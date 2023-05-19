@@ -156,7 +156,29 @@ export class PostDomainService implements IPostDomainService {
       });
       postEntity.setTags(newTagEntities);
     }
-    await this._postValidator.validateAndSetMedia(postEntity, media);
+    if (media) {
+      const images = await this._mediaDomainService.getAvailableImages(
+        postEntity.get('media').images,
+        media?.imagesIds,
+        postEntity.get('createdBy')
+      );
+
+      const files = await this._mediaDomainService.getAvailableFiles(
+        postEntity.get('media').files,
+        media?.filesIds,
+        postEntity.get('createdBy')
+      );
+      const videos = await this._mediaDomainService.getAvailableVideos(
+        postEntity.get('media').videos,
+        media?.videosIds,
+        postEntity.get('createdBy')
+      );
+      postEntity.setMedia({
+        files,
+        images,
+        videos,
+      });
+    }
     if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
@@ -177,73 +199,5 @@ export class PostDomainService implements IPostDomainService {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-  }
-
-  private async _getAvailableVideos(
-    postEntity: PostEntity,
-    videosIds?: string[]
-  ): Promise<VideoEntity[]> {
-    if (!videosIds || videosIds?.length === 0) return [];
-    let result = [];
-
-    result = postEntity.get('media').videos;
-    const currentVideoIds = result.map((e) => e.get('id'));
-    const addingVideoIds = videosIds.filter((id) => !currentVideoIds.includes(id));
-    if (addingVideoIds.length) {
-      const videos = await this._mediaRepo.findVideos(addingVideoIds);
-      const availableVideos = videos.filter((video) => video.isOwner(postEntity.get('createdBy')));
-      videos.push(...availableVideos);
-    }
-    const removingVideoIds = currentVideoIds.filter((id) => !videosIds.includes(id));
-    if (removingVideoIds.length) {
-      result = result.filter((e) => !removingVideoIds.includes(e.get('id')));
-    }
-    return result;
-  }
-
-  private async _getAvailableFiles(
-    postEntity: PostEntity,
-    filesIds: string[]
-  ): Promise<FileEntity[]> {
-    if (!filesIds || filesIds.length === 0) return [];
-    let result = [];
-    result = postEntity.get('media').files;
-    const currentFileIds = result.map((e) => e.get('id'));
-    const addingFileIds = filesIds.filter((id) => !currentFileIds.includes(id));
-    if (addingFileIds.length) {
-      const files = await this._mediaRepo.findFiles(addingFileIds);
-      const availableFiles = files.filter((image) => image.isOwner(postEntity.get('createdBy')));
-      files.push(...availableFiles);
-    }
-
-    const removingFileIds = currentFileIds.filter((id) => !filesIds.includes(id));
-    if (removingFileIds.length) {
-      result = result.filter((e) => !removingFileIds.includes(e.get('id')));
-    }
-    return result;
-  }
-
-  private async _getAvailableImages(
-    postEntity: PostEntity,
-    imagesIds?: string[]
-  ): Promise<ImageEntity[]> {
-    if (!imagesIds || imagesIds.length === 0) return [];
-    let result = [];
-    result = postEntity.get('media').images || [];
-    const currentImageIds = result.map((e) => e.get('id'));
-    const addingImageIds = imagesIds.filter((id) => !currentImageIds.includes(id));
-    if (addingImageIds.length) {
-      const images = await this._mediaRepo.findImages(addingImageIds);
-      const availableImages = images.filter(
-        (image) => image.isOwner(postEntity.get('createdBy')) && image.isReady()
-      );
-      result.push(...availableImages);
-    }
-
-    const removingImageIds = currentImageIds.filter((id) => !imagesIds.includes(id));
-    if (removingImageIds.length) {
-      result = result.filter((e) => !removingImageIds.includes(e.get('id')));
-    }
-    return result;
   }
 }
