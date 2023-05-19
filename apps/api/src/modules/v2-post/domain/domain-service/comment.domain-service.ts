@@ -51,7 +51,7 @@ export class CommentDomainService implements ICommentDomainService {
         media?.images,
         commentEntity.get('createdBy')
       );
-      if (images.some((image) => !image.isPostContentResource())) {
+      if (images.some((image) => !image.isCommentContentResource())) {
         throw new InvalidResourceImageException();
       }
       const files = await this._mediaDomainService.getAvailableFiles(
