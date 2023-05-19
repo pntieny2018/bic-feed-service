@@ -401,7 +401,7 @@ export class ArticleListener {
         new SeriesAddedItemsEvent({
           itemIds: [newArticle.id],
           seriesId: seriesId,
-          skipNotify: skipNotifyForNewItems.includes(seriesId) && newArticle.isHidden,
+          skipNotify: skipNotifyForNewItems.includes(seriesId) || newArticle.isHidden,
           actor: actor,
           context: 'publish',
         })
@@ -427,7 +427,7 @@ export class ArticleListener {
             },
           ],
           actor,
-          skipNotify: skipNotifyForRemoveItems.includes(seriesId) && newArticle.isHidden,
+          skipNotify: skipNotifyForRemoveItems.includes(seriesId) || newArticle.isHidden,
           contentIsDeleted: false,
         })
       );
