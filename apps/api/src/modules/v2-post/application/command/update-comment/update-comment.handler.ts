@@ -10,6 +10,7 @@ import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/re
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
   CommentNotFoundException,
+  ContentNoCRUDPermissionException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
@@ -45,11 +46,11 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
   public async execute(command: UpdateCommentCommand): Promise<void> {
     const { actor, id, mentions } = command.payload;
 
-    const comment = await this._commentRepository.findOne({
-      id: id,
-      createdBy: actor.id,
-    });
+    const comment = await this._commentRepository.findOne({ id });
+
     if (!comment) throw new CommentNotFoundException();
+
+    if (!comment.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
     const post = (await this._postRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },

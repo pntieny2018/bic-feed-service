@@ -37,6 +37,7 @@ import {
 import {
   CommentNotFoundException,
   CommentReplyNotExistException,
+  ContentNoCRUDPermissionException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
   ContentRequireGroupException,
@@ -180,6 +181,7 @@ export class CommentController {
           throw new NotFoundException(e);
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
+        case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
@@ -216,6 +218,7 @@ export class CommentController {
           throw new NotFoundException(e);
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
+        case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
