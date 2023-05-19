@@ -64,4 +64,8 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
       videos,
     };
   }
+
+  public isOwner(actorId: string): boolean {
+    return this._props.createdBy === actorId;
+  }
 }

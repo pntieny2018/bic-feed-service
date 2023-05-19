@@ -4,14 +4,14 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { ProcessPostPublishedCommand } from './process-post-published.command';
+import { ProcessPostUpdatedCommand } from './process-post-updated.command';
 import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { PostEntity, PostProps } from '../../../domain/model/content';
+import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { PostStatus } from '../../../../../database/models/post.model';
 import { MediaService } from '../../../../media';
@@ -27,14 +27,16 @@ import { NotificationService } from '../../../../../notification';
 import { ISeriesState, PostActivityService } from '../../../../../notification/activities';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { SeriesAddedItemsEvent, SeriesChangedItemsEvent } from '../../../../../events/series';
+import {
+  SeriesAddedItemsEvent,
+  SeriesChangedItemsEvent,
+  SeriesRemovedItemsEvent,
+} from '../../../../../events/series';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
+import { ProcessPostPublishedCommand } from '../process-post-published/process-post-published.command';
 
-@CommandHandler(ProcessPostPublishedCommand)
-export class ProcessPostPublishedHandler
-  implements ICommandHandler<ProcessPostPublishedCommand, void>
-{
+@CommandHandler(ProcessPostUpdatedCommand)
+export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpdatedCommand, void> {
   public constructor(
     @Inject(POST_REPOSITORY_TOKEN) private readonly _postRepository: IPostRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
@@ -52,7 +54,7 @@ export class ProcessPostPublishedHandler
     private readonly _internalEventEmitter: InternalEventEmitterService //TODO improve interface later
   ) {}
 
-  public async execute(command: ProcessPostPublishedCommand): Promise<void> {
+  public async execute(command: ProcessPostUpdatedCommand): Promise<void> {
     const { before, after } = command.payload;
 
     const postEntity = await this._postRepository.findOne({
@@ -71,7 +73,7 @@ export class ProcessPostPublishedHandler
   }
 
   private async _processNotification(
-    command: ProcessPostPublishedCommand,
+    command: ProcessPostUpdatedCommand,
     postEntity: PostEntity
   ): Promise<void> {
     const { before, after, isPublished } = command.payload;
@@ -97,41 +99,159 @@ export class ProcessPostPublishedHandler
       actor: after.actor,
       createdAt: after.createdAt,
     });
+    let oldActivity = undefined;
 
+    if (!isPublished) {
+      const mentionUsers = await this._userApplicationService.findAllByIds(before.mentionUserIds);
+      const mentions = this._contentBinding.mapMentionWithUserInfo(mentionUsers);
+      const oldGroups = await this._groupApplicationService.findAllByIds(before.groupIds);
+      oldActivity = this._postActivityService.createPayload({
+        id: after.id,
+        title: null,
+        content: after.content,
+        contentType: after.type,
+        setting: after.setting,
+        audience: {
+          groups: oldGroups,
+        },
+        mentions: mentions as any,
+        actor: after.actor,
+        createdAt: after.createdAt,
+      });
+    }
     await this._notificationService.publishPostNotification({
       key: after.id,
       value: {
         actor: {
           id: after.actor.id,
         },
-        event: PostHasBeenPublished,
+        event: isPublished ? PostHasBeenPublished : PostHasBeenUpdated,
         data: updatedActivity,
         meta: {
           post: {
+            oldData: oldActivity,
             ignoreUserIds: series.map((series) => series.get('createdBy')),
           },
         },
       },
     });
 
-    if (after.state.attachSeriesIds.length > 0) {
-      const series = await this._postRepository.findAll({
-        where: {
-          ids: after.state.attachSeriesIds,
-        },
+    const removeSeries = await this._postRepository.findAll({
+      attributes: ['id', 'createdBy', 'title'],
+      where: {
+        ids: after.state.detachSeriesIds,
+      },
+    });
+
+    const removeSeriesWithState = removeSeries.map((item) => ({
+      id: item.get('id'),
+      title: item.get('title'),
+      actor: {
+        id: item.get('createdBy'),
+      },
+      state: 'remove',
+    }));
+
+    const newSeries = await this._postRepository.findAll({
+      attributes: ['id', 'createdBy', 'title'],
+      where: {
+        ids: after.state.attachSeriesIds,
+      },
+    });
+    const newSeriesWithState = newSeries.map((item) => ({
+      id: item.get('id'),
+      title: item.get('title'),
+      actor: {
+        id: item.get('createdBy'),
+      },
+      state: 'add',
+    }));
+
+    let skipNotifyForNewItems = [];
+    let skipNotifyForRemoveItems = [];
+
+    if (newSeriesWithState.length && removeSeriesWithState.length) {
+      const result = new Map<string, ISeriesState[]>();
+
+      [...newSeriesWithState, ...removeSeriesWithState].forEach((item: ISeriesState): void => {
+        const key = item.actor.id;
+        if (!result.has(key)) {
+          result.set(key, []);
+        }
+        const items = result.get(key);
+        items.push(item);
+        result.set(key, items);
       });
-      for (const sr of series) {
-        if (sr instanceof SeriesEntity) {
+
+      const sameOwnerItems = [];
+
+      result.forEach((r) => {
+        const newItem = r.filter((i) => i.state === 'add');
+        const removeItem = r.filter((i) => i.state === 'remove');
+        if (newItem.length && removeItem.length) {
+          sameOwnerItems.push(r);
+          skipNotifyForNewItems = newItem.map((i) => i.id);
+          skipNotifyForRemoveItems = removeItem.map((i) => i.id);
+        }
+      });
+
+      if (sameOwnerItems.length && !after.isHidden) {
+        sameOwnerItems.forEach((so) => {
           this._internalEventEmitter.emit(
-            new SeriesAddedItemsEvent({
-              itemIds: [after.id],
-              seriesId: sr.get('id'),
+            new SeriesChangedItemsEvent({
+              content: {
+                id: after.id,
+                content: after.content,
+                type: after.type,
+                createdBy: after.actor.id,
+                createdAt: after.createdAt,
+                updatedAt: after.createdAt,
+              } as any,
+              series: so,
               actor: after.actor,
-              context: 'publish',
             })
           );
-        }
+        });
       }
+    }
+
+    if (after.state.attachSeriesIds.length > 0) {
+      after.state.attachSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesAddedItemsEvent({
+            itemIds: [after.id],
+            seriesId: seriesId,
+            skipNotify: skipNotifyForNewItems.includes(seriesId) || after.isHidden,
+            actor: after.actor,
+            context: 'publish',
+          })
+        )
+      );
+    }
+
+    if (after.state.detachSeriesIds.length > 0) {
+      after.state.detachSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
+            items: [
+              {
+                id: after.id,
+                title: null,
+                content: after.content,
+                type: after.type,
+                createdBy: after.actor.id,
+                groupIds: after.groupIds,
+                createdAt: after.createdAt,
+                // updatedAt: newPost.updatedAt,
+              },
+            ],
+            seriesId: seriesId,
+            skipNotify: skipNotifyForRemoveItems.includes(seriesId) || after.isHidden,
+            actor: after.actor,
+            contentIsDeleted: false,
+          })
+        )
+      );
     }
   }
 

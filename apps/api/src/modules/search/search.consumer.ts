@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { PostPublishedMessagePayload } from '../v2-post/application/dto/message/post-published.message-payload';
+import { PostChangedMessagePayload } from '../v2-post/application/dto/message/post-published.message-payload';
 import { KAFKA_TOPIC } from '../../common/constants';
 import { SearchService } from './search.service';
 import { PostStatus } from '../v2-post/data-type/post-status.enum';
@@ -9,10 +9,8 @@ import { PostStatus } from '../v2-post/data-type/post-status.enum';
 export class SearchConsumer {
   public constructor(private readonly _postSearchService: SearchService) {}
 
-  @EventPattern(KAFKA_TOPIC.CONTENT.POST_PUBLISHED)
-  public async postPublished(
-    @Payload('value') payload: PostPublishedMessagePayload
-  ): Promise<void> {
+  @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
+  public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
     const { before, after, isPublished } = payload;
     const {
       id,

@@ -18,7 +18,7 @@ import { postProvider } from './provider/post.provider';
 import { mediaProvider } from './provider/media.provider';
 import { HttpModule } from '@nestjs/axios';
 import { CommentController } from './driving-apdater/controller/comment.controller';
-import { PostPublishedConsumer } from './driving-apdater/consumer/post-published.consumer';
+import { PostConsumer } from './driving-apdater/consumer/post.consumer';
 import { MediaModule } from '../media';
 import { NotificationModule } from '../../notification';
 
@@ -33,13 +33,7 @@ import { NotificationModule } from '../../notification';
     MediaModule,
     NotificationModule,
   ],
-  controllers: [
-    TagController,
-    CategoryController,
-    PostController,
-    CommentController,
-    PostPublishedConsumer,
-  ],
+  controllers: [TagController, CategoryController, PostController, CommentController, PostConsumer],
   providers: [
     ...tagProvider,
     ...categoryProvider,

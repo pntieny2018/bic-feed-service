@@ -33,18 +33,9 @@ export class CommentDissociationService {
     const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
     const postMentions = Array.isArray(postResponse.mentions)
       ? []
-      : Object.values(postResponse.mentions);
+      : Object.values(postResponse.mentions || {});
     try {
       let comment = await this._commentModel.findOne({
-        include: [
-          {
-            association: 'mentions',
-            required: false,
-            where: {
-              mentionableType: MentionableType.COMMENT,
-            },
-          },
-        ],
         where: {
           id: commentId,
         },

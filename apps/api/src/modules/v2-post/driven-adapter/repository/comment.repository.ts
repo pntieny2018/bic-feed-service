@@ -86,7 +86,7 @@ export class CommentRepository implements ICommentRepository {
     }
   }
 
-  public async destroyComment(id: string): Promise<void> {
+  public async destroyComment(id: string): Promise<IComment> {
     const comment = await this._commentModel.findByPk(id);
     const childComments = await this._commentModel.findAll({
       attributes: ['id'],
@@ -112,6 +112,7 @@ export class CommentRepository implements ICommentRepository {
       });
       await comment.destroy({ transaction });
       await transaction.commit();
+      return comment;
     } catch (e) {
       await transaction.rollback();
       throw e;

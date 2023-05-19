@@ -1,6 +1,6 @@
 import { PostMessagePayload } from './post.message-payload';
 
-export class PostPublishedMessagePayload {
+export class PostChangedMessagePayload {
   public isPublished: boolean;
   public before: Omit<PostMessagePayload, 'tags' | 'media' | 'seriesIds' | 'communityIds'>;
   public after: PostMessagePayload & {
@@ -20,7 +20,7 @@ export class PostPublishedMessagePayload {
     };
   };
 
-  public constructor(data: Partial<PostPublishedMessagePayload>) {
+  public constructor(data: Partial<PostChangedMessagePayload>) {
     Object.assign(this, data);
   }
 }

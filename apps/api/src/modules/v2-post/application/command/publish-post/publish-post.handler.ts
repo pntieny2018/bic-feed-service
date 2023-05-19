@@ -19,7 +19,7 @@ import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../../../../common/constants';
 import { ClientKafka } from '@nestjs/microservices';
-import { PostPublishedMessagePayload } from '../../dto/message/post-published.message-payload';
+import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { MediaService } from '../../../../media';
 
 @CommandHandler(PublishPostCommand)
@@ -83,59 +83,58 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
 
     //TODO:: wrap event
     if (postEntity.isChanged() && postEntity.isPublished()) {
-      await this._clientKafka.emit(KAFKA_TOPIC.CONTENT.POST_PUBLISHED, {
+      const payload = {
+        isPublished: postEntity.getState().isChangeStatus,
+        before: {
+          id: postPropsBefore.id,
+          actor: result.actor,
+          setting: postPropsBefore.setting,
+          type: postPropsBefore.type,
+          groupIds: postPropsBefore.groupIds,
+          content: postPropsBefore.content,
+          mentionUserIds: postPropsBefore.mentionUserIds,
+          createdAt: postPropsBefore.createdAt,
+          updatedAt: postPropsBefore.updatedAt,
+          lang: postPropsBefore.lang,
+          isHidden: postPropsBefore.isHidden,
+          status: postPropsBefore.status,
+        },
+        after: {
+          id: postEntity.get('id'),
+          actor: result.actor,
+          setting: result.setting,
+          type: result.type,
+          groupIds: postEntity.get('groupIds'),
+          communityIds: result.communities.map((community) => community.id),
+          tags: result.tags,
+          media: result.media,
+          seriesIds: result.series,
+          content: result.content,
+          mentionUserIds: postEntity.get('mentionUserIds'),
+          lang: postEntity.get('lang'),
+          isHidden: postEntity.get('isHidden'),
+          status: postEntity.get('status'),
+          state: {
+            attachSeriesIds: postEntity.getState().attachSeriesIds,
+            detachSeriesIds: postEntity.getState().detachSeriesIds,
+            attachGroupIds: postEntity.getState().attachGroupIds,
+            detachGroupIds: postEntity.getState().detachGroupIds,
+            attachTagIds: postEntity.getState().attachTagIds,
+            detachTagIds: postEntity.getState().detachTagIds,
+            attachFileIds: postEntity.getState().attachFileIds,
+            detachFileIds: postEntity.getState().detachFileIds,
+            attachImageIds: postEntity.getState().attachImageIds,
+            detachImageIds: postEntity.getState().detachImageIds,
+            attachVideoIds: postEntity.getState().attachVideoIds,
+            detachVideoIds: postEntity.getState().detachVideoIds,
+          },
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
+        },
+      };
+      await this._clientKafka.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
         key: postEntity.get('id'),
-        value: JSON.stringify(
-          new PostPublishedMessagePayload({
-            isPublished: postEntity.getState().isChangeStatus,
-            before: {
-              id: postPropsBefore.id,
-              actor: result.actor,
-              setting: postPropsBefore.setting,
-              type: postPropsBefore.type,
-              groupIds: postPropsBefore.groupIds,
-              content: postPropsBefore.content,
-              mentionUserIds: postPropsBefore.mentionUserIds,
-              createdAt: postPropsBefore.createdAt,
-              updatedAt: postPropsBefore.updatedAt,
-              lang: postPropsBefore.lang,
-              isHidden: postPropsBefore.isHidden,
-              status: postPropsBefore.status,
-            },
-            after: {
-              id: postEntity.get('id'),
-              actor: result.actor,
-              setting: result.setting,
-              type: result.type,
-              groupIds: postEntity.get('groupIds'),
-              communityIds: result.communities.map((community) => community.id),
-              tags: result.tags,
-              media: result.media,
-              seriesIds: result.series,
-              content: result.content,
-              mentionUserIds: postEntity.get('mentionUserIds'),
-              lang: postEntity.get('lang'),
-              isHidden: postEntity.get('isHidden'),
-              status: postEntity.get('status'),
-              state: {
-                attachSeriesIds: postEntity.getState().attachSeriesIds,
-                detachSeriesIds: postEntity.getState().attachSeriesIds,
-                attachGroupIds: postEntity.getState().attachGroupIds,
-                detachGroupIds: postEntity.getState().detachGroupIds,
-                attachTagIds: postEntity.getState().attachTagIds,
-                detachTagIds: postEntity.getState().detachTagIds,
-                attachFileIds: postEntity.getState().attachFileIds,
-                detachFileIds: postEntity.getState().detachFileIds,
-                attachImageIds: postEntity.getState().attachImageIds,
-                detachImageIds: postEntity.getState().detachImageIds,
-                attachVideoIds: postEntity.getState().attachVideoIds,
-                detachVideoIds: postEntity.getState().detachVideoIds,
-              },
-              createdAt: result.createdAt,
-              updatedAt: result.updatedAt,
-            },
-          })
-        ),
+        value: JSON.stringify(new PostChangedMessagePayload(payload)),
       });
     }
 
