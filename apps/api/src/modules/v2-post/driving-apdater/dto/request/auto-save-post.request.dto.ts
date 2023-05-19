@@ -57,7 +57,6 @@ export class AutoSavePostRequestDto {
     type: PostSettingDto,
     required: false,
     example: {
-      canShare: true,
       canReact: true,
       canComment: true,
       isImportant: false,

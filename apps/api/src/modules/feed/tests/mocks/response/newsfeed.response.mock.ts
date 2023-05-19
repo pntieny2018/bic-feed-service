@@ -21,7 +21,6 @@ export const mockedNewsFeedResponse = {
       setting: {
         canReact: true,
         canComment: true,
-        canShare: true,
         isImportant: false,
         importantExpiredAt: null,
       },
@@ -87,7 +86,6 @@ export const mockedNewsFeedResponse = {
       setting: {
         canReact: true,
         canComment: true,
-        canShare: true,
         isImportant: false,
         importantExpiredAt: null,
       },

@@ -158,10 +158,7 @@ export class ContentEntity<
     let isEnableSetting = false;
     if (
       setting &&
-      (setting.isImportant ||
-        setting.canComment === false ||
-        setting.canReact === false ||
-        setting.canShare === false)
+      (setting.isImportant || setting.canComment === false || setting.canReact === false)
     ) {
       isEnableSetting = true;
     }

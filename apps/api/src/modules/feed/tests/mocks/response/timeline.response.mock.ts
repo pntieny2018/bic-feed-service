@@ -20,7 +20,6 @@ export const mockTimelineResponse = {
       setting: {
         canReact: true,
         canComment: true,
-        canShare: true,
         isImportant: false,
         importantExpiredAt: null,
       },
@@ -74,7 +73,6 @@ export const mockTimelineResponse = {
       setting: {
         canReact: true,
         canComment: true,
-        canShare: true,
         isImportant: false,
         importantExpiredAt: null,
       },

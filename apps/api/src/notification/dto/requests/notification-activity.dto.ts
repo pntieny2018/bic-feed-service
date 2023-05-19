@@ -34,7 +34,6 @@ export class ReportObject {
 export class SettingObject {
   public canReact: boolean;
   public canComment: boolean;
-  public canShare: boolean;
   public isImportant: boolean;
   public importantExpiredAt?: Date;
 }

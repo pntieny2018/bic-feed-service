@@ -21,20 +21,6 @@ export class PostSettingDto {
     type: Boolean,
     default: true,
     required: false,
-    description: 'Allow to share post',
-    name: 'can_share',
-  })
-  @IsNotEmpty()
-  @IsBoolean()
-  @Expose({
-    name: 'can_share',
-  })
-  public canShare: boolean;
-
-  @ApiProperty({
-    type: Boolean,
-    default: true,
-    required: false,
     description: 'Allow to comment',
     name: 'can_comment',
   })

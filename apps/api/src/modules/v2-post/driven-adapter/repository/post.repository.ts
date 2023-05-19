@@ -127,7 +127,6 @@ export class PostRepository implements IPostRepository {
       updatedBy: postEntity.get('updatedBy'),
       isImportant: postEntity.get('setting').isImportant,
       importantExpiredAt: postEntity.get('setting').importantExpiredAt,
-      canShare: postEntity.get('setting').canShare,
       canComment: postEntity.get('setting').canComment,
       canReact: postEntity.get('setting').canReact,
       commentsCount: postEntity.get('aggregation').commentsCount,
@@ -330,7 +329,6 @@ export class PostRepository implements IPostRepository {
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
-        canShare: post.canShare,
         canComment: post.canComment,
         canReact: post.canReact,
       },
@@ -373,7 +371,6 @@ export class PostRepository implements IPostRepository {
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
-        canShare: post.canShare,
         canComment: post.canComment,
         canReact: post.canReact,
       },
@@ -406,7 +403,6 @@ export class PostRepository implements IPostRepository {
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
-        canShare: post.canShare,
         canComment: post.canComment,
         canReact: post.canReact,
       },

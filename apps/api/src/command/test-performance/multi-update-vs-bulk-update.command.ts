@@ -17,7 +17,6 @@ export class MultiUpdateVsBulkUpdateCommand implements CommandRunner {
           importantExpiredAt: null,
           canComment: true,
           canReact: true,
-          canShare: true,
           isHidden: false,
           isReported: false,
           content: null,
@@ -48,7 +47,6 @@ export class MultiUpdateVsBulkUpdateCommand implements CommandRunner {
           importantExpiredAt: null,
           canComment: true,
           canReact: true,
-          canShare: true,
           isHidden: false,
           isReported: false,
           content:
@@ -80,7 +78,6 @@ export class MultiUpdateVsBulkUpdateCommand implements CommandRunner {
           importantExpiredAt: null,
           canComment: true,
           canReact: true,
-          canShare: true,
           isHidden: false,
           isReported: false,
           content:

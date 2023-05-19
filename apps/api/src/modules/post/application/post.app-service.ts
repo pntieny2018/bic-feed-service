@@ -127,7 +127,7 @@ export class PostAppService {
     const { audience, setting } = createPostDto;
     if (audience.groupIds?.length > 0) {
       const isEnableSetting = setting.isImportant;
-      setting.canComment === false || setting.canReact === false || setting.canShare === false;
+      setting.canComment === false || setting.canReact === false;
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._postService.create(user, createPostDto);
@@ -236,10 +236,7 @@ export class PostAppService {
       let isEnableSetting = false;
       if (
         setting &&
-        (setting.isImportant ||
-          setting.canComment === false ||
-          setting.canReact === false ||
-          setting.canShare === false)
+        (setting.isImportant || setting.canComment === false || setting.canReact === false)
       ) {
         isEnableSetting = true;
       }
@@ -479,10 +476,7 @@ export class PostAppService {
     const groupIds = audience.groups.map((group) => group.id);
 
     const isEnableSetting =
-      setting.isImportant ||
-      setting.canComment === false ||
-      setting.canReact === false ||
-      setting.canShare === false;
+      setting.isImportant || setting.canComment === false || setting.canReact === false;
     await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
 
     await this.isSeriesAndTagsValid(

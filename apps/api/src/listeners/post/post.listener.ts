@@ -80,7 +80,6 @@ export class PostListener {
         setting: {
           canComment: post.canComment,
           canReact: post.canReact,
-          canShare: post.canShare,
           isImportant: post.isImportant,
         },
         id: post.id,

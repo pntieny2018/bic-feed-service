@@ -272,7 +272,6 @@ export class IndexPostCommand implements CommandRunner {
             'title',
             'summary',
             'createdBy',
-            'canShare',
             'canComment',
             'canReact',
             'importantExpiredAt',
