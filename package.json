@@ -47,6 +47,7 @@
     "@sentry/integrations": "^6.18.2",
     "@sentry/node": "^6.18.2",
     "@types/jsonwebtoken": "^8.5.8",
+    "@types/lodash": "^4.14.194",
     "@types/node-emoji": "^1.8.1",
     "aws-sdk": "^2.1089.0",
     "bull": "^4.8.1",
