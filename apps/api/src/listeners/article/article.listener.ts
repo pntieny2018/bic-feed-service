@@ -3,14 +3,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
-import { MediaStatus, MediaType } from '../../database/models/media.model';
 import { PostStatus } from '../../database/models/post.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
-import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
+import {
+  SeriesAddedItemsEvent,
+  SeriesChangedItemsEvent,
+  SeriesRemovedItemsEvent,
+} from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -20,7 +23,8 @@ import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
-import { PostActivityService } from '../../notification/activities';
+import { ISeriesState, PostActivityService } from '../../notification/activities';
+import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
 
 @Injectable()
 export class ArticleListener {
@@ -306,7 +310,6 @@ export class ArticleListener {
     if (!newArticle.isHidden) {
       const updatedActivity = this._postActivityService.createPayload(newArticle);
       const oldActivity = this._postActivityService.createPayload(oldArticle);
-
       await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
@@ -321,42 +324,113 @@ export class ArticleListener {
           },
         },
       });
+    }
 
-      const series = newArticle.series?.map((s) => s.id) ?? [];
-      const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
-      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
-      for (const seriesId of newSeriesIds) {
-        this._internalEventEmitter.emit(
-          new SeriesAddedItemsEvent({
-            itemIds: [newArticle.id],
-            seriesId: seriesId,
-            actor: actor,
-            context: 'publish',
-          })
-        );
-      }
-      const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !series.includes(id));
-      for (const seriesId of seriesIdsShouldRemove) {
-        this._internalEventEmitter.emit(
-          new SeriesRemovedItemsEvent({
-            seriesId,
-            items: [
-              {
+    const seriesIds = newArticle.series?.map((s) => s.id) ?? [];
+    const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
+    const newSeriesIds = seriesIds.filter((id) => !oldSeriesIds.includes(id));
+
+    const getItems =
+      (state: 'add' | 'remove') =>
+      (s: SeriesSimpleResponseDto): ISeriesState => ({
+        id: s.id,
+        actor: { id: s.createdBy },
+        title: s.title,
+        state: state,
+      });
+
+    const removeSeriesWithState = (oldArticle.series?.map(getItems('remove')) ?? []).filter(
+      (item) => !seriesIds.includes(item.id)
+    );
+
+    const newSeriesWithState = (newArticle.series?.map(getItems('add')) ?? []).filter(
+      (item) => !oldSeriesIds.includes(item.id)
+    );
+
+    let skipNotifyForNewItems = [];
+
+    let skipNotifyForRemoveItems = [];
+
+    if (newSeriesWithState.length && removeSeriesWithState.length) {
+      const result = new Map<string, ISeriesState[]>();
+
+      [...newSeriesWithState, ...removeSeriesWithState].forEach((item: ISeriesState): void => {
+        const key = item.actor.id;
+        if (!result.has(key)) {
+          result.set(key, []);
+        }
+        const items = result.get(key);
+        items.push(item);
+        result.set(key, items);
+      });
+
+      const sameOwnerItems = [];
+
+      result.forEach((r) => {
+        const newItem = r.filter((i) => i.state === 'add');
+        const removeItem = r.filter((i) => i.state === 'remove');
+        if (newItem.length && removeItem.length) {
+          sameOwnerItems.push(r);
+          skipNotifyForNewItems = newItem.map((i) => i.id);
+          skipNotifyForRemoveItems = removeItem.map((i) => i.id);
+        }
+      });
+
+      if (sameOwnerItems.length && !newArticle.isHidden) {
+        sameOwnerItems.forEach((so) => {
+          this._internalEventEmitter.emit(
+            new SeriesChangedItemsEvent({
+              content: {
                 id: newArticle.id,
-                title: newArticle.title,
                 content: newArticle.content,
                 type: newArticle.type,
                 createdBy: newArticle.createdBy,
-                groupIds: newArticle.audience.groups.map((group) => group.id),
                 createdAt: newArticle.createdAt,
-                updatedAt: newArticle.updatedAt,
-              },
-            ],
-            actor,
-            contentIsDeleted: false,
-          })
-        );
+                updatedAt: newArticle.createdAt,
+              } as any,
+              series: so,
+              actor: actor,
+            })
+          );
+        });
       }
+    }
+
+    for (const seriesId of newSeriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesAddedItemsEvent({
+          itemIds: [newArticle.id],
+          seriesId: seriesId,
+          skipNotify: skipNotifyForNewItems.includes(seriesId) && newArticle.isHidden,
+          actor: actor,
+          context: 'publish',
+        })
+      );
+    }
+
+    const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !seriesIds.includes(id));
+
+    for (const seriesId of seriesIdsShouldRemove) {
+      this._internalEventEmitter.emit(
+        new SeriesRemovedItemsEvent({
+          seriesId,
+          items: [
+            {
+              id: newArticle.id,
+              title: newArticle.title,
+              content: newArticle.content,
+              type: newArticle.type,
+              createdBy: newArticle.createdBy,
+              groupIds: newArticle.audience.groups.map((group) => group.id),
+              createdAt: newArticle.createdAt,
+              updatedAt: newArticle.updatedAt,
+            },
+          ],
+          actor,
+          skipNotify: skipNotifyForRemoveItems.includes(seriesId) && newArticle.isHidden,
+          contentIsDeleted: false,
+        })
+      );
     }
 
     try {

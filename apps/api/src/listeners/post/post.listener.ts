@@ -17,7 +17,7 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
-import { PostActivityService } from '../../notification/activities';
+import { ISeriesState, PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 import { ArrayHelper } from '../../common/helpers';
@@ -26,6 +26,8 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
 import { SeriesService } from '../../modules/series/series.service';
+import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
+import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
 
 @Injectable()
 export class PostListener {
@@ -334,24 +336,92 @@ export class PostListener {
       this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
     }
 
-    const series = newPost.series?.map((s) => s.id) ?? [];
+    const seriesIds = newPost.series?.map((s) => s.id) ?? [];
     const oldSeriesIds = oldPost.series?.map((s) => s.id) ?? [];
-    if (series && series.length > 0) {
-      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+
+    const getItems =
+      (state: 'add' | 'remove') =>
+      (s: SeriesSimpleResponseDto): ISeriesState => ({
+        id: s.id,
+        actor: { id: s.createdBy },
+        title: s.title,
+        state: state,
+      });
+
+    const removeSeriesWithState = (oldPost.series?.map(getItems('remove')) ?? []).filter(
+      (item) => !seriesIds.includes(item.id)
+    );
+
+    const newSeriesWithState = (newPost.series?.map(getItems('add')) ?? []).filter(
+      (item) => !oldSeriesIds.includes(item.id)
+    );
+
+    let skipNotifyForNewItems = [];
+    let skipNotifyForRemoveItems = [];
+
+    if (newSeriesWithState.length && removeSeriesWithState.length) {
+      const result = new Map<string, ISeriesState[]>();
+
+      [...newSeriesWithState, ...removeSeriesWithState].forEach((item: ISeriesState): void => {
+        const key = item.actor.id;
+        if (!result.has(key)) {
+          result.set(key, []);
+        }
+        const items = result.get(key);
+        items.push(item);
+        result.set(key, items);
+      });
+
+      const sameOwnerItems = [];
+
+      result.forEach((r) => {
+        const newItem = r.filter((i) => i.state === 'add');
+        const removeItem = r.filter((i) => i.state === 'remove');
+        if (newItem.length && removeItem.length) {
+          sameOwnerItems.push(r);
+          skipNotifyForNewItems = newItem.map((i) => i.id);
+          skipNotifyForRemoveItems = removeItem.map((i) => i.id);
+        }
+      });
+
+      if (sameOwnerItems.length && !newPost.isHidden) {
+        sameOwnerItems.forEach((so) => {
+          this._internalEventEmitter.emit(
+            new SeriesChangedItemsEvent({
+              content: {
+                id: newPost.id,
+                content: newPost.content,
+                type: newPost.type,
+                createdBy: newPost.createdBy,
+                createdAt: newPost.createdAt,
+                updatedAt: newPost.createdAt,
+              } as any,
+              series: so,
+              actor: actor,
+            })
+          );
+        });
+      }
+    }
+
+    if (seriesIds && seriesIds.length > 0) {
+      const newSeriesIds = seriesIds.filter((id) => !oldSeriesIds.includes(id));
 
       newSeriesIds.forEach((seriesId) =>
         this._internalEventEmitter.emit(
           new SeriesAddedItemsEvent({
             itemIds: [newPost.id],
             seriesId: seriesId,
+            skipNotify: skipNotifyForNewItems.includes(seriesId) && newPost.isHidden,
             actor: actor,
             context: 'publish',
           })
         )
       );
     }
+
     if (oldSeriesIds && oldSeriesIds.length > 0) {
-      const seriesIdsDeleted = oldSeriesIds.filter((id) => !series.includes(id));
+      const seriesIdsDeleted = oldSeriesIds.filter((id) => !seriesIds.includes(id));
       seriesIdsDeleted.forEach((seriesId) =>
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
@@ -368,6 +438,7 @@ export class PostListener {
               },
             ],
             seriesId: seriesId,
+            skipNotify: skipNotifyForRemoveItems.includes(seriesId) && newPost.isHidden,
             actor: actor,
             contentIsDeleted: false,
           })
