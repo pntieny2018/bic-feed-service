@@ -82,11 +82,9 @@ export class PostEntity extends ContentEntity<PostProps> {
   }
   private _updateFilesState(files: FileEntity[]): void {
     const currentFileIds = this._props.media.files.map((file) => file.get('id'));
-    console.log('currentFileIds', currentFileIds);
     for (const file of files) {
       if (!currentFileIds.includes(file.get('id'))) {
         this._state.attachFileIds.push(file.get('id'));
-        console.log('attachFileIds', this._state.attachFileIds);
       }
     }
 
