@@ -63,7 +63,7 @@ export class ProcessPostPublishedHandler
 
     if (!postEntity) return;
     if (postEntity instanceof PostEntity) {
-      await this._processMedia(command, postEntity);
+      await this._processMedia(postEntity);
       if (!postEntity.isHidden()) {
         await this._processNotification(command, postEntity);
       }
@@ -76,20 +76,25 @@ export class ProcessPostPublishedHandler
   ): Promise<void> {
     const { before, after, isPublished } = command.payload;
 
-    const series = await this._postRepository.findAll({
-      attributes: ['id', 'createdBy'], //TODO enhance get attributes repo
-      where: {
-        ids: after.seriesIds,
-      },
-    });
-    const groups = await this._groupApplicationService.findAllByIds(after.groupIds);
-    const mentionUsers = await this._userApplicationService.findAllByIds(after.mentionUserIds);
+    let series = [];
+    if (postEntity.get('seriesIds')?.length) {
+      series = await this._postRepository.findAll({
+        attributes: ['id', 'createdBy'], //TODO enhance get attributes repo
+        where: {
+          ids: after.seriesIds,
+        },
+      });
+    }
+    const groups = await this._groupApplicationService.findAllByIds(postEntity.get('groupIds'));
+    const mentionUsers = await this._userApplicationService.findAllByIds(
+      postEntity.get('mentionUserIds')
+    );
     const updatedActivity = this._postActivityService.createPayload({
-      id: after.id,
+      id: postEntity.get('id'),
       title: null,
-      content: after.content,
-      contentType: after.type,
-      setting: after.setting,
+      content: postEntity.get('content'),
+      contentType: postEntity.get('type'),
+      setting: postEntity.get('setting'),
       audience: {
         groups,
       },
@@ -114,67 +119,41 @@ export class ProcessPostPublishedHandler
       },
     });
 
-    if (after.state.attachSeriesIds.length > 0) {
-      const series = await this._postRepository.findAll({
-        where: {
-          ids: after.state.attachSeriesIds,
-        },
-      });
-      for (const sr of series) {
-        if (sr instanceof SeriesEntity) {
-          this._internalEventEmitter.emit(
-            new SeriesAddedItemsEvent({
-              itemIds: [after.id],
-              seriesId: sr.get('id'),
-              actor: after.actor,
-              context: 'publish',
-            })
-          );
-        }
+    for (const sr of series) {
+      if (sr instanceof SeriesEntity) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedItemsEvent({
+            itemIds: [after.id],
+            seriesId: sr.get('id'),
+            actor: after.actor,
+            context: 'publish',
+          })
+        );
       }
     }
   }
 
-  private async _processMedia(
-    command: ProcessPostPublishedCommand,
-    postEntity: PostEntity
-  ): Promise<void> {
-    const { after } = command.payload;
-    if (after.state.attachVideoIds.length) {
+  private async _processMedia(postEntity: PostEntity): Promise<void> {
+    const videoIds = postEntity.get('media').videos.map((video) => video.get('id'));
+    const fileIds = postEntity.get('media').files.map((file) => file.get('id'));
+    if (videoIds.length) {
       await this._mediaService.emitMediaToUploadService(
         MediaType.VIDEO,
         MediaMarkAction.USED,
-        after.state.attachVideoIds,
-        after.actor.id
+        videoIds,
+        postEntity.get('createdBy')
       );
     }
-    if (after.state.attachFileIds.length) {
+    if (fileIds.length) {
       await this._mediaService.emitMediaToUploadService(
         MediaType.FILE,
         MediaMarkAction.USED,
-        after.state.attachFileIds,
-        after.actor.id
+        fileIds,
+        postEntity.get('createdBy')
       );
     }
-
-    if (after.state.detachVideoIds.length) {
-      await this._mediaService.emitMediaToUploadService(
-        MediaType.VIDEO,
-        MediaMarkAction.DELETE,
-        after.state.detachVideoIds,
-        after.actor.id
-      );
-    }
-
-    if (after.state.detachFileIds.length) {
-      await this._mediaService.emitMediaToUploadService(
-        MediaType.FILE,
-        MediaMarkAction.DELETE,
-        after.state.detachFileIds,
-        after.actor.id
-      );
-    }
-
+    console.log('postEntity.isProcessing()', postEntity.isProcessing());
+    console.log('postEntity.getVideoIdProcessing()', postEntity.getVideoIdProcessing());
     if (postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
       this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
