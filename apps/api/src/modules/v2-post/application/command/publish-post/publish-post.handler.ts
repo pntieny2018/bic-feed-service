@@ -145,13 +145,6 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         key: null,
         value: JSON.stringify({ videoIds: [postEntity.getVideoIdProcessing()] }),
       });
-
-      await this._mediaService.emitMediaToUploadService(
-        MediaType.VIDEO,
-        MediaMarkAction.USED,
-        [postEntity.getVideoIdProcessing()],
-        postEntity.get('createdBy')
-      );
     }
     return result;
   }
