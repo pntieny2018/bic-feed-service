@@ -351,6 +351,7 @@ export class PostRepository implements IPostRepository {
         totalUsersSeen: post.totalUsersSeen,
       },
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
+      videoIdProcessing: post.videoIdProcessing,
     });
   }
 

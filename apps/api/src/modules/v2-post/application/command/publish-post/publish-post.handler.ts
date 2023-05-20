@@ -132,10 +132,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
           updatedAt: result.updatedAt,
         },
       };
-      await this._clientKafka.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
-        key: postEntity.get('id'),
-        value: JSON.stringify(new PostChangedMessagePayload(payload)),
-      });
+      console.log('payload', JSON.stringify(payload, null, 4));
+      // await this._clientKafka.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
+      //   key: postEntity.get('id'),
+      //   value: JSON.stringify(new PostChangedMessagePayload(payload)),
+      // });
     }
 
     return result;
