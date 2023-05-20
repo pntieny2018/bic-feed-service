@@ -137,6 +137,10 @@ export class ContentEntity<
     this._props.status = PostStatus.PUBLISHED;
   }
 
+  public isDraft(): boolean {
+    return this._props.status === PostStatus.DRAFT;
+  }
+
   public setProcessing(): void {
     this._props.status = PostStatus.PROCESSING;
   }
@@ -164,7 +168,12 @@ export class ContentEntity<
       isEnableSetting = true;
     }
     this._state.enableSetting = isEnableSetting;
-    this._props.setting = setting;
+    this._props.setting = {
+      canComment: setting.canComment,
+      canReact: setting.canReact,
+      importantExpiredAt: setting.importantExpiredAt || null,
+      isImportant: setting.isImportant,
+    };
   }
 
   public update(data: {
