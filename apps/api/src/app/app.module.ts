@@ -46,7 +46,7 @@ import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
     UploadModule,
     MediaModule,
     MentionModule,
-    ReactionModule,
+    // ReactionModule,
     ListenerModule,
     AuthorityModule,
     NotificationModule,

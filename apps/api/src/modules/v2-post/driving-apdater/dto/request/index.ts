@@ -6,3 +6,6 @@ export * from './audience.request.dto';
 export * from './publish-post.request.dto';
 export * from './media.request.dto';
 export * from './create-comment.request.dto';
+export * from './get-reaction.request.dto';
+export * from './create-reaction.request.dto';
+export * from './delete-reaction.request.dto';

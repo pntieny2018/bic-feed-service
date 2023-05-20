@@ -16,7 +16,7 @@ export interface ICommentReaction {
   id: string;
   commentId: string;
   reactionName: string;
-  createdBy: number;
+  createdBy: string;
   createdAt?: Date;
 }
 @Table({
@@ -43,8 +43,8 @@ export class CommentReactionModel
   public reactionName: string;
 
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @CreatedAt
-  public createdAt: Date;
+  public createdAt?: Date;
 }

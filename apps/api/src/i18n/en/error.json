@@ -51,7 +51,6 @@
     "domain_model_validation": "Domain model invalidate",
     "access_denied": "Access denied"
   },
-  "tag_series_invalid": "Tag series invalid",
   "image_resource_invalid": "Image resource invalid",
   "mention": {
     "user_not_found": "The mentioned user is not found"
@@ -60,5 +59,11 @@
     "not_found": "Comment not found",
     "reply_not_exist": "The reply comment does not exist"
   },
-  "tag_series_invalid": "Tag series invalid"
+  "tag_series_invalid": "Tag series invalid",
+  "reaction": {
+    "not_found": "Reaction not found",
+    "not_have_authority": "You don't have authority to do this action",
+    "no_delete_permission": "Failed to delete reaction: you don't have permission",
+    "duplicate": "You have already reacted to this content"
+  }
 }
