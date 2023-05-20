@@ -10,8 +10,12 @@ export class FeedConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after } = payload;
+    const { before, after, isPublished } = payload;
 
-    await this._feedPublisherService.fanoutOnWrite(after.id, after.groupIds, before.groupIds);
+    await this._feedPublisherService.fanoutOnWrite(
+      after.id,
+      after.groupIds,
+      isPublished ? [] : before.groupIds
+    );
   }
 }

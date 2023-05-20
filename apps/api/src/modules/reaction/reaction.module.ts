@@ -23,7 +23,7 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     forwardRef(() => FeedModule),
   ],
 
-  controllers: [ReactionController],
+  // controllers: [ReactionController],
   providers: [ReactionService, ReactionActivityService],
   exports: [ReactionService, ReactionActivityService],
 })

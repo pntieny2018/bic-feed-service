@@ -21,4 +21,6 @@ export * from './mention-user-not-found.exception';
 export * from './content-no-comment-permission.exception';
 export * from './comment-reply-not-exist.exception';
 export * from './comment-not-found.exception';
-
+export * from './reaction-duplicate.exception';
+export * from './reaction-not-found.exception';
+export * from './reaction-not-have-authority.exception';
