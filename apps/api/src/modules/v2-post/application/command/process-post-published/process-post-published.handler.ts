@@ -152,13 +152,5 @@ export class ProcessPostPublishedHandler
         postEntity.get('createdBy')
       );
     }
-    console.log('postEntity.isProcessing()', postEntity.isProcessing());
-    console.log('postEntity.getVideoIdProcessing()', postEntity.getVideoIdProcessing());
-    if (postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
-      this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
-        key: null,
-        value: JSON.stringify({ videoIds: [postEntity.getVideoIdProcessing()] }),
-      });
-    }
   }
 }

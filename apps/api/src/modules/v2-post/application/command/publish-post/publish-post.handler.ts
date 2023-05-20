@@ -21,6 +21,7 @@ import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../../../../common/constants';
 import { ClientKafka } from '@nestjs/microservices';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { MediaService } from '../../../../media';
+import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -82,7 +83,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     });
 
     //TODO:: wrap event
-    if (postEntity.isChanged() && !postEntity.isDraft()) {
+    if (postEntity.isChanged() && postEntity.isPublished()) {
       const payload = {
         isPublished: postEntity.getState().isChangeStatus,
         before: {
@@ -139,6 +140,19 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       });
     }
 
+    if (postEntity.isChanged() && postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
+      await this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+        key: null,
+        value: JSON.stringify({ videoIds: [postEntity.getVideoIdProcessing()] }),
+      });
+
+      await this._mediaService.emitMediaToUploadService(
+        MediaType.VIDEO,
+        MediaMarkAction.USED,
+        [postEntity.getVideoIdProcessing()],
+        postEntity.get('createdBy')
+      );
+    }
     return result;
   }
 }

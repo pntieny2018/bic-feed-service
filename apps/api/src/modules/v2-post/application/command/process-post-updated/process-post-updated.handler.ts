@@ -293,12 +293,5 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
         after.actor.id
       );
     }
-
-    if (postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
-      this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
-        key: null,
-        value: JSON.stringify({ videoIds: [postEntity.getVideoIdProcessing()] }),
-      });
-    }
   }
 }
