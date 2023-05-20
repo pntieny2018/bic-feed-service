@@ -1,7 +1,7 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { MediaStatus } from '../../database/models/media.model';
+import { MediaMarkAction, MediaStatus, MediaType } from '../../database/models/media.model';
 import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
@@ -614,6 +614,13 @@ export class PostListener {
         }
       }
     }
+
+    await this._mediaService.emitMediaToUploadService(
+      MediaType.VIDEO,
+      MediaMarkAction.USED,
+      [videoId],
+      posts[0]?.createdBy || null
+    );
   }
 
   @On(PostVideoFailedEvent)
