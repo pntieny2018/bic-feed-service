@@ -202,7 +202,9 @@ export class PostRepository implements IPostRepository {
     return this._modelToEntity(entity);
   }
 
-  public async findAll(findAllPostOptions: FindAllPostOptions): Promise<PostEntity[]> {
+  public async findAll(
+    findAllPostOptions: FindAllPostOptions
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const include = [];
     if (findAllPostOptions.include) {
       const { shouldIncludeGroup, mustIncludeGroup } = findAllPostOptions.include;
@@ -219,7 +221,7 @@ export class PostRepository implements IPostRepository {
     }
     const findOption = this._buildFindOptions(findAllPostOptions);
     const rows = await this._postModel.findAll(findOption);
-    return rows.map((row) => this._modelToPostEntity(row));
+    return rows.map((row) => this._modelToEntity(row));
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {

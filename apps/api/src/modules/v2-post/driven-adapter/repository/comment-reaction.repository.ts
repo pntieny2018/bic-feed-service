@@ -1,18 +1,18 @@
 import { Inject, Logger } from '@nestjs/common';
-import { getDatabaseConfig } from '../../../../../config/database';
+import { getDatabaseConfig } from '../../../../config/database';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
-import { ReactionEntity } from '../../model/reaction';
+import { ReactionEntity } from '../../domain/model/reaction';
 import {
   FindOneCommentReactionProps,
   ICommentReactionRepository,
-} from '../../repositoty-interface';
+} from '../../domain/repositoty-interface';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
-} from '../../factory/interface/reaction.factory.interface';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
-import { CommentReactionModel } from '../../../../../database/models/comment-reaction.model';
+} from '../../domain/factory/interface/reaction.factory.interface';
+import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 
 export class CommentReactionRepository implements ICommentReactionRepository {
   @Inject(REACTION_FACTORY_TOKEN) private readonly _factory: IReactionFactory;

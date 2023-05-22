@@ -1,15 +1,18 @@
 import { Inject, Logger } from '@nestjs/common';
-import { getDatabaseConfig } from '../../../../../config/database';
+import { getDatabaseConfig } from '../../../../config/database';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
-import { ReactionEntity } from '../../model/reaction';
+import { ReactionEntity } from '../../domain/model/reaction';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
-} from '../../factory/interface/reaction.factory.interface';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
-import { FindOnePostReactionProps, IPostReactionRepository } from '../../repositoty-interface';
-import { PostReactionModel } from '../../../../../database/models/post-reaction.model';
+} from '../../domain/factory/interface/reaction.factory.interface';
+import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import {
+  FindOnePostReactionProps,
+  IPostReactionRepository,
+} from '../../domain/repositoty-interface';
+import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 
 export class PostReactionRepository implements IPostReactionRepository {
   @Inject(REACTION_FACTORY_TOKEN) private readonly _factory: IReactionFactory;

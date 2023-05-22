@@ -1,5 +1,5 @@
-import { PostReactionRepository } from '../../../domain/driven-adapter/repository/post-reaction.repository';
-import { CommentReactionRepository } from '../../../domain/driven-adapter/repository/comment-reaction.repository';
+import { PostReactionRepository } from '../../../driven-adapter/repository/post-reaction.repository';
+import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
 import { I18nContext } from 'nestjs-i18n';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { IReactionDomainService } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
