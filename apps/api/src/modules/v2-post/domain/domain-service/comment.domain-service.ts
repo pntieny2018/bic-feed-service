@@ -28,8 +28,47 @@ export class CommentDomainService implements ICommentDomainService {
   ) {}
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {
+    const { data, groups, mentionUsers } = input;
+    const { userId, parentId, postId, content, media, mentions, giphyId } = data;
+
     try {
-      const commentEntityInput = this._commentFactory.createComment(input);
+      await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+
+      const commentEntityInput = this._commentFactory.createComment({
+        userId,
+        parentId,
+        postId,
+        content,
+        giphyId,
+        mentions,
+      });
+
+      if (media) {
+        const images = await this._mediaDomainService.getAvailableImages(
+          commentEntityInput.get('media').images,
+          media?.images,
+          commentEntityInput.get('createdBy')
+        );
+        if (images.some((image) => !image.isCommentContentResource())) {
+          throw new InvalidResourceImageException();
+        }
+        const files = await this._mediaDomainService.getAvailableFiles(
+          commentEntityInput.get('media').files,
+          media?.files,
+          commentEntityInput.get('createdBy')
+        );
+        const videos = await this._mediaDomainService.getAvailableVideos(
+          commentEntityInput.get('media').videos,
+          media?.videos,
+          commentEntityInput.get('createdBy')
+        );
+        commentEntityInput.setMedia({
+          files,
+          images,
+          videos,
+        });
+      }
+
       return this._commentRepository.createComment(commentEntityInput);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
