@@ -57,7 +57,8 @@
   },
   "comment": {
     "not_found": "Comment not found",
-    "reply_not_exist": "The reply comment does not exist"
+    "reply_not_exist": "The reply comment does not exist",
+    "can_not_empty": "The comment can't be empty"
   },
   "tag_series_invalid": "Tag series invalid",
   "reaction": {

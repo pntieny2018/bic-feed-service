@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
 import { MediaRequestDto } from './media.request.dto';
 import { UserMentionDto } from '../../../application/dto/user-mention.dto';
@@ -8,8 +8,7 @@ import { UserMentionDto } from '../../../application/dto/user-mention.dto';
 export class UpdateCommentRequestDto {
   @ApiPropertyOptional()
   @Type(() => String)
-  @IsNotEmpty()
-  @ValidateIf((o) => !(o.media?.images || o.giphyId))
+  @IsOptional()
   public content: string;
 
   @ApiPropertyOptional({
@@ -28,8 +27,7 @@ export class UpdateCommentRequestDto {
       files: [],
     },
   })
-  @IsNotEmpty()
-  @ValidateIf((o) => o.content === null || o.content == undefined)
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaRequestDto)
   public media?: MediaRequestDto;
@@ -67,12 +65,12 @@ export class UpdateCommentRequestDto {
       url: 'https://i.giphy.com/3pZipqyo1sqHDfJGtz',
     },
   })
-  @IsNotEmpty()
+  @IsOptional()
   @Type(() => GiphyDto)
   @Expose({
     name: 'giphy',
+    toPlainOnly: true,
   })
-  @ValidateIf((o) => !(o.content || o.media?.images))
   @Transform(({ value }) => {
     if (typeof value === 'object') {
       if (value?.id) return value.id;

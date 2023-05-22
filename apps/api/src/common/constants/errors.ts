@@ -51,6 +51,7 @@ export const ERRORS = {
   COMMENT: {
     COMMENT_NOT_FOUND: 'comment.not_found',
     REPLY_NOT_EXIST: 'comment.reply_not_exist',
+    CAN_NOT_EMPTY: 'comment.can_not_empty',
   },
   RECENT_SEARCH: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',

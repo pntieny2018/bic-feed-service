@@ -3,6 +3,7 @@ import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
+import { isEmpty } from 'lodash';
 
 export type CommentProps = {
   id: string;
@@ -47,8 +48,8 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     this._props.updatedAt = new Date();
     this._props.edited = true;
     this._props.updatedBy = actor.id;
-    if (content) this._props.content = content;
-    if (giphyId) this._props.giphyId = giphyId;
+    if (content !== undefined) this._props.content = content;
+    if (giphyId !== undefined) this._props.giphyId = giphyId;
     if (mentions && Array.isArray(mentions)) this._props.mentions = mentions;
   }
 
@@ -67,5 +68,14 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
 
   public isOwner(actorId: string): boolean {
     return this._props.createdBy === actorId;
+  }
+
+  public isEmptyComment(): boolean {
+    return (
+      isEmpty(this._props.content) &&
+      isEmpty(this._props.giphyId) &&
+      isEmpty(this._props.media.images) &&
+      isEmpty(this._props.mentions)
+    );
   }
 }
