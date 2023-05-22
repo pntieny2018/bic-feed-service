@@ -38,7 +38,6 @@ export class FeedController {
     description: 'Get timeline in a group successfully.',
     type: PageDto,
   })
-  @Version('1')
   @Get('/newsfeed')
   public async getNewsFeed(
     @AuthUser() authUser: UserDto,
