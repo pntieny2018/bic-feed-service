@@ -13,6 +13,7 @@ import {
 } from './interface/media.domain-service.interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
+import { CommentNotEmptyException } from '../exception/comment-not-empty.exception';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
@@ -70,6 +71,8 @@ export class CommentDomainService implements ICommentDomainService {
     }
 
     commentEntity.updateAttribute(newData);
+
+    if (commentEntity.isEmptyComment()) throw new CommentNotEmptyException();
 
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     if (!commentEntity.isChanged()) return;

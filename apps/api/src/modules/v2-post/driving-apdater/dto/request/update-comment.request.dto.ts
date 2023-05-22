@@ -69,6 +69,7 @@ export class UpdateCommentRequestDto {
   @Type(() => GiphyDto)
   @Expose({
     name: 'giphy',
+    toPlainOnly: true,
   })
   @Transform(({ value }) => {
     if (typeof value === 'object') {
