@@ -1,18 +1,29 @@
-import { FileDto, ImageDto, VideoDto } from '../../../application/dto';
+import { UserDto } from '../../../../v2-user/application';
+import { GroupDto } from '../../../../v2-group/application';
 import { CommentEntity, CommentProps } from '../../model/comment';
 
 export type CreateCommentProps = {
+  data: BasedCommentAttribute;
+  groups: GroupDto[];
+  mentionUsers: UserDto[];
+};
+
+export type BasedCommentAttribute = {
   userId: string;
   postId: string;
   parentId?: string;
   content?: string;
   giphyId?: string;
-  media?: { images?: ImageDto[]; videos?: VideoDto[]; files?: FileDto[] };
+  media?: {
+    files: string[];
+    images: string[];
+    videos: string[];
+  };
   mentions?: string[];
 };
 
 export interface ICommentFactory {
-  createComment(props: CreateCommentProps): CommentEntity;
+  createComment(props: BasedCommentAttribute): CommentEntity;
 
   reconstitute(props: CommentProps): CommentEntity;
 }
