@@ -33,6 +33,20 @@ export class MigrateCommentMentionsCommand implements CommandRunner {
         }
       );
       console.log(`UPDATE ${results[1]}, ${results[1]} rows affected`);
+
+      const setDefaultValueQuery = await this._commentModel.sequelize.query(
+        `UPDATE 
+            ${schema}."comments"
+          SET
+	          "mentions" = '[]'
+          WHERE	"mentions" IS NULL;`,
+        {
+          type: QueryTypes.UPDATE,
+        }
+      );
+      console.log(
+        `UPDATE DEFAULT VALUE ${setDefaultValueQuery[1]}, ${setDefaultValueQuery[1]} rows affected`
+      );
     } catch (e) {
       console.log(e);
     }

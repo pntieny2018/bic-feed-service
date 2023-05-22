@@ -6,26 +6,13 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CreateCommentCommand } from './create-comment.command';
 import { CreateCommentDto } from './create-comment.dto';
-import { ExternalService } from '../../../../../app/external.service';
-import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post.repository.interface';
-import {
-  CONTENT_VALIDATOR_TOKEN,
-  MEDIA_VALIDATOR_TOKEN,
-  MENTION_VALIDATOR_TOKEN,
-  IContentValidator,
-  IMediaValidator,
-  IMentionValidator,
-} from '../../../domain/validator/interface';
-import { UserMentionDto } from '../../dto/user-mention.dto';
+import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import {
   ContentNotFoundException,
   ContentNoCommentPermissionException,
-  MentionUserNotFoundException,
 } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
@@ -39,29 +26,24 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
-import { CommentHasBeenCreatedEvent } from '../../../../../events/comment/comment-has-been-created.event';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
-  constructor(
+  public constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
-    @Inject(MEDIA_VALIDATOR_TOKEN)
-    private readonly _mediaValidator: IMediaValidator,
-    @Inject(MENTION_VALIDATOR_TOKEN)
-    private readonly _mentionValidator: IMentionValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    private readonly _externalService: ExternalService,
     private readonly _eventEmitter: InternalEventEmitterService
   ) {}
 
@@ -81,39 +63,27 @@ export class CreateCommentHandler
 
     if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
-    let imagesDto: ImageDto[] = [];
+    let mentionUsers: UserDto[] = [];
+    const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
 
-    if (media?.images.length) {
-      const images: ImageDto[] = await this._externalService.getImageIds(media?.images);
-      this._mediaValidator.validateImagesMedia(images, actor);
-      imagesDto = images;
-    }
-
-    let usersMentionMapper: UserMentionDto = {};
-    if (mentions.length) {
-      const usersMention = await this._userApplicationService.findAllByIds(mentions, {
+    if (mentions && mentions.length) {
+      mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
         withGroupJoined: true,
       });
-      const groups = post.get('groupIds').map((item) => new GroupDto({ id: item }));
-      if (usersMention?.length < mentions.length) {
-        throw new MentionUserNotFoundException();
-      }
-      await this._mentionValidator.validateMentionUsers(usersMention, groups);
-      usersMentionMapper = this._contentBinding.mapMentionWithUserInfo(usersMention);
     }
 
     const commentEntity = await this._commentDomainService.create({
-      userId: actor.id,
-      parentId: NIL,
-      postId,
-      content,
-      giphyId,
-      media: {
-        files: [],
-        images: imagesDto,
-        videos: [],
+      data: {
+        userId: actor.id,
+        postId,
+        parentId: NIL,
+        content,
+        giphyId,
+        media,
+        mentions: mentions || [],
       },
-      mentions: mentions,
+      groups,
+      mentionUsers,
     });
 
     this._eventEmitter.emit(
@@ -139,7 +109,7 @@ export class CreateCommentHandler
         images: commentEntity.get('media').images.map((item) => new ImageDto(item.toObject())),
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
-      mentions: usersMentionMapper,
+      mentions: this._contentBinding.mapMentionWithUserInfo(mentionUsers),
       actor: new UserDto({
         id: actor.id,
         fullname: actor.fullname,
