@@ -5,6 +5,7 @@ import {
 } from '../repositoty-interface/media.repository.interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaDomainService } from './interface/media.domain-service.interface';
+import { difference, intersection } from 'lodash';
 
 export class MediaDomainService implements IMediaDomainService {
   @Inject(MEDIA_REPOSITORY_TOKEN)
@@ -16,19 +17,20 @@ export class MediaDomainService implements IMediaDomainService {
     ownerId: string
   ): Promise<VideoEntity[]> {
     if (!videosIds || videosIds?.length === 0) return [];
-    let result = [...videoEntities];
-    const currentVideoIds = (videoEntities || []).map((e) => e.get('id'));
-    const addingVideoIds = videosIds.filter((id) => !currentVideoIds.includes(id));
+
+    videoEntities = videoEntities || [];
+    const currentVideoIds = videoEntities.map((e) => e.get('id'));
+    const notChangedIds = intersection(currentVideoIds, videosIds);
+    const addingVideoIds = difference(videosIds, currentVideoIds);
+    let result = videoEntities.filter((e) => notChangedIds.includes(e.get('id')));
+
     if (addingVideoIds.length) {
       const videos = await this._mediaRepo.findVideos(addingVideoIds);
       const availableVideos = videos.filter((video) => video.isOwner(ownerId));
-      result.push(...availableVideos);
+      result.concat(availableVideos);
     }
-    const removingVideoIds = currentVideoIds.filter((id) => !videosIds.includes(id));
-    if (removingVideoIds.length) {
-      result = result.filter((e) => !removingVideoIds.includes(e.get('id')));
-    }
-    return result;
+
+    return result.sort((a, b) => videosIds.indexOf(a.get('id')) - videosIds.indexOf(b.get('id')));
   }
 
   public async getAvailableFiles(
@@ -37,20 +39,20 @@ export class MediaDomainService implements IMediaDomainService {
     ownerId: string
   ): Promise<FileEntity[]> {
     if (!filesIds || filesIds.length === 0) return [];
-    let result = [...fileEntities];
-    const currentFileIds = (fileEntities || []).map((e) => e.get('id'));
-    const addingFileIds = filesIds.filter((id) => !currentFileIds.includes(id));
+
+    fileEntities = fileEntities || [];
+    const currentFileIds = fileEntities.map((e) => e.get('id'));
+    const notChangedIds = intersection(currentFileIds, filesIds);
+    const addingFileIds = difference(filesIds, currentFileIds);
+    let result = fileEntities.filter((e) => notChangedIds.includes(e.get('id')));
+
     if (addingFileIds.length) {
       const files = await this._mediaRepo.findFiles(addingFileIds);
-      const availableFiles = files.filter((image) => image.isOwner(ownerId));
-      result.push(...availableFiles);
+      const availableFiles = files.filter((file) => file.isOwner(ownerId));
+      result.concat(availableFiles);
     }
 
-    const removingFileIds = currentFileIds.filter((id) => !filesIds.includes(id));
-    if (removingFileIds.length) {
-      result = result.filter((e) => !removingFileIds.includes(e.get('id')));
-    }
-    return result;
+    return result.sort((a, b) => filesIds.indexOf(a.get('id')) - filesIds.indexOf(b.get('id')));
   }
 
   public async getAvailableImages(
@@ -59,19 +61,19 @@ export class MediaDomainService implements IMediaDomainService {
     ownerId: string
   ): Promise<ImageEntity[]> {
     if (!imagesIds || imagesIds.length === 0) return [];
-    let result = [...imageEntities];
-    const currentImageIds = (imageEntities || []).map((e) => e.get('id'));
-    const addingImageIds = imagesIds.filter((id) => !currentImageIds.includes(id));
+
+    imageEntities = imageEntities || [];
+    const currentImageIds = imageEntities.map((e) => e.get('id'));
+    const notChangedIds = intersection(currentImageIds, imagesIds);
+    const addingImageIds = difference(imagesIds, currentImageIds);
+    let result = imageEntities.filter((e) => notChangedIds.includes(e.get('id')));
+
     if (addingImageIds.length) {
       const images = await this._mediaRepo.findImages(addingImageIds);
       const availableImages = images.filter((image) => image.isOwner(ownerId) && image.isReady());
-      result.push(...availableImages);
+      result.concat(availableImages);
     }
 
-    const removingImageIds = currentImageIds.filter((id) => !imagesIds.includes(id));
-    if (removingImageIds.length) {
-      result = result.filter((e) => !removingImageIds.includes(e.get('id')));
-    }
-    return result;
+    return result.sort((a, b) => imagesIds.indexOf(a.get('id')) - imagesIds.indexOf(b.get('id')));
   }
 }

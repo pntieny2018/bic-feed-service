@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@nestjs/cqrs';
-import { cloneDeep, isEqual } from 'lodash';
+import { cloneDeep, isEqual, omit } from 'lodash';
 
 export type EntityProperties<T> = {
   [K in keyof T]: T[K];
@@ -27,11 +27,10 @@ export abstract class DomainAggregateRoot<
   }
 
   public isChanged(): boolean {
-    const props = { ...this._props };
-    const snapshot = { ...this._snapshot };
-    delete props['updatedAt'];
-    delete snapshot['updatedAt'];
-    return !isEqual(props, snapshot);
+    const props = cloneDeep(this._props);
+    const snapshot = cloneDeep(this._snapshot);
+    const excluded = ['updatedAt'];
+    return !isEqual(omit(props, excluded), omit(snapshot, excluded));
   }
 
   public get<K extends keyof Props>(key: K): Props[K] {
