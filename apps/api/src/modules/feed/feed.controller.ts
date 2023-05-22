@@ -15,6 +15,7 @@ import { ArticleResponseDto } from '../article/dto/responses';
 @ApiSecurity('authorization')
 @Controller({
   path: 'feeds',
+  version: DEFAULT_APP_VERSION,
 })
 export class FeedController {
   public constructor(private readonly _feedService: FeedService) {}

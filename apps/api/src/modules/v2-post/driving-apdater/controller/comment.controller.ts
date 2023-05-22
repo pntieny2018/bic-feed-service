@@ -47,11 +47,12 @@ import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
 } from '../../application/command/delete-comment/delete-comment.command';
+import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
 @Controller({
-  version: '2',
+  version: DEFAULT_APP_VERSION,
   path: 'comments',
 })
 export class CommentController {
