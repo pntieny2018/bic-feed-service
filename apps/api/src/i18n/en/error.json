@@ -1,0 +1,69 @@
+{
+  "tag": {
+    "duplicate_name": "Name is existed",
+    "not_found": "Tag not found",
+    "tag_name_exceed_max_length": "Tag name must be less than or equal to {num} characters",
+    "is_used": "The tag is used",
+    "no_create_permission": "Failed to create tag: you don't have permission",
+    "no_update_permission": "Failed to update tag: you don't have permission",
+    "no_delete_permission": "Failed to delete tag: you don't have permission"
+  },
+  "content": {
+    "not_found": "Content not found",
+    "no_crud_permission": "You don't have CRUD permission",
+    "no_edit_setting_permission": "You don't have edit setting permission",
+    "no_pin_permission": "You don't have permission in this group",
+    "audience_no_belong": "This post no longer belongs to this group",
+    "group_join_required": "Join at least one group to keep reading",
+    "empty_group": "You have not selected any group/community",
+    "empty": "Empty content",
+    "no_comment_permission": "Comment action on this content is not available"
+  },
+  "post": {
+    "not_found": "Post not found",
+    "not_owner": "You are not the owner of this post",
+    "no_create_permission": "Failed to create post: you don't have permission",
+    "no_update_permission": "Failed to update post: you don't have permission",
+    "no_delete_permission": "Failed to delete post: you don't have permission",
+    "no_read_permission": "You do not have permission to read this post"
+  },
+  "article": {
+    "not_found": "Article not found",
+    "not_owner": "You are not the owner of this post",
+    "no_create_permission": "Failed to create article: you don't have permission",
+    "no_update_permission": "Failed to update article: you don't have permission",
+    "no_delete_permission": "Failed to delete article: you don't have permission",
+    "no_read_permission": "You do not have permission to read this article"
+  },
+  "series": {
+    "not_found": "Series not found",
+    "not_owner": "You are not the owner of this post",
+    "no_create_permission": "Failed to create series: you don't have permission",
+    "no_update_permission": "Failed to update series: you don't have permission",
+    "no_delete_permission": "Failed to delete series: you don't have permission",
+    "no_read_permission": "You do not have permission to read this series"
+  },
+  "user": {
+    "no_belong_group": "User are not a member of community/group"
+  },
+  "common": {
+    "database_error": "Database error",
+    "domain_model_validation": "Domain model invalidate",
+    "access_denied": "Access denied"
+  },
+  "image_resource_invalid": "Image resource invalid",
+  "mention": {
+    "user_not_found": "The mentioned user is not found"
+  },
+  "comment": {
+    "not_found": "Comment not found",
+    "reply_not_exist": "The reply comment does not exist"
+  },
+  "tag_series_invalid": "Tag series invalid",
+  "reaction": {
+    "not_found": "Reaction not found",
+    "not_have_authority": "You don't have authority to do this action",
+    "no_delete_permission": "Failed to delete reaction: you don't have permission",
+    "duplicate": "You have already reacted to this content"
+  }
+}

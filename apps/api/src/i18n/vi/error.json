@@ -1,0 +1,28 @@
+{
+  "tag": {
+    "duplicate_name": "Trùng tên",
+    "not_found": "Không tìm thấy tag",
+    "tag_name_exceed_max_length": "Tên không vượt quá {num} kí tự",
+    "is_used": "Tag này đã được sử dụng",
+    "no_create_permission": "Failed to create tag: you don't have permission",
+    "no_update_permission": "Failed to update tag: you don't have permission",
+    "no_delete_permission": "Failed to delete tag: you don't have permission"
+  },
+  "recent_search": {
+    "not_found": "Không tìm thấy kết quả tìm kiếm gần đây"
+  },
+  "common": {
+    "database_error": "Database error",
+    "domain_model_validation": "Domain model invalidate"
+  },
+  "mention": {
+    "user_not_found": "Không tìm thấy người dùng được đề cập"
+  },
+  "content": {
+    "no_comment_permission": "Tính năng bình luận không có sẵn cho nội dung này"
+  },
+  "comment": {
+    "not_found": "Không tìm thấy bình luận",
+    "reply_not_exist": "Bình luận được trả lời không tồn tại"
+  }
+}

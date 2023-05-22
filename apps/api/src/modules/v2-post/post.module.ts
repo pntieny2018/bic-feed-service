@@ -1,0 +1,57 @@
+import { Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
+import { DatabaseModule } from '../../database';
+import { GroupModuleV2 } from '../v2-group/group.module';
+import { TagController } from './driving-apdater/controller/tag.controller';
+import {
+  categoryProvider,
+  commentProvider,
+  linkPreviewProvider,
+  sharedProvider,
+  tagProvider,
+  postProvider,
+  mediaProvider,
+  reactionProvider,
+} from './provider';
+import { UserModuleV2 } from '../v2-user/user.module';
+import { CategoryController } from './driving-apdater/controller/category.controller';
+import { AuthorityModule } from '../authority';
+import { PostController } from './driving-apdater/controller/post.controller';
+import { ReactionController } from './driving-apdater/controller/reaction.controller';
+import { HttpModule } from '@nestjs/axios';
+import { CommentController } from './driving-apdater/controller/comment.controller';
+import { PostConsumer } from './driving-apdater/consumer/post.consumer';
+import { MediaModule } from '../media';
+import { NotificationModule } from '../../notification';
+
+@Module({
+  imports: [
+    HttpModule,
+    CqrsModule,
+    DatabaseModule,
+    AuthorityModule,
+    GroupModuleV2,
+    UserModuleV2,
+    MediaModule,
+    NotificationModule,
+  ],
+  controllers: [
+    TagController,
+    CategoryController,
+    PostController,
+    ReactionController,
+    CommentController,
+    PostConsumer,
+  ],
+  providers: [
+    ...tagProvider,
+    ...categoryProvider,
+    ...postProvider,
+    ...linkPreviewProvider,
+    ...mediaProvider,
+    ...commentProvider,
+    ...sharedProvider,
+    ...reactionProvider,
+  ],
+})
+export class PostModuleV2 {}

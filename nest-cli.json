@@ -1,6 +1,6 @@
 {
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/api/src",
   "projects": {
     "redis": {
       "type": "library",
@@ -19,15 +19,37 @@
       "compilerOptions": {
         "tsConfigPath": "libs/sentry/tsconfig.lib.json"
       }
+    },
+    "api": {
+      "type": "application",
+      "root": "apps/api",
+      "entryFile": "main",
+      "sourceRoot": "apps/api/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api/tsconfig.app.json"
+      }
+    },
+    "content-worker": {
+      "type": "application",
+      "root": "apps/content-worker",
+      "entryFile": "main",
+      "sourceRoot": "apps/content-worker/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/content-worker/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {
     "assets": [
-      { 
-        "include": "./i18n",
-        "outDir": "dist/src",
+      {
+        "include": "i18n/**/*",
+        "outDir": "dist/apps/api/apps/api/src",
         "watchAssets": true
       }
-    ]
-  }
+    ],
+    "webpack": false,
+    "tsConfigPath": "apps/api/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/api"
 }
