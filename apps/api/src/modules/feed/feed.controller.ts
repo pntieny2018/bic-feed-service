@@ -15,6 +15,7 @@ import { ArticleResponseDto } from '../article/dto/responses';
 @ApiSecurity('authorization')
 @Controller({
   path: 'feeds',
+  version: DEFAULT_APP_VERSION,
 })
 export class FeedController {
   public constructor(private readonly _feedService: FeedService) {}
@@ -37,7 +38,6 @@ export class FeedController {
     description: 'Get timeline in a group successfully.',
     type: PageDto,
   })
-  @Version('1')
   @Get('/newsfeed')
   public async getNewsFeed(
     @AuthUser() authUser: UserDto,

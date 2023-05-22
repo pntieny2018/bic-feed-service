@@ -13,9 +13,13 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from 
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { UserDto } from '../v2-user/application';
 import { ResponseMessages } from '../../common/decorators';
+import { DEFAULT_APP_VERSION } from '../../common/constants';
 
 @ApiTags('Reports')
-@Controller('reports')
+@Controller({
+  path: 'reports',
+  version: DEFAULT_APP_VERSION,
+})
 @ApiSecurity('authorization')
 export class ReportContentController {
   public constructor(private readonly _reportContentService: ReportContentService) {}
