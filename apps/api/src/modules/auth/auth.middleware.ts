@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { LogicException } from '../../common/exceptions';
-import { DEFAULT_APP_VERSION, HTTP_STATUS_ID } from '../../common/constants';
+import { DEFAULT_APP_VERSION, HTTP_STATUS_ID, VERSION_HEADER_KEY } from '../../common/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -26,8 +26,8 @@ export class AuthMiddleware implements NestMiddleware {
       }
       req.user = token ? await this._authService.login(token) : null;
     }
-    if (!req.headers['x-version']) {
-      req.headers['x-version'] = DEFAULT_APP_VERSION;
+    if (!req.headers[VERSION_HEADER_KEY]) {
+      req.headers[VERSION_HEADER_KEY] = DEFAULT_APP_VERSION[0];
     }
 
     next();

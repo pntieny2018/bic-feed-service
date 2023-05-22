@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   Req,
+  Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { DEFAULT_APP_VERSION } from '../../common/constants';
@@ -110,6 +111,7 @@ export class PostController {
   @Post('/')
   @ResponseMessages({ success: 'Post has been published successfully' })
   @InjectUserToBody()
+  @Version('1.2.3')
   public async create(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
