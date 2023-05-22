@@ -26,10 +26,8 @@ import {
 import { ContentEmptyException } from '../exception/content-empty.exception';
 import { TagSeriesInvalidException } from '../exception/tag-series-invalid.exception';
 import { TagEntity } from '../model/tag';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY_TOKEN,
-} from '../repositoty-interface/media.repository.interface';
+import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
+import { SeriesEntity } from '../model/content/series.entity';
 
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
@@ -74,7 +72,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
           groupArchived: false,
         },
       });
-      series.forEach((item) => {
+      series.forEach((item: SeriesEntity) => {
         const isValid = item.get('groupIds').some((groupId) => groupIds.includes(groupId));
         if (!isValid) {
           seriesTagErrorData.seriesIds.push(item.get('id'));

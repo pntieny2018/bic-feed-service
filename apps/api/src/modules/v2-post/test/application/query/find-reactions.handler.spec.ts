@@ -1,6 +1,6 @@
 import { ReactionEntity } from '../../../domain/model/reaction';
 import { USER_APPLICATION_TOKEN, UserApplicationService } from '../../../../v2-user/application';
-import { ReactionQuery } from '../../../domain/driven-adapter/query/reaction.query';
+import { ReactionQuery } from '../../../driven-adapter/query/reaction.query';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FindReactionsHandler } from '../../../application/query/find-reactions/find-reactions.handler';
 import { REACTION_QUERY_TOKEN } from '../../../domain/query-interface/reaction.query.interface';

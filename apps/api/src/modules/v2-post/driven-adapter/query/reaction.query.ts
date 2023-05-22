@@ -2,18 +2,21 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import sequelize, { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
-import { getDatabaseConfig } from '../../../../../config/database';
+import { getDatabaseConfig } from '../../../../config/database';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
-} from '../../factory/interface/reaction.factory.interface';
-import { CommentReactionModel } from '../../../../../database/models/comment-reaction.model';
-import { PaginationResult } from '../../../../../common/types/pagination-result.type';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
-import { ReactionEntity } from '../../model/reaction';
-import { GetReactionProps, IReactionQuery } from '../../query-interface/reaction.query.interface';
-import { PostReactionModel } from '../../../../../database/models/post-reaction.model';
-import { OrderEnum } from '../../../../../common/dto';
+} from '../../domain/factory/interface/reaction.factory.interface';
+import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
+import { PaginationResult } from '../../../../common/types/pagination-result.type';
+import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { ReactionEntity } from '../../domain/model/reaction';
+import {
+  GetReactionProps,
+  IReactionQuery,
+} from '../../domain/query-interface/reaction.query.interface';
+import { PostReactionModel } from '../../../../database/models/post-reaction.model';
+import { OrderEnum } from '../../../../common/dto';
 
 export class ReactionQuery implements IReactionQuery {
   @Inject(REACTION_FACTORY_TOKEN) private readonly _reactionFactory: IReactionFactory;

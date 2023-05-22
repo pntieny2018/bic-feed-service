@@ -4,7 +4,7 @@ import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { PostReactionRepository } from '../../../domain/driven-adapter/repository/post-reaction.repository';
+import { PostReactionRepository } from '../../../driven-adapter/repository/post-reaction.repository';
 import { DeleteReactionHandler } from '../../../application/command/delete-reaction/delete-reaction.handler';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';

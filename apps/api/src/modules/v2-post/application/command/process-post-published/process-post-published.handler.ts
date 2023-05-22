@@ -11,25 +11,18 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { PostEntity, PostProps } from '../../../domain/model/content';
+import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { PostStatus } from '../../../../../database/models/post.model';
 import { MediaService } from '../../../../media';
 import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
-import {
-  KAFKA_PRODUCER,
-  KAFKA_TOPIC,
-  PostHasBeenPublished,
-  PostHasBeenUpdated,
-} from '../../../../../common/constants';
+import { KAFKA_PRODUCER, PostHasBeenPublished } from '../../../../../common/constants';
 import { ClientKafka } from '@nestjs/microservices';
 import { NotificationService } from '../../../../../notification';
-import { ISeriesState, PostActivityService } from '../../../../../notification/activities';
+import { PostActivityService } from '../../../../../notification/activities';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { SeriesAddedItemsEvent, SeriesChangedItemsEvent } from '../../../../../events/series';
+import { SeriesAddedItemsEvent } from '../../../../../events/series';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 
 @CommandHandler(ProcessPostPublishedCommand)
 export class ProcessPostPublishedHandler
@@ -58,6 +51,13 @@ export class ProcessPostPublishedHandler
     const postEntity = await this._postRepository.findOne({
       where: {
         id: after.id,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeTag: true,
+        shouldIncludeLinkPreview: true,
       },
     });
 
@@ -120,16 +120,14 @@ export class ProcessPostPublishedHandler
     });
 
     for (const sr of series) {
-      if (sr instanceof SeriesEntity) {
-        this._internalEventEmitter.emit(
-          new SeriesAddedItemsEvent({
-            itemIds: [after.id],
-            seriesId: sr.get('id'),
-            actor: after.actor,
-            context: 'publish',
-          })
-        );
-      }
+      this._internalEventEmitter.emit(
+        new SeriesAddedItemsEvent({
+          itemIds: [after.id],
+          seriesId: sr.get('id'),
+          actor: after.actor,
+          context: 'publish',
+        })
+      );
     }
   }
 

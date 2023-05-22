@@ -45,7 +45,7 @@ export interface IPostRepository {
 
   findAll(
     findAllPostOptions: FindAllPostOptions
-  ): Promise<PostEntity[] | ArticleEntity[] | SeriesEntity[]>;
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;
   markSeen(postId: string, userId: string): Promise<void>;
