@@ -3,17 +3,14 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { ICommentFactory, CreateCommentProps, COMMENT_FACTORY_TOKEN } from '../factory/interface';
 import { ICommentDomainService, UpdateCommentProps } from './interface';
 import { CommentEntity } from '../model/comment';
-import {
-  ICommentRepository,
-  COMMENT_REPOSITORY_TOKEN,
-} from '../repositoty-interface/comment.repository.interface';
+import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
-import { CommentNotEmptyException } from '../exception/comment-not-empty.exception';
+import { CommentNotEmptyException } from '../exception';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {

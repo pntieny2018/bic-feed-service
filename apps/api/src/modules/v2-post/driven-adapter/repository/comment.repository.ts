@@ -3,7 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentEntity } from '../../domain/model/comment';
 import { CommentModel, IComment } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
-import { ICommentRepository } from '../../domain/repositoty-interface/comment.repository.interface';
+import { ICommentRepository } from '../../domain/repositoty-interface';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
 import { Sequelize, WhereOptions } from 'sequelize';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';

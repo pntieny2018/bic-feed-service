@@ -7,10 +7,7 @@ import {
 import { CreateCommentCommand } from './create-comment.command';
 import { CreateCommentDto } from './create-comment.dto';
 import { ExternalService } from '../../../../../app/external.service';
-import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post.repository.interface';
+import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   MEDIA_VALIDATOR_TOKEN,
@@ -19,7 +16,7 @@ import {
   IMediaValidator,
   IMentionValidator,
 } from '../../../domain/validator/interface';
-import { UserMentionDto } from '../../dto/user-mention.dto';
+import { UserMentionDto } from '../../dto';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import {
@@ -39,14 +36,14 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
-import { CommentHasBeenCreatedEvent } from '../../../../../events/comment/comment-has-been-created.event';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
-  constructor(
+  public constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)

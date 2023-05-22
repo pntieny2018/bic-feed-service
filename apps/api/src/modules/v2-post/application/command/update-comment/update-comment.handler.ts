@@ -1,10 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateCommentCommand } from './update-comment.command';
-import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post.repository.interface';
+import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
@@ -24,12 +21,12 @@ import {
   UserDto,
 } from 'apps/api/src/modules/v2-user/application';
 import { GroupDto } from 'apps/api/src/modules/v2-group/application';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
-import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment/comment-has-been-updated.event';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
 
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
-  constructor(
+  public constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
