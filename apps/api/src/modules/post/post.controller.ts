@@ -100,7 +100,7 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Create post' })
+  @ApiOperation({ summary: 'Create post.' })
   @ApiOkResponse({
     type: PostResponseDto,
     description: 'Create post successfully',
@@ -109,7 +109,7 @@ export class PostController {
     success: 'message.post.created_success',
   })
   @Post('/')
-  @ResponseMessages({ success: 'Post has been published successfully' })
+  @ResponseMessages({ success: 'Post has been published successfully.' })
   @InjectUserToBody()
   @Version(DEFAULT_APP_VERSION[0])
   public async create(
