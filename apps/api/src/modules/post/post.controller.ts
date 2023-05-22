@@ -100,7 +100,7 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Create post' })
+  @ApiOperation({ summary: 'Create post.' })
   @ApiOkResponse({
     type: PostResponseDto,
     description: 'Create post successfully',
@@ -109,9 +109,9 @@ export class PostController {
     success: 'message.post.created_success',
   })
   @Post('/')
-  @ResponseMessages({ success: 'Post has been published successfully' })
+  @ResponseMessages({ success: 'Post has been published successfully.' })
   @InjectUserToBody()
-  @Version('1.2.3')
+  @Version(DEFAULT_APP_VERSION[0])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
@@ -129,6 +129,7 @@ export class PostController {
   })
   @Put('/:postId')
   @InjectUserToBody()
+  @Version(DEFAULT_APP_VERSION[0])
   public async update(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
@@ -146,11 +147,13 @@ export class PostController {
     success: 'message.post.published_success',
   })
   @Put('/:postId/publish')
+  @Version(DEFAULT_APP_VERSION[0])
   public async publish(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Req() req: Request
   ): Promise<PostResponseDto> {
+    console.log('old version');
     const publishResult = await this._postAppService.publishPost(user, postId);
     if (
       publishResult?.media?.videos?.length > 0 &&

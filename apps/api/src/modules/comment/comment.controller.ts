@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { DEFAULT_APP_VERSION } from '../../common/constants';
@@ -68,6 +69,7 @@ export class CommentController {
   })
   @Post('/')
   @InjectUserToBody()
+  @Version(DEFAULT_APP_VERSION[0])
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
@@ -84,6 +86,7 @@ export class CommentController {
     success: 'message.comment.replied_success',
   })
   @Post('/:commentId/reply')
+  @Version(DEFAULT_APP_VERSION[0])
   @InjectUserToBody()
   public async reply(
     @AuthUser() user: UserDto,
@@ -132,6 +135,7 @@ export class CommentController {
     success: 'message.comment.updated_success',
   })
   @Put('/:commentId')
+  @Version(DEFAULT_APP_VERSION[0])
   @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
@@ -150,6 +154,7 @@ export class CommentController {
     success: 'message.comment.deleted_success',
   })
   @Delete('/:commentId')
+  @Version(DEFAULT_APP_VERSION[0])
   public async destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
