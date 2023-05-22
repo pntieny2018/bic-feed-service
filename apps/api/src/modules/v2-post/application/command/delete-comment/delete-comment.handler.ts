@@ -18,7 +18,7 @@ import { CommentHasBeenDeletedEvent } from 'apps/api/src/events/comment/comment-
 
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
-  constructor(
+  public constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
