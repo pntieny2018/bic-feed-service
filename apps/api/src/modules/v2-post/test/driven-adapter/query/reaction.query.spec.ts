@@ -3,7 +3,7 @@ import { PostReactionModel } from '../../../../../database/models/post-reaction.
 import { CommentReactionModel } from '../../../../../database/models/comment-reaction.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { createMock } from '@golevelup/ts-jest';
-import { ReactionQuery } from '../../../domain/driven-adapter/query/reaction.query';
+import { ReactionQuery } from '../../../driven-adapter/query/reaction.query';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   IReactionFactory,

@@ -33,6 +33,7 @@ import {
 } from '../../../../../events/series';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { ProcessPostPublishedCommand } from '../process-post-published/process-post-published.command';
+import { SeriesEntity } from '../../../domain/model/content/series.entity';
 
 @CommandHandler(ProcessPostUpdatedCommand)
 export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpdatedCommand, void> {
@@ -129,7 +130,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
         meta: {
           post: {
             oldData: oldActivity,
-            ignoreUserIds: series.map((series) => series.get('createdBy')),
+            ignoreUserIds: series.map((series: SeriesEntity) => series.get('createdBy')),
           },
         },
       },
@@ -142,7 +143,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
       },
     });
 
-    const removeSeriesWithState = removeSeries.map((item) => ({
+    const removeSeriesWithState = removeSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
@@ -157,7 +158,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
         ids: after.state.attachSeriesIds,
       },
     });
-    const newSeriesWithState = newSeries.map((item) => ({
+    const newSeriesWithState = newSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
