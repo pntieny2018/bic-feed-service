@@ -6,3 +6,5 @@ export * from './post-setting.dto';
 export * from './user-mention.dto';
 export * from './video.dto';
 export * from './tag.dto';
+export * from './reaction.dto';
+export * from './reaction-list.dto';

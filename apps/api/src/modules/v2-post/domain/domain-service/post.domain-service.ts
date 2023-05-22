@@ -6,8 +6,10 @@ import { PostEntity } from '../model/content';
 import {
   IPostRepository,
   ITagRepository,
+  IMediaRepository,
   POST_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
+  MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import {
   IMentionValidator,
@@ -21,11 +23,6 @@ import {
   ILinkPreviewDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
 } from './interface/link-preview.domain-service.interface';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY_TOKEN,
-} from '../repositoty-interface/media.repository.interface';
-import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import {
   IMediaDomainService,

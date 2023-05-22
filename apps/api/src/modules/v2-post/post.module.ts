@@ -9,13 +9,15 @@ import {
   linkPreviewProvider,
   sharedProvider,
   tagProvider,
+  postProvider,
+  mediaProvider,
+  reactionProvider,
 } from './provider';
 import { UserModuleV2 } from '../v2-user/user.module';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { AuthorityModule } from '../authority';
 import { PostController } from './driving-apdater/controller/post.controller';
-import { postProvider } from './provider/post.provider';
-import { mediaProvider } from './provider/media.provider';
+import { ReactionController } from './driving-apdater/controller/reaction.controller';
 import { HttpModule } from '@nestjs/axios';
 import { CommentController } from './driving-apdater/controller/comment.controller';
 import { PostConsumer } from './driving-apdater/consumer/post.consumer';
@@ -33,7 +35,14 @@ import { NotificationModule } from '../../notification';
     MediaModule,
     NotificationModule,
   ],
-  controllers: [TagController, CategoryController, PostController, CommentController, PostConsumer],
+  controllers: [
+    TagController,
+    CategoryController,
+    PostController,
+    ReactionController,
+    CommentController,
+    PostConsumer,
+  ],
   providers: [
     ...tagProvider,
     ...categoryProvider,
@@ -42,6 +51,7 @@ import { NotificationModule } from '../../notification';
     ...mediaProvider,
     ...commentProvider,
     ...sharedProvider,
+    ...reactionProvider,
   ],
 })
 export class PostModuleV2 {}

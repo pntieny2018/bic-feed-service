@@ -52,8 +52,13 @@ export const ERRORS = {
     COMMENT_NOT_FOUND: 'comment.not_found',
     REPLY_NOT_EXIST: 'comment.reply_not_exist',
   },
-  recent_search: {
+  RECENT_SEARCH: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
+  },
+  REACTION: {
+    REACTION_DUPLICATE: 'reaction.duplicate',
+    REACTION_NOT_FOUND: 'reaction.not_found',
+    REACTION_NOT_HAVE_AUTHORITY: 'reaction.not_have_authority',
   },
   IMAGE_RESOURCE_INVALID: 'image_resource_invalid',
   TAG_SERIES_INVALID: 'tag_series_invalid',

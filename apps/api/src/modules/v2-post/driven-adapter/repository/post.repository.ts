@@ -126,7 +126,7 @@ export class PostRepository implements IPostRepository {
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
       isImportant: postEntity.get('setting').isImportant,
-      importantExpiredAt: postEntity.get('setting').importantExpiredAt,
+      importantExpiredAt: postEntity.get('setting').importantExpiredAt || null,
       canComment: postEntity.get('setting').canComment,
       canReact: postEntity.get('setting').canReact,
       commentsCount: postEntity.get('aggregation').commentsCount,
@@ -351,6 +351,7 @@ export class PostRepository implements IPostRepository {
         totalUsersSeen: post.totalUsersSeen,
       },
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
+      videoIdProcessing: post.videoIdProcessing,
     });
   }
 

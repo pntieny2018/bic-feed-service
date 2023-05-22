@@ -60,7 +60,6 @@ export class CreatePostDto {
     type: PostSettingDto,
     required: false,
     example: {
-      ['can_share']: true,
       ['can_react']: true,
       ['can_comment']: true,
       ['is_important']: false,
