@@ -27,7 +27,7 @@ export class MediaDomainService implements IMediaDomainService {
     if (addingVideoIds.length) {
       const videos = await this._mediaRepo.findVideos(addingVideoIds);
       const availableVideos = videos.filter((video) => video.isOwner(ownerId));
-      result.concat(availableVideos);
+      result = result.concat(availableVideos);
     }
 
     return result.sort((a, b) => videosIds.indexOf(a.get('id')) - videosIds.indexOf(b.get('id')));
@@ -49,7 +49,7 @@ export class MediaDomainService implements IMediaDomainService {
     if (addingFileIds.length) {
       const files = await this._mediaRepo.findFiles(addingFileIds);
       const availableFiles = files.filter((file) => file.isOwner(ownerId));
-      result.concat(availableFiles);
+      result = result.concat(availableFiles);
     }
 
     return result.sort((a, b) => filesIds.indexOf(a.get('id')) - filesIds.indexOf(b.get('id')));
@@ -71,7 +71,7 @@ export class MediaDomainService implements IMediaDomainService {
     if (addingImageIds.length) {
       const images = await this._mediaRepo.findImages(addingImageIds);
       const availableImages = images.filter((image) => image.isOwner(ownerId) && image.isReady());
-      result.concat(availableImages);
+      result = result.concat(availableImages);
     }
 
     return result.sort((a, b) => imagesIds.indexOf(a.get('id')) - imagesIds.indexOf(b.get('id')));
