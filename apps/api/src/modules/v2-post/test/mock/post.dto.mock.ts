@@ -19,6 +19,7 @@ export const postMock: PostDto = {
     ],
   },
   content: '1111',
+  wordCount: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
   tags: [],
