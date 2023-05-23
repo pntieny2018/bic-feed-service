@@ -32,15 +32,7 @@ export class AuthService {
     if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
-    return {
-      id: userInfo.id,
-      avatar: userInfo.avatar,
-      email: userInfo.email,
-      username: userInfo.username,
-      fullname: userInfo.fullname,
-      permissions: userInfo.permissions,
-      groups: userInfo.groups || [],
-    };
+    return userInfo;
   }
 
   public async login(token: string): Promise<UserDto> {
