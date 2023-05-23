@@ -13,7 +13,6 @@ import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserApplicationService,
-  UserDto,
 } from '../../../../v2-user/application';
 import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import { ContentBinding } from '../../../application/binding/binding-post/content.binding';
@@ -23,10 +22,6 @@ import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
 } from '../../../application/command/reply-comment/reply-comment.command';
-import { CommentEntity } from '../../../domain/model/comment';
-import { CreateCommentDto } from '../../../application/command/create-comment/create-comment.dto';
-import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
-import { FileDto, ImageDto, VideoDto } from '../../../application/dto';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
@@ -36,8 +31,6 @@ import {
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { userMentions, userMock } from '../../mock/user.dto.mock';
-import { ImageEntity } from '../../../domain/model/media';
-import { ImageResource } from '../../../data-type';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import {
   COMMENT_REPOSITORY_TOKEN,
@@ -48,6 +41,7 @@ import {
 import { ReplyCommentHandler } from '../../../application/command/reply-comment/reply-comment.handler';
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
 import { createCommentDto } from '../../mock/comment.dto.mock';
+import { createCommentEntity } from '../../mock/comment.entity.mock';
 
 describe('ReplyCommentHandler', () => {
   let handler: ReplyCommentHandler;
@@ -115,80 +109,27 @@ describe('ReplyCommentHandler', () => {
 
   describe('execute', () => {
     it('Should reply comment successfully', async () => {
-      const parentTagetId = v4();
-      const targetId = v4();
+      const parentId = v4();
+      const postId = v4();
       const payload: ReplyCommentCommandPayload = {
         media: {
           files: [],
           images: ['ea62f4f6-92a1-4c0b-9f4a-7680544e6a44'],
           videos: [],
         },
-        parentId: parentTagetId,
-        postId: targetId,
-        content: 'This is a comment',
+        parentId: parentId,
+        postId: postId,
+        content: 'This is a sample comment',
         giphyId: 'EZICHGrSD5QEFCxMiC',
-        mentions: [],
+        mentions: userMentions.map((mention) => mention.id),
         actor: userMock,
       };
       const command = new ReplyCommentCommand(payload);
-      const commentEntity = new CommentEntity({
-        id: v4(),
-        postId: targetId,
-        parentId: payload.parentId,
-        content: payload.content,
-        giphyId: payload.giphyId,
-        media: {
-          files: [],
-          images: [
-            {
-              id: v4(),
-              src: '/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-              url: 'https://media.beincom.io/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-              width: 1000,
-              height: 667,
-              status: 'DONE',
-              mimeType: 'image/jpeg',
-              resource: ImageResource.COMMENT_CONTENT,
-              createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
-            },
-          ].map((item) => new ImageEntity(item)),
-          videos: [],
-        },
-        mentions: payload.mentions || [],
-        createdBy: payload.actor.id,
-        updatedBy: payload.actor.id,
-      });
-
-      const parentCommentEntity = new CommentEntity({
-        id: parentTagetId,
-        postId: targetId,
-        parentId: NIL,
-        content: 'This is a parent comment',
-        giphyId: '',
-        media: {
-          files: [],
-          images: [
-            {
-              id: v4(),
-              src: '/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-              url: 'https://media.beincom.io/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-              width: 1000,
-              height: 667,
-              status: 'DONE',
-              mimeType: 'image/jpeg',
-              resource: ImageResource.COMMENT_CONTENT,
-              createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
-            },
-          ].map((item) => new ImageEntity(item)),
-          videos: [],
-        },
-        mentions: payload.mentions || [],
-        createdBy: payload.actor.id,
-        updatedBy: payload.actor.id,
-      });
-
+      const parentCommentEntity = createCommentEntity(payload, postId);
+      const commentEntity = createCommentEntity(payload, postId, parentId);
       const commentDto = createCommentDto(commentEntity);
-      const postEntity = new PostEntity({ ...postProps, id: targetId });
+      const postEntity = new PostEntity({ ...postProps, id: postId });
+
       jest.spyOn(commentRepo, 'findOne').mockResolvedValue(parentCommentEntity);
       commentRepo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
       jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
@@ -196,11 +137,11 @@ describe('ReplyCommentHandler', () => {
       jest.spyOn(domainService, 'create').mockResolvedValue(commentEntity);
       const result = await handler.execute(command);
       expect(commentRepo.findOne).toBeCalledWith({
-        id: parentTagetId,
+        id: parentId,
         parentId: NIL,
       });
       expect(repo.findOne).toBeCalledWith({
-        where: { id: targetId, groupArchived: false, isHidden: false },
+        where: { id: postId, groupArchived: false, isHidden: false },
         include: {
           mustIncludeGroup: true,
         },
@@ -216,7 +157,7 @@ describe('ReplyCommentHandler', () => {
 
     it('Should throw error when content not found', async () => {
       const parentTagetId = v4();
-      const targetId = v4();
+      const postId = v4();
       const payload: ReplyCommentCommandPayload = {
         media: {
           files: [],
@@ -224,40 +165,15 @@ describe('ReplyCommentHandler', () => {
           videos: [],
         },
         parentId: parentTagetId,
-        postId: targetId,
+        postId: postId,
         content: 'This is a comment',
         giphyId: 'EZICHGrSD5QEFCxMiC',
         mentions: [],
         actor: userMock,
       };
-      const parentCommentEntity = new CommentEntity({
-        id: parentTagetId,
-        postId: targetId,
-        parentId: NIL,
-        content: 'This is a parent comment',
-        giphyId: '',
-        media: {
-          files: [],
-          images: [
-            {
-              id: v4(),
-              src: '/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-              url: 'https://media.beincom.io/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-              width: 1000,
-              height: 667,
-              status: 'DONE',
-              mimeType: 'image/jpeg',
-              resource: ImageResource.COMMENT_CONTENT,
-              createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
-            },
-          ].map((item) => new ImageEntity(item)),
-          videos: [],
-        },
-        mentions: payload.mentions || [],
-        createdBy: payload.actor.id,
-        updatedBy: payload.actor.id,
-      });
+      const parentCommentEntity = createCommentEntity(payload, postId);
       const command = new ReplyCommentCommand(payload);
+
       jest.spyOn(commentRepo, 'findOne').mockResolvedValue(parentCommentEntity);
       commentRepo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
       jest.spyOn(repo, 'findOne').mockResolvedValue(null);
@@ -271,7 +187,7 @@ describe('ReplyCommentHandler', () => {
 
   it('Should throw error when content do not allow comment', async () => {
     const parentTagetId = v4();
-    const targetId = v4();
+    const postId = v4();
     const payload: ReplyCommentCommandPayload = {
       media: {
         files: [],
@@ -279,45 +195,18 @@ describe('ReplyCommentHandler', () => {
         videos: [],
       },
       parentId: parentTagetId,
-      postId: targetId,
+      postId: postId,
       content: 'This is a comment',
       giphyId: 'EZICHGrSD5QEFCxMiC',
       mentions: [],
       actor: userMock,
     };
     const command = new ReplyCommentCommand(payload);
-
+    const parentCommentEntity = createCommentEntity(payload, postId);
     const postEntity = new PostEntity({
       ...postProps,
-      id: targetId,
+      id: postId,
       setting: { ...postProps.setting, canComment: false },
-    });
-    const parentCommentEntity = new CommentEntity({
-      id: parentTagetId,
-      postId: targetId,
-      parentId: NIL,
-      content: 'This is a parent comment',
-      giphyId: '',
-      media: {
-        files: [],
-        images: [
-          {
-            id: v4(),
-            src: '/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-            url: 'https://media.beincom.io/image/variants/comment/content/ea62f4f6-92a1-4c0b-9f4a-7680544e6a44',
-            width: 1000,
-            height: 667,
-            status: 'DONE',
-            mimeType: 'image/jpeg',
-            resource: ImageResource.COMMENT_CONTENT,
-            createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
-          },
-        ].map((item) => new ImageEntity(item)),
-        videos: [],
-      },
-      mentions: payload.mentions || [],
-      createdBy: payload.actor.id,
-      updatedBy: payload.actor.id,
     });
 
     jest.spyOn(commentRepo, 'findOne').mockResolvedValue(parentCommentEntity);
@@ -335,7 +224,7 @@ describe('ReplyCommentHandler', () => {
 
   it('Should throw error when not found parent comment', async () => {
     const parentTagetId = v4();
-    const targetId = v4();
+    const postId = v4();
     const payload: ReplyCommentCommandPayload = {
       media: {
         files: [],
@@ -343,89 +232,15 @@ describe('ReplyCommentHandler', () => {
         videos: [],
       },
       parentId: parentTagetId,
-      postId: targetId,
+      postId: postId,
       content: 'This is a comment',
       giphyId: 'EZICHGrSD5QEFCxMiC',
       mentions: [],
       actor: userMock,
     };
     const command = new ReplyCommentCommand(payload);
+
     jest.spyOn(commentRepo, 'findOne').mockResolvedValue(null);
     await expect(handler.execute(command)).rejects.toThrowError(CommentReplyNotExistException);
-  });
-
-  it('Should reply comment with mention successfully', async () => {
-    const parentTagetId = v4();
-    const targetId = v4();
-    const payload: ReplyCommentCommandPayload = {
-      media: {
-        files: [],
-        images: [],
-        videos: [],
-      },
-      parentId: parentTagetId,
-      postId: targetId,
-      content: 'This is a comment',
-      giphyId: 'EZICHGrSD5QEFCxMiC',
-      mentions: userMentions.map((mention) => mention.id),
-      actor: userMock,
-    };
-    const command = new ReplyCommentCommand(payload);
-    const commentEntity = new CommentEntity({
-      id: v4(),
-      postId: targetId,
-      parentId: NIL,
-      content: payload.content,
-      giphyId: payload.giphyId,
-      media: {
-        files: [],
-        images: [],
-        videos: [],
-      },
-      mentions: payload.mentions,
-      createdBy: payload.actor.id,
-      updatedBy: payload.actor.id,
-    });
-
-    const commentDto = new CreateCommentDto({
-      id: commentEntity.get('id'),
-      edited: commentEntity.get('edited'),
-      parentId: commentEntity.get('parentId'),
-      postId: commentEntity.get('postId'),
-      totalReply: commentEntity.get('totalReply'),
-      content: commentEntity.get('content'),
-      giphyId: commentEntity.get('giphyId'),
-      giphyUrl: createUrlFromId(commentEntity.get('giphyId')),
-      createdAt: commentEntity.get('createdAt'),
-      createdBy: commentEntity.get('createdBy'),
-      media: {
-        files: commentEntity.get('media').files.map((item) => new FileDto(item.toObject())),
-        images: commentEntity.get('media').images.map((item) => new ImageDto(item.toObject())),
-        videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
-      },
-      mentions: {
-        [userMentions[0].username]: userMentions[0],
-      },
-      actor: new UserDto(payload.actor),
-    });
-    const postEntity = new PostEntity({ ...postProps, id: targetId });
-    jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
-    repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
-    jest.spyOn(userApplicationService, 'findAllByIds').mockResolvedValue(userMentions);
-    jest.spyOn(domainService, 'create').mockResolvedValue(commentEntity);
-    const result = await handler.execute(command);
-    expect(repo.findOne).toBeCalledWith({
-      where: { id: targetId, groupArchived: false, isHidden: false },
-      include: {
-        mustIncludeGroup: true,
-      },
-    });
-    expect(eventEmitter.emit).toBeCalledWith(
-      new CommentHasBeenCreatedEvent({
-        actor: payload.actor,
-        commentId: commentEntity.get('id'),
-      })
-    );
-    expect(result).toEqual(commentDto);
   });
 });

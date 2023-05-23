@@ -5,13 +5,14 @@ import { CommentEntity } from '../../domain/model/comment';
 import { CreateCommentCommandPayload } from '../../application/command/create-comment/create-comment.command';
 
 export const createCommentEntity = (
-  payload: CreateCommentCommandPayload,
-  postId: string
+  payload: Partial<CreateCommentCommandPayload>,
+  postId: string,
+  parentId?: string
 ): CommentEntity => {
   return new CommentEntity({
     id: v4(),
     postId: postId,
-    parentId: NIL,
+    parentId: parentId || NIL,
     content: payload.content,
     giphyId: payload.giphyId,
     media: {
