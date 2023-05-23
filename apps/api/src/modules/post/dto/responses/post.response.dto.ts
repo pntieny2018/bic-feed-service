@@ -191,6 +191,13 @@ export class PostResponseDto {
   public commentsCount: number;
 
   @ApiProperty({
+    type: Number,
+    name: 'word_count',
+  })
+  @Expose()
+  public wordCount: number;
+
+  @ApiProperty({
     description: 'Total users seen post',
     type: Number,
     name: 'total_users_seen',

@@ -26,14 +26,9 @@ export class GroupDto {
   public rootGroupId: string;
 
   @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
-  public child?: ChildGroup = {
-    closed: [],
-    open: [],
-    private: [],
-    secret: [],
-  };
+  public child?: ChildGroup;
 
-  public constructor(userInfo: Partial<GroupDto>) {
-    Object.assign(this, userInfo);
+  public constructor(data: Partial<GroupDto>) {
+    Object.assign(this, data);
   }
 }

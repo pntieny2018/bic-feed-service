@@ -551,7 +551,8 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { coverMedia, audience, categories, series, tags, setting } = updateArticleDto;
+      const { coverMedia, audience, categories, series, tags, setting, wordCount } =
+        updateArticleDto;
 
       const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
 
@@ -592,6 +593,10 @@ export class ArticleService {
 
       if (coverMedia) {
         dataUpdate['coverJson'] = coverMedia;
+      }
+
+      if (wordCount) {
+        dataUpdate['wordCount'] = wordCount;
       }
 
       await this.postModel.update(dataUpdate, {

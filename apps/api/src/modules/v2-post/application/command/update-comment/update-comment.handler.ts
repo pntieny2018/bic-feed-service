@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateCommentCommand } from './update-comment.command';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
@@ -27,8 +27,8 @@ import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
   public constructor(
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -49,7 +49,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
     if (!comment.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
-    const post = (await this._postRepository.findOne({
+    const post = (await this._contentRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
       include: {
         mustIncludeGroup: true,

@@ -25,7 +25,6 @@ import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publi
 import { FollowModule } from '../modules/follow';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UploadModule } from '../modules/upload';
-import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-vs-bulk-update.command';
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
@@ -72,7 +71,6 @@ import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
     UpdateNewsfeedCommand,
     FeedPublisherService,
     UpdateContentTypeImageCommand,
-    MultiUpdateVsBulkUpdateCommand,
     FixTotalUsersSeenCommand,
     MigrateMediaIdCommand,
     MigratePostMediaCommand,

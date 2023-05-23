@@ -5,7 +5,7 @@ import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ReplyCommentDto } from './reply-comment.dto';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
@@ -34,8 +34,8 @@ import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
   public constructor(
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -58,7 +58,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     });
     if (!parentComment) throw new CommentReplyNotExistException();
 
-    const post = (await this._postRepository.findOne({
+    const post = (await this._contentRepository.findOne({
       where: { id: postId, groupArchived: false, isHidden: false },
       include: {
         mustIncludeGroup: true,

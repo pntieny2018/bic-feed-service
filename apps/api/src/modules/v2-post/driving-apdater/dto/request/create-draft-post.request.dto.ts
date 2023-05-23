@@ -17,7 +17,7 @@ export class CreateDraftPostRequestDto {
   public audience: AudienceRequestDto = {
     groupIds: [],
   };
-  public constructor(createReactionDto: CreateDraftPostRequestDto) {
-    Object.assign(this, createReactionDto);
+  public constructor(data: CreateDraftPostRequestDto) {
+    Object.assign(this, data);
   }
 }
