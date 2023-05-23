@@ -26,7 +26,7 @@ import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
-import { plainToClass } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { PublishPostCommand } from '../../application/command/publish-post/publish-post.command';
 import { PostDto } from '../../application/dto';
 import { Request } from 'express';
@@ -38,6 +38,7 @@ import { AutoSavePostCommand } from '../../application/command/auto-save-post/au
 import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
 import { PostStatus } from '../../../../database/models/post.model';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -66,7 +67,7 @@ export class PostController {
         new CreateDraftPostCommand({ groupIds: audience.groupIds, authUser })
       );
 
-      return data;
+      return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentNoEditSettingPermissionException:
@@ -116,7 +117,7 @@ export class PostController {
         req.message = 'message.post.published_success_with_video_waiting_process';
       }
 
-      return plainToClass(PostDto, data);
+      return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
