@@ -130,4 +130,8 @@ export class PublishPostRequestDto {
   @IsOptional()
   @IsUUID('4', { each: true })
   public series?: string[];
+
+  public constructor(data: PublishPostRequestDto) {
+    Object.assign(this, data);
+  }
 }

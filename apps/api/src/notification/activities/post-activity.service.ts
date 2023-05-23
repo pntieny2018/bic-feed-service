@@ -2,6 +2,7 @@ import {
   ActivityObject,
   ActorObject,
   AudienceObject,
+  MediaObject,
   MentionObject,
   NotificationActivity,
   SettingObject,
@@ -18,11 +19,13 @@ export class PostActivityService {
     contentType: string;
     setting: SettingObject;
     audience: AudienceObject;
-    mentions?: MentionObject;
     actor: ActorObject;
     createdAt: Date;
+    mentions?: MentionObject;
+    media?: MediaObject;
   }): NotificationActivity {
-    const { title, content, contentType, setting, audience, actor, mentions, createdAt } = post;
+    const { title, content, contentType, setting, audience, actor, mentions, createdAt, media } =
+      post;
 
     const activityObject: ActivityObject = {
       id: post.id,
@@ -33,7 +36,7 @@ export class PostActivityService {
       audience,
       mentions: mentions as any,
       content: content,
-      // media: media,
+      media: media,
       // reactionsCount: post.reactionsCount,
       createdAt,
       // updatedAt: post.createdAt,

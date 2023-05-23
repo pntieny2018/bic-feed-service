@@ -12,8 +12,8 @@ import {
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory } from '../domain/factory';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
-import { POST_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { PostRepository } from '../driven-adapter/repository/post.repository';
+import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { CreateDraftPostHandler } from '../application/command/create-draft-post/create-draft-post.handler';
 import { PublishPostHandler } from '../application/command/publish-post/publish-post.handler';
 import { PostValidator } from '../domain/validator/post.validator';
@@ -52,8 +52,8 @@ export const postProvider = [
     useClass: PostDomainService,
   },
   {
-    provide: POST_REPOSITORY_TOKEN,
-    useClass: PostRepository,
+    provide: CONTENT_REPOSITORY_TOKEN,
+    useClass: ContentRepository,
   },
   {
     provide: CONTENT_BINDING_TOKEN,

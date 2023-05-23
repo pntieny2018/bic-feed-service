@@ -5,7 +5,7 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { AutoSavePostCommand } from './auto-save-post.command';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -19,7 +19,7 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-
 @CommandHandler(AutoSavePostCommand)
 export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand, void> {
   public constructor(
-    @Inject(POST_REPOSITORY_TOKEN) private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
@@ -30,7 +30,7 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
 
   public async execute(command: AutoSavePostCommand): Promise<void> {
     const { id, groupIds, mentionUserIds } = command.payload;
-    const postEntity = await this._postRepository.findOne({
+    const postEntity = await this._contentRepository.findOne({
       where: {
         id,
         groupArchived: false,
