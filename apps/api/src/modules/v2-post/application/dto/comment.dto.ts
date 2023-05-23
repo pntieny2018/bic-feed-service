@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { UserMentionDto } from 'apps/api/src/modules/mention/dto';
+import { UserMentionDto } from '../../../mention/dto';
 import { FileDto, ImageDto, VideoDto } from './index';
 import { UserDto } from '../../../v2-user/application/user.dto';
 
