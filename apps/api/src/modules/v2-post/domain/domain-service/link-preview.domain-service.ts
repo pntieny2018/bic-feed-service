@@ -23,6 +23,7 @@ export class LinkPreviewDomainService implements ILinkPreviewDomainService {
       let linkPreviewEntity = await this._linkPreviewRepo.findByUrl(url);
       if (!linkPreviewEntity) {
         linkPreviewEntity = this._linkPreviewFactory.createLinkPreview(input);
+        await this._linkPreviewRepo.create(linkPreviewEntity);
       } else {
         linkPreviewEntity.update(input);
         await this._linkPreviewRepo.update(linkPreviewEntity);
