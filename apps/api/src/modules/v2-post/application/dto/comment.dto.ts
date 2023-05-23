@@ -12,7 +12,7 @@ export class CommentDto {
     name: 'edited',
     example: false,
   })
-  public edited: boolean = false;
+  public edited = false;
 
   @ApiProperty({
     name: 'parent_id',
@@ -27,7 +27,7 @@ export class CommentDto {
   @ApiProperty({
     name: 'total_reply',
   })
-  public totalReply: number = 0;
+  public totalReply = 0;
 
   @ApiProperty()
   public content?: string;
