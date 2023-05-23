@@ -240,13 +240,9 @@ export class TagService {
     }
   }
 
-  public async getTagsByIds(ids: string[]): Promise<TagResponseDto[]> {
+  public async getTagsByIds(ids: string[]): Promise<ITag[]> {
     const tags = await this._tagModel.findAll({ where: { id: { [Op.in]: ids } } });
-    return tags.map((tag) =>
-      this._classTransformer.plainToInstance(TagResponseDto, tag, {
-        excludeExtraneousValues: true,
-      })
-    );
+    return tags;
   }
 
   public async increaseTotalUsed(ids: string[], transaction?: Transaction): Promise<void> {

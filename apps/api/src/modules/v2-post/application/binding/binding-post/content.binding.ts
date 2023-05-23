@@ -96,6 +96,13 @@ export class ContentBinding implements IContentBinding {
       setting: postEntity.get('setting'),
       commentsCount: postEntity.get('aggregation').commentsCount,
       totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
+      linkPreview: {
+        url: postEntity.get('linkPreview').get('url'),
+        title: postEntity.get('linkPreview').get('title'),
+        description: postEntity.get('linkPreview').get('description'),
+        image: postEntity.get('linkPreview').get('image'),
+        domain: postEntity.get('linkPreview').get('domain'),
+      },
       markedReadPost: true,
       isSaved: false,
       reactionsCount: {},

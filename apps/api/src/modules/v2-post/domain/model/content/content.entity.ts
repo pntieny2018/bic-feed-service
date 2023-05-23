@@ -31,6 +31,7 @@ export type ContentProps = {
   publishedAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
+  wordCount?: number;
   aggregation?: {
     commentsCount: number;
     totalUsersSeen: number;

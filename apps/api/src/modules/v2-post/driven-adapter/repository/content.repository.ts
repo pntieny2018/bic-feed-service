@@ -144,6 +144,7 @@ export class ContentRepository implements IContentRepository {
       videoIdProcessing: postEntity.get('videoIdProcessing'),
       tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
       linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
+      wordCount: postEntity.get('wordCount'),
     };
   }
 
@@ -307,7 +308,6 @@ export class ContentRepository implements IContentRepository {
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
-    post = post.toJSON();
     if (post.type === PostType.POST) {
       return this._modelToPostEntity(post);
     } else if (post.type === PostType.SERIES) {
@@ -319,7 +319,7 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  private _modelToPostEntity(post: PostModel): PostEntity {
+  private _modelToPostEntity(post: IPost): PostEntity {
     if (post === null) return null;
     return this._postFactory.reconstitute({
       id: post.id,
@@ -360,7 +360,7 @@ export class ContentRepository implements IContentRepository {
     });
   }
 
-  private _modelToArticleEntity(post: PostModel): ArticleEntity {
+  private _modelToArticleEntity(post: IPost): ArticleEntity {
     if (post === null) return null;
     return this._articleFactory.reconstitute({
       id: post.id,
@@ -389,6 +389,7 @@ export class ContentRepository implements IContentRepository {
       seriesIds: post.postSeries?.map((series) => series.seriesId),
       tags: post.tagsJson,
       cover: new ImageEntity(post.coverJson),
+      wordCount: post.wordCount,
     });
   }
 

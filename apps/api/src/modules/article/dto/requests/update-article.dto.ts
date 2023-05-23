@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { UpdatePostDto } from '../../../post/dto/requests';
 import { Expose } from 'class-transformer';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
@@ -40,6 +40,14 @@ export class UpdateArticleDto extends UpdatePostDto {
   @IsArray()
   //@CanUseSeries()
   public series?: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: [10],
+  })
+  @IsOptional()
+  @IsInt()
+  public wordCount?: number;
 
   @ApiProperty({
     type: [String],
