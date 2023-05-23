@@ -210,7 +210,6 @@ describe('CreateCommentHandler', () => {
       };
       const command = new CreateCommentCommand(payload);
       jest.spyOn(repo, 'findOne').mockResolvedValue(null);
-      repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
       await expect(handler.execute(command)).rejects.toThrowError(ContentNotFoundException);
     });
   });
@@ -243,7 +242,6 @@ describe('CreateCommentHandler', () => {
       setting: { ...postProps.setting, canComment: false },
     });
     jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
-    repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
     await expect(handler.execute(command)).rejects.toThrowError(
       ContentNoCommentPermissionException
     );
