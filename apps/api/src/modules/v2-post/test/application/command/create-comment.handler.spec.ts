@@ -1,4 +1,3 @@
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NIL, v4 } from 'uuid';
 import { I18nContext } from 'nestjs-i18n';
@@ -9,7 +8,6 @@ import {
   ICommentDomainService,
 } from '../../../domain/domain-service/interface';
 import { createMock } from '@golevelup/ts-jest';
-import { PostRepository } from '../../../driven-adapter/repository/post.repository';
 import { ContentValidator } from '../../../domain/validator/content.validator';
 import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
 import {
@@ -40,10 +38,12 @@ import {
 import { userMentions } from '../../mock/user.dto.mock';
 import { ImageEntity } from '../../../domain/model/media';
 import { ImageResource } from '../../../data-type';
+import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 
 describe('CreateCommentHandler', () => {
   let handler: CreateCommentHandler;
-  let repo: IPostRepository;
+  let repo: IContentRepository;
   let domainService: ICommentDomainService;
   let eventEmitter: InternalEventEmitterService;
   let userApplicationService: IUserApplicationService;
@@ -55,8 +55,8 @@ describe('CreateCommentHandler', () => {
         EventEmitter2,
         InternalEventEmitterService,
         {
-          provide: POST_REPOSITORY_TOKEN,
-          useValue: createMock<PostRepository>(),
+          provide: CONTENT_REPOSITORY_TOKEN,
+          useValue: createMock<ContentRepository>(),
         },
         {
           provide: CONTENT_VALIDATOR_TOKEN,
@@ -78,7 +78,7 @@ describe('CreateCommentHandler', () => {
     }).compile();
 
     handler = module.get<CreateCommentHandler>(CreateCommentHandler);
-    repo = module.get<PostRepository>(POST_REPOSITORY_TOKEN);
+    repo = module.get<ContentRepository>(CONTENT_REPOSITORY_TOKEN);
     domainService = module.get<CommentDomainService>(COMMENT_DOMAIN_SERVICE_TOKEN);
     userApplicationService = module.get<UserApplicationService>(USER_APPLICATION_TOKEN);
     eventEmitter = module.get<InternalEventEmitterService>(InternalEventEmitterService);
