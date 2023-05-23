@@ -139,6 +139,11 @@ export class ContentRepository implements IContentRepository {
         images: postEntity.get('media').images.map((image) => image.toObject()),
         videos: postEntity.get('media').videos.map((video) => video.toObject()),
       },
+      mentions: postEntity.get('mentionUserIds'),
+      cover: postEntity.get('cover'),
+      videoIdProcessing: postEntity.get('videoIdProcessing'),
+      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
+      linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
     };
   }
 
