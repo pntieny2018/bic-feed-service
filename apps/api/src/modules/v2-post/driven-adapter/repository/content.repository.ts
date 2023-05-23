@@ -133,7 +133,7 @@ export class ContentRepository implements IContentRepository {
       canReact: postEntity.get('setting')?.canReact,
       commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      linkPreview: postEntity.get('linkPreview')?.get('id'),
+      linkPreviewId: postEntity.get('linkPreview')?.get('id'),
       mediaJson: {
         files: postEntity.get('media').files.map((file) => file.toObject()),
         images: postEntity.get('media').images.map((image) => image.toObject()),
