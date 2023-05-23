@@ -140,7 +140,7 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "<rootDir>/src/**/**.ts",
+      "<rootDir>/apps/api/src/**/**.ts",
       "!**/index.ts",
       "!**/*.dto.ts",
       "!**/*.constant.ts",
