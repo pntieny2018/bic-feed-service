@@ -19,8 +19,8 @@ import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
-} from 'apps/api/src/modules/v2-user/application';
-import { GroupDto } from 'apps/api/src/modules/v2-group/application';
+} from '../../../../v2-user/application';
+import { GroupDto } from '../../../../v2-group/application';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
 
