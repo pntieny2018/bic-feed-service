@@ -5,7 +5,7 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { PublishPostCommand } from './publish-post.command';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -14,7 +14,11 @@ import {
 import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../../v2-user/application';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../../../../common/constants';
@@ -26,7 +30,7 @@ import { MediaMarkAction, MediaType } from '../../../../../database/models/media
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
   public constructor(
-    @Inject(POST_REPOSITORY_TOKEN) private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
@@ -41,7 +45,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {
     const { authUser, id, groupIds, mentionUserIds } = command.payload;
-    const postEntity = await this._postRepository.findOne({
+    const postEntity = await this._contentRepository.findOne({
       where: {
         id,
         groupArchived: false,
@@ -73,12 +77,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groups,
       },
     });
-
     await this._postDomainService.markSeen(postEntity, authUser.id);
 
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
-      // actor: TODO hide authUser, because actor is returning permission property, transform GROUP not work, check later
+      actor: new UserDto(authUser),
       mentionUsers,
     });
 

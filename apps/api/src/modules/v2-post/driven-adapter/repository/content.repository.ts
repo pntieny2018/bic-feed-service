@@ -4,7 +4,7 @@ import { FindOptions, Sequelize } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
-  IPostRepository,
+  IContentRepository,
 } from '../../domain/repositoty-interface';
 import { PostEntity } from '../../domain/model/content';
 import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
@@ -30,11 +30,11 @@ import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 
-export class PostRepository implements IPostRepository {
+export class ContentRepository implements IContentRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
   @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
   @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
-  private _logger = new Logger(PostRepository.name);
+  private _logger = new Logger(ContentRepository.name);
   @InjectModel(PostModel)
   private readonly _postModel: typeof PostModel;
   @InjectModel(PostGroupModel)
@@ -43,8 +43,6 @@ export class PostRepository implements IPostRepository {
   private readonly _postSeriesModel: typeof PostSeriesModel;
   @InjectModel(PostTagModel)
   private readonly _postTagModel: typeof PostTagModel;
-  @InjectModel(TagModel)
-  private readonly _tagModel: typeof TagModel;
   @InjectModel(LinkPreviewModel)
   private readonly _linkPreviewModel: typeof LinkPreviewModel;
   @InjectModel(UserSeenPostModel)
@@ -52,17 +50,19 @@ export class PostRepository implements IPostRepository {
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async create(postEntity: ContentEntity): Promise<void> {
+  public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const attributes = await this._getAttributes(postEntity);
-      await this._postModel.create(attributes, {
+      const model = await this._entityToModel(contentEntity);
+      await this._postModel.create(model, {
         transaction,
       });
 
-      await this._setSeries(postEntity, transaction);
-      await this._setTags(postEntity, transaction);
-      await this._setGroups(postEntity, transaction);
+      if (contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity) {
+        await this._setSeries(contentEntity, transaction);
+        await this._setTags(contentEntity, transaction);
+      }
+      await this._setGroups(contentEntity, transaction);
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();
@@ -70,20 +70,22 @@ export class PostRepository implements IPostRepository {
     }
   }
 
-  public async update(postEntity: ContentEntity): Promise<void> {
+  public async update(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const attributes = await this._getAttributes(postEntity);
-      await this._postModel.update(attributes, {
+      const model = this._entityToModel(contentEntity);
+      await this._postModel.update(model, {
         where: {
-          id: postEntity.get('id'),
+          id: contentEntity.getId(),
         },
         transaction,
       });
 
-      await this._setSeries(postEntity, transaction);
-      await this._setTags(postEntity, transaction);
-      await this._setGroups(postEntity, transaction);
+      if (contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity) {
+        await this._setSeries(contentEntity, transaction);
+        await this._setTags(contentEntity, transaction);
+      }
+      await this._setGroups(contentEntity, transaction);
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();
@@ -114,7 +116,7 @@ export class PostRepository implements IPostRepository {
     }
   }
 
-  private async _getAttributes(postEntity): Promise<IPost> {
+  private _entityToModel(postEntity): IPost {
     return {
       id: postEntity.get('id'),
       content: postEntity.get('content'),
@@ -125,12 +127,13 @@ export class PostRepository implements IPostRepository {
       status: postEntity.get('status'),
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
-      isImportant: postEntity.get('setting').isImportant,
-      importantExpiredAt: postEntity.get('setting').importantExpiredAt || null,
-      canComment: postEntity.get('setting').canComment,
-      canReact: postEntity.get('setting').canReact,
-      commentsCount: postEntity.get('aggregation').commentsCount,
-      totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
+      isImportant: postEntity.get('setting')?.isImportant,
+      importantExpiredAt: postEntity.get('setting')?.importantExpiredAt || null,
+      canComment: postEntity.get('setting')?.canComment,
+      canReact: postEntity.get('setting')?.canReact,
+      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
+      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
+      linkPreviewId: postEntity.get('linkPreview')?.get('id'),
       mediaJson: {
         files: postEntity.get('media').files.map((file) => file.toObject()),
         images: postEntity.get('media').images.map((image) => image.toObject()),
@@ -139,17 +142,18 @@ export class PostRepository implements IPostRepository {
       mentions: postEntity.get('mentionUserIds'),
       cover: postEntity.get('cover'),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags').map((tag) => tag.toObject()),
+      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
       linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
+      wordCount: postEntity.get('wordCount'),
     };
   }
 
-  private async _setSeries(postEntity: ContentEntity, transaction): Promise<void> {
-    const state = postEntity.getState();
+  private async _setSeries(contentEntity: PostEntity | ArticleEntity, transaction): Promise<void> {
+    const state = contentEntity.getState();
     if (state.attachSeriesIds.length > 0) {
       await this._postSeriesModel.bulkCreate(
         state.attachSeriesIds.map((seriesId) => ({
-          postId: postEntity.get('id'),
+          postId: contentEntity.getId(),
           seriesId,
         })),
         { transaction, ignoreDuplicates: true }
@@ -159,7 +163,7 @@ export class PostRepository implements IPostRepository {
     if (state.detachSeriesIds.length > 0) {
       await this._postSeriesModel.destroy({
         where: {
-          postId: postEntity.get('id'),
+          postId: contentEntity.getId(),
           seriesId: state.detachSeriesIds,
         },
         transaction,
@@ -167,12 +171,12 @@ export class PostRepository implements IPostRepository {
     }
   }
 
-  private async _setTags(postEntity: ContentEntity, transaction): Promise<void> {
-    const state = postEntity.getState();
+  private async _setTags(contentEntity: PostEntity | ArticleEntity, transaction): Promise<void> {
+    const state = contentEntity.getState();
     if (state.attachTagIds.length > 0) {
       await this._postTagModel.bulkCreate(
         state.attachTagIds.map((tagId) => ({
-          postId: postEntity.get('id'),
+          postId: contentEntity.getId(),
           tagId,
         })),
         { transaction, ignoreDuplicates: true }
@@ -182,7 +186,7 @@ export class PostRepository implements IPostRepository {
     if (state.detachTagIds.length > 0) {
       await this._postTagModel.destroy({
         where: {
-          postId: postEntity.get('id'),
+          postId: contentEntity.getId(),
           tagId: state.detachTagIds,
         },
         transaction,
@@ -304,7 +308,6 @@ export class PostRepository implements IPostRepository {
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
-    post = post.toJSON();
     if (post.type === PostType.POST) {
       return this._modelToPostEntity(post);
     } else if (post.type === PostType.SERIES) {
@@ -316,7 +319,7 @@ export class PostRepository implements IPostRepository {
     }
   }
 
-  private _modelToPostEntity(post: PostModel): PostEntity {
+  private _modelToPostEntity(post: IPost): PostEntity {
     if (post === null) return null;
     return this._postFactory.reconstitute({
       id: post.id,
@@ -357,7 +360,7 @@ export class PostRepository implements IPostRepository {
     });
   }
 
-  private _modelToArticleEntity(post: PostModel): ArticleEntity {
+  private _modelToArticleEntity(post: IPost): ArticleEntity {
     if (post === null) return null;
     return this._articleFactory.reconstitute({
       id: post.id,
@@ -383,9 +386,10 @@ export class PostRepository implements IPostRepository {
       publishedAt: post.publishedAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
-      seriesIds: post.series?.map((series) => series.id),
+      seriesIds: post.postSeries?.map((series) => series.seriesId),
       tags: post.tagsJson,
       cover: new ImageEntity(post.coverJson),
+      wordCount: post.wordCount,
     });
   }
 

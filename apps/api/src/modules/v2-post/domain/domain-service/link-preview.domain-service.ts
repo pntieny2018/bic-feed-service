@@ -18,11 +18,13 @@ export class LinkPreviewDomainService implements ILinkPreviewDomainService {
   private readonly _linkPreviewFactory: ILinkPreviewFactory;
 
   public async findOrUpsert(input: LinkPreviewDto): Promise<LinkPreviewEntity> {
-    const { url } = input;
+    const url = input?.url;
+    if (!url) return null;
     try {
       let linkPreviewEntity = await this._linkPreviewRepo.findByUrl(url);
       if (!linkPreviewEntity) {
         linkPreviewEntity = this._linkPreviewFactory.createLinkPreview(input);
+        await this._linkPreviewRepo.create(linkPreviewEntity);
       } else {
         linkPreviewEntity.update(input);
         await this._linkPreviewRepo.update(linkPreviewEntity);

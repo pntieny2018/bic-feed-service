@@ -35,6 +35,7 @@ export class PostDto {
   public mentions: UserMentionDto;
   public commentsCount: number;
   public totalUsersSeen: number;
+  public wordCount: number;
   public reactionsCount: Record<string, Record<string, number>>;
   public ownerReactions: {
     id: string;

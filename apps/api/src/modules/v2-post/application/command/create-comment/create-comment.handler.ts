@@ -6,7 +6,7 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CreateCommentCommand } from './create-comment.command';
 import { CreateCommentDto } from './create-comment.dto';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
@@ -34,8 +34,8 @@ export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
   public constructor(
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
@@ -50,7 +50,7 @@ export class CreateCommentHandler
   public async execute(command: CreateCommentCommand): Promise<CreateCommentDto> {
     const { actor, postId, content, media, mentions, giphyId } = command.payload;
 
-    const post = (await this._postRepository.findOne({
+    const post = (await this._contentRepository.findOne({
       where: { id: postId, groupArchived: false, isHidden: false },
       include: {
         mustIncludeGroup: true,

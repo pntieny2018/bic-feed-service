@@ -50,7 +50,7 @@ export class PostEntity extends ContentEntity<PostProps> {
 
   public setTags(newTags: TagEntity[]): void {
     if (!newTags) return;
-    const entityTagIds = this._props.tags.map((tag) => tag.get('id'));
+    const entityTagIds = this._props.tags?.map((tag) => tag.get('id')) || [];
     for (const tag of newTags) {
       if (!entityTagIds.includes(tag.get('id'))) {
         this._state.attachTagIds.push(tag.get('id'));

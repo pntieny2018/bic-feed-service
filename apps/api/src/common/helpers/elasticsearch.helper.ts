@@ -1,4 +1,5 @@
 import { getElasticsearchConfig } from '../../config/elasticsearch';
+import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
 
 export class ElasticsearchHelper {
   private static _prefix = getElasticsearchConfig().namespace + '_';
@@ -86,11 +87,11 @@ export class ElasticsearchHelper {
     POST: 'pipe_lang_ident_post',
   };
 
-  public static getLangOfPostByIndexName(indexName: string, defaultIndex?: string): string {
+  public static getLangOfPostByIndexName(indexName: string, defaultIndex?: string): PostLang {
     const index = defaultIndex ? defaultIndex : this.ALIAS.POST.default.name;
     const lang = indexName.slice(index.length + 1, index.length + 3);
 
-    return this.LANGUAGES_SUPPORTED.includes(lang) ? lang : null;
+    return this.LANGUAGES_SUPPORTED.includes(lang) ? (lang as PostLang) : null;
   }
   public static getIndexOfPostByLang(lang: string): string {
     if (!lang) return this.ALIAS.POST.default.name;

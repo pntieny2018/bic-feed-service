@@ -17,8 +17,6 @@ import {
 } from 'sequelize-typescript';
 import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
-import { MentionableType } from '../../common/constants';
-import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
 import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
@@ -27,7 +25,6 @@ import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IMedia, MediaModel } from './media.model';
-import { IMention, MentionModel } from './mention.model';
 import { PostCategoryModel } from './post-category.model';
 import { IPostGroup, PostGroupModel } from './post-group.model';
 import { PostMediaModel } from './post-media.model';
@@ -67,10 +64,11 @@ export interface IPost {
   createdBy: string;
   updatedBy: string;
   content: string;
-  lang?: string;
+  lang?: PostLang;
   commentsCount: number;
   totalUsersSeen: number;
   isImportant: boolean;
+  wordCount?: number;
   importantExpiredAt?: Date;
   canReact: boolean;
   canComment: boolean;
@@ -95,7 +93,7 @@ export interface IPost {
   tags?: ITag[];
   postTags?: IPostTag[];
   privacy?: PostPrivacy;
-  tagsJson?: TagResponseDto[];
+  tagsJson?: ITag[];
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
@@ -127,6 +125,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @Column
   public totalUsersSeen: number;
+
+  @Column
+  public wordCount?: number;
 
   @Default(false)
   @Column
@@ -240,13 +241,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public deletedAt?: Date;
 
   @HasMany(() => CommentModel)
-  public comments?: CommentModel[];
+  public comments?: IComment[];
 
   @BelongsToMany(() => MediaModel, () => PostMediaModel)
   public media?: MediaModel[];
 
   @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
-  public categories?: CategoryModel[];
+  public categories?: ICategory[];
 
   @HasMany(() => PostCategoryModel)
   public postCategories?: PostCategoryModel[];
@@ -258,13 +259,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public postTags?: PostTagModel[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'postId', 'seriesId')
-  public series?: PostModel[];
+  public series?: IPost[];
 
   @HasMany(() => PostSeriesModel, 'postId')
   public postSeries?: PostSeriesModel[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
-  public items?: PostModel[];
+  public items?: IPost[];
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 

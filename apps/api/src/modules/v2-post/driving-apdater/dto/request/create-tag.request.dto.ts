@@ -15,4 +15,8 @@ export class CreateTagRequestDto {
     name: 'group_id',
   })
   public groupId: string;
+
+  public constructor(data: CreateTagRequestDto) {
+    Object.assign(this, data);
+  }
 }
