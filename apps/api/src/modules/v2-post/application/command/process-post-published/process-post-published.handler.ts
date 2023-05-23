@@ -5,7 +5,7 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ProcessPostPublishedCommand } from './process-post-published.command';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -29,7 +29,7 @@ export class ProcessPostPublishedHandler
   implements ICommandHandler<ProcessPostPublishedCommand, void>
 {
   public constructor(
-    @Inject(POST_REPOSITORY_TOKEN) private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _postRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,

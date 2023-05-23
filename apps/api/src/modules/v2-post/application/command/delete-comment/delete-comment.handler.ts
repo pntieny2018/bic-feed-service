@@ -2,8 +2,8 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteCommentCommand } from './delete-comment.command';
 import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
+  IContentRepository,
+  CONTENT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
@@ -19,8 +19,8 @@ import { CommentHasBeenDeletedEvent } from 'apps/api/src/events/comment/comment-
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
   constructor(
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _postRepository: IContentRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)

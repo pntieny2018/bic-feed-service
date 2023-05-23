@@ -8,8 +8,8 @@ import { CreateCommentCommand } from './create-comment.command';
 import { CreateCommentDto } from './create-comment.dto';
 import { ExternalService } from '../../../../../app/external.service';
 import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
+  IContentRepository,
+  CONTENT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
@@ -47,8 +47,8 @@ export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
   constructor(
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _postRepository: IContentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(MEDIA_VALIDATOR_TOKEN)

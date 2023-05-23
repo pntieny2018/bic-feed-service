@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PostType } from '../../data-type';
 import {
-  IPostRepository,
+  IContentRepository,
   ITagRepository,
-  POST_REPOSITORY_TOKEN,
+  CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import { IPostValidator } from './interface';
@@ -38,8 +38,8 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     protected readonly _userApplicationService: IUserApplicationService,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected _authorityAppService: IAuthorityAppService,
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _postRepository: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
     @Inject(MEDIA_REPOSITORY_TOKEN)

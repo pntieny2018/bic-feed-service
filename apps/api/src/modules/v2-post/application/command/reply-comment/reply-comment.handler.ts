@@ -6,10 +6,7 @@ import {
 } from '../../../domain/domain-service/interface';
 import { ReplyCommentDto } from './reply-comment.dto';
 import { ExternalService } from '../../../../../app/external.service';
-import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post.repository.interface';
+import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   MEDIA_VALIDATOR_TOKEN,
@@ -21,7 +18,7 @@ import {
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
-import { UserMentionDto } from '../../dto/user-mention.dto';
+import { UserMentionDto } from '../../dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
@@ -47,8 +44,8 @@ import { CommentHasBeenCreatedEvent } from '../../../../../events/comment/commen
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
   constructor(
-    @Inject(POST_REPOSITORY_TOKEN)
-    private readonly _postRepository: IPostRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _postRepository: IContentRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)

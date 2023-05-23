@@ -4,10 +4,10 @@ import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
 import { IPostDomainService, PostCreateProps, PostPublishProps } from './interface';
 import { PostEntity } from '../model/content';
 import {
-  IPostRepository,
+  IContentRepository,
   ITagRepository,
   IMediaRepository,
-  POST_REPOSITORY_TOKEN,
+  CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
@@ -33,8 +33,8 @@ import { ContentEntity } from '../model/content/content.entity';
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
 
-  @Inject(POST_REPOSITORY_TOKEN)
-  private readonly _postRepository: IPostRepository;
+  @Inject(CONTENT_REPOSITORY_TOKEN)
+  private readonly _postRepository: IContentRepository;
   @Inject(POST_FACTORY_TOKEN)
   private readonly _postFactory: IPostFactory;
   @Inject(POST_VALIDATOR_TOKEN)

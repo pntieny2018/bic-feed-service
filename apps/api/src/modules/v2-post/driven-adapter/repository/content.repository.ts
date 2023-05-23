@@ -4,7 +4,7 @@ import { FindOptions, Sequelize } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
-  IPostRepository,
+  IContentRepository,
 } from '../../domain/repositoty-interface';
 import { PostEntity } from '../../domain/model/content';
 import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
@@ -30,11 +30,11 @@ import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 
-export class PostRepository implements IPostRepository {
+export class ContentRepository implements IContentRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
   @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
   @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
-  private _logger = new Logger(PostRepository.name);
+  private _logger = new Logger(ContentRepository.name);
   @InjectModel(PostModel)
   private readonly _postModel: typeof PostModel;
   @InjectModel(PostGroupModel)
@@ -52,17 +52,17 @@ export class PostRepository implements IPostRepository {
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async create(postEntity: ContentEntity): Promise<void> {
+  public async create(contentEntity: ContentEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const attributes = await this._getAttributes(postEntity);
+      const attributes = await this._getAttributes(contentEntity);
       await this._postModel.create(attributes, {
         transaction,
       });
 
-      await this._setSeries(postEntity, transaction);
-      await this._setTags(postEntity, transaction);
-      await this._setGroups(postEntity, transaction);
+      await this._setSeries(contentEntity, transaction);
+      await this._setTags(contentEntity, transaction);
+      await this._setGroups(contentEntity, transaction);
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();
@@ -70,20 +70,20 @@ export class PostRepository implements IPostRepository {
     }
   }
 
-  public async update(postEntity: ContentEntity): Promise<void> {
+  public async update(contentEntity: ContentEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const attributes = await this._getAttributes(postEntity);
+      const attributes = await this._getAttributes(contentEntity);
       await this._postModel.update(attributes, {
         where: {
-          id: postEntity.get('id'),
+          id: contentEntity.get('id'),
         },
         transaction,
       });
 
-      await this._setSeries(postEntity, transaction);
-      await this._setTags(postEntity, transaction);
-      await this._setGroups(postEntity, transaction);
+      await this._setSeries(contentEntity, transaction);
+      await this._setTags(contentEntity, transaction);
+      await this._setGroups(contentEntity, transaction);
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();

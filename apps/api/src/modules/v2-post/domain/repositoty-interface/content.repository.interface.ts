@@ -36,7 +36,7 @@ export type FindAllPostOptions = {
   attributes?: (keyof IPost)[];
 };
 
-export interface IPostRepository {
+export interface IContentRepository {
   create(data: PostEntity): Promise<void>;
   update(data: PostEntity): Promise<void>;
   findOne(
@@ -51,4 +51,4 @@ export interface IPostRepository {
   markSeen(postId: string, userId: string): Promise<void>;
 }
 
-export const POST_REPOSITORY_TOKEN = 'POST_REPOSITORY_TOKEN';
+export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
