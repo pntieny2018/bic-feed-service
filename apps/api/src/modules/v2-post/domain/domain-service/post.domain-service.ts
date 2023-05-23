@@ -34,7 +34,7 @@ export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
 
   @Inject(CONTENT_REPOSITORY_TOKEN)
-  private readonly _postRepository: IContentRepository;
+  private readonly _contentRepository: IContentRepository;
   @Inject(POST_FACTORY_TOKEN)
   private readonly _postFactory: IPostFactory;
   @Inject(POST_VALIDATOR_TOKEN)
@@ -62,7 +62,7 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setGroups(groups.map((group) => group.id));
     postEntity.setPrivacyFromGroups(groups);
     try {
-      await this._postRepository.create(postEntity);
+      await this._contentRepository.create(postEntity);
       postEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
@@ -133,13 +133,13 @@ export class PostDomainService implements IPostDomainService {
     );
 
     if (!postEntity.isChanged()) return;
-    await this._postRepository.update(postEntity);
+    await this._contentRepository.update(postEntity);
 
     postEntity.commit();
   }
 
   public async markSeen(contentEntity: ContentEntity, userId: string): Promise<void> {
-    await this._postRepository.markSeen(contentEntity.get('id'), userId);
+    await this._contentRepository.markSeen(contentEntity.get('id'), userId);
   }
 
   public async autoSavePost(input: PostPublishProps): Promise<void> {
@@ -185,13 +185,13 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setPrivacyFromGroups(groups);
 
     if (!postEntity.isChanged()) return;
-    await this._postRepository.update(postEntity);
+    await this._contentRepository.update(postEntity);
     postEntity.commit();
   }
 
   public async delete(id: string): Promise<void> {
     try {
-      await this._postRepository.delete(id);
+      await this._contentRepository.delete(id);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

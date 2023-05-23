@@ -38,7 +38,7 @@ import { SeriesEntity } from '../../../domain/model/content/series.entity';
 @CommandHandler(ProcessPostUpdatedCommand)
 export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpdatedCommand, void> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _postRepository: IContentRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
@@ -57,7 +57,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
   public async execute(command: ProcessPostUpdatedCommand): Promise<void> {
     const { before, after } = command.payload;
 
-    const postEntity = await this._postRepository.findOne({
+    const postEntity = await this._contentRepository.findOne({
       where: {
         id: after.id,
       },
@@ -78,7 +78,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
   ): Promise<void> {
     const { before, after, isPublished } = command.payload;
 
-    const series = await this._postRepository.findAll({
+    const series = await this._contentRepository.findAll({
       attributes: ['id', 'createdBy'], //TODO enhance get attributes repo
       where: {
         ids: after.seriesIds,
@@ -136,7 +136,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
       },
     });
 
-    const removeSeries = await this._postRepository.findAll({
+    const removeSeries = await this._contentRepository.findAll({
       attributes: ['id', 'createdBy', 'title'],
       where: {
         ids: after.state.detachSeriesIds,
@@ -152,7 +152,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
       state: 'remove',
     }));
 
-    const newSeries = await this._postRepository.findAll({
+    const newSeries = await this._contentRepository.findAll({
       attributes: ['id', 'createdBy', 'title'],
       where: {
         ids: after.state.attachSeriesIds,

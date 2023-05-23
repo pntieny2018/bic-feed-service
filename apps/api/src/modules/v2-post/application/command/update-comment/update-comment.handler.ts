@@ -28,7 +28,7 @@ import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _postRepository: IContentRepository,
+    private readonly _contentRepository: IContentRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -49,7 +49,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
     if (!comment.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
-    const post = (await this._postRepository.findOne({
+    const post = (await this._contentRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
       include: {
         mustIncludeGroup: true,

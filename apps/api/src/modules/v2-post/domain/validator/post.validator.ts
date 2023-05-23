@@ -39,7 +39,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _postRepository: IContentRepository,
+    private readonly _contentRepository: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
     @Inject(MEDIA_REPOSITORY_TOKEN)
@@ -61,7 +61,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     };
     if (seriesIds?.length) {
       const groupIds = groups.map((e) => e.id);
-      const series = await this._postRepository.findAll({
+      const series = await this._contentRepository.findAll({
         attributes: ['id', 'title'],
         include: {
           mustIncludeGroup: true,

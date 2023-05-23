@@ -526,6 +526,7 @@ export class PostListener {
         content: post.content,
         contentType: post.type,
         setting: post.setting,
+        media: post.media,
         audience: post.audience,
         mentions: post.mentions as any,
         actor: post.actor,

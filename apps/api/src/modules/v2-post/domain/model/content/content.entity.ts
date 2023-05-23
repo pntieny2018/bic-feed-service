@@ -113,7 +113,9 @@ export class ContentEntity<
     if (totalOpen > 0) this._props.privacy = PostPrivacy.OPEN;
     if (totalPrivate > 0) this._props.privacy = PostPrivacy.OPEN;
   }
-
+  public getId(): string {
+    return this._props.id;
+  }
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
   }

@@ -19,7 +19,7 @@ export class CreateDraftPostHandler
 {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _postRepository: IContentRepository,
+    private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)

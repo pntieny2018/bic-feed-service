@@ -29,7 +29,7 @@ export class ProcessPostPublishedHandler
   implements ICommandHandler<ProcessPostPublishedCommand, void>
 {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _postRepository: IContentRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
@@ -48,7 +48,7 @@ export class ProcessPostPublishedHandler
   public async execute(command: ProcessPostPublishedCommand): Promise<void> {
     const { before, after } = command.payload;
 
-    const postEntity = await this._postRepository.findOne({
+    const postEntity = await this._contentRepository.findOne({
       where: {
         id: after.id,
         groupArchived: false,
@@ -78,7 +78,7 @@ export class ProcessPostPublishedHandler
 
     let series = [];
     if (postEntity.get('seriesIds')?.length) {
-      series = await this._postRepository.findAll({
+      series = await this._contentRepository.findAll({
         attributes: ['id', 'createdBy'], //TODO enhance get attributes repo
         where: {
           ids: after.seriesIds,
