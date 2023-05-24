@@ -1,8 +1,9 @@
 import { NIL, v4 } from 'uuid';
 import { ImageResource } from '../../data-type';
-import { ImageEntity } from '../../domain/model/media';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { CommentEntity } from '../../domain/model/comment';
 import { CreateCommentCommandPayload } from '../../application/command/create-comment/create-comment.command';
+import { commentRecord } from './comment.model.mock';
 
 export const createCommentEntity = (
   payload: Partial<CreateCommentCommandPayload>,
@@ -37,3 +38,24 @@ export const createCommentEntity = (
     updatedBy: payload.actor.id,
   });
 };
+
+export const commentEntityMock = new CommentEntity({
+  id: commentRecord.id,
+  postId: commentRecord.postId,
+  parentId: commentRecord.parentId,
+  edited: commentRecord.edited,
+  isHidden: commentRecord.isHidden,
+  giphyId: commentRecord.giphyId,
+  totalReply: commentRecord.totalReply,
+  createdBy: commentRecord.createdBy,
+  updatedBy: commentRecord.updatedBy,
+  createdAt: commentRecord.createdAt,
+  updatedAt: commentRecord.updatedAt,
+  content: commentRecord.content,
+  mentions: commentRecord.mentions,
+  media: {
+    images: commentRecord.mediaJson?.images.map((image) => new ImageEntity(image)),
+    files: commentRecord.mediaJson?.files.map((file) => new FileEntity(file)),
+    videos: commentRecord.mediaJson?.videos.map((video) => new VideoEntity(video)),
+  },
+});
