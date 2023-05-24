@@ -3,47 +3,36 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 import { PostTagModel } from '../../../../../database/models/post-tag.model';
-import { TagModel } from '../../../../../database/models/tag.model';
-import { TagEntity } from '../../../domain/model/tag';
-import { TagRepository } from '../../../driven-adapter/repository';
-import { userMock } from '../../mock/user.dto.mock';
 import { Sequelize } from 'sequelize-typescript';
 import {
   ARTICLE_FACTORY_TOKEN,
   IArticleFactory,
   IPostFactory,
   ISeriesFactory,
-  ITagFactory,
   POST_FACTORY_TOKEN,
   SERIES_FACTORY_TOKEN,
-  TAG_FACTORY_TOKEN,
 } from '../../../domain/factory/interface';
-import { HttpService } from '@nestjs/axios';
 import { Transaction } from 'sequelize';
-import { PostFactory, TagFactory } from '../../../domain/factory';
+import { PostFactory } from '../../../domain/factory';
 import { ArticleFactory } from '../../../domain/factory/article.factory';
 import { SeriesFactory } from '../../../domain/factory/series.factory';
 import { PostModel } from '../../../../../database/models/post.model';
 import { PostGroupModel } from '../../../../../database/models/post-group.model';
 import { PostSeriesModel } from '../../../../../database/models/post-series.model';
-import { PostResponseDto } from '../../../../post/dto/responses';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
-import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { postRecordMock } from '../../mock/post.model.mock';
-import { PostType } from '../../../data-type';
-import { PostStatus } from '../../../data-type/post-status.enum';
 import { LinkPreviewModel } from '../../../../../database/models/link-preview.model';
 import { UserSeenPostModel } from '../../../../../database/models/user-seen-post.model';
-import { clone } from 'lodash';
 import { contentEntityMock } from '../../mock/content.entity.mock';
 import { postEntityMock } from '../../mock/post.entity.mock';
 import { seriesEntityMock } from '../../mock/series.entity.mock';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
+import { UserMarkReadPostModel } from '../../../../../database/models/user-mark-read-post.model';
 
 const transaction = createMock<Transaction>();
 
 describe('ContentRepository', () => {
   let repo,
+    userReadImportantPostModel,
     postModel,
     postGroupModel,
     postSeriesModel,
@@ -100,6 +89,10 @@ describe('ContentRepository', () => {
           useValue: createMock<UserSeenPostModel>(),
         },
         {
+          provide: getModelToken(UserMarkReadPostModel),
+          useValue: createMock<UserMarkReadPostModel>(),
+        },
+        {
           provide: Sequelize,
           useValue: createMock<Sequelize>(),
         },
@@ -116,6 +109,9 @@ describe('ContentRepository', () => {
     postSeriesModel = module.get<PostSeriesModel>(getModelToken(PostSeriesModel));
     linkPreviewModel = module.get<LinkPreviewModel>(getModelToken(LinkPreviewModel));
     userSeenPostModel = module.get<UserSeenPostModel>(getModelToken(UserSeenPostModel));
+    userReadImportantPostModel = module.get<UserMarkReadPostModel>(
+      getModelToken(UserMarkReadPostModel)
+    );
     sequelizeConnection = module.get<Sequelize>(Sequelize);
     sequelizeConnection.transaction.mockResolvedValue(transaction);
   });
