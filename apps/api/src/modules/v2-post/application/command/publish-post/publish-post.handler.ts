@@ -159,7 +159,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     }
 
     if (postEntityAfter.isProcessing() && postEntityAfter.getVideoIdProcessing()) {
-      this._kafkaService.emit(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED, {
+      this._kafkaService.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: { videoIds: [postEntityAfter.getVideoIdProcessing()] },
       });
