@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
-import { KafkaConsumerBootstrap } from './bootstrap/kafka-consumer.bootstrap';
+import { KafkaGateway } from '@app/kafka/kafka-gateway';
 import { LoggerBootstrap } from './bootstrap/logger.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import './common/extension';
@@ -19,7 +19,7 @@ async function bootstrap(): Promise<void> {
 
   ClassValidatorBootstrap.init(app, AppModule);
   SwaggerBootstrap.init(app, configService);
-  KafkaConsumerBootstrap.init(app, configService)
+  KafkaGateway.init(app, configService)
     .then((app) => {
       KafkaHealthBootstrap.init(app);
     })

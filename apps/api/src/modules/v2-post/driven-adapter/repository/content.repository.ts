@@ -29,6 +29,7 @@ import { LinkPreviewModel } from '../../../../database/models/link-preview.model
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
+import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
 
 export class ContentRepository implements IContentRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -47,6 +48,8 @@ export class ContentRepository implements IContentRepository {
   private readonly _linkPreviewModel: typeof LinkPreviewModel;
   @InjectModel(UserSeenPostModel)
   private readonly _userSeenPostModel: typeof UserSeenPostModel;
+  @InjectModel(UserMarkReadPostModel)
+  private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel;
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
@@ -98,7 +101,7 @@ export class ContentRepository implements IContentRepository {
     if (state.attachGroupIds.length > 0) {
       await this._postGroupModel.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
-          postId: postEntity.get('id'),
+          postId: postEntity.getId(),
           groupId,
         })),
         { transaction, ignoreDuplicates: true }
@@ -108,7 +111,7 @@ export class ContentRepository implements IContentRepository {
     if (state.detachGroupIds.length > 0) {
       await this._postGroupModel.destroy({
         where: {
-          postId: postEntity.get('id'),
+          postId: postEntity.getId(),
           groupId: state.detachGroupIds,
         },
         transaction,
@@ -118,7 +121,7 @@ export class ContentRepository implements IContentRepository {
 
   private _entityToModel(postEntity): IPost {
     return {
-      id: postEntity.get('id'),
+      id: postEntity.getId(),
       content: postEntity.get('content'),
       privacy: postEntity.get('privacy'),
       isHidden: postEntity.get('isHidden'),
@@ -234,6 +237,18 @@ export class ContentRepository implements IContentRepository {
         {
           postId: postId,
           userId: userId,
+        },
+      ],
+      { ignoreDuplicates: true }
+    );
+  }
+
+  public async markReadImportant(postId: string, userId: string): Promise<void> {
+    await this._userReadImportantPostModel.bulkCreate(
+      [
+        {
+          postId,
+          userId,
         },
       ],
       { ignoreDuplicates: true }

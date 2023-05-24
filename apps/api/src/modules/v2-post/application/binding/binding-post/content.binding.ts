@@ -14,14 +14,6 @@ import {
 import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
 
-type Props = {
-  name?: string;
-  level?: number;
-  isCreatedByMe?: boolean;
-  offset: number;
-  limit: number;
-};
-
 @Injectable()
 export class ContentBinding implements IContentBinding {
   public constructor(
@@ -55,6 +47,8 @@ export class ContentBinding implements IContentBinding {
     }
 
     if (dataBinding?.actor) {
+      delete dataBinding.actor.permissions;
+      delete dataBinding.actor.groups;
       users.push(dataBinding.actor);
     }
 

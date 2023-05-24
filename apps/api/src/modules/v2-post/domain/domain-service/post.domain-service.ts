@@ -139,7 +139,11 @@ export class PostDomainService implements IPostDomainService {
   }
 
   public async markSeen(contentEntity: ContentEntity, userId: string): Promise<void> {
-    await this._contentRepository.markSeen(contentEntity.get('id'), userId);
+    await this._contentRepository.markSeen(contentEntity.getId(), userId);
+  }
+
+  public async markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void> {
+    await this._contentRepository.markReadImportant(contentEntity.getId(), userId);
   }
 
   public async autoSavePost(input: PostPublishProps): Promise<void> {

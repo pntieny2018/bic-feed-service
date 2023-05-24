@@ -121,6 +121,10 @@ export class ContentEntity<
     return this._props.createdBy === userId;
   }
 
+  public isImportant(): boolean {
+    return this._props.setting.isImportant;
+  }
+
   public isPublished(): boolean {
     return this._props.status === PostStatus.PUBLISHED;
   }
