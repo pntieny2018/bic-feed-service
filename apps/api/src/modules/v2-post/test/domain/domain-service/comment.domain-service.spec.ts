@@ -14,13 +14,18 @@ import {
 } from '../../../domain/domain-service/interface/media.domain-service.interface';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { MentionValidator } from '../../../domain/validator/mention.validator';
-import { createCommentProps } from '../../mock/comment.props.mock';
+import {
+  createCommentProps,
+  notChangedCommentProps,
+  updateCommentProps,
+} from '../../mock/comment.props.mock';
 import { CommentEntity } from '../../../domain/model/comment';
 import { v4 } from 'uuid';
 import { imageEntites, invalidImageComment } from '../../mock/media.entity.mock';
 import { cloneDeep, omit } from 'lodash';
 import { InvalidResourceImageException } from '../../../domain/exception/invalid-resource-image.exception';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
+import { CommentNotEmptyException } from '../../../domain/exception';
 
 describe('CommentDomainService', () => {
   let domainService: ICommentDomainService;
@@ -192,5 +197,70 @@ describe('CommentDomainService', () => {
         expect(error).toBeInstanceOf(DatabaseException);
       }
     });
+  });
+
+  describe('update', () => {
+    it('Should update comment successfully', async () => {
+      const props = cloneDeep(updateCommentProps);
+      jest.spyOn(mediaDomainService, 'getAvailableImages').mockResolvedValue(imageEntites);
+      const commentEntityWithMedia = cloneDeep(props.commentEntity);
+      commentEntityWithMedia.setMedia({
+        files: props.commentEntity.get('media').files,
+        images: imageEntites,
+        videos: props.commentEntity.get('media').videos,
+      });
+      commentEntityWithMedia.updateAttribute(props.newData);
+      await domainService.update(props);
+
+      expect(mentionValidator.validateMentionUsers).toBeCalledWith(
+        props.mentionUsers,
+        props.groups
+      );
+      expect(repo.update).toBeCalledWith(props.commentEntity);
+      expect(omit(props.commentEntity.toObject(), ['updatedAt'])).toEqual(
+        omit(commentEntityWithMedia.toObject(), ['updatedAt'])
+      );
+    });
+
+    it('Should throw error invalid image resource', async () => {
+      const props = cloneDeep(updateCommentProps);
+      jest.spyOn(mediaDomainService, 'getAvailableImages').mockResolvedValue(invalidImageComment);
+      try {
+        await domainService.update(props);
+      } catch (e) {
+        expect(e).toEqual(new InvalidResourceImageException());
+      }
+    });
+
+    it('Should throw error because comment is empty', async () => {
+      const props = cloneDeep(updateCommentProps);
+      try {
+        await domainService.update({
+          ...props,
+          newData: {
+            ...props.newData,
+            content: '',
+            giphyId: '',
+            mentions: [],
+            media: undefined,
+          },
+        });
+      } catch (error) {
+        expect(error).toBeInstanceOf(CommentNotEmptyException);
+      }
+    });
+  });
+
+  it('Should return void because the comment is not changed', async () => {
+    const props = cloneDeep(notChangedCommentProps);
+    await domainService.update({
+      ...props,
+      newData: {
+        ...props.newData,
+        media: undefined,
+      },
+    });
+    expect(mentionValidator.validateMentionUsers).toBeCalledWith(props.mentionUsers, props.groups);
+    expect(repo.update).toBeCalledTimes(0);
   });
 });
