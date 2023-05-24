@@ -23,6 +23,7 @@ import { CommentController } from './driving-apdater/controller/comment.controll
 import { PostConsumer } from './driving-apdater/consumer/post.consumer';
 import { MediaModule } from '../media';
 import { NotificationModule } from '../../notification';
+import { KafkaModule } from '@app/kafka';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { NotificationModule } from '../../notification';
     GroupModuleV2,
     UserModuleV2,
     MediaModule,
+    KafkaModule,
     NotificationModule,
   ],
   controllers: [

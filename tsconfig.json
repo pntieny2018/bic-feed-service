@@ -32,6 +32,12 @@
       ],
       "@app/sentry/*": [
         "libs/sentry/src/*"
+      ],
+      "@app/kafka": [
+        "libs/kafka/src"
+      ],
+      "@app/kafka/*": [
+        "libs/kafka/src/*"
       ]
     }
   },

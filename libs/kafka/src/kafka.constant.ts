@@ -1,4 +1,4 @@
-export const KAFKA_PRODUCER = `${process.env.KAFKA_ENV}.stream_producer`;
+export const KAFKA_TOKEN = `KAFKA_TOKEN`;
 export const KAFKA_TOPIC = {
   BEIN_GROUP: {
     USERS_FOLLOW_GROUPS: `${process.env.KAFKA_ENV}.bein_group.users_follow_groups`,
