@@ -1,9 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
-import { IKafkaConfig } from '../config/kafka';
+import { IKafkaConfig } from '../../../apps/api/src/config/kafka';
 
-export class KafkaConsumerBootstrap {
+export class KafkaGateway {
   /**
    * Initializers the kafka consumer.
    * Connects microservice to the NestApplication instance.
