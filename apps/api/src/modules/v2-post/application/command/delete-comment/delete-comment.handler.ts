@@ -15,7 +15,7 @@ import {
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { CommentHasBeenDeletedEvent } from 'apps/api/src/events/comment/comment-has-been-deleted.event';
+import { CommentHasBeenDeletedEvent } from '../../../../../events/comment/comment-has-been-deleted.event';
 
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
