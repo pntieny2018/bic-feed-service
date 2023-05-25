@@ -42,6 +42,7 @@ import {
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { v4 } from 'uuid';
+import { GroupDto } from '../../../../../modules/v2-group/application';
 
 describe('UpdateCommentHandler', () => {
   let handler: UpdateCommentHandler;
@@ -128,6 +129,7 @@ describe('UpdateCommentHandler', () => {
         .mockResolvedValue(commentEntityMock);
       const spyRepo = jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
       const spyUserAppService = jest.spyOn(userApplicationService, 'findAllByIds').mockReturnThis();
+      const spyDomainService = jest.spyOn(domainService, 'update').mockReturnThis();
       await handler.execute(command);
       expect(spyRepo).toBeCalledWith({
         where: { id: commentEntityMock.get('postId'), groupArchived: false, isHidden: false },
@@ -137,6 +139,7 @@ describe('UpdateCommentHandler', () => {
       });
       expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
       expect(spyUserAppService).toBeCalledWith(payload.mentions, { withGroupJoined: true });
+      expect(spyDomainService).toBeCalled();
       expect(eventEmitter.emit).toBeCalledWith(
         new CommentHasBeenUpdatedEvent({
           actor: payload.actor,
