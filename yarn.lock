@@ -6839,6 +6839,11 @@ nest-winston@^1.6.2:
     cli-color "^2.0.1"
     fast-safe-stringify "^2.1.1"
 
+nestjs-cls@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/nestjs-cls/-/nestjs-cls-3.3.1.tgz#6bac8e9b8171b74c586245a7a782355961c9a96e"
+  integrity sha512-8YyXFAtVVEXSrRpXJfOSGYMTSD6WBbNylowneAjwkUFZaw5ff2Q0VyMUcUKZYux6hTO8NFrGlc2AAm0l2WvPXA==
+
 nestjs-i18n@^10.2.1:
   version "10.2.1"
   resolved "https://registry.yarnpkg.com/nestjs-i18n/-/nestjs-i18n-10.2.1.tgz#dc2aa66c94b347dd047695c3eaa3fae437733480"

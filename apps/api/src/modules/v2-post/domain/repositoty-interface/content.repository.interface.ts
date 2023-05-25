@@ -49,6 +49,7 @@ export interface IContentRepository {
 
   delete(id: string): Promise<void>;
   markSeen(postId: string, userId: string): Promise<void>;
+  markReadImportant(postId: string, userId: string): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

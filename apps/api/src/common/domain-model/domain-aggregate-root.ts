@@ -27,10 +27,13 @@ export abstract class DomainAggregateRoot<
   }
 
   public isChanged(): boolean {
-    const props = cloneDeep(this._props);
-    const snapshot = cloneDeep(this._snapshot);
+    const props = this._props;
+    const snapshot = this._snapshot;
     const excluded = ['updatedAt'];
-    return !isEqual(omit(props, excluded), omit(snapshot, excluded));
+    return !isEqual(
+      omit(JSON.parse(JSON.stringify(props)), excluded),
+      omit(JSON.parse(JSON.stringify(snapshot)), excluded)
+    );
   }
 
   public get<K extends keyof Props>(key: K): Props[K] {

@@ -19,6 +19,7 @@ export class LinkPreviewFactory implements ILinkPreviewFactory {
       title,
       description,
       domain,
+      image,
       url,
       createdAt: now,
       updatedAt: now,

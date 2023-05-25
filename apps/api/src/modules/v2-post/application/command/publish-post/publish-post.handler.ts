@@ -5,7 +5,7 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { PublishPostCommand } from './publish-post.command';
-import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -21,11 +21,11 @@ import {
 } from '../../../../v2-user/application';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../../../../common/constants';
-import { ClientKafka } from '@nestjs/microservices';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { MediaService } from '../../../../media';
-import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
+import { clone } from 'lodash';
+import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
+import { KafkaService } from '@app/kafka';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -38,8 +38,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    @Inject(KAFKA_PRODUCER)
-    private readonly _clientKafka: ClientKafka,
+    private readonly _kafkaService: KafkaService,
     private readonly _mediaService: MediaService
   ) {}
 
@@ -61,7 +60,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       throw new ContentNotFoundException();
     }
 
-    const postPropsBefore = { ...postEntity.toObject() };
+    const postEntityBefore = clone(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
       groupIds || postEntity.get('groupIds')
     );
@@ -77,7 +76,13 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groups,
       },
     });
-    await this._postDomainService.markSeen(postEntity, authUser.id);
+
+    if (postEntity.getState().isChangeStatus) {
+      await this._postDomainService.markSeen(postEntity, authUser.id);
+      if (postEntity.isImportant()) {
+        await this._postDomainService.markReadImportant(postEntity, authUser.id);
+      }
+    }
 
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
@@ -85,70 +90,79 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       mentionUsers,
     });
 
-    //TODO:: wrap event
-    if (postEntity.isChanged() && postEntity.isPublished()) {
+    this._sendEvent(postEntityBefore, postEntity, result);
+
+    return result;
+  }
+
+  private _sendEvent(
+    postEntityBefore: PostEntity,
+    postEntityAfter: PostEntity,
+    result: PostDto
+  ): void {
+    if (!postEntityAfter.isChanged()) return;
+    if (postEntityAfter.isPublished()) {
       const payload = {
-        isPublished: postEntity.getState().isChangeStatus,
+        isPublished: postEntityAfter.getState().isChangeStatus,
         before: {
-          id: postPropsBefore.id,
+          id: postEntityBefore.getId(),
           actor: result.actor,
-          setting: postPropsBefore.setting,
-          type: postPropsBefore.type,
-          groupIds: postPropsBefore.groupIds,
-          content: postPropsBefore.content,
-          mentionUserIds: postPropsBefore.mentionUserIds,
-          createdAt: postPropsBefore.createdAt,
-          updatedAt: postPropsBefore.updatedAt,
-          lang: postPropsBefore.lang,
-          isHidden: postPropsBefore.isHidden,
-          status: postPropsBefore.status,
+          setting: postEntityBefore.get('setting'),
+          type: postEntityBefore.get('type'),
+          groupIds: postEntityBefore.get('groupIds'),
+          content: postEntityBefore.get('content'),
+          mentionUserIds: postEntityBefore.get('mentionUserIds'),
+          createdAt: postEntityBefore.get('createdAt'),
+          updatedAt: postEntityBefore.get('updatedAt'),
+          lang: postEntityBefore.get('lang'),
+          isHidden: postEntityBefore.get('isHidden'),
+          status: postEntityBefore.get('status'),
         },
         after: {
-          id: postEntity.get('id'),
+          id: postEntityAfter.get('id'),
           actor: result.actor,
           setting: result.setting,
           type: result.type,
-          groupIds: postEntity.get('groupIds'),
+          groupIds: postEntityAfter.get('groupIds'),
           communityIds: result.communities.map((community) => community.id),
           tags: result.tags,
           media: result.media,
-          seriesIds: result.series,
-          content: result.content,
-          mentionUserIds: postEntity.get('mentionUserIds'),
-          lang: postEntity.get('lang'),
-          isHidden: postEntity.get('isHidden'),
-          status: postEntity.get('status'),
+          seriesIds: postEntityAfter.get('seriesIds'),
+          content: postEntityAfter.get('content'),
+          mentionUserIds: postEntityAfter.get('mentionUserIds'),
+          lang: postEntityAfter.get('lang'),
+          isHidden: postEntityAfter.get('isHidden'),
+          status: postEntityAfter.get('status'),
           state: {
-            attachSeriesIds: postEntity.getState().attachSeriesIds,
-            detachSeriesIds: postEntity.getState().detachSeriesIds,
-            attachGroupIds: postEntity.getState().attachGroupIds,
-            detachGroupIds: postEntity.getState().detachGroupIds,
-            attachTagIds: postEntity.getState().attachTagIds,
-            detachTagIds: postEntity.getState().detachTagIds,
-            attachFileIds: postEntity.getState().attachFileIds,
-            detachFileIds: postEntity.getState().detachFileIds,
-            attachImageIds: postEntity.getState().attachImageIds,
-            detachImageIds: postEntity.getState().detachImageIds,
-            attachVideoIds: postEntity.getState().attachVideoIds,
-            detachVideoIds: postEntity.getState().detachVideoIds,
+            attachSeriesIds: postEntityAfter.getState().attachSeriesIds,
+            detachSeriesIds: postEntityAfter.getState().detachSeriesIds,
+            attachGroupIds: postEntityAfter.getState().attachGroupIds,
+            detachGroupIds: postEntityAfter.getState().detachGroupIds,
+            attachTagIds: postEntityAfter.getState().attachTagIds,
+            detachTagIds: postEntityAfter.getState().detachTagIds,
+            attachFileIds: postEntityAfter.getState().attachFileIds,
+            detachFileIds: postEntityAfter.getState().detachFileIds,
+            attachImageIds: postEntityAfter.getState().attachImageIds,
+            detachImageIds: postEntityAfter.getState().detachImageIds,
+            attachVideoIds: postEntityAfter.getState().attachVideoIds,
+            detachVideoIds: postEntityAfter.getState().detachVideoIds,
           },
-          createdAt: result.createdAt,
-          updatedAt: result.updatedAt,
+          createdAt: postEntityAfter.get('createdAt'),
+          updatedAt: postEntityAfter.get('updatedAt'),
         },
       };
 
-      await this._clientKafka.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
-        key: postEntity.get('id'),
-        value: JSON.stringify(new PostChangedMessagePayload(payload)),
+      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
+        key: postEntityAfter.getId(),
+        value: new PostChangedMessagePayload(payload),
       });
     }
 
-    if (postEntity.isChanged() && postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
-      await this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+    if (postEntityAfter.isProcessing() && postEntityAfter.getVideoIdProcessing()) {
+      this._kafkaService.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
-        value: JSON.stringify({ videoIds: [postEntity.getVideoIdProcessing()] }),
+        value: { videoIds: [postEntityAfter.getVideoIdProcessing()] },
       });
     }
-    return result;
   }
 }
