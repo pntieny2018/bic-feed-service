@@ -10,7 +10,7 @@ export interface ICommentRepository {
   /**
    * Temporarily set return type, will refactor soon
    */
-  destroyComment(id: string): Promise<IComment>;
+  destroyComment(id: string): Promise<void>;
 
   findOne(options: WhereOptions<IComment>): Promise<CommentEntity>;
 }

@@ -13,6 +13,7 @@ import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserDto } from '../../modules/v2-user/application';
+import { CommentEntity } from '../../modules/v2-post/domain/model/comment';
 
 @Injectable()
 export class CommentNotificationService {
@@ -193,13 +194,21 @@ export class CommentNotificationService {
     });
   }
 
-  public async destroy(event: string, deletedComment: IComment): Promise<void> {
+  public async destroy(event: string, deletedComment: IComment | CommentEntity): Promise<void> {
+    let data: any, postId: string;
+    if (deletedComment instanceof CommentEntity) {
+      data = deletedComment.toObject();
+      postId = deletedComment.get('postId');
+    } else {
+      data = deletedComment;
+      postId = deletedComment.postId;
+    }
     this._notificationService.publishCommentNotification<NotificationActivity>({
-      key: `${deletedComment.postId}`,
+      key: postId,
       value: {
         actor: null,
         event: event,
-        data: deletedComment as any,
+        data,
       },
     });
   }

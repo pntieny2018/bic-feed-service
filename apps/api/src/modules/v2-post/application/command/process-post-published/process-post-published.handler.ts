@@ -5,7 +5,7 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ProcessPostPublishedCommand } from './process-post-published.command';
-import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -15,8 +15,7 @@ import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { MediaService } from '../../../../media';
 import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
-import { KAFKA_PRODUCER, PostHasBeenPublished } from '../../../../../common/constants';
-import { ClientKafka } from '@nestjs/microservices';
+import { PostHasBeenPublished } from '../../../../../common/constants';
 import { NotificationService } from '../../../../../notification';
 import { PostActivityService } from '../../../../../notification/activities';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
@@ -37,8 +36,6 @@ export class ProcessPostPublishedHandler
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    @Inject(KAFKA_PRODUCER)
-    private readonly _clientKafka: ClientKafka,
     private readonly _mediaService: MediaService, //TODO improve interface later
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _postActivityService: PostActivityService, //TODO improve interface later
