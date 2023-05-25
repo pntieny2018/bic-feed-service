@@ -117,13 +117,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
       mentions: this._contentBinding.mapMentionWithUserInfo(mentionUsers),
-      actor: new UserDto({
-        id: actor.id,
-        fullname: actor.fullname,
-        email: actor.email,
-        username: actor.username,
-        avatar: actor.avatar,
-      }),
+      actor,
     });
   }
 }

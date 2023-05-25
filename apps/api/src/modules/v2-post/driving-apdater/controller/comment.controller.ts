@@ -48,6 +48,8 @@ import {
   DeleteCommentCommandPayload,
 } from '../../application/command/delete-comment/delete-comment.command';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { instanceToInstance } from 'class-transformer';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -85,7 +87,7 @@ export class CommentController {
             : undefined,
         } as CreateCommentCommandPayload)
       );
-      return data;
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
@@ -131,7 +133,7 @@ export class CommentController {
             : undefined,
         } as ReplyCommentCommandPayload)
       );
-      return data;
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
