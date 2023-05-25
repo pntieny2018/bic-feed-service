@@ -108,24 +108,20 @@ describe('CommentRepository', () => {
   });
 
   describe('destroyComment', () => {
-    it('Should create comment successfully', async () => {
-      const spyFindOne = jest.spyOn(commentModel, 'findByPk').mockResolvedValue(commentRecord);
+    it('Should delete comment successfully', async () => {
       const spyDelete = jest.spyOn(commentModel, 'destroy').mockResolvedValue(undefined);
       const spyDeleteReaction = jest
         .spyOn(commentReactionModel, 'destroy')
         .mockResolvedValue(undefined);
 
-      const result = await repo.destroyComment(commentRecord.id);
+      await repo.destroyComment(commentRecord.id);
 
-      expect(spyFindOne).toBeCalled();
       expect(spyDelete).toBeCalled();
       expect(spyDeleteReaction).toBeCalled();
-      expect(result).toEqual(commentRecord);
       expect(transaction.commit).toBeCalled();
     });
 
     it('Should throw a exception', async () => {
-      const spyFindOne = jest.spyOn(commentModel, 'findByPk').mockResolvedValue(commentRecord);
       const spyDelete = jest.spyOn(commentModel, 'destroy').mockRejectedValue(new Error());
       const spyDeleteReaction = jest
         .spyOn(commentReactionModel, 'destroy')
@@ -134,7 +130,6 @@ describe('CommentRepository', () => {
       try {
         await repo.destroyComment(commentRecord.id);
       } catch (err) {
-        expect(spyFindOne).toBeCalled();
         expect(spyDelete).toBeCalled();
         expect(spyDeleteReaction).toBeCalled();
         expect(transaction.commit).toBeCalledTimes(0);
