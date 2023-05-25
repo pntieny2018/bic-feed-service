@@ -174,11 +174,13 @@ describe('ReplyCommentHandler', () => {
       const parentCommentEntity = createCommentEntity(payload, postId);
       const command = new ReplyCommentCommand(payload);
 
-      jest.spyOn(commentRepo, 'findOne').mockResolvedValue(parentCommentEntity);
-      commentRepo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
-      jest.spyOn(repo, 'findOne').mockResolvedValue(null);
+      const spyCommentRepo = jest
+        .spyOn(commentRepo, 'findOne')
+        .mockResolvedValue(parentCommentEntity);
+      const spyRepo = jest.spyOn(repo, 'findOne').mockResolvedValue(null);
       await expect(handler.execute(command)).rejects.toThrowError(ContentNotFoundException);
-      expect(commentRepo.findOne).toBeCalledWith({
+      expect(spyRepo).toBeCalled();
+      expect(spyCommentRepo).toBeCalledWith({
         id: parentTagetId,
         parentId: NIL,
       });
@@ -209,17 +211,18 @@ describe('ReplyCommentHandler', () => {
       setting: { ...postProps.setting, canComment: false },
     });
 
-    jest.spyOn(commentRepo, 'findOne').mockResolvedValue(parentCommentEntity);
-    jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
-    commentRepo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
-    commentRepo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
+    const spyCommentRepo = jest
+      .spyOn(commentRepo, 'findOne')
+      .mockResolvedValue(parentCommentEntity);
+    const spyRepo = jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
     await expect(handler.execute(command)).rejects.toThrowError(
       ContentNoCommentPermissionException
     );
-    expect(commentRepo.findOne).toBeCalledWith({
+    expect(spyCommentRepo).toBeCalledWith({
       id: parentTagetId,
       parentId: NIL,
     });
+    expect(spyRepo).toBeCalled();
   });
 
   it('Should throw error when not found parent comment', async () => {

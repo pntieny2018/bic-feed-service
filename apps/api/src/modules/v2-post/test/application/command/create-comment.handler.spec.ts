@@ -114,9 +114,8 @@ describe('CreateCommentHandler', () => {
       const commentDto = createCommentDto(commentEntity);
       const postEntity = new PostEntity({ ...postProps, id: postId });
 
-      jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
-      repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
-      jest.spyOn(domainService, 'create').mockResolvedValue(commentEntity);
+      const spyRepo = jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
+      const spyDomainService = jest.spyOn(domainService, 'create').mockResolvedValue(commentEntity);
       const result = await handler.execute(command);
       expect(repo.findOne).toBeCalledWith({
         where: { id: postId, groupArchived: false, isHidden: false },
@@ -124,6 +123,8 @@ describe('CreateCommentHandler', () => {
           mustIncludeGroup: true,
         },
       });
+      expect(spyRepo).toBeCalled();
+      expect(spyDomainService).toBeCalled();
       expect(eventEmitter.emit).toBeCalledWith(
         new CommentHasBeenCreatedEvent({
           actor: payload.actor,
