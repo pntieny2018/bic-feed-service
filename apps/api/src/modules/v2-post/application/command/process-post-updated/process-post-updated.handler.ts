@@ -8,8 +8,7 @@ import {
 } from '../../../../v2-group/application';
 import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { MediaService } from '../../../../media';
-import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
+import { MediaType } from '../../../../../database/models/media.model';
 import { PostHasBeenPublished, PostHasBeenUpdated } from '../../../../../common/constants';
 import { NotificationService } from '../../../../../notification';
 import { ISeriesState, PostActivityService } from '../../../../../notification/activities';
@@ -23,6 +22,10 @@ import {
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { ProcessPostPublishedCommand } from '../process-post-published/process-post-published.command';
 import { SeriesEntity } from '../../../domain/model/content/series.entity';
+import {
+  IMediaDomainService,
+  MEDIA_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/media.domain-service.interface';
 
 @CommandHandler(ProcessPostUpdatedCommand)
 export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpdatedCommand, void> {
@@ -33,7 +36,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    private readonly _mediaService: MediaService, //TODO improve interface later
+    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _postActivityService: PostActivityService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService //TODO improve interface later
@@ -50,17 +53,14 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
 
     if (!postEntity) return;
     if (postEntity instanceof PostEntity) {
-      await this._processMedia(command, postEntity);
+      await this._processMedia(command);
       if (!postEntity.isHidden()) {
-        await this._processNotification(command, postEntity);
+        await this._processNotification(command);
       }
     }
   }
 
-  private async _processNotification(
-    command: ProcessPostUpdatedCommand,
-    postEntity: PostEntity
-  ): Promise<void> {
+  private async _processNotification(command: ProcessPostUpdatedCommand): Promise<void> {
     const { before, after, isPublished } = command.payload;
 
     const series = await this._contentRepository.findAll({
@@ -240,41 +240,34 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     }
   }
 
-  private async _processMedia(
-    command: ProcessPostPublishedCommand,
-    postEntity: PostEntity
-  ): Promise<void> {
+  private async _processMedia(command: ProcessPostPublishedCommand): Promise<void> {
     const { after } = command.payload;
     if (after.state.attachVideoIds.length) {
-      await this._mediaService.emitMediaToUploadService(
+      await this._mediaDomainService.setMediaUsed(
         MediaType.VIDEO,
-        MediaMarkAction.USED,
         after.state.attachVideoIds,
         after.actor.id
       );
     }
     if (after.state.attachFileIds.length) {
-      await this._mediaService.emitMediaToUploadService(
+      await this._mediaDomainService.setMediaUsed(
         MediaType.FILE,
-        MediaMarkAction.USED,
         after.state.attachFileIds,
         after.actor.id
       );
     }
 
     if (after.state.detachVideoIds.length) {
-      await this._mediaService.emitMediaToUploadService(
+      await this._mediaDomainService.setMediaDelete(
         MediaType.VIDEO,
-        MediaMarkAction.DELETE,
         after.state.detachVideoIds,
         after.actor.id
       );
     }
 
     if (after.state.detachFileIds.length) {
-      await this._mediaService.emitMediaToUploadService(
+      await this._mediaDomainService.setMediaDelete(
         MediaType.FILE,
-        MediaMarkAction.DELETE,
         after.state.detachFileIds,
         after.actor.id
       );
