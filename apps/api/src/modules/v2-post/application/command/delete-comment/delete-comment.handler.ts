@@ -49,12 +49,12 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    const deletedComent = await this._commentRepository.destroyComment(id);
+    await this._commentRepository.destroyComment(id);
 
     this._eventEmitter.emit(
       new CommentHasBeenDeletedEvent({
         actor,
-        comment: deletedComent,
+        comment,
       })
     );
   }

@@ -86,11 +86,7 @@ export class CommentRepository implements ICommentRepository {
     }
   }
 
-  public async destroyComment(id: string): Promise<IComment> {
-    /**
-     * TODO: Remove the find comment soon when refactoring notification module
-     * */
-    const comment = await this._commentModel.findByPk(id);
+  public async destroyComment(id: string): Promise<void> {
     const childComments = await this._commentModel.findAll({
       attributes: ['id'],
       where: {
@@ -120,7 +116,6 @@ export class CommentRepository implements ICommentRepository {
         transaction: transaction,
       });
       await transaction.commit();
-      return comment;
     } catch (e) {
       await transaction.rollback();
       throw e;
