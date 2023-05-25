@@ -22,6 +22,10 @@ import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interf
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { SeriesAddedItemsEvent } from '../../../../../events/series';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import {
+  IMediaDomainService,
+  MEDIA_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/media.domain-service.interface';
 
 @CommandHandler(ProcessPostPublishedCommand)
 export class ProcessPostPublishedHandler
@@ -36,7 +40,7 @@ export class ProcessPostPublishedHandler
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    private readonly _mediaService: MediaService, //TODO improve interface later
+    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _postActivityService: PostActivityService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService //TODO improve interface later
@@ -71,7 +75,7 @@ export class ProcessPostPublishedHandler
     command: ProcessPostPublishedCommand,
     postEntity: PostEntity
   ): Promise<void> {
-    const { before, after, isPublished } = command.payload;
+    const { after } = command.payload;
 
     let series = [];
     if (postEntity.get('seriesIds')?.length) {
@@ -132,17 +136,15 @@ export class ProcessPostPublishedHandler
     const videoIds = postEntity.get('media').videos.map((video) => video.get('id'));
     const fileIds = postEntity.get('media').files.map((file) => file.get('id'));
     if (videoIds.length) {
-      await this._mediaService.emitMediaToUploadService(
+      await this._mediaDomainService.setMediaUsed(
         MediaType.VIDEO,
-        MediaMarkAction.USED,
         videoIds,
         postEntity.get('createdBy')
       );
     }
     if (fileIds.length) {
-      await this._mediaService.emitMediaToUploadService(
+      await this._mediaDomainService.setMediaUsed(
         MediaType.FILE,
-        MediaMarkAction.USED,
         fileIds,
         postEntity.get('createdBy')
       );

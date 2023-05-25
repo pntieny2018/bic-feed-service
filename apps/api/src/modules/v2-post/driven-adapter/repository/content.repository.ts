@@ -1,6 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize } from 'sequelize';
+import { FindOptions, Sequelize, Op } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
@@ -30,6 +30,9 @@ import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
+import { TargetType } from '../../../report-content/contstants';
+import { getDatabaseConfig } from '../../../../config/database';
+import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 
 export class ContentRepository implements IContentRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -256,6 +259,8 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
+    const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
     const findOption: FindOptions<IPost> = {};
     if (options.where) {
       if (options.where['id'])
@@ -273,6 +278,21 @@ export class ContentRepository implements IContentRepository {
         findOption.where = {
           ...findOption.where,
           type: options.where['type'],
+        };
+      }
+      if (options.where.excludeReportedByUserId) {
+        findOption.where = {
+          ...findOption.where,
+          [Op.and]: [
+            Sequelize.literal(
+              `NOT EXISTS ( 
+                      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+                        WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this._postModel.sequelize.escape(
+                          options.where.excludeReportedByUserId
+                        )}
+                    )`
+            ),
+          ],
         };
       }
     }

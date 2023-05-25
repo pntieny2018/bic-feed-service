@@ -9,6 +9,7 @@ export type FindOnePostOptions = {
     id: string;
     groupArchived?: boolean;
     isHidden?: boolean;
+    excludeReportedByUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
@@ -25,6 +26,7 @@ export type FindAllPostOptions = {
     type?: PostType;
     ids?: string[];
     groupArchived?: boolean;
+    excludeReportedByUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
