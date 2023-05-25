@@ -9,8 +9,8 @@ export const commentRecord: IComment = {
   postId: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
   parentId: '00000000-0000-0000-0000-000000000000',
   isHidden: false,
-  updatedBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
-  createdBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
+  updatedBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
+  createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
   giphyId: 'EZICHGrSD5QEFCxMiC',
   mediaJson: {
     files: [{ id: '95809c73-e73e-4c49-855a-67ff0ca58346' }],
