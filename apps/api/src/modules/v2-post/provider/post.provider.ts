@@ -1,4 +1,7 @@
-import { POST_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
+import {
+  POST_DOMAIN_SERVICE_TOKEN,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+} from '../domain/domain-service/interface';
 import {
   ARTICLE_FACTORY_TOKEN,
   POST_FACTORY_TOKEN,
@@ -8,6 +11,7 @@ import {
   CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
+  SERIES_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory } from '../domain/factory';
@@ -25,6 +29,9 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
 import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
+import { SeriesValidator } from '../domain/validator/series.validator';
+import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
+import { CreateSeriesHandler } from '../application/command/create-series/create-series.handler';
 
 export const postProvider = [
   {
@@ -34,6 +41,10 @@ export const postProvider = [
   {
     provide: POST_VALIDATOR_TOKEN,
     useClass: PostValidator,
+  },
+  {
+    provide: SERIES_VALIDATOR_TOKEN,
+    useClass: SeriesValidator,
   },
   {
     provide: POST_FACTORY_TOKEN,
@@ -50,6 +61,10 @@ export const postProvider = [
   {
     provide: POST_DOMAIN_SERVICE_TOKEN,
     useClass: PostDomainService,
+  },
+  {
+    provide: SERIES_DOMAIN_SERVICE_TOKEN,
+    useClass: SeriesDomainService,
   },
   {
     provide: CONTENT_REPOSITORY_TOKEN,
@@ -69,4 +84,5 @@ export const postProvider = [
   AutoSavePostHandler,
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
+  CreateSeriesHandler,
 ];
