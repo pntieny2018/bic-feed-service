@@ -1,11 +1,11 @@
-import { PostEntity } from '../../../domain/model/content';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../../../v2-user/application';
 import { Inject, Injectable } from '@nestjs/common';
-import { FileDto, ImageDto, PostDto, UserMentionDto, VideoDto } from '../../dto';
+import { FileDto, ImageDto, PostDto, UserMentionDto, VideoDto, SeriesDto } from '../../dto';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -103,6 +103,42 @@ export class ContentBinding implements IContentBinding {
             domain: postEntity.get('linkPreview').get('domain'),
           }
         : null,
+      markedReadPost: true,
+      isSaved: false,
+      reactionsCount: {},
+      ownerReactions: [],
+    });
+  }
+
+  public async seriesBinding(
+    seriesEntity: SeriesEntity,
+    dataBinding?: {
+      actor: UserDto;
+      groups?: GroupDto[];
+    }
+  ): Promise<SeriesDto> {
+    const { actor, groups } = dataBinding;
+    const audience = {
+      groups:
+        groups || (await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds'))),
+    };
+
+    const communities = await this._groupApplicationService.findAllByIds(
+      ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
+    );
+
+    return new SeriesDto({
+      id: seriesEntity.get('id'),
+      audience,
+      createdAt: seriesEntity.get('createdAt'),
+      communities,
+      actor,
+      status: seriesEntity.get('status'),
+      type: seriesEntity.get('type'),
+      privacy: seriesEntity.get('privacy'),
+      setting: seriesEntity.get('setting'),
+      commentsCount: seriesEntity.get('aggregation').commentsCount,
+      totalUsersSeen: seriesEntity.get('aggregation').totalUsersSeen,
       markedReadPost: true,
       isSaved: false,
       reactionsCount: {},
