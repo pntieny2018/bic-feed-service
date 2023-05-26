@@ -53,14 +53,13 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
     });
 
     await this._postDomainService.markSeen(seriesEntity, actor.id);
-    seriesBinding.totalUsersSeen++;
+    seriesBinding.increaseTotalUsersSeen();
 
     if (seriesEntity.isImportant()) {
       await this._postDomainService.markReadImportant(seriesEntity, actor.id);
-      seriesBinding.markedReadPost = true;
+      seriesBinding.setMarkedReadPost();
     }
 
-    // TODO: emit event
     return seriesBinding;
   }
 }
