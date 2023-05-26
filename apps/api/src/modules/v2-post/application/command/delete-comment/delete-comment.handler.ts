@@ -15,7 +15,7 @@ import {
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { CommentHasBeenDeletedEvent } from 'apps/api/src/events/comment/comment-has-been-deleted.event';
+import { CommentHasBeenDeletedEvent } from '../../../../../events/comment/comment-has-been-deleted.event';
 
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
@@ -49,12 +49,12 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    const deletedComent = await this._commentRepository.destroyComment(id);
+    await this._commentRepository.destroyComment(id);
 
     this._eventEmitter.emit(
       new CommentHasBeenDeletedEvent({
         actor,
-        comment: deletedComent,
+        comment,
       })
     );
   }

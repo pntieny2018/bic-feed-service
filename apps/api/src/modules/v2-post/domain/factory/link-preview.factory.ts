@@ -1,7 +1,4 @@
 import { v4 } from 'uuid';
-import { StringHelper } from '../../../../common/helpers';
-import { TagEntity, TagProps } from '../model/tag';
-import { CreateTagProps, ITagFactory } from './interface';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { ILinkPreviewFactory } from './interface/link-preview.factory.interface';

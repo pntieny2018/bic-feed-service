@@ -20,7 +20,7 @@ export abstract class DomainAggregateRoot<
 
   public abstract validate(): void | never;
 
-  protected createSnapShot() {
+  protected createSnapShot(): void {
     if (!this._snapshot) {
       this._snapshot = cloneDeep(this._props);
     }
