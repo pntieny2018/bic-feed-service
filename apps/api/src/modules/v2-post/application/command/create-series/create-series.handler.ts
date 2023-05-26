@@ -47,18 +47,20 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
       data: { ...command.payload, groups },
     });
 
-    await this._postDomainService.markSeen(seriesEntity, actor.id);
-    // TODO: Increase the number of user seen
-
-    if (seriesEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(seriesEntity, actor.id);
-    }
-
-    const result = await this._contentBinding.seriesBinding(seriesEntity, {
+    const seriesBinding = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,
     });
+
+    await this._postDomainService.markSeen(seriesEntity, actor.id);
+    seriesBinding.totalUsersSeen++;
+
+    if (seriesEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(seriesEntity, actor.id);
+      seriesBinding.markedReadPost = true;
+    }
+
     // TODO: emit event
-    return result;
+    return seriesBinding;
   }
 }
