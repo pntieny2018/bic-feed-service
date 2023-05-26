@@ -24,6 +24,7 @@ import { PostConsumer } from './driving-apdater/consumer/post.consumer';
 import { MediaModule } from '../media';
 import { NotificationModule } from '../../notification';
 import { KafkaModule } from '@app/kafka';
+import { SeriesController } from './driving-apdater/controller/series.controller';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { KafkaModule } from '@app/kafka';
     ReactionController,
     CommentController,
     PostConsumer,
+    SeriesController,
   ],
   providers: [
     ...tagProvider,
