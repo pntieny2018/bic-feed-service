@@ -24,7 +24,6 @@ import {
 import { PostSeriesModel } from '../../../../database/models/post-series.model';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ContentEntity } from '../../domain/model/content/content.entity';
-import { TagModel } from '../../../../database/models/tag.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
@@ -123,6 +122,8 @@ export class ContentRepository implements IContentRepository {
     return {
       id: postEntity.getId(),
       content: postEntity.get('content'),
+      title: postEntity.get('title'),
+      summary: postEntity.get('summary'),
       privacy: postEntity.get('privacy'),
       isHidden: postEntity.get('isHidden'),
       isReported: postEntity.get('isReported'),
@@ -143,7 +144,7 @@ export class ContentRepository implements IContentRepository {
         videos: postEntity.get('media').videos.map((video) => video.toObject()),
       },
       mentions: postEntity.get('mentionUserIds'),
-      cover: postEntity.get('cover'),
+      cover: postEntity.get('cover').toObject(),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
       tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
       linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
