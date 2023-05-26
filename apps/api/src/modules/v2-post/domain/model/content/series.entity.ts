@@ -14,4 +14,8 @@ export class SeriesEntity extends ContentEntity<SeriesProps> {
   public constructor(props: SeriesProps) {
     super(props);
   }
+
+  public setCover(coverMedia: ImageEntity): void {
+    this._props.cover = coverMedia;
+  }
 }
