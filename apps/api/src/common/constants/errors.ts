@@ -44,6 +44,7 @@ export const ERRORS = {
     SERIES_NO_UPDATE_PERMISSION: 'series.no_update_permission',
     SERIES_NO_CREATE_PERMISSION: 'series.no_create_permission',
     SERIES_NO_READ_PERMISSION: 'series.no_read_permission',
+    SERIRES_REQUIRED_COVER: 'series.required_cover',
   },
   MENTION: {
     USER_NOT_FOUND: 'mention.user_not_found',

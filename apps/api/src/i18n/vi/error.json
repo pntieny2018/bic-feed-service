@@ -25,5 +25,8 @@
     "not_found": "Không tìm thấy bình luận",
     "reply_not_exist": "Bình luận được trả lời không tồn tại",
     "can_not_empty": "Bình luận không được trống"
+  },
+  "series": {
+    "required_group": "Vui lòng chọn cover"
   }
 }

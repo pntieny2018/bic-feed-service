@@ -25,3 +25,4 @@ export * from './reaction-duplicate.exception';
 export * from './reaction-not-found.exception';
 export * from './reaction-not-have-authority.exception';
 export * from './comment-not-empty.exception';
+export * from './series-require-cover.exception';
