@@ -1,0 +1,5 @@
+export enum REACTION_TARGET {
+  ARTICLE = 'ARTICLE',
+  POST = 'POST',
+  COMMENT = 'COMMENT',
+}
