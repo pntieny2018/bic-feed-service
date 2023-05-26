@@ -18,5 +18,7 @@ export interface IMediaDomainService {
     newVideoIds: string[],
     ownerId: string
   ): Promise<VideoEntity[]>;
+
+  getImage(magesId: string, ownerId: string): Promise<ImageEntity>;
 }
 export const MEDIA_DOMAIN_SERVICE_TOKEN = 'MEDIA_DOMAIN_SERVICE_TOKEN';
