@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from './media.request.dto';
-import { PostSettingDto } from '../../../application/dto';
+import { PostSettingRequestDto } from './post-setting.request.dto';
 
 export class CreateSeriesRequestDto {
   @ApiProperty({
@@ -47,7 +47,7 @@ export class CreateSeriesRequestDto {
 
   @ApiProperty({
     description: 'Setting post',
-    type: PostSettingDto,
+    type: PostSettingRequestDto,
     required: false,
     example: {
       canReact: true,
@@ -58,6 +58,6 @@ export class CreateSeriesRequestDto {
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => PostSettingDto)
-  public setting?: PostSettingDto;
+  @Type(() => PostSettingRequestDto)
+  public setting?: PostSettingRequestDto;
 }
