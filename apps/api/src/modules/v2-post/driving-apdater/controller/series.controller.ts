@@ -18,6 +18,8 @@ import {
   ContentNoEditSettingPermissionAtGroupException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
+import { instanceToInstance } from 'class-transformer';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 
 @ApiTags('Series v2')
 @ApiSecurity('authorization')
@@ -46,9 +48,10 @@ export class SeriesController {
         new CreateSeriesCommand({
           ...createSeriesRequestDto,
           actor: user,
+          groupIds: createSeriesRequestDto.audience?.groupIds,
         } as CreateSeriesCommandPayload)
       );
-      return data;
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentEmptyGroupException:
