@@ -57,7 +57,7 @@ export class ContentRepository implements IContentRepository {
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const model = await this._entityToModel(contentEntity);
+      const model = this._entityToModel(contentEntity);
       await this._postModel.create(model, {
         transaction,
       });
@@ -146,7 +146,7 @@ export class ContentRepository implements IContentRepository {
         videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
       },
       mentions: postEntity.get('mentionUserIds') || [],
-      coverJson: postEntity.get('cover').toObject(),
+      coverJson: postEntity.get('cover')?.toObject(),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
       tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
       linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,

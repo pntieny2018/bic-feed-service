@@ -135,7 +135,7 @@ export class ContentBinding implements IContentBinding {
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
       createdBy: seriesEntity.get('createdBy'),
-      coverMedia: new ImageDto(seriesEntity.get('cover').toObject()),
+      coverMedia: new ImageDto(seriesEntity.get('cover')?.toObject()),
       communities,
       actor,
       status: seriesEntity.get('status'),
