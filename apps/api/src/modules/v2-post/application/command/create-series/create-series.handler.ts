@@ -8,7 +8,10 @@ import {
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { isEmpty } from 'lodash';
-import { ContentEmptyGroupException, SeriesReqiredCoverException } from '../../../domain/exception';
+import {
+  ContentEmptyGroupException,
+  SeriesRequiredCoverException,
+} from '../../../domain/exception';
 import {
   IPostDomainService,
   ISeriesDomainService,
@@ -39,7 +42,7 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
 
     if (groupIds.length === 0) throw new ContentEmptyGroupException();
 
-    if (isEmpty(coverMedia)) throw new SeriesReqiredCoverException();
+    if (isEmpty(coverMedia)) throw new SeriesRequiredCoverException();
 
     const groups = await this._groupAppService.findAllByIds(groupIds);
 

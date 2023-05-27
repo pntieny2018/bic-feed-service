@@ -25,6 +25,6 @@ export * from './reaction-duplicate.exception';
 export * from './reaction-not-found.exception';
 export * from './reaction-not-have-authority.exception';
 export * from './comment-not-empty.exception';
-export * from './series-require-cover.exception';
+export * from './series-required-cover.exception';
 export * from './content-no-crud-permission-at-group.exception';
 export * from './content-no-edit-setting-permission-at-group.exception';
