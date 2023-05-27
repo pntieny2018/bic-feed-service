@@ -29,7 +29,6 @@ import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
-import { TargetType } from '../../../report-content/contstants';
 import { getDatabaseConfig } from '../../../../config/database';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 
@@ -100,7 +99,7 @@ export class ContentRepository implements IContentRepository {
 
   private async _setGroups(postEntity: ContentEntity, transaction): Promise<void> {
     const state = postEntity.getState();
-    if (state.attachGroupIds.length > 0) {
+    if (state.attachGroupIds?.length > 0) {
       await this._postGroupModel.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
           postId: postEntity.getId(),
@@ -110,7 +109,7 @@ export class ContentRepository implements IContentRepository {
       );
     }
 
-    if (state.detachGroupIds.length > 0) {
+    if (state.detachGroupIds?.length > 0) {
       await this._postGroupModel.destroy({
         where: {
           postId: postEntity.getId(),
