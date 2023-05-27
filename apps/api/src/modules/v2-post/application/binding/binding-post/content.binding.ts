@@ -129,6 +129,8 @@ export class ContentBinding implements IContentBinding {
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
+      title: seriesEntity.get('title'),
+      summary: seriesEntity.get('summary'),
       audience,
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
@@ -139,6 +141,7 @@ export class ContentBinding implements IContentBinding {
       status: seriesEntity.get('status'),
       type: seriesEntity.get('type'),
       privacy: seriesEntity.get('privacy'),
+      isHidden: seriesEntity.get('isHidden'),
       setting: seriesEntity.get('setting'),
       commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
