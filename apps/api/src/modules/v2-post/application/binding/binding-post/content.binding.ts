@@ -92,8 +92,8 @@ export class ContentBinding implements IContentBinding {
       type: postEntity.get('type'),
       privacy: postEntity.get('privacy'),
       setting: postEntity.get('setting'),
-      commentsCount: postEntity.get('aggregation').commentsCount,
-      totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
+      commentsCount: postEntity.get('aggregation')?.commentsCount,
+      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen,
       linkPreview: postEntity.get('linkPreview')
         ? {
             url: postEntity.get('linkPreview').get('url'),
@@ -137,8 +137,8 @@ export class ContentBinding implements IContentBinding {
       type: seriesEntity.get('type'),
       privacy: seriesEntity.get('privacy'),
       setting: seriesEntity.get('setting'),
-      commentsCount: seriesEntity.get('aggregation').commentsCount || 0,
-      totalUsersSeen: seriesEntity.get('aggregation').totalUsersSeen || 0,
+      commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
+      totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
       markedReadPost: false,
       isSaved: false,
       reactionsCount: {},
