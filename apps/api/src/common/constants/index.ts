@@ -7,3 +7,4 @@ export * from './kafka.constant';
 export * from './http-message';
 export * from './http-status-id';
 export * from './casl.constant';
+export * from './transformer.constant';
