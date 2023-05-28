@@ -10,7 +10,6 @@ import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import { ISeriesValidator, SERIES_VALIDATOR_TOKEN } from '../validator/interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { isNil } from 'lodash';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -36,25 +35,21 @@ export class SeriesDomainService implements ISeriesDomainService {
     });
 
     seriesEntity.setSetting(setting);
+    const isEnableSetting = seriesEntity.getState().enableSetting;
 
-    if (groupIds.length) {
-      const isEnableSetting = seriesEntity.getState().enableSetting;
-      await this._seriesValidator.checkCanCreateSeries(actor, groups, isEnableSetting);
-      seriesEntity.setGroups(groupIds);
-      seriesEntity.setPrivacyFromGroups(groups);
-    }
+    await this._seriesValidator.checkCanCreateSeries(actor, groups, isEnableSetting);
+    seriesEntity.setGroups(groupIds);
+    seriesEntity.setPrivacyFromGroups(groups);
 
-    if (!isNil(coverMedia) && coverMedia?.id) {
-      const images = await this._mediaDomainService.getAvailableImages(
-        [],
-        [coverMedia.id],
-        seriesEntity.get('createdBy')
-      );
-      if (images[0] && !images[0].isSeriesCoverResource()) {
-        throw new InvalidResourceImageException();
-      }
-      seriesEntity.setCover(images[0]);
+    const images = await this._mediaDomainService.getAvailableImages(
+      [],
+      [coverMedia.id],
+      seriesEntity.get('createdBy')
+    );
+    if (images[0] && !images[0].isSeriesCoverResource()) {
+      throw new InvalidResourceImageException();
     }
+    seriesEntity.setCover(images[0]);
 
     try {
       await this._contentRepository.create(seriesEntity);

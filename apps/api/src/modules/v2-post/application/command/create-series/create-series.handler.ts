@@ -7,7 +7,6 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { isEmpty } from 'lodash';
 import {
   ContentEmptyGroupException,
   SeriesRequiredCoverException,
@@ -40,9 +39,9 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
   public async execute(command: CreateSeriesCommand): Promise<CreateSeriesDto> {
     const { actor, groupIds, coverMedia } = command.payload;
 
-    if (groupIds.length === 0) throw new ContentEmptyGroupException();
+    if (!groupIds || groupIds.length === 0) throw new ContentEmptyGroupException();
 
-    if (isEmpty(coverMedia)) throw new SeriesRequiredCoverException();
+    if (!coverMedia || !coverMedia.id) throw new SeriesRequiredCoverException();
 
     const groups = await this._groupAppService.findAllByIds(groupIds);
 
