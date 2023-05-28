@@ -10,6 +10,7 @@ import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import { ISeriesValidator, SERIES_VALIDATOR_TOKEN } from '../validator/interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { isNil } from 'lodash';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -43,13 +44,16 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setPrivacyFromGroups(groups);
     }
 
-    if (coverMedia && coverMedia?.id) {
-      const image = await this._mediaDomainService.getImage(
-        coverMedia.id,
+    if (!isNil(coverMedia) && coverMedia?.id) {
+      const images = await this._mediaDomainService.getAvailableImages(
+        [],
+        [coverMedia.id],
         seriesEntity.get('createdBy')
       );
-      if (image && !image.isSeriesCoverResource()) throw new InvalidResourceImageException();
-      seriesEntity.setCover(image);
+      if (images[0] && !images[0].isSeriesCoverResource()) {
+        throw new InvalidResourceImageException();
+      }
+      seriesEntity.setCover(images[0]);
     }
 
     try {

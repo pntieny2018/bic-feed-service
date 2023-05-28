@@ -127,12 +127,4 @@ export class MediaDomainService implements IMediaDomainService {
       });
     }
   }
-
-  public async getImage(imageId: string, ownerId: string): Promise<ImageEntity> {
-    if (!imageId) return;
-    const images = await this._mediaRepo.findImages([imageId]);
-    if (images.length === 0) return;
-    if (!images[0].isOwner(ownerId) || !images[0].isReady()) return;
-    return images[0];
-  }
 }

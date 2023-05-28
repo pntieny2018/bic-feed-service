@@ -22,7 +22,5 @@ export interface IMediaDomainService {
 
   setMediaUsed(mediaType: MediaType, mediaIds: string[], userId: string): Promise<void>;
   setMediaDelete(mediaType: MediaType, mediaIds: string[], userId: string): Promise<void>;
-
-  getImage(magesId: string, ownerId: string): Promise<ImageEntity>;
 }
 export const MEDIA_DOMAIN_SERVICE_TOKEN = 'MEDIA_DOMAIN_SERVICE_TOKEN';
