@@ -116,6 +116,7 @@ export class ContentBinding implements IContentBinding {
         : null,
       markedReadPost: postEntity.get('markedReadImportant'),
       isSaved: postEntity.get('isSaved'),
+      isReported: postEntity.get('isReported'),
       reactionsCount: {},
       ownerReactions: postEntity.get('ownerReactions'),
     });
