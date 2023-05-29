@@ -35,6 +35,7 @@ export class PostDto {
   public type: PostType;
   public markedReadPost: boolean;
   public isSaved: boolean;
+  public isReported: boolean;
   public mentions: UserMentionDto;
   public commentsCount: number;
   public totalUsersSeen: number;
