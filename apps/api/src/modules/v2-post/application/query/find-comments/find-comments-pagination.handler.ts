@@ -6,12 +6,21 @@ import { FindCommentsPaginationDto } from './find-comments-pagination.dto';
 import { CommentDto } from '../../dto/comment.dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { FileDto, ImageDto, VideoDto } from '../../dto';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+} from '../../../domain/query-interface/reaction.query.interface';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
   implements IQueryHandler<FindCommentsPaginationQuery, FindCommentsPaginationDto>
 {
-  public constructor(@Inject(COMMENT_QUERY_TOKEN) private readonly _commentQuery: ICommentQuery) {}
+  public constructor(
+    @Inject(COMMENT_QUERY_TOKEN)
+    private readonly _commentQuery: ICommentQuery,
+    @Inject(REACTION_QUERY_TOKEN)
+    private readonly _reactionQuery: IReactionQuery
+  ) {}
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);
@@ -36,7 +45,9 @@ export class FindCommentsPaginationHandler
       });
     });
 
-    // TODO: Binding data to comments
+    const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
+      instances.map((item) => item.id)
+    );
 
     return new FindCommentsPaginationDto(instances, meta);
   }
