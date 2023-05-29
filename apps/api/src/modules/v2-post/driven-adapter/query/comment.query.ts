@@ -60,6 +60,7 @@ export class CommentQuery implements ICommentQuery {
       this._commentModel,
       findOptions,
       { previousCursor, nextCursor, limit },
+      order,
       'id'
     );
 

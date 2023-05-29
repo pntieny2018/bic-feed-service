@@ -1,3 +1,4 @@
+import { OrderEnum } from '../pagination';
 import { PaginatedArgs } from './paginated.args';
 import { FindOptions, Model, ModelStatic, Op, WhereOptions } from 'sequelize';
 import { CursorPaginationResult } from '../../types/cursor-pagination-result.type';
@@ -6,20 +7,23 @@ export async function paginate<T extends Model>(
   executer: ModelStatic<T>,
   query: FindOptions,
   paginatedArgs: PaginatedArgs,
+  order: OrderEnum,
   cursorColumn = 'id'
 ): Promise<CursorPaginationResult<T>> {
   const { previousCursor, nextCursor, limit } = paginatedArgs;
   let paginationQuery: WhereOptions | undefined;
 
   if (nextCursor) {
+    const operator = order === OrderEnum.ASC ? Op.gt : Op.lt;
     paginationQuery = {
-      [cursorColumn]: { [Op.gt]: Buffer.from(nextCursor, 'base64').toString('utf8') },
+      [cursorColumn]: { [operator]: Buffer.from(nextCursor, 'base64').toString('utf8') },
     };
   }
 
   if (previousCursor) {
+    const operator = order === OrderEnum.ASC ? Op.lt : Op.gt;
     paginationQuery = {
-      [cursorColumn]: { [Op.gt]: Buffer.from(previousCursor, 'base64').toString('utf8') },
+      [cursorColumn]: { [operator]: Buffer.from(previousCursor, 'base64').toString('utf8') },
     };
   }
 
