@@ -3,9 +3,9 @@ import { Inject } from '@nestjs/common';
 import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
 import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
 import { FindCommentsPaginationDto } from './find-comments-pagination.dto';
-import { CommentDto } from '../../dto/comment.dto';
+import { CommentResponseDto } from '../../../driving-apdater/dto/response';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
-import { FileDto, ImageDto, VideoDto } from '../../dto';
+import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
@@ -25,8 +25,14 @@ export class FindCommentsPaginationHandler
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);
 
+    if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
+
+    const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
+      rows.map((item) => item.get('id'))
+    );
+
     const instances = rows.map((row) => {
-      return new CommentDto({
+      return new CommentResponseDto({
         id: row.get('id'),
         edited: row.get('edited'),
         parentId: row.get('parentId'),
@@ -37,17 +43,23 @@ export class FindCommentsPaginationHandler
         giphyUrl: createUrlFromId(row.get('giphyId')),
         createdAt: row.get('createdAt'),
         createdBy: row.get('createdBy'),
+        updatedAt: row.get('updatedAt'),
         media: {
-          files: (row.get('media')?.files || []).map((item) => new FileDto(item.toObject())),
-          images: (row.get('media')?.images || []).map((item) => new ImageDto(item.toObject())),
-          videos: (row.get('media')?.videos || []).map((item) => new VideoDto(item.toObject())),
+          files: row.get('media').files.map((item) => new FileDto(item.toObject())),
+          images: row.get('media').images.map((item) => new ImageDto(item.toObject())),
+          videos: row.get('media').videos.map((item) => new VideoDto(item.toObject())),
         },
+        ownerReactions: row.get('ownerReactions').map(
+          (item) =>
+            new ReactionDto({
+              id: item.get('id'),
+              reactionName: item.get('reactionName'),
+              createdAt: item.get('createdAt'),
+            })
+        ),
+        reactionsCount,
       });
     });
-
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
-      instances.map((item) => item.id)
-    );
 
     return new FindCommentsPaginationDto(instances, meta);
   }
