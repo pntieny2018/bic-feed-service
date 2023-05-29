@@ -1,9 +1,14 @@
 import { UserDto } from '../../../../v2-user/application';
 import { ContentEntity } from '../../model/content/content.entity';
 import { GroupDto } from '../../../../v2-group/application/group.dto';
+import { PostType } from '../../../data-type';
 
 export interface IContentValidator {
-  checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void>;
+  checkCanCRUDContent(
+    user: UserDto,
+    groupAudienceIds: string[],
+    postType?: PostType
+  ): Promise<void>;
 
   checkCanEditContentSetting(user: UserDto, groupAudienceIds: string[]): Promise<void>;
 

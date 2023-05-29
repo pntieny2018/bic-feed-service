@@ -25,7 +25,7 @@ import { IContentValidator } from './interface/content.validator.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { AccessDeniedException } from '../exception/access-denied.exception';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
-import { PostPrivacy } from '../../data-type';
+import { PostPrivacy, PostType } from '../../data-type';
 import { PostStatus } from '../../../../database/models/post.model';
 
 @Injectable()
@@ -39,14 +39,17 @@ export class ContentValidator implements IContentValidator {
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
 
-  public async checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void> {
+  public async checkCanCRUDContent(
+    user: UserDto,
+    groupAudienceIds: string[],
+    postType?: PostType
+  ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
+    const permissionKey = this.postTypeToPermissionKey(postType);
     for (const group of groups) {
-      if (
-        !ability.can(PERMISSION_KEY.CRUD_POST_ARTICLE, subject(SUBJECT.GROUP, { id: group.id }))
-      ) {
+      if (!ability.can(PERMISSION_KEY[permissionKey], subject(SUBJECT.GROUP, { id: group.id }))) {
         notCreatableInGroups.push(group);
       }
     }
@@ -82,6 +85,17 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
+  public postTypeToPermissionKey(postType: PostType): string {
+    switch (postType) {
+      case PostType.SERIES:
+        return PERMISSION_KEY.CRUD_SERIES;
+      case PostType.ARTICLE:
+      case PostType.POST:
+      default:
+        return PERMISSION_KEY.CRUD_POST_ARTICLE;
+    }
+  }
+
   public async validatePublishContent(
     contentEntity: ContentEntity,
     userAuth: UserDto,
@@ -95,16 +109,17 @@ export class ContentValidator implements IContentValidator {
       throw new ContentEmptyGroupException();
     }
 
+    const postType = contentEntity.get('type');
     const state = contentEntity.getState();
     const { detachGroupIds, enableSetting } = state;
     if (enableSetting) {
       await this.checkCanEditContentSetting(userAuth, groupIds);
     } else {
-      await this.checkCanCRUDContent(userAuth, groupIds);
+      await this.checkCanCRUDContent(userAuth, groupIds, postType);
     }
 
     if (detachGroupIds?.length) {
-      await this.checkCanCRUDContent(userAuth, detachGroupIds);
+      await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
     }
   }
 
