@@ -33,6 +33,8 @@ import { UserMarkReadPostModel } from '../../../../database/models/user-mark-rea
 import { TargetType } from '../../../report-content/contstants';
 import { getDatabaseConfig } from '../../../../config/database';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
+import { UserSavePostModel } from '../../../../database/models/user-save-post.model';
+import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 
 export class ContentRepository implements IContentRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -261,6 +263,8 @@ export class ContentRepository implements IContentRepository {
   private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
     const { schema } = getDatabaseConfig();
     const reportContentDetailTable = ReportContentDetailModel.tableName;
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    const userSavePostTable = UserSavePostModel.tableName;
     const findOption: FindOptions<IPost> = {};
     if (options.where) {
       if (options.where['id'])
@@ -301,6 +305,9 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeSeries,
         shouldIncludeGroup,
         shouldIncludeLinkPreview,
+        shouldIncludeSavedUserId,
+        shouldIncludeReactionUserId,
+        shouldIncludeMarkReadImportantUserId,
         mustIncludeGroup,
       } = options.include;
       findOption.include = [];
@@ -331,6 +338,48 @@ export class ContentRepository implements IContentRepository {
           as: 'linkPreview',
           required: false,
         });
+      }
+      if (shouldIncludeReactionUserId) {
+        findOption.include.push({
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: shouldIncludeReactionUserId,
+          },
+        });
+      }
+
+      if (shouldIncludeSavedUserId) {
+        findOption.attributes = {
+          include: [
+            [
+              Sequelize.literal(`(
+                  COALESCE((SELECT true FROM ${schema}.${userSavePostTable} as r
+                  WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
+                    shouldIncludeSavedUserId
+                  )}), false)
+              )`),
+              'isSaved',
+            ],
+          ],
+        };
+      }
+
+      if (shouldIncludeMarkReadImportantUserId) {
+        findOption.attributes = {
+          include: [
+            [
+              Sequelize.literal(`(
+                  COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
+                  WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
+                    shouldIncludeMarkReadImportantUserId
+                  )}), false)
+              )`),
+              'markedReadPost',
+            ],
+          ],
+        };
       }
     }
 
@@ -392,6 +441,14 @@ export class ContentRepository implements IContentRepository {
       },
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
       videoIdProcessing: post.videoIdProcessing,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: post.ownerReactions
+        ? post.ownerReactions.map((item) => ({
+            id: item.id,
+            reactionName: item.reactionName,
+          }))
+        : undefined,
     });
   }
 

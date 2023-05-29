@@ -23,7 +23,12 @@ export const postMock: PostDto = {
   createdAt: new Date(),
   updatedAt: new Date(),
   tags: [],
-  series: ['72acc501-6c18-47c6-b549-9f7af98948d8'],
+  series: [
+    {
+      id: '72acc501-6c18-47c6-b549-9f7af98948d8',
+      title: 'Dragon Ball',
+    },
+  ],
   communities: [
     {
       id: 'e22e09b2-7956-483a-ab46-87db8a74c09d',

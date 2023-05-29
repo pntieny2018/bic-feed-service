@@ -18,7 +18,10 @@ export class PostDto {
   public communities: GroupDto[];
   public content: string;
   public tags: TagDto[];
-  public series: string[];
+  public series: {
+    title: string;
+    id: string;
+  }[];
   public setting: PostSettingDto;
   public linkPreview?: LinkPreviewDto;
   public media: {
