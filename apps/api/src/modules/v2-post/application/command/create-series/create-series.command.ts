@@ -12,7 +12,7 @@ export type CreateSeriesCommandPayload = {
 
   summary?: string;
 
-  coverMedia?: MediaDto;
+  coverMedia: MediaDto;
 
   setting?: PostSettingDto;
 };
