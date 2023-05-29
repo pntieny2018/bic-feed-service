@@ -25,6 +25,7 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
 import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
+import { FindPostHandler } from '../application/query/find-post/find-post.handler';
 
 export const postProvider = [
   {
@@ -69,4 +70,5 @@ export const postProvider = [
   AutoSavePostHandler,
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
+  FindPostHandler,
 ];

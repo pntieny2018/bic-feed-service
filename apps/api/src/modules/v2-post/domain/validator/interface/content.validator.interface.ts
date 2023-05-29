@@ -15,7 +15,7 @@ export interface IContentValidator {
 
   validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void>;
 
-  checkCanReadContent(post: ContentEntity, user: UserDto, requireGroups?: GroupDto[]): void;
+  checkCanReadContent(post: ContentEntity, user: UserDto, postGroupsData?: GroupDto[]): void;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

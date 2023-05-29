@@ -56,7 +56,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         shouldIncludeLinkPreview: true,
       },
     });
-    if (!postEntity || !(postEntity instanceof PostEntity)) {
+    if (postEntity.isHidden() || !postEntity || !(postEntity instanceof PostEntity)) {
       throw new ContentNotFoundException();
     }
 
@@ -79,8 +79,10 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
 
     if (postEntity.getState().isChangeStatus) {
       await this._postDomainService.markSeen(postEntity, authUser.id);
+      postEntity.increaseTotalSeen();
       if (postEntity.isImportant()) {
         await this._postDomainService.markReadImportant(postEntity, authUser.id);
+        postEntity.setMarkReadImportant();
       }
     }
 

@@ -251,7 +251,7 @@ export class PostBindingService {
    */
   public async bindAttributes(
     posts: any[],
-    attributes: Array<'content' | 'commentsCount' | 'totalUsersSeen' | 'setting'>
+    attributes: Array<'content' | 'commentsCount' | 'totalUsersSeen' | 'setting' | 'wordCount'>
   ): Promise<void> {
     const postIds = [];
     for (const post of posts) {
@@ -268,8 +268,12 @@ export class PostBindingService {
         if (attributes.includes('commentsCount')) {
           post.commentsCount = findPost?.commentsCount || 0;
         }
-        if (attributes.includes('totalUsersSeen'))
+        if (attributes.includes('totalUsersSeen')) {
           post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+        }
+        if (attributes.includes('wordCount')) {
+          post.wordCount = findPost?.wordCount || 0;
+        }
         if (attributes.includes('setting')) {
           post.setting = {
             importantExpiredAt: findPost.importantExpiredAt,

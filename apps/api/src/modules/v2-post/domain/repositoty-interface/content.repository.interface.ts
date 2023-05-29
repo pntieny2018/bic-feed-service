@@ -17,6 +17,9 @@ export type FindOnePostOptions = {
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
     shouldIncludeLinkPreview?: boolean;
+    shouldIncludeReactionUserId?: string;
+    shouldIncludeSavedUserId?: string;
+    shouldIncludeMarkReadImportantUserId?: string;
   };
   attributes?: (keyof IPost)[];
 };
@@ -34,6 +37,9 @@ export type FindAllPostOptions = {
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
     shouldIncludeLinkPreview?: boolean;
+    shouldIncludeReactionUserId?: string;
+    shouldIncludeSavedUserId?: string;
+    shouldIncludeMarkReadImportantUserId?: string;
   };
   attributes?: (keyof IPost)[];
 };

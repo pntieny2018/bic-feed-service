@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -39,6 +40,8 @@ import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dt
 import { PostStatus } from '../../../../database/models/post.model';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -172,5 +175,15 @@ export class PostController {
     } catch (e) {
       console.log(e);
     }
+  }
+
+  @ApiOperation({ summary: 'Get post detail' })
+  @Get('/:postId')
+  public async getPostDetail(
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<PostDto> {
+    const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
+    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

@@ -80,6 +80,7 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/:postId')
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
