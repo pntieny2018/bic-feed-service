@@ -39,6 +39,8 @@ export async function paginate<T extends Model>(
 
   const hasPreviousPage = Boolean(previousCursor) && rows.length - limit > 0;
 
+  if (hasNextPage || hasPreviousPage) rows.pop();
+
   const meta = {
     hasNextPage,
     hasPreviousPage,
