@@ -68,6 +68,7 @@ export class SeriesController {
     } catch (e) {
       switch (e.constructor) {
         case ContentEmptyGroupException:
+          throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
@@ -104,6 +105,7 @@ export class SeriesController {
     } catch (e) {
       switch (e.constructor) {
         case ContentEmptyGroupException:
+          throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
