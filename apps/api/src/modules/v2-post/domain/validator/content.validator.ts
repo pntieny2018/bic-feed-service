@@ -142,25 +142,15 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  /**
-   * Check user can read a content policy
-   * @param post ContentEntity
-   * @param user UserDto
-   * @param @optional requireGroups GroupDto
-   * @throws LogicException
-   * @returns void
-   */
-
-  public checkCanReadContent(post: ContentEntity, user: UserDto, requireGroups?: GroupDto[]): void {
-    if (post.get('status') !== PostStatus.PUBLISHED && post.get('createdBy') === user.id) return;
-    if (post.get('privacy') === PostPrivacy.OPEN || post.get('privacy') === PostPrivacy.CLOSED)
-      return;
+  public checkCanReadContent(post: ContentEntity, user: UserDto, groups?: GroupDto[]): void {
+    if (!post.isPublished() && post.isOwner(user.id)) return;
+    if (post.isOpen() || post.isClosed()) return;
     const groupAudienceIds = post.get('groupIds') ?? [];
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      if (requireGroups && requireGroups.length > 0) {
-        throw new ContentRequireGroupException({ requireGroups: requireGroups });
+      if (groups?.length > 0) {
+        throw new ContentRequireGroupException({ requireGroups: groups });
       }
       throw new ContentNoCRUDPermissionException();
     }

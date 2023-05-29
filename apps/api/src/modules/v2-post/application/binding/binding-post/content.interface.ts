@@ -11,6 +11,7 @@ export interface IContentBinding {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
+      authUser?: UserDto;
     }
   ): Promise<PostDto>;
 
