@@ -18,7 +18,10 @@ export class PostDto {
   public communities: GroupDto[];
   public content: string;
   public tags: TagDto[];
-  public series: string[];
+  public series: {
+    title: string;
+    id: string;
+  }[];
   public setting: PostSettingDto;
   public linkPreview?: LinkPreviewDto;
   public media: {
@@ -32,6 +35,7 @@ export class PostDto {
   public type: PostType;
   public markedReadPost: boolean;
   public isSaved: boolean;
+  public isReported: boolean;
   public mentions: UserMentionDto;
   public commentsCount: number;
   public totalUsersSeen: number;

@@ -8,7 +8,7 @@ import { PostSettingAttributes } from './attributes/post-setting.entity';
 import { PostPrivacy, PostType } from '../../../data-type';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
-import { PostSettingDto } from '../../../application/dto/post-setting.dto';
+import { PostSettingDto } from '../../../application/dto';
 
 export type ContentProps = {
   id: string;
@@ -27,6 +27,9 @@ export type ContentProps = {
   };
   createdAt: Date;
   updatedAt: Date;
+  markedReadImportant?: boolean;
+  isSaved?: boolean;
+  ownerReactions?: { id: string; reactionName: string }[];
   errorLog?: any;
   publishedAt?: Date;
   lang?: PostLang;
@@ -137,6 +140,14 @@ export class ContentEntity<
     return this._props.isHidden;
   }
 
+  public isOpen(): boolean {
+    return this._props.privacy === PostPrivacy.OPEN;
+  }
+
+  public isClosed(): boolean {
+    return this._props.privacy === PostPrivacy.CLOSED;
+  }
+
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
@@ -150,6 +161,14 @@ export class ContentEntity<
 
   public setProcessing(): void {
     this._props.status = PostStatus.PROCESSING;
+  }
+
+  public increaseTotalSeen(): void {
+    this._props.aggregation.totalUsersSeen += 1;
+  }
+
+  public setMarkReadImportant(): void {
+    this._props.markedReadImportant = true;
   }
 
   public setDraft(): void {

@@ -13,6 +13,8 @@ import {
 } from '../../../../v2-group/application';
 import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
+import { SeriesEntity } from '../../../domain/model/content/series.entity';
+import { GroupPrivacy } from '../../../../v2-group/data-type';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -28,6 +30,8 @@ export class ContentBinding implements IContentBinding {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
+      series?: SeriesEntity[];
+      authUser?: UserDto;
     }
   ): Promise<PostDto> {
     const userIdsNeedToFind = [];
@@ -59,10 +63,12 @@ export class ContentBinding implements IContentBinding {
       );
     }
 
+    const groups =
+      dataBinding?.groups ||
+      (await this._groupApplicationService.findAllByIds(postEntity.get('groupIds')));
+
     const audience = {
-      groups:
-        dataBinding?.groups ||
-        (await this._groupApplicationService.findAllByIds(postEntity.get('groupIds'))),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
@@ -79,7 +85,12 @@ export class ContentBinding implements IContentBinding {
         name: tag.get('name'),
         groupId: tag.get('groupId'),
       })),
-      series: postEntity.get('seriesIds'),
+      series: dataBinding.series
+        ? dataBinding.series.map((series) => ({
+            id: series.get('id'),
+            title: series.get('title'),
+          }))
+        : undefined,
       communities,
       media: {
         files: postEntity.get('media').files.map((file) => new FileDto(file.toObject())),
@@ -103,18 +114,17 @@ export class ContentBinding implements IContentBinding {
             domain: postEntity.get('linkPreview').get('domain'),
           }
         : null,
-      markedReadPost: true,
-      isSaved: false,
+      markedReadPost: postEntity.get('markedReadImportant'),
+      isSaved: postEntity.get('isSaved'),
+      isReported: postEntity.get('isReported'),
       reactionsCount: {},
-      ownerReactions: [],
+      ownerReactions: postEntity.get('ownerReactions'),
     });
   }
 
   /**
    * Map mentions to UserInfo
-   * @param mentions string[]
    * @param users UserDto[]
-   * @throws BadRequestException
    * returns UserMentionDto
    */
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
@@ -130,5 +140,13 @@ export class ContentBinding implements IContentBinding {
         },
       };
     }, {});
+  }
+
+  public filterSecretGroupCannotAccess(groups: GroupDto[], authUser?: UserDto): GroupDto[] {
+    return groups.filter((group) => {
+      const isUserNotInGroup = authUser?.groups.includes(group.id);
+      const isGuest = !authUser;
+      return !(group.privacy === GroupPrivacy.SECRET && (isUserNotInGroup || isGuest));
+    });
   }
 }
