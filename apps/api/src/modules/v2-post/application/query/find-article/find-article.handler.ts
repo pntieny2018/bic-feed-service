@@ -4,8 +4,8 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { PostDto } from '../../dto';
-import { FindPostQuery } from './find-post.query';
+import { ArticleDto, PostDto } from '../../dto';
+import { FindArticleQuery } from './find-article.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
   IUserApplicationService,
@@ -23,9 +23,10 @@ import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
+import { ArticleEntity } from '../../../domain/model/content/article.entity';
 
-@QueryHandler(FindPostQuery)
-export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
+@QueryHandler(FindArticleQuery)
+export class FindArticleHandler implements IQueryHandler<FindArticleQuery, ArticleDto> {
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
   @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
@@ -33,11 +34,11 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindPostQuery): Promise<any> {
-    const { postId, authUser } = query.payload;
-    const postEntity = await this._contentRepo.findOne({
+  public async execute(query: FindArticleQuery): Promise<ArticleDto> {
+    const { articleId, authUser } = query.payload;
+    const articleEntity = await this._contentRepo.findOne({
       where: {
-        id: postId,
+        id: articleId,
         groupArchived: false,
         excludeReportedByUserId: authUser.id,
       },
@@ -53,31 +54,29 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     });
 
     if (
-      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
-      postEntity.isHidden() ||
-      !postEntity ||
-      !(postEntity instanceof PostEntity)
+      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
+      articleEntity.isHidden() ||
+      !articleEntity ||
+      !(articleEntity instanceof ArticleEntity)
     ) {
       throw new ContentNotFoundException();
     }
 
-    if (!authUser && !postEntity.isOpen()) {
+    if (!authUser && !articleEntity.isOpen()) {
       throw new AccessDeniedException();
     }
-    const groups = await this._groupAppService.findAllByIds(postEntity.get('groupIds'));
+    const groups = await this._groupAppService.findAllByIds(articleEntity.get('groupIds'));
     if (authUser) {
-      await this._postValidator.checkCanReadContent(postEntity, authUser, groups);
+      await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
     }
 
-    const mentionUsers = await this._userAppService.findAllByIds(postEntity.get('mentionUserIds'));
-
     let series;
-    if (postEntity.get('seriesIds')?.length) {
+    if (articleEntity.get('seriesIds')?.length) {
       series = await this._contentRepo.findAll({
         attributes: ['id', 'title'],
         where: {
           groupArchived: false,
-          ids: postEntity.get('seriesIds'),
+          ids: articleEntity.get('seriesIds'),
         },
         include: {
           mustIncludeGroup: true,
@@ -89,10 +88,9 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       series.getId(),
     ]);
 
-    return this._contentBinding.postBinding(postEntity, {
+    return this._contentBinding.articleBinding(articleEntity, {
       groups,
       actor: new UserDto(authUser),
-      mentionUsers,
       series: series as SeriesEntity[],
       reactionsCount,
     });

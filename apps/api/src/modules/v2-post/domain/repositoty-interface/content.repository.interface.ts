@@ -16,6 +16,7 @@ export type FindOnePostOptions = {
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReactionUserId?: string;
     shouldIncludeSavedUserId?: string;
@@ -36,6 +37,7 @@ export type FindAllPostOptions = {
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReactionUserId?: string;
     shouldIncludeSavedUserId?: string;
