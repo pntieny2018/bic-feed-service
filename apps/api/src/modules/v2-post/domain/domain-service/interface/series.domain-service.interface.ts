@@ -11,6 +11,7 @@ export type CreateSeriesProps = {
 
 export type UpdateSeriesProps = {
   seriesEntity: SeriesEntity;
+  groups: GroupDto[];
   newData: UpdateSeriesCommandPayload;
 };
 

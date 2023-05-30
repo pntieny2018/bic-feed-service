@@ -3,6 +3,11 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { UpdateSeriesCommand } from './update-series.command';
 import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
+import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
   ContentNotFoundException,
@@ -18,6 +23,8 @@ import { SeriesEntity } from '../../../domain/model/content';
 @CommandHandler(UpdateSeriesCommand)
 export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand, void> {
   public constructor(
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
     @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
     private readonly _seriesDomainService: ISeriesDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -48,8 +55,14 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
 
     if (groupIds && groupIds.length === 0) throw new ContentEmptyGroupException();
 
+    let groups: GroupDto[] = [];
+    if (groupIds?.length) {
+      groups = await this._groupAppService.findAllByIds(groupIds);
+    }
+
     await this._seriesDomainService.update({
       seriesEntity,
+      groups,
       newData: command.payload,
     });
   }

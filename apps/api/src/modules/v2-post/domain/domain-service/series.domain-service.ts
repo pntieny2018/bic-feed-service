@@ -63,7 +63,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   }
 
   public async update(input: UpdateSeriesProps): Promise<void> {
-    const { seriesEntity, newData } = input;
+    const { seriesEntity, groups, newData } = input;
     const { actor, groupIds, coverMedia, setting } = newData;
 
     seriesEntity.setSetting(setting || seriesEntity.get('setting'));
@@ -91,6 +91,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       );
 
       seriesEntity.setGroups(groupIds);
+      seriesEntity.setPrivacyFromGroups(groups);
       const state = seriesEntity.getState();
       const attachGroupIds = state.attachGroupIds;
       const isEnableSetting = state.enableSetting;
