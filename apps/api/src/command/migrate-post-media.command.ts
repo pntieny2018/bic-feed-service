@@ -369,7 +369,7 @@ export class MigratePostMediaCommand implements CommandRunner {
       });
       for (const comment of comments) {
         const mediaJson = [];
-        for (const media of comment.media) {
+        for (const media of comment['media'] || []) {
           if (!media.url) continue;
           const mediaData = await this._externalService.updateMedia(media.id, {
             userId: comment.createdBy,

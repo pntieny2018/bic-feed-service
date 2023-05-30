@@ -1,7 +1,7 @@
 import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 import { OrderEnum } from '../../../../../common/dto';
-import { PaginationProps } from '../../../../../common/types/pagination-props.type ';
+import { PaginationProps } from '../../../../../common/types/pagination-props.type';
 
 export type GetPaginationRecentSearchProps = PaginationProps & {
   keyword?: string;

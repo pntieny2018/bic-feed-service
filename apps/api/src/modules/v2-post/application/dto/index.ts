@@ -8,3 +8,4 @@ export * from './video.dto';
 export * from './tag.dto';
 export * from './reaction.dto';
 export * from './reaction-list.dto';
+export * from './comment.dto';

@@ -9,8 +9,12 @@ export type GetReactionProps = {
   order: string;
   limit: number;
 };
+
+export type ReactionsCount = Record<string, number>[];
 export interface IReactionQuery {
   getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>>;
+
+  getAndCountReactionByComments(commentIds: string[]): Promise<ReactionsCount>;
 }
 
 export const REACTION_QUERY_TOKEN = 'REACTION_QUERY_TOKEN';
