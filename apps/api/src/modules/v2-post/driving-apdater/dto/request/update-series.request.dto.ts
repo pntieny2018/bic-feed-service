@@ -17,9 +17,7 @@ export class UpdateSeriesRequestDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience?: AudienceRequestDto = {
-    groupIds: [],
-  };
+  public audience?: AudienceRequestDto;
 
   @ApiProperty({ type: String })
   @Type(() => String)
