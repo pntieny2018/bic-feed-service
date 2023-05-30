@@ -31,6 +31,7 @@ import { ProcessPostUpdatedHandler } from '../application/command/process-post-u
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
 import { CreateSeriesHandler } from '../application/command/create-series/create-series.handler';
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
+import { UpdateSeriesHandler } from '../application/command/update-series/update-series.handler';
 
 export const postProvider = [
   {
@@ -80,5 +81,6 @@ export const postProvider = [
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   CreateSeriesHandler,
+  UpdateSeriesHandler,
   FindPostHandler,
 ];
