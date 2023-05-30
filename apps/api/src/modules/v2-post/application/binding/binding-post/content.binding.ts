@@ -50,16 +50,15 @@ export class ContentBinding implements IContentBinding {
     const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
       withGroupJoined: false,
     });
+
     if (dataBinding?.mentionUsers?.length) {
       users.push(...dataBinding?.mentionUsers);
     }
-
     if (dataBinding?.actor) {
       delete dataBinding.actor.permissions;
       delete dataBinding.actor.groups;
       users.push(dataBinding.actor);
     }
-
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
     if (postEntity.get('mentionUserIds') && users.length) {
       mentionUsers = this.mapMentionWithUserInfo(
@@ -194,6 +193,7 @@ export class ContentBinding implements IContentBinding {
       isReported: articleEntity.get('isReported'),
       reactionsCount: dataBinding?.reactionsCount || [],
       ownerReactions: articleEntity.get('ownerReactions'),
+      coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
       categories: articleEntity.get('categories')?.map((category) => ({
         id: category.get('id'),
         name: category.get('name'),

@@ -47,6 +47,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
         shouldIncludeSeries: true,
         shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeCategory: true,
         shouldIncludeSavedUserId: authUser?.id,
         shouldIncludeMarkReadImportantUserId: authUser?.id,
         shouldIncludeReactionUserId: authUser?.id,
@@ -54,10 +55,10 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     });
 
     if (
-      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
-      articleEntity.isHidden() ||
       !articleEntity ||
-      !(articleEntity instanceof ArticleEntity)
+      !(articleEntity instanceof ArticleEntity) ||
+      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
+      articleEntity.isHidden()
     ) {
       throw new ContentNotFoundException();
     }

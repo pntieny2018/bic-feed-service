@@ -5,6 +5,7 @@ import { UserDto } from '../../../v2-user/application';
 import { PostPrivacy, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
 import { TagDto } from './tag.dto';
+import { ImageDto } from './image.dto';
 
 export class ArticleDto {
   public id: string;
@@ -36,6 +37,7 @@ export class ArticleDto {
   public commentsCount: number;
   public totalUsersSeen: number;
   public wordCount: number;
+  public coverMedia: ImageDto;
   public reactionsCount: Record<string, number>[];
   public ownerReactions: {
     id: string;

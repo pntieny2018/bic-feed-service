@@ -27,6 +27,7 @@ import { ProcessPostPublishedHandler } from '../application/command/process-post
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
 import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
+import { CreateDraftArticleHandler } from '../application/command/create-draft-article/create-draft-article.handler';
 
 export const postProvider = [
   {
@@ -73,4 +74,6 @@ export const postProvider = [
   ProcessPostUpdatedHandler,
   FindPostHandler,
   FindArticleHandler,
+  FindArticleHandler,
+  CreateDraftArticleHandler,
 ];

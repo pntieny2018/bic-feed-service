@@ -4,18 +4,20 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { CreateArticleCommand } from './create-article.command';
-import { CreateArticleDto } from './create-article.dto';
+import { CreateDraftArticleCommand } from './create-draft-article.command';
 import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
+import { ArticleDto } from '../../dto';
+import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
+import { ContentBinding } from '../../binding/binding-post/content.binding';
 
-@CommandHandler(CreateArticleCommand)
-export class CreateArticleHandler
-  implements ICommandHandler<CreateArticleCommand, CreateArticleDto>
+@CommandHandler(CreateDraftArticleCommand)
+export class CreateDraftArticleHandler
+  implements ICommandHandler<CreateDraftArticleCommand, ArticleDto>
 {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -25,23 +27,19 @@ export class CreateArticleHandler
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator
+    private readonly _contentValidator: IContentValidator,
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
   ) {}
 
-  public async execute(command: CreateArticleCommand): Promise<CreateArticleDto> {
-    const { groupIds, authUser } = command.payload;
-    await this._contentValidator.checkCanCRUDContent(authUser, groupIds);
-    const groups = await this._groupApplicationService.findAllByIds(groupIds);
-    const tagEntity = await this._postDomainService.createDraftPost({
+  public async execute(command: CreateDraftArticleCommand): Promise<ArticleDto> {
+    const { authUser } = command.payload;
+    const articleEntity = await this._postDomainService.createDraftArticle({
       userId: authUser.id,
-      groups,
+      groups: [],
     });
-    const data = new CreateArticleDto({
-      id: tagEntity.get('id'),
-      audience: {
-        groups,
-      },
-      setting: tagEntity.get('setting'),
+    const data = this._contentBinding.articleBinding(articleEntity, {
+      actor: authUser,
+      authUser,
     });
     return data;
   }

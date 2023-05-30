@@ -1,6 +1,11 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
+import {
+  ARTICLE_FACTORY_TOKEN,
+  IArticleFactory,
+  IPostFactory,
+  POST_FACTORY_TOKEN,
+} from '../factory/interface';
 import {
   ArticleCreateProps,
   IPostDomainService,
@@ -43,6 +48,8 @@ export class PostDomainService implements IPostDomainService {
   private readonly _contentRepository: IContentRepository;
   @Inject(POST_FACTORY_TOKEN)
   private readonly _postFactory: IPostFactory;
+  @Inject(ARTICLE_FACTORY_TOKEN)
+  private readonly _articleFactory: IArticleFactory;
   @Inject(POST_VALIDATOR_TOKEN)
   private readonly _postValidator: IPostValidator;
   @Inject(MENTION_VALIDATOR_TOKEN)
@@ -61,7 +68,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
-    const postEntity = this._postFactory.createDraftPost({
+    const postEntity = this._postFactory.createPost({
       groupIds: [],
       userId,
     });
@@ -76,10 +83,10 @@ export class PostDomainService implements IPostDomainService {
     }
     return postEntity;
   }
-  public async createArticle(input: ArticleCreateProps): Promise<ArticleEntity> {
+  public async createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity> {
     const { groups, userId } = input;
-    const articleEntity = this._postFactory.createDraftPost({
-      groupIds: [],
+    const articleEntity = this._articleFactory.createArticle({
+      groupIds: groups.map((group) => group.id),
       userId,
     });
     articleEntity.setGroups(groups.map((group) => group.id));

@@ -7,42 +7,30 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
-  Patch,
   Post,
-  Put,
-  Req,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import {
-  ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
-  ContentNoEditSettingPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
 } from '../../domain/exception';
-import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
-import { plainToClass, plainToInstance } from 'class-transformer';
-import { PublishPostCommand } from '../../application/command/publish-post/publish-post.command';
-import { ArticleDto, PostDto } from '../../application/dto';
-import { Request } from 'express';
-import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
-import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
-import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
+import { plainToInstance } from 'class-transformer';
+import { ArticleDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
-import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
-import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
-import { PostStatus } from '../../../../database/models/post.model';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
-import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
-import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
+import { ArticleResponseDto } from '../../../article/dto/responses';
+import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
+import { CreateDraftArticleRequestDto } from '../dto/request/create-draft-article.request.dto';
+import { CreateDraftArticleCommand } from '../../application/command/create-draft-article/create-draft-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -62,7 +50,51 @@ export class ArticleController {
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const data = await this._queryBus.execute(new FindArticleQuery({ articleId, authUser }));
-    return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    try {
+      const data = await this._queryBus.execute(new FindArticleQuery({ articleId, authUser }));
+      return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Create article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+    description: 'Create article successfully',
+  })
+  @Post('/')
+  @InjectUserToBody()
+  @ResponseMessages({
+    success: 'message.article.created_success',
+  })
+  public async create(
+    @AuthUser() authUser: UserDto,
+    @Body() createDraftPostRequestDto: CreateDraftArticleRequestDto
+  ): Promise<ArticleDto> {
+    try {
+      const data = await this._commandBus.execute<CreateDraftArticleCommand, CreateDraftPostDto>(
+        new CreateDraftArticleCommand({ authUser })
+      );
+      return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }

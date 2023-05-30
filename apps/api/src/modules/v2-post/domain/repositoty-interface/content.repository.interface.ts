@@ -47,8 +47,8 @@ export type FindAllPostOptions = {
 };
 
 export interface IContentRepository {
-  create(data: PostEntity): Promise<void>;
-  update(data: PostEntity): Promise<void>;
+  create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
+  update(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;

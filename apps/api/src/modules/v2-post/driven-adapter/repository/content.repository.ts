@@ -1,6 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize, Op } from 'sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
@@ -24,13 +24,11 @@ import {
 import { PostSeriesModel } from '../../../../database/models/post-series.model';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ContentEntity } from '../../domain/model/content/content.entity';
-import { TagModel } from '../../../../database/models/tag.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
-import { TargetType } from '../../../report-content/contstants';
 import { getDatabaseConfig } from '../../../../config/database';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { UserSavePostModel } from '../../../../database/models/user-save-post.model';
@@ -144,15 +142,15 @@ export class ContentRepository implements IContentRepository {
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
       linkPreviewId: postEntity.get('linkPreview')?.get('id'),
       mediaJson: {
-        files: postEntity.get('media').files.map((file) => file.toObject()),
-        images: postEntity.get('media').images.map((image) => image.toObject()),
-        videos: postEntity.get('media').videos.map((video) => video.toObject()),
+        files: postEntity.get('media')?.files.map((file) => file.toObject()) || [],
+        images: postEntity.get('media')?.images.map((image) => image.toObject()) || [],
+        videos: postEntity.get('media')?.videos.map((video) => video.toObject()) || [],
       },
-      mentions: postEntity.get('mentionUserIds'),
+      mentions: postEntity.get('mentionUserIds') || [],
       cover: postEntity.get('cover'),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
-      linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
+      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
+      linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
     };
   }
