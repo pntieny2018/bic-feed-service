@@ -57,10 +57,12 @@ export async function paginate<T extends Model>(
     hasNextPage,
     hasPreviousPage,
     previousCursor:
-      rows.length > 0 ? Buffer.from(`${rows[0][cursorColumn]}`).toString('base64') : null,
+      rows.length > 0
+        ? Buffer.from(`${rows[0][cursorColumn].toISOString()}`).toString('base64')
+        : null,
     nextCursor:
       rows.length > 0
-        ? Buffer.from(`${rows[rows.length - 1][cursorColumn]}`).toString('base64')
+        ? Buffer.from(`${rows[rows.length - 1][cursorColumn].toISOString()}`).toString('base64')
         : null,
   };
 
