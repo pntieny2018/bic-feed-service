@@ -87,7 +87,7 @@ export class SeriesController {
   })
   @Post('/')
   @InjectUserToBody()
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createSeriesDto: CreateSeriesDto
@@ -104,7 +104,7 @@ export class SeriesController {
     success: 'message.series.updated_success',
   })
   @Put('/:id')
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
