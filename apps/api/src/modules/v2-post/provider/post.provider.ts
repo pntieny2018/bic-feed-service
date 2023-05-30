@@ -30,8 +30,9 @@ import { ProcessPostPublishedHandler } from '../application/command/process-post
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
 import { CreateSeriesHandler } from '../application/command/create-series/create-series.handler';
-import { FindPostHandler } from '../application/query/find-post/find-post.handler';
 import { UpdateSeriesHandler } from '../application/command/update-series/update-series.handler';
+import { FindPostHandler } from '../application/query/find-post/find-post.handler';
+import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
 
 export const postProvider = [
   {
@@ -83,4 +84,5 @@ export const postProvider = [
   CreateSeriesHandler,
   UpdateSeriesHandler,
   FindPostHandler,
+  FindArticleHandler,
 ];

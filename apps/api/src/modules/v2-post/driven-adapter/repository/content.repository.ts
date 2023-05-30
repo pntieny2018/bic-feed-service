@@ -33,6 +33,7 @@ import { getDatabaseConfig } from '../../../../config/database';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { UserSavePostModel } from '../../../../database/models/user-save-post.model';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
+import { CategoryModel } from '../../../../database/models/category.model';
 
 export class ContentRepository implements IContentRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -305,6 +306,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeSeries,
         shouldIncludeGroup,
         shouldIncludeLinkPreview,
+        shouldIncludeCategory,
         shouldIncludeSavedUserId,
         shouldIncludeReactionUserId,
         shouldIncludeMarkReadImportantUserId,
@@ -347,6 +349,17 @@ export class ContentRepository implements IContentRepository {
           where: {
             createdBy: shouldIncludeReactionUserId,
           },
+        });
+      }
+      if (shouldIncludeCategory) {
+        findOption.include.push({
+          model: CategoryModel,
+          as: 'categories',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
         });
       }
 
@@ -456,6 +469,7 @@ export class ContentRepository implements IContentRepository {
     if (post === null) return null;
     return this._articleFactory.reconstitute({
       id: post.id,
+      content: post.content,
       isReported: post.isReported,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
@@ -479,13 +493,25 @@ export class ContentRepository implements IContentRepository {
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      tags: post.tagsJson,
+      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+      },
       cover: new ImageEntity(post.coverJson),
       wordCount: post.wordCount,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: post.ownerReactions
+        ? post.ownerReactions.map((item) => ({
+            id: item.id,
+            reactionName: item.reactionName,
+          }))
+        : undefined,
     });
   }
 
-  private _modelToSeriesEntity(post: PostModel): SeriesEntity {
+  private _modelToSeriesEntity(post: IPost): SeriesEntity {
     if (post === null) return null;
     return this._seriesFactory.reconstitute({
       id: post.id,
@@ -511,6 +537,8 @@ export class ContentRepository implements IContentRepository {
       publishedAt: post.publishedAt,
       groupIds: post.groups?.map((group) => group.groupId),
       cover: new ImageEntity(post.coverJson),
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
       items: post.items?.map((item) => {
         if (item.type === PostType.ARTICLE) {
           return this._modelToArticleEntity(item);

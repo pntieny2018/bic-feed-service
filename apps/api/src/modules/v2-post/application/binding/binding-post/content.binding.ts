@@ -15,6 +15,8 @@ import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
+import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { ArticleDto } from '../../dto/article.dto';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -32,7 +34,7 @@ export class ContentBinding implements IContentBinding {
       groups?: GroupDto[];
       series?: SeriesEntity[];
       authUser?: UserDto;
-      reactionCount?: ReactionsCount;
+      reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto> {
     const userIdsNeedToFind = [];
@@ -118,8 +120,83 @@ export class ContentBinding implements IContentBinding {
       markedReadPost: postEntity.get('markedReadImportant'),
       isSaved: postEntity.get('isSaved'),
       isReported: postEntity.get('isReported'),
-      reactionsCount: dataBinding?.reactionCount || [],
+      reactionsCount: dataBinding?.reactionsCount || [],
       ownerReactions: postEntity.get('ownerReactions'),
+    });
+  }
+
+  public async articleBinding(
+    articleEntity: ArticleEntity,
+    dataBinding?: {
+      actor?: UserDto;
+      groups?: GroupDto[];
+      series?: SeriesEntity[];
+      authUser?: UserDto;
+      reactionsCount?: ReactionsCount;
+    }
+  ): Promise<ArticleDto> {
+    const userIdsNeedToFind = [];
+    if (!dataBinding?.actor) {
+      userIdsNeedToFind.push(articleEntity.get('createdBy'));
+    }
+
+    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+      withGroupJoined: false,
+    });
+
+    if (dataBinding?.actor) {
+      delete dataBinding.actor.permissions;
+      delete dataBinding.actor.groups;
+      users.push(dataBinding.actor);
+    }
+
+    const actor = users.find((user) => user.id === articleEntity.get('createdBy'));
+
+    const groups =
+      dataBinding?.groups ||
+      (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
+
+    const audience = {
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
+    };
+
+    const communities = await this._groupApplicationService.findAllByIds(
+      ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
+    );
+
+    return new ArticleDto({
+      id: articleEntity.get('id'),
+      audience,
+      content: articleEntity.get('content'),
+      createdAt: articleEntity.get('createdAt'),
+      tags: articleEntity.get('tags').map((tag) => ({
+        id: tag.get('id'),
+        name: tag.get('name'),
+        groupId: tag.get('groupId'),
+      })),
+      series: dataBinding.series
+        ? dataBinding.series.map((series) => ({
+            id: series.get('id'),
+            title: series.get('title'),
+          }))
+        : undefined,
+      communities,
+      actor,
+      status: articleEntity.get('status'),
+      type: articleEntity.get('type'),
+      privacy: articleEntity.get('privacy'),
+      setting: articleEntity.get('setting'),
+      commentsCount: articleEntity.get('aggregation').commentsCount,
+      totalUsersSeen: articleEntity.get('aggregation').totalUsersSeen,
+      markedReadPost: articleEntity.get('markedReadImportant'),
+      isSaved: articleEntity.get('isSaved'),
+      isReported: articleEntity.get('isReported'),
+      reactionsCount: dataBinding?.reactionsCount || [],
+      ownerReactions: articleEntity.get('ownerReactions'),
+      categories: articleEntity.get('categories')?.map((category) => ({
+        id: category.get('id'),
+        name: category.get('name'),
+      })),
     });
   }
 
@@ -130,10 +207,12 @@ export class ContentBinding implements IContentBinding {
       groups?: GroupDto[];
     }
   ): Promise<SeriesDto> {
-    const { actor, groups } = dataBinding;
+    const groups =
+      dataBinding?.groups ||
+      (await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds')));
+
     const audience = {
-      groups:
-        groups || (await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds'))),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.actor),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
@@ -150,7 +229,7 @@ export class ContentBinding implements IContentBinding {
       createdBy: seriesEntity.get('createdBy'),
       coverMedia: new ImageDto(seriesEntity.get('cover')?.toObject()),
       communities,
-      actor,
+      actor: dataBinding.actor,
       status: seriesEntity.get('status'),
       type: seriesEntity.get('type'),
       privacy: seriesEntity.get('privacy'),

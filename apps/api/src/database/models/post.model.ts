@@ -98,7 +98,7 @@ export interface IPost {
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
-  items?: Partial<IPost>[];
+  items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
   publishedAt?: Date;
