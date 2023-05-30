@@ -48,7 +48,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       [coverMedia.id],
       seriesEntity.get('createdBy')
     );
-    if (images[0] && !images[0].isSeriesCoverResource()) {
+    if (!images[0] || !images[0].isSeriesCoverResource()) {
       throw new InvalidResourceImageException();
     }
     seriesEntity.setCover(images[0]);
