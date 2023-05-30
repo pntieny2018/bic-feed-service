@@ -11,7 +11,6 @@ import {
   CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
-  SERIES_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory } from '../domain/factory';
@@ -29,7 +28,6 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
 import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
-import { SeriesValidator } from '../domain/validator/series.validator';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
 import { CreateSeriesHandler } from '../application/command/create-series/create-series.handler';
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
@@ -42,10 +40,6 @@ export const postProvider = [
   {
     provide: POST_VALIDATOR_TOKEN,
     useClass: PostValidator,
-  },
-  {
-    provide: SERIES_VALIDATOR_TOKEN,
-    useClass: SeriesValidator,
   },
   {
     provide: POST_FACTORY_TOKEN,

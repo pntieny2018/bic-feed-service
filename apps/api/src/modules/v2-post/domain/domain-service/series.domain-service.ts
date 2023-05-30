@@ -8,7 +8,7 @@ import { SeriesEntity } from '../model/content/series.entity';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
-import { ISeriesValidator, SERIES_VALIDATOR_TOKEN } from '../validator/interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 @Injectable()
@@ -20,8 +20,8 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _mediaDomainService: IMediaDomainService,
     @Inject(SERIES_FACTORY_TOKEN)
     private readonly _seriesFactory: ISeriesFactory,
-    @Inject(SERIES_VALIDATOR_TOKEN)
-    private readonly _seriesValidator: ISeriesValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository
   ) {}
@@ -37,7 +37,9 @@ export class SeriesDomainService implements ISeriesDomainService {
     seriesEntity.setSetting(setting);
     const isEnableSetting = seriesEntity.getState().enableSetting;
 
-    await this._seriesValidator.checkCanCreateSeries(actor, groups, isEnableSetting);
+    await this._contentValidator.checkCanCRUDContent(actor, groupIds, seriesEntity.get('type'));
+    if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
@@ -61,7 +63,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   }
 
   public async update(input: UpdateSeriesProps): Promise<void> {
-    const { seriesEntity, groups, newData } = input;
+    const { seriesEntity, newData } = input;
     const { actor, groupIds, coverMedia, setting } = newData;
 
     seriesEntity.setSetting(setting || seriesEntity.get('setting'));
@@ -79,14 +81,28 @@ export class SeriesDomainService implements ISeriesDomainService {
     }
 
     if (groupIds) {
+      this._contentValidator.checkCanReadContent(seriesEntity, actor);
+
       const oldGroupIds = seriesEntity.get('groupIds');
+      await this._contentValidator.checkCanCRUDContent(
+        actor,
+        oldGroupIds,
+        seriesEntity.get('type')
+      );
+
       seriesEntity.setGroups(groupIds);
       const state = seriesEntity.getState();
-      const isEnableSetting = state.enableSetting;
       const attachGroupIds = state.attachGroupIds;
-      const detachGroupIds = state.detachGroupIds;
+      const isEnableSetting = state.enableSetting;
 
-      // TODO: Valdidate groupIds when deleting, update
+      if (attachGroupIds?.length) {
+        await this._contentValidator.checkCanCRUDContent(
+          actor,
+          attachGroupIds,
+          seriesEntity.get('type')
+        );
+      }
+      if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
     seriesEntity.updateAttribute(newData);
