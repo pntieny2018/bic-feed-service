@@ -53,10 +53,10 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     });
 
     if (
-      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
-      postEntity.isHidden() ||
       !postEntity ||
-      !(postEntity instanceof PostEntity)
+      !(postEntity instanceof PostEntity) ||
+      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
+      postEntity.isHidden()
     ) {
       throw new ContentNotFoundException();
     }
@@ -88,13 +88,12 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
       postEntity.getId(),
     ]);
-
     return this._contentBinding.postBinding(postEntity, {
       groups,
-      actor: new UserDto(authUser),
       mentionUsers,
       series: series as SeriesEntity[],
       reactionsCount,
+      authUser,
     });
   }
 }

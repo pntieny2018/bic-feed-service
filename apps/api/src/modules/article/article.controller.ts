@@ -159,6 +159,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto

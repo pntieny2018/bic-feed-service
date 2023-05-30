@@ -1,6 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize, Op } from 'sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
@@ -149,10 +149,10 @@ export class ContentRepository implements IContentRepository {
         videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
       },
       mentions: postEntity.get('mentionUserIds') || [],
-      coverJson: postEntity.get('cover')?.toObject(),
+      coverJson: postEntity.get('cover'),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
-      linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
+      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
+      linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
     };
   }
