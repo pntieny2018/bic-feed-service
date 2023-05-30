@@ -1,7 +1,12 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
-import { IPostDomainService, PostCreateProps, PostPublishProps } from './interface';
+import {
+  ArticleCreateProps,
+  IPostDomainService,
+  PostCreateProps,
+  PostPublishProps,
+} from './interface';
 import { PostEntity } from '../model/content';
 import {
   IContentRepository,
@@ -29,6 +34,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
 import { ContentEntity } from '../model/content/content.entity';
+import { ArticleEntity } from '../model/content/article.entity';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -69,6 +75,23 @@ export class PostDomainService implements IPostDomainService {
       throw new DatabaseException();
     }
     return postEntity;
+  }
+  public async createArticle(input: ArticleCreateProps): Promise<ArticleEntity> {
+    const { groups, userId } = input;
+    const articleEntity = this._postFactory.createDraftPost({
+      groupIds: [],
+      userId,
+    });
+    articleEntity.setGroups(groups.map((group) => group.id));
+    articleEntity.setPrivacyFromGroups(groups);
+    try {
+      await this._contentRepository.create(articleEntity);
+      articleEntity.commit();
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+    return articleEntity;
   }
 
   public async publishPost(input: PostPublishProps): Promise<void> {
