@@ -61,7 +61,7 @@ export class CommentQuery implements ICommentQuery {
       findOptions,
       { previousCursor, nextCursor, limit },
       order,
-      'id'
+      'createdAt'
     );
 
     return {

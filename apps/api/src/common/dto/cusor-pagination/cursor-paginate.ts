@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { OrderEnum } from '../pagination';
 import { PaginatedArgs } from './paginated.args';
 import { FindOptions, Model, ModelStatic, Op, WhereOptions } from 'sequelize';
@@ -8,7 +9,7 @@ export async function paginate<T extends Model>(
   query: FindOptions,
   paginatedArgs: PaginatedArgs,
   order: OrderEnum,
-  cursorColumn = 'id'
+  cursorColumn = 'createdAt'
 ): Promise<CursorPaginationResult<T>> {
   const { previousCursor, nextCursor, limit } = paginatedArgs;
   let paginationQuery: WhereOptions | undefined;
@@ -16,14 +17,20 @@ export async function paginate<T extends Model>(
   if (nextCursor) {
     const operator = order === OrderEnum.ASC ? Op.gt : Op.lt;
     paginationQuery = {
-      [cursorColumn]: { [operator]: Buffer.from(nextCursor, 'base64').toString('utf8') },
+      [cursorColumn]: {
+        [operator]: moment(new Date(Buffer.from(nextCursor, 'base64').toString('utf8'))).toDate(),
+      },
     };
   }
 
   if (previousCursor) {
     const operator = order === OrderEnum.ASC ? Op.lt : Op.gt;
     paginationQuery = {
-      [cursorColumn]: { [operator]: Buffer.from(previousCursor, 'base64').toString('utf8') },
+      [cursorColumn]: {
+        [operator]: moment(
+          new Date(Buffer.from(previousCursor, 'base64').toString('utf8'))
+        ).toDate(),
+      },
     };
   }
 
@@ -39,11 +46,12 @@ export async function paginate<T extends Model>(
 
   const rows = await executer.findAll(paginationQueryOptions);
 
-  const hasNextPage = Boolean(nextCursor) && rows.length - limit > 0;
+  const hasNextPage =
+    (Boolean(nextCursor) && rows.length - limit > 0) || (!nextCursor && rows.length - limit > 0);
 
   const hasPreviousPage = Boolean(previousCursor) && rows.length - limit > 0;
 
-  if (hasNextPage || hasPreviousPage) rows.pop();
+  if (rows.length - limit > 0) rows.pop();
 
   const meta = {
     hasNextPage,
