@@ -26,6 +26,7 @@ import { MediaModule } from '../media';
 import { NotificationModule } from '../../notification';
 import { KafkaModule } from '@app/kafka';
 import { SeriesController } from './driving-apdater/controller/series.controller';
+import { ContentController } from './driving-apdater/controller/content.controller';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SeriesController } from './driving-apdater/controller/series.controller
     CategoryController,
     PostController,
     ArticleController,
+    ContentController,
     ReactionController,
     CommentController,
     PostConsumer,

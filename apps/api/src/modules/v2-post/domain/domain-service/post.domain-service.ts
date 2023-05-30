@@ -22,6 +22,8 @@ import {
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
   IMentionValidator,
   IPostValidator,
   MENTION_VALIDATOR_TOKEN,
@@ -52,6 +54,8 @@ export class PostDomainService implements IPostDomainService {
   private readonly _articleFactory: IArticleFactory;
   @Inject(POST_VALIDATOR_TOKEN)
   private readonly _postValidator: IPostValidator;
+  @Inject(CONTENT_VALIDATOR_TOKEN)
+  private readonly _contentValidator: IContentValidator;
   @Inject(MENTION_VALIDATOR_TOKEN)
   private readonly _mentionValidator: IMentionValidator;
   @Inject(USER_APPLICATION_TOKEN)
@@ -156,7 +160,7 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('groupIds')
     );
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
-    await this._postValidator.validateSeriesAndTags(
+    await this._contentValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),
       postEntity.get('tags')
