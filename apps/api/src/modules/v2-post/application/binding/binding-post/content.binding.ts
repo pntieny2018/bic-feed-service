@@ -1,11 +1,11 @@
-import { PostEntity } from '../../../domain/model/content';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../../../v2-user/application';
 import { Inject, Injectable } from '@nestjs/common';
-import { FileDto, ImageDto, PostDto, UserMentionDto, VideoDto } from '../../dto';
+import { FileDto, ImageDto, PostDto, UserMentionDto, VideoDto, SeriesDto } from '../../dto';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -13,7 +13,6 @@ import {
 } from '../../../../v2-group/application';
 import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
@@ -106,8 +105,8 @@ export class ContentBinding implements IContentBinding {
       type: postEntity.get('type'),
       privacy: postEntity.get('privacy'),
       setting: postEntity.get('setting'),
-      commentsCount: postEntity.get('aggregation').commentsCount,
-      totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
+      commentsCount: postEntity.get('aggregation')?.commentsCount,
+      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen,
       linkPreview: postEntity.get('linkPreview')
         ? {
             url: postEntity.get('linkPreview').get('url'),
@@ -198,6 +197,50 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+    });
+  }
+
+  public async seriesBinding(
+    seriesEntity: SeriesEntity,
+    dataBinding?: {
+      actor: UserDto;
+      groups?: GroupDto[];
+    }
+  ): Promise<SeriesDto> {
+    const groups =
+      dataBinding?.groups ||
+      (await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds')));
+
+    const audience = {
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.actor),
+    };
+
+    const communities = await this._groupApplicationService.findAllByIds(
+      ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
+    );
+
+    return new SeriesDto({
+      id: seriesEntity.get('id'),
+      title: seriesEntity.get('title'),
+      summary: seriesEntity.get('summary'),
+      audience,
+      createdAt: seriesEntity.get('createdAt'),
+      updatedAt: seriesEntity.get('updatedAt'),
+      createdBy: seriesEntity.get('createdBy'),
+      coverMedia: new ImageDto(seriesEntity.get('cover')?.toObject()),
+      communities,
+      actor: dataBinding.actor,
+      status: seriesEntity.get('status'),
+      type: seriesEntity.get('type'),
+      privacy: seriesEntity.get('privacy'),
+      isHidden: seriesEntity.get('isHidden'),
+      setting: seriesEntity.get('setting'),
+      commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
+      totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
+      markedReadPost: false,
+      isSaved: false,
+      reactionsCount: {},
+      ownerReactions: [],
     });
   }
 

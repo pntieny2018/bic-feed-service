@@ -60,7 +60,7 @@ export class ContentRepository implements IContentRepository {
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const model = await this._entityToModel(contentEntity);
+      const model = this._entityToModel(contentEntity);
       await this._postModel.create(model, {
         transaction,
       });
@@ -102,7 +102,7 @@ export class ContentRepository implements IContentRepository {
 
   private async _setGroups(postEntity: ContentEntity, transaction): Promise<void> {
     const state = postEntity.getState();
-    if (state.attachGroupIds.length > 0) {
+    if (state.attachGroupIds?.length > 0) {
       await this._postGroupModel.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
           postId: postEntity.getId(),
@@ -112,7 +112,7 @@ export class ContentRepository implements IContentRepository {
       );
     }
 
-    if (state.detachGroupIds.length > 0) {
+    if (state.detachGroupIds?.length > 0) {
       await this._postGroupModel.destroy({
         where: {
           postId: postEntity.getId(),
@@ -127,6 +127,8 @@ export class ContentRepository implements IContentRepository {
     return {
       id: postEntity.getId(),
       content: postEntity.get('content'),
+      title: postEntity.get('title'),
+      summary: postEntity.get('summary'),
       privacy: postEntity.get('privacy'),
       isHidden: postEntity.get('isHidden'),
       isReported: postEntity.get('isReported'),
@@ -142,12 +144,12 @@ export class ContentRepository implements IContentRepository {
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
       linkPreviewId: postEntity.get('linkPreview')?.get('id'),
       mediaJson: {
-        files: postEntity.get('media')?.files.map((file) => file.toObject()) || [],
-        images: postEntity.get('media')?.images.map((image) => image.toObject()) || [],
-        videos: postEntity.get('media')?.videos.map((video) => video.toObject()) || [],
+        files: (postEntity.get('media')?.files || []).map((file) => file.toObject()),
+        images: (postEntity.get('media')?.images || []).map((image) => image.toObject()),
+        videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
       },
       mentions: postEntity.get('mentionUserIds') || [],
-      cover: postEntity.get('cover'),
+      coverJson: postEntity.get('cover'),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
       tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,

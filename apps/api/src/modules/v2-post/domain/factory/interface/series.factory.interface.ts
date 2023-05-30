@@ -1,6 +1,15 @@
 import { SeriesEntity, SeriesProps } from '../../model/content/series.entity';
 
+export type BasedSeriesAttribute = {
+  userId: string;
+
+  summary: string;
+
+  title: string;
+};
+
 export interface ISeriesFactory {
+  createSeries(props: BasedSeriesAttribute): SeriesEntity;
   reconstitute(props: SeriesProps): SeriesEntity;
 }
 

@@ -1,4 +1,7 @@
-import { POST_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
+import {
+  POST_DOMAIN_SERVICE_TOKEN,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+} from '../domain/domain-service/interface';
 import {
   ARTICLE_FACTORY_TOKEN,
   POST_FACTORY_TOKEN,
@@ -25,6 +28,9 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
 import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
+import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
+import { CreateSeriesHandler } from '../application/command/create-series/create-series.handler';
+import { UpdateSeriesHandler } from '../application/command/update-series/update-series.handler';
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
 import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
 import { CreateDraftArticleHandler } from '../application/command/create-draft-article/create-draft-article.handler';
@@ -55,6 +61,10 @@ export const postProvider = [
     useClass: PostDomainService,
   },
   {
+    provide: SERIES_DOMAIN_SERVICE_TOKEN,
+    useClass: SeriesDomainService,
+  },
+  {
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
   },
@@ -72,6 +82,8 @@ export const postProvider = [
   AutoSavePostHandler,
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
+  CreateSeriesHandler,
+  UpdateSeriesHandler,
   FindPostHandler,
   FindArticleHandler,
   FindArticleHandler,

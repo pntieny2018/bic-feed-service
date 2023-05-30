@@ -1,11 +1,9 @@
-import { PostEntity } from '../../../domain/model/content';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { UserDto } from '../../../../v2-user/application';
-import { ArticleDto, PostDto, UserMentionDto } from '../../dto';
+import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
 import { GroupDto } from '../../../../v2-group/application';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
-
 export interface IContentBinding {
   postBinding(
     postEntity: PostEntity,
@@ -18,6 +16,14 @@ export interface IContentBinding {
       reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto>;
+
+  seriesBinding(
+    seriesEntity: SeriesEntity,
+    dataBinding?: {
+      actor?: UserDto;
+      groups?: GroupDto[];
+    }
+  ): Promise<SeriesDto>;
 
   articleBinding(
     articleEntity: ArticleEntity,
