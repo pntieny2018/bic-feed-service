@@ -17,16 +17,16 @@ import {
 import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants/casl.constant';
 import {
   ContentEmptyGroupException,
+  ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
-  ContentNoEditSettingPermissionException,
+  ContentNoEditSettingPermissionAtGroupException,
   ContentRequireGroupException,
 } from '../exception';
 import { IContentValidator } from './interface/content.validator.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { AccessDeniedException } from '../exception/access-denied.exception';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
-import { PostPrivacy } from '../../data-type';
-import { PostStatus } from '../../../../database/models/post.model';
+import { PostType } from '../../data-type';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -39,22 +39,28 @@ export class ContentValidator implements IContentValidator {
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
 
-  public async checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void> {
+  public async checkCanCRUDContent(
+    user: UserDto,
+    groupAudienceIds: string[],
+    postType?: PostType
+  ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
+    const permissionKey = this.postTypeToPermissionKey(postType);
     for (const group of groups) {
-      if (
-        !ability.can(PERMISSION_KEY.CRUD_POST_ARTICLE, subject(SUBJECT.GROUP, { id: group.id }))
-      ) {
+      if (!ability.can(PERMISSION_KEY[permissionKey], subject(SUBJECT.GROUP, { id: group.id }))) {
         notCreatableInGroups.push(group);
       }
     }
 
     if (notCreatableInGroups.length) {
-      throw new ContentNoCRUDPermissionException({
-        groupsDenied: notCreatableInGroups.map((e) => e.id),
-      });
+      throw new ContentNoCRUDPermissionAtGroupException(
+        {
+          groupsDenied: notCreatableInGroups.map((e) => e.id),
+        },
+        notCreatableInGroups.map((e) => e.name)
+      );
     }
   }
 
@@ -62,23 +68,38 @@ export class ContentValidator implements IContentValidator {
     user: UserDto,
     groupAudienceIds: string[]
   ): Promise<void> {
-    const notEditSettingInGroupIds = [];
+    const notEditSettingInGroups: GroupDto[] = [];
+    const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
-    for (const groupId of groupAudienceIds) {
+    for (const group of groups) {
       if (
         !ability.can(
           PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
-          subject(SUBJECT.GROUP, { id: groupId })
+          subject(SUBJECT.GROUP, { id: group.id })
         )
       ) {
-        notEditSettingInGroupIds.push(groupId);
+        notEditSettingInGroups.push(group);
       }
     }
 
-    if (notEditSettingInGroupIds.length) {
-      throw new ContentNoEditSettingPermissionException({
-        groupsDenied: notEditSettingInGroupIds,
-      });
+    if (notEditSettingInGroups.length) {
+      throw new ContentNoEditSettingPermissionAtGroupException(
+        {
+          groupsDenied: notEditSettingInGroups.map((e) => e.id),
+        },
+        notEditSettingInGroups.map((e) => e.name)
+      );
+    }
+  }
+
+  public postTypeToPermissionKey(postType: PostType): string {
+    switch (postType) {
+      case PostType.SERIES:
+        return 'CRUD_SERIES';
+      case PostType.ARTICLE:
+      case PostType.POST:
+      default:
+        return 'CRUD_POST_ARTICLE';
     }
   }
 
@@ -87,25 +108,19 @@ export class ContentValidator implements IContentValidator {
     userAuth: UserDto,
     groupIds: string[]
   ): Promise<void> {
-    if (!contentEntity.isOwner(userAuth.id)) {
-      throw new AccessDeniedException();
-    }
+    if (!contentEntity.isOwner(userAuth.id)) throw new AccessDeniedException();
 
-    if (contentEntity.get('groupIds')?.length === 0) {
-      throw new ContentEmptyGroupException();
-    }
+    if (contentEntity.get('groupIds')?.length === 0) throw new ContentEmptyGroupException();
 
+    const postType = contentEntity.get('type');
     const state = contentEntity.getState();
     const { detachGroupIds, enableSetting } = state;
-    if (enableSetting) {
-      await this.checkCanEditContentSetting(userAuth, groupIds);
-    } else {
-      await this.checkCanCRUDContent(userAuth, groupIds);
-    }
 
-    if (detachGroupIds?.length) {
-      await this.checkCanCRUDContent(userAuth, detachGroupIds);
-    }
+    await this.checkCanCRUDContent(userAuth, groupIds, postType);
+
+    if (enableSetting) await this.checkCanEditContentSetting(userAuth, groupIds);
+
+    if (detachGroupIds?.length) await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
   }
 
   public async validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void> {
