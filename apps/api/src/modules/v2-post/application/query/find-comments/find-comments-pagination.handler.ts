@@ -10,6 +10,17 @@ import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  FindOnePostOptions,
+  IContentRepository,
+} from '../../../domain/repositoty-interface';
+import {
+  UserDto,
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+} from '../../../../v2-user/application';
+import { uniq } from 'lodash';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
@@ -19,13 +30,48 @@ export class FindCommentsPaginationHandler
     @Inject(COMMENT_QUERY_TOKEN)
     private readonly _commentQuery: ICommentQuery,
     @Inject(REACTION_QUERY_TOKEN)
-    private readonly _reactionQuery: IReactionQuery
+    private readonly _reactionQuery: IReactionQuery,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository
   ) {}
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
+    const { postId, authUserId } = query.payload;
+    const findOneOptions: FindOnePostOptions = {
+      where: {
+        id: postId,
+        groupArchived: false,
+        isHidden: false,
+      },
+    };
+
+    if (authUserId) findOneOptions.where.excludeReportedByUserId = authUserId;
+
+    const postEntity = await this._contentRepository.findOne(findOneOptions);
+
+    if (!postEntity || (!postEntity.isOpen() && !authUserId))
+      return new FindCommentsPaginationDto([]);
+
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);
 
     if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
+
+    const userIdsNeedToFind = uniq([
+      ...rows.map((item) => item.get('createdBy')),
+      ...rows.map((item) => item.get('mentions')).flat(),
+    ]);
+
+    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+      withGroupJoined: false,
+    });
+
+    const usersMapper = new Map<string, UserDto>(
+      users.map((user) => {
+        return [user.id, user];
+      })
+    );
 
     const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
@@ -44,6 +90,7 @@ export class FindCommentsPaginationHandler
         createdAt: row.get('createdAt'),
         createdBy: row.get('createdBy'),
         updatedAt: row.get('updatedAt'),
+        actor: usersMapper.get(row.get('createdBy')),
         media: {
           files: row.get('media').files.map((item) => new FileDto(item.toObject())),
           images: row.get('media').images.map((item) => new ImageDto(item.toObject())),
@@ -58,6 +105,12 @@ export class FindCommentsPaginationHandler
             })
         ),
         reactionsCount,
+        mentions: row.get('mentions').reduce((returnValue, current) => {
+          return {
+            ...returnValue,
+            [usersMapper.get(current).username]: usersMapper.get(current),
+          };
+        }, {}),
       });
     });
 

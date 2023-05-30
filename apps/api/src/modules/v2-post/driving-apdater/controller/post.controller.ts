@@ -22,6 +22,7 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
 } from '../../domain/exception';
 import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -183,7 +184,22 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto
   ): Promise<PostDto> {
-    const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    try {
+      const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
+      return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }

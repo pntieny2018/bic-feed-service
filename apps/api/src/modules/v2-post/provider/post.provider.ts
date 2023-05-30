@@ -33,6 +33,7 @@ import { CreateSeriesHandler } from '../application/command/create-series/create
 import { UpdateSeriesHandler } from '../application/command/update-series/update-series.handler';
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
 import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
+import { CreateDraftArticleHandler } from '../application/command/create-draft-article/create-draft-article.handler';
 
 export const postProvider = [
   {
@@ -85,4 +86,6 @@ export const postProvider = [
   UpdateSeriesHandler,
   FindPostHandler,
   FindArticleHandler,
+  FindArticleHandler,
+  CreateDraftArticleHandler,
 ];
