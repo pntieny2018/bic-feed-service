@@ -85,7 +85,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     }
 
     const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
-      series.getId(),
+      articleEntity.getId(),
     ]);
 
     return this._contentBinding.articleBinding(articleEntity, {

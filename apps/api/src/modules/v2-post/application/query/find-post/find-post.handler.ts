@@ -86,7 +86,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     }
 
     const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
-      series.getId(),
+      postEntity.getId(),
     ]);
 
     return this._contentBinding.postBinding(postEntity, {
