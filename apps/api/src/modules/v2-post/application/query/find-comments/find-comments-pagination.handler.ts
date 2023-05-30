@@ -10,6 +10,11 @@ import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  FindOnePostOptions,
+  IContentRepository,
+} from '../../../domain/repositoty-interface';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
@@ -19,10 +24,28 @@ export class FindCommentsPaginationHandler
     @Inject(COMMENT_QUERY_TOKEN)
     private readonly _commentQuery: ICommentQuery,
     @Inject(REACTION_QUERY_TOKEN)
-    private readonly _reactionQuery: IReactionQuery
+    private readonly _reactionQuery: IReactionQuery,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository
   ) {}
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
+    const { postId, authUserId } = query.payload;
+    const findOneOptions: FindOnePostOptions = {
+      where: {
+        id: postId,
+        groupArchived: false,
+        isHidden: false,
+      },
+    };
+
+    if (authUserId) findOneOptions.where.excludeReportedByUserId = authUserId;
+
+    const postEntity = await this._contentRepository.findOne(findOneOptions);
+
+    if (!postEntity || (!postEntity.isOpen() && !authUserId))
+      return new FindCommentsPaginationDto([]);
+
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);
 
     if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
