@@ -33,6 +33,7 @@ import { FindPostHandler } from '../application/query/find-post/find-post.handle
 import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
 import { CreateDraftArticleHandler } from '../application/command/create-draft-article/create-draft-article.handler';
 import { MarkReadImportantContentHandler } from '../application/command/mark-read-important-content/mark-read-important-content.handler';
+import { ValidateSeriesTagsHandler } from '../application/command/validate-series-tags/validate-series-tags.handler';
 
 export const postProvider = [
   {
@@ -87,4 +88,5 @@ export const postProvider = [
   FindArticleHandler,
   CreateDraftArticleHandler,
   MarkReadImportantContentHandler,
+  ValidateSeriesTagsHandler,
 ];
