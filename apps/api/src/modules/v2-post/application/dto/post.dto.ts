@@ -40,7 +40,7 @@ export class PostDto {
   public commentsCount: number;
   public totalUsersSeen: number;
   public wordCount: number;
-  public reactionsCount: Record<string, Record<string, number>>;
+  public reactionsCount: Record<string, number>[];
   public ownerReactions: {
     id: string;
     reactionName: string;

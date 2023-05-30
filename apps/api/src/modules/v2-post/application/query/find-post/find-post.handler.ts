@@ -19,6 +19,10 @@ import { AccessDeniedException } from '../../../domain/exception/access-denied.e
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { SeriesEntity } from '../../../domain/model/content/series.entity';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+} from '../../../domain/query-interface/reaction.query.interface';
 
 @QueryHandler(FindPostQuery)
 export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
@@ -27,6 +31,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
   @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator;
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
+  @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
   public async execute(query: FindPostQuery): Promise<any> {
     const { postId, authUser } = query.payload;
@@ -79,6 +84,10 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
         },
       });
     }
+
+    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
+      series.getId(),
+    ]);
 
     return this._contentBinding.postBinding(postEntity, {
       groups,
