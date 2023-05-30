@@ -95,11 +95,11 @@ export class ContentValidator implements IContentValidator {
   public postTypeToPermissionKey(postType: PostType): string {
     switch (postType) {
       case PostType.SERIES:
-        return PERMISSION_KEY.CRUD_SERIES;
+        return 'CRUD_SERIES';
       case PostType.ARTICLE:
       case PostType.POST:
       default:
-        return PERMISSION_KEY.CRUD_POST_ARTICLE;
+        return 'CRUD_POST_ARTICLE';
     }
   }
 
