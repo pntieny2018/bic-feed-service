@@ -15,6 +15,12 @@ import {
   FindOnePostOptions,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
+import {
+  UserDto,
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+} from '../../../../v2-user/application';
+import { uniq } from 'lodash';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
@@ -25,6 +31,8 @@ export class FindCommentsPaginationHandler
     private readonly _commentQuery: ICommentQuery,
     @Inject(REACTION_QUERY_TOKEN)
     private readonly _reactionQuery: IReactionQuery,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository
   ) {}
@@ -50,6 +58,21 @@ export class FindCommentsPaginationHandler
 
     if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
 
+    const userIdsNeedToFind = uniq([
+      ...rows.map((item) => item.get('createdBy')),
+      ...rows.map((item) => item.get('mentions')).flat(),
+    ]);
+
+    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+      withGroupJoined: false,
+    });
+
+    const usersMapper = new Map<string, UserDto>(
+      users.map((user) => {
+        return [user.id, user];
+      })
+    );
+
     const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
     );
@@ -67,6 +90,7 @@ export class FindCommentsPaginationHandler
         createdAt: row.get('createdAt'),
         createdBy: row.get('createdBy'),
         updatedAt: row.get('updatedAt'),
+        actor: usersMapper.get(row.get('createdBy')),
         media: {
           files: row.get('media').files.map((item) => new FileDto(item.toObject())),
           images: row.get('media').images.map((item) => new ImageDto(item.toObject())),
@@ -81,6 +105,12 @@ export class FindCommentsPaginationHandler
             })
         ),
         reactionsCount,
+        mentions: row.get('mentions').reduce((returnValue, current) => {
+          return {
+            ...returnValue,
+            [usersMapper.get(current).username]: usersMapper.get(current),
+          };
+        }, {}),
       });
     });
 
