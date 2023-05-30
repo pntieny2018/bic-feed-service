@@ -14,7 +14,9 @@ import {
   SeriesRequiredCoverException,
 } from '../../../domain/exception';
 import {
+  IPostDomainService,
   ISeriesDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -27,6 +29,8 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     private readonly _groupAppService: IGroupApplicationService,
     @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
     private readonly _seriesDomainService: ISeriesDomainService,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     private readonly _eventEmitter: InternalEventEmitterService
@@ -44,6 +48,8 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
         shouldIncludeGroup: true,
       },
     });
+
+    const isImportantBefore = seriesEntity.isImportant();
 
     if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
       throw new ContentNotFoundException();
@@ -65,5 +71,9 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       groups,
       newData: command.payload,
     });
+
+    if (!isImportantBefore && seriesEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(seriesEntity, actor.id);
+    }
   }
 }
