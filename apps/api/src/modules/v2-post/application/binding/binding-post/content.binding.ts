@@ -13,7 +13,6 @@ import {
 } from '../../../../v2-group/application';
 import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 
 @Injectable()
