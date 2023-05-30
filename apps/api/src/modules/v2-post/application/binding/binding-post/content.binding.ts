@@ -14,6 +14,7 @@ import {
 import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
+import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -31,6 +32,7 @@ export class ContentBinding implements IContentBinding {
       groups?: GroupDto[];
       series?: SeriesEntity[];
       authUser?: UserDto;
+      reactionCount?: ReactionsCount;
     }
   ): Promise<PostDto> {
     const userIdsNeedToFind = [];
@@ -116,7 +118,7 @@ export class ContentBinding implements IContentBinding {
       markedReadPost: postEntity.get('markedReadImportant'),
       isSaved: postEntity.get('isSaved'),
       isReported: postEntity.get('isReported'),
-      reactionsCount: {},
+      reactionsCount: dataBinding?.reactionCount || [],
       ownerReactions: postEntity.get('ownerReactions'),
     });
   }
