@@ -108,7 +108,7 @@ export class ReactionQuery implements IReactionQuery {
   public async getAndCountReactionByContents(contentIds: string[]): Promise<ReactionsCount> {
     const result = await this._postReactionModel.findAll({
       attributes: [
-        'commentId',
+        'postId',
         'reactionName',
         [Sequelize.literal(`COUNT("id")`), 'total'],
         [Sequelize.literal(`MIN("created_at")`), 'date'],
@@ -116,7 +116,7 @@ export class ReactionQuery implements IReactionQuery {
       where: {
         postId: contentIds,
       },
-      group: ['commentId', `reactionName`],
+      group: ['postId', `reactionName`],
       order: [[Sequelize.literal('date'), OrderEnum.ASC]],
     });
 

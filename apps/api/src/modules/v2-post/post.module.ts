@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../../database';
 import { GroupModuleV2 } from '../v2-group/group.module';
 import { TagController } from './driving-apdater/controller/tag.controller';
+import { ArticleController } from './driving-apdater/controller/article.controller';
 import {
   categoryProvider,
   commentProvider,
@@ -41,6 +42,7 @@ import { KafkaModule } from '@app/kafka';
     TagController,
     CategoryController,
     PostController,
+    ArticleController,
     ReactionController,
     CommentController,
     PostConsumer,

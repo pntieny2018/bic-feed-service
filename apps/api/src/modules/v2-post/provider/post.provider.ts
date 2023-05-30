@@ -26,6 +26,7 @@ import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-
 import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
+import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
 
 export const postProvider = [
   {
@@ -71,4 +72,5 @@ export const postProvider = [
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   FindPostHandler,
+  FindArticleHandler,
 ];
