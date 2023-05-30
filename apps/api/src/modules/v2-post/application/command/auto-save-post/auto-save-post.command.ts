@@ -2,7 +2,7 @@ import { ICommand } from '@nestjs/cqrs';
 import { UserDto } from '../../../../v2-user/application';
 import { PostSettingDto } from '../../dto';
 
-export type PublishPostCommandPayload = {
+export type AutoSavePostCommandPayload = {
   id: string;
   groupIds: string[];
   authUser: UserDto;
@@ -25,5 +25,5 @@ export type PublishPostCommandPayload = {
   };
 };
 export class AutoSavePostCommand implements ICommand {
-  public constructor(public readonly payload: PublishPostCommandPayload) {}
+  public constructor(public readonly payload: AutoSavePostCommandPayload) {}
 }

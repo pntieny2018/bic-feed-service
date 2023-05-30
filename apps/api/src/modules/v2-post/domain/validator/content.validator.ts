@@ -14,7 +14,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../../../v2-group/application';
-import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants/casl.constant';
+import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
 import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
@@ -22,11 +22,15 @@ import {
   ContentNoEditSettingPermissionAtGroupException,
   ContentRequireGroupException,
 } from '../exception';
-import { IContentValidator } from './interface/content.validator.interface';
+import { IContentValidator } from './interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { AccessDeniedException } from '../exception/access-denied.exception';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
 import { PostType } from '../../data-type';
+import { TagEntity } from '../model/tag';
+import { SeriesEntity } from '../model/content';
+import { TagSeriesInvalidException } from '../exception/tag-series-invalid.exception';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -36,7 +40,9 @@ export class ContentValidator implements IContentValidator {
     @Inject(USER_APPLICATION_TOKEN)
     protected readonly _userApplicationService: IUserApplicationService,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected readonly _authorityAppService: IAuthorityAppService
+    protected readonly _authorityAppService: IAuthorityAppService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    protected readonly _contentRepository: IContentRepository
   ) {}
 
   public async checkCanCRUDContent(
@@ -153,6 +159,55 @@ export class ContentValidator implements IContentValidator {
         throw new ContentRequireGroupException({ requireGroups: groups });
       }
       throw new ContentNoCRUDPermissionException();
+    }
+  }
+
+  public async validateSeriesAndTags(
+    groups: GroupDto[] = [],
+    seriesIds: string[],
+    tags: TagEntity[]
+  ): Promise<void> {
+    const seriesTagErrorData = {
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
+    };
+    if (seriesIds?.length) {
+      const groupIds = groups.map((e) => e.id);
+      const series = await this._contentRepository.findAll({
+        attributes: ['id', 'title'],
+        include: {
+          mustIncludeGroup: true,
+        },
+        where: {
+          ids: seriesIds,
+          type: PostType.SERIES,
+          groupArchived: false,
+        },
+      });
+      series.forEach((item: SeriesEntity) => {
+        const isValid = item.get('groupIds').some((groupId) => groupIds.includes(groupId));
+        if (!isValid) {
+          seriesTagErrorData.seriesIds.push(item.get('id'));
+          seriesTagErrorData.seriesNames.push(item.get('title'));
+        }
+      });
+    }
+
+    if (tags?.length) {
+      const rootGroupIds = groups.map((e) => e.rootGroupId);
+      const invalidTags = tags.filter((tag) => !rootGroupIds.includes(tag.get('groupId')));
+      if (invalidTags) {
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.get('id'));
+          seriesTagErrorData.tagNames.push(e.get('name'));
+        });
+      }
+    }
+
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+      throw new TagSeriesInvalidException(seriesTagErrorData);
     }
   }
 }
