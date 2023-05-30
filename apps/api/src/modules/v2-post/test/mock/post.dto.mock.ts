@@ -69,6 +69,7 @@ export const postMock: PostDto = {
   totalUsersSeen: 14,
   markedReadPost: true,
   isSaved: false,
-  reactionsCount: {},
+  isReported: false,
+  reactionsCount: [],
   ownerReactions: [],
 };
