@@ -1,5 +1,5 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { v4, validate as isUUID } from 'uuid';
+import { validate as isUUID } from 'uuid';
 import { emoji } from 'node-emoji';
 import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';

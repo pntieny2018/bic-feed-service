@@ -1,16 +1,18 @@
 import { AuthUser } from '../../../auth';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   BadRequestException,
   Body,
   Controller,
   Delete,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
@@ -50,6 +52,10 @@ import {
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { instanceToInstance } from 'class-transformer';
+import { GetCommentsPipe } from '../pipes/get-comments.pipe';
+import { GetListCommentsDto } from '../dto/request';
+import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
+import { FindCommentsPaginationDto } from '../../application/query/find-comments/find-comments-pagination.dto';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -58,7 +64,24 @@ import { instanceToInstance } from 'class-transformer';
   path: 'comments',
 })
 export class CommentController {
-  public constructor(private readonly _commandBus: CommandBus) {}
+  public constructor(
+    private readonly _commandBus: CommandBus,
+    private readonly _queryBus: QueryBus
+  ) {}
+
+  @ApiOperation({ summary: 'Get comment list' })
+  @ResponseMessages({
+    success: 'Get comments successfully',
+  })
+  @Get('/')
+  public async getList(
+    @AuthUser(false) user: UserDto,
+    @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
+  ): Promise<FindCommentsPaginationDto> {
+    return this._queryBus.execute(
+      new FindCommentsPaginationQuery({ authUserId: user?.id, ...getListCommentsDto })
+    );
+  }
 
   @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({

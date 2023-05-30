@@ -52,6 +52,7 @@ export class CommentController {
     success: 'Get comments successfully',
   })
   @Get('/')
+  @Version(DEFAULT_APP_VERSION[0])
   public getList(
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto

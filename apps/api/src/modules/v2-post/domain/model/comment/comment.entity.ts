@@ -4,6 +4,7 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
 import { isEmpty } from 'lodash';
+import { ReactionEntity } from '../reaction';
 
 export type CommentProps = {
   id: string;
@@ -25,6 +26,7 @@ export type CommentProps = {
   totalReply?: number;
   childs?: CommentEntity[];
   mentions?: string[];
+  ownerReactions?: ReactionEntity[];
 };
 
 export class CommentEntity extends DomainAggregateRoot<CommentProps> {
