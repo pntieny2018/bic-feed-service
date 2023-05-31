@@ -11,28 +11,28 @@ export async function paginate<T extends Model>(
   order: OrderEnum,
   cursorColumn = 'createdAt'
 ): Promise<CursorPaginationResult<T>> {
-  const { previousCursor, nextCursor, limit } = paginatedArgs;
+  const { before, after, limit } = paginatedArgs;
   let paginationQuery: WhereOptions | undefined;
 
-  if (nextCursor) {
+  if (after) {
     paginationQuery = {
       [cursorColumn]: {
         [order === OrderEnum.ASC ? Op.gt : Op.lt]: moment(
-          new Date(Buffer.from(nextCursor, 'base64').toString('utf8'))
+          new Date(Buffer.from(after, 'base64').toString('utf8'))
         ).toDate(),
       },
     };
-  } else if (previousCursor) {
+  } else if (before) {
     paginationQuery = {
       [cursorColumn]: {
         [order === OrderEnum.ASC ? Op.lt : Op.gt]: moment(
-          new Date(Buffer.from(previousCursor, 'base64').toString('utf8'))
+          new Date(Buffer.from(before, 'base64').toString('utf8'))
         ).toDate(),
       },
     };
   }
 
-  if (!nextCursor && previousCursor) {
+  if (!after && before) {
     order = order === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC;
   }
 
@@ -54,21 +54,21 @@ export async function paginate<T extends Model>(
 
   if (hasMore) rows.pop();
 
-  if (!nextCursor && previousCursor) {
+  if (!after && before) {
     rows.reverse();
   }
 
-  const hasPreviousPage = Boolean(nextCursor) || (Boolean(previousCursor) && hasMore);
-  const hasNextPage = Boolean(previousCursor) || hasMore;
+  const hasPreviousPage = Boolean(after) || (Boolean(before) && hasMore);
+  const hasNextPage = Boolean(before) || hasMore;
 
   const meta = {
     hasNextPage,
     hasPreviousPage,
-    previousCursor:
+    startCursor:
       rows.length > 0
         ? Buffer.from(`${rows[0][cursorColumn].toISOString()}`).toString('base64')
         : null,
-    nextCursor:
+    endCursor:
       rows.length > 0
         ? Buffer.from(`${rows[rows.length - 1][cursorColumn].toISOString()}`).toString('base64')
         : null,

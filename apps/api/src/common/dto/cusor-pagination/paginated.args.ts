@@ -19,14 +19,14 @@ export class PaginatedArgs implements IPaginationArgs {
   @ApiProperty()
   @IsOptional()
   @Expose({
-    name: 'previous_cursor',
+    name: 'before',
   })
-  public previousCursor?: string;
+  public before?: string;
 
   @ApiProperty()
   @IsOptional()
   @Expose({
-    name: 'next_cursor',
+    name: 'after',
   })
-  public nextCursor?: string;
+  public after?: string;
 }

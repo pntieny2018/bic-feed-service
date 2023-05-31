@@ -25,7 +25,7 @@ export class CommentQuery implements ICommentQuery {
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const { authUserId, limit, order, postId, parentId, previousCursor, nextCursor } = input;
+    const { authUserId, limit, order, postId, parentId, before, after } = input;
     const restQueryOptions = this._getRestCondition(input);
     const findOptions: FindOptions = {
       include: [
@@ -58,7 +58,7 @@ export class CommentQuery implements ICommentQuery {
     const { rows, meta } = await paginate(
       this._commentModel,
       findOptions,
-      { previousCursor, nextCursor, limit },
+      { before, after, limit },
       order,
       'createdAt'
     );
