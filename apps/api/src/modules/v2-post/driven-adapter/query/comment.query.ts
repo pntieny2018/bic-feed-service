@@ -1,3 +1,4 @@
+import { concat } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Includeable, Op, Sequelize, col } from 'sequelize';
@@ -5,7 +6,11 @@ import { CommentModel } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
-import { GetPaginationCommentProps, ICommentQuery } from '../../domain/query-interface';
+import {
+  GetArroundCommentProps,
+  GetPaginationCommentProps,
+  ICommentQuery,
+} from '../../domain/query-interface';
 import { CommentEntity } from '../../domain/model/comment';
 import { TargetType } from '../../../report-content/contstants';
 import { paginate } from '../../../../common/dto/cusor-pagination';
@@ -97,5 +102,46 @@ export class CommentQuery implements ICommentQuery {
       ),
       meta,
     };
+  }
+
+  public async getArroundComment(
+    comment: CommentEntity,
+    props: GetArroundCommentProps
+  ): Promise<CursorPaginationResult<CommentEntity>> {
+    const { limit } = props;
+    const limitExcludeTarget = limit - 1;
+    const fisrt = Math.ceil(limitExcludeTarget / 2);
+    const last = limitExcludeTarget - fisrt;
+
+    const soonerCommentsQuery = this.getPagination({
+      ...props,
+      limit: fisrt,
+      after: Buffer.from(`${comment.get('createdAt').toISOString()}`).toString('base64'),
+      postId: comment.get('postId'),
+      parentId: comment.get('parentId'),
+    });
+
+    const laterCommentsQuery = this.getPagination({
+      ...props,
+      limit: last,
+      before: Buffer.from(`${comment.get('createdAt').toISOString()}`).toString('base64'),
+      postId: comment.get('postId'),
+      parentId: comment.get('parentId'),
+    });
+
+    const [soonerComment, laterComments] = await Promise.all([
+      soonerCommentsQuery,
+      laterCommentsQuery,
+    ]);
+
+    const rows = concat(laterComments.rows, comment, soonerComment.rows);
+    const meta = {
+      startCursor: laterComments.rows.length > 0 ? laterComments.meta.startCursor : null,
+      endCursor: soonerComment.rows.length > 0 ? soonerComment.meta.endCursor : null,
+      hasNextPage: soonerComment.meta.hasNextPage,
+      hasPreviousPage: laterComments.meta.hasPreviousPage,
+    };
+
+    return { rows, meta };
   }
 }
