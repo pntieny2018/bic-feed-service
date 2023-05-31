@@ -7,10 +7,6 @@ export type GetPaginationCommentProps = CursorPaginationProps & {
   authUserId?: string;
   order: OrderEnum;
   postId: string;
-  createdAtGT?: string;
-  createdAtLT?: string;
-  createdAtGTE?: string;
-  createdAtLTE?: string;
   parentId?: string;
 };
 

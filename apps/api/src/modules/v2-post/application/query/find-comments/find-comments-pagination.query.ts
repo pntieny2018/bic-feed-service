@@ -9,10 +9,6 @@ type Props = {
   before?: string;
   after?: string;
   order: OrderEnum;
-  createdAtGT?: string;
-  createdAtLT?: string;
-  createdAtGTE?: string;
-  createdAtLTE?: string;
 };
 
 export class FindCommentsPaginationQuery implements IQuery {
