@@ -1,3 +1,5 @@
+import { CommentBinding } from '../application/binding/binding-comment/comment.binding';
+import { COMMENT_BINDING_TOKEN } from '../application/binding/binding-comment/comment.interface';
 import { CreateCommentHandler } from '../application/command/create-comment/create-comment.handler';
 import { DeleteCommentHandler } from '../application/command/delete-comment/delete-comment.handler';
 import { ReplyCommentHandler } from '../application/command/reply-comment/reply-comment.handler';
@@ -34,6 +36,10 @@ export const commentProvider = [
   {
     provide: COMMENT_QUERY_TOKEN,
     useClass: CommentQuery,
+  },
+  {
+    provide: COMMENT_BINDING_TOKEN,
+    useClass: CommentBinding,
   },
   /** Application */
   CreateCommentHandler,
