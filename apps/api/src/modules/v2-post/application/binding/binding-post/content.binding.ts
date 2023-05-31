@@ -182,6 +182,8 @@ export class ContentBinding implements IContentBinding {
       communities,
       actor,
       status: articleEntity.get('status'),
+      title: articleEntity.get('title'),
+      summary: articleEntity.get('summary'),
       type: articleEntity.get('type'),
       privacy: articleEntity.get('privacy'),
       setting: articleEntity.get('setting'),
