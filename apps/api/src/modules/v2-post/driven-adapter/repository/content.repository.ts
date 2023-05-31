@@ -519,7 +519,7 @@ export class ContentRepository implements IContentRepository {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
       },
-      cover: new ImageEntity(post.coverJson),
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       wordCount: post.wordCount,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
@@ -557,7 +557,7 @@ export class ContentRepository implements IContentRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       groupIds: post.groups?.map((group) => group.groupId),
-      cover: new ImageEntity(post.coverJson),
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
       items: post.items?.map((item) => {
