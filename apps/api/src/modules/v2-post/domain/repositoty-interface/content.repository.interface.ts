@@ -9,13 +9,18 @@ export type FindOnePostOptions = {
     id: string;
     groupArchived?: boolean;
     isHidden?: boolean;
+    excludeReportedByUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
+    shouldIncludeReactionUserId?: string;
+    shouldIncludeSavedUserId?: string;
+    shouldIncludeMarkReadImportantUserId?: string;
   };
   attributes?: (keyof IPost)[];
 };
@@ -25,20 +30,25 @@ export type FindAllPostOptions = {
     type?: PostType;
     ids?: string[];
     groupArchived?: boolean;
+    excludeReportedByUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
+    shouldIncludeReactionUserId?: string;
+    shouldIncludeSavedUserId?: string;
+    shouldIncludeMarkReadImportantUserId?: string;
   };
   attributes?: (keyof IPost)[];
 };
 
 export interface IContentRepository {
-  create(data: PostEntity): Promise<void>;
-  update(data: PostEntity): Promise<void>;
+  create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
+  update(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;

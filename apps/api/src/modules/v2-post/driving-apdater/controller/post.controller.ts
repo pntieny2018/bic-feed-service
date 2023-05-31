@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -21,6 +22,7 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
 } from '../../domain/exception';
 import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -39,6 +41,8 @@ import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dt
 import { PostStatus } from '../../../../database/models/post.model';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -171,6 +175,31 @@ export class PostController {
       return data;
     } catch (e) {
       console.log(e);
+    }
+  }
+
+  @ApiOperation({ summary: 'Get post detail' })
+  @Get('/:postId')
+  public async getPostDetail(
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<PostDto> {
+    try {
+      const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
+      return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
     }
   }
 }

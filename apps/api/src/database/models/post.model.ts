@@ -28,7 +28,7 @@ import { IMedia, MediaModel } from './media.model';
 import { PostCategoryModel } from './post-category.model';
 import { IPostGroup, PostGroupModel } from './post-group.model';
 import { PostMediaModel } from './post-media.model';
-import { PostReactionModel } from './post-reaction.model';
+import { IPostReaction, PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
 import { IPostTag, PostTagModel } from './post-tag.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
@@ -85,6 +85,7 @@ export interface IPost {
   mentionIds?: number[];
   reactionsCount?: string;
   markedReadPost?: boolean;
+  isSaved?: boolean;
   type: PostType;
   title?: string;
   summary?: string;
@@ -97,7 +98,7 @@ export interface IPost {
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
-  items?: Partial<IPost>[];
+  items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
   publishedAt?: Date;
@@ -107,6 +108,7 @@ export interface IPost {
   coverJson?: any;
   videoIdProcessing?: string;
   postSeries?: PostSeriesModel[];
+  ownerReactions?: IPostReaction[];
 }
 
 @Table({

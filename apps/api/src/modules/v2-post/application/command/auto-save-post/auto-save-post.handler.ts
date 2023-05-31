@@ -42,7 +42,7 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
         shouldIncludeLinkPreview: true,
       },
     });
-    if (!postEntity || !(postEntity instanceof PostEntity)) return;
+    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) return;
 
     if (postEntity.isPublished()) return;
 

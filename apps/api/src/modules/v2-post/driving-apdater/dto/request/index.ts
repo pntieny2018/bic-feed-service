@@ -9,3 +9,6 @@ export * from './create-comment.request.dto';
 export * from './get-reaction.request.dto';
 export * from './create-reaction.request.dto';
 export * from './delete-reaction.request.dto';
+export * from './create-series.request.dto';
+export * from './get-list-comments.dto';
+export * from './validate-series-tag.dto';
