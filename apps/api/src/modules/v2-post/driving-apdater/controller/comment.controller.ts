@@ -70,6 +70,9 @@ export class CommentController {
   ) {}
 
   @ApiOperation({ summary: 'Get comment list' })
+  @ApiOkResponse({
+    type: FindCommentsPaginationDto,
+  })
   @ResponseMessages({
     success: 'Get comments successfully',
   })
@@ -79,7 +82,9 @@ export class CommentController {
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
   ): Promise<FindCommentsPaginationDto> {
     return this._queryBus.execute(
-      new FindCommentsPaginationQuery({ authUserId: user?.id, ...getListCommentsDto })
+      new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
+    );
+  }
     );
   }
 

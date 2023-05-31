@@ -38,7 +38,7 @@ export class FindCommentsPaginationHandler
   ) {}
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
-    const { postId, authUserId } = query.payload;
+    const { postId, authUser } = query.payload;
     const findOneOptions: FindOnePostOptions = {
       where: {
         id: postId,
@@ -47,11 +47,11 @@ export class FindCommentsPaginationHandler
       },
     };
 
-    if (authUserId) findOneOptions.where.excludeReportedByUserId = authUserId;
+    if (authUser) findOneOptions.where.excludeReportedByUserId = authUser.id;
 
     const postEntity = await this._contentRepository.findOne(findOneOptions);
 
-    if (!postEntity || (!postEntity.isOpen() && !authUserId))
+    if (!postEntity || (!postEntity.isOpen() && !authUser))
       return new FindCommentsPaginationDto([]);
 
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);

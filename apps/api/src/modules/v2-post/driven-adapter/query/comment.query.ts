@@ -25,16 +25,16 @@ export class CommentQuery implements ICommentQuery {
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const { authUserId, limit, order, postId, parentId, before, after } = input;
+    const { authUser, limit, order, postId, parentId, before, after } = input;
     const findOptions: FindOptions = {
       include: [
-        authUserId
+        authUser
           ? {
               model: CommentReactionModel,
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUserId,
+                  created_by: authUser.id,
                 },
               },
             }
