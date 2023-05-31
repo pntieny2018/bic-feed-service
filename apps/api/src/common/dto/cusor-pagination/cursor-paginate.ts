@@ -15,24 +15,28 @@ export async function paginate<T extends Model>(
   let paginationQuery: WhereOptions | undefined;
 
   if (nextCursor) {
-    const operator = order === OrderEnum.ASC ? Op.gt : Op.lt;
     paginationQuery = {
       [cursorColumn]: {
-        [operator]: moment(new Date(Buffer.from(nextCursor, 'base64').toString('utf8'))).toDate(),
+        [order === OrderEnum.ASC ? Op.gt : Op.lt]: moment(
+          new Date(Buffer.from(nextCursor, 'base64').toString('utf8'))
+        ).toDate(),
       },
     };
-  }
-
-  if (previousCursor) {
-    const operator = order === OrderEnum.ASC ? Op.lt : Op.gt;
+  } else if (previousCursor) {
     paginationQuery = {
       [cursorColumn]: {
-        [operator]: moment(
+        [order === OrderEnum.ASC ? Op.lt : Op.gt]: moment(
           new Date(Buffer.from(previousCursor, 'base64').toString('utf8'))
         ).toDate(),
       },
     };
   }
+
+  if (!nextCursor && previousCursor) {
+    order = order === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC;
+  }
+
+  query.order = [[cursorColumn, order]];
 
   const paginationWhere: WhereOptions | undefined = paginationQuery
     ? { [Op.and]: [paginationQuery, query.where] }
@@ -46,12 +50,16 @@ export async function paginate<T extends Model>(
 
   const rows = await executer.findAll(paginationQueryOptions);
 
-  const hasNextPage =
-    (Boolean(nextCursor) && rows.length - limit > 0) || (!nextCursor && rows.length - limit > 0);
+  const hasMore = rows.length > limit;
 
-  const hasPreviousPage = Boolean(previousCursor) && rows.length - limit > 0;
+  if (hasMore) rows.pop();
 
-  if (rows.length - limit > 0) rows.pop();
+  if (!nextCursor && previousCursor) {
+    rows.reverse();
+  }
+
+  const hasPreviousPage = Boolean(nextCursor) || (Boolean(previousCursor) && hasMore);
+  const hasNextPage = Boolean(previousCursor) || hasMore;
 
   const meta = {
     hasNextPage,

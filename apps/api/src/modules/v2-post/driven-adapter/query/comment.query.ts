@@ -53,7 +53,6 @@ export class CommentQuery implements ICommentQuery {
         ],
         ...restQueryOptions,
       },
-      order: [['createdAt', order]],
     };
 
     const { rows, meta } = await paginate(
