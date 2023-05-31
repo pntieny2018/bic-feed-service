@@ -1,5 +1,5 @@
 export type CursorPaginationProps = {
   limit: number;
-  previousCursor?: string;
-  nextCursor?: string;
+  before?: string;
+  after?: string;
 };

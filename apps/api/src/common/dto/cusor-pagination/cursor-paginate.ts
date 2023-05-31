@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { OrderEnum } from '../pagination';
 import { PaginatedArgs } from './paginated.args';
 import { FindOptions, Model, ModelStatic, Op, WhereOptions } from 'sequelize';
@@ -7,25 +8,35 @@ export async function paginate<T extends Model>(
   executer: ModelStatic<T>,
   query: FindOptions,
   paginatedArgs: PaginatedArgs,
-  order: OrderEnum,
-  cursorColumn = 'id'
+  order = OrderEnum.DESC,
+  cursorColumn = 'createdAt'
 ): Promise<CursorPaginationResult<T>> {
-  const { previousCursor, nextCursor, limit } = paginatedArgs;
+  const { before, after, limit } = paginatedArgs;
   let paginationQuery: WhereOptions | undefined;
 
-  if (nextCursor) {
-    const operator = order === OrderEnum.ASC ? Op.gt : Op.lt;
+  if (after) {
     paginationQuery = {
-      [cursorColumn]: { [operator]: Buffer.from(nextCursor, 'base64').toString('utf8') },
+      [cursorColumn]: {
+        [order === OrderEnum.ASC ? Op.gt : Op.lt]: moment(
+          new Date(Buffer.from(after, 'base64').toString('utf8'))
+        ).toDate(),
+      },
+    };
+  } else if (before) {
+    paginationQuery = {
+      [cursorColumn]: {
+        [order === OrderEnum.ASC ? Op.lt : Op.gt]: moment(
+          new Date(Buffer.from(before, 'base64').toString('utf8'))
+        ).toDate(),
+      },
     };
   }
 
-  if (previousCursor) {
-    const operator = order === OrderEnum.ASC ? Op.lt : Op.gt;
-    paginationQuery = {
-      [cursorColumn]: { [operator]: Buffer.from(previousCursor, 'base64').toString('utf8') },
-    };
+  if (!after && before) {
+    order = order === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC;
   }
+
+  query.order = [[cursorColumn, order]];
 
   const paginationWhere: WhereOptions | undefined = paginationQuery
     ? { [Op.and]: [paginationQuery, query.where] }
@@ -39,21 +50,28 @@ export async function paginate<T extends Model>(
 
   const rows = await executer.findAll(paginationQueryOptions);
 
-  const hasNextPage = Boolean(nextCursor) && rows.length - limit > 0;
+  const hasMore = rows.length > limit;
 
-  const hasPreviousPage = Boolean(previousCursor) && rows.length - limit > 0;
+  if (hasMore) rows.pop();
 
-  if (hasNextPage || hasPreviousPage) rows.pop();
+  if (!after && before) {
+    rows.reverse();
+  }
+
+  const hasPreviousPage = Boolean(after) || (Boolean(before) && hasMore);
+  const hasNextPage = Boolean(before) || hasMore;
 
   const meta = {
+    startCursor:
+      rows.length > 0
+        ? Buffer.from(`${rows[0][cursorColumn].toISOString()}`).toString('base64')
+        : null,
+    endCursor:
+      rows.length > 0
+        ? Buffer.from(`${rows[rows.length - 1][cursorColumn].toISOString()}`).toString('base64')
+        : null,
     hasNextPage,
     hasPreviousPage,
-    previousCursor:
-      rows.length > 0 ? Buffer.from(`${rows[0][cursorColumn]}`).toString('base64') : null,
-    nextCursor:
-      rows.length > 0
-        ? Buffer.from(`${rows[rows.length - 1][cursorColumn]}`).toString('base64')
-        : null,
   };
 
   return { rows, meta };
