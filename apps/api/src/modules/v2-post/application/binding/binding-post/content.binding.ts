@@ -192,6 +192,7 @@ export class ContentBinding implements IContentBinding {
       isReported: articleEntity.get('isReported'),
       reactionsCount: dataBinding?.reactionsCount || [],
       ownerReactions: articleEntity.get('ownerReactions'),
+      wordCount: articleEntity.get('wordCount'),
       coverMedia: articleEntity.get('cover')
         ? new ImageDto(articleEntity.get('cover').toObject())
         : null,
