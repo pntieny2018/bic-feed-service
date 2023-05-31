@@ -1,8 +1,8 @@
 import { IPaginatedInfo, PaginatedResponse } from '../../../../../common/dto/cusor-pagination';
-import { CommentDto } from '../../dto/comment.dto';
+import { CommentResponseDto } from '../../../driving-apdater/dto/response';
 
-export class FindCommentsPaginationDto extends PaginatedResponse<CommentDto> {
-  public constructor(list: CommentDto[], meta?: IPaginatedInfo) {
+export class FindCommentsPaginationDto extends PaginatedResponse<CommentResponseDto> {
+  public constructor(list: CommentResponseDto[], meta?: IPaginatedInfo) {
     super(list, meta);
   }
 }
