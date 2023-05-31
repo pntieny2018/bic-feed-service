@@ -172,6 +172,73 @@ export class PostDomainService implements IPostDomainService {
     postEntity.commit();
   }
 
+  public async updatePost(input: PostPublishProps): Promise<void> {
+    const { postEntity, newData } = input;
+    const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
+
+    let newTagEntities = [];
+    if (tagIds) {
+      newTagEntities = await this._tagRepo.findAll({
+        ids: tagIds,
+      });
+      postEntity.setTags(newTagEntities);
+    }
+    if (media) {
+      const images = await this._mediaDomainService.getAvailableImages(
+        postEntity.get('media').images,
+        media?.imagesIds,
+        postEntity.get('createdBy')
+      );
+      if (images.some((image) => !image.isPostContentResource())) {
+        throw new InvalidResourceImageException();
+      }
+      const files = await this._mediaDomainService.getAvailableFiles(
+        postEntity.get('media').files,
+        media?.filesIds,
+        postEntity.get('createdBy')
+      );
+      const videos = await this._mediaDomainService.getAvailableVideos(
+        postEntity.get('media').videos,
+        media?.videosIds,
+        postEntity.get('createdBy')
+      );
+      postEntity.setMedia({
+        files,
+        images,
+        videos,
+      });
+    }
+    if (linkPreview?.url && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
+      postEntity.setLinkPreview(linkPreviewEntity);
+    }
+
+    postEntity.updateAttribute(newData);
+    postEntity.setPrivacyFromGroups(groups);
+    if (postEntity.hasVideoProcessing()) {
+      postEntity.setProcessing();
+    } else {
+      postEntity.setPublish();
+    }
+
+    await this._postValidator.validatePublishContent(
+      postEntity,
+      authUser,
+      postEntity.get('groupIds')
+    );
+    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      postEntity.get('seriesIds'),
+      postEntity.get('tags')
+    );
+
+    if (!postEntity.isChanged()) return;
+    await this._contentRepository.update(postEntity);
+
+    postEntity.commit();
+  }
+
   public async markSeen(contentEntity: ContentEntity, userId: string): Promise<void> {
     await this._contentRepository.markSeen(contentEntity.getId(), userId);
   }

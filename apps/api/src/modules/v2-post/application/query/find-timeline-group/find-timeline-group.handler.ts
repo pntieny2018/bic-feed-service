@@ -5,27 +5,22 @@ import {
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { PostDto } from '../../dto';
-import { FindPostQuery } from './find-post.query';
+import { FindTimelineGroupQuery } from './find-timeline-group.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
 
-@QueryHandler(FindPostQuery)
-export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
+@QueryHandler(FindTimelineGroupQuery)
+export class FindTimelineGroupHandler implements IQueryHandler<FindTimelineGroupQuery, PostDto[]> {
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
   @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
@@ -33,11 +28,11 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindPostQuery): Promise<PostDto> {
-    const { postId, authUser } = query.payload;
-    const postEntity = await this._contentRepo.findOne({
+  public async execute(query: FindTimelineGroupQuery): Promise<PostDto[]> {
+    const { groupId, authUser } = query.payload;
+    const postEntity = await this._contentRepo.findAll({
       where: {
-        id: postId,
+        ids: [],
         groupArchived: false,
         excludeReportedByUserId: authUser.id,
       },
@@ -88,12 +83,13 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
       postEntity.getId(),
     ]);
-    return this._contentBinding.postBinding(postEntity, {
-      groups,
-      mentionUsers,
-      series: series as SeriesEntity[],
-      reactionsCount,
-      authUser,
-    });
+    return [];
+    // this._contentBinding.postBinding(postEntity, {
+    //   groups,
+    //   mentionUsers,
+    //   series: series as SeriesEntity[],
+    //   reactionsCount,
+    //   authUser,
+    // });
   }
 }

@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Includeable, Op, Sequelize, WhereAttributeHash, col } from 'sequelize';
-import { CommentModel, IComment } from '../../../../database/models/comment.model';
+import { FindOptions, Includeable, Op, Sequelize, col } from 'sequelize';
+import { CommentModel } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
@@ -25,8 +25,7 @@ export class CommentQuery implements ICommentQuery {
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const { authUserId, limit, order, postId, parentId, previousCursor, nextCursor } = input;
-    const restQueryOptions = this._getRestCondition(input);
+    const { authUserId, limit, order, postId, parentId, before, after } = input;
     const findOptions: FindOptions = {
       include: [
         authUserId
@@ -51,17 +50,15 @@ export class CommentQuery implements ICommentQuery {
               TargetType.COMMENT
             }')`),
         ],
-        ...restQueryOptions,
       },
-      order: [['createdAt', order]],
     };
 
     const { rows, meta } = await paginate(
       this._commentModel,
       findOptions,
-      { previousCursor, nextCursor, limit },
+      { before, after, limit },
       order,
-      'id'
+      'createdAt'
     );
 
     return {
@@ -100,27 +97,5 @@ export class CommentQuery implements ICommentQuery {
       ),
       meta,
     };
-  }
-
-  private _getRestCondition(
-    getCommentsDto: GetPaginationCommentProps
-  ): WhereAttributeHash<IComment> {
-    const { createdAtGT, createdAtGTE, createdAtLT, createdAtLTE } = getCommentsDto;
-    const restQueryOptions: WhereAttributeHash<IComment> = {};
-
-    if (createdAtGT) {
-      restQueryOptions['createdAt'] = { [Op.gt]: createdAtGT };
-    }
-    if (createdAtGTE) {
-      restQueryOptions['createdAt'] = { [Op.gte]: createdAtGTE };
-    }
-    if (createdAtLT) {
-      restQueryOptions['createdAt'] = { [Op.lt]: createdAtLT };
-    }
-    if (createdAtLTE) {
-      restQueryOptions['createdAt'] = { [Op.lte]: createdAtLTE };
-    }
-
-    return restQueryOptions;
   }
 }

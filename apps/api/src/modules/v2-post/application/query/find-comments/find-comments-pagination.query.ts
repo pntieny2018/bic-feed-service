@@ -6,13 +6,9 @@ type Props = {
   postId: string;
   parentId: string;
   limit: number;
-  previousCursor?: string;
-  nextCursor?: string;
+  before?: string;
+  after?: string;
   order: OrderEnum;
-  createdAtGT?: string;
-  createdAtLT?: string;
-  createdAtGTE?: string;
-  createdAtLTE?: string;
 };
 
 export class FindCommentsPaginationQuery implements IQuery {
