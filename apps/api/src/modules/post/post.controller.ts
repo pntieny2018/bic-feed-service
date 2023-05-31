@@ -130,7 +130,7 @@ export class PostController {
   })
   @Put('/:postId')
   @InjectUserToBody()
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   public async update(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,

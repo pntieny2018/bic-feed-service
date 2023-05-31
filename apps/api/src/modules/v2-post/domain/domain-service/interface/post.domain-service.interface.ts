@@ -26,6 +26,7 @@ export interface IPostDomainService {
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
   publishPost(input: PostPublishProps): Promise<void>;
+  updatePost(input: PostPublishProps): Promise<void>;
   autoSavePost(input: PostPublishProps): Promise<void>;
   markSeen(contentEntity: ContentEntity, userId: string): Promise<void>;
   markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void>;

@@ -85,6 +85,61 @@ export class PostController {
     }
   }
 
+  @ApiOperation({ summary: 'Update post' })
+  @ResponseMessages({
+    success: 'message.post.updated_success',
+  })
+  @Put('/:postId')
+  public async updatePost(
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @AuthUser() authUser: UserDto,
+    @Body() publishPostRequestDto: PublishPostRequestDto,
+    @Req() req: Request
+  ): Promise<void> {
+    const { audience, tags, series, mentions, media } = publishPostRequestDto;
+    try {
+      const data = await this._commandBus.execute<PublishPostCommand, PostDto>(
+        new PublishPostCommand({
+          ...publishPostRequestDto,
+          id: postId,
+          mentionUserIds: mentions,
+          groupIds: audience?.groupIds,
+          tagIds: tags,
+          seriesIds: series,
+          media: media
+            ? {
+                filesIds: media?.files.map((file) => file.id),
+                imagesIds: media?.images.map((image) => image.id),
+                videosIds: media?.videos.map((video) => video.id),
+              }
+            : undefined,
+          authUser,
+        })
+      );
+
+      if (data.status === PostStatus.PROCESSING) {
+        req.message = 'message.post.published_success_with_video_waiting_process';
+      }
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoEditSettingPermissionException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+        case UserNoBelongGroupException:
+        case ContentEmptyException:
+        case ContentEmptyGroupException:
+        case TagSeriesInvalidException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
   @ApiOperation({ summary: 'Publish post' })
   @ResponseMessages({
     success: 'message.post.published_success',
@@ -172,7 +227,6 @@ export class PostController {
           authUser,
         })
       );
-      return data;
     } catch (e) {
       console.log(e);
     }

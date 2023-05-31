@@ -33,7 +33,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindPostQuery): Promise<any> {
+  public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;
     const postEntity = await this._contentRepo.findOne({
       where: {
