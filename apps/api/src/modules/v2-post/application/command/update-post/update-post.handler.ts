@@ -68,7 +68,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       withGroupJoined: true,
     });
 
-    await this._postDomainService.publishPost({
+    await this._postDomainService.updatePost({
       postEntity: postEntity as PostEntity,
       newData: {
         ...command.payload,
