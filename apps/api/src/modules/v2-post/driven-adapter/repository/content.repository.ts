@@ -279,10 +279,31 @@ export class ContentRepository implements IContentRepository {
           id: options.where['ids'],
         };
       }
-      if (options.where['type']) {
+      if (options.where.type) {
         findOption.where = {
           ...findOption.where,
-          type: options.where['type'],
+          type: options.where.type,
+        };
+      }
+
+      if (options.where.isImportant) {
+        findOption.where = {
+          ...findOption.where,
+          isImportant: options.where.isImportant,
+        };
+      }
+
+      if (options.where.status) {
+        findOption.where = {
+          ...findOption.where,
+          status: options.where.status,
+        };
+      }
+
+      if (options.where.createdBy) {
+        findOption.where = {
+          ...findOption.where,
+          createdBy: options.where.createdBy,
         };
       }
       if (options.where.excludeReportedByUserId) {
