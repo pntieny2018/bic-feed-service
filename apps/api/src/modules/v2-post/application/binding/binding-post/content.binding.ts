@@ -192,6 +192,7 @@ export class ContentBinding implements IContentBinding {
       isReported: articleEntity.get('isReported'),
       reactionsCount: dataBinding?.reactionsCount || [],
       ownerReactions: articleEntity.get('ownerReactions'),
+      wordCount: articleEntity.get('wordCount'),
       coverMedia: articleEntity.get('cover')
         ? new ImageDto(articleEntity.get('cover').toObject())
         : null,
@@ -229,7 +230,9 @@ export class ContentBinding implements IContentBinding {
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
       createdBy: seriesEntity.get('createdBy'),
-      coverMedia: new ImageDto(seriesEntity.get('cover')?.toObject()),
+      coverMedia: seriesEntity.get('cover')
+        ? new ImageDto(seriesEntity.get('cover')?.toObject())
+        : null,
       communities,
       actor: dataBinding.actor,
       status: seriesEntity.get('status'),
