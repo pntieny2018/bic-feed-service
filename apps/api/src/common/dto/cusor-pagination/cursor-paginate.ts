@@ -8,7 +8,7 @@ export async function paginate<T extends Model>(
   executer: ModelStatic<T>,
   query: FindOptions,
   paginatedArgs: PaginatedArgs,
-  order: OrderEnum,
+  order = OrderEnum.DESC,
   cursorColumn = 'createdAt'
 ): Promise<CursorPaginationResult<T>> {
   const { before, after, limit } = paginatedArgs;
@@ -62,8 +62,6 @@ export async function paginate<T extends Model>(
   const hasNextPage = Boolean(before) || hasMore;
 
   const meta = {
-    hasNextPage,
-    hasPreviousPage,
     startCursor:
       rows.length > 0
         ? Buffer.from(`${rows[0][cursorColumn].toISOString()}`).toString('base64')
@@ -72,6 +70,8 @@ export async function paginate<T extends Model>(
       rows.length > 0
         ? Buffer.from(`${rows[rows.length - 1][cursorColumn].toISOString()}`).toString('base64')
         : null,
+    hasNextPage,
+    hasPreviousPage,
   };
 
   return { rows, meta };
