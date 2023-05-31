@@ -4,6 +4,7 @@ import { IComment } from '../../../../database/models/comment.model';
 
 export type FindOneOptions = {
   excludeReportedByUserId?: string;
+  includeOwnerReactions?: string;
 };
 
 export interface ICommentRepository {

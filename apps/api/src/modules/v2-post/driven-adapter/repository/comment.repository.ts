@@ -6,7 +6,7 @@ import { CommentReactionModel } from '../../../../database/models/comment-reacti
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { FindOneOptions, ICommentRepository } from '../../domain/repositoty-interface';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { TargetType } from '../../../report-content/contstants';
 import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
@@ -84,8 +84,9 @@ export class CommentRepository implements ICommentRepository {
     where: WhereOptions<IComment>,
     options?: FindOneOptions
   ): Promise<CommentEntity> {
+    const findOptions: FindOptions = { where };
     if (options?.excludeReportedByUserId) {
-      where = {
+      findOptions.where = {
         ...where,
         [Op.and]: [
           Sequelize.literal(
@@ -101,7 +102,21 @@ export class CommentRepository implements ICommentRepository {
         ],
       };
     }
-    const comment = await this._commentModel.findOne({ where });
+    if (options?.includeOwnerReactions) {
+      findOptions.include = [
+        {
+          model: CommentReactionModel,
+          on: {
+            [Op.and]: {
+              comment_id: { [Op.eq]: col(`CommentModel.id`) },
+              created_by: options?.includeOwnerReactions,
+            },
+          },
+        },
+      ];
+    }
+
+    const comment = await this._commentModel.findOne(findOptions);
 
     return this._modelToEntity(comment);
   }
