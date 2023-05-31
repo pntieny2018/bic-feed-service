@@ -43,6 +43,8 @@ import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
 import { FindPostQuery } from '../../application/query/find-post/find-post.query';
+import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
+import { UpdatePostRequestDto } from '../dto/request/update-post.request.dto';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -93,14 +95,14 @@ export class PostController {
   public async updatePost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
-    @Body() publishPostRequestDto: PublishPostRequestDto,
+    @Body() updatePostRequestDto: UpdatePostRequestDto,
     @Req() req: Request
   ): Promise<void> {
-    const { audience, tags, series, mentions, media } = publishPostRequestDto;
+    const { audience, tags, series, mentions, media } = updatePostRequestDto;
     try {
-      const data = await this._commandBus.execute<PublishPostCommand, PostDto>(
-        new PublishPostCommand({
-          ...publishPostRequestDto,
+      const data = await this._commandBus.execute<UpdatePostCommand, PostDto>(
+        new UpdatePostCommand({
+          ...updatePostRequestDto,
           id: postId,
           mentionUserIds: mentions,
           groupIds: audience?.groupIds,
