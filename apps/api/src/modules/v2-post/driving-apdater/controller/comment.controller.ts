@@ -44,6 +44,7 @@ import {
   ContentNotFoundException,
   ContentRequireGroupException,
   InvalidCursorParamsException,
+  InvalidResourceImageException,
   MentionUserNotFoundException,
 } from '../../domain/exception';
 import {
@@ -167,6 +168,7 @@ export class CommentController {
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
@@ -214,6 +216,7 @@ export class CommentController {
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:

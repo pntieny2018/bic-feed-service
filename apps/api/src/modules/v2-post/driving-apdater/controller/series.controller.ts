@@ -5,6 +5,7 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -25,6 +26,9 @@ import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoEditSettingPermissionAtGroupException,
+  ContentNotFoundException,
+  InvalidResourceImageException,
+  SeriesRequiredCoverException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { instanceToInstance } from 'class-transformer';
@@ -67,13 +71,16 @@ export class SeriesController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
         case ContentEmptyGroupException:
+        case SeriesRequiredCoverException:
+        case InvalidResourceImageException:
+        case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
         default:
           throw e;
       }
@@ -104,13 +111,16 @@ export class SeriesController {
       );
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
         case ContentEmptyGroupException:
+        case SeriesRequiredCoverException:
+        case InvalidResourceImageException:
+        case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
         default:
           throw e;
       }
