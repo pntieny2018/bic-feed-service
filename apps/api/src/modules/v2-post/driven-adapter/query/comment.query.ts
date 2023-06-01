@@ -119,7 +119,7 @@ export class CommentQuery implements ICommentQuery {
 
     const soonerCommentsQuery = this.getPagination({
       ...props,
-      limit: fisrt,
+      limit: Math.max(fisrt, 1),
       after: createCursor(cursorPayload),
       postId: comment.get('postId'),
       parentId: comment.get('parentId'),
@@ -127,7 +127,7 @@ export class CommentQuery implements ICommentQuery {
 
     const laterCommentsQuery = this.getPagination({
       ...props,
-      limit: last,
+      limit: Math.max(last, 1),
       before: createCursor(cursorPayload),
       postId: comment.get('postId'),
       parentId: comment.get('parentId'),
@@ -139,12 +139,17 @@ export class CommentQuery implements ICommentQuery {
     ]);
 
     const rows = concat(laterComments.rows, comment, soonerComment.rows);
+
     const meta = {
       startCursor: laterComments.rows.length > 0 ? laterComments.meta.startCursor : null,
       endCursor: soonerComment.rows.length > 0 ? soonerComment.meta.endCursor : null,
       hasNextPage: soonerComment.meta.hasNextPage,
       hasPreviousPage: laterComments.meta.hasPreviousPage,
     };
+
+    if (!fisrt) rows.shift();
+
+    if (!last) rows.pop();
 
     return { rows, meta };
   }

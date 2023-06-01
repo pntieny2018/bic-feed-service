@@ -9,7 +9,7 @@ export class GetCommentsArroundIdDto {
     default: 10,
   })
   @IsOptional()
-  @Min(3)
+  @Min(1)
   @Max(PAGING_DEFAULT_LIMIT)
   @Type(() => Number)
   public limit?: number = 10;
