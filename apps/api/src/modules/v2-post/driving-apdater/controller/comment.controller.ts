@@ -43,6 +43,7 @@ import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
   ContentRequireGroupException,
+  InvalidCursorParamsException,
   MentionUserNotFoundException,
 } from '../../domain/exception';
 import {
@@ -84,9 +85,22 @@ export class CommentController {
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
   ): Promise<FindCommentsPaginationDto> {
-    return this._queryBus.execute(
-      new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
-    );
+    try {
+      const data = await this._queryBus.execute(
+        new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
+      );
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Get comments arround a comment' })
@@ -94,14 +108,27 @@ export class CommentController {
     success: 'Get comments arround a comment successfully',
   })
   @Get('/:commentId')
-  public getCommentsArroundId(
+  public async getCommentsArroundId(
     @AuthUser(false) user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query(GetCommentsArroundIdPipe) getCommentsArroundIdDto: GetCommentsArroundIdDto
   ): Promise<FindCommentsArroundIdDto> {
-    return this._queryBus.execute(
-      new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
-    );
+    try {
+      const data = await this._queryBus.execute(
+        new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
+      );
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create new comment' })
