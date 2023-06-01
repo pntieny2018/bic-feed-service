@@ -126,6 +126,10 @@ export class ContentEntity<
     return this._props.createdBy;
   }
 
+  public getGroupIds(): string[] {
+    return this._props.groupIds;
+  }
+
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
   }

@@ -31,7 +31,7 @@ export class TimelineController {
     @AuthUser(false) authUser: UserDto,
     @Query() getTimelineDto: GetTimelineRequestDto
   ): Promise<any> {
-    const { type, isSaved, isMine, isImportant, limit } = getTimelineDto;
+    const { type, isSaved, isMine, isImportant, limit, before, after } = getTimelineDto;
     const data = await this._queryBus.execute(
       new FindTimelineGroupQuery({
         type,
@@ -40,7 +40,8 @@ export class TimelineController {
         isImportant,
         limit,
         groupId,
-        after: '',
+        after,
+        before,
         authUser,
       })
     );

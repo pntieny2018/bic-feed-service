@@ -4,6 +4,7 @@ import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
+  GetPaginationContentsProps,
   IContentRepository,
   OrderOptions,
 } from '../../domain/repositoty-interface';
@@ -35,6 +36,12 @@ import { ReportContentDetailModel } from '../../../../database/models/report-con
 import { UserSavePostModel } from '../../../../database/models/user-save-post.model';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { CategoryModel } from '../../../../database/models/category.model';
+import { isBoolean } from 'lodash';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { CommentEntity } from '../../domain/model/comment';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
+import { ReactionEntity } from '../../domain/model/reaction';
+import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
 
 export class ContentRepository implements IContentRepository {
   LIMIT_DEFAULT = 10;
@@ -220,30 +227,15 @@ export class ContentRepository implements IContentRepository {
   public async findAll(
     findAllPostOptions: FindAllPostOptions
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const include = [];
-    if (findAllPostOptions.include) {
-      const { shouldIncludeGroup, mustIncludeGroup } = findAllPostOptions.include;
-      if (shouldIncludeGroup || mustIncludeGroup) {
-        include.push({
-          model: PostGroupModel,
-          as: 'groups',
-          required: !shouldIncludeGroup,
-          where: findAllPostOptions.where?.groupArchived
-            ? { isArchived: findAllPostOptions.where.groupArchived }
-            : {},
-        });
-      }
-    }
     const findOption = this._buildFindOptions(findAllPostOptions);
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
     findOption.order = this._getOrderContent(findAllPostOptions.order);
-
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }
 
   private _getOrderContent(orderOptions: OrderOptions) {
-    if (!orderOptions) return [];
+    if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
       order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
@@ -283,6 +275,7 @@ export class ContentRepository implements IContentRepository {
     const findOption: FindOptions<IPost> = {};
     findOption.where = this._getCondition(options).where;
     const includeAttr = [];
+    const subSelect = [];
     if (options.include) {
       const {
         shouldIncludeSeries,
@@ -354,7 +347,7 @@ export class ContentRepository implements IContentRepository {
 
       if (shouldIncludeSaved) {
         if (shouldIncludeSaved.userId) {
-          includeAttr.push([
+          subSelect.push([
             Sequelize.literal(`(
                   COALESCE((SELECT true FROM ${schema}.${userSavePostTable} as r
                   WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
@@ -364,13 +357,13 @@ export class ContentRepository implements IContentRepository {
             'isSaved',
           ]);
         } else {
-          includeAttr.push([Sequelize.literal(`(false)`), 'isSaved']);
+          subSelect.push([Sequelize.literal(`(false)`), 'isSaved']);
         }
       }
 
       if (shouldIncludeMarkReadImportant) {
         if (shouldIncludeMarkReadImportant.userId) {
-          includeAttr.push([
+          subSelect.push([
             Sequelize.literal(`(
                   COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
                   WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
@@ -380,13 +373,13 @@ export class ContentRepository implements IContentRepository {
             'markedReadPost',
           ]);
         } else {
-          includeAttr.push([Sequelize.literal(`(false)`), 'markedReadPost']);
+          subSelect.push([Sequelize.literal(`(false)`), 'markedReadPost']);
         }
       }
 
       if (shouldIncludeImportant) {
         if (shouldIncludeImportant.userId) {
-          includeAttr.push([
+          subSelect.push([
             Sequelize.literal(`(
           CASE WHEN is_important = TRUE AND COALESCE((SELECT TRUE FROM ${schema}.${userMarkReadPostTable} as r
           WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
@@ -396,14 +389,17 @@ export class ContentRepository implements IContentRepository {
             'colImportant',
           ]);
         } else {
-          includeAttr.push([Sequelize.literal(`"PostModel".is_important`), 'colImportant']);
+          subSelect.push([Sequelize.literal(`"PostModel".is_important`), 'colImportant']);
         }
       }
     }
 
-    findOption.attributes = {
-      include: [...includeAttr],
-    };
+    if (subSelect.length) {
+      findOption.attributes = {
+        include: [...subSelect],
+      };
+    }
+    if (includeAttr.length) findOption.include = includeAttr;
     return findOption;
   }
 
@@ -430,7 +426,7 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
-      if (options.where.isImportant) {
+      if (isBoolean(options.where.isImportant)) {
         condition.push({
           isImportant: options.where.isImportant,
         });
@@ -448,7 +444,7 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
-      if (options.where.isHidden !== undefined) {
+      if (isBoolean(options.where.isHidden)) {
         condition.push({
           isHidden: options.where.isHidden,
         });
@@ -484,20 +480,32 @@ export class ContentRepository implements IContentRepository {
             `EXISTS ( 
                       SELECT g.group_id FROM  ${schema}.${postGroupTable} g
                         WHERE g.post_id = "PostModel".id ${
-                          options.where.groupArchived ? ` AND g.is_archived = TRUE}` : ``
+                          options.where.groupArchived ? ` AND g.is_archived = TRUE` : ``
                         }  AND g.group_id = ${this._postModel.sequelize.escape(
               options.where.groupId
             )}
-              )`
+                      )`
           )
         );
       }
+
+      // if (options.where.groupArchived !== undefined) {
+      //   condition.push(
+      //     Sequelize.literal(
+      //       `EXISTS (
+      //                 SELECT g.group_id FROM  ${schema}.${postGroupTable} g
+      //                   WHERE g.post_id = "PostModel".id  AND g.is_archived = ${options.where.groupArchived})`
+      //     )
+      //   );
+      // }
+
       if (condition.length) {
         findOption.where = {
           [Op.and]: condition,
         };
       }
     }
+
     return findOption;
   }
 
@@ -637,13 +645,36 @@ export class ContentRepository implements IContentRepository {
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
-      items: post.items?.map((item) => {
-        if (item.type === PostType.ARTICLE) {
-          return this._modelToArticleEntity(item);
-        } else if (item.type === PostType.POST) {
-          return this._modelToPostEntity(item);
-        }
-      }),
+      itemIds: post.itemIds?.map((item) => item.postId) || [],
     });
+  }
+
+  public async getPagination(
+    getPaginationContentsProps: GetPaginationContentsProps
+  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
+    const { after, before, limit } = getPaginationContentsProps;
+    const findOption = this._buildFindOptions(getPaginationContentsProps);
+    findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
+    findOption.order = this._getOrderContent(getPaginationContentsProps.order);
+
+    // const curorCols = [];
+    // if (getPaginationContentsProps.isImportantFirst) {
+    //   curorCols.push('"colImportant"')
+    // }
+    // order.push(['createdAt', 'desc']);
+    //
+    const paginator = new CursorPaginator(
+      this._postModel,
+      ['createdAt'],
+      { before, after, limit },
+      OrderEnum.DESC
+    );
+
+    const { rows, meta } = await paginator.paginate(findOption);
+
+    return {
+      rows: rows.map((row) => this._modelToEntity(row)),
+      meta,
+    };
   }
 }

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
-import { PageOptionsDto } from '../../../../../common/dto';
+import { PageOptionsDto, PaginatedArgs } from '../../../../../common/dto';
 import { PostType } from '../../../data-type';
 
-export class GetTimelineRequestDto extends PageOptionsDto {
+export class GetTimelineRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'is_important', example: true })
   @IsOptional()
   @Expose({

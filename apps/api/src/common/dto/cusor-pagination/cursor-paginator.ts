@@ -35,7 +35,7 @@ export class CursorPaginator<T extends Model> {
   public async paginate(query: FindOptions): Promise<CursorPaginationResult<T>> {
     const paginationQuery = this._getPaginationQuery();
 
-    query.order = this._buildOrder();
+    // query.order = this._buildOrder();
 
     const paginationWhere: WhereOptions | undefined = paginationQuery
       ? { [Op.and]: [paginationQuery, query.where] }

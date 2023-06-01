@@ -4,6 +4,12 @@ import { IPost } from '../../../../database/models/post.model';
 import { ArticleEntity } from '../model/content/article.entity';
 import { SeriesEntity } from '../model/content/series.entity';
 import { FindOptions } from 'sequelize';
+import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
+import { UserDto } from '../../../v2-user/application';
+import { OrderEnum } from '../../../../common/dto';
+import { CommentEntity } from '../model/comment';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { GetArroundCommentProps, GetPaginationCommentProps } from '../query-interface';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
@@ -84,6 +90,8 @@ export type FindAllPostOptions = {
   order?: OrderOptions;
 };
 
+export type GetPaginationContentsProps = FindAllPostOptions & CursorPaginationProps;
+
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
@@ -98,6 +106,9 @@ export interface IContentRepository {
   delete(id: string): Promise<void>;
   markSeen(postId: string, userId: string): Promise<void>;
   markReadImportant(postId: string, userId: string): Promise<void>;
+  getPagination(
+    getPaginationContentsProps: GetPaginationContentsProps
+  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

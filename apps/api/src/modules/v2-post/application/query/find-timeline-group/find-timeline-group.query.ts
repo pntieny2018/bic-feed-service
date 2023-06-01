@@ -10,6 +10,7 @@ type Props = {
   isSaved?: boolean;
   limit?: number;
   after?: string;
+  before?: string;
   type?: PostType;
 };
 export class FindTimelineGroupQuery implements IQuery {

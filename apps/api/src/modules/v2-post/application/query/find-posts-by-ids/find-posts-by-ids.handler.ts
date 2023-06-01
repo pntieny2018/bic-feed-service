@@ -4,7 +4,7 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { PostDto } from '../../dto';
+import { ArticleDto, PostDto, SeriesDto } from '../../dto';
 import { FindPostsByIdsQuery } from './find-posts-by-ids.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
@@ -21,7 +21,9 @@ import {
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
 
 @QueryHandler(FindPostsByIdsQuery)
-export class FindPostsByIdsHandler implements IQueryHandler<FindPostsByIdsQuery, PostDto[]> {
+export class FindPostsByIdsHandler
+  implements IQueryHandler<FindPostsByIdsQuery, (PostDto | ArticleDto | SeriesDto)[]>
+{
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
   @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
@@ -29,9 +31,7 @@ export class FindPostsByIdsHandler implements IQueryHandler<FindPostsByIdsQuery,
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(
-    query: FindPostsByIdsQuery
-  ): Promise<(PostDto | ArticleEntity | SeriesEntity)[]> {
+  public async execute(query: FindPostsByIdsQuery): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
     const { ids, authUser } = query.payload;
     const contentEntities = await this._contentRepo.findAll({
       where: {
@@ -53,8 +53,6 @@ export class FindPostsByIdsHandler implements IQueryHandler<FindPostsByIdsQuery,
       },
     });
 
-    const
-    contentEntities.forEach((contentEntity) => {});
-    return contentEntities;
+    return await this._contentBinding.contentsBinding(contentEntities, authUser);
   }
 }

@@ -76,31 +76,9 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
       await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
     }
 
-    let series;
-    if (articleEntity.get('seriesIds')?.length) {
-      series = await this._contentRepo.findAll({
-        attributes: {
-          exclude: ['content'],
-        },
-        where: {
-          groupArchived: false,
-          ids: articleEntity.get('seriesIds'),
-        },
-        include: {
-          mustIncludeGroup: true,
-        },
-      });
-    }
-
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
-      articleEntity.getId(),
-    ]);
-
     return this._contentBinding.articleBinding(articleEntity, {
       groups,
       actor: new UserDto(authUser),
-      series: series as SeriesEntity[],
-      reactionsCount,
     });
   }
 }

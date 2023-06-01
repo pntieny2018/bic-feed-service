@@ -39,6 +39,14 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
     }
   }
 
+  public getSeriesIds(): string[] {
+    return this._props.seriesIds;
+  }
+
+  public getTitle(): string {
+    return this._props.title;
+  }
+
   public setCategories(categoryEntities: CategoryEntity[]): void {
     this._props.categories = categoryEntities;
   }

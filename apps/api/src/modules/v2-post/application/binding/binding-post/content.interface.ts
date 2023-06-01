@@ -37,7 +37,8 @@ export interface IContentBinding {
   ): Promise<ArticleDto>;
 
   contentsBinding(
-    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[]
+    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[],
+    authUser: UserDto
   ): Promise<(ArticleDto | PostDto | SeriesDto)[]>;
 
   mapMentionWithUserInfo(users: UserDto[]): UserMentionDto;

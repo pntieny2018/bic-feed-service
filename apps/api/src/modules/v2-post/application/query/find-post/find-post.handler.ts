@@ -99,7 +99,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       groups,
       mentionUsers,
       series: series as SeriesEntity[],
-      reactionsCount,
+      reactionsCount: reactionsCount.get(postEntity.getId()),
       authUser,
     });
   }
