@@ -4,6 +4,7 @@ import { CursorPaginationResult } from '../../types/cursor-pagination-result.typ
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
 import { PaginatedArgs } from './paginated.args';
 import { CursorParam } from './paginated.interface';
+import { InvalidCursorParamsException } from '../../../modules/v2-post/domain/exception';
 
 export class CursorPaginator<T extends Model> {
   public modelClass: ModelStatic<T>;
@@ -80,7 +81,7 @@ export class CursorPaginator<T extends Model> {
 
     if (this.before) cursors = parseCursor(this.before);
 
-    if (!Object.keys(cursors).length || !this._isValidCursor(cursors)) return paginationQuery;
+    if (cursors && !this._isValidCursor(cursors)) throw new InvalidCursorParamsException();
 
     const operator = this._getOperator();
 
@@ -116,7 +117,12 @@ export class CursorPaginator<T extends Model> {
   }
 
   private _isValidCursor(cursors: CursorParam): boolean {
-    return Object.keys(cursors).length === this.cursorColumns.length;
+    const cursorKeys = Object.keys(cursors);
+    const attributes = Object.keys(this.modelClass.getAttributes());
+
+    if (cursorKeys.length !== this.cursorColumns.length) return false;
+
+    return cursorKeys.every((column) => attributes.includes(column));
   }
 
   private _recursivelyGetPaginationQuery(
