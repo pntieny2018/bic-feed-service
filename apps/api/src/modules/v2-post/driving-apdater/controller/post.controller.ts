@@ -22,6 +22,7 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
 } from '../../domain/exception';
 import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -42,6 +43,8 @@ import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
 import { FindPostQuery } from '../../application/query/find-post/find-post.query';
+import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
+import { UpdatePostRequestDto } from '../dto/request/update-post.request.dto';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -77,6 +80,61 @@ export class PostController {
         case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Update post' })
+  @ResponseMessages({
+    success: 'message.post.updated_success',
+  })
+  @Put('/:postId')
+  public async updatePost(
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @AuthUser() authUser: UserDto,
+    @Body() updatePostRequestDto: UpdatePostRequestDto,
+    @Req() req: Request
+  ): Promise<void> {
+    const { audience, tags, series, mentions, media } = updatePostRequestDto;
+    try {
+      const data = await this._commandBus.execute<UpdatePostCommand, PostDto>(
+        new UpdatePostCommand({
+          ...updatePostRequestDto,
+          id: postId,
+          mentionUserIds: mentions,
+          groupIds: audience?.groupIds,
+          tagIds: tags,
+          seriesIds: series,
+          media: media
+            ? {
+                filesIds: media?.files.map((file) => file.id),
+                imagesIds: media?.images.map((image) => image.id),
+                videosIds: media?.videos.map((video) => video.id),
+              }
+            : undefined,
+          authUser,
+        })
+      );
+
+      if (data.status === PostStatus.PROCESSING) {
+        req.message = 'message.post.published_success_with_video_waiting_process';
+      }
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoEditSettingPermissionException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+        case UserNoBelongGroupException:
+        case ContentEmptyException:
+        case ContentEmptyGroupException:
+        case TagSeriesInvalidException:
           throw new BadRequestException(e);
         default:
           throw e;
@@ -171,7 +229,6 @@ export class PostController {
           authUser,
         })
       );
-      return data;
     } catch (e) {
       console.log(e);
     }
@@ -183,7 +240,22 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto
   ): Promise<PostDto> {
-    const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    try {
+      const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
+      return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }

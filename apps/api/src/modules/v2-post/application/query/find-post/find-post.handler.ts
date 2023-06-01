@@ -33,7 +33,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindPostQuery): Promise<any> {
+  public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;
     const postEntity = await this._contentRepo.findOne({
       where: {
@@ -53,10 +53,10 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     });
 
     if (
-      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
-      postEntity.isHidden() ||
       !postEntity ||
-      !(postEntity instanceof PostEntity)
+      !(postEntity instanceof PostEntity) ||
+      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
+      postEntity.isHidden()
     ) {
       throw new ContentNotFoundException();
     }
@@ -86,14 +86,14 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     }
 
     const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
-      series.getId(),
+      postEntity.getId(),
     ]);
-
     return this._contentBinding.postBinding(postEntity, {
       groups,
-      actor: new UserDto(authUser),
       mentionUsers,
       series: series as SeriesEntity[],
+      reactionsCount,
+      authUser,
     });
   }
 }

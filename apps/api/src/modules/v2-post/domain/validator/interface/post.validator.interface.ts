@@ -4,7 +4,6 @@ import { TagEntity } from '../../model/tag';
 import { PostEntity } from '../../model/content';
 
 export interface IPostValidator extends IContentValidator {
-  validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): void;
   validateAndSetMedia(
     postEntity: PostEntity,
     media: {

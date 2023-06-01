@@ -1,5 +1,5 @@
 import { PostEntity } from '../model/content';
-import { PostType } from '../../data-type';
+import { PostStatus, PostType } from '../../data-type';
 import { IPost } from '../../../../database/models/post.model';
 import { ArticleEntity } from '../model/content/article.entity';
 import { SeriesEntity } from '../model/content/series.entity';
@@ -10,12 +10,19 @@ export type FindOnePostOptions = {
     groupArchived?: boolean;
     isHidden?: boolean;
     excludeReportedByUserId?: string;
+    groupId?: string;
+    createdBy?: string;
+    isImportant?: string;
+    savedByUserId?: string;
+    type?: PostType;
+    status?: PostStatus;
   };
   include?: {
     mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReactionUserId?: string;
     shouldIncludeSavedUserId?: string;
@@ -30,12 +37,18 @@ export type FindAllPostOptions = {
     ids?: string[];
     groupArchived?: boolean;
     excludeReportedByUserId?: string;
+    groupId?: string;
+    createdBy?: string;
+    isImportant?: string;
+    savedByUserId?: string;
+    status?: PostStatus;
   };
   include?: {
     mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReactionUserId?: string;
     shouldIncludeSavedUserId?: string;
@@ -45,8 +58,8 @@ export type FindAllPostOptions = {
 };
 
 export interface IContentRepository {
-  create(data: PostEntity): Promise<void>;
-  update(data: PostEntity): Promise<void>;
+  create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
+  update(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
