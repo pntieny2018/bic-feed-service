@@ -28,3 +28,4 @@ export * from './comment-not-empty.exception';
 export * from './series-required-cover.exception';
 export * from './content-no-crud-permission-at-group.exception';
 export * from './content-no-edit-setting-permission-at-group.exception';
+export * from './invalid-resource-image.exception';
