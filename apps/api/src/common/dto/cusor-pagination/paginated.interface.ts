@@ -15,3 +15,5 @@ export interface IPaginationArgs {
   before?: string;
   after?: string;
 }
+
+export type CursorParam = Record<string, Date | string | number>;

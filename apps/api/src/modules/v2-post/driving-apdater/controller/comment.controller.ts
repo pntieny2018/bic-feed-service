@@ -43,6 +43,7 @@ import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
   ContentRequireGroupException,
+  InvalidResourceImageException,
   MentionUserNotFoundException,
 } from '../../domain/exception';
 import {
@@ -53,9 +54,12 @@ import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { instanceToInstance } from 'class-transformer';
 import { GetCommentsPipe } from '../pipes/get-comments.pipe';
-import { GetListCommentsDto } from '../dto/request';
+import { GetCommentsArroundIdDto, GetListCommentsDto } from '../dto/request';
 import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
 import { FindCommentsPaginationDto } from '../../application/query/find-comments/find-comments-pagination.dto';
+import { GetCommentsArroundIdPipe } from '../pipes/get-comments-arround-id.pipe';
+import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
+import { FindCommentsArroundIdDto } from '../../application/query/find-comments-arround-id/find-comments-arround-id.dto';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -70,6 +74,9 @@ export class CommentController {
   ) {}
 
   @ApiOperation({ summary: 'Get comment list' })
+  @ApiOkResponse({
+    type: FindCommentsPaginationDto,
+  })
   @ResponseMessages({
     success: 'Get comments successfully',
   })
@@ -79,7 +86,22 @@ export class CommentController {
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
   ): Promise<FindCommentsPaginationDto> {
     return this._queryBus.execute(
-      new FindCommentsPaginationQuery({ authUserId: user?.id, ...getListCommentsDto })
+      new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
+    );
+  }
+
+  @ApiOperation({ summary: 'Get comments arround a comment' })
+  @ResponseMessages({
+    success: 'Get comments arround a comment successfully',
+  })
+  @Get('/:commentId')
+  public getCommentsArroundId(
+    @AuthUser(false) user: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Query(GetCommentsArroundIdPipe) getCommentsArroundIdDto: GetCommentsArroundIdDto
+  ): Promise<FindCommentsArroundIdDto> {
+    return this._queryBus.execute(
+      new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
     );
   }
 
@@ -119,6 +141,7 @@ export class CommentController {
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
@@ -166,6 +189,7 @@ export class CommentController {
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:

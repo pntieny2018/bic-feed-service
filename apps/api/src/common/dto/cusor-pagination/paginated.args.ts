@@ -14,7 +14,7 @@ export class PaginatedArgs implements IPaginationArgs {
   @IsInt()
   @Max(PAGING_DEFAULT_LIMIT)
   @Min(1)
-  public limit = 25;
+  public limit = 10;
 
   @ApiProperty()
   @IsOptional()

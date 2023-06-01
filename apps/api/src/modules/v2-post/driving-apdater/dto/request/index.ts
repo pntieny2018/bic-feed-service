@@ -11,5 +11,6 @@ export * from './create-reaction.request.dto';
 export * from './delete-reaction.request.dto';
 export * from './create-series.request.dto';
 export * from './get-list-comments.dto';
+export * from './get-comments-arround-id.request.dto';
 export * from './validate-series-tag.dto';
 export * from './get-timeline.request.dto';
