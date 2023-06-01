@@ -9,7 +9,7 @@ export const seriesEntityMock = new SeriesEntity({
   title: postRecordMock.title,
   summary: postRecordMock.summary,
   cover: new ImageEntity(postRecordMock.coverJson),
-  items: [],
+  itemIds: [],
   createdBy: postRecordMock.createdBy,
   updatedBy: postRecordMock.updatedBy,
   aggregation: {

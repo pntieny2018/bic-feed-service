@@ -57,7 +57,6 @@ export class ProcessPostPublishedHandler
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });
@@ -80,7 +79,9 @@ export class ProcessPostPublishedHandler
     let series = [];
     if (postEntity.get('seriesIds')?.length) {
       series = await this._contentRepository.findAll({
-        attributes: ['id', 'createdBy'], //TODO enhance get attributes repo
+        attributes: {
+          exclude: ['content'],
+        },
         where: {
           ids: after.seriesIds,
         },

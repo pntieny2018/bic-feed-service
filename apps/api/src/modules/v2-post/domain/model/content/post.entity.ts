@@ -48,6 +48,14 @@ export class PostEntity extends ContentEntity<PostProps> {
     this._props.linkPreview = linkPreview;
   }
 
+  public getTitle(): string {
+    return '';
+  }
+
+  public getSeriesIds(): string[] {
+    return this._props.seriesIds;
+  }
+
   public setTags(newTags: TagEntity[]): void {
     if (!newTags) return;
     const entityTagIds = this._props.tags?.map((tag) => tag.get('id')) || [];

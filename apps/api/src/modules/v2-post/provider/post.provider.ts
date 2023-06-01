@@ -35,6 +35,8 @@ import { CreateDraftArticleHandler } from '../application/command/create-draft-a
 import { MarkReadImportantContentHandler } from '../application/command/mark-read-important-content/mark-read-important-content.handler';
 import { ValidateSeriesTagsHandler } from '../application/command/validate-series-tags/validate-series-tags.handler';
 import { UpdatePostHandler } from '../application/command/update-post/update-post.handler';
+import { FindTimelineGroupHandler } from '../application/query/find-timeline-group/find-timeline-group.handler';
+import { FindPostsByIdsHandler } from '../application/query/find-posts-by-ids/find-posts-by-ids.handler';
 
 export const postProvider = [
   {
@@ -91,4 +93,6 @@ export const postProvider = [
   MarkReadImportantContentHandler,
   ValidateSeriesTagsHandler,
   UpdatePostHandler,
+  FindTimelineGroupHandler,
+  FindPostsByIdsHandler,
 ];

@@ -15,7 +15,7 @@ export interface IReactionQuery {
   getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>>;
 
   getAndCountReactionByComments(commentIds: string[]): Promise<ReactionsCount>;
-  getAndCountReactionByContents(contentIds: string[]): Promise<ReactionsCount>;
+  getAndCountReactionByContents(contentIds: string[]): Promise<Map<string, ReactionsCount>>;
 }
 
 export const REACTION_QUERY_TOKEN = 'REACTION_QUERY_TOKEN';

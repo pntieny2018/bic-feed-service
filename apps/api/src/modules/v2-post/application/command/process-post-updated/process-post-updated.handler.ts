@@ -64,7 +64,9 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     const { before, after, isPublished } = command.payload;
 
     const series = await this._contentRepository.findAll({
-      attributes: ['id', 'createdBy'], //TODO enhance get attributes repo
+      attributes: {
+        exclude: ['content'],
+      },
       where: {
         ids: after.seriesIds,
       },
@@ -122,7 +124,9 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     });
 
     const removeSeries = await this._contentRepository.findAll({
-      attributes: ['id', 'createdBy', 'title'],
+      attributes: {
+        exclude: ['content'],
+      },
       where: {
         ids: after.state.detachSeriesIds,
       },
@@ -138,7 +142,9 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     }));
 
     const newSeries = await this._contentRepository.findAll({
-      attributes: ['id', 'createdBy', 'title'],
+      attributes: {
+        exclude: ['content'],
+      },
       where: {
         ids: after.state.attachSeriesIds,
       },

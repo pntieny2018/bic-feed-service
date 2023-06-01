@@ -4,29 +4,26 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ArticleDto, PostDto } from '../../dto';
-import { FindArticleQuery } from './find-article.query';
+import { ArticleDto, PostDto, SeriesDto } from '../../dto';
+import { FindPostsByIdsQuery } from './find-posts-by-ids.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/content';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
 
-@QueryHandler(FindArticleQuery)
-export class FindArticleHandler implements IQueryHandler<FindArticleQuery, ArticleDto> {
+@QueryHandler(FindPostsByIdsQuery)
+export class FindPostsByIdsHandler
+  implements IQueryHandler<FindPostsByIdsQuery, (PostDto | ArticleDto | SeriesDto)[]>
+{
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
   @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
@@ -34,19 +31,16 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindArticleQuery): Promise<ArticleDto> {
-    const { articleId, authUser } = query.payload;
-    const articleEntity = await this._contentRepo.findOne({
+  public async execute(query: FindPostsByIdsQuery): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
+    const { ids, authUser } = query.payload;
+    const contentEntities = await this._contentRepo.findAll({
       where: {
-        id: articleId,
-        groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+        ids,
       },
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
-        shouldIncludeCategory: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
         },
@@ -59,26 +53,6 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
       },
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
-      articleEntity.isHidden()
-    ) {
-      throw new ContentNotFoundException();
-    }
-
-    if (!authUser && !articleEntity.isOpen()) {
-      throw new AccessDeniedException();
-    }
-    const groups = await this._groupAppService.findAllByIds(articleEntity.get('groupIds'));
-    if (authUser) {
-      await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
-    }
-
-    return this._contentBinding.articleBinding(articleEntity, {
-      groups,
-      actor: new UserDto(authUser),
-    });
+    return await this._contentBinding.contentsBinding(contentEntities, authUser);
   }
 }
