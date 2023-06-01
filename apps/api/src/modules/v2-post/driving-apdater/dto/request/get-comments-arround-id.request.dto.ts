@@ -1,6 +1,7 @@
-import { IsOptional, Min } from 'class-validator';
+import { IsOptional, Max, Min } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PAGING_DEFAULT_LIMIT } from '../../../../../common/constants';
 
 export class GetCommentsArroundIdDto {
   @ApiPropertyOptional({
@@ -8,7 +9,8 @@ export class GetCommentsArroundIdDto {
     default: 10,
   })
   @IsOptional()
-  @Min(3)
+  @Min(1)
+  @Max(PAGING_DEFAULT_LIMIT)
   @Type(() => Number)
   public limit?: number = 10;
 
@@ -19,6 +21,7 @@ export class GetCommentsArroundIdDto {
   })
   @IsOptional()
   @Min(3)
+  @Max(PAGING_DEFAULT_LIMIT)
   @Type(() => Number)
   @Expose({
     name: 'target_child_limit',

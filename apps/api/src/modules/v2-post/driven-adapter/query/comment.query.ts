@@ -13,7 +13,7 @@ import {
 } from '../../domain/query-interface';
 import { CommentEntity } from '../../domain/model/comment';
 import { TargetType } from '../../../report-content/contstants';
-import { paginate } from '../../../../common/dto/cusor-pagination';
+import { CursorPaginator, createCursor } from '../../../../common/dto/cusor-pagination';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { ReactionEntity } from '../../domain/model/reaction';
 import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
@@ -58,13 +58,14 @@ export class CommentQuery implements ICommentQuery {
       },
     };
 
-    const { rows, meta } = await paginate(
+    const paginator = new CursorPaginator(
       this._commentModel,
-      findOptions,
+      ['createdAt'],
       { before, after, limit },
-      order,
-      'createdAt'
+      order
     );
+
+    const { rows, meta } = await paginator.paginate(findOptions);
 
     return {
       rows: rows.map((row) =>
@@ -112,19 +113,22 @@ export class CommentQuery implements ICommentQuery {
     const limitExcludeTarget = limit - 1;
     const fisrt = Math.ceil(limitExcludeTarget / 2);
     const last = limitExcludeTarget - fisrt;
+    const cursorPayload = {
+      createdAt: comment.get('createdAt'),
+    };
 
     const soonerCommentsQuery = this.getPagination({
       ...props,
-      limit: fisrt,
-      after: Buffer.from(`${comment.get('createdAt').toISOString()}`).toString('base64'),
+      limit: Math.max(fisrt, 1),
+      after: createCursor(cursorPayload),
       postId: comment.get('postId'),
       parentId: comment.get('parentId'),
     });
 
     const laterCommentsQuery = this.getPagination({
       ...props,
-      limit: last,
-      before: Buffer.from(`${comment.get('createdAt').toISOString()}`).toString('base64'),
+      limit: Math.max(last, 1),
+      before: createCursor(cursorPayload),
       postId: comment.get('postId'),
       parentId: comment.get('parentId'),
     });
@@ -135,12 +139,17 @@ export class CommentQuery implements ICommentQuery {
     ]);
 
     const rows = concat(laterComments.rows, comment, soonerComment.rows);
+
     const meta = {
       startCursor: laterComments.rows.length > 0 ? laterComments.meta.startCursor : null,
       endCursor: soonerComment.rows.length > 0 ? soonerComment.meta.endCursor : null,
       hasNextPage: soonerComment.meta.hasNextPage,
       hasPreviousPage: laterComments.meta.hasPreviousPage,
     };
+
+    if (!fisrt) rows.shift();
+
+    if (!last) rows.pop();
 
     return { rows, meta };
   }
