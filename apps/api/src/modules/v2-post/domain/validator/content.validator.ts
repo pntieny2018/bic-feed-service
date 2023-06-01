@@ -176,7 +176,9 @@ export class ContentValidator implements IContentValidator {
     if (seriesIds?.length) {
       const groupIds = groups.map((e) => e.id);
       const series = await this._contentRepository.findAll({
-        attributes: ['id', 'title'],
+        attributes: {
+          exclude: ['content'],
+        },
         include: {
           mustIncludeGroup: true,
         },

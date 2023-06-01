@@ -5,14 +5,6 @@ import { PageOptionsDto } from '../../../../../common/dto';
 import { PostType } from '../../../data-type';
 
 export class GetTimelineRequestDto extends PageOptionsDto {
-  @ApiProperty({ name: 'group_id', example: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d' })
-  @IsUUID()
-  @IsNotEmpty()
-  @Expose({
-    name: 'group_id',
-  })
-  public groupId: string;
-
   @ApiProperty({ name: 'is_important', example: true })
   @IsOptional()
   @Expose({

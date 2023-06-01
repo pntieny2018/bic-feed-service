@@ -52,7 +52,6 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });

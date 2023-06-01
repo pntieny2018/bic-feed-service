@@ -3,7 +3,11 @@ import { PostStatus, PostType } from '../../data-type';
 import { IPost } from '../../../../database/models/post.model';
 import { ArticleEntity } from '../model/content/article.entity';
 import { SeriesEntity } from '../model/content/series.entity';
+import { FindOptions } from 'sequelize';
 
+export type OrderOptions = {
+  isImportantFirst?: boolean;
+};
 export type FindOnePostOptions = {
   where: {
     id: string;
@@ -21,14 +25,24 @@ export type FindOnePostOptions = {
     mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
-    shouldIncludeTag?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
-    shouldIncludeReactionUserId?: string;
-    shouldIncludeSavedUserId?: string;
-    shouldIncludeMarkReadImportantUserId?: string;
+    shouldIncludeItems?: boolean;
+    shouldIncludeReaction?: {
+      userId?: string;
+    };
+    shouldIncludeSaved?: {
+      userId?: string;
+    };
+    shouldIncludeMarkReadImportant?: {
+      userId: string;
+    };
+    shouldIncludeImportant?: {
+      userId: string;
+    };
   };
-  attributes?: (keyof IPost)[];
+  attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
+  order?: OrderOptions;
 };
 
 export type FindAllPostOptions = {
@@ -39,7 +53,8 @@ export type FindAllPostOptions = {
     excludeReportedByUserId?: string;
     groupId?: string;
     createdBy?: string;
-    isImportant?: string;
+    isImportant?: boolean;
+    isHidden?: boolean;
     savedByUserId?: string;
     status?: PostStatus;
   };
@@ -47,14 +62,26 @@ export type FindAllPostOptions = {
     mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
-    shouldIncludeTag?: boolean;
+    shouldIncludeItems?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludeLinkPreview?: boolean;
-    shouldIncludeReactionUserId?: string;
-    shouldIncludeSavedUserId?: string;
-    shouldIncludeMarkReadImportantUserId?: string;
+    shouldIncludeReaction?: {
+      userId?: string;
+    };
+    shouldIncludeSaved?: {
+      userId?: string;
+    };
+    shouldIncludeMarkReadImportant?: {
+      userId: string;
+    };
+    shouldIncludeImportant?: {
+      userId: string;
+    };
   };
-  attributes?: (keyof IPost)[];
+  attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
+  limit?: number;
+  after?: string;
+  order?: OrderOptions;
 };
 
 export interface IContentRepository {

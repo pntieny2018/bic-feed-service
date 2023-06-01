@@ -45,12 +45,17 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeCategory: true,
-        shouldIncludeSavedUserId: authUser?.id,
-        shouldIncludeMarkReadImportantUserId: authUser?.id,
-        shouldIncludeReactionUserId: authUser?.id,
+        shouldIncludeSaved: {
+          userId: authUser?.id,
+        },
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
+        shouldIncludeReaction: {
+          userId: authUser?.id,
+        },
       },
     });
 
@@ -74,7 +79,9 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     let series;
     if (articleEntity.get('seriesIds')?.length) {
       series = await this._contentRepo.findAll({
-        attributes: ['id', 'title'],
+        attributes: {
+          exclude: ['content'],
+        },
         where: {
           groupArchived: false,
           ids: articleEntity.get('seriesIds'),

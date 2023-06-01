@@ -17,6 +17,7 @@ import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { ArticleDto } from '../../dto/article.dto';
+import { ContentEntity } from '../../../domain/model/content/content.entity';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -251,11 +252,95 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
-  /**
-   * Map mentions to UserInfo
-   * @param users UserDto[]
-   * returns UserMentionDto
-   */
+  public async contentsBinding(
+    contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[]
+  ): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
+    const userIdsNeedToFind = [];
+    contentEntities.forEach((contentEntity) => {
+      userIdsNeedToFind.push(contentEntity.getCreatedBy());
+      if (contentEntity instanceof PostEntity) {
+        userIdsNeedToFind.push(...contentEntity.get('mentionUserIds'));
+      }
+    });
+
+    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+      withGroupJoined: false,
+    });
+
+    if (dataBinding?.mentionUsers?.length) {
+      users.push(...dataBinding?.mentionUsers);
+    }
+    if (dataBinding?.actor) {
+      delete dataBinding.actor.permissions;
+      delete dataBinding.actor.groups;
+      users.push(dataBinding.actor);
+    }
+    const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+    if (postEntity.get('mentionUserIds') && users.length) {
+      mentionUsers = this.mapMentionWithUserInfo(
+        users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
+      );
+    }
+
+    const groups =
+      dataBinding?.groups ||
+      (await this._groupApplicationService.findAllByIds(postEntity.get('groupIds')));
+
+    const audience = {
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
+    };
+
+    const communities = await this._groupApplicationService.findAllByIds(
+      ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
+    );
+
+    return new PostDto({
+      id: postEntity.get('id'),
+      audience,
+      content: postEntity.get('content'),
+      createdAt: postEntity.get('createdAt'),
+      tags: postEntity.get('tags').map((tag) => ({
+        id: tag.get('id'),
+        name: tag.get('name'),
+        groupId: tag.get('groupId'),
+      })),
+      series: dataBinding.series
+        ? dataBinding.series.map((series) => ({
+            id: series.get('id'),
+            title: series.get('title'),
+          }))
+        : undefined,
+      communities,
+      media: {
+        files: postEntity.get('media').files.map((file) => new FileDto(file.toObject())),
+        images: postEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
+        videos: postEntity.get('media').videos.map((video) => new VideoDto(video.toObject())),
+      },
+      mentions: mentionUsers,
+      actor,
+      status: postEntity.get('status'),
+      type: postEntity.get('type'),
+      privacy: postEntity.get('privacy'),
+      setting: postEntity.get('setting'),
+      commentsCount: postEntity.get('aggregation')?.commentsCount,
+      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen,
+      linkPreview: postEntity.get('linkPreview')
+        ? {
+            url: postEntity.get('linkPreview').get('url'),
+            title: postEntity.get('linkPreview').get('title'),
+            description: postEntity.get('linkPreview').get('description'),
+            image: postEntity.get('linkPreview').get('image'),
+            domain: postEntity.get('linkPreview').get('domain'),
+          }
+        : null,
+      markedReadPost: postEntity.get('markedReadImportant'),
+      isSaved: postEntity.get('isSaved'),
+      isReported: postEntity.get('isReported'),
+      reactionsCount: dataBinding?.reactionsCount || [],
+      ownerReactions: postEntity.get('ownerReactions'),
+    });
+  }
+
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
     return users.reduce((returnValue, current) => {
       return {

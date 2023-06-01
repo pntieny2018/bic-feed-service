@@ -36,6 +36,10 @@ export interface IContentBinding {
     }
   ): Promise<ArticleDto>;
 
+  contentsBinding(
+    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[]
+  ): Promise<(ArticleDto | PostDto | SeriesDto)[]>;
+
   mapMentionWithUserInfo(users: UserDto[]): UserMentionDto;
 }
 export const CONTENT_BINDING_TOKEN = 'CONTENT_BINDING_TOKEN';
