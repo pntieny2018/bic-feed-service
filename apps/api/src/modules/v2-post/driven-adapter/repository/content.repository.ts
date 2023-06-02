@@ -686,7 +686,6 @@ export class ContentRepository implements IContentRepository {
       { before, after, limit },
       OrderEnum.DESC
     );
-
     const { rows, meta } = await paginator.paginate(findOption);
 
     return {

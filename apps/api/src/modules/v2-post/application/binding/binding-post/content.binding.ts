@@ -295,7 +295,6 @@ export class ContentBinding implements IContentBinding {
             groups,
             communities,
             reactionsCount,
-            series,
           })
         );
       }
@@ -504,14 +503,14 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(contentEntity.getCreatedBy());
       groupIds.push(...contentEntity.getGroupIds());
       contentIds.push(contentEntity.getId());
-      if (contentEntity instanceof ArticleEntity || contentEntity instanceof PostEntity) {
-        if (contentEntity.getSeriesIds().length) seriesIds.push(...contentEntity.getSeriesIds());
-      }
+      // if (contentEntity instanceof ArticleEntity || contentEntity instanceof PostEntity) {
+      //   if (contentEntity.getSeriesIds().length) seriesIds.push(...contentEntity.getSeriesIds());
+      // }
       if (contentEntity instanceof PostEntity) {
         userIdsNeedToFind.push(...contentEntity.get('mentionUserIds'));
       }
       if (contentEntity instanceof SeriesEntity) {
-        itemIds.push(contentEntity.get('itemIds'));
+        itemIds.push(...contentEntity.get('itemIds'));
       }
     });
     const users = await this._userApplicationService.findAllByIds(
