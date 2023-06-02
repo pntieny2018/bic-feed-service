@@ -42,6 +42,7 @@ import { CommentEntity } from '../../domain/model/comment';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { ReactionEntity } from '../../domain/model/reaction';
 import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 
 export class ContentRepository implements IContentRepository {
   LIMIT_DEFAULT = 10;
@@ -309,7 +310,7 @@ export class ContentRepository implements IContentRepository {
 
       if (shouldIncludeItems) {
         includeAttr.push({
-          model: PostModel,
+          model: PostSeriesModel,
           as: 'itemIds',
           required: false,
           attributes: ['postId'],
@@ -475,6 +476,18 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
+      if (options.where.inNewsfeedUserId) {
+        condition.push(
+          Sequelize.literal(
+            `EXISTS ( 
+                      SELECT nf.user_id FROM  ${schema}.${UserNewsFeedModel.tableName} nf
+                        WHERE nf.post_id = "PostModel".id AND nf.user_id = ${this._postModel.sequelize.escape(
+                          options.where.inNewsfeedUserId
+                        )}
+                    )`
+          )
+        );
+      }
       if (options.where.importantWithUserId) {
         condition.push(
           Sequelize.literal(
@@ -490,12 +503,12 @@ export class ContentRepository implements IContentRepository {
       if (options.where.notImportantWithUserId) {
         condition.push(
           Sequelize.literal(
-            `"PostModel".is_important = FALSE OR EXISTS ( 
+            `("PostModel".is_important = FALSE OR EXISTS ( 
                       SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
                         WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
                           options.where.notImportantWithUserId
                         )}
-                    )`
+                    ))`
           )
         );
       }

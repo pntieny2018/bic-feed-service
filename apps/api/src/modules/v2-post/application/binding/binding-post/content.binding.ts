@@ -469,6 +469,35 @@ export class ContentBinding implements IContentBinding {
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
+      items: entity.get('itemIds').map((itemId) => {
+        const item = dataBinding.items.get(itemId);
+        if (item instanceof PostEntity) {
+          return {
+            id: item.getId(),
+            content: item.get('content'),
+            createdAt: item.get('createdAt'),
+            setting: item.get('setting'),
+            type: item.get('type'),
+            media: {
+              files: item.get('media').files?.map((file) => new FileDto(file.toObject())),
+              images: item.get('media').images?.map((image) => new ImageDto(image.toObject())),
+              videos: item.get('media').videos?.map((video) => new VideoDto(video.toObject())),
+            },
+          };
+        }
+        if (item instanceof ArticleEntity) {
+          return {
+            id: item.getId(),
+            title: item.get('title'),
+            summary: item.get('summary'),
+            type: item.get('type'),
+            createdAt: item.get('createdAt'),
+            setting: item.get('setting'),
+            coverMedia: entity.get('cover') ? new ImageDto(entity.get('cover').toObject()) : null,
+          };
+        }
+        return null;
+      }),
       actor: dataBinding.users.get(entity.getCreatedBy()),
       status: entity.get('status'),
       type: entity.get('type'),
@@ -535,7 +564,6 @@ export class ContentBinding implements IContentBinding {
         status: PostStatus.PUBLISHED,
       },
     });
-
     const itemsMapper = new Map<string, PostEntity | ArticleEntity | SeriesEntity>(
       items.map((item) => {
         return [item.getId(), item];

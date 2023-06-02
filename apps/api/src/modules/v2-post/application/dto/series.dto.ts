@@ -16,7 +16,7 @@ export class SeriesDto {
 
   public communities?: GroupDto[];
 
-  public items?: (PostDto | ArticleDto)[] = [];
+  public items?: Partial<PostDto | ArticleDto>[] = [];
 
   public setting: PostSettingDto;
 
