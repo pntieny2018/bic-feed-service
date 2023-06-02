@@ -26,6 +26,8 @@ export type FindOnePostOptions = {
     savedByUserId?: string;
     type?: PostType;
     status?: PostStatus;
+    importantWithUserId?: string;
+    notImportantWithUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
@@ -63,6 +65,8 @@ export type FindAllPostOptions = {
     isHidden?: boolean;
     savedByUserId?: string;
     status?: PostStatus;
+    importantWithUserId?: string;
+    notImportantWithUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
