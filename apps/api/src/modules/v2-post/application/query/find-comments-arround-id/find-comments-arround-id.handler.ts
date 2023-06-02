@@ -6,7 +6,6 @@ import { FindCommentsArroundIdDto } from './find-comments-arround-id.dto';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
-  FindOnePostOptions,
   ICommentRepository,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
@@ -60,7 +59,7 @@ export class FindCommentsArroundIdHandler
 
     const arroundTargetPagination = await this._commentQuery.getArroundComment(comment, {
       limit: isChild ? targetChildLimit : limit,
-      order: isChild ? OrderEnum.ASC : OrderEnum.DESC,
+      order: OrderEnum.DESC,
       authUser,
     });
     const arroundTargetInstances = await this._commentBinding.commentBinding(
@@ -77,7 +76,7 @@ export class FindCommentsArroundIdHandler
         postId: comment.get('postId'),
         parentId: comment.get('id'),
         limit: targetChildLimit,
-        order: OrderEnum.ASC,
+        order: OrderEnum.DESC,
       });
 
       if (childsPagination && childsPagination.rows?.length) {
