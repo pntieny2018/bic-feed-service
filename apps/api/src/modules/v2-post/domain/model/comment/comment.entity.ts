@@ -81,7 +81,7 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     );
   }
 
-  public isParentComment(): boolean {
-    return this._props.parentId === NIL;
+  public isChildComment(): boolean {
+    return this._props.parentId !== NIL;
   }
 }

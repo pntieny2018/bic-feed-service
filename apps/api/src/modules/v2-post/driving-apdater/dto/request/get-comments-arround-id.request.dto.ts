@@ -20,7 +20,7 @@ export class GetCommentsArroundIdDto {
     name: 'target_child_limit',
   })
   @IsOptional()
-  @Min(3)
+  @Min(1)
   @Max(PAGING_DEFAULT_LIMIT)
   @Type(() => Number)
   @Expose({
