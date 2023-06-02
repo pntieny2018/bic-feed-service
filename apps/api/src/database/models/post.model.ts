@@ -108,6 +108,7 @@ export interface IPost {
   coverJson?: any;
   videoIdProcessing?: string;
   postSeries?: PostSeriesModel[];
+  itemIds?: PostSeriesModel[];
   ownerReactions?: IPostReaction[];
 }
 
@@ -265,6 +266,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => PostSeriesModel, 'postId')
   public postSeries?: PostSeriesModel[];
+
+  @HasMany(() => PostSeriesModel, 'seriesId')
+  public itemIds?: PostSeriesModel[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: IPost[];

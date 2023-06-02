@@ -44,11 +44,16 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
-        shouldIncludeSavedUserId: authUser?.id,
-        shouldIncludeMarkReadImportantUserId: authUser?.id,
-        shouldIncludeReactionUserId: authUser?.id,
+        shouldIncludeSaved: {
+          userId: authUser?.id,
+        },
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
+        shouldIncludeReaction: {
+          userId: authUser?.id,
+        },
       },
     });
 
@@ -74,7 +79,9 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     let series;
     if (postEntity.get('seriesIds')?.length) {
       series = await this._contentRepo.findAll({
-        attributes: ['id', 'title'],
+        attributes: {
+          exclude: ['content'],
+        },
         where: {
           groupArchived: false,
           ids: postEntity.get('seriesIds'),
@@ -92,7 +99,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       groups,
       mentionUsers,
       series: series as SeriesEntity[],
-      reactionsCount,
+      reactionsCount: reactionsCount.get(postEntity.getId()),
       authUser,
     });
   }

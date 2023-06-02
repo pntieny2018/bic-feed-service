@@ -12,7 +12,7 @@ import {
   PostCreateProps,
   PostPublishProps,
 } from './interface';
-import { PostEntity } from '../model/content';
+import { PostEntity, SeriesEntity } from '../model/content';
 import {
   IContentRepository,
   ITagRepository,
@@ -42,6 +42,8 @@ import {
 } from './interface/media.domain-service.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { ArticleEntity } from '../model/content/article.entity';
+import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
+import { PostStatus } from '../../data-type';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);

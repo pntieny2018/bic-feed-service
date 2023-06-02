@@ -52,7 +52,6 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });
