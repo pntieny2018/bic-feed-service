@@ -14,19 +14,19 @@ export class PaginatedArgs implements IPaginationArgs {
   @IsInt()
   @Max(PAGING_DEFAULT_LIMIT)
   @Min(1)
-  public limit = 25;
+  public limit = 10;
 
   @ApiProperty()
   @IsOptional()
   @Expose({
-    name: 'previous_cursor',
+    name: 'before',
   })
-  public previousCursor?: string;
+  public before?: string;
 
   @ApiProperty()
   @IsOptional()
   @Expose({
-    name: 'next_cursor',
+    name: 'after',
   })
-  public nextCursor?: string;
+  public after?: string;
 }

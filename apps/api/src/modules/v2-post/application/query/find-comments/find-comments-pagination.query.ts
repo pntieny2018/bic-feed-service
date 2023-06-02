@@ -1,18 +1,15 @@
 import { IQuery } from '@nestjs/cqrs';
 import { OrderEnum } from '../../../../../common/dto';
+import { UserDto } from '../../../../v2-user/application';
 
 type Props = {
-  authUserId?: string;
+  authUser?: UserDto;
   postId: string;
   parentId: string;
   limit: number;
-  previousCursor?: string;
-  nextCursor?: string;
+  before?: string;
+  after?: string;
   order: OrderEnum;
-  createdAtGT?: string;
-  createdAtLT?: string;
-  createdAtGTE?: string;
-  createdAtLTE?: string;
 };
 
 export class FindCommentsPaginationQuery implements IQuery {

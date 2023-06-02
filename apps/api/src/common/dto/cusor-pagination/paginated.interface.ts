@@ -1,6 +1,6 @@
 export interface IPaginatedInfo {
-  previousCursor?: string;
-  nextCursor?: string;
+  startCursor?: string;
+  endCursor?: string;
   hasNextPage?: boolean;
   hasPreviousPage?: boolean;
 }
@@ -12,6 +12,8 @@ export interface IPaginatedResponse<T> {
 
 export interface IPaginationArgs {
   limit?: number;
-  previousCursor?: string;
-  nextCursor?: string;
+  before?: string;
+  after?: string;
 }
+
+export type CursorParam = Record<string, Date | string | number>;

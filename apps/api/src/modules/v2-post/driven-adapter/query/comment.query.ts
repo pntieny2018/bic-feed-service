@@ -1,14 +1,19 @@
+import { concat } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Includeable, Op, Sequelize, WhereAttributeHash, col } from 'sequelize';
-import { CommentModel, IComment } from '../../../../database/models/comment.model';
+import { FindOptions, Includeable, Op, Sequelize, col } from 'sequelize';
+import { CommentModel } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
-import { GetPaginationCommentProps, ICommentQuery } from '../../domain/query-interface';
+import {
+  GetArroundCommentProps,
+  GetPaginationCommentProps,
+  ICommentQuery,
+} from '../../domain/query-interface';
 import { CommentEntity } from '../../domain/model/comment';
 import { TargetType } from '../../../report-content/contstants';
-import { paginate } from '../../../../common/dto/cusor-pagination';
+import { CursorPaginator, createCursor } from '../../../../common/dto/cusor-pagination';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { ReactionEntity } from '../../domain/model/reaction';
 import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
@@ -25,17 +30,16 @@ export class CommentQuery implements ICommentQuery {
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const { authUserId, limit, order, postId, parentId, previousCursor, nextCursor } = input;
-    const restQueryOptions = this._getRestCondition(input);
+    const { authUser, limit, order, postId, parentId, before, after } = input;
     const findOptions: FindOptions = {
       include: [
-        authUserId
+        authUser
           ? {
               model: CommentReactionModel,
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUserId,
+                  created_by: authUser.id,
                 },
               },
             }
@@ -51,18 +55,17 @@ export class CommentQuery implements ICommentQuery {
               TargetType.COMMENT
             }')`),
         ],
-        ...restQueryOptions,
       },
-      order: [['createdAt', order]],
     };
 
-    const { rows, meta } = await paginate(
+    const paginator = new CursorPaginator(
       this._commentModel,
-      findOptions,
-      { previousCursor, nextCursor, limit },
-      order,
-      'id'
+      ['createdAt'],
+      { before, after, limit },
+      order
     );
+
+    const { rows, meta } = await paginator.paginate(findOptions);
 
     return {
       rows: rows.map((row) =>
@@ -102,25 +105,46 @@ export class CommentQuery implements ICommentQuery {
     };
   }
 
-  private _getRestCondition(
-    getCommentsDto: GetPaginationCommentProps
-  ): WhereAttributeHash<IComment> {
-    const { createdAtGT, createdAtGTE, createdAtLT, createdAtLTE } = getCommentsDto;
-    const restQueryOptions: WhereAttributeHash<IComment> = {};
+  public async getArroundComment(
+    comment: CommentEntity,
+    props: GetArroundCommentProps
+  ): Promise<CursorPaginationResult<CommentEntity>> {
+    const { limit } = props;
+    const limitExcludeTarget = limit - 1;
+    const fisrt = Math.ceil(limitExcludeTarget / 2);
+    const last = limitExcludeTarget - fisrt;
+    const cursor = createCursor({ createdAt: comment.get('createdAt') });
 
-    if (createdAtGT) {
-      restQueryOptions['createdAt'] = { [Op.gt]: createdAtGT };
-    }
-    if (createdAtGTE) {
-      restQueryOptions['createdAt'] = { [Op.gte]: createdAtGTE };
-    }
-    if (createdAtLT) {
-      restQueryOptions['createdAt'] = { [Op.lt]: createdAtLT };
-    }
-    if (createdAtLTE) {
-      restQueryOptions['createdAt'] = { [Op.lte]: createdAtLTE };
-    }
+    const soonerCommentsQuery = this.getPagination({
+      ...props,
+      limit: fisrt,
+      after: cursor,
+      postId: comment.get('postId'),
+      parentId: comment.get('parentId'),
+    });
 
-    return restQueryOptions;
+    const laterCommentsQuery = this.getPagination({
+      ...props,
+      limit: last,
+      before: cursor,
+      postId: comment.get('postId'),
+      parentId: comment.get('parentId'),
+    });
+
+    const [soonerComment, laterComments] = await Promise.all([
+      soonerCommentsQuery,
+      laterCommentsQuery,
+    ]);
+
+    const rows = concat(laterComments.rows, comment, soonerComment.rows);
+
+    const meta = {
+      startCursor: laterComments.rows.length > 0 ? laterComments.meta.startCursor : cursor,
+      endCursor: soonerComment.rows.length > 0 ? soonerComment.meta.endCursor : cursor,
+      hasNextPage: soonerComment.meta.hasNextPage,
+      hasPreviousPage: laterComments.meta.hasPreviousPage,
+    };
+
+    return { rows, meta };
   }
 }

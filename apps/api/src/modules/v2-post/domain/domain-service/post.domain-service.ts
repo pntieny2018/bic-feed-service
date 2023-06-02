@@ -12,7 +12,7 @@ import {
   PostCreateProps,
   PostPublishProps,
 } from './interface';
-import { PostEntity } from '../model/content';
+import { PostEntity, SeriesEntity } from '../model/content';
 import {
   IContentRepository,
   ITagRepository,
@@ -22,6 +22,8 @@ import {
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
   IMentionValidator,
   IPostValidator,
   MENTION_VALIDATOR_TOKEN,
@@ -40,6 +42,8 @@ import {
 } from './interface/media.domain-service.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { ArticleEntity } from '../model/content/article.entity';
+import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
+import { PostStatus } from '../../data-type';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -52,6 +56,8 @@ export class PostDomainService implements IPostDomainService {
   private readonly _articleFactory: IArticleFactory;
   @Inject(POST_VALIDATOR_TOKEN)
   private readonly _postValidator: IPostValidator;
+  @Inject(CONTENT_VALIDATOR_TOKEN)
+  private readonly _contentValidator: IContentValidator;
   @Inject(MENTION_VALIDATOR_TOKEN)
   private readonly _mentionValidator: IMentionValidator;
   @Inject(USER_APPLICATION_TOKEN)
@@ -156,7 +162,74 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('groupIds')
     );
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
-    await this._postValidator.validateSeriesAndTags(
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      postEntity.get('seriesIds'),
+      postEntity.get('tags')
+    );
+
+    if (!postEntity.isChanged()) return;
+    await this._contentRepository.update(postEntity);
+
+    postEntity.commit();
+  }
+
+  public async updatePost(input: PostPublishProps): Promise<void> {
+    const { postEntity, newData } = input;
+    const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
+
+    let newTagEntities = [];
+    if (tagIds) {
+      newTagEntities = await this._tagRepo.findAll({
+        ids: tagIds,
+      });
+      postEntity.setTags(newTagEntities);
+    }
+    if (media) {
+      const images = await this._mediaDomainService.getAvailableImages(
+        postEntity.get('media').images,
+        media?.imagesIds,
+        postEntity.get('createdBy')
+      );
+      if (images.some((image) => !image.isPostContentResource())) {
+        throw new InvalidResourceImageException();
+      }
+      const files = await this._mediaDomainService.getAvailableFiles(
+        postEntity.get('media').files,
+        media?.filesIds,
+        postEntity.get('createdBy')
+      );
+      const videos = await this._mediaDomainService.getAvailableVideos(
+        postEntity.get('media').videos,
+        media?.videosIds,
+        postEntity.get('createdBy')
+      );
+      postEntity.setMedia({
+        files,
+        images,
+        videos,
+      });
+    }
+    if (linkPreview?.url && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
+      postEntity.setLinkPreview(linkPreviewEntity);
+    }
+
+    postEntity.updateAttribute(newData);
+    postEntity.setPrivacyFromGroups(groups);
+    if (postEntity.hasVideoProcessing()) {
+      postEntity.setProcessing();
+    } else {
+      postEntity.setPublish();
+    }
+
+    await this._postValidator.validatePublishContent(
+      postEntity,
+      authUser,
+      postEntity.get('groupIds')
+    );
+    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+    await this._contentValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),
       postEntity.get('tags')

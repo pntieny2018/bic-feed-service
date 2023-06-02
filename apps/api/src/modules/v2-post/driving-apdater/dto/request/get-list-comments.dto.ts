@@ -9,46 +9,6 @@ export class GetListCommentsDto extends PaginatedArgs {
   @IsEnum(OrderEnum)
   public order: OrderEnum = OrderEnum.DESC;
 
-  @ApiPropertyOptional({
-    required: false,
-    name: 'created_at_gt',
-  })
-  @IsOptional()
-  @Expose({
-    name: 'created_at_gt',
-  })
-  public createdAtGT?: string;
-
-  @ApiPropertyOptional({
-    required: false,
-    name: 'created_at_lt',
-  })
-  @IsOptional()
-  @Expose({
-    name: 'created_at_lt',
-  })
-  public createdAtLT?: string;
-
-  @ApiPropertyOptional({
-    required: false,
-    name: 'created_at_gte',
-  })
-  @IsOptional()
-  @Expose({
-    name: 'created_at_gte',
-  })
-  public createdAtGTE?: string;
-
-  @ApiPropertyOptional({
-    required: false,
-    name: 'created_at_lte',
-  })
-  @IsOptional()
-  @Expose({
-    name: 'created_at_lte',
-  })
-  public createdAtLTE?: string;
-
   @ApiProperty({
     required: true,
     name: 'post_id',

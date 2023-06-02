@@ -5,11 +5,11 @@ import { IsOptional } from 'class-validator';
 export class PaginatedInfo implements IPaginatedInfo {
   @ApiProperty()
   @IsOptional()
-  public previousCursor?: string;
+  public startCursor?: string;
 
   @ApiProperty()
   @IsOptional()
-  public nextCursor?: string;
+  public endCursor?: string;
 
   @ApiProperty()
   @IsOptional()

@@ -33,7 +33,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindPostQuery): Promise<any> {
+  public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;
     const postEntity = await this._contentRepo.findOne({
       where: {
@@ -44,11 +44,16 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
-        shouldIncludeSavedUserId: authUser?.id,
-        shouldIncludeMarkReadImportantUserId: authUser?.id,
-        shouldIncludeReactionUserId: authUser?.id,
+        shouldIncludeSaved: {
+          userId: authUser?.id,
+        },
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
+        shouldIncludeReaction: {
+          userId: authUser?.id,
+        },
       },
     });
 
@@ -74,7 +79,9 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     let series;
     if (postEntity.get('seriesIds')?.length) {
       series = await this._contentRepo.findAll({
-        attributes: ['id', 'title'],
+        attributes: {
+          exclude: ['content'],
+        },
         where: {
           groupArchived: false,
           ids: postEntity.get('seriesIds'),
@@ -92,7 +99,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       groups,
       mentionUsers,
       series: series as SeriesEntity[],
-      reactionsCount,
+      reactionsCount: reactionsCount.get(postEntity.getId()),
       authUser,
     });
   }

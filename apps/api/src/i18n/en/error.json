@@ -69,5 +69,6 @@
     "not_have_authority": "You don't have authority to do this action",
     "no_delete_permission": "Failed to delete reaction: you don't have permission",
     "duplicate": "You have already reacted to this content"
-  }
+  },
+  "cursor_params_invalid": "Cursor params invalid"
 }

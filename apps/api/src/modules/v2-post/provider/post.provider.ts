@@ -13,15 +13,13 @@ import {
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
 import { ContentValidator } from '../domain/validator/content.validator';
-import { PostFactory } from '../domain/factory';
+import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { CreateDraftPostHandler } from '../application/command/create-draft-post/create-draft-post.handler';
 import { PublishPostHandler } from '../application/command/publish-post/publish-post.handler';
 import { PostValidator } from '../domain/validator/post.validator';
-import { ArticleFactory } from '../domain/factory/article.factory';
-import { SeriesFactory } from '../domain/factory/series.factory';
 import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
 import { ContentBinding } from '../application/binding/binding-post/content.binding';
 import { MentionValidator } from '../domain/validator/mention.validator';
@@ -34,6 +32,11 @@ import { UpdateSeriesHandler } from '../application/command/update-series/update
 import { FindPostHandler } from '../application/query/find-post/find-post.handler';
 import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
 import { CreateDraftArticleHandler } from '../application/command/create-draft-article/create-draft-article.handler';
+import { MarkReadImportantContentHandler } from '../application/command/mark-read-important-content/mark-read-important-content.handler';
+import { ValidateSeriesTagsHandler } from '../application/command/validate-series-tags/validate-series-tags.handler';
+import { UpdatePostHandler } from '../application/command/update-post/update-post.handler';
+import { FindTimelineGroupHandler } from '../application/query/find-timeline-group/find-timeline-group.handler';
+import { FindPostsByIdsHandler } from '../application/query/find-posts-by-ids/find-posts-by-ids.handler';
 
 export const postProvider = [
   {
@@ -86,6 +89,10 @@ export const postProvider = [
   UpdateSeriesHandler,
   FindPostHandler,
   FindArticleHandler,
-  FindArticleHandler,
   CreateDraftArticleHandler,
+  MarkReadImportantContentHandler,
+  ValidateSeriesTagsHandler,
+  UpdatePostHandler,
+  FindTimelineGroupHandler,
+  FindPostsByIdsHandler,
 ];

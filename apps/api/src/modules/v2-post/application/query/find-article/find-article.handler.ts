@@ -45,12 +45,17 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeCategory: true,
-        shouldIncludeSavedUserId: authUser?.id,
-        shouldIncludeMarkReadImportantUserId: authUser?.id,
-        shouldIncludeReactionUserId: authUser?.id,
+        shouldIncludeSaved: {
+          userId: authUser?.id,
+        },
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
+        shouldIncludeReaction: {
+          userId: authUser?.id,
+        },
       },
     });
 
@@ -71,29 +76,9 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
       await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
     }
 
-    let series;
-    if (articleEntity.get('seriesIds')?.length) {
-      series = await this._contentRepo.findAll({
-        attributes: ['id', 'title'],
-        where: {
-          groupArchived: false,
-          ids: articleEntity.get('seriesIds'),
-        },
-        include: {
-          mustIncludeGroup: true,
-        },
-      });
-    }
-
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
-      articleEntity.getId(),
-    ]);
-
     return this._contentBinding.articleBinding(articleEntity, {
       groups,
       actor: new UserDto(authUser),
-      series: series as SeriesEntity[],
-      reactionsCount,
     });
   }
 }

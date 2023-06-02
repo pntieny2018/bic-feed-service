@@ -38,11 +38,10 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });
-    if (postEntity.isHidden() || !postEntity || !(postEntity instanceof PostEntity)) return;
+    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) return;
 
     if (postEntity.isPublished()) return;
 
