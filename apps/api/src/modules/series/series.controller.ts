@@ -125,6 +125,7 @@ export class SeriesController {
   @ResponseMessages({
     success: 'message.series.deleted_success',
   })
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   @Delete('/:id')
   public async delete(
     @AuthUser() user: UserDto,
