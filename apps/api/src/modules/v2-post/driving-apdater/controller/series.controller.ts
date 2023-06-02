@@ -11,6 +11,7 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
@@ -44,6 +45,10 @@ import { PostDto, SeriesDto } from '../../application/dto';
 import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
+import {
+  DeleteSeriesCommand,
+  DeleteSeriesCommandPayload,
+} from '../../application/command/delete-series/delete-series.command';
 
 @ApiTags('Series v2')
 @ApiSecurity('authorization')
@@ -158,6 +163,41 @@ export class SeriesController {
           throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Delete series' })
+  @ApiOkResponse({
+    description: 'Delete series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.deleted_success',
+  })
+  @Delete('/:id')
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<DeleteSeriesCommand, void>(
+        new DeleteSeriesCommand({
+          id,
+          actor: user,
+        } as DeleteSeriesCommandPayload)
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        case ContentNoCRUDPermissionException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
         default:
           throw e;
       }
