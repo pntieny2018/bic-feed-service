@@ -50,12 +50,4 @@ export class SeriesDto {
   public constructor(data: Partial<SeriesDto>) {
     Object.assign(this, data);
   }
-
-  public increaseTotalUsersSeen(users = 1): void {
-    this.totalUsersSeen = this.totalUsersSeen + users;
-  }
-
-  public setMarkedReadPost(): void {
-    this.markedReadPost = true;
-  }
 }
