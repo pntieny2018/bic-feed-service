@@ -45,7 +45,6 @@ export class TimelineController {
         authUser,
       })
     );
-    return data; //plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    // return this._feedService.getTimeline(authUser, getTimelineDto);
+    return data;
   }
 }
