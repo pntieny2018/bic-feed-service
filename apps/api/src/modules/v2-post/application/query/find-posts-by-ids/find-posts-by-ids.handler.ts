@@ -52,7 +52,22 @@ export class FindPostsByIdsHandler
         },
       },
     });
+    const contentsSorted = this._sortContentsByIds(ids, contentEntities);
+    const result = await this._contentBinding.contentsBinding(contentsSorted, authUser);
+    return result;
+  }
 
-    return await this._contentBinding.contentsBinding(contentEntities, authUser);
+  private _sortContentsByIds(
+    ids: string[],
+    contents: (PostEntity | ArticleEntity | SeriesEntity)[]
+  ): (PostEntity | ArticleEntity | SeriesEntity)[] {
+    const contentsSorted = [];
+    for (const id of ids) {
+      const content = contents.find((item) => item.getId() === id);
+      if (content) {
+        contentsSorted.push(content);
+      }
+    }
+    return contentsSorted;
   }
 }
