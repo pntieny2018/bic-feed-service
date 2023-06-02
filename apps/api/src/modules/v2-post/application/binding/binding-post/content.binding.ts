@@ -496,8 +496,10 @@ export class ContentBinding implements IContentBinding {
     const rootGroupIds = [];
     entity.getGroupIds().forEach((groupId) => {
       const group = dataBinding.groups.get(groupId);
-      groups.push(group);
-      rootGroupIds.push(group.rootGroupId);
+      if (group) {
+        groups.push(group);
+        rootGroupIds.push(group.rootGroupId);
+      }
     });
 
     const items = [];
