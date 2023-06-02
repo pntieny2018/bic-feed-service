@@ -234,6 +234,7 @@ export class ContentBinding implements IContentBinding {
     dataBinding?: {
       actor: UserDto;
       groups?: GroupDto[];
+      authUser?: UserDto;
     }
   ): Promise<SeriesDto> {
     const groups =
@@ -242,18 +243,60 @@ export class ContentBinding implements IContentBinding {
         : await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds'));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.actor),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
+    let items = [];
+    if (seriesEntity.get('itemIds')?.length) {
+      items = await this._contentRepo.findAll({
+        where: {
+          ids: seriesEntity.get('itemIds'),
+          excludeReportedByUserId: dataBinding.authUser?.id,
+          isHidden: false,
+          groupArchived: false,
+          status: PostStatus.PUBLISHED,
+        },
+      });
+    }
+
     return new SeriesDto({
       id: seriesEntity.get('id'),
       title: seriesEntity.get('title'),
       summary: seriesEntity.get('summary'),
       audience,
+      items: seriesEntity.get('itemIds')?.map((itemId) => {
+        const item = items.find((item) => item.getId() === itemId);
+        if (item instanceof PostEntity) {
+          return {
+            id: item.getId(),
+            content: item.get('content'),
+            createdAt: item.get('createdAt'),
+            setting: item.get('setting'),
+            type: item.get('type'),
+            media: {
+              files: item.get('media').files?.map((file) => new FileDto(file.toObject())),
+              images: item.get('media').images?.map((image) => new ImageDto(image.toObject())),
+              videos: item.get('media').videos?.map((video) => new VideoDto(video.toObject())),
+            },
+          };
+        }
+        if (item instanceof ArticleEntity) {
+          return {
+            id: item.getId(),
+            title: item.get('title'),
+            summary: item.get('summary'),
+            type: item.get('type'),
+            createdAt: item.get('createdAt'),
+            setting: item.get('setting'),
+            coverMedia: item.get('cover') ? new ImageDto(item.get('cover').toObject()) : null,
+          };
+        }
+        return null;
+      }),
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
       createdBy: seriesEntity.get('createdBy'),
@@ -454,10 +497,17 @@ export class ContentBinding implements IContentBinding {
     const rootGroupIds = [];
     entity.getGroupIds().forEach((groupId) => {
       const group = dataBinding.groups.get(groupId);
-      groups.push(group);
-      rootGroupIds.push(group.rootGroupId);
+      if (group) {
+        groups.push(group);
+        rootGroupIds.push(group.rootGroupId);
+      }
     });
 
+    const items = [];
+    entity.get('itemIds').forEach((itemId) => {
+      const itemEntity = dataBinding.items.get(itemId);
+      if (itemEntity) items.push(itemEntity);
+    });
     return new SeriesDto({
       id: entity.get('id'),
       audience: {
@@ -469,8 +519,7 @@ export class ContentBinding implements IContentBinding {
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
-      items: entity.get('itemIds').map((itemId) => {
-        const item = dataBinding.items.get(itemId);
+      items: items.map((item) => {
         if (item instanceof PostEntity) {
           return {
             id: item.getId(),
@@ -493,7 +542,7 @@ export class ContentBinding implements IContentBinding {
             type: item.get('type'),
             createdAt: item.get('createdAt'),
             setting: item.get('setting'),
-            coverMedia: entity.get('cover') ? new ImageDto(entity.get('cover').toObject()) : null,
+            coverMedia: item.get('cover') ? new ImageDto(item.get('cover').toObject()) : null,
           };
         }
         return null;
