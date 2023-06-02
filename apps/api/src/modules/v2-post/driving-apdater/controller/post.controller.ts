@@ -143,7 +143,7 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Publish post' })
+  @ApiOperation({ summary: 'Publish post.' })
   @ResponseMessages({
     success: 'message.post.published_success',
   })
