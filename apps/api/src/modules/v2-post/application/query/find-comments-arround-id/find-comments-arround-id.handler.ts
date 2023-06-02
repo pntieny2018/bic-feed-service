@@ -10,7 +10,7 @@ import {
   ICommentRepository,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
-import { CommentNotFoundException } from '../../../domain/exception';
+import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import { OrderEnum } from 'apps/api/src/common/dto';
 import { NIL } from 'uuid';
@@ -43,23 +43,17 @@ export class FindCommentsArroundIdHandler
       { id: commentId },
       { excludeReportedByUserId: authUser?.id, includeOwnerReactions: authUser?.id }
     );
-
     if (!comment) throw new CommentNotFoundException();
 
-    const findOneOptions: FindOnePostOptions = {
+    const postEntity = await this._contentRepository.findOne({
       where: {
         id: comment.get('postId'),
         groupArchived: false,
         isHidden: false,
+        excludeReportedByUserId: authUser?.id,
       },
-    };
-
-    if (authUser) findOneOptions.where.excludeReportedByUserId = authUser.id;
-
-    const postEntity = await this._contentRepository.findOne(findOneOptions);
-
-    if (!postEntity || (!postEntity.isOpen() && !authUser)) return new FindCommentsArroundIdDto([]);
-
+    });
+    if (!postEntity || (!postEntity.isOpen() && !authUser)) throw new ContentNotFoundException();
     this._contentValidator.checkCanReadContent(postEntity, authUser);
 
     const isChild = comment.isChildComment();
@@ -96,6 +90,7 @@ export class FindCommentsArroundIdHandler
           }
         }
       }
+
       return arroundTargetResult;
     }
 
@@ -113,7 +108,6 @@ export class FindCommentsArroundIdHandler
     const arroundParentInstances = await this._commentBinding.commentBinding(
       arroundParentPagination.rows
     );
-
     for (const instance of arroundParentInstances) {
       if (instance.id === parent.get('id')) {
         instance.child = arroundTargetResult;
