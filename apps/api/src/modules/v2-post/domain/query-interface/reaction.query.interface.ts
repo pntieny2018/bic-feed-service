@@ -14,7 +14,7 @@ export type ReactionsCount = Record<string, number>[];
 export interface IReactionQuery {
   getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>>;
 
-  getAndCountReactionByComments(commentIds: string[]): Promise<ReactionsCount>;
+  getAndCountReactionByComments(commentIds: string[]): Promise<Map<string, ReactionsCount>>;
   getAndCountReactionByContents(contentIds: string[]): Promise<Map<string, ReactionsCount>>;
 }
 
