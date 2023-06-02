@@ -4,8 +4,8 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ArticleDto } from '../../dto';
-import { FindArticleQuery } from './find-article.query';
+import { SeriesDto } from '../../dto';
+import { FindSeriesQuery } from './find-series.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
   IUserApplicationService,
@@ -21,10 +21,10 @@ import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { SeriesEntity } from '../../../domain/model/content';
 
-@QueryHandler(FindArticleQuery)
-export class FindArticleHandler implements IQueryHandler<FindArticleQuery, ArticleDto> {
+@QueryHandler(FindSeriesQuery)
+export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesDto> {
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
   @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
@@ -32,18 +32,17 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
-  public async execute(query: FindArticleQuery): Promise<ArticleDto> {
-    const { articleId, authUser } = query.payload;
-    const articleEntity = await this._contentRepo.findOne({
+  public async execute(query: FindSeriesQuery): Promise<SeriesDto> {
+    const { seriesId, authUser } = query.payload;
+    const seriesEntity = await this._contentRepo.findOne({
       where: {
-        id: articleId,
+        id: seriesId,
         groupArchived: false,
         excludeReportedByUserId: authUser.id,
       },
       include: {
         shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
+        shouldIncludeItems: true,
         shouldIncludeCategory: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
@@ -51,32 +50,30 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
         shouldIncludeMarkReadImportant: {
           userId: authUser?.id,
         },
-        shouldIncludeReaction: {
-          userId: authUser?.id,
-        },
       },
     });
 
     if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
-      articleEntity.isHidden()
+      !seriesEntity ||
+      !(seriesEntity instanceof SeriesEntity) ||
+      (seriesEntity.isDraft() && !seriesEntity.isOwner(authUser.id)) ||
+      seriesEntity.isHidden()
     ) {
       throw new ContentNotFoundException();
     }
 
-    if (!authUser && !articleEntity.isOpen()) {
+    if (!authUser && !seriesEntity.isOpen()) {
       throw new AccessDeniedException();
     }
-    const groups = await this._groupAppService.findAllByIds(articleEntity.get('groupIds'));
+    const groups = await this._groupAppService.findAllByIds(seriesEntity.get('groupIds'));
     if (authUser) {
-      await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
+      await this._postValidator.checkCanReadContent(seriesEntity, authUser, groups);
     }
 
-    return this._contentBinding.articleBinding(articleEntity, {
+    return this._contentBinding.seriesBinding(seriesEntity, {
       groups,
       actor: new UserDto(authUser),
+      authUser,
     });
   }
 }

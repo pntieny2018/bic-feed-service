@@ -38,14 +38,11 @@ import { PostReactionModel } from '../../../../database/models/post-reaction.mod
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { CommentEntity } from '../../domain/model/comment';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
-import { ReactionEntity } from '../../domain/model/reaction';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 
 export class ContentRepository implements IContentRepository {
-  LIMIT_DEFAULT = 10;
+  LIMIT_DEFAULT = 100;
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
   @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
   @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
@@ -685,7 +682,12 @@ export class ContentRepository implements IContentRepository {
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
-      itemIds: post.itemIds?.map((item) => item.postId) || [],
+      itemIds:
+        post.itemIds
+          ?.sort((a, b) => {
+            return a.zindex - b.zindex;
+          })
+          .map((item) => item.postId) || [],
     });
   }
 
