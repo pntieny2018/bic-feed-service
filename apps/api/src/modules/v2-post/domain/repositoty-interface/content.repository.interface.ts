@@ -28,6 +28,7 @@ export type FindOnePostOptions = {
     status?: PostStatus;
     importantWithUserId?: string;
     notImportantWithUserId?: string;
+    inNewsfeedUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
@@ -67,6 +68,7 @@ export type FindAllPostOptions = {
     status?: PostStatus;
     importantWithUserId?: string;
     notImportantWithUserId?: string;
+    inNewsfeedUserId?: string;
   };
   include?: {
     mustIncludeGroup?: boolean;
@@ -90,6 +92,7 @@ export type FindAllPostOptions = {
   };
   attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
   limit?: number;
+  offset?: number;
   after?: string;
   order?: OrderOptions;
 };

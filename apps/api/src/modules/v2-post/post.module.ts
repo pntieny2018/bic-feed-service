@@ -28,6 +28,7 @@ import { KafkaModule } from '@app/kafka';
 import { SeriesController } from './driving-apdater/controller/series.controller';
 import { ContentController } from './driving-apdater/controller/content.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
+import { NewsFeedController } from './driving-apdater/controller/newsfeed.controller';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { TimelineController } from './driving-apdater/controller/timeline.contro
     ContentController,
     ReactionController,
     TimelineController,
+    NewsFeedController,
     CommentController,
     PostConsumer,
     SeriesController,

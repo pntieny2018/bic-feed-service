@@ -37,6 +37,7 @@ import { ValidateSeriesTagsHandler } from '../application/command/validate-serie
 import { UpdatePostHandler } from '../application/command/update-post/update-post.handler';
 import { FindTimelineGroupHandler } from '../application/query/find-timeline-group/find-timeline-group.handler';
 import { FindPostsByIdsHandler } from '../application/query/find-posts-by-ids/find-posts-by-ids.handler';
+import { FindNewsfeedHandler } from '../application/query/find-newsfeed/find-newsfeed.handler';
 
 export const postProvider = [
   {
@@ -95,4 +96,5 @@ export const postProvider = [
   UpdatePostHandler,
   FindTimelineGroupHandler,
   FindPostsByIdsHandler,
+  FindNewsfeedHandler,
 ];
