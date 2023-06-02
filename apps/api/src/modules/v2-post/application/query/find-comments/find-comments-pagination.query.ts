@@ -1,8 +1,9 @@
 import { IQuery } from '@nestjs/cqrs';
 import { OrderEnum } from '../../../../../common/dto';
+import { UserDto } from '../../../../v2-user/application';
 
 type Props = {
-  authUserId?: string;
+  authUser?: UserDto;
   postId: string;
   parentId: string;
   limit: number;

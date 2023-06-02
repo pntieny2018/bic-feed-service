@@ -1,95 +1,104 @@
 import { Inject } from '@nestjs/common';
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { PostDto } from '../../dto';
+import { ArticleDto, PostDto, SeriesDto } from '../../dto';
 import { FindTimelineGroupQuery } from './find-timeline-group.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { ContentNotFoundException } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/content';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
+import { PostStatus } from '../../../data-type';
+import {
+  IPostDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
+import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
+import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { FindTimelineGroupDto } from './find-timeline-group.dto';
+import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
 
 @QueryHandler(FindTimelineGroupQuery)
-export class FindTimelineGroupHandler implements IQueryHandler<FindTimelineGroupQuery, PostDto[]> {
+export class FindTimelineGroupHandler
+  implements IQueryHandler<FindTimelineGroupQuery, FindTimelineGroupDto>
+{
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
-  @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
+  @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository;
   @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator;
   @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
+  @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService;
 
-  public async execute(query: FindTimelineGroupQuery): Promise<PostDto[]> {
-    const { groupId, authUser } = query.payload;
-    const postEntity = await this._contentRepo.findAll({
+  public constructor(private _queryBus: QueryBus) {}
+
+  public async execute(query: FindTimelineGroupQuery): Promise<any> {
+    const { rows: ids, meta: meta } = await this._getContentIdsByUser(query);
+
+    const result = await this._queryBus.execute<
+      FindPostsByIdsQuery,
+      (PostDto | ArticleDto | SeriesDto)[]
+    >(
+      new FindPostsByIdsQuery({
+        ids,
+        authUser: query.payload.authUser,
+      })
+    );
+
+    return {
+      list: result,
+      meta,
+    };
+  }
+
+  private async _getContentIdsByUser(
+    query: FindTimelineGroupQuery
+  ): Promise<CursorPaginationResult<string>> {
+    const { groupId, isMine, type, isSaved, limit, isImportant, after, authUser } = query.payload;
+    const offset = getLimitFromAfter(after);
+    const rows = await this._contentRepository.findAll({
+      attributes: {
+        exclude: ['content'],
+      },
       where: {
-        ids: [],
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+        groupId,
         groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+        excludeReportedByUserId: authUser?.id,
+        isImportant,
+        createdBy: isMine ? authUser?.id : undefined,
+        savedByUserId: isSaved ? authUser?.id : undefined,
+        type,
       },
       include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeTag: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeSavedUserId: authUser?.id,
-        shouldIncludeMarkReadImportantUserId: authUser?.id,
-        shouldIncludeReactionUserId: authUser?.id,
+        shouldIncludeImportant: {
+          userId: authUser.id,
+        },
+      },
+      offset,
+      limit: limit + 1,
+      order: {
+        isImportantFirst: true,
       },
     });
 
-    if (
-      !postEntity ||
-      !(postEntity instanceof PostEntity) ||
-      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
-      postEntity.isHidden()
-    ) {
-      throw new ContentNotFoundException();
-    }
+    const hasMore = rows.length > limit;
 
-    if (!authUser && !postEntity.isOpen()) {
-      throw new AccessDeniedException();
-    }
-    const groups = await this._groupAppService.findAllByIds(postEntity.get('groupIds'));
-    if (authUser) {
-      await this._postValidator.checkCanReadContent(postEntity, authUser, groups);
-    }
-
-    const mentionUsers = await this._userAppService.findAllByIds(postEntity.get('mentionUserIds'));
-
-    let series;
-    if (postEntity.get('seriesIds')?.length) {
-      series = await this._contentRepo.findAll({
-        attributes: ['id', 'title'],
-        where: {
-          groupArchived: false,
-          ids: postEntity.get('seriesIds'),
-        },
-        include: {
-          mustIncludeGroup: true,
-        },
-      });
-    }
-
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
-      postEntity.getId(),
-    ]);
-    return [];
-    // this._contentBinding.postBinding(postEntity, {
-    //   groups,
-    //   mentionUsers,
-    //   series: series as SeriesEntity[],
-    //   reactionsCount,
-    //   authUser,
-    // });
+    if (hasMore) rows.pop();
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta: {
+        hasNextPage: hasMore,
+        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
+      },
+    };
   }
 }

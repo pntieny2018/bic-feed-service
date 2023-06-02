@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { CommentDto, ReactionDto } from '../../../application/dto';
 import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
+import { PaginatedResponse } from '../../../../../common/dto/cusor-pagination';
 
 export class CommentResponseDto extends CommentDto {
   @ApiProperty({
@@ -21,6 +22,12 @@ export class CommentResponseDto extends CommentDto {
   })
   @Expose()
   public reactionsCount?: ReactionsCount = [];
+
+  @ApiProperty({
+    name: 'child',
+  })
+  @Expose()
+  public child?: PaginatedResponse<CommentResponseDto>;
 
   public constructor(data: Partial<CommentResponseDto>) {
     super(data);

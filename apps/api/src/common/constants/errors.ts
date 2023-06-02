@@ -75,4 +75,5 @@ export const ERRORS = {
   DATABASE_ERROR: 'database_error',
   DOMAIN_MODEL_VALIDATION: 'domain_model_validation',
   INTERNAL_SERVER_ERROR: 'api.internal_server_error',
+  CURSOR_PARAMS_INVALID: 'cursor_params_invalid',
 };

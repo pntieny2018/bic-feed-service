@@ -38,7 +38,6 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });

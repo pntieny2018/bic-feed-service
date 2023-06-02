@@ -18,6 +18,7 @@ import {
 } from '../../domain/query-interface/reaction.query.interface';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { OrderEnum } from '../../../../common/dto';
+import { UserDto } from '../../../v2-user/application';
 
 export class ReactionQuery implements IReactionQuery {
   public constructor(
@@ -80,7 +81,9 @@ export class ReactionQuery implements IReactionQuery {
     };
   }
 
-  public async getAndCountReactionByComments(commentIds: string[]): Promise<ReactionsCount> {
+  public async getAndCountReactionByComments(
+    commentIds: string[]
+  ): Promise<Map<string, ReactionsCount>> {
     const result = await this._commentReactionModel.findAll({
       attributes: [
         'commentId',
@@ -97,15 +100,26 @@ export class ReactionQuery implements IReactionQuery {
 
     if (!result) return;
 
-    const reactionsCount = result.map((item) => {
-      item = item.toJSON();
-      return { [item['reactionName']]: parseInt(item['total']) };
-    });
-
-    return reactionsCount;
+    return new Map<string, ReactionsCount>(
+      commentIds.map((commentId) => {
+        return [
+          commentId,
+          result
+            .filter((i) => {
+              return i.commentId === commentId;
+            })
+            .map((item) => {
+              item = item.toJSON();
+              return { [item['reactionName']]: parseInt(item['total']) };
+            }),
+        ];
+      })
+    );
   }
 
-  public async getAndCountReactionByContents(contentIds: string[]): Promise<ReactionsCount> {
+  public async getAndCountReactionByContents(
+    contentIds: string[]
+  ): Promise<Map<string, ReactionsCount>> {
     const result = await this._postReactionModel.findAll({
       attributes: [
         'postId',
@@ -120,13 +134,22 @@ export class ReactionQuery implements IReactionQuery {
       order: [[Sequelize.literal('date'), OrderEnum.ASC]],
     });
 
-    if (!result) return;
+    if (!result) return new Map<string, ReactionsCount>();
 
-    const reactionsCount = result.map((item) => {
-      item = item.toJSON();
-      return { [item['reactionName']]: parseInt(item['total']) };
-    });
-
-    return reactionsCount;
+    return new Map<string, ReactionsCount>(
+      contentIds.map((contentId) => {
+        return [
+          contentId,
+          result
+            .filter((i) => {
+              return i.postId === contentId;
+            })
+            .map((item) => {
+              item = item.toJSON();
+              return { [item['reactionName']]: parseInt(item['total']) };
+            }),
+        ];
+      })
+    );
   }
 }

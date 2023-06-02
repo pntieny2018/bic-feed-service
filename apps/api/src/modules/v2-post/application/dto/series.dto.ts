@@ -1,7 +1,7 @@
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserDto } from '../../../v2-user/application';
 import { GroupDto } from '../../../v2-group/application';
-import { ImageDto, PostDto, PostSettingDto } from '.';
+import { ArticleDto, ImageDto, PostDto, PostSettingDto } from '.';
 
 export class SeriesDto {
   public id: string;
@@ -16,7 +16,7 @@ export class SeriesDto {
 
   public communities?: GroupDto[];
 
-  public items?: PostDto[] = [];
+  public items?: Partial<PostDto | ArticleDto>[] = [];
 
   public setting: PostSettingDto;
 
@@ -39,13 +39,7 @@ export class SeriesDto {
   public commentsCount: number;
 
   public totalUsersSeen: number;
-
-  public reactionsCount?: Record<string, Record<string, number>>;
-
-  public ownerReactions?: {
-    id: string;
-    reactionName: string;
-  }[] = [];
+  public isReported: boolean;
 
   public createdAt: Date;
 
@@ -55,13 +49,5 @@ export class SeriesDto {
 
   public constructor(data: Partial<SeriesDto>) {
     Object.assign(this, data);
-  }
-
-  public increaseTotalUsersSeen(users = 1): void {
-    this.totalUsersSeen = this.totalUsersSeen + users;
-  }
-
-  public setMarkedReadPost(): void {
-    this.markedReadPost = true;
   }
 }

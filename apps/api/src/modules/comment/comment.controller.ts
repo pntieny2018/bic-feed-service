@@ -101,6 +101,7 @@ export class CommentController {
   @ApiOkResponse({
     type: CommentDetailResponseDto,
   })
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   @Get('/:commentId')
   public getCommentsArroundId(
     @Param('commentId', ParseUUIDPipe) commentId: string,

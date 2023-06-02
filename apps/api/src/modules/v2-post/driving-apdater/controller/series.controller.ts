@@ -5,6 +5,7 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -25,6 +26,9 @@ import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoEditSettingPermissionAtGroupException,
+  ContentNotFoundException,
+  InvalidResourceImageException,
+  SeriesRequiredCoverException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { instanceToInstance } from 'class-transformer';
@@ -33,6 +37,7 @@ import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
+import { SeriesDto } from '../../application/dto';
 
 @ApiTags('Series v2')
 @ApiSecurity('authorization')
@@ -67,13 +72,16 @@ export class SeriesController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
         case ContentEmptyGroupException:
+        case SeriesRequiredCoverException:
+        case InvalidResourceImageException:
+        case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
         default:
           throw e;
       }
@@ -92,9 +100,9 @@ export class SeriesController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSeriesRequestDto: UpdateSeriesRequestDto
-  ): Promise<void> {
+  ): Promise<SeriesDto> {
     try {
-      await this._commandBus.execute<UpdateSeriesCommand, void>(
+      const data = await this._commandBus.execute<UpdateSeriesCommand, SeriesDto>(
         new UpdateSeriesCommand({
           ...updateSeriesRequestDto,
           id,
@@ -102,15 +110,19 @@ export class SeriesController {
           groupIds: updateSeriesRequestDto.audience?.groupIds,
         } as UpdateSeriesCommandPayload)
       );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
         case ContentEmptyGroupException:
+        case SeriesRequiredCoverException:
+        case InvalidResourceImageException:
+        case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
         default:
           throw e;
       }
