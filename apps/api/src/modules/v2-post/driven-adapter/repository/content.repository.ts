@@ -312,7 +312,7 @@ export class ContentRepository implements IContentRepository {
           model: PostSeriesModel,
           as: 'itemIds',
           required: false,
-          attributes: ['postId'],
+          attributes: ['postId', 'zindex'],
         });
       }
 
