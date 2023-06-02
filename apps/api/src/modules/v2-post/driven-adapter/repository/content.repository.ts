@@ -231,6 +231,8 @@ export class ContentRepository implements IContentRepository {
     const findOption = this._buildFindOptions(findAllPostOptions);
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
     findOption.order = this._getOrderContent(findAllPostOptions.order);
+    findOption.offset = findAllPostOptions.offset || 0;
+    findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }

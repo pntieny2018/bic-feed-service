@@ -92,6 +92,7 @@ export type FindAllPostOptions = {
   };
   attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
   limit?: number;
+  offset?: number;
   after?: string;
   order?: OrderOptions;
 };

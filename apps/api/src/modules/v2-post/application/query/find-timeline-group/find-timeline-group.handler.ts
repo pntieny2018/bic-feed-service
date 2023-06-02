@@ -20,10 +20,10 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { FindPostsByIdsHandler } from '../find-posts-by-ids/find-posts-by-ids.handler';
 import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FindTimelineGroupDto } from './find-timeline-group.dto';
+import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
 
 @QueryHandler(FindTimelineGroupQuery)
 export class FindTimelineGroupHandler
@@ -40,19 +40,8 @@ export class FindTimelineGroupHandler
   public constructor(private _queryBus: QueryBus) {}
 
   public async execute(query: FindTimelineGroupQuery): Promise<any> {
-    const { rows: ids, meta: meta } = await this._getImportantContentIdsByUser(query);
-    if (ids.length < query.payload.limit) {
-      query.payload.limit = query.payload.limit - ids.length;
-      const { rows: normalIds, meta: normalMeta } = await this._getNotImportantContentIdsByUser(
-        query
-      );
-      ids.push(...normalIds);
-      meta.hasNextPage = normalMeta.hasNextPage;
-      meta.endCursor = normalMeta.endCursor;
-      if (ids.length === 0) {
-        meta.startCursor = normalMeta.startCursor;
-      }
-    }
+    const { rows: ids, meta: meta } = await this._getContentIdsByUser(query);
+
     const result = await this._queryBus.execute<
       FindPostsByIdsQuery,
       (PostDto | ArticleDto | SeriesDto)[]
@@ -69,24 +58,22 @@ export class FindTimelineGroupHandler
     };
   }
 
-  private async _getImportantContentIdsByUser(
+  private async _getContentIdsByUser(
     query: FindTimelineGroupQuery
   ): Promise<CursorPaginationResult<string>> {
-    const { groupId, isMine, type, isSaved, limit, before, after, authUser } = query.payload;
-    const { rows, meta } = await this._contentRepository.getPagination({
+    const { groupId, isMine, type, isSaved, limit, isImportant, after, authUser } = query.payload;
+    const offset = getLimitFromAfter(after);
+    const rows = await this._contentRepository.findAll({
       attributes: {
         exclude: ['content'],
       },
-      before,
-      after,
       where: {
         isHidden: false,
         status: PostStatus.PUBLISHED,
         groupId,
         groupArchived: false,
         excludeReportedByUserId: authUser?.id,
-        isImportant: true,
-        importantWithUserId: authUser?.id,
+        isImportant,
         createdBy: isMine ? authUser?.id : undefined,
         savedByUserId: isSaved ? authUser?.id : undefined,
         type,
@@ -96,50 +83,22 @@ export class FindTimelineGroupHandler
           userId: authUser.id,
         },
       },
-      limit,
+      offset,
+      limit: limit + 1,
+      order: {
+        isImportantFirst: true,
+      },
     });
-    return {
-      rows: rows.map((row) => row.getId()),
-      meta,
-    };
-  }
 
-  private async _getNotImportantContentIdsByUser(
-    query: FindTimelineGroupQuery
-  ): Promise<CursorPaginationResult<string>> {
-    const { groupId, isMine, type, isSaved, limit, before, after, authUser } = query.payload;
-    const condition = {
-      isHidden: false,
-      status: PostStatus.PUBLISHED,
-      groupId,
-      groupArchived: false,
-      excludeReportedByUserId: authUser?.id,
-      createdBy: isMine ? authUser?.id : undefined,
-      savedByUserId: isSaved ? authUser?.id : undefined,
-      type,
-    };
-    if (authUser?.id) {
-      condition['notImportantWithUserId'] = authUser?.id;
-    } else {
-      condition['isImportant'] = false;
-    }
-    const { rows, meta } = await this._contentRepository.getPagination({
-      attributes: {
-        exclude: ['content'],
-      },
-      before,
-      after,
-      where: condition,
-      include: {
-        shouldIncludeImportant: {
-          userId: authUser?.id,
-        },
-      },
-      limit,
-    });
+    const hasMore = rows.length > limit;
+
+    if (hasMore) rows.pop();
     return {
       rows: rows.map((row) => row.getId()),
-      meta,
+      meta: {
+        hasNextPage: hasMore,
+        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
+      },
     };
   }
 }
