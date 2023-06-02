@@ -52,7 +52,6 @@ export class FindPostsByIdsHandler
         },
       },
     });
-    console.log('ids=', ids);
     const contentsSorted = this._sortContentsByIds(ids, contentEntities);
     const result = await this._contentBinding.contentsBinding(contentsSorted, authUser);
     return result;
