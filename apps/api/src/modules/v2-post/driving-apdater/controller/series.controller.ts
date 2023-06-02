@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
@@ -25,6 +26,7 @@ import { CreateCommentDto } from '../../application/command/create-comment/creat
 import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
+  ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentNotFoundException,
   InvalidResourceImageException,
@@ -38,6 +40,10 @@ import {
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
 import { SeriesDto } from '../../application/dto';
+import {
+  DeleteSeriesCommand,
+  DeleteSeriesCommandPayload,
+} from '../../application/command/delete-series/delete-series.command';
 
 @ApiTags('Series v2')
 @ApiSecurity('authorization')
@@ -120,6 +126,41 @@ export class SeriesController {
         case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Delete series' })
+  @ApiOkResponse({
+    description: 'Delete series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.deleted_success',
+  })
+  @Delete('/:id')
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<DeleteSeriesCommand, void>(
+        new DeleteSeriesCommand({
+          id,
+          actor: user,
+        } as DeleteSeriesCommandPayload)
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
