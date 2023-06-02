@@ -62,38 +62,65 @@ export class FindCommentsArroundIdHandler
 
     this._contentValidator.checkCanReadContent(postEntity, authUser);
 
-    const isParentComment = comment.isParentComment();
+    const isChild = comment.isChildComment();
 
-    const target = await this._commentQuery.getArroundComment(comment, {
-      limit: isParentComment ? limit : targetChildLimit,
-      order: isParentComment ? OrderEnum.DESC : OrderEnum.ASC,
+    const arroundTargetPagination = await this._commentQuery.getArroundComment(comment, {
+      limit: isChild ? targetChildLimit : limit,
+      order: isChild ? OrderEnum.ASC : OrderEnum.DESC,
       authUser,
     });
-    const targetInstances = await this._commentBinding.commentBinding(target.rows);
-    const targetResult = new FindCommentsArroundIdDto(targetInstances, target.meta);
+    const arroundTargetInstances = await this._commentBinding.commentBinding(
+      arroundTargetPagination.rows
+    );
+    const arroundTargetResult = new FindCommentsArroundIdDto(
+      arroundTargetInstances,
+      arroundTargetPagination.meta
+    );
 
-    if (isParentComment) return targetResult;
+    if (!isChild) {
+      const childsPagination = await this._commentQuery.getPagination({
+        authUser,
+        postId: comment.get('postId'),
+        parentId: comment.get('id'),
+        limit: targetChildLimit,
+        order: OrderEnum.ASC,
+      });
 
-    const parentComment = await this._commentRepository.findOne(
+      if (childsPagination && childsPagination.rows?.length) {
+        const childInstances = await this._commentBinding.commentBinding(childsPagination.rows);
+        const childsResult = new FindCommentsArroundIdDto(childInstances, childsPagination.meta);
+        for (const instance of arroundTargetResult.list) {
+          if (instance.id === comment.get('id')) {
+            instance.child = childsResult;
+            break;
+          }
+        }
+      }
+      return arroundTargetResult;
+    }
+
+    const parent = await this._commentRepository.findOne(
       { id: comment.get('parentId'), parentId: NIL },
       { excludeReportedByUserId: authUser?.id, includeOwnerReactions: authUser?.id }
     );
-    if (!parentComment) throw new CommentNotFoundException();
+    if (!parent) throw new CommentNotFoundException();
 
-    const parentsTarget = await this._commentQuery.getArroundComment(parentComment, {
+    const arroundParentPagination = await this._commentQuery.getArroundComment(parent, {
       limit,
       order: OrderEnum.DESC,
       authUser,
     });
-    const parentInstances = await this._commentBinding.commentBinding(parentsTarget.rows);
+    const arroundParentInstances = await this._commentBinding.commentBinding(
+      arroundParentPagination.rows
+    );
 
-    for (const instance of parentInstances) {
-      if (instance.id === comment.get('parentId')) {
-        instance.child = targetResult;
+    for (const instance of arroundParentInstances) {
+      if (instance.id === parent.get('id')) {
+        instance.child = arroundTargetResult;
         break;
       }
     }
 
-    return new FindCommentsArroundIdDto(parentInstances, parentsTarget.meta);
+    return new FindCommentsArroundIdDto(arroundParentInstances, arroundParentPagination.meta);
   }
 }
