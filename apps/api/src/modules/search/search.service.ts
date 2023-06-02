@@ -395,7 +395,7 @@ export class SearchService {
       const audienceGroups = [];
       const communities = [];
       let mentions = {};
-      const reactionsCount = {};
+      const reactionsCount = [];
       for (const group of groups) {
         if (post.groupIds && post.groupIds.includes(group.id)) {
           audienceGroups.push({
