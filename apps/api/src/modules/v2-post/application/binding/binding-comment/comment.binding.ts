@@ -69,7 +69,7 @@ export class CommentBinding implements ICommentBinding {
               createdAt: item.get('createdAt'),
             })
         ),
-        reactionsCount,
+        reactionsCount: reactionsCount.get(row.get('id')) || [],
         mentions: row.get('mentions').reduce((returnValue, current) => {
           return {
             ...returnValue,

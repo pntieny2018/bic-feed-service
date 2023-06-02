@@ -39,7 +39,7 @@ export class FindPostsByIdsHandler
       },
       include: {
         shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
+        shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
