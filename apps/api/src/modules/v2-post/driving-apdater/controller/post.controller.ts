@@ -97,7 +97,7 @@ export class PostController {
     @AuthUser() authUser: UserDto,
     @Body() updatePostRequestDto: UpdatePostRequestDto,
     @Req() req: Request
-  ): Promise<void> {
+  ): Promise<PostDto> {
     const { audience, tags, series, mentions, media } = updatePostRequestDto;
     try {
       const data = await this._commandBus.execute<UpdatePostCommand, PostDto>(
@@ -122,6 +122,7 @@ export class PostController {
       if (data.status === PostStatus.PROCESSING) {
         req.message = 'message.post.published_success_with_video_waiting_process';
       }
+      return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:

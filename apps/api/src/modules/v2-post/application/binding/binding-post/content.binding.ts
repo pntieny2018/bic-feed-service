@@ -299,17 +299,17 @@ export class ContentBinding implements IContentBinding {
           })
         );
       }
-      // if (contentEntity instanceof SeriesEntity) {
-      //   result.push(
-      //     await this._getSeriesDto(contentEntity, {
-      //       users,
-      //       groups,
-      //       communities,
-      //       reactionsCount,
-      //       items,
-      //     })
-      //   );
-      // }
+      if (contentEntity instanceof SeriesEntity) {
+        result.push(
+          await this._getSeriesDto(contentEntity, {
+            users,
+            groups,
+            communities,
+            reactionsCount,
+            items,
+          })
+        );
+      }
     }
 
     return result;
