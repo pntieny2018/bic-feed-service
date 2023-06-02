@@ -268,7 +268,8 @@ export class ContentBinding implements IContentBinding {
       title: seriesEntity.get('title'),
       summary: seriesEntity.get('summary'),
       audience,
-      items: items.map((item) => {
+      items: seriesEntity.get('itemIds')?.map((itemId) => {
+        const item = items.find((item) => item.getId() === itemId);
         if (item instanceof PostEntity) {
           return {
             id: item.getId(),
