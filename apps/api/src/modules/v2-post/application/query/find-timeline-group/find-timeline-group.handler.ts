@@ -40,7 +40,7 @@ export class FindTimelineGroupHandler
   public constructor(private _queryBus: QueryBus) {}
 
   public async execute(query: FindTimelineGroupQuery): Promise<any> {
-    const { rows: ids, meta } = await this._getContentIds(query);
+    const { rows: ids, meta } = await this._getImportantContentIdsByUser(query);
     const result = await this._queryBus.execute<
       FindPostsByIdsQuery,
       (PostDto | ArticleDto | SeriesDto)[]
@@ -57,7 +57,7 @@ export class FindTimelineGroupHandler
     };
   }
 
-  private async _getContentIds(
+  private async _getImportantContentIdsByUser(
     query: FindTimelineGroupQuery
   ): Promise<CursorPaginationResult<string>> {
     const { groupId, isImportant, isMine, type, isSaved, limit, before, after, authUser } =
@@ -75,6 +75,7 @@ export class FindTimelineGroupHandler
         groupArchived: false,
         excludeReportedByUserId: authUser.id,
         isImportant,
+        //notMarkedReadImportantUserId: authUser.id,
         createdBy: isMine ? authUser.id : undefined,
         savedByUserId: isSaved ? authUser.id : undefined,
         type,
@@ -85,9 +86,41 @@ export class FindTimelineGroupHandler
         },
       },
       limit,
-      order: {
-        isImportantFirst: true,
+    });
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
+  }
+
+  private async _getNotImportantContentIdsByUser(
+    query: FindTimelineGroupQuery
+  ): Promise<CursorPaginationResult<string>> {
+    const { groupId, isImportant, isMine, type, isSaved, limit, before, after, authUser } =
+      query.payload;
+    const { rows, meta } = await this._contentRepository.getPagination({
+      attributes: {
+        exclude: ['content'],
       },
+      before,
+      after,
+      where: {
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+        groupId,
+        groupArchived: false,
+        excludeReportedByUserId: authUser.id,
+        isImportant: false,
+        createdBy: isMine ? authUser.id : undefined,
+        savedByUserId: isSaved ? authUser.id : undefined,
+        type,
+      },
+      include: {
+        shouldIncludeImportant: {
+          userId: authUser.id,
+        },
+      },
+      limit,
     });
     return {
       rows: rows.map((row) => row.getId()),

@@ -462,6 +462,7 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
+
       if (options.where.savedByUserId) {
         condition.push(
           Sequelize.literal(
@@ -469,6 +470,30 @@ export class ContentRepository implements IContentRepository {
                       SELECT sp.user_id FROM  ${schema}.${userSavePostTable} sp
                         WHERE sp.post_id = "PostModel".id AND sp.user_id = ${this._postModel.sequelize.escape(
                           options.where.savedByUserId
+                        )}
+                    )`
+          )
+        );
+      }
+      if (options.where.importantWithUserId) {
+        condition.push(
+          Sequelize.literal(
+            `"PostModel".is_important = TRUE AND NOT EXISTS ( 
+                      SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
+                        WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
+                          options.where.importantWithUserId
+                        )}
+                    )`
+          )
+        );
+      }
+      if (options.where.notImportantWithUserId) {
+        condition.push(
+          Sequelize.literal(
+            `"PostModel".is_important = FALSE OR EXISTS ( 
+                      SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
+                        WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
+                          options.where.notImportantWithUserId
                         )}
                     )`
           )
@@ -655,14 +680,6 @@ export class ContentRepository implements IContentRepository {
     const { after, before, limit } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
     findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
-    findOption.order = this._getOrderContent(getPaginationContentsProps.order);
-
-    // const curorCols = [];
-    // if (getPaginationContentsProps.isImportantFirst) {
-    //   curorCols.push('"colImportant"')
-    // }
-    // order.push(['createdAt', 'desc']);
-    //
     const paginator = new CursorPaginator(
       this._postModel,
       ['createdAt'],
