@@ -21,9 +21,14 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { SeriesEntity } from '../../../domain/model/content';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+} from '../../binding/binding-post/content.interface';
+import { SeriesDto } from '../../dto';
 
 @CommandHandler(UpdateSeriesCommand)
-export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand, void> {
+export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand, SeriesDto> {
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupAppService: IGroupApplicationService,
@@ -33,10 +38,12 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
     private readonly _eventEmitter: InternalEventEmitterService
   ) {}
 
-  public async execute(command: UpdateSeriesCommand): Promise<void> {
+  public async execute(command: UpdateSeriesCommand): Promise<SeriesDto> {
     const { actor, id, groupIds, coverMedia } = command.payload;
 
     const seriesEntity = await this._contentRepository.findOne({
@@ -74,6 +81,12 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
 
     if (!isImportantBefore && seriesEntity.isImportant()) {
       await this._postDomainService.markReadImportant(seriesEntity, actor.id);
+      seriesEntity.setMarkReadImportant();
     }
+
+    return this._contentBinding.seriesBinding(seriesEntity, {
+      actor,
+      groups,
+    });
   }
 }

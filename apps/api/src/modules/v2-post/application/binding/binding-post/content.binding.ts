@@ -23,7 +23,6 @@ import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { ArticleDto } from '../../dto/article.dto';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { PostStatus } from '../../../data-type';
-import { arrayUnique } from 'class-validator';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -238,8 +237,9 @@ export class ContentBinding implements IContentBinding {
     }
   ): Promise<SeriesDto> {
     const groups =
-      dataBinding?.groups ||
-      (await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds')));
+      dataBinding.groups && dataBinding.groups.length
+        ? dataBinding.groups
+        : await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds'));
 
     const audience = {
       groups: this.filterSecretGroupCannotAccess(groups, dataBinding.actor),
@@ -269,7 +269,7 @@ export class ContentBinding implements IContentBinding {
       setting: seriesEntity.get('setting'),
       commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
-      markedReadPost: false,
+      markedReadPost: seriesEntity.get('markedReadImportant'),
       isSaved: false,
       isReported: false,
     });
