@@ -561,6 +561,7 @@ export class ContentRepository implements IContentRepository {
 
   private _modelToPostEntity(post: IPost): PostEntity {
     if (post === null) return null;
+    console.log('1222', post.markedReadPost);
     return this._postFactory.reconstitute({
       id: post.id,
       isReported: post.isReported,
