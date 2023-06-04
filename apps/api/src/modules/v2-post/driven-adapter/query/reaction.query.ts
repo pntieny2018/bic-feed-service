@@ -74,7 +74,6 @@ export class ReactionQuery implements IReactionQuery {
       limit: limit,
       order: [['createdAt', order]],
     });
-    console.log(rows.map((r) => r.toJSON()));
     const result = rows.map((row) => this._reactionFactory.reconstitute(row));
     return {
       rows: result,
