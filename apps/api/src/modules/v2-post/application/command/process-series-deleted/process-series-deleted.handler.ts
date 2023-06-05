@@ -11,7 +11,7 @@ import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
 
 @CommandHandler(ProcessSeriesDeletedCommand)
-export class ProcessSeriesPublishedHandler
+export class ProcessSeriesDeletedHandler
   implements ICommandHandler<ProcessSeriesDeletedCommand, void>
 {
   public constructor(
