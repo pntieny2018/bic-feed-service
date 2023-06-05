@@ -26,6 +26,10 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 import { SeriesDto } from '../../dto';
+import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
+import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
+import { clone } from 'lodash';
+import { KafkaService } from '@app/kafka';
 
 @CommandHandler(UpdateSeriesCommand)
 export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand, SeriesDto> {
@@ -40,7 +44,8 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    private readonly _eventEmitter: InternalEventEmitterService
+    private readonly _eventEmitter: InternalEventEmitterService,
+    private readonly _kafkaService: KafkaService
   ) {}
 
   public async execute(command: UpdateSeriesCommand): Promise<SeriesDto> {
@@ -53,6 +58,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       },
       include: {
         shouldIncludeGroup: true,
+        shouldIncludeItems: true,
       },
     });
 
@@ -67,6 +73,8 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     if (coverMedia && !coverMedia.id) throw new SeriesRequiredCoverException();
 
     if (groupIds && groupIds.length === 0) throw new ContentEmptyGroupException();
+
+    const seriesEntityBefore = clone(seriesEntity);
 
     let groups: GroupDto[] = [];
     if (groupIds?.length) {
@@ -88,5 +96,54 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       actor,
       groups,
     });
+  }
+
+  private _sendEvent(entityBefore, entityAfter: SeriesEntity, result: SeriesDto): void {
+    if (entityAfter.isPublished()) {
+      const payload: SeriesChangedMessagePayload = {
+        isPublished: false,
+        before: {
+          id: entityBefore.get('id'),
+          actor: result.actor,
+          setting: result.setting,
+          type: entityBefore.get('type'),
+          groupIds: entityBefore.get('groupIds'),
+          communityIds: result.communities.map((community) => community.id),
+          title: entityBefore.get('title'),
+          summary: entityBefore.get('summary'),
+          lang: entityBefore.get('lang'),
+          isHidden: entityBefore.get('isHidden'),
+          status: entityBefore.get('status'),
+          coverMedia: result.coverMedia,
+          createdAt: entityBefore.get('createdAt'),
+          updatedAt: entityBefore.get('updatedAt'),
+        },
+        after: {
+          id: entityAfter.get('id'),
+          actor: result.actor,
+          setting: result.setting,
+          type: entityAfter.get('type'),
+          groupIds: entityAfter.get('groupIds'),
+          communityIds: result.communities.map((community) => community.id),
+          title: entityAfter.get('title'),
+          summary: entityAfter.get('summary'),
+          lang: entityAfter.get('lang'),
+          isHidden: entityAfter.get('isHidden'),
+          status: entityAfter.get('status'),
+          coverMedia: result.coverMedia,
+          state: {
+            attachGroupIds: entityAfter.getState().attachGroupIds,
+            detachGroupIds: entityAfter.getState().detachGroupIds,
+          },
+          createdAt: entityAfter.get('createdAt'),
+          updatedAt: entityAfter.get('updatedAt'),
+        },
+      };
+
+      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
+        key: entityAfter.getId(),
+        value: new SeriesChangedMessagePayload(payload),
+      });
+    }
   }
 }

@@ -4,6 +4,8 @@ import { PostChangedMessagePayload } from '../v2-post/application/dto/message/po
 import { KAFKA_TOPIC } from '../../common/constants';
 import { SearchService } from './search.service';
 import { PostStatus } from '../v2-post/data-type/post-status.enum';
+import { SeriesChangedMessagePayload } from '../v2-post/application/dto/message/series-changed.message-payload';
+import { PostType } from '../../database/models/post.model';
 
 @Controller()
 export class SearchConsumer {
@@ -62,6 +64,63 @@ export class SearchConsumer {
         createdAt,
         updatedAt,
         lang,
+      },
+    ]);
+  }
+
+  @EventPattern(KAFKA_TOPIC.CONTENT.SERIES_CHANGED)
+  public async seriesChanged(
+    @Payload('value') payload: SeriesChangedMessagePayload
+  ): Promise<void> {
+    const { before, after, isPublished } = payload;
+    const {
+      id,
+      type,
+      title,
+      summary,
+      groupIds,
+      communityIds,
+      actor,
+      createdAt,
+      updatedAt,
+      lang,
+      isHidden,
+      coverMedia,
+    } = after;
+
+    if (isPublished) {
+      await this._postSearchService.addPostsToSearch([
+        {
+          id,
+          createdAt,
+          updatedAt,
+          createdBy: actor.id,
+          title,
+          summary,
+          groupIds: groupIds,
+          isHidden: false,
+          communityIds,
+          type: PostType.SERIES,
+          items: [],
+          coverMedia,
+        },
+      ]);
+      return;
+    }
+    await this._postSearchService.updatePostsToSearch([
+      {
+        id,
+        groupIds: groupIds,
+        communityIds,
+        createdAt,
+        updatedAt,
+        createdBy: actor.id,
+        isHidden: false,
+        lang,
+        summary,
+        title,
+        type: PostType.SERIES,
+        coverMedia,
       },
     ]);
   }
