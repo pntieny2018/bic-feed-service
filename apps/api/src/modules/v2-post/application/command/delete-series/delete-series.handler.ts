@@ -7,8 +7,9 @@ import {
   ContentNoCRUDPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { SeriesEntity } from '../../../domain/model/content';
+import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
+import { SeriesDeletedMessagePayload } from '../../dto/message/series-deleted.message-payload';
 
 @CommandHandler(DeleteSeriesCommand)
 export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand, void> {
@@ -17,7 +18,7 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
     private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
-    private readonly _eventEmitter: InternalEventEmitterService
+    private readonly _kafkaService: KafkaService
   ) {}
 
   public async execute(command: DeleteSeriesCommand): Promise<void> {
@@ -47,5 +48,10 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
     );
 
     await this._contentRepository.delete(seriesEntity.get('id'));
+
+    this._kafkaService.emit(KAFKA_TOPIC.CONTENT.SERIES_DELETED, {
+      key: id,
+      value: new SeriesDeletedMessagePayload({ id, actor }),
+    });
   }
 }
