@@ -5,9 +5,10 @@ import { KAFKA_TOPIC } from '../../../../common/constants';
 import { SeriesChangedMessagePayload } from '../../application/dto/message/series-changed.message-payload';
 import { ProcessSeriesDeletedCommand } from '../../application/command/process-series-deleted/process-series-deleted.command';
 import { ProcessSeriesPublishedCommand } from '../../application/command/process-series-published/process-series-published.command';
+import { ProcessSeriesUpdatedCommand } from '../../application/command/process-series-updated/process-series-updated.command';
 
 @Controller()
-export class PostConsumer {
+export class SeriesConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   @EventPattern(KAFKA_TOPIC.CONTENT.SERIES_CHANGED)
@@ -21,6 +22,11 @@ export class PostConsumer {
       case 'delete':
         await this._commandBus.execute<ProcessSeriesDeletedCommand, void>(
           new ProcessSeriesDeletedCommand(payload)
+        );
+        break;
+      case 'update':
+        await this._commandBus.execute<ProcessSeriesUpdatedCommand, void>(
+          new ProcessSeriesUpdatedCommand(payload)
         );
         break;
       default:
