@@ -20,6 +20,7 @@ import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
+  IDataPostToDelete,
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
@@ -169,7 +170,7 @@ export class SearchService {
       }
     }
   }
-  public async deletePostsToSearch(posts: IPost[]): Promise<void> {
+  public async deletePostsToSearch(posts: IDataPostToDelete[]): Promise<void> {
     try {
       for (const post of posts) {
         await this.elasticsearchService.deleteByQuery({
