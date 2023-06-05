@@ -262,6 +262,9 @@ export class ContentBinding implements IContentBinding {
           groupArchived: false,
           status: PostStatus.PUBLISHED,
         },
+        include: {
+          shouldIncludeCategory: true,
+        },
       });
 
       userIdsNeedToFind = uniq([
