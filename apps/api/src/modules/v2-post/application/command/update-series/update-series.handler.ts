@@ -101,7 +101,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
   private _sendEvent(entityBefore, entityAfter: SeriesEntity, result: SeriesDto): void {
     if (entityAfter.isPublished()) {
       const payload: SeriesChangedMessagePayload = {
-        isPublished: false,
+        state: 'update',
         before: {
           id: entityBefore.get('id'),
           actor: result.actor,
