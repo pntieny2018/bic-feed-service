@@ -20,7 +20,7 @@ export class ReactionEntity extends DomainAggregateRoot<ReactionProps> {
     if (!isUUID(this._props.id)) {
       throw new Error('Reaction ID is not UUID');
     }
-    if (!isUUID(this._props.targetId)) {
+    if (this._props.targetId && !isUUID(this._props.targetId)) {
       throw new Error('Target ID is not UUID');
     }
     if (!isUUID(this._props.createdBy)) {

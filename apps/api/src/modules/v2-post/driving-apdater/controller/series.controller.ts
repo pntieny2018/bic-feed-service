@@ -1,10 +1,11 @@
 import { AuthUser } from '../../../auth';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   BadRequestException,
   Body,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -14,9 +15,9 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
-import { UserDto } from '../../../v2-user/application/user.dto';
+import { UserDto } from '../../../v2-user/application';
 import { DEFAULT_APP_VERSION, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { CreateSeriesRequestDto } from '../dto/request/create-series.request.dto';
+import { CreateSeriesRequestDto } from '../dto/request';
 import { CreateSeriesDto } from '../../application/command/create-series/create-series.dto';
 import {
   CreateSeriesCommand,
@@ -29,17 +30,21 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentNotFoundException,
+  ContentRequireGroupException,
   InvalidResourceImageException,
   SeriesRequiredCoverException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { instanceToInstance } from 'class-transformer';
+import { instanceToInstance, plainToInstance } from 'class-transformer';
 import { UpdateSeriesRequestDto } from '../dto/request/update-series.request.dto';
 import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
-import { SeriesDto } from '../../application/dto';
+import { PostDto, SeriesDto } from '../../application/dto';
+import { FindPostQuery } from '../../application/query/find-post/find-post.query';
+import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
+import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
   DeleteSeriesCommand,
   DeleteSeriesCommandPayload,
@@ -52,7 +57,10 @@ import {
   path: 'series',
 })
 export class SeriesController {
-  public constructor(private readonly _commandBus: CommandBus) {}
+  public constructor(
+    private readonly _commandBus: CommandBus,
+    private readonly _queryBus: QueryBus
+  ) {}
 
   @ApiOperation({ summary: 'Create new series' })
   @ApiOkResponse({
@@ -129,6 +137,32 @@ export class SeriesController {
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get series detail' })
+  @Get('/:seriesId')
+  public async getPostDetail(
+    @Param('seriesId', ParseUUIDPipe) seriesId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<SeriesDto> {
+    try {
+      const data = await this._queryBus.execute(new FindSeriesQuery({ seriesId, authUser }));
+      console.log(data);
+      return plainToInstance(SeriesDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCRUDPermissionException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }

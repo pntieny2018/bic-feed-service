@@ -39,6 +39,7 @@ import { FindTimelineGroupHandler } from '../application/query/find-timeline-gro
 import { FindPostsByIdsHandler } from '../application/query/find-posts-by-ids/find-posts-by-ids.handler';
 import { FindNewsfeedHandler } from '../application/query/find-newsfeed/find-newsfeed.handler';
 import { DeleteSeriesHandler } from '../application/command/delete-series/delete-series.handler';
+import { FindSeriesHandler } from '../application/query/find-series/find-series.handler';
 
 export const postProvider = [
   {
@@ -99,4 +100,5 @@ export const postProvider = [
   FindTimelineGroupHandler,
   FindPostsByIdsHandler,
   FindNewsfeedHandler,
+  FindSeriesHandler,
 ];
