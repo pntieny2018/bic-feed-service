@@ -334,8 +334,8 @@ export class ContentBinding implements IContentBinding {
       commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
       markedReadPost: seriesEntity.get('markedReadImportant'),
-      isSaved: seriesEntity.get('isSaved'),
-      isReported: seriesEntity.get('isReported'),
+      isSaved: seriesEntity.get('isSaved') || false,
+      isReported: seriesEntity.get('isReported') || false,
     });
   }
 
