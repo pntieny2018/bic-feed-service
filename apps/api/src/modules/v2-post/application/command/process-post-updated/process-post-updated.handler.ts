@@ -21,7 +21,7 @@ import {
 } from '../../../../../events/series';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { ProcessPostPublishedCommand } from '../process-post-published/process-post-published.command';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
+import { SeriesEntity } from '../../../domain/model/content';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
