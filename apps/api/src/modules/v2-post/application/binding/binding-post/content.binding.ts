@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import {
   IUserApplicationService,
@@ -232,7 +233,7 @@ export class ContentBinding implements IContentBinding {
   public async seriesBinding(
     seriesEntity: SeriesEntity,
     dataBinding?: {
-      actor: UserDto;
+      actor?: UserDto;
       groups?: GroupDto[];
       authUser?: UserDto;
     }
@@ -251,6 +252,7 @@ export class ContentBinding implements IContentBinding {
     );
 
     let items = [];
+    let userIdsNeedToFind = [seriesEntity.get('createdBy')];
     if (seriesEntity.get('itemIds')?.length) {
       items = await this._contentRepo.findAll({
         where: {
@@ -261,7 +263,15 @@ export class ContentBinding implements IContentBinding {
           status: PostStatus.PUBLISHED,
         },
       });
+
+      userIdsNeedToFind = uniq([
+        ...items.map((item) => item.get('createdBy')),
+        ...userIdsNeedToFind,
+      ]);
     }
+    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+      withGroupJoined: false,
+    });
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
@@ -277,6 +287,8 @@ export class ContentBinding implements IContentBinding {
             createdAt: item.get('createdAt'),
             setting: item.get('setting'),
             type: item.get('type'),
+            actor: users.find((user) => user.id === item.get('createdBy')),
+            isSaved: item.get('isSaved'),
             media: {
               files: item.get('media').files?.map((file) => new FileDto(file.toObject())),
               images: item.get('media').images?.map((image) => new ImageDto(image.toObject())),
@@ -292,7 +304,13 @@ export class ContentBinding implements IContentBinding {
             type: item.get('type'),
             createdAt: item.get('createdAt'),
             setting: item.get('setting'),
+            actor: users.find((user) => user.id === item.get('createdBy')),
+            isSaved: item.get('isSaved'),
             coverMedia: item.get('cover') ? new ImageDto(item.get('cover').toObject()) : null,
+            categories: (item.get('categories') || []).map((category) => ({
+              id: category.get('id'),
+              name: category.get('name'),
+            })),
           };
         }
         return null;
@@ -304,7 +322,9 @@ export class ContentBinding implements IContentBinding {
         ? new ImageDto(seriesEntity.get('cover')?.toObject())
         : null,
       communities,
-      actor: dataBinding.actor,
+      actor: dataBinding.actor
+        ? dataBinding.actor
+        : users.find((user) => user.id === seriesEntity.get('createdBy')),
       status: seriesEntity.get('status'),
       type: seriesEntity.get('type'),
       privacy: seriesEntity.get('privacy'),
@@ -322,7 +342,7 @@ export class ContentBinding implements IContentBinding {
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
   ): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
-    const { users, groups, communities, items, reactionsCount, series } =
+    const { users, groups, communities, items, reactionsCount } =
       await this._getDataBindingForContents(contentEntities, authUser);
     const result = [];
     for (const contentEntity of contentEntities) {
