@@ -59,6 +59,9 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       include: {
         shouldIncludeGroup: true,
         shouldIncludeItems: true,
+        shouldIncludeSaved: {
+          userId: actor.id,
+        },
       },
     });
 

@@ -303,6 +303,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   public reactionsCount: string;
 
+  public markedReadPost?: boolean;
+
+  public isSaved?: boolean;
+
   @BelongsTo(() => MediaModel, {
     foreignKey: 'cover',
   })
