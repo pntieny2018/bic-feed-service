@@ -74,7 +74,7 @@ export class ProcessSeriesPublishedHandler
   }
 
   private async _processNotification(command: ProcessSeriesPublishedCommand): Promise<void> {
-    const { after, isPublished } = command.payload;
+    const { after, state } = command.payload;
     const groups = await this._groupApplicationService.findAllByIds(after.groupIds);
     const activity = this._postActivityService.createPayload({
       id: after.id,
@@ -103,7 +103,7 @@ export class ProcessSeriesPublishedHandler
           actor: {
             id: after.actor.id,
           },
-          event: isPublished ? SeriesHasBeenPublished : SeriesHasBeenUpdated,
+          event: state === 'publish' ? SeriesHasBeenPublished : SeriesHasBeenUpdated,
           data: activity,
           meta: {
             series: {
