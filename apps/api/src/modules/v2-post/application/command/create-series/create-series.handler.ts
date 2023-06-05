@@ -75,7 +75,7 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
   private _sendEvent(entity: SeriesEntity, result: SeriesDto): void {
     if (entity.isPublished()) {
       const payload: SeriesChangedMessagePayload = {
-        isPublished: true,
+        state: 'publish',
         after: {
           id: entity.get('id'),
           actor: result.actor,

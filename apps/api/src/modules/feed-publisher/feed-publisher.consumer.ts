@@ -11,12 +11,12 @@ export class FeedConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after, isPublished } = payload;
+    const { before, after, state } = payload;
 
     await this._feedPublisherService.fanoutOnWrite(
       after.id,
       after.groupIds,
-      isPublished ? [] : before.groupIds
+      state === 'publish' ? [] : before.groupIds
     );
   }
 
@@ -24,12 +24,12 @@ export class FeedConsumer {
   public async seriesChanged(
     @Payload('value') payload: SeriesChangedMessagePayload
   ): Promise<void> {
-    const { before, after, isPublished } = payload;
+    const { before, after, state } = payload;
 
     await this._feedPublisherService.fanoutOnWrite(
       after.id,
       after.groupIds,
-      isPublished ? [] : before.groupIds
+      state === 'publish' ? [] : before.groupIds
     );
   }
 }

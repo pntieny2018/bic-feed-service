@@ -1,7 +1,7 @@
 import { SeriesMessagePayload } from './series.message-payload';
 
 export class SeriesChangedMessagePayload {
-  public isPublished: boolean;
+  public state: 'publish' | 'update' | 'delete';
   public before?: SeriesMessagePayload;
   public after: SeriesMessagePayload & {
     state: {

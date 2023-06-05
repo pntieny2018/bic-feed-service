@@ -61,7 +61,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
   }
 
   private async _processNotification(command: ProcessPostUpdatedCommand): Promise<void> {
-    const { before, after, isPublished } = command.payload;
+    const { before, after, state } = command.payload;
 
     const series = await this._contentRepository.findAll({
       attributes: {
@@ -88,7 +88,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     });
     let oldActivity = undefined;
 
-    if (!isPublished) {
+    if (state === 'update') {
       const mentionUsers = await this._userApplicationService.findAllByIds(before.mentionUserIds);
       const mentions = this._contentBinding.mapMentionWithUserInfo(mentionUsers);
       const oldGroups = await this._groupApplicationService.findAllByIds(before.groupIds);
@@ -112,7 +112,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
         actor: {
           id: after.actor.id,
         },
-        event: isPublished ? PostHasBeenPublished : PostHasBeenUpdated,
+        event: state === 'update' ? PostHasBeenPublished : PostHasBeenUpdated,
         data: updatedActivity,
         meta: {
           post: {

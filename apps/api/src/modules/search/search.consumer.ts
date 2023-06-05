@@ -13,7 +13,7 @@ export class SearchConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after, isPublished } = payload;
+    const { before, after, state } = payload;
     const {
       id,
       type,
@@ -30,7 +30,7 @@ export class SearchConsumer {
       isHidden,
     } = after;
 
-    if (isPublished) {
+    if (state === 'publish') {
       await this._postSearchService.addPostsToSearch([
         {
           id,
@@ -72,7 +72,7 @@ export class SearchConsumer {
   public async seriesChanged(
     @Payload('value') payload: SeriesChangedMessagePayload
   ): Promise<void> {
-    const { before, after, isPublished } = payload;
+    const { before, after, state } = payload;
     const {
       id,
       type,
@@ -88,7 +88,7 @@ export class SearchConsumer {
       coverMedia,
     } = after;
 
-    if (isPublished) {
+    if (state === 'publish') {
       await this._postSearchService.addPostsToSearch([
         {
           id,
