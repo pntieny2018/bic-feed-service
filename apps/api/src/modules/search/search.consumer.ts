@@ -96,7 +96,7 @@ export class SearchConsumer {
             createdBy: actor.id,
             title,
             summary,
-            groupIds: groupIds,
+            groupIds,
             isHidden,
             communityIds,
             type,
@@ -109,7 +109,7 @@ export class SearchConsumer {
         await this._postSearchService.updatePostsToSearch([
           {
             id,
-            groupIds: groupIds,
+            groupIds,
             communityIds,
             createdAt,
             updatedAt,

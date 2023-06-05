@@ -41,6 +41,7 @@ import { FindNewsfeedHandler } from '../application/query/find-newsfeed/find-new
 import { DeleteSeriesHandler } from '../application/command/delete-series/delete-series.handler';
 import { FindSeriesHandler } from '../application/query/find-series/find-series.handler';
 import { ProcessSeriesDeletedHandler } from '../application/command/process-series-deleted/process-series-deleted.handler';
+import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
 
 export const postProvider = [
   {
@@ -92,6 +93,7 @@ export const postProvider = [
   CreateSeriesHandler,
   UpdateSeriesHandler,
   DeleteSeriesHandler,
+  ProcessSeriesPublishedHandler,
   ProcessSeriesDeletedHandler,
   FindPostHandler,
   FindArticleHandler,

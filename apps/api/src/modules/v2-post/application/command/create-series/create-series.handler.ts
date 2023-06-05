@@ -64,7 +64,9 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
       actor,
       groups,
     });
+
     this._sendEvent(seriesEntity, result);
+
     return result;
   }
 
