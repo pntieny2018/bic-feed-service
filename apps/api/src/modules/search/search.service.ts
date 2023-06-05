@@ -8,7 +8,6 @@ import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
-import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
@@ -32,10 +31,6 @@ import {
 } from '../v2-group/application';
 import { TagService } from '../tag/tag.service';
 
-type FieldSearch = {
-  default: string;
-  ascii: string;
-};
 @Injectable()
 export class SearchService {
   /**
@@ -91,7 +86,6 @@ export class SearchService {
         body,
         pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
       });
-      console.log(`ADD ES:`, JSON.stringify(res));
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
@@ -163,7 +157,6 @@ export class SearchService {
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         });
-        console.log(`Update ES:`, JSON.stringify(res));
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
         if (dataIndex.lang !== newLang) {
           await this.postService.updateData([dataIndex.id], { lang: newLang });
