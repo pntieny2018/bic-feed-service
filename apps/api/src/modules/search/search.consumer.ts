@@ -3,9 +3,7 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 import { PostChangedMessagePayload } from '../v2-post/application/dto/message/post-published.message-payload';
 import { KAFKA_TOPIC } from '../../common/constants';
 import { SearchService } from './search.service';
-import { PostStatus } from '../v2-post/data-type/post-status.enum';
 import { SeriesChangedMessagePayload } from '../v2-post/application/dto/message/series-changed.message-payload';
-import { PostType } from '../../database/models/post.model';
 
 @Controller()
 export class SearchConsumer {
@@ -88,40 +86,48 @@ export class SearchConsumer {
       coverMedia,
     } = after;
 
-    if (state === 'publish') {
-      await this._postSearchService.addPostsToSearch([
-        {
-          id,
-          createdAt,
-          updatedAt,
-          createdBy: actor.id,
-          title,
-          summary,
-          groupIds: groupIds,
-          isHidden: false,
-          communityIds,
-          type: PostType.SERIES,
-          items: [],
-          coverMedia,
-        },
-      ]);
-      return;
+    switch (state) {
+      case 'publish':
+        await this._postSearchService.addPostsToSearch([
+          {
+            id,
+            createdAt,
+            updatedAt,
+            createdBy: actor.id,
+            title,
+            summary,
+            groupIds: groupIds,
+            isHidden,
+            communityIds,
+            type,
+            items: [],
+            coverMedia,
+          },
+        ]);
+        break;
+      case 'update':
+        await this._postSearchService.updatePostsToSearch([
+          {
+            id,
+            groupIds: groupIds,
+            communityIds,
+            createdAt,
+            updatedAt,
+            createdBy: actor.id,
+            isHidden,
+            lang,
+            summary,
+            title,
+            type,
+            coverMedia,
+          },
+        ]);
+        break;
+      case 'delete':
+        await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
+        break;
+      default:
+        break;
     }
-    await this._postSearchService.updatePostsToSearch([
-      {
-        id,
-        groupIds: groupIds,
-        communityIds,
-        createdAt,
-        updatedAt,
-        createdBy: actor.id,
-        isHidden: false,
-        lang,
-        summary,
-        title,
-        type: PostType.SERIES,
-        coverMedia,
-      },
-    ]);
   }
 }

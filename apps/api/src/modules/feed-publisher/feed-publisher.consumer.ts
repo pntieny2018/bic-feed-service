@@ -26,10 +26,12 @@ export class FeedConsumer {
   ): Promise<void> {
     const { before, after, state } = payload;
 
-    await this._feedPublisherService.fanoutOnWrite(
-      after.id,
-      after.groupIds,
-      state === 'publish' ? [] : before.groupIds
-    );
+    if (state !== 'delete') {
+      await this._feedPublisherService.fanoutOnWrite(
+        after.id,
+        after.groupIds,
+        state === 'publish' ? [] : before.groupIds
+      );
+    }
   }
 }
