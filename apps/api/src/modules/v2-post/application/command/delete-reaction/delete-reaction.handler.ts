@@ -30,6 +30,7 @@ export class DeleteReactionHandler implements ICommandHandler<DeleteReactionComm
     const { target, targetId, reactionName, reactionId, userId } = command.payload;
     const conditions = {
       reactionName,
+      createdBy: userId,
     };
 
     if (reactionId) conditions['id'] = reactionId;
