@@ -21,6 +21,12 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
+import { PostDto, SeriesDto } from '../../dto';
+import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
+import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
+import { KafkaService } from '@app/kafka';
+import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 
 @CommandHandler(CreateSeriesCommand)
 export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand, CreateSeriesDto> {
@@ -33,7 +39,8 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    private readonly _eventEmitter: InternalEventEmitterService
+    private readonly _eventEmitter: InternalEventEmitterService,
+    private readonly _kafkaService: KafkaService
   ) {}
 
   public async execute(command: CreateSeriesCommand): Promise<CreateSeriesDto> {
@@ -57,9 +64,44 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
       seriesEntity.setMarkReadImportant();
     }
 
-    return this._contentBinding.seriesBinding(seriesEntity, {
+    const result = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,
     });
+    this._sendEvent(seriesEntity, result);
+    return result;
+  }
+
+  private _sendEvent(entity: SeriesEntity, result: SeriesDto): void {
+    if (entity.isPublished()) {
+      const payload: SeriesChangedMessagePayload = {
+        state: 'publish',
+        after: {
+          id: entity.get('id'),
+          actor: result.actor,
+          setting: result.setting,
+          type: entity.get('type'),
+          groupIds: entity.get('groupIds'),
+          communityIds: result.communities.map((community) => community.id),
+          title: entity.get('title'),
+          summary: entity.get('summary'),
+          lang: entity.get('lang'),
+          isHidden: entity.get('isHidden'),
+          status: entity.get('status'),
+          coverMedia: result.coverMedia,
+          state: {
+            attachGroupIds: entity.getState().attachGroupIds,
+            detachGroupIds: entity.getState().detachGroupIds,
+          },
+          createdAt: entity.get('createdAt'),
+          updatedAt: entity.get('updatedAt'),
+        },
+      };
+
+      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
+        key: entity.getId(),
+        value: new SeriesChangedMessagePayload(payload),
+      });
+    }
   }
 }
