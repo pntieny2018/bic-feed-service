@@ -278,8 +278,7 @@ export class ContentBinding implements IContentBinding {
       title: seriesEntity.get('title'),
       summary: seriesEntity.get('summary'),
       audience,
-      items: seriesEntity.get('itemIds')?.map((itemId) => {
-        const item = items.find((item) => item.getId() === itemId);
+      items: (items || []).map((item) => {
         if (item instanceof PostEntity) {
           return {
             id: item.getId(),
@@ -313,7 +312,6 @@ export class ContentBinding implements IContentBinding {
             })),
           };
         }
-        return null;
       }),
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
