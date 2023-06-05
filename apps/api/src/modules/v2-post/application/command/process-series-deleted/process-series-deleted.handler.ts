@@ -5,8 +5,8 @@ import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { SeriesHasBeenDeleted } from '../../../../../common/constants';
 import { NotificationService, TypeActivity, VerbActivity } from '../../../../../notification';
 import { PostType } from '../../../data-type';
-import { StringHelper } from 'apps/api/src/common/helpers';
-import { NotificationActivity } from 'apps/api/src/notification/dto/requests/notification-activity.dto';
+import { StringHelper } from '../../../../../common/helpers';
+import { NotificationActivity } from '../../../../../notification/dto/requests/notification-activity.dto';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
 
@@ -15,7 +15,8 @@ export class ProcessSeriesPublishedHandler
   implements ICommandHandler<ProcessSeriesDeletedCommand, void>
 {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     private readonly _notificationService: NotificationService //TODO improve interface later
   ) {}
 
