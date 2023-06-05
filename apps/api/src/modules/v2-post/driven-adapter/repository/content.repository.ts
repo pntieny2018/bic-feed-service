@@ -548,6 +548,7 @@ export class ContentRepository implements IContentRepository {
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
+    post = post.toJSON();
     if (post.type === PostType.POST) {
       return this._modelToPostEntity(post);
     } else if (post.type === PostType.SERIES) {
