@@ -1,6 +1,6 @@
 import { ICommand } from '@nestjs/cqrs';
-import { SeriesDeletedMessagePayload } from '../../dto/message/series-deleted.message-payload';
+import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 
 export class ProcessSeriesDeletedCommand implements ICommand {
-  public constructor(public readonly payload: SeriesDeletedMessagePayload) {}
+  public constructor(public readonly payload: SeriesChangedMessagePayload) {}
 }
