@@ -7,11 +7,7 @@ import {
 import { SeriesDto } from '../../dto';
 import { FindSeriesQuery } from './find-series.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
@@ -72,7 +68,6 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
 
     return this._contentBinding.seriesBinding(seriesEntity, {
       groups,
-      actor: new UserDto(authUser),
       authUser,
     });
   }

@@ -41,8 +41,7 @@ import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
-import { PostDto, SeriesDto } from '../../application/dto';
-import { FindPostQuery } from '../../application/query/find-post/find-post.query';
+import { SeriesDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
@@ -151,7 +150,6 @@ export class SeriesController {
   ): Promise<SeriesDto> {
     try {
       const data = await this._queryBus.execute(new FindSeriesQuery({ seriesId, authUser }));
-      console.log(data);
       return plainToInstance(SeriesDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {

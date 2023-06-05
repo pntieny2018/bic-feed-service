@@ -31,14 +31,21 @@ export class DeleteReactionHandler implements ICommandHandler<DeleteReactionComm
     const conditions = {
       reactionName,
     };
-    if (target === REACTION_TARGET.COMMENT) {
-      conditions['commentId'] = targetId;
-    } else if (target === REACTION_TARGET.POST) {
-      conditions['postId'] = targetId;
+
+    if (reactionId) conditions['id'] = reactionId;
+
+    switch (target) {
+      case REACTION_TARGET.COMMENT:
+        conditions['commentId'] = targetId;
+        break;
+      case REACTION_TARGET.POST:
+      case REACTION_TARGET.ARTICLE:
+        conditions['postId'] = targetId;
+        break;
+      default:
+        break;
     }
-    if (reactionId) {
-      conditions['id'] = reactionId;
-    }
+
     const reaction =
       target === REACTION_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne(conditions)
