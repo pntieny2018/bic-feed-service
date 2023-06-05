@@ -42,6 +42,7 @@ import { DeleteSeriesHandler } from '../application/command/delete-series/delete
 import { FindSeriesHandler } from '../application/query/find-series/find-series.handler';
 import { ProcessSeriesDeletedHandler } from '../application/command/process-series-deleted/process-series-deleted.handler';
 import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
+import { ProcessSeriesUpdatedHandler } from '../application/command/process-series-updated/process-series-updated.handler';
 
 export const postProvider = [
   {
@@ -95,6 +96,7 @@ export const postProvider = [
   DeleteSeriesHandler,
   ProcessSeriesPublishedHandler,
   ProcessSeriesDeletedHandler,
+  ProcessSeriesUpdatedHandler,
   FindPostHandler,
   FindArticleHandler,
   CreateDraftArticleHandler,

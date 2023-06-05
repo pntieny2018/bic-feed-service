@@ -18,7 +18,6 @@ export class SeriesMessagePayload {
   public isHidden: boolean;
   public status: PostStatus;
   public coverMedia?: ImageDto;
-  public items?: { id: string; zindex: number }[];
 
   public constructor(data: Partial<SeriesMessagePayload>) {
     Object.assign(this, data);
