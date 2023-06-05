@@ -379,7 +379,7 @@ export class ContentBinding implements IContentBinding {
     return new PostDto({
       id: entity.get('id'),
       audience: {
-        groups: entity.getGroupIds().map((groupId) => dataBinding.groups.get(groupId)),
+        groups,
       },
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
@@ -446,7 +446,7 @@ export class ContentBinding implements IContentBinding {
     return new ArticleDto({
       id: entity.get('id'),
       audience: {
-        groups: entity.getGroupIds().map((groupId) => dataBinding.groups.get(groupId)),
+        groups,
       },
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
@@ -513,7 +513,7 @@ export class ContentBinding implements IContentBinding {
     return new SeriesDto({
       id: entity.get('id'),
       audience: {
-        groups: entity.getGroupIds().map((groupId) => dataBinding.groups.get(groupId)),
+        groups,
       },
       title: entity.get('title'),
       summary: entity.get('summary'),
