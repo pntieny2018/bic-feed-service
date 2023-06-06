@@ -25,10 +25,11 @@ export class FeedConsumer {
     @Payload('value') payload: SeriesChangedMessagePayload
   ): Promise<void> {
     const { before, after, state } = payload;
+    if (state === 'delete') return;
 
     await this._feedPublisherService.fanoutOnWrite(
-      after.id || before.id,
-      state === 'delete' ? [] : after.groupIds,
+      after.id,
+      after.groupIds,
       state === 'publish' ? [] : before.groupIds
     );
   }
