@@ -26,6 +26,7 @@ import { MediaService } from '../../../../media';
 import { clone } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
+import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -103,8 +104,8 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
   ): void {
     if (!postEntityAfter.isChanged()) return;
     if (postEntityAfter.isPublished()) {
-      const payload = {
-        isPublished: postEntityAfter.getState().isChangeStatus,
+      const payload: PostChangedMessagePayload = {
+        state: postEntityAfter.getState().isChangeStatus ? 'update' : 'publish',
         before: {
           id: postEntityBefore.getId(),
           actor: result.actor,
