@@ -103,8 +103,8 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
   ): void {
     if (!postEntityAfter.isChanged()) return;
     if (postEntityAfter.isPublished()) {
-      const payload = {
-        isPublished: postEntityAfter.getState().isChangeStatus,
+      const payload: PostChangedMessagePayload = {
+        state: 'update',
         before: {
           id: postEntityBefore.getId(),
           actor: result.actor,
