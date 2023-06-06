@@ -528,6 +528,20 @@ export class ContentRepository implements IContentRepository {
         );
       }
 
+      if (
+        isBoolean(options.where.groupArchived) &&
+        !options.include?.shouldIncludeGroup &&
+        !options.include?.mustIncludeGroup
+      ) {
+        condition.push(
+          Sequelize.literal(
+            `EXISTS (
+                      SELECT g.group_id FROM  ${schema}.${postGroupTable} g
+                        WHERE g.post_id = "PostModel".id  AND g.is_archived = ${options.where.groupArchived})`
+          )
+        );
+      }
+
       if (condition.length) {
         findOption.where = {
           [Op.and]: condition,
