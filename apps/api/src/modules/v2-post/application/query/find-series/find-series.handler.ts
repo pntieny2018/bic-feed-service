@@ -72,7 +72,6 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
 
     return this._contentBinding.seriesBinding(seriesEntity, {
       groups,
-      actor: new UserDto(authUser),
       authUser,
     });
   }

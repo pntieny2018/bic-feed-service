@@ -232,7 +232,7 @@ export class ContentBinding implements IContentBinding {
   public async seriesBinding(
     seriesEntity: SeriesEntity,
     dataBinding?: {
-      actor: UserDto;
+      actor?: UserDto;
       groups?: GroupDto[];
       authUser?: UserDto;
     }
@@ -268,8 +268,7 @@ export class ContentBinding implements IContentBinding {
       title: seriesEntity.get('title'),
       summary: seriesEntity.get('summary'),
       audience,
-      items: seriesEntity.get('itemIds')?.map((itemId) => {
-        const item = items.find((item) => item.getId() === itemId);
+      items: items.map((item) => {
         if (item instanceof PostEntity) {
           return {
             id: item.getId(),
