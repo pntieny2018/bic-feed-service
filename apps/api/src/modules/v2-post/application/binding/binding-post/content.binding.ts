@@ -604,9 +604,6 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(contentEntity.getCreatedBy());
       groupIds.push(...contentEntity.getGroupIds());
       contentIds.push(contentEntity.getId());
-      // if (contentEntity instanceof ArticleEntity || contentEntity instanceof PostEntity) {
-      //   if (contentEntity.getSeriesIds().length) seriesIds.push(...contentEntity.getSeriesIds());
-      // }
       if (contentEntity instanceof PostEntity) {
         userIdsNeedToFind.push(...contentEntity.get('mentionUserIds'));
       }
