@@ -63,11 +63,11 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       },
     });
 
-    const isImportantBefore = seriesEntity.isImportant();
-
     if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
       throw new ContentNotFoundException();
     }
+
+    const isImportantBefore = seriesEntity.isImportant();
 
     if (!seriesEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
