@@ -28,7 +28,7 @@ import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
-import { plainToClass, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { PublishPostCommand } from '../../application/command/publish-post/publish-post.command';
 import { PostDto } from '../../application/dto';
 import { Request } from 'express';
@@ -41,7 +41,6 @@ import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dt
 import { PostStatus } from '../../../../database/models/post.model';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
-import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
 import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
 import { UpdatePostRequestDto } from '../dto/request/update-post.request.dto';
@@ -211,28 +210,24 @@ export class PostController {
     @Body() autoSavePostRequestDto: AutoSavePostRequestDto
   ): Promise<void> {
     const { audience, tags, series, mentions, media } = autoSavePostRequestDto;
-    try {
-      const data = await this._commandBus.execute<AutoSavePostCommand, void>(
-        new AutoSavePostCommand({
-          ...autoSavePostRequestDto,
-          id: postId,
-          mentionUserIds: mentions,
-          groupIds: audience?.groupIds,
-          tagIds: tags,
-          seriesIds: series,
-          media: media
-            ? {
-                filesIds: media?.files.map((file) => file.id),
-                imagesIds: media?.images.map((image) => image.id),
-                videosIds: media?.videos.map((video) => video.id),
-              }
-            : undefined,
-          authUser,
-        })
-      );
-    } catch (e) {
-      console.log(e);
-    }
+    return this._commandBus.execute<AutoSavePostCommand, void>(
+      new AutoSavePostCommand({
+        ...autoSavePostRequestDto,
+        id: postId,
+        mentionUserIds: mentions,
+        groupIds: audience?.groupIds,
+        tagIds: tags,
+        seriesIds: series,
+        media: media
+          ? {
+              filesIds: media?.files.map((file) => file.id),
+              imagesIds: media?.images.map((image) => image.id),
+              videosIds: media?.videos.map((video) => video.id),
+            }
+          : undefined,
+        authUser,
+      })
+    );
   }
 
   @ApiOperation({ summary: 'Get post detail' })
