@@ -3,13 +3,8 @@ import { PostStatus, PostType } from '../../data-type';
 import { IPost } from '../../../../database/models/post.model';
 import { ArticleEntity } from '../model/content/article.entity';
 import { SeriesEntity } from '../model/content/series.entity';
-import { FindOptions } from 'sequelize';
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
-import { UserDto } from '../../../v2-user/application';
-import { OrderEnum } from '../../../../common/dto';
-import { CommentEntity } from '../model/comment';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { GetArroundCommentProps, GetPaginationCommentProps } from '../query-interface';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
