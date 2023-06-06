@@ -29,8 +29,13 @@ export class SeriesFactory implements ISeriesFactory {
       cover: null,
       createdAt: now,
       updatedAt: now,
+      isSaved: false,
       isReported: false,
       isHidden: false,
+      aggregation: {
+        commentsCount: 0,
+        totalUsersSeen: 0,
+      },
     });
 
     return this._eventPublisher.mergeObjectContext(entity);

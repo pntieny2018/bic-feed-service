@@ -6,10 +6,10 @@ import { ImageDto } from '../image.dto';
 export class SeriesMessagePayload {
   public id: string;
   public actor: UserDto;
-  public setting: PostSettingDto;
+  public setting?: PostSettingDto;
   public type: PostType;
   public groupIds: string[];
-  public communityIds: string[];
+  public communityIds?: string[];
   public title: string;
   public summary: string;
   public createdAt: Date;
@@ -17,7 +17,7 @@ export class SeriesMessagePayload {
   public lang: string;
   public isHidden: boolean;
   public status: PostStatus;
-  public coverMedia: ImageDto;
+  public coverMedia?: ImageDto;
 
   public constructor(data: Partial<SeriesMessagePayload>) {
     Object.assign(this, data);

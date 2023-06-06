@@ -7,8 +7,10 @@ import {
   ContentNoCRUDPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { SeriesEntity } from '../../../domain/model/content';
+import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
+import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
+import { UserDto } from '../../../../v2-user/application';
 
 @CommandHandler(DeleteSeriesCommand)
 export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand, void> {
@@ -17,7 +19,7 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
     private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
-    private readonly _eventEmitter: InternalEventEmitterService
+    private readonly _kafkaService: KafkaService
   ) {}
 
   public async execute(command: DeleteSeriesCommand): Promise<void> {
@@ -47,5 +49,33 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
     );
 
     await this._contentRepository.delete(seriesEntity.get('id'));
+
+    this._sendEvent(seriesEntity, actor);
+  }
+
+  private _sendEvent(entity: SeriesEntity, actor: UserDto): void {
+    if (entity.isPublished()) {
+      const payload: SeriesChangedMessagePayload = {
+        state: 'delete',
+        before: {
+          id: entity.get('id'),
+          actor,
+          type: entity.get('type'),
+          groupIds: entity.get('groupIds'),
+          title: entity.get('title'),
+          summary: entity.get('summary'),
+          lang: entity.get('lang'),
+          isHidden: entity.get('isHidden'),
+          status: entity.get('status'),
+          createdAt: entity.get('createdAt'),
+          updatedAt: entity.get('updatedAt'),
+        },
+      };
+
+      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
+        key: entity.getId(),
+        value: new SeriesChangedMessagePayload(payload),
+      });
+    }
   }
 }

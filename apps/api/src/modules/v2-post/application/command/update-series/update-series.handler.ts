@@ -1,6 +1,5 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { UpdateSeriesCommand } from './update-series.command';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -28,7 +27,7 @@ import {
 import { SeriesDto } from '../../dto';
 import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
-import { clone } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { KafkaService } from '@app/kafka';
 
 @CommandHandler(UpdateSeriesCommand)
@@ -44,7 +43,6 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    private readonly _eventEmitter: InternalEventEmitterService,
     private readonly _kafkaService: KafkaService
   ) {}
 
@@ -59,14 +57,17 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       include: {
         shouldIncludeGroup: true,
         shouldIncludeItems: true,
+        shouldIncludeSaved: {
+          userId: actor.id,
+        },
       },
     });
-
-    const isImportantBefore = seriesEntity.isImportant();
 
     if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
       throw new ContentNotFoundException();
     }
+
+    const isImportantBefore = seriesEntity.isImportant();
 
     if (!seriesEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
@@ -74,7 +75,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
 
     if (groupIds && groupIds.length === 0) throw new ContentEmptyGroupException();
 
-    const seriesEntityBefore = clone(seriesEntity);
+    const seriesEntityBefore = cloneDeep(seriesEntity);
 
     let groups: GroupDto[] = [];
     if (groupIds?.length) {
@@ -92,29 +93,35 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       seriesEntity.setMarkReadImportant();
     }
 
-    return this._contentBinding.seriesBinding(seriesEntity, {
+    const result = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,
     });
+
+    this._sendEvent(seriesEntityBefore, seriesEntity, result);
+
+    return result;
   }
 
-  private _sendEvent(entityBefore, entityAfter: SeriesEntity, result: SeriesDto): void {
+  private _sendEvent(
+    entityBefore: SeriesEntity,
+    entityAfter: SeriesEntity,
+    result: SeriesDto
+  ): void {
     if (entityAfter.isPublished()) {
       const payload: SeriesChangedMessagePayload = {
         state: 'update',
         before: {
           id: entityBefore.get('id'),
           actor: result.actor,
-          setting: result.setting,
+          setting: entityBefore.get('setting'),
           type: entityBefore.get('type'),
           groupIds: entityBefore.get('groupIds'),
-          communityIds: result.communities.map((community) => community.id),
           title: entityBefore.get('title'),
           summary: entityBefore.get('summary'),
           lang: entityBefore.get('lang'),
           isHidden: entityBefore.get('isHidden'),
           status: entityBefore.get('status'),
-          coverMedia: result.coverMedia,
           createdAt: entityBefore.get('createdAt'),
           updatedAt: entityBefore.get('updatedAt'),
         },
