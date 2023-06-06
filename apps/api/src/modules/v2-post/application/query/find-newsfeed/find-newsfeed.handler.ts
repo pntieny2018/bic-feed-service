@@ -20,11 +20,9 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { FindPostsByIdsHandler } from '../find-posts-by-ids/find-posts-by-ids.handler';
 import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FindNewsfeedDto } from './find-newsfeed.dto';
-import { FindTimelineGroupQuery } from '../find-timeline-group/find-timeline-group.query';
 import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
 
 @QueryHandler(FindNewsfeedQuery)

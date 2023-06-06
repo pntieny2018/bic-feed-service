@@ -8,8 +8,6 @@ export type FindOnePostReactionProps = {
 };
 
 export interface IPostReactionRepository {
-  // findAll(input: FindAllReactionsProps): Promise<ReactionEntity[]>;
-
   findOne(input: FindOnePostReactionProps): Promise<ReactionEntity>;
 
   create(data: ReactionEntity): Promise<void>;

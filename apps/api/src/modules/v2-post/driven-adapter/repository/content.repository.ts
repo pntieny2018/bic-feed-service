@@ -42,7 +42,7 @@ import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 
 export class ContentRepository implements IContentRepository {
-  LIMIT_DEFAULT = 100;
+  public LIMIT_DEFAULT = 100;
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
   @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
   @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
@@ -234,7 +234,7 @@ export class ContentRepository implements IContentRepository {
     return rows.map((row) => this._modelToEntity(row));
   }
 
-  private _getOrderContent(orderOptions: OrderOptions) {
+  private _getOrderContent(orderOptions: OrderOptions): any {
     if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
@@ -294,7 +294,9 @@ export class ContentRepository implements IContentRepository {
           model: PostGroupModel,
           as: 'groups',
           required: !shouldIncludeGroup,
-          where: options.where.groupArchived ? { isArchived: options.where.groupArchived } : {},
+          where: isBoolean(options.where.groupArchived)
+            ? { isArchived: options.where.groupArchived }
+            : {},
         });
       }
 
@@ -525,16 +527,6 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
-
-      // if (options.where.groupArchived !== undefined) {
-      //   condition.push(
-      //     Sequelize.literal(
-      //       `EXISTS (
-      //                 SELECT g.group_id FROM  ${schema}.${postGroupTable} g
-      //                   WHERE g.post_id = "PostModel".id  AND g.is_archived = ${options.where.groupArchived})`
-      //     )
-      //   );
-      // }
 
       if (condition.length) {
         findOption.where = {

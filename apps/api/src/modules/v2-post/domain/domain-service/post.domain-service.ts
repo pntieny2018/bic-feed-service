@@ -12,14 +12,12 @@ import {
   PostCreateProps,
   PostPublishProps,
 } from './interface';
-import { PostEntity, SeriesEntity } from '../model/content';
+import { PostEntity } from '../model/content';
 import {
   IContentRepository,
   ITagRepository,
-  IMediaRepository,
   CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
-  MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
@@ -29,8 +27,6 @@ import {
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../validator/interface';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
 import {
   ILinkPreviewDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
@@ -42,8 +38,6 @@ import {
 } from './interface/media.domain-service.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { ArticleEntity } from '../model/content/article.entity';
-import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
-import { PostStatus } from '../../data-type';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -60,14 +54,8 @@ export class PostDomainService implements IPostDomainService {
   private readonly _contentValidator: IContentValidator;
   @Inject(MENTION_VALIDATOR_TOKEN)
   private readonly _mentionValidator: IMentionValidator;
-  @Inject(USER_APPLICATION_TOKEN)
-  private readonly _userApplicationService: IUserApplicationService;
-  @Inject(GROUP_APPLICATION_TOKEN)
-  private readonly _groupApplicationService: IGroupApplicationService;
   @Inject(LINK_PREVIEW_DOMAIN_SERVICE_TOKEN)
   private readonly _linkPreviewDomainService: ILinkPreviewDomainService;
-  @Inject(MEDIA_REPOSITORY_TOKEN)
-  private readonly _mediaRepo: IMediaRepository;
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepo: ITagRepository;
   @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService;
