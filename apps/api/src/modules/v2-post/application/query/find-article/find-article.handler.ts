@@ -76,7 +76,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
 
     return this._contentBinding.articleBinding(articleEntity, {
       groups,
-      actor: new UserDto(authUser),
+      authUser: new UserDto(authUser),
     });
   }
 }
