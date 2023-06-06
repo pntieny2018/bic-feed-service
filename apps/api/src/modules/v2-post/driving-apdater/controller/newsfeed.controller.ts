@@ -1,12 +1,11 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Controller, Get, Query } from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { DEFAULT_APP_VERSION } from '../../../../common/constants';
-import { GetNewsfeedRequestDto, GetTimelineRequestDto } from '../dto/request';
+import { GetNewsfeedRequestDto } from '../dto/request';
 import { PageDto } from '../../../../common/dto';
-import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
 import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
 
 @ApiTags('v2 Timeline')
@@ -16,10 +15,7 @@ import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-ne
   version: DEFAULT_APP_VERSION,
 })
 export class NewsFeedController {
-  public constructor(
-    private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
-  ) {}
+  public constructor(private readonly _queryBus: QueryBus) {}
 
   @ApiOperation({ summary: 'Get timeline in a group.' })
   @ApiOkResponse({
@@ -27,7 +23,7 @@ export class NewsFeedController {
     type: PageDto,
   })
   @Get('/')
-  public async getTimeline(
+  public async getNewsfeed(
     @AuthUser(false) authUser: UserDto,
     @Query() dto: GetNewsfeedRequestDto
   ): Promise<any> {
