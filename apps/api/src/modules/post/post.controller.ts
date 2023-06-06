@@ -177,8 +177,8 @@ export class PostController {
   public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.deletePost(user, postId);
+  ): Promise<void> {
+    await this._postAppService.deletePost(user, postId);
   }
 
   @ApiOperation({ summary: 'Mark as read' })
