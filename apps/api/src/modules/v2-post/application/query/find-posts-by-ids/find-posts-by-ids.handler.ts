@@ -8,10 +8,8 @@ import { ArticleDto, PostDto, SeriesDto } from '../../dto';
 import { FindPostsByIdsQuery } from './find-posts-by-ids.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import {

@@ -1,10 +1,6 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize } from 'sequelize';
-import {
-  FindAllPostOptions,
-  FindOnePostOptions,
-  ILinkPreviewRepository,
-} from '../../domain/repositoty-interface';
+import { Sequelize } from 'sequelize';
+import { ILinkPreviewRepository } from '../../domain/repositoty-interface';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import {

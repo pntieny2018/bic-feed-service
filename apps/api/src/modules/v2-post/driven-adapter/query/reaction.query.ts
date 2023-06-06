@@ -18,7 +18,6 @@ import {
 } from '../../domain/query-interface/reaction.query.interface';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { OrderEnum } from '../../../../common/dto';
-import { UserDto } from '../../../v2-user/application';
 
 export class ReactionQuery implements IReactionQuery {
   public constructor(
