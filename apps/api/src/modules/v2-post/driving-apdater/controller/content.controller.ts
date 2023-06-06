@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,11 +15,6 @@ import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
 import { ValidateSeriesTagDto } from '../dto/request';
-import {
-  ContentNoCRUDPermissionException,
-  ContentNoEditSettingPermissionException,
-} from '../../domain/exception';
-import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
 
 @ApiTags('v2 Content')

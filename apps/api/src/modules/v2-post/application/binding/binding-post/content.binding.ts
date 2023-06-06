@@ -104,9 +104,13 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       communities,
       media: {
-        files: postEntity.get('media').files.map((file) => new FileDto(file.toObject())),
-        images: postEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
-        videos: postEntity.get('media').videos.map((video) => new VideoDto(video.toObject())),
+        files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
+        images: (postEntity.get('media').images || []).map(
+          (image) => new ImageDto(image.toObject())
+        ),
+        videos: (postEntity.get('media').videos || []).map(
+          (video) => new VideoDto(video.toObject())
+        ),
       },
       mentions: mentionUsers,
       actor,
@@ -604,9 +608,6 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(contentEntity.getCreatedBy());
       groupIds.push(...contentEntity.getGroupIds());
       contentIds.push(contentEntity.getId());
-      // if (contentEntity instanceof ArticleEntity || contentEntity instanceof PostEntity) {
-      //   if (contentEntity.getSeriesIds().length) seriesIds.push(...contentEntity.getSeriesIds());
-      // }
       if (contentEntity instanceof PostEntity) {
         userIdsNeedToFind.push(...contentEntity.get('mentionUserIds'));
       }
