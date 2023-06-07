@@ -717,6 +717,6 @@ export class ReactionService {
     reactionsCount: Record<string, Record<string, number>> | Record<string, number>[]
   ): Record<string, number>[] {
     if (Array.isArray(reactionsCount)) return reactionsCount;
-    return !isEmpty(reactionsCount) ? [] : Object.values(reactionsCount);
+    return isEmpty(reactionsCount) ? [] : Object.values(reactionsCount);
   }
 }
