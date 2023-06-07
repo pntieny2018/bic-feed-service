@@ -6,15 +6,13 @@ import {
 } from '../../../domain/domain-service/interface';
 import { ProcessPostPublishedCommand } from './process-post-published.command';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { MediaService } from '../../../../media';
-import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
+import { MediaType } from '../../../../../database/models/media.model';
 import { PostHasBeenPublished } from '../../../../../common/constants';
 import { NotificationService } from '../../../../../notification';
 import { PostActivityService } from '../../../../../notification/activities';
@@ -38,7 +36,6 @@ export class ProcessPostPublishedHandler
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
@@ -47,7 +44,7 @@ export class ProcessPostPublishedHandler
   ) {}
 
   public async execute(command: ProcessPostPublishedCommand): Promise<void> {
-    const { before, after } = command.payload;
+    const { after } = command.payload;
 
     const postEntity = await this._contentRepository.findOne({
       where: {

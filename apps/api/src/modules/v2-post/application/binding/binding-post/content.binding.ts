@@ -197,6 +197,7 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: articleEntity.get('content'),
       createdAt: articleEntity.get('createdAt'),
+      publishedAt: articleEntity.get('publishedAt'),
       tags: articleEntity.get('tags').map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -263,7 +264,6 @@ export class ContentBinding implements IContentBinding {
           ids: seriesEntity.get('itemIds'),
           excludeReportedByUserId: dataBinding.authUser?.id,
           isHidden: false,
-          groupArchived: false,
           status: PostStatus.PUBLISHED,
         },
         include: {
@@ -368,7 +368,7 @@ export class ContentBinding implements IContentBinding {
       }
       if (contentEntity instanceof SeriesEntity) {
         result.push(
-          await this._getSeriesDto(contentEntity, {
+          this._getSeriesDto(contentEntity, {
             users,
             groups,
             communities,
@@ -633,7 +633,6 @@ export class ContentBinding implements IContentBinding {
         ids: itemIds,
         excludeReportedByUserId: authUser?.id,
         isHidden: false,
-        groupArchived: false,
         status: PostStatus.PUBLISHED,
       },
     });

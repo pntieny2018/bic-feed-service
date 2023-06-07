@@ -23,7 +23,7 @@ export interface IContentValidator {
 
   checkCanReadContent(post: ContentEntity, user: UserDto, postGroupsData?: GroupDto[]): void;
 
-  validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): void;
+  validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): Promise<void>;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

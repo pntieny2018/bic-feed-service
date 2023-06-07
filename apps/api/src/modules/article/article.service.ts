@@ -501,11 +501,12 @@ export class ArticleService {
         status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this._postService.getPrivacy(groupIds);
+      const publishedAt = new Date();
       await this.postModel.update(
         {
           status,
           privacy: postPrivacy,
-          createdAt: new Date(),
+          publishedAt,
         },
         {
           where: {
@@ -515,6 +516,7 @@ export class ArticleService {
         }
       );
       article.status = status;
+      article.publishedAt = publishedAt;
       if (article.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {

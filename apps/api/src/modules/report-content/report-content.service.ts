@@ -43,6 +43,7 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { CACHE_KEYS } from '../../common/constants/casl.constant';
+import { ReactionService } from '../reaction';
 
 @Injectable()
 export class ReportContentService {
@@ -758,6 +759,7 @@ export class ReportContentService {
     const actor = await this._userAppService.findOne(reportStatus.authorId);
     if (reportStatus.targetType === TargetType.COMMENT) {
       const comment = await this._commentService.getComment(actor, targetId, 0);
+      comment.reactionsCount = ReactionService.transformReactionFormat(comment.reactionsCount);
       detailContentReportResponseDto.setComment(comment);
 
       return detailContentReportResponseDto;
@@ -765,12 +767,14 @@ export class ReportContentService {
 
     if (reportStatus.targetType === TargetType.POST) {
       const post = await this._postService.get(targetId, null, { withComment: false }, false);
+      post.reactionsCount = ReactionService.transformReactionFormat(post.reactionsCount);
       detailContentReportResponseDto.setPost(post);
       return detailContentReportResponseDto;
     }
 
     if (reportStatus.targetType === TargetType.ARTICLE) {
       const article = await this._articleService.get(targetId, null, { withComment: false }, false);
+      article.reactionsCount = ReactionService.transformReactionFormat(article.reactionsCount);
       detailContentReportResponseDto.setArticle(article);
       return detailContentReportResponseDto;
     }
