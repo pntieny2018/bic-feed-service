@@ -505,7 +505,8 @@ export class ArticleService {
         {
           status,
           privacy: postPrivacy,
-          createdAt: new Date(),
+          updatedAt: new Date(),
+          publishedAt: new Date(),
         },
         {
           where: {
