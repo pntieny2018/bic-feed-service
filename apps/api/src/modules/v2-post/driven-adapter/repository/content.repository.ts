@@ -528,11 +528,7 @@ export class ContentRepository implements IContentRepository {
         );
       }
 
-      if (
-        isBoolean(options.where.groupArchived) &&
-        !options.include?.shouldIncludeGroup &&
-        !options.include?.mustIncludeGroup
-      ) {
+      if (isBoolean(options.where.groupArchived)) {
         condition.push(
           Sequelize.literal(
             `EXISTS (
