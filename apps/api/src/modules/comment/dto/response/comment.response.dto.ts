@@ -135,7 +135,7 @@ export class CommentResponseDto {
     return value;
   })
   @Expose()
-  public reactionsCount?: Record<string, Record<string, number>>;
+  public reactionsCount?: Record<string, number>[] | Record<string, Record<string, number>>;
 
   @ApiProperty({
     type: UserMentionDto,

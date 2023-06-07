@@ -43,6 +43,7 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { CACHE_KEYS } from '../../common/constants/casl.constant';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class ReportContentService {
@@ -758,6 +759,9 @@ export class ReportContentService {
     const actor = await this._userAppService.findOne(reportStatus.authorId);
     if (reportStatus.targetType === TargetType.COMMENT) {
       const comment = await this._commentService.getComment(actor, targetId, 0);
+      comment.reactionsCount = !isEmpty(comment.reactionsCount)
+        ? []
+        : Object.values(comment.reactionsCount);
       detailContentReportResponseDto.setComment(comment);
 
       return detailContentReportResponseDto;
@@ -765,6 +769,7 @@ export class ReportContentService {
 
     if (reportStatus.targetType === TargetType.POST) {
       const post = await this._postService.get(targetId, null, { withComment: false }, false);
+      post.reactionsCount = !isEmpty(post.reactionsCount) ? [] : Object.values(post.reactionsCount);
       detailContentReportResponseDto.setPost(post);
       return detailContentReportResponseDto;
     }
