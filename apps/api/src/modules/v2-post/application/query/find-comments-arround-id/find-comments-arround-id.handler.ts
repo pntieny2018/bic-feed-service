@@ -51,6 +51,9 @@ export class FindCommentsArroundIdHandler
         isHidden: false,
         excludeReportedByUserId: authUser?.id,
       },
+      include: {
+        shouldIncludeGroup: true,
+      },
     });
     if (!postEntity || (!postEntity.isOpen() && !authUser)) throw new ContentNotFoundException();
     this._contentValidator.checkCanReadContent(postEntity, authUser);
