@@ -32,8 +32,8 @@ import {
 } from './reaction.constant';
 import { ReactionEnum } from './reaction.enum';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class ReactionService {
@@ -711,5 +711,12 @@ export class ReactionService {
       copy['reactionName'] = 'thumbsdown';
     }
     return copy;
+  }
+
+  public static transformReactionFormat(
+    reactionsCount: Record<string, Record<string, number>> | Record<string, number>[]
+  ): Record<string, number>[] {
+    if (Array.isArray(reactionsCount)) return reactionsCount;
+    return !isEmpty(reactionsCount) ? [] : Object.values(reactionsCount);
   }
 }
