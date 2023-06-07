@@ -26,7 +26,6 @@ import { MediaService } from '../../../../media';
 import { clone } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
-import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
