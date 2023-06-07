@@ -11,9 +11,9 @@ export const getWordCount = (content) => {
   try {
     const value = JSON.parse(content);
     value.forEach((node) => {
-      let str = Node.string(node).trim();
+      const str = Node.string(node).trim();
       if (str) {
-        count += str.split(' ').length;
+        count += str.split(/\s+/).length;
       }
     });
     return count;
