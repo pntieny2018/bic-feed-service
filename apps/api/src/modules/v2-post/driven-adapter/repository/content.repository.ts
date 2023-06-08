@@ -294,9 +294,14 @@ export class ContentRepository implements IContentRepository {
           model: PostGroupModel,
           as: 'groups',
           required: !shouldIncludeGroup,
-          where: isBoolean(options.where.groupArchived)
-            ? { isArchived: options.where.groupArchived }
-            : {},
+          where: {
+            ...(isBoolean(options.where.groupArchived) && {
+              isArchived: options.where.groupArchived,
+            }),
+            ...((options.where?.groupId || options.where?.groupIds) && {
+              groupId: options.where?.groupId || options.where?.groupIds,
+            }),
+          },
         });
       }
 
@@ -513,16 +518,26 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
-      if (options.where.groupId) {
+      if (
+        (options.where?.groupId || options.where?.groupIds) &&
+        !options.include?.shouldIncludeGroup &&
+        !options.include?.mustIncludeGroup
+      ) {
+        let groupConditions = '';
+        if (options.where.groupId) {
+          groupConditions = `AND g.group_id = ${this._postModel.sequelize.escape(
+            options.where.groupId
+          )}`;
+        } else if (options.where.groupIds?.length) {
+          groupConditions = `AND g.group_id IN (${options.where.groupIds
+            .map((groupId) => this._postModel.sequelize.escape(groupId))
+            .join(', ')})`;
+        }
         condition.push(
           Sequelize.literal(
             `EXISTS ( 
                       SELECT g.group_id FROM  ${schema}.${postGroupTable} g
-                        WHERE g.post_id = "PostModel".id ${
-                          options.where.groupArchived ? ` AND g.is_archived = TRUE` : ``
-                        }  AND g.group_id = ${this._postModel.sequelize.escape(
-              options.where.groupId
-            )}
+                        WHERE g.post_id = "PostModel".id ${groupConditions}
                       )`
           )
         );
