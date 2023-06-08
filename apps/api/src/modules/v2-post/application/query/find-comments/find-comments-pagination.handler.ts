@@ -1,0 +1,54 @@
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
+import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
+import { FindCommentsPaginationDto } from './find-comments-pagination.dto';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  FindOnePostOptions,
+  IContentRepository,
+} from '../../../domain/repositoty-interface';
+import {
+  COMMENT_BINDING_TOKEN,
+  ICommentBinding,
+} from '../../binding/binding-comment/comment.interface';
+
+@QueryHandler(FindCommentsPaginationQuery)
+export class FindCommentsPaginationHandler
+  implements IQueryHandler<FindCommentsPaginationQuery, FindCommentsPaginationDto>
+{
+  public constructor(
+    @Inject(COMMENT_QUERY_TOKEN)
+    private readonly _commentQuery: ICommentQuery,
+    @Inject(COMMENT_BINDING_TOKEN)
+    private readonly _commentBinding: ICommentBinding,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository
+  ) {}
+
+  public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
+    const { postId, authUser } = query.payload;
+    const findOneOptions: FindOnePostOptions = {
+      where: {
+        id: postId,
+        groupArchived: false,
+        isHidden: false,
+      },
+    };
+
+    if (authUser) findOneOptions.where.excludeReportedByUserId = authUser.id;
+
+    const postEntity = await this._contentRepository.findOne(findOneOptions);
+
+    if (!postEntity || (!postEntity.isOpen() && !authUser))
+      return new FindCommentsPaginationDto([]);
+
+    const { rows, meta } = await this._commentQuery.getPagination(query.payload);
+
+    if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
+
+    const instances = await this._commentBinding.commentBinding(rows);
+
+    return new FindCommentsPaginationDto(instances, meta);
+  }
+}
