@@ -37,7 +37,7 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
         excludeReportedByUserId: authUser.id,
       },
       include: {
-        shouldIncludeGroup: true,
+        mustIncludeGroup: true,
         shouldIncludeItems: true,
         shouldIncludeCategory: true,
         shouldIncludeSaved: {

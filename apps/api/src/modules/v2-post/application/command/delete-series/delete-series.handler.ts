@@ -31,7 +31,7 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
         groupArchived: false,
       },
       include: {
-        shouldIncludeGroup: true,
+        mustIncludeGroup: true,
       },
     });
 

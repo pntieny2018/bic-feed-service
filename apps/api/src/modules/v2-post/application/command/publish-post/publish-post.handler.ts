@@ -50,7 +50,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groupArchived: false,
       },
       include: {
-        shouldIncludeGroup: true,
+        mustIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
       },
