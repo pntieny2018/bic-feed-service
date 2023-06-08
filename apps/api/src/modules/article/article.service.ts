@@ -501,11 +501,12 @@ export class ArticleService {
         status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this._postService.getPrivacy(groupIds);
+      const publishedAt = new Date();
       await this.postModel.update(
         {
           status,
           privacy: postPrivacy,
-          createdAt: new Date(),
+          publishedAt,
         },
         {
           where: {
@@ -515,6 +516,7 @@ export class ArticleService {
         }
       );
       article.status = status;
+      article.publishedAt = publishedAt;
       if (article.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -595,10 +597,6 @@ export class ArticleService {
         dataUpdate['coverJson'] = coverMedia;
       }
 
-      if (wordCount) {
-        dataUpdate['wordCount'] = wordCount;
-      }
-
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
@@ -640,7 +638,7 @@ export class ArticleService {
     updateArticleDto: UpdateArticleDto,
     authUserId: string
   ): Promise<Partial<IPost>> {
-    const { content, setting, audience, title, summary, coverMedia } = updateArticleDto;
+    const { content, setting, audience, title, summary, wordCount } = updateArticleDto;
     const dataUpdate = {
       updatedBy: authUserId,
     };
@@ -657,6 +655,10 @@ export class ArticleService {
     }
     if (setting && setting.hasOwnProperty('canReact')) {
       dataUpdate['canReact'] = setting.canReact;
+    }
+
+    if (wordCount !== null) {
+      dataUpdate['wordCount'] = wordCount;
     }
 
     if (setting && setting.hasOwnProperty('isImportant')) {

@@ -3,7 +3,6 @@ import {
   AfterDestroy,
   AllowNull,
   BelongsTo,
-  BelongsToMany,
   Column,
   CreatedAt,
   Default,
@@ -17,20 +16,10 @@ import {
 } from 'sequelize-typescript';
 import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
-import { IMedia, MediaModel } from './media.model';
-import { StringHelper } from '../../common/helpers';
-import { IMention, MentionModel } from './mention.model';
-import { MentionableType } from '../../common/constants';
+import { IMedia } from './media.model';
 import { getDatabaseConfig } from '../../config/database';
-import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
-import {
-  BelongsToManyAddAssociationsMixin,
-  DataTypes,
-  Optional,
-  QueryTypes,
-  Sequelize,
-} from 'sequelize';
+import { DataTypes, Optional, QueryTypes, Sequelize } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 import { OrderEnum } from '../../common/dto';
@@ -136,9 +125,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @BelongsTo(() => PostModel)
   public post: PostModel;
-
-  @BelongsToMany(() => MediaModel, () => CommentMediaModel)
-  public media?: MediaModel[];
 
   public parent?: CommentModel;
 

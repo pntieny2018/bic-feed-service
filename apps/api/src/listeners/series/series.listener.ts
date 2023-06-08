@@ -1,7 +1,6 @@
 import { SentryService } from '@app/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import {
   SeriesHasBeenDeletedEvent,
