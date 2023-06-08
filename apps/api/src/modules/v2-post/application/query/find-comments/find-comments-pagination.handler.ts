@@ -12,6 +12,7 @@ import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
+import { ContentNotFoundException } from '../../../domain/exception';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
@@ -40,8 +41,7 @@ export class FindCommentsPaginationHandler
 
     const postEntity = await this._contentRepository.findOne(findOneOptions);
 
-    if (!postEntity || (!postEntity.isOpen() && !authUser))
-      return new FindCommentsPaginationDto([]);
+    if (!postEntity || (!postEntity.isOpen() && !authUser)) throw new ContentNotFoundException();
 
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);
 
