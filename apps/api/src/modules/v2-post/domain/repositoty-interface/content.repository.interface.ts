@@ -16,6 +16,7 @@ export type FindOnePostOptions = {
     isHidden?: boolean;
     excludeReportedByUserId?: string;
     groupId?: string;
+    groupIds?: string[];
     createdBy?: string;
     isImportant?: string;
     savedByUserId?: string;
@@ -56,6 +57,7 @@ export type FindAllPostOptions = {
     groupArchived?: boolean;
     excludeReportedByUserId?: string;
     groupId?: string;
+    groupIds?: string[];
     createdBy?: string;
     isImportant?: boolean;
     isHidden?: boolean;
