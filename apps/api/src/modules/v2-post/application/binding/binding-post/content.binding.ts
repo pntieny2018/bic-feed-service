@@ -694,19 +694,21 @@ export class ContentBinding implements IContentBinding {
   }
 
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
-    if (!users) return {};
-    return users.reduce((returnValue, current) => {
-      return {
-        ...returnValue,
-        [current.username]: {
-          id: current.id,
-          fullname: current.fullname,
-          email: current.email,
-          username: current.username,
-          avatar: current.avatar,
-        },
-      };
-    }, {});
+    if (!users || !users?.length) return {};
+    return users
+      .filter((user) => user)
+      .reduce((returnValue, current) => {
+        return {
+          ...returnValue,
+          [current.username]: {
+            id: current.id,
+            fullname: current.fullname,
+            email: current.email,
+            username: current.username,
+            avatar: current.avatar,
+          },
+        };
+      }, {});
   }
 
   public filterSecretGroupCannotAccess(groups: GroupDto[], authUser?: UserDto): GroupDto[] {

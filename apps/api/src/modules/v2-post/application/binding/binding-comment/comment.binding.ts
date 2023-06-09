@@ -70,12 +70,15 @@ export class CommentBinding implements ICommentBinding {
             })
         ),
         reactionsCount: reactionsCount.get(row.get('id')) || [],
-        mentions: row.get('mentions').reduce((returnValue, current) => {
-          return {
-            ...returnValue,
-            [usersMapper.get(current).username]: usersMapper.get(current),
-          };
-        }, {}),
+        mentions: row
+          .get('mentions')
+          .filter((mention) => usersMapper.has(mention))
+          .reduce((returnValue, current) => {
+            return {
+              ...returnValue,
+              [usersMapper.get(current).username]: usersMapper.get(current),
+            };
+          }, {}),
       });
     });
   }
