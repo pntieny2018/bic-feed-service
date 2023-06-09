@@ -33,7 +33,6 @@ export class FindCommentsPaginationHandler
       where: {
         id: postId,
         groupArchived: false,
-        isHidden: false,
       },
     };
 
