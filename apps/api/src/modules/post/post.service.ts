@@ -1492,7 +1492,7 @@ export class PostService {
     return mappedPosts;
   }
 
-  public async getIdsPinnedInGroup(groupId: string, userId: string) {
+  public async getIdsPinnedInGroup(groupId: string, userId: string): Promise<string[]> {
     const { schema } = getDatabaseConfig();
     let condition = ` pg.group_id =:groupId AND pg.is_archived = false`;
     if (userId) {

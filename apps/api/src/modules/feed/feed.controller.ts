@@ -62,7 +62,7 @@ export class FeedController {
     type: PostResponseDto,
   })
   @Get('group/:groupId/pinned')
-  public getPinnedList(
+  public async getPinnedList(
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @AuthUser() user: UserDto
   ): Promise<ArticleResponseDto[]> {
