@@ -56,9 +56,7 @@ export type ContentState = {
   enableSetting?: boolean;
   isChangeStatus?: boolean;
 };
-export class ContentEntity<
-  Props extends ContentProps = ContentProps
-> extends DomainAggregateRoot<Props> {
+export class ContentEntity<Props extends ContentProps = ContentProps> extends DomainAggregateRoot<Props> {
   protected _state: ContentState;
   public constructor(props: Props) {
     super(props);
@@ -158,9 +156,13 @@ export class ContentEntity<
     return this._props.privacy === PostPrivacy.CLOSED;
   }
 
+  /**
+   * Note: Need to override createdAt when publishing
+   */
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
+      this._props.createdAt = new Date();
     }
     this._props.status = PostStatus.PUBLISHED;
   }
