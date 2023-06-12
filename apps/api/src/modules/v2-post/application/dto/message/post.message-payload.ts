@@ -1,7 +1,5 @@
-import { GroupDto } from '../../../../v2-group/application';
 import { PostSettingDto } from '../post-setting.dto';
 import { PostType } from '../../../data-type';
-import { UserMentionDto } from '../user-mention.dto';
 import { TagDto } from '../tag.dto';
 import { UserDto } from '../../../../v2-user/application';
 import { FileDto } from '../file.dto';
