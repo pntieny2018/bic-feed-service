@@ -480,6 +480,7 @@ export class ArticleService {
    * @param createArticleDto CreateArticleDto
    * @returns Promise resolve boolean
    * @throws HttpException
+   * @note Need to override createdAt when publishing
    */
   public async publish(
     article: ArticleResponseDto,
@@ -501,11 +502,12 @@ export class ArticleService {
         status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this._postService.getPrivacy(groupIds);
+      const createdAt = new Date();
       await this.postModel.update(
         {
           status,
           privacy: postPrivacy,
-          createdAt: new Date(),
+          createdAt,
         },
         {
           where: {
@@ -515,6 +517,7 @@ export class ArticleService {
         }
       );
       article.status = status;
+      article.createdAt = createdAt;
       if (article.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
