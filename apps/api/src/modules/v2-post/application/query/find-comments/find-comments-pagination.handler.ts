@@ -33,7 +33,6 @@ export class FindCommentsPaginationHandler
       where: {
         id: postId,
         groupArchived: false,
-        isHidden: false,
       },
     };
 
@@ -41,7 +40,12 @@ export class FindCommentsPaginationHandler
 
     const postEntity = await this._contentRepository.findOne(findOneOptions);
 
-    if (!postEntity || (!postEntity.isOpen() && !authUser)) throw new ContentNotFoundException();
+    if (
+      !postEntity ||
+      (!postEntity.isOpen() && !authUser) ||
+      (postEntity.isHidden() && !postEntity.isOwner(authUser?.id))
+    )
+      throw new ContentNotFoundException();
 
     const { rows, meta } = await this._commentQuery.getPagination(query.payload);
 
