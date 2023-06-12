@@ -61,7 +61,8 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
       !articleEntity ||
       !(articleEntity instanceof ArticleEntity) ||
       (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
-      articleEntity.isHidden()
+      (articleEntity.isHidden() && !articleEntity.isOwner(authUser.id)) ||
+      (articleEntity.isPublished() && !articleEntity.getGroupIds()?.length)
     ) {
       throw new ContentNotFoundException();
     }

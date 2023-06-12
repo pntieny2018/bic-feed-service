@@ -674,6 +674,10 @@ export class ReportContentService {
       },
     });
 
+    if (!reportDetails || !reportDetails?.length) {
+      throw new ValidatorException('Report not found or resolved');
+    }
+
     const reportDetailJsons = reportDetails.map((dt) => dt.toJSON());
 
     const groupIds = [...new Set(reportDetailJsons.map((g) => g.groupId))];
