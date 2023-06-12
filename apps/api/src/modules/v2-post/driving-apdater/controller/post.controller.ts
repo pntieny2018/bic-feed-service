@@ -37,14 +37,14 @@ import { AccessDeniedException } from '../../domain/exception/access-denied.exce
 import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
 import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
 import { PostStatus } from '../../../../database/models/post.model';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
 @Controller({
   path: 'posts',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class PostController {
   public constructor(

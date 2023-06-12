@@ -47,14 +47,14 @@ import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
 } from '../../application/command/delete-comment/delete-comment.command';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { instanceToInstance } from 'class-transformer';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'comments',
 })
 export class CommentController {

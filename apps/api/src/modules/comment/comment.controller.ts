@@ -12,7 +12,7 @@ import {
   Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
@@ -36,7 +36,7 @@ import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 @ApiTags('Comment')
 @ApiSecurity('authorization')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'comments',
 })
 export class CommentController {
@@ -69,7 +69,7 @@ export class CommentController {
   })
   @Post('/')
   @InjectUserToBody()
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version(VERSIONS_SUPPORTED[0])
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
@@ -86,7 +86,7 @@ export class CommentController {
     success: 'message.comment.replied_success',
   })
   @Post('/:commentId/reply')
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version(VERSIONS_SUPPORTED[0])
   @InjectUserToBody()
   public async reply(
     @AuthUser() user: UserDto,
@@ -135,7 +135,7 @@ export class CommentController {
     success: 'message.comment.updated_success',
   })
   @Put('/:commentId')
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version(VERSIONS_SUPPORTED[0])
   @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
@@ -154,7 +154,7 @@ export class CommentController {
     success: 'message.comment.deleted_success',
   })
   @Delete('/:commentId')
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version(VERSIONS_SUPPORTED[0])
   public async destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string

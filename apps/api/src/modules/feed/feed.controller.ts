@@ -6,7 +6,7 @@ import { AuthUser } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedService } from './feed.service';
 import { PostResponseDto } from '../post/dto/responses';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserDto } from '../v2-user/application';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -15,7 +15,7 @@ import { ArticleResponseDto } from '../article/dto/responses';
 @ApiSecurity('authorization')
 @Controller({
   path: 'feeds',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class FeedController {
   public constructor(private readonly _feedService: FeedService) {}
@@ -25,6 +25,7 @@ export class FeedController {
     description: 'Get timeline in a group successfully.',
     type: PageDto,
   })
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @Get('/timeline')
   public async getTimeline(
     @AuthUser(false) authUser: UserDto,
@@ -38,6 +39,7 @@ export class FeedController {
     description: 'Get timeline in a group successfully.',
     type: PageDto,
   })
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @Get('/newsfeed')
   public async getNewsFeed(
     @AuthUser() authUser: UserDto,

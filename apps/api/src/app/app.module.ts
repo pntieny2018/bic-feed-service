@@ -33,6 +33,7 @@ import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
+import { ApiVersioningMiddleware } from '../modules/auth/api-versioning.middleware';
 
 @Module({
   imports: [
@@ -77,6 +78,6 @@ import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(I18nMiddleware, AuthMiddleware).forRoutes('*');
+    consumer.apply(I18nMiddleware, AuthMiddleware, ApiVersioningMiddleware).forRoutes('*');
   }
 }
