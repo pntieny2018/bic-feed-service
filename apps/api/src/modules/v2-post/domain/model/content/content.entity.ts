@@ -56,7 +56,9 @@ export type ContentState = {
   enableSetting?: boolean;
   isChangeStatus?: boolean;
 };
-export class ContentEntity<Props extends ContentProps = ContentProps> extends DomainAggregateRoot<Props> {
+export class ContentEntity<
+  Props extends ContentProps = ContentProps
+> extends DomainAggregateRoot<Props> {
   protected _state: ContentState;
   public constructor(props: Props) {
     super(props);
