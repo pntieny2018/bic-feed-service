@@ -171,9 +171,10 @@ export class SearchService {
     }
   }
   public async deletePostsToSearch(posts: IDataPostToDelete[]): Promise<void> {
+    console.log('deletePostsToSearch: ' + posts[0].id);
     try {
       for (const post of posts) {
-        await this.elasticsearchService.deleteByQuery({
+        const response = await this.elasticsearchService.deleteByQuery({
           index: ElasticsearchHelper.ALIAS.POST.all.name,
           query: {
             term: {
@@ -181,6 +182,7 @@ export class SearchService {
             },
           },
         });
+        console.log(JSON.stringify(response));
       }
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
