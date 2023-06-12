@@ -4,6 +4,11 @@
     "updated_success": "Cập nhật tag thành công",
     "deleted_success": "Xóa tag thành công"
   },
+  "content": {
+    "saved_success": "Lưu nội dung thành công",
+    "unsaved_success": "Bỏ lưu nội dung thành công",
+    "reported_success": "Báo cáo nội dung thành công"
+  },
   "post": {
     "created_success": "Tạo bài viết thành công",
     "updated_success": "Cập nhật bài viết thành công",
@@ -24,7 +29,7 @@
     "unsaved_success": "Bỏ lưu bài viết thành công"
   },
   "series": {
-    "created_success": "Tạo sê-ri thành công",
+    "created_success": "Đăng sê-ri thành công",
     "updated_success": "Cập nhật sê-ri thành công",
     "deleted_success": "Xóa sê-ri thành công",
     "added_success": "Thêm bài viết vào sê-ri thành công",
