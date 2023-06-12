@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
@@ -127,6 +128,7 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/:id')
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
@@ -157,6 +159,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto

@@ -1,16 +1,18 @@
 import { AuthUser } from '../../../auth';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   BadRequestException,
   Body,
   Controller,
   Delete,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
@@ -41,6 +43,8 @@ import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
   ContentRequireGroupException,
+  InvalidCursorParamsException,
+  InvalidResourceImageException,
   MentionUserNotFoundException,
 } from '../../domain/exception';
 import {
@@ -50,6 +54,13 @@ import {
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { instanceToInstance } from 'class-transformer';
+import { GetCommentsPipe } from '../pipes/get-comments.pipe';
+import { GetCommentsArroundIdDto, GetListCommentsDto } from '../dto/request';
+import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
+import { FindCommentsPaginationDto } from '../../application/query/find-comments/find-comments-pagination.dto';
+import { GetCommentsArroundIdPipe } from '../pipes/get-comments-arround-id.pipe';
+import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
+import { FindCommentsArroundIdDto } from '../../application/query/find-comments-arround-id/find-comments-arround-id.dto';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -58,7 +69,68 @@ import { instanceToInstance } from 'class-transformer';
   path: 'comments',
 })
 export class CommentController {
-  public constructor(private readonly _commandBus: CommandBus) {}
+  public constructor(
+    private readonly _commandBus: CommandBus,
+    private readonly _queryBus: QueryBus
+  ) {}
+
+  @ApiOperation({ summary: 'Get comment list' })
+  @ApiOkResponse({
+    type: FindCommentsPaginationDto,
+  })
+  @ResponseMessages({
+    success: 'Get comments successfully',
+  })
+  @Get('/')
+  public async getList(
+    @AuthUser(false) user: UserDto,
+    @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
+  ): Promise<FindCommentsPaginationDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
+      );
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get comments arround a comment' })
+  @ResponseMessages({
+    success: 'Get comments arround a comment successfully',
+  })
+  @Get('/:commentId')
+  public async getCommentsArroundId(
+    @AuthUser(false) user: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Query(GetCommentsArroundIdPipe) getCommentsArroundIdDto: GetCommentsArroundIdDto
+  ): Promise<FindCommentsArroundIdDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
+      );
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
 
   @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({
@@ -96,6 +168,7 @@ export class CommentController {
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
@@ -143,6 +216,7 @@ export class CommentController {
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:

@@ -80,6 +80,7 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/:postId')
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
@@ -129,7 +130,7 @@ export class PostController {
   })
   @Put('/:postId')
   @InjectUserToBody()
-  @Version(VERSIONS_SUPPORTED[0])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async update(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
@@ -176,8 +177,8 @@ export class PostController {
   public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.deletePost(user, postId);
+  ): Promise<void> {
+    await this._postAppService.deletePost(user, postId);
   }
 
   @ApiOperation({ summary: 'Mark as read' })
