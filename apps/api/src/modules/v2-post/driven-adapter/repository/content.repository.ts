@@ -136,7 +136,9 @@ export class ContentRepository implements IContentRepository {
       canReact: postEntity.get('setting')?.canReact,
       commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      linkPreviewId: postEntity.get('linkPreview')?.get('id'),
+      linkPreviewId: postEntity.get('linkPreview')
+        ? postEntity.get('linkPreview')?.get('id')
+        : null,
       mediaJson: {
         files: postEntity.get('media').files.map((file) => file.toObject()),
         images: postEntity.get('media').images.map((image) => image.toObject()),
@@ -148,6 +150,7 @@ export class ContentRepository implements IContentRepository {
       tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
       linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
       wordCount: postEntity.get('wordCount'),
+      createdAt: postEntity.get('createdAt'),
     };
   }
 
