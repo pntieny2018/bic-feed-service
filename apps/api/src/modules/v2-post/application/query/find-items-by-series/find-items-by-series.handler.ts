@@ -71,6 +71,7 @@ export class FindItemsBySeriesHandler
       series.push({
         id: seriesEntity.getId(),
         title: seriesEntity.get('title'),
+        type: seriesEntity.getType(),
         items,
       });
     });
