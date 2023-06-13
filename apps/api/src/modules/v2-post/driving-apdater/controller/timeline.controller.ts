@@ -3,7 +3,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { GetTimelineRequestDto } from '../dto/request';
 import { PageDto } from '../../../../common/dto';
 import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
@@ -12,7 +12,7 @@ import { FindTimelineGroupQuery } from '../../application/query/find-timeline-gr
 @ApiSecurity('authorization')
 @Controller({
   path: 'timeline',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class TimelineController {
   public constructor(

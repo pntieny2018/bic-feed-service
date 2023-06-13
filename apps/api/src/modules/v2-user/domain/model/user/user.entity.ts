@@ -7,6 +7,19 @@ export type UserPermission = {
   groups: Record<string, string[]>;
 };
 
+export type BadgeCommunity = {
+  id: string;
+  name: string;
+};
+
+export type UserBadge = {
+  id: string;
+  name: string;
+  fullname: string;
+  iconUrl: string;
+  community: BadgeCommunity;
+};
+
 export type UserProps = {
   id: string;
   username: string;
@@ -17,6 +30,7 @@ export type UserProps = {
   permissions?: UserPermission;
   isDeactivated?: boolean;
   isVerified?: boolean;
+  showingBadges?: UserBadge[];
 };
 
 export class UserEntity extends DomainAggregateRoot<UserProps> {

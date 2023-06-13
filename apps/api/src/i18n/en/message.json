@@ -40,5 +40,9 @@
     "replied_success": "Replied comment successfully",
     "updated_success": "Edited comment successfully",
     "deleted_success": "Deleted comment successfully"
+  },
+  "report": {
+    "ignored_success": "Ignored content successfully",
+    "hidden_success": "Hidden content successfully"
   }
 }

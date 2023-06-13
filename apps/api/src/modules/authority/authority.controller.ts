@@ -1,13 +1,13 @@
 //import { AuthUser, UserInfoDto } from '../auth';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Controller, Get } from '@nestjs/common';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 
 @ApiSecurity('authorization')
 @ApiTags('Authorization')
 @Controller({
   path: 'authorization',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class AuthorityController {
   @ApiOperation({ summary: 'Get Giphy API key' })
