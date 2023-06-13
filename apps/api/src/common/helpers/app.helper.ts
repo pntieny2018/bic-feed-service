@@ -30,7 +30,7 @@ export class AppHelper {
     );
   }
 
-  public static getMaVersionsSupportedTo(maxVersion: string): string[] {
+  public static getVersionsSupportedTo(maxVersion: string): string[] {
     return VERSIONS_SUPPORTED.filter((version) => semver.lte(version, maxVersion)).map(
       (version) => version
     );

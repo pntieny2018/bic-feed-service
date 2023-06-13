@@ -78,6 +78,6 @@ import { ApiVersioningMiddleware } from '../modules/auth/api-versioning.middlewa
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(I18nMiddleware, AuthMiddleware, ApiVersioningMiddleware).forRoutes('*');
+    consumer.apply(I18nMiddleware, ApiVersioningMiddleware, AuthMiddleware).forRoutes('*');
   }
 }

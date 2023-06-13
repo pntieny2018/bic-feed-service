@@ -12,12 +12,14 @@ import {
   Post,
   Put,
   Delete,
+  Version,
+  Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { CreateSeriesRequestDto } from '../dto/request';
+import { CreateSeriesRequestDto, GetTagRequestDto } from '../dto/request';
 import { CreateSeriesDto } from '../../application/command/create-series/create-series.dto';
 import {
   CreateSeriesCommand,
@@ -41,20 +43,21 @@ import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
-import { SeriesDto } from '../../application/dto';
+import { PostDto, SeriesDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
   DeleteSeriesCommand,
   DeleteSeriesCommandPayload,
 } from '../../application/command/delete-series/delete-series.command';
+import { ROUTES } from '../../../../common/constants/routes.constant';
+import { GetItemsBySeriesRequestDto } from '../dto/request/get-items-by-series.request.dto';
+import { FindItemsBySeriesQuery } from '../../application/query/find-items-by-series/find-items-by-series.query';
+import { FindItemsBySeriesDto } from '../../application/query/find-items-by-series/find-items-by-series.dto';
 
 @ApiTags('Series v2')
 @ApiSecurity('authorization')
-@Controller({
-  version: VERSIONS_SUPPORTED,
-  path: 'series',
-})
+@Controller()
 export class SeriesController {
   public constructor(
     private readonly _commandBus: CommandBus,
@@ -69,7 +72,8 @@ export class SeriesController {
   @ResponseMessages({
     success: 'message.series.created_success',
   })
-  @Post('/')
+  @Post(ROUTES.SERIES.CREATE.PATH)
+  @Version(ROUTES.SERIES.CREATE.VERSIONS)
   public async create(
     @AuthUser() user: UserDto,
     @Body() createSeriesRequestDto: CreateSeriesRequestDto
@@ -108,7 +112,8 @@ export class SeriesController {
   @ResponseMessages({
     success: 'message.series.updated_success',
   })
-  @Put('/:id')
+  @Put(ROUTES.SERIES.UPDATE.PATH)
+  @Version(ROUTES.SERIES.UPDATE.VERSIONS)
   public async update(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
@@ -142,14 +147,42 @@ export class SeriesController {
     }
   }
 
+  @ApiOperation({ summary: 'Get items by series' })
+  @Get(ROUTES.SERIES.GET_ITEMS_BY_SERIES.PATH)
+  @Version(ROUTES.SERIES.GET_ITEMS_BY_SERIES.VERSIONS)
+  public async getItemsBySeries(
+    @AuthUser() authUser: UserDto,
+    @Query() getItemsBySeriesRequestDto: GetItemsBySeriesRequestDto
+  ): Promise<FindItemsBySeriesDto> {
+    try {
+      const result = await this._queryBus.execute<FindItemsBySeriesQuery, FindItemsBySeriesDto>(
+        new FindItemsBySeriesQuery({
+          seriesIds: getItemsBySeriesRequestDto.seriesIds,
+          authUser,
+        })
+      );
+      return plainToInstance(FindItemsBySeriesDto, result, {
+        groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+      });
+    } catch (e) {
+      switch (e.constructor) {
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
   @ApiOperation({ summary: 'Get series detail' })
-  @Get('/:seriesId')
+  @Get(ROUTES.SERIES.GET_DETAIL.PATH)
+  @Version(ROUTES.SERIES.GET_DETAIL.VERSIONS)
   public async getPostDetail(
-    @Param('seriesId', ParseUUIDPipe) seriesId: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<SeriesDto> {
     try {
-      const data = await this._queryBus.execute(new FindSeriesQuery({ seriesId, authUser }));
+      const data = await this._queryBus.execute(new FindSeriesQuery({ seriesId: id, authUser }));
       return plainToInstance(SeriesDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
@@ -174,7 +207,8 @@ export class SeriesController {
   @ResponseMessages({
     success: 'message.series.deleted_success',
   })
-  @Delete('/:id')
+  @Delete(ROUTES.SERIES.DELETE.PATH)
+  @Version(ROUTES.SERIES.DELETE.VERSIONS)
   public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
