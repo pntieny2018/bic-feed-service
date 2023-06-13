@@ -27,6 +27,14 @@ export interface IPostDomainService {
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
   publishPost(input: PostPublishProps): Promise<void>;
   updatePost(input: PostPublishProps): Promise<void>;
+  updateSetting(input: {
+    entity: ContentEntity;
+    authUser: UserDto;
+    canComment: boolean;
+    canReact: boolean;
+    isImportant: boolean;
+    importantExpiredAt: Date;
+  }): Promise<void>;
   autoSavePost(input: PostPublishProps): Promise<void>;
   markSeen(contentEntity: ContentEntity, userId: string): Promise<void>;
   markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void>;

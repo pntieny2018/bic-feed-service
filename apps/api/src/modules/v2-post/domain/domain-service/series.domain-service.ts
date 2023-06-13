@@ -34,11 +34,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       summary,
     });
 
-    seriesEntity.setSetting(setting);
-    const isEnableSetting = seriesEntity.getState().enableSetting;
-
     await this._contentValidator.checkCanCRUDContent(actor, groupIds, seriesEntity.get('type'));
-    if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
 
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
@@ -94,7 +90,6 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setPrivacyFromGroups(groups);
       const state = seriesEntity.getState();
       const attachGroupIds = state.attachGroupIds;
-      const isEnableSetting = state.enableSetting;
 
       if (attachGroupIds?.length) {
         await this._contentValidator.checkCanCRUDContent(
@@ -103,7 +98,6 @@ export class SeriesDomainService implements ISeriesDomainService {
           seriesEntity.get('type')
         );
       }
-      if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
     seriesEntity.updateAttribute(newData);
