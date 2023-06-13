@@ -13,15 +13,18 @@ export class ArticleMessagePayload {
   public setting: PostSettingDto;
   public type: PostType;
   public groupIds: string[];
-  public categoryIds: string[];
-  public communityIds: string[];
-  public tags: TagDto[];
-  public media: {
+  public communityIds?: string[];
+  public media?: {
     files: FileDto[];
     images: ImageDto[];
     videos: VideoDto[];
   };
-  public coverMedia: ImageDto;
+  public categories?: {
+    id: string;
+    name: string;
+  }[];
+  public coverMedia?: ImageDto;
+  public tags: TagDto[];
   public seriesIds: string[];
   public content: string;
   public title: string;
