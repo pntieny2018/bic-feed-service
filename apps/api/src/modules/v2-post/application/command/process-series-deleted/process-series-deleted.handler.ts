@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
+import { PostEntity } from '../../../domain/model/content';
 import { SeriesHasBeenDeleted } from '../../../../../common/constants';
 import { NotificationService, TypeActivity, VerbActivity } from '../../../../../notification';
 import { PostType } from '../../../data-type';
@@ -9,6 +9,8 @@ import { StringHelper } from '../../../../../common/helpers';
 import { NotificationActivity } from '../../../../../notification/dto/requests/notification-activity.dto';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
+import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { SeriesMessagePayload } from '../../dto/message/series.message-payload';
 
 @CommandHandler(ProcessSeriesDeletedCommand)
 export class ProcessSeriesDeletedHandler
@@ -23,44 +25,37 @@ export class ProcessSeriesDeletedHandler
   public async execute(command: ProcessSeriesDeletedCommand): Promise<void> {
     const { before } = command.payload;
 
-    const seriesEntity = (await this._contentRepository.findOne({
-      where: {
-        id: before.id,
-        groupArchived: false,
-        type: PostType.SERIES,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeItems: true,
-      },
-    })) as SeriesEntity;
+    const { actor, itemIds, isHidden } = before;
 
-    if (!seriesEntity || !seriesEntity.get('itemIds').length) return;
+    if (!itemIds || !itemIds.length) return;
 
-    if (!seriesEntity.isHidden()) {
-      const itemsSorted = seriesEntity.get('itemIds');
+    if (!isHidden) {
       const items = await this._contentRepository.findAll({
         where: {
-          ids: itemsSorted,
+          ids: itemIds,
         },
       });
 
-      if (items.every((item) => item.isOwner(seriesEntity.get('createdBy')))) return;
+      if (items.every((item) => item.isOwner(actor.id))) return;
 
-      await this._processNotification(seriesEntity, items);
+      await this._processNotification(before, items);
     }
   }
 
-  private async _processNotification(series: SeriesEntity, items: ContentEntity[]): Promise<void> {
+  private async _processNotification(
+    series: SeriesMessagePayload,
+    items: ContentEntity[]
+  ): Promise<void> {
+    const { id, actor, type, groupIds, title, createdAt, updatedAt } = series;
+
     const existingCreator = new Set([]);
     const filterItems = [];
     for (const item of items) {
-      if (
-        !existingCreator.has(item.get('createdBy')) &&
-        item.get('createdBy') !== series.get('createdBy')
-      ) {
+      if (!existingCreator.has(item.get('createdBy')) && item.get('createdBy') !== actor.id) {
         filterItems.push({
           id: item.get('id'),
+          title:
+            item.get('type') === PostType.ARTICLE ? (item as ArticleEntity).get('title') : null,
           contentType: item.get('type').toLowerCase(),
           actor: { id: item.get('createdBy') },
           audience: {
@@ -77,16 +72,16 @@ export class ProcessSeriesDeletedHandler
       }
     }
     const activityObject = {
-      id: series.get('id'),
-      title: series.get('title'),
-      contentType: series.get('type').toLowerCase(),
-      actor: { id: series.get('createdBy') },
+      id,
+      title,
+      contentType: type.toLowerCase(),
+      actor: { id: series.actor.id },
       audience: {
-        groups: series.get('groupIds').map((groupId) => ({ id: groupId })),
+        groups: groupIds.map((groupId) => ({ id: groupId })),
       },
       items: filterItems,
-      createdAt: series.get('createdAt'),
-      updatedAt: series.get('updatedAt'),
+      createdAt,
+      updatedAt,
     };
 
     const activity = new NotificationActivity(
@@ -98,10 +93,10 @@ export class ProcessSeriesDeletedHandler
     );
 
     await this._notificationService.publishPostNotification({
-      key: `${series.get('id')}`,
+      key: `${id}`,
       value: {
         actor: {
-          id: series.get('createdBy'),
+          id: actor.id,
         },
         event: SeriesHasBeenDeleted,
         data: activity,

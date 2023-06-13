@@ -10,6 +10,7 @@ export class SeriesMessagePayload {
   public type: PostType;
   public groupIds: string[];
   public communityIds?: string[];
+  public itemIds?: string[];
   public title: string;
   public summary: string;
   public createdAt: Date;
