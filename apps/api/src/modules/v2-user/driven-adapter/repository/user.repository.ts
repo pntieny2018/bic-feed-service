@@ -1,5 +1,5 @@
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
-import { UserEntity } from '../../domain/model/user';
+import { UserBadge, UserEntity } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
@@ -22,6 +22,7 @@ type UserDataInCache = {
   isDeactivated?: boolean;
   permissions?: Permission;
   isVerified?: boolean;
+  showingBadges?: UserBadge[];
 };
 
 type UserDataInRest = UserDataInCache;

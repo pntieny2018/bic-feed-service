@@ -32,6 +32,8 @@ import { PostHelper } from '../../post/post.helper';
 import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
+import { isEmpty } from 'lodash';
+import { ReactionService } from '../../reaction';
 
 @Injectable()
 export class ArticleAppService {
@@ -306,6 +308,9 @@ export class ArticleAppService {
     const articleUpdated = await this._articleService.publish(article, user);
     this._postService.markSeenPost(articleUpdated.id, user.id);
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
+    articleUpdated.reactionsCount = ReactionService.transformReactionFormat(
+      articleUpdated.reactionsCount
+    );
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
         article: articleUpdated,

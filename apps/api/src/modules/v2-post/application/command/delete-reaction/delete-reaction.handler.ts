@@ -27,18 +27,24 @@ export class DeleteReactionHandler implements ICommandHandler<DeleteReactionComm
   private readonly _commentReactionRepository: ICommentReactionRepository;
 
   public async execute(command: DeleteReactionCommand): Promise<void> {
-    const { target, targetId, reactionName, reactionId, userId } = command.payload;
+    const { target, targetId, reactionName, userId } = command.payload;
     const conditions = {
       reactionName,
+      createdBy: userId,
     };
-    if (target === REACTION_TARGET.COMMENT) {
-      conditions['commentId'] = targetId;
-    } else if (target === REACTION_TARGET.POST) {
-      conditions['postId'] = targetId;
+
+    switch (target) {
+      case REACTION_TARGET.COMMENT:
+        conditions['commentId'] = targetId;
+        break;
+      case REACTION_TARGET.POST:
+      case REACTION_TARGET.ARTICLE:
+        conditions['postId'] = targetId;
+        break;
+      default:
+        break;
     }
-    if (reactionId) {
-      conditions['id'] = reactionId;
-    }
+
     const reaction =
       target === REACTION_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne(conditions)

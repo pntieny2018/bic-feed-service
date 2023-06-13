@@ -19,11 +19,16 @@
     "user_not_found": "Không tìm thấy người dùng được đề cập"
   },
   "content": {
-    "no_comment_permission": "Tính năng bình luận không có sẵn cho nội dung này"
+    "no_comment_permission": "Tính năng bình luận không có sẵn cho nội dung này",
+    "no_crud_permission_at_group": "Tính năng thêm/xoá/sửa nội dung này không có sẵn trong group {groups}",
+    "no_edit_setting_permission_at_group": "Tính năng sửa nội dung này không có sẵn trong group {groups}"
   },
   "comment": {
     "not_found": "Không tìm thấy bình luận",
     "reply_not_exist": "Bình luận được trả lời không tồn tại",
     "can_not_empty": "Bình luận không được trống"
+  },
+  "series": {
+    "required_group": "Vui lòng chọn cover"
   }
 }

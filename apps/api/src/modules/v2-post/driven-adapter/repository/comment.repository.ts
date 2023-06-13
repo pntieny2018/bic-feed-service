@@ -3,10 +3,14 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentEntity } from '../../domain/model/comment';
 import { CommentModel, IComment } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
-import { ICommentRepository } from '../../domain/repositoty-interface';
+import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
+import { FindOneOptions, ICommentRepository } from '../../domain/repositoty-interface';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
-import { Sequelize, WhereOptions } from 'sequelize';
+import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
+import { TargetType } from '../../../report-content/contstants';
+import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { ReactionEntity } from '../../domain/model/reaction';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -62,13 +66,57 @@ export class CommentRepository implements ICommentRepository {
         files: comment.mediaJson?.files.map((file) => new FileEntity(file)),
         videos: comment.mediaJson?.videos.map((video) => new VideoEntity(video)),
       },
+      ownerReactions: (comment?.ownerReactions || []).map(
+        (reaction) =>
+          new ReactionEntity({
+            id: reaction.id,
+            target: REACTION_TARGET.COMMENT,
+            targetId: comment.id,
+            reactionName: reaction.reactionName,
+            createdBy: reaction.createdBy,
+            createdAt: reaction.createdAt,
+          })
+      ),
     });
   }
 
-  public async findOne(options: WhereOptions<IComment>): Promise<CommentEntity> {
-    const comment = await this._commentModel.findOne({
-      where: options,
-    });
+  public async findOne(
+    where: WhereOptions<IComment>,
+    options?: FindOneOptions
+  ): Promise<CommentEntity> {
+    const findOptions: FindOptions = { where };
+    if (options?.excludeReportedByUserId) {
+      findOptions.where = {
+        ...where,
+        [Op.and]: [
+          Sequelize.literal(
+            `NOT EXISTS ( 
+              SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
+                WHERE rp.target_id = "CommentModel".id AND rp.target_type = '${
+                  TargetType.COMMENT
+                }' AND rp.created_by = ${this._sequelizeConnection.escape(
+              options.excludeReportedByUserId
+            )}
+            )`
+          ),
+        ],
+      };
+    }
+    if (options?.includeOwnerReactions) {
+      findOptions.include = [
+        {
+          model: CommentReactionModel,
+          on: {
+            [Op.and]: {
+              comment_id: { [Op.eq]: col(`CommentModel.id`) },
+              created_by: options?.includeOwnerReactions,
+            },
+          },
+        },
+      ];
+    }
+
+    const comment = await this._commentModel.findOne(findOptions);
 
     return this._modelToEntity(comment);
   }
@@ -87,6 +135,7 @@ export class CommentRepository implements ICommentRepository {
   }
 
   public async destroyComment(id: string): Promise<void> {
+    const comment = await this._commentModel.findOne({ where: { id } });
     const childComments = await this._commentModel.findAll({
       attributes: ['id'],
       where: {
@@ -109,12 +158,7 @@ export class CommentRepository implements ICommentRepository {
         individualHooks: true,
         transaction: transaction,
       });
-      await this._commentModel.destroy({
-        where: {
-          id,
-        },
-        transaction: transaction,
-      });
+      await comment.destroy({ transaction });
       await transaction.commit();
     } catch (e) {
       await transaction.rollback();

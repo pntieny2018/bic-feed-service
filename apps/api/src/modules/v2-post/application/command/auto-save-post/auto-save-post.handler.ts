@@ -6,14 +6,11 @@ import {
 } from '../../../domain/domain-service/interface';
 import { AutoSavePostCommand } from './auto-save-post.command';
 import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
-import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(AutoSavePostCommand)
@@ -24,8 +21,7 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService,
-    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator
+    private readonly _userApplicationService: IUserApplicationService
   ) {}
 
   public async execute(command: AutoSavePostCommand): Promise<void> {
@@ -38,11 +34,10 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });
-    if (!postEntity || !(postEntity instanceof PostEntity)) return;
+    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) return;
 
     if (postEntity.isPublished()) return;
 

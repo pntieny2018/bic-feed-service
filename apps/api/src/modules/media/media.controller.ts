@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { UploadService } from '../upload';
 import { UploadDto, UploadType } from '../upload/dto/requests/upload.dto';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { MediaService } from './media.service';
 import { AuthUser } from '../auth';
 import { MediaHelper } from './media.helper';
@@ -24,7 +24,7 @@ import { ObjectHelper } from '../../common/helpers';
 @ApiSecurity('authorization')
 @Controller({
   path: 'media',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class MediaController {
   public constructor(private _uploadService: UploadService, private _mediaService: MediaService) {}
