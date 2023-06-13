@@ -1,6 +1,6 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
 import { AuthUser } from '../../../auth';
@@ -13,7 +13,7 @@ import { FindCategoriesPaginationDto } from '../../application/query/find-catego
 @ApiTags('Category')
 @ApiSecurity('authorization')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'category',
 })
 export class CategoryController {

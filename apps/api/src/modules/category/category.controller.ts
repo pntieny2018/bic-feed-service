@@ -1,6 +1,6 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Body, Controller, Get, Logger, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
 import { AuthUser } from '../auth';
@@ -13,7 +13,7 @@ import { UserDto } from '../v2-user/application';
 @ApiTags('Category')
 @ApiSecurity('authorization')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'category',
 })
 export class CategoryController {

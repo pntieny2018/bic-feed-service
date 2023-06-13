@@ -61,7 +61,6 @@ import { MigrateWordCountCommand } from './migrate-word-count.command';
     SequelizeTinkerCommand,
     FixCommentCountCommand,
     FixPostCommentCountCommand,
-    FixCommentRepliesCountCommand,
     UpdatePrivacyPostCommand,
     UpdateMediaDomainCommand,
     CleanArticleCommand,
@@ -82,6 +81,7 @@ import { MigrateWordCountCommand } from './migrate-word-count.command';
     MigrateCommentMentionsCommand,
     MigratePostMentionsCommand,
     MigrateWordCountCommand,
+    FixCommentRepliesCountCommand,
   ],
 })
 export class CommandModule {}

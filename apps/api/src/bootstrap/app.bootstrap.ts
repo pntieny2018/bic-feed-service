@@ -1,10 +1,10 @@
 import { INestApplication, Logger, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { json, request } from 'express';
+import { json } from 'express';
 import { HttpExceptionFilter } from '../common/filters';
 import { HandleResponseInterceptor } from '../common/interceptors';
 import { IAppConfig } from '../config/app';
-import { DEFAULT_APP_VERSION, VERSION_HEADER_KEY } from '../common/constants';
+import { VERSION_HEADER_KEY } from '../common/constants';
 
 export class AppBootstrap {
   /**
@@ -21,13 +21,10 @@ export class AppBootstrap {
 
     app.enableVersioning({
       type: VersioningType.HEADER,
-      defaultVersion: DEFAULT_APP_VERSION,
       header: VERSION_HEADER_KEY,
     });
     app.useGlobalInterceptors(new HandleResponseInterceptor());
-    // app.useGlobalPipes(new I18nValidationPipe());
     app.useGlobalFilters(new HttpExceptionFilter(appConfig.env, '/'));
-    // app.useGlobalFilters(new I18nValidationExceptionFilter());
 
     app.use(
       json({

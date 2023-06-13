@@ -15,7 +15,7 @@ export class PageOptionsDto {
 
   @ApiProperty({
     minimum: 1,
-    default: 25,
+    default: 10,
     required: false,
   })
   @Type(() => Number)

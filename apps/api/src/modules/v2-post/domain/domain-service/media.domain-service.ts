@@ -1,15 +1,16 @@
 import { Inject } from '@nestjs/common';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY_TOKEN,
-} from '../repositoty-interface/media.repository.interface';
+import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaDomainService } from './interface/media.domain-service.interface';
 import { difference, intersection } from 'lodash';
+import { KAFKA_TOPIC } from '../../../../common/constants';
+import { MediaType } from '../../data-type';
+import { KafkaService } from '@app/kafka';
 
 export class MediaDomainService implements IMediaDomainService {
   @Inject(MEDIA_REPOSITORY_TOKEN)
   private readonly _mediaRepo: IMediaRepository;
+  private readonly _kafkaService: KafkaService;
 
   public async getAvailableVideos(
     videoEntities: VideoEntity[],
@@ -75,5 +76,55 @@ export class MediaDomainService implements IMediaDomainService {
     }
 
     return result.sort((a, b) => imagesIds.indexOf(a.get('id')) - imagesIds.indexOf(b.get('id')));
+  }
+
+  public async setMediaUsed(
+    mediaType: MediaType,
+    mediaIds: string[],
+    userId: string = null
+  ): Promise<void> {
+    const config = {
+      [MediaType.FILE]: {
+        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED,
+        keyIds: 'fileIds',
+      },
+      [MediaType.VIDEO]: {
+        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED,
+        keyIds: 'videoIds',
+      },
+    };
+
+    if (!config[mediaType]) return;
+    if (mediaIds.length) {
+      await this._kafkaService.emit(config[mediaType].topic, {
+        key: null,
+        value: { [config[mediaType].keyIds]: mediaIds, userId },
+      });
+    }
+  }
+
+  public async setMediaDelete(
+    mediaType: MediaType,
+    mediaIds: string[],
+    userId: string = null
+  ): Promise<void> {
+    const config = {
+      [MediaType.FILE]: {
+        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES,
+        keyIds: 'fileIds',
+      },
+      [MediaType.VIDEO]: {
+        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS,
+        keyIds: 'videoIds',
+      },
+    };
+
+    if (!config[mediaType]) return;
+    if (mediaIds.length) {
+      await this._kafkaService.emit(config[mediaType].topic, {
+        key: null,
+        value: { [config[mediaType].keyIds]: mediaIds, userId },
+      });
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
 import { SearchPostsDto } from './dto/requests';
@@ -10,7 +10,7 @@ import { UserDto } from '../v2-user/application';
 @ApiSecurity('authorization')
 @ApiTags('Posts')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'posts',
 })
 export class SearchController {
