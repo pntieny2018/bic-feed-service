@@ -79,10 +79,6 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     if (postEntity.getState().isChangeStatus) {
       await this._postDomainService.markSeen(postEntity, authUser.id);
       postEntity.increaseTotalSeen();
-      if (postEntity.isImportant()) {
-        await this._postDomainService.markReadImportant(postEntity, authUser.id);
-        postEntity.setMarkReadImportant();
-      }
     }
 
     const result = await this._contentBinding.postBinding(postEntity, {

@@ -55,11 +55,6 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
     await this._postDomainService.markSeen(seriesEntity, actor.id);
     seriesEntity.increaseTotalSeen();
 
-    if (seriesEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(seriesEntity, actor.id);
-      seriesEntity.setMarkReadImportant();
-    }
-
     const result = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,

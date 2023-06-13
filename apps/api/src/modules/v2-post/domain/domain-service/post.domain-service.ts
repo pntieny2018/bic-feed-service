@@ -248,6 +248,10 @@ export class PostDomainService implements IPostDomainService {
     });
     await this._contentRepository.update(entity);
 
+    if (isImportant) {
+      await this.markReadImportant(entity, entity.getCreatedBy());
+    }
+
     entity.commit();
   }
 
