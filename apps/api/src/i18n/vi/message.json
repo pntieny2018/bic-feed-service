@@ -33,7 +33,7 @@
     "updated_success": "Cập nhật sê-ri thành công",
     "deleted_success": "Xóa sê-ri thành công",
     "added_success": "Thêm bài viết vào sê-ri thành công",
-    "remove_success": "Xóa bài viết khỏi sê-ri thành công"
+    "removed_success": "Xóa bài viết khỏi sê-ri thành công"
   },
   "comment": {
     "created_success": "Tạo bình luận thành công",
