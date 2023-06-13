@@ -37,9 +37,6 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
     if (this._props.name.length > RULES.TAG_MAX_NAME) {
       throw new DomainModelException(`Tag name must not exceed ${RULES.TAG_MAX_NAME} characters`);
     }
-    // if (this._props.totalUsed && this._props.totalUsed < 0) {
-    //   throw new DomainModelException(`Total used must be >= 0`);
-    // }
   }
 
   public update(props: Partial<TagProps>): void {
@@ -47,5 +44,11 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
     this._props.name = name.toUpperCase();
     this._props.updatedBy = updatedBy;
     this._props.slug = StringHelper.convertToSlug(name);
+  }
+
+  public decreaseTotalUsed(): void {
+    if (this._props.totalUsed > 0) {
+      this._props.totalUsed -= 1;
+    }
   }
 }

@@ -2,8 +2,8 @@ import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { ProcessSeriesDeletedCommand } from '../../application/command/process-series-deleted/process-series-deleted.command';
 import { ArticleChangedMessagePayload } from '../../application/dto/message';
+import { ProcessArticleDeletedCommand } from '../../application/command/process-article-deleted/process-article-deleted.command';
 
 @Controller()
 export class ArticleConsumer {
@@ -15,8 +15,8 @@ export class ArticleConsumer {
   ): Promise<any> {
     switch (payload.state) {
       case 'delete':
-        await this._commandBus.execute<ProcessSeriesDeletedCommand, void>(
-          new ProcessSeriesDeletedCommand(payload)
+        await this._commandBus.execute<ProcessArticleDeletedCommand, void>(
+          new ProcessArticleDeletedCommand(payload)
         );
         break;
       default:

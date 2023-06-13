@@ -1,7 +1,7 @@
 import {
   BadRequestException,
-  Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -15,7 +15,9 @@ import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import {
+  ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
+  ContentNoEditSettingPermissionAtGroupException,
   ContentNotFoundException,
   ContentRequireGroupException,
 } from '../../domain/exception';
@@ -29,8 +31,11 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transform
 import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
-import { CreateDraftArticleRequestDto } from '../dto/request/create-draft-article.request.dto';
 import { CreateDraftArticleCommand } from '../../application/command/create-draft-article/create-draft-article.command';
+import {
+  DeleteArticleCommand,
+  DeleteArticleCommandPayload,
+} from '../../application/command/delete-article/delete-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -79,10 +84,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
-  public async create(
-    @AuthUser() authUser: UserDto,
-    @Body() createDraftPostRequestDto: CreateDraftArticleRequestDto
-  ): Promise<ArticleDto> {
+  public async create(@AuthUser() authUser: UserDto): Promise<ArticleDto> {
     try {
       const data = await this._commandBus.execute<CreateDraftArticleCommand, CreateDraftPostDto>(
         new CreateDraftArticleCommand({ authUser })
@@ -92,6 +94,42 @@ export class ArticleController {
       switch (e.constructor) {
         case DomainModelException:
           throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Delete article' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Delete article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.deleted_success',
+  })
+  @Delete('/:id')
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<DeleteArticleCommand, void>(
+        new DeleteArticleCommand({
+          id,
+          actor: user,
+        } as DeleteArticleCommandPayload)
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        case ContentNoCRUDPermissionException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
         default:
           throw e;
       }
