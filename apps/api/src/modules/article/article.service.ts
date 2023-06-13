@@ -598,7 +598,7 @@ export class ArticleService {
         dataUpdate['coverJson'] = coverMedia;
       }
 
-      if (wordCount) {
+      if (wordCount !== null) {
         dataUpdate['wordCount'] = wordCount;
       }
 
