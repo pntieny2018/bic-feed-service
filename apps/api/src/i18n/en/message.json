@@ -33,7 +33,7 @@
     "updated_success": "Edited series successfully",
     "deleted_success": "Deleted series successfully",
     "added_success": "Added article/post successfully",
-    "remove_success": "Removed article/post successfully"
+    "removed_success": "Removed article/post successfully"
   },
   "comment": {
     "created_success": "Created comment successfully",
