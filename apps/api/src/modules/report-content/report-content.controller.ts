@@ -112,9 +112,9 @@ export class ReportContentController {
     @Req() req: Request
   ): Promise<boolean> {
     if (updateStatusReportDto.status === ReportStatus.HID) {
-      req.message = 'message.report.ignored_success';
-    } else {
       req.message = 'message.report.hidden_success';
+    } else {
+      req.message = 'message.report.ignored_success';
     }
 
     return this._reportContentService.updateStatusReport(user, updateStatusReportDto);
