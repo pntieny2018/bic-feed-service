@@ -1,0 +1,74 @@
+name: staging
+run-name: ${{ github.ref_name }}
+on:
+  pull_request:
+    types:
+      - closed
+    branches: ["staging"]
+
+permissions:
+  contents: read    # This is required for actions/checkout
+  id-token: write   # This is required for requesting the JWT
+
+jobs:
+  staging:
+    if: ${{ github.ref_name == 'staging' }}
+    runs-on: ubuntu-22.04
+    environment: staging
+    env:
+      AWS_SM_SECRET_ID: /bic/ci
+      AWS_IAM_ROLE: arn:aws:iam::210668178631:role/bic-all-github-action-iam-role
+      BITBUCKET_WORKPLACE: beincomm
+      ENVIRONMENT: stg
+      SERVICE: feed
+      IMAGE_NAME: beingroup/bic-stg-feed-service
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials with IAM Role
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ env.AWS_IAM_ROLE }}
+        aws-region: ap-southeast-1
+
+    - name: Get Secrets from AWS Secrets Manager
+      uses: aws-actions/aws-secretsmanager-get-secrets@v1
+      with:
+        secret-ids: |
+          ${{ env.AWS_SM_SECRET_ID }}
+        parse-json-secrets: true
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ env._BIC_CI_NON_PRO_DOCKERHUB_USERNAME }}
+        password: ${{ env._BIC_CI_NON_PRO_DOCKERHUB_PASSWORD }}
+
+    - name: Build then Push Docker Image to DockerHub
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ github.sha }}
+      
+    - name: Install Envsubst
+      run: sudo apt-get update && sudo apt-get -y install gettext-base
+
+    - name: Update Image Version to GitOps Repository
+      run: |
+        HEAD=$(git rev-parse --short HEAD)
+        GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.sha }})
+        git clone https://cicd-bic:${{ env._BIC_CI_ARGOCD_TOKEN }}@bitbucket.org/${{ env.BITBUCKET_WORKPLACE }}/bic-kube.git
+        cd bic-kube
+        set -e
+        export COMMIT_SHA1=${{ github.sha }}
+        envsubst <bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.patch.yaml >bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.yaml.out
+        mv bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.yaml.out bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.yaml
+        git config --global user.email "cicd@evol.vn"
+        git config --global user.name "CICD"
+        git add -A
+        git commit -m "Commit: $HEAD  Build: ${{ github.run_number }}  Message: $GIT_COMMIT_MESSAGE"
+        git pull
+        git push
