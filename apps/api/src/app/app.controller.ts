@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { DEFAULT_APP_VERSION } from '../common/constants';
+import { VERSIONS_SUPPORTED } from '../common/constants';
 import { FeedPublisherService } from '../modules/feed-publisher';
 
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'app',
 })
 export class AppController {

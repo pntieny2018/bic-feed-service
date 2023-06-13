@@ -24,7 +24,7 @@ import { CreateDraftPostDto } from '../../application/command/create-draft-post/
 import { plainToInstance } from 'class-transformer';
 import { ArticleDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
 import { ArticleResponseDto } from '../../../article/dto/responses';
@@ -36,7 +36,7 @@ import { CreateDraftArticleCommand } from '../../application/command/create-draf
 @ApiSecurity('authorization')
 @Controller({
   path: 'articles',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class ArticleController {
   public constructor(

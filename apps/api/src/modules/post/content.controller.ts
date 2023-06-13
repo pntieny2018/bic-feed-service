@@ -13,7 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser } from '../auth';
 import { PostAppService } from './application/post.app-service';
 import { UserDto } from '../v2-user/application';
@@ -34,7 +34,7 @@ import { ArticleResponseDto } from '../article/dto/responses';
 @ApiSecurity('authorization')
 @ApiTags('Content')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'content',
 })
 export class ContentController {

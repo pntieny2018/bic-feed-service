@@ -3,7 +3,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { GetNewsfeedRequestDto } from '../dto/request';
 import { PageDto } from '../../../../common/dto';
 import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
@@ -12,7 +12,7 @@ import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-ne
 @ApiSecurity('authorization')
 @Controller({
   path: 'newsfeed',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class NewsFeedController {
   public constructor(private readonly _queryBus: QueryBus) {}

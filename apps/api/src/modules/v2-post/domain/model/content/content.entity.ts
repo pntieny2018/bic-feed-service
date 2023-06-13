@@ -126,6 +126,10 @@ export class ContentEntity<
     return this._props.createdBy;
   }
 
+  public getType(): PostType {
+    return this._props.type;
+  }
+
   public getGroupIds(): string[] {
     return this._props.groupIds;
   }
