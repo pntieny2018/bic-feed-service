@@ -47,6 +47,9 @@ export class UpdateArticleDto extends UpdatePostDto {
   })
   @IsOptional()
   @IsInt()
+  @Expose({
+    name: 'word_count',
+  })
   public wordCount?: number;
 
   @ApiProperty({

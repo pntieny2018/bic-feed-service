@@ -347,6 +347,7 @@ export class SearchService {
         'commentsCount',
         'totalUsersSeen',
         'setting',
+        'wordCount',
       ]),
     ]);
 
