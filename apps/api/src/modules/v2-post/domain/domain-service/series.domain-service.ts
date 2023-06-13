@@ -60,9 +60,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
   public async update(input: UpdateSeriesProps): Promise<void> {
     const { seriesEntity, groups, newData } = input;
-    const { actor, groupIds, coverMedia, setting } = newData;
-
-    seriesEntity.setSetting(setting || seriesEntity.get('setting'));
+    const { actor, groupIds, coverMedia } = newData;
 
     if (coverMedia) {
       const images = await this._mediaDomainService.getAvailableImages(

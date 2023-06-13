@@ -141,7 +141,7 @@ export class SeriesService {
   public async create(authUser: UserDto, createPostDto: CreateSeriesDto): Promise<IPost> {
     let transaction;
     try {
-      const { title, summary, audience, coverMedia, setting } = createPostDto;
+      const { title, summary, audience, coverMedia } = createPostDto;
       const authUserId = authUser.id;
       transaction = await this._sequelizeConnection.transaction();
       const privacy = await this._postService.getPrivacy(audience.groupIds);
@@ -154,10 +154,10 @@ export class SeriesService {
           status: PostStatus.PUBLISHED,
           type: PostType.SERIES,
           privacy,
-          isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canComment: setting.canComment,
-          canReact: setting.canReact,
+          isImportant: false, // setting.isImportant,
+          importantExpiredAt: null, // setting.isImportant === false ? null : setting.importantExpiredAt,
+          canComment: true, //setting.canComment,
+          canReact: true, //setting.canReact,
           coverJson: coverMedia,
         },
         { transaction }
@@ -167,26 +167,6 @@ export class SeriesService {
         await this.addGroup(audience.groupIds, post.id, transaction);
       }
       await transaction.commit();
-
-      if (setting && setting.isImportant) {
-        const checkMarkImportant = await this._userMarkReadPostModel.findOne({
-          where: {
-            postId: post.id,
-            userId: authUserId,
-          },
-        });
-        if (!checkMarkImportant) {
-          await this._userMarkReadPostModel.bulkCreate(
-            [
-              {
-                postId: post.id,
-                userId: authUserId,
-              },
-            ],
-            { ignoreDuplicates: true }
-          );
-        }
-      }
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -220,7 +200,7 @@ export class SeriesService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { audience, title, summary, coverMedia, setting } = updateSeriesDto;
+      const { audience, title, summary, coverMedia } = updateSeriesDto;
       transaction = await this._sequelizeConnection.transaction();
       const privacy = await this._postService.getPrivacy(audience.groupIds);
       const dataUpdate = {
@@ -230,19 +210,6 @@ export class SeriesService {
         coverJson: coverMedia,
         privacy,
       };
-      if (setting && setting.hasOwnProperty('canComment')) {
-        dataUpdate['canComment'] = setting.canComment;
-      }
-      if (setting && setting.hasOwnProperty('canReact')) {
-        dataUpdate['canReact'] = setting.canReact;
-      }
-
-      if (setting && setting.hasOwnProperty('isImportant')) {
-        dataUpdate['isImportant'] = setting.isImportant;
-      }
-      if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
-        dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
-      }
 
       await this._postModel.update(dataUpdate, {
         where: {
@@ -258,26 +225,6 @@ export class SeriesService {
       }
 
       await transaction.commit();
-
-      if (setting && setting.isImportant) {
-        const checkMarkImportant = await this._userMarkReadPostModel.findOne({
-          where: {
-            postId: post.id,
-            userId: authUserId,
-          },
-        });
-        if (!checkMarkImportant) {
-          await this._userMarkReadPostModel.bulkCreate(
-            [
-              {
-                postId: post.id,
-                userId: authUserId,
-              },
-            ],
-            { ignoreDuplicates: true }
-          );
-        }
-      }
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();

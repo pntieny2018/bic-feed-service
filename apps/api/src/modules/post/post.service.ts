@@ -558,7 +558,7 @@ export class PostService {
   public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
-      const { content, setting, mentions, audience, tags, series } = createPostDto;
+      const { content, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
       let tagList = [];
@@ -573,10 +573,10 @@ export class PostService {
           content,
           createdBy: authUserId,
           updatedBy: authUserId,
-          isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canComment: setting.canComment,
-          canReact: setting.canReact,
+          isImportant: false,
+          importantExpiredAt: null,
+          canComment: true,
+          canReact: true,
           tagsJson: tagList,
           mediaJson: {
             images: [],
@@ -652,7 +652,7 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { media, mentions, audience, setting, tags, series } = updatePostDto;
+      const { media, mentions, audience, tags, series } = updatePostDto;
 
       const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
 
@@ -712,26 +712,6 @@ export class PostService {
       }
       await transaction.commit();
 
-      if (setting && setting.isImportant) {
-        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
-          where: {
-            postId: post.id,
-            userId: authUserId,
-          },
-        });
-        if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.bulkCreate(
-            [
-              {
-                postId: post.id,
-                userId: authUserId,
-              },
-            ],
-            { ignoreDuplicates: true }
-          );
-        }
-      }
-
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -744,7 +724,7 @@ export class PostService {
     updatePostDto: UpdatePostDto,
     authUserId: string
   ): Promise<Partial<IPost>> {
-    const { content, setting, audience } = updatePostDto;
+    const { content, audience } = updatePostDto;
     const dataUpdate = {
       updatedBy: authUserId,
     };
@@ -755,19 +735,6 @@ export class PostService {
 
     if (content !== null) {
       dataUpdate['content'] = content;
-    }
-    if (setting && setting.hasOwnProperty('canComment')) {
-      dataUpdate['canComment'] = setting.canComment;
-    }
-    if (setting && setting.hasOwnProperty('canReact')) {
-      dataUpdate['canReact'] = setting.canReact;
-    }
-
-    if (setting && setting.hasOwnProperty('isImportant')) {
-      dataUpdate['isImportant'] = setting.isImportant;
-    }
-    if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
-      dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
     }
 
     return dataUpdate;
