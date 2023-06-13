@@ -32,16 +32,16 @@ export class CreateDraftPostHandler
     const { groupIds, authUser } = command.payload;
     await this._contentValidator.checkCanCRUDContent(authUser, groupIds);
     const groups = await this._groupApplicationService.findAllByIds(groupIds);
-    const tagEntity = await this._postDomainService.createDraftPost({
+    const postEntity = await this._postDomainService.createDraftPost({
       userId: authUser.id,
       groups,
     });
     const data = new CreateDraftPostDto({
-      id: tagEntity.get('id'),
+      id: postEntity.get('id'),
       audience: {
         groups,
       },
-      setting: tagEntity.get('setting'),
+      setting: postEntity.get('setting'),
     });
     return data;
   }

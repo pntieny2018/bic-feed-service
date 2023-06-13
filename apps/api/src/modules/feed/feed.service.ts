@@ -20,6 +20,7 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
 import { AuthorityService } from '../authority';
+import { ReactionService } from '../reaction';
 
 @Injectable()
 export class FeedService {
@@ -287,7 +288,7 @@ export class FeedService {
     return this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
   }
 
-  public async getPinnedList(groupId: string, authUser: UserDto) {
+  public async getPinnedList(groupId: string, authUser: UserDto): Promise<ArticleResponseDto[]> {
     const ids = await this._postService.getIdsPinnedInGroup(groupId, authUser?.id || null);
     if (ids.length === 0) return [];
     const posts = await this._postService.getPostsByIds(ids, authUser?.id || null);
@@ -296,6 +297,9 @@ export class FeedService {
       authUser,
     });
 
-    return postsBoundData;
+    return (postsBoundData || []).map((post) => ({
+      ...post,
+      reactionsCount: ReactionService.transformReactionFormat(post.reactionsCount),
+    }));
   }
 }

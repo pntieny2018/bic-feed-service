@@ -11,11 +11,11 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ClassTransformer } from 'class-transformer';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { AuthUser } from '../../../auth';
@@ -27,25 +27,21 @@ import { UpdateTagCommand } from '../../application/command/update-tag/update-ta
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 import {
   TagDuplicateNameException,
+  TagNoCreatePermissionException,
+  TagNoDeletePermissionException,
   TagNotFoundException,
+  TagNoUpdatePermissionException,
   TagUsedException,
 } from '../../domain/exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
-import {
-  TagNoCreatePermissionException,
-  TagNoUpdatePermissionException,
-  TagNoDeletePermissionException,
-} from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
 import { TagDto } from '../../application/dto';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
-@Controller({
-  version: DEFAULT_APP_VERSION,
-  path: 'tags',
-})
+@Controller()
 export class TagController {
   public constructor(
     private readonly _commandBus: CommandBus,
@@ -53,7 +49,7 @@ export class TagController {
   ) {}
   private _classTransformer = new ClassTransformer();
   @ApiOperation({ summary: 'Get tags' })
-  @Get('/')
+  @Get(ROUTES.TAG.GET_TAGS.PATH)
   public async get(
     @AuthUser() _user: UserDto,
     @Query() getTagDto: GetTagRequestDto
@@ -78,7 +74,8 @@ export class TagController {
   @ResponseMessages({
     success: 'message.tag.created_success',
   })
-  @Post('/')
+  @Post(ROUTES.TAG.CREATE_TAG.PATH)
+  @Version(ROUTES.TAG.CREATE_TAG.VERSIONS)
   public async create(
     @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagRequestDto
@@ -113,7 +110,8 @@ export class TagController {
     description: 'Update tag successfully',
   })
   @ResponseMessages({ success: 'message.tag.updated_success' })
-  @Put('/:id')
+  @Put(ROUTES.TAG.UPDATE_TAG.PATH)
+  @Version(ROUTES.TAG.UPDATE_TAG.VERSIONS)
   public async update(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,
@@ -147,7 +145,8 @@ export class TagController {
     type: Boolean,
     description: 'Delete tag successfully',
   })
-  @Delete('/:id')
+  @Delete(ROUTES.TAG.DELETE_TAG.PATH)
+  @Version(ROUTES.TAG.DELETE_TAG.VERSIONS)
   @ResponseMessages({ success: 'message.tag.deleted_success' })
   public async delete(
     @AuthUser() user: UserDto,

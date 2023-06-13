@@ -1,13 +1,13 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { FollowService } from './follow.service';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { GetUserFollowsDto } from './dto/requests';
 import { ApiTags } from '@nestjs/swagger';
 import { FollowsDto } from './dto/response/follows.dto';
 
 @ApiTags('Follow')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'follows',
 })
 export class FollowController {
