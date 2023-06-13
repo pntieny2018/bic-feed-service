@@ -50,13 +50,12 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groupArchived: false,
       },
       include: {
-        shouldIncludeGroup: true,
+        mustIncludeGroup: true,
         shouldIncludeSeries: true,
-        shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
       },
     });
-    if (!postEntity || !(postEntity instanceof PostEntity)) {
+    if (postEntity.isHidden() || !postEntity || !(postEntity instanceof PostEntity)) {
       throw new ContentNotFoundException();
     }
 
@@ -79,8 +78,10 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
 
     if (postEntity.getState().isChangeStatus) {
       await this._postDomainService.markSeen(postEntity, authUser.id);
+      postEntity.increaseTotalSeen();
       if (postEntity.isImportant()) {
         await this._postDomainService.markReadImportant(postEntity, authUser.id);
+        postEntity.setMarkReadImportant();
       }
     }
 
@@ -102,8 +103,8 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
   ): void {
     if (!postEntityAfter.isChanged()) return;
     if (postEntityAfter.isPublished()) {
-      const payload = {
-        isPublished: postEntityAfter.getState().isChangeStatus,
+      const payload: PostChangedMessagePayload = {
+        state: postEntityAfter.getState().isChangeStatus ? 'publish' : 'update',
         before: {
           id: postEntityBefore.getId(),
           actor: result.actor,

@@ -1,7 +1,7 @@
 import { PostMessagePayload } from './post.message-payload';
 
 export class PostChangedMessagePayload {
-  public isPublished: boolean;
+  public state: 'publish' | 'update' | 'delete';
   public before: Omit<PostMessagePayload, 'tags' | 'media' | 'seriesIds' | 'communityIds'>;
   public after: PostMessagePayload & {
     state: {

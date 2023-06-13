@@ -52,6 +52,7 @@ export class CommentController {
     success: 'Get comments successfully',
   })
   @Get('/')
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   public getList(
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
@@ -100,6 +101,7 @@ export class CommentController {
   @ApiOkResponse({
     type: CommentDetailResponseDto,
   })
+  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
   @Get('/:commentId')
   public getCommentsArroundId(
     @Param('commentId', ParseUUIDPipe) commentId: string,
