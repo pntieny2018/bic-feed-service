@@ -86,7 +86,6 @@ export class ProcessArticleDeletedHandler
         canReact: setting.canReact,
         isImportant: setting.isImportant,
       },
-
       audience: {
         groups: (groupIds ?? []).map((id) => ({ id })),
       },
