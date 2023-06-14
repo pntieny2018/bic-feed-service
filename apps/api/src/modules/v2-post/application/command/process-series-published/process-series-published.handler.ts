@@ -1,4 +1,5 @@
-import { Inject } from '@nestjs/common';
+import { SentryService } from '@app/sentry';
+import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ProcessSeriesPublishedCommand } from './process-series-published.command';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -15,7 +16,10 @@ import { PostActivityService } from '../../../../../notification/activities';
 export class ProcessSeriesPublishedHandler
   implements ICommandHandler<ProcessSeriesPublishedCommand, void>
 {
+  private _logger = new Logger(ProcessSeriesPublishedHandler.name);
+
   public constructor(
+    private _sentryService: SentryService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(GROUP_APPLICATION_TOKEN)
@@ -43,44 +47,49 @@ export class ProcessSeriesPublishedHandler
   }
 
   private async _processNotification(command: ProcessSeriesPublishedCommand): Promise<void> {
-    const { after } = command.payload;
-    const groups = await this._groupApplicationService.findAllByIds(after.groupIds);
-    const activity = this._postActivityService.createPayload({
-      id: after.id,
-      title: after.title,
-      content: null,
-      contentType: after.type,
-      setting: after.setting,
-      audience: {
-        groups,
-      },
-      actor: after.actor,
-      createdAt: after.createdAt,
-    });
+    try {
+      const { after } = command.payload;
+      const groups = await this._groupApplicationService.findAllByIds(after.groupIds);
+      const activity = this._postActivityService.createPayload({
+        id: after.id,
+        title: after.title,
+        content: null,
+        contentType: after.type,
+        setting: after.setting,
+        audience: {
+          groups,
+        },
+        actor: after.actor,
+        createdAt: after.createdAt,
+      });
 
-    let groupAdminIds = await this._groupApplicationService.getGroupAdminIds(
-      after.actor,
-      after.groupIds
-    );
+      let groupAdminIds = await this._groupApplicationService.getGroupAdminIds(
+        after.actor,
+        after.groupIds
+      );
 
-    groupAdminIds = groupAdminIds.filter((id) => id !== after.actor.id);
+      groupAdminIds = groupAdminIds.filter((id) => id !== after.actor.id);
 
-    if (groupAdminIds.length) {
-      await this._notificationService.publishPostNotification({
-        key: `${after.id}`,
-        value: {
-          actor: {
-            id: after.actor.id,
-          },
-          event: SeriesHasBeenPublished,
-          data: activity,
-          meta: {
-            series: {
-              targetUserIds: groupAdminIds,
+      if (groupAdminIds.length) {
+        await this._notificationService.publishPostNotification({
+          key: `${after.id}`,
+          value: {
+            actor: {
+              id: after.actor.id,
+            },
+            event: SeriesHasBeenPublished,
+            data: activity,
+            meta: {
+              series: {
+                targetUserIds: groupAdminIds,
+              },
             },
           },
-        },
-      });
+        });
+      }
+    } catch (err) {
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
     }
   }
 }
