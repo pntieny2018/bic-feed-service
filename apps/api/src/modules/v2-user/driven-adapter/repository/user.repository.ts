@@ -150,13 +150,6 @@ export class UserRepository implements IUserRepository {
 
   public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
     try {
-      console.log(
-        'debug check CUD TAG=',
-        AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
-          userId,
-          rootGroupId,
-        })
-      );
       const response = await lastValueFrom(
         this._httpService.get(
           AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
@@ -165,9 +158,7 @@ export class UserRepository implements IUserRepository {
           })
         )
       );
-      const result = AxiosHelper.getDataResponse<boolean>(response);
-      console.log('result====', result);
-      console.log('response type====', typeof result);
+      return AxiosHelper.getDataResponse<boolean>(response);
     } catch (e) {
       this._logger.debug(e);
       return false;
