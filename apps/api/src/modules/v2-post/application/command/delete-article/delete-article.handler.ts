@@ -78,7 +78,6 @@ export class DeleteArticleHandler implements ICommandHandler<DeleteArticleComman
           createdAt: entity.get('createdAt'),
           updatedAt: entity.get('updatedAt'),
           publishedAt: entity.get('publishedAt'),
-          createdBy: entity.get('createdBy'),
         },
       };
 

@@ -35,7 +35,6 @@ export class ArticleMessagePayload {
   public createdAt: Date;
   public updatedAt: Date;
   public publishedAt: Date;
-  public createdBy: string;
 
   public constructor(data: Partial<ArticleMessagePayload>) {
     Object.assign(this, data);
