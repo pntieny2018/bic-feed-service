@@ -8,7 +8,6 @@ import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
-import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
@@ -21,6 +20,7 @@ import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
+  IDataPostToDelete,
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
@@ -32,10 +32,6 @@ import {
 } from '../v2-group/application';
 import { TagService } from '../tag/tag.service';
 
-type FieldSearch = {
-  default: string;
-  ascii: string;
-};
 @Injectable()
 export class SearchService {
   /**
@@ -91,7 +87,6 @@ export class SearchService {
         body,
         pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
       });
-      console.log(`ADD ES:`, JSON.stringify(res));
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
@@ -163,7 +158,6 @@ export class SearchService {
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         });
-        console.log(`Update ES:`, JSON.stringify(res));
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
         if (dataIndex.lang !== newLang) {
           await this.postService.updateData([dataIndex.id], { lang: newLang });
@@ -176,7 +170,7 @@ export class SearchService {
       }
     }
   }
-  public async deletePostsToSearch(posts: IPost[]): Promise<void> {
+  public async deletePostsToSearch(posts: IDataPostToDelete[]): Promise<void> {
     try {
       for (const post of posts) {
         await this.elasticsearchService.deleteByQuery({
@@ -395,7 +389,7 @@ export class SearchService {
       const audienceGroups = [];
       const communities = [];
       let mentions = {};
-      const reactionsCount = {};
+      const reactionsCount = [];
       for (const group of groups) {
         if (post.groupIds && post.groupIds.includes(group.id)) {
           audienceGroups.push({
@@ -428,6 +422,7 @@ export class SearchService {
             email: user.email,
             username: user.username,
             avatar: user.avatar,
+            showingBadges: user.showingBadges,
           };
         }
         if (post.mentionUserIds && post.mentionUserIds.includes(user.id)) {

@@ -9,7 +9,7 @@ import { PostType } from '../../data-type';
 export class PostFactory implements IPostFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public createDraftPost({ groupIds, userId }: { groupIds: string[]; userId: string }): PostEntity {
+  public createPost({ groupIds, userId }: { groupIds: string[]; userId: string }): PostEntity {
     const now = new Date();
     const entity = new PostEntity({
       id: v4(),

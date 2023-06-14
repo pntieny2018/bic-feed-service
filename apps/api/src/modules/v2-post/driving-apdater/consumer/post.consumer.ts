@@ -15,11 +15,12 @@ export class PostConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<any> {
-    if (payload.isPublished) {
+    if (payload.state === 'publish') {
       await this._commandBus.execute<ProcessPostPublishedCommand, void>(
         new ProcessPostPublishedCommand(payload)
       );
-    } else {
+    }
+    if (payload.state === 'update') {
       await this._commandBus.execute<ProcessPostUpdatedCommand, void>(
         new ProcessPostUpdatedCommand(payload)
       );

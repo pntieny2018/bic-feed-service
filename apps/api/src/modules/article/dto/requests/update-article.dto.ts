@@ -41,10 +41,7 @@ export class UpdateArticleDto extends UpdatePostDto {
   //@CanUseSeries()
   public series?: string[];
 
-  @ApiProperty({
-    type: [String],
-    example: [10],
-  })
+  @ApiProperty()
   @IsOptional()
   @IsInt()
   @Expose({
