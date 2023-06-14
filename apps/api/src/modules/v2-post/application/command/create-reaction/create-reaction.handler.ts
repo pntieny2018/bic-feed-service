@@ -17,6 +17,7 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-
 import { ReactionDuplicateException } from '../../../domain/exception/reaction-duplicate.exception';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
 import { ReactionDto } from '../../dto';
+import { ContentNoReactPermissionException } from '../../../domain/exception/content-no-react-permission.exception';
 
 @CommandHandler(CreateReactionCommand)
 export class CreateReactionHandler implements ICommandHandler<CreateReactionCommand, ReactionDto> {
@@ -33,23 +34,27 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
       command.payload
     );
 
-    const reactionEntity =
-      command.payload.target === REACTION_TARGET.COMMENT
-        ? await this._commentReactionRepository.findOne({
-            commentId: newCreateReactionDto.targetId,
-            createdBy: newCreateReactionDto.createdBy,
-            reactionName: newCreateReactionDto.reactionName,
-          })
-        : await this._postReactionRepository.findOne({
-            postId: newCreateReactionDto.targetId,
-            createdBy: newCreateReactionDto.createdBy,
-            reactionName: newCreateReactionDto.reactionName,
-          });
+    let reactionEntity;
+    if (command.payload.target === REACTION_TARGET.COMMENT) {
+      reactionEntity = await this._commentReactionRepository.findOne({
+        commentId: newCreateReactionDto.targetId,
+        createdBy: newCreateReactionDto.createdBy,
+        reactionName: newCreateReactionDto.reactionName,
+      });
+    } else {
+      reactionEntity = await this._postReactionRepository.findOne({
+        postId: newCreateReactionDto.targetId,
+        createdBy: newCreateReactionDto.createdBy,
+        reactionName: newCreateReactionDto.reactionName,
+      });
+    }
     if (reactionEntity) {
       throw new ReactionDuplicateException();
     }
 
-    // TODO check policy await this._postPolicyService.allow(post, PostAllow.REACT);
+    if (newCreateReactionDto.target !== REACTION_TARGET.COMMENT && !reactionEntity.allowReact()) {
+      throw new ContentNoReactPermissionException();
+    }
 
     const newReactionEntity = await this._reactionDomainService.createReaction(
       newCreateReactionDto
@@ -74,4 +79,6 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     }
     return copy;
   }
+
+  private _sendNotification() {}
 }

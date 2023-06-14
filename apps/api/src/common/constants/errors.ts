@@ -17,10 +17,12 @@ export const ERRORS = {
     CONTENT_PIN_NOT_FOUND: 'content.pin_not_found',
     CONTENT_PIN_LACK: 'content.pin_lack',
     CONTENT_GROUP_JOIN_REQUIRED: 'content.group_join_required',
+    CONTENT_NOT_ALLOW_REACT: 'content.not_allow_react',
     CONTENT_NO_CRUD_PERMISSION: 'content.no_crud_permission',
     CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
     CONTENT_ACCESS_DENIED: 'content.access_denied',
     CONTENT_NO_COMMENT_PERMISSION: 'content.no_comment_permission',
+    CONTENT_NO_REACT_PERMISSION: 'content.no_react_permission',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',

@@ -17,7 +17,8 @@
     "group_join_required": "Join at least one group to keep reading",
     "empty_group": "You have not selected any group/community",
     "empty": "Empty content",
-    "no_comment_permission": "Comment action on this content is not available"
+    "no_comment_permission": "Comment action on this content is not available",
+    "no_react_permission": "React action on this content is not available"
   },
   "post": {
     "not_found": "Post not found",
