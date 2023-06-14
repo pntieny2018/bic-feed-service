@@ -160,6 +160,7 @@ export class UserRepository implements IUserRepository {
       );
       return AxiosHelper.getDataResponse<boolean>(response);
     } catch (e) {
+      this._logger.debug(e);
       return false;
     }
   }
