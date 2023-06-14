@@ -18,8 +18,8 @@ import {
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
-import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { CreateSeriesRequestDto, GetTagRequestDto } from '../dto/request';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { CreateSeriesRequestDto } from '../dto/request';
 import { CreateSeriesDto } from '../../application/command/create-series/create-series.dto';
 import {
   CreateSeriesCommand,
@@ -43,7 +43,7 @@ import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
-import { PostDto, SeriesDto } from '../../application/dto';
+import { SeriesDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
