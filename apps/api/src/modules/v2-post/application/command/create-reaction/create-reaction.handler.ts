@@ -80,5 +80,8 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     return copy;
   }
 
-  private _sendNotification() {}
+  private _sendNotification(type: REACTION_TARGET) {
+    if (type === REACTION_TARGET.COMMENT) {
+    }
+  }
 }
