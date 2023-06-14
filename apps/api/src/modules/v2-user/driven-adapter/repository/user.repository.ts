@@ -165,8 +165,9 @@ export class UserRepository implements IUserRepository {
           })
         )
       );
-      console.log('debug result CUD TAG=', response);
-      return AxiosHelper.getDataResponse<boolean>(response);
+      const result = AxiosHelper.getDataResponse<boolean>(response);
+      console.log('result====', result);
+      console.log('response type====', typeof result);
     } catch (e) {
       console.log(e);
       return false;
