@@ -37,6 +37,10 @@ export class ProcessSeriesDeletedHandler
       const items = await this._contentRepository.findAll({
         where: {
           ids: itemIds,
+          groupArchived: false,
+        },
+        include: {
+          shouldIncludeGroup: true,
         },
       });
 
@@ -64,7 +68,7 @@ export class ProcessSeriesDeletedHandler
             contentType: item.get('type').toLowerCase(),
             actor: { id: item.get('createdBy') },
             audience: {
-              groups: item.get('groupIds').map((groupId) => ({ id: groupId })),
+              groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
             },
             content:
               item.get('type') === PostType.POST
@@ -82,7 +86,7 @@ export class ProcessSeriesDeletedHandler
         contentType: type.toLowerCase(),
         actor: { id: series.actor.id },
         audience: {
-          groups: groupIds.map((groupId) => ({ id: groupId })),
+          groups: (groupIds || []).map((groupId) => ({ id: groupId })),
         },
         items: filterItems,
         createdAt,
