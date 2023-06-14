@@ -42,8 +42,6 @@ export class DeleteArticleHandler implements ICommandHandler<DeleteArticleComman
     }
     if (!articleEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
-    this._contentValidator.checkCanReadContent(articleEntity, actor);
-
     if (articleEntity.isPublished()) {
       await this._contentValidator.checkCanCRUDContent(
         actor,
