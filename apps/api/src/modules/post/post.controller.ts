@@ -13,7 +13,7 @@ import {
   Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
@@ -35,7 +35,7 @@ import { PostStatus } from '../../database/models/post.model';
 @ApiSecurity('authorization')
 @ApiTags('Posts')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'posts',
 })
 export class PostController {
@@ -80,7 +80,7 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/:postId')
-  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
@@ -112,7 +112,7 @@ export class PostController {
   @Post('/')
   @ResponseMessages({ success: 'Post has been published successfully.' })
   @InjectUserToBody()
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version(VERSIONS_SUPPORTED[0])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
@@ -130,7 +130,7 @@ export class PostController {
   })
   @Put('/:postId')
   @InjectUserToBody()
-  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async update(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
@@ -148,7 +148,7 @@ export class PostController {
     success: 'message.post.published_success',
   })
   @Put('/:postId/publish')
-  @Version(DEFAULT_APP_VERSION[0])
+  @Version(VERSIONS_SUPPORTED[0])
   public async publish(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,

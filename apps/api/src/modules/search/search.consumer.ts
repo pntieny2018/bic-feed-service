@@ -87,7 +87,7 @@ export class SearchConsumer {
       lang,
       isHidden,
       coverMedia,
-    } = after;
+    } = after || {};
 
     switch (state) {
       case 'publish':

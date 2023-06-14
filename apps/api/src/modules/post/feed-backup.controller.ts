@@ -13,7 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser } from '../auth';
 import { PostAppService } from './application/post.app-service';
 import { UserDto } from '../v2-user/application';
@@ -29,7 +29,7 @@ import { ResponseMessages } from '../../common/decorators';
 @ApiSecurity('authorization')
 @ApiTags('Feed old version')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'feeds',
 })
 export class FeedBackupController {

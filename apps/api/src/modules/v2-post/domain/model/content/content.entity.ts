@@ -126,6 +126,10 @@ export class ContentEntity<
     return this._props.createdBy;
   }
 
+  public getType(): PostType {
+    return this._props.type;
+  }
+
   public getGroupIds(): string[] {
     return this._props.groupIds;
   }
@@ -158,9 +162,13 @@ export class ContentEntity<
     return this._props.privacy === PostPrivacy.CLOSED;
   }
 
+  /**
+   * Note: Need to override createdAt when publishing
+   */
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
+      this._props.createdAt = new Date();
     }
     this._props.status = PostStatus.PUBLISHED;
   }
