@@ -227,7 +227,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.deleted_success',
   })
-  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @Delete('/:id')
   public async delete(
     @AuthUser() user: UserDto,
