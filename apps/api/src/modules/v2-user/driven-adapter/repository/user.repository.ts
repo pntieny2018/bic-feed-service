@@ -169,7 +169,7 @@ export class UserRepository implements IUserRepository {
       console.log('result====', result);
       console.log('response type====', typeof result);
     } catch (e) {
-      console.log(e);
+      this._logger.debug(e);
       return false;
     }
   }
