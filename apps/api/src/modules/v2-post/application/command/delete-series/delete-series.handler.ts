@@ -32,6 +32,7 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
       },
       include: {
         mustIncludeGroup: true,
+        shouldIncludeItems: true,
       },
     });
 
@@ -62,6 +63,7 @@ export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand,
           actor,
           type: entity.get('type'),
           groupIds: entity.get('groupIds'),
+          itemIds: entity.get('itemIds'),
           title: entity.get('title'),
           summary: entity.get('summary'),
           lang: entity.get('lang'),
