@@ -17,7 +17,10 @@
     "group_join_required": "Join at least one group to keep reading",
     "empty_group": "You have not selected any group/community",
     "empty": "Empty content",
-    "no_comment_permission": "Comment action on this content is not available"
+    "no_comment_permission": "Comment action on this content is not available",
+    "no_react_permission": "React action on this content is not available",
+    "no_crud_permission_at_group": "You don't have CRUD permission at group {groups}",
+    "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}"
   },
   "post": {
     "not_found": "Post not found",
@@ -66,5 +69,6 @@
     "not_have_authority": "You don't have authority to do this action",
     "no_delete_permission": "Failed to delete reaction: you don't have permission",
     "duplicate": "You have already reacted to this content"
-  }
+  },
+  "cursor_params_invalid": "Cursor params invalid"
 }
