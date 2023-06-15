@@ -2,7 +2,7 @@ import { IAppConfig } from './app-config.interface';
 
 export const getAppConfig = (): IAppConfig => ({
   name: process.env.APP_NAME || 'Bein Feed',
-  version: process.env.DEFAULT_APP_VERSION || '1',
+  version: process.env.VERSIONS_SUPPORTED || '1',
   debug: process.env.APP_DEBUG === 'true' || false,
   port: parseInt(process.env.APP_PORT, 10) || 3001,
   url: process.env.APP_URL || 'http://localhost:3001',

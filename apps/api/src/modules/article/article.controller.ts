@@ -12,7 +12,7 @@ import {
   Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
@@ -40,7 +40,7 @@ import {
 @ApiSecurity('authorization')
 @ApiTags('Articles')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'articles',
 })
 export class ArticleController {
@@ -128,7 +128,7 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/:id')
-  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
@@ -159,7 +159,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
-  @Version([DEFAULT_APP_VERSION[0], DEFAULT_APP_VERSION[1]])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
@@ -227,6 +227,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.deleted_success',
   })
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1], VERSIONS_SUPPORTED[2]])
   @Delete('/:id')
   public async delete(
     @AuthUser() user: UserDto,

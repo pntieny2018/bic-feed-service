@@ -163,6 +163,7 @@ export class ContentRepository implements IContentRepository {
       tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
+      createdAt: postEntity.get('createdAt'),
     };
   }
 

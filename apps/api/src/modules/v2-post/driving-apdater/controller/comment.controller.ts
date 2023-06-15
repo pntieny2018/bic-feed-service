@@ -51,7 +51,7 @@ import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
 } from '../../application/command/delete-comment/delete-comment.command';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { instanceToInstance } from 'class-transformer';
 import { GetCommentsPipe } from '../pipes/get-comments.pipe';
@@ -65,7 +65,7 @@ import { FindCommentsArroundIdDto } from '../../application/query/find-comments-
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'comments',
 })
 export class CommentController {

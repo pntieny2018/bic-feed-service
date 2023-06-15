@@ -1,9 +1,12 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { PostChangedMessagePayload } from '../v2-post/application/dto/message/post-published.message-payload';
 import { KAFKA_TOPIC } from '../../common/constants';
 import { SearchService } from './search.service';
-import { SeriesChangedMessagePayload } from '../v2-post/application/dto/message/series-changed.message-payload';
+import {
+  PostChangedMessagePayload,
+  SeriesChangedMessagePayload,
+  ArticleChangedMessagePayload,
+} from '../v2-post/application/dto/message';
 
 @Controller()
 export class SearchConsumer {
@@ -84,7 +87,7 @@ export class SearchConsumer {
       lang,
       isHidden,
       coverMedia,
-    } = after;
+    } = after || {};
 
     switch (state) {
       case 'publish':
@@ -123,6 +126,21 @@ export class SearchConsumer {
           },
         ]);
         break;
+      case 'delete':
+        await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
+        break;
+      default:
+        break;
+    }
+  }
+
+  @EventPattern(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED)
+  public async articleChanged(
+    @Payload('value') payload: ArticleChangedMessagePayload
+  ): Promise<void> {
+    const { before, state } = payload;
+
+    switch (state) {
       case 'delete':
         await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
         break;

@@ -422,6 +422,7 @@ export class SearchService {
             email: user.email,
             username: user.username,
             avatar: user.avatar,
+            showingBadges: user.showingBadges,
           };
         }
         if (post.mentionUserIds && post.mentionUserIds.includes(user.id)) {

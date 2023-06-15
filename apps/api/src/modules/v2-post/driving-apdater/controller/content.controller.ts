@@ -13,7 +13,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
 import { ValidateSeriesTagDto } from '../dto/request';
@@ -35,7 +35,7 @@ import { UpdateContentSettingCommand } from '../../application/command/update-co
 @ApiSecurity('authorization')
 @Controller({
   path: 'content',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class ContentController {
   public constructor(

@@ -21,7 +21,6 @@ import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
 import { MediaStatus } from '../../database/models/media.model';
-import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -43,7 +42,6 @@ import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
-import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
 import { ReportTo, TargetType } from '../report-content/contstants';
@@ -1459,7 +1457,7 @@ export class PostService {
     return mappedPosts;
   }
 
-  public async getIdsPinnedInGroup(groupId: string, userId: string) {
+  public async getIdsPinnedInGroup(groupId: string, userId: string): Promise<string[]> {
     const { schema } = getDatabaseConfig();
     let condition = ` pg.group_id =:groupId AND pg.is_archived = false`;
     if (userId) {
