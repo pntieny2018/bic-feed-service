@@ -46,6 +46,7 @@ import { ProcessSeriesUpdatedHandler } from '../application/command/process-seri
 import { FindItemsBySeriesHandler } from '../application/query/find-items-by-series/find-items-by-series.handler';
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
+import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 
 export const postProvider = [
   {
@@ -113,4 +114,5 @@ export const postProvider = [
   FindItemsBySeriesHandler,
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
+  UpdateContentSettingHandler,
 ];

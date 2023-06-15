@@ -10,7 +10,6 @@ export type PublishPostCommandPayload = {
   tagIds?: string[];
   seriesIds?: string[];
   mentionUserIds?: string[];
-  setting?: PostSettingDto;
   linkPreview?: {
     url: string;
     domain: string;
