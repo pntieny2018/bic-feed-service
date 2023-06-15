@@ -1,6 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
 import { UserDto } from '../../../../v2-user/application';
-import { PostSettingDto } from '../../dto';
 
 export type PublishPostCommandPayload = {
   id: string;

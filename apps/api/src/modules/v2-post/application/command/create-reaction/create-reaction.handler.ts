@@ -13,46 +13,17 @@ import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface/comment-reaction.repository.interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ReactionDuplicateException } from '../../../domain/exception/reaction-duplicate.exception';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
-import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
-import { ContentNoReactPermissionException } from '../../../domain/exception/content-no-react-permission.exception';
-import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
-import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
-import { ReactionHasBeenCreated } from '../../../../../common/constants';
-import { ObjectHelper } from '../../../../../common/helpers';
-import { ReactionEntity } from '../../../domain/model/reaction';
-import { CommentEntity } from '../../../domain/model/comment';
+import { ReactionDto } from '../../dto';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
-import { PostEntity } from '../../../domain/model/content';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../binding/binding-post/content.interface';
-import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
-import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
-import { v4 } from 'uuid';
-import { TypeActivity, VerbActivity } from '../../../../../notification';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 import { ProcessReactionNotificationCommand } from '../process-reaction-notification/process-reaction-notification.command';
 
@@ -65,20 +36,12 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     private readonly _commentReactionRepository: ICommentReactionRepository,
     @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
     private readonly _reactionDomainService: IReactionDomainService,
-    @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService,
-    private readonly _kafkaService: KafkaService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userAppService: IUserApplicationService,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
-    @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding,
-    @Inject(COMMENT_QUERY_TOKEN)
-    private readonly _commentQuery: ICommentQuery,
-    @Inject(REACTION_QUERY_TOKEN)
-    private readonly _reactionQuery: IReactionQuery,
     private readonly _commandBus: CommandBus
   ) {}
 
