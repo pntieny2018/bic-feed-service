@@ -2,7 +2,6 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { BadRequestException, Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
 import {
-  HTTP_STATUS_ID,
   MINIMUM_VERSION_SUPPORT,
   VERSION_HEADER_KEY,
   VERSIONS_SUPPORTED,

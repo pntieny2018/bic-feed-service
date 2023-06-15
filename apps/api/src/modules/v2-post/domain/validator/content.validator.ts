@@ -120,11 +120,9 @@ export class ContentValidator implements IContentValidator {
 
     const postType = contentEntity.get('type');
     const state = contentEntity.getState();
-    const { detachGroupIds, enableSetting } = state;
+    const { detachGroupIds } = state;
 
     await this.checkCanCRUDContent(userAuth, groupIds, postType);
-
-    if (enableSetting) await this.checkCanEditContentSetting(userAuth, groupIds);
 
     if (detachGroupIds?.length) await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
   }

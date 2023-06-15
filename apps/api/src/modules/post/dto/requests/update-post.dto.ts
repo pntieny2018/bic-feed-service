@@ -1,11 +1,9 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsUUID, ValidateNested } from 'class-validator';
-import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { UserMentionDto } from '../../../mention/dto';
-import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 
@@ -55,22 +53,6 @@ export class UpdatePostDto {
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
   public media?: MediaDto;
-
-  @ApiProperty({
-    description: 'Setting post',
-    type: PostSettingDto,
-    required: false,
-    example: {
-      canReact: true,
-      canComment: true,
-      isImportant: false,
-      importantExpiredAt: null,
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => PostSettingDto)
-  public setting?: PostSettingDto;
 
   @ApiProperty({
     type: UserMentionDto,

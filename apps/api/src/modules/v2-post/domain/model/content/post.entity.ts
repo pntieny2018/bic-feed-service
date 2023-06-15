@@ -24,10 +24,9 @@ export class PostEntity extends ContentEntity<PostProps> {
   }
 
   public updateAttribute(data: PublishPostCommandPayload): void {
-    const { authUser, content, seriesIds, groupIds, setting, mentionUserIds } = data;
+    const { authUser, content, seriesIds, groupIds, mentionUserIds } = data;
     super.update({
       authUser,
-      setting,
       groupIds,
     });
 
