@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { AudienceRequestDto } from '../../../post/dto/requests/audience.request.dto';
 import { CoverMediaDto } from '../../../article/dto/requests';
-import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 
 export class UpdateSeriesDto {
   @ApiProperty({
@@ -44,25 +43,4 @@ export class UpdateSeriesDto {
     name: 'cover_media',
   })
   public coverMedia?: CoverMediaDto;
-
-  @ApiProperty({
-    description: 'Setting post',
-    type: PostSettingDto,
-    required: false,
-    example: {
-      ['can_react']: true,
-      ['can_comment']: true,
-      ['is_important']: false,
-      ['important_expired_at']: null,
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => PostSettingDto)
-  public setting?: PostSettingDto = {
-    canReact: true,
-    canComment: true,
-    isImportant: false,
-    importantExpiredAt: null,
-  };
 }

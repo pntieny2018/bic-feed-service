@@ -30,6 +30,7 @@ import { ContentController } from './driving-apdater/controller/content.controll
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { NewsFeedController } from './driving-apdater/controller/newsfeed.controller';
 import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
+import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
     CommentController,
     PostConsumer,
     SeriesConsumer,
+    ArticleConsumer,
     SeriesController,
   ],
   providers: [

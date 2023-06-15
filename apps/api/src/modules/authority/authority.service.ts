@@ -70,13 +70,8 @@ export class AuthorityService {
     }
   }
 
-  public async checkCanUpdatePost(
-    user: UserDto,
-    groupAudienceIds: string[],
-    needEnableSetting: boolean
-  ): Promise<void> {
+  public async checkCanUpdatePost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
-    const notEditSettingInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._buildAbility(user);
     for (const group of groups) {
@@ -86,16 +81,6 @@ export class AuthorityService {
       );
       if (!canCreatePost) {
         notCreatableInGroups.push(group);
-      }
-
-      if (canCreatePost && needEnableSetting) {
-        const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canEditPostSetting) {
-          notEditSettingInGroups.push(group);
-        }
       }
     }
 
@@ -108,25 +93,10 @@ export class AuthorityService {
         errors: { groupsDenied: notCreatableInGroups.map((e) => e.id) },
       });
     }
-
-    if (notEditSettingInGroups.length > 0 && notEditSettingInGroups.length === groups.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
-        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
-      });
-    }
   }
 
-  public async checkCanCreatePost(
-    user: UserDto,
-    groupAudienceIds: string[],
-    needEnableSetting: boolean
-  ): Promise<void> {
+  public async checkCanCreatePost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
-    const notEditSettingInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._buildAbility(user);
     for (const group of groups) {
@@ -136,16 +106,6 @@ export class AuthorityService {
       );
       if (!canCreatePost) {
         notCreatableInGroups.push(group);
-      }
-
-      if (canCreatePost && needEnableSetting) {
-        const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canEditPostSetting) {
-          notEditSettingInGroups.push(group);
-        }
       }
     }
 
@@ -158,29 +118,14 @@ export class AuthorityService {
         errors: { groupsDenied: notCreatableInGroups.map((e) => e.id) },
       });
     }
-
-    if (notEditSettingInGroups.length > 0) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
-        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
-      });
-    }
   }
 
   public async checkCanDeletePost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
-    return this.checkCanCreatePost(user, groupAudienceIds, false);
+    return this.checkCanCreatePost(user, groupAudienceIds);
   }
 
-  public async checkCanUpdateSeries(
-    user: UserDto,
-    groupAudienceIds: string[],
-    needEnableSetting: boolean
-  ): Promise<void> {
+  public async checkCanUpdateSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableGroupInfos = [];
-    const notEditSettingInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._buildAbility(user);
     for (const group of groups) {
@@ -191,15 +136,6 @@ export class AuthorityService {
       if (!canCreatePost) {
         notCreatableGroupInfos.push(group);
       }
-      if (canCreatePost && needEnableSetting) {
-        const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canEditPostSetting) {
-          notEditSettingInGroups.push(group);
-        }
-      }
     }
 
     if (notCreatableGroupInfos.length > 0 && notCreatableGroupInfos.length === groups.length) {
@@ -209,16 +145,6 @@ export class AuthorityService {
           PERMISSION_KEY.CRUD_SERIES
         )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
-      });
-    }
-
-    if (notEditSettingInGroups.length > 0 && notEditSettingInGroups.length === groups.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
-        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
     }
   }
