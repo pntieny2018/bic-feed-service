@@ -268,6 +268,9 @@ export class PostBindingService {
         if (attributes.includes('commentsCount')) {
           post.commentsCount = findPost?.commentsCount || 0;
         }
+        if (attributes.includes('wordCount')) {
+          post.wordCount = findPost?.wordCount || 0;
+        }
         if (attributes.includes('totalUsersSeen')) {
           post.totalUsersSeen = findPost?.totalUsersSeen || 0;
         }

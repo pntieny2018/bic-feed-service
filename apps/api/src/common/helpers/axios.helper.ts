@@ -10,7 +10,9 @@ export class AxiosHelper {
    */
   public static getDataResponse<T>(response: AxiosResponse): T {
     if (response) {
-      return ObjectHelper.convertKeysToCamelCase(response.data['data']) as unknown as T;
+      return typeof response.data['data'] === 'boolean'
+        ? (response.data['data'] as unknown as T)
+        : (ObjectHelper.convertKeysToCamelCase(response.data['data']) as unknown as T);
     }
 
     return null;

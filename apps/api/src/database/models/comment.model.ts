@@ -18,7 +18,7 @@ import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
 import { IMedia } from './media.model';
 import { getDatabaseConfig } from '../../config/database';
-import { CommentReactionModel } from './comment-reaction.model';
+import { CommentReactionModel, ICommentReaction } from './comment-reaction.model';
 import { DataTypes, Optional, QueryTypes, Sequelize } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
@@ -54,6 +54,7 @@ export interface IComment {
   reactionsCount?: string;
   mediaJson?: any;
   mentions?: string[];
+  ownerReactions?: ICommentReaction[];
 }
 
 @Table({

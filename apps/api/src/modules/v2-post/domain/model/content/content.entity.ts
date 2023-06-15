@@ -230,4 +230,8 @@ export class ContentEntity<
   public allowComment(): boolean {
     return this._props.setting.canComment;
   }
+
+  public allowReact(): boolean {
+    return this._props.setting.canReact;
+  }
 }

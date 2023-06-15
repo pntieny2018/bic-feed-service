@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { FixCommentCountCommand } from './fix-comment-count.command';
 import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
+import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.command';
 import { DatabaseModule } from '../database';
 import { LibModule } from '../app/lib.module';
 import { PostModule } from '../modules/post';
@@ -35,7 +36,6 @@ import { MigrateLinkPreviewCommand } from './migrate-link-preview.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigrateWordCountCommand } from './migrate-word-count.command';
-import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.command';
 
 @Module({
   imports: [
@@ -61,6 +61,7 @@ import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.comma
     SequelizeTinkerCommand,
     FixCommentCountCommand,
     FixPostCommentCountCommand,
+    FixCommentRepliesCountCommand,
     UpdatePrivacyPostCommand,
     UpdateMediaDomainCommand,
     CleanArticleCommand,
