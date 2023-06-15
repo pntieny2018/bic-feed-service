@@ -24,6 +24,8 @@ export interface ICommentQuery {
     comment: CommentEntity,
     props: GetArroundCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>>;
+
+  findComment(id: string, authUser: UserDto): Promise<CommentEntity>;
 }
 
 export const COMMENT_QUERY_TOKEN = 'COMMENT_QUERY_TOKEN';

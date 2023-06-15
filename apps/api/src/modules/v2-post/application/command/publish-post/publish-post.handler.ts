@@ -55,7 +55,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         shouldIncludeLinkPreview: true,
       },
     });
-    if (postEntity.isHidden() || !postEntity || !(postEntity instanceof PostEntity)) {
+    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) {
       throw new ContentNotFoundException();
     }
 

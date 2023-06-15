@@ -543,6 +543,7 @@ export class ContentBinding implements IContentBinding {
       title: entity.get('title'),
       summary: entity.get('summary'),
       createdAt: entity.get('createdAt'),
+      updatedAt: entity.get('updatedAt'),
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
