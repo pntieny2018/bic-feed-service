@@ -168,77 +168,12 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     })) as ContentEntity;
     if (!contentEntity) return;
 
-    const userIds = [
-      contentEntity.get('createdBy'),
-      commentEntity.get('createdBy'),
-      ...commentEntity.get('mentions'),
-    ];
+    const userIds = [contentEntity.get('createdBy')];
     if (contentEntity instanceof PostEntity) {
       userIds.push(...contentEntity.get('mentionUserIds'));
     }
     const users = await this._userAppService.findAllByIds(userIds);
     let mentionUsers = {};
-    let mentionUsersComment = {};
-    const commentActor = users.find((user) => user.id === commentEntity.get('createdBy'));
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByComments([
-      commentEntity.get('id'),
-    ]);
-
-    let comment;
-
-    let parentCommentEntity = null;
-    if (commentEntity.isChildComment()) {
-      parentCommentEntity = await this._commentRepository.findOne({
-        id: commentEntity.get('parentId'),
-      });
-      comment = {
-        id: commentEntity.get('id'),
-        actor: commentActor,
-        reaction: reaction.toObject(),
-        content: commentEntity.get('content'),
-        media: {
-          files: [],
-          images: commentEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
-          videos: [],
-        },
-        mentions: mentionUsersComment,
-        reactionsCount,
-        reactionsOfActor: commentEntity.get('ownerReactions').map(
-          (item) =>
-            new ReactionDto({
-              id: item.get('id'),
-              reactionName: item.get('reactionName'),
-              createdAt: item.get('createdAt'),
-            })
-        ),
-        createdAt: commentEntity.get('createdAt'),
-        updatedAt: commentEntity.get('updatedAt'),
-      };
-    } else {
-      comment = {
-        id: commentEntity.get('id'),
-        actor: commentActor,
-        reaction: reaction.toObject(),
-        content: commentEntity.get('content'),
-        media: {
-          files: [],
-          images: commentEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
-          videos: [],
-        },
-        mentions: mentionUsersComment,
-        reactionsCount,
-        reactionsOfActor: commentEntity.get('ownerReactions').map(
-          (item) =>
-            new ReactionDto({
-              id: item.get('id'),
-              reactionName: item.get('reactionName'),
-              createdAt: item.get('createdAt'),
-            })
-        ),
-        createdAt: commentEntity.get('createdAt'),
-        updatedAt: commentEntity.get('updatedAt'),
-      };
-    }
 
     if (
       contentEntity instanceof PostEntity &&
@@ -247,12 +182,6 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     ) {
       mentionUsers = this._contentBinding.mapMentionWithUserInfo(
         users.filter((user) => contentEntity.get('mentionUserIds').includes(user.id))
-      );
-    }
-
-    if (commentEntity.get('mentions') && users.length) {
-      mentionUsersComment = this._contentBinding.mapMentionWithUserInfo(
-        users.filter((user) => commentEntity.get('mentions').includes(user.id))
       );
     }
 
@@ -278,7 +207,7 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
         images: contentEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
         videos: contentEntity.get('media').videos.map((video) => new VideoDto(video.toObject())),
       },
-      comment,
+      comment: this._getCommentPayload(reaction, commentId),
       createdAt: contentEntity.get('createdAt'),
       updatedAt: contentEntity.get('updatedAt'),
     };
@@ -300,17 +229,16 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     });
   }
 
-  private async _getCommentPayload(
-    reaction: ReactionEntity,
-    commentId: string,
-    actor: UserDto
-  ): Promise<void> {
+  private async _getCommentPayload(reaction: ReactionEntity, commentId: string): Promise<void> {
     const commentEntity = await this._commentRepository.findOne({ id: commentId });
     if (!commentEntity) return;
 
-    const userIds = [commentEntity.get('createdBy'), ...commentEntity.get('mentions')];
+    const userIds = [commentEntity.get('createdBy')];
+    if (commentEntity.get('mentions')?.length) {
+      userIds.push(...commentEntity.get('mentions'));
+    }
     const users = await this._userAppService.findAllByIds(userIds);
-    let mentionUsersParentComment = {};
+
     let mentionUsersComment = {};
     const commentActor = users.find((user) => user.id === commentEntity.get('createdBy'));
     const reactionsCount = await this._reactionQuery.getAndCountReactionByComments([
@@ -321,11 +249,7 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
         users.filter((user) => commentEntity.get('mentions').includes(user.id))
       );
     }
-    if (parentCommentEntity.get('mentions') && users.length) {
-      mentionUsersComment = this._contentBinding.mapMentionWithUserInfo(
-        users.filter((user) => commentEntity.get('mentions').includes(user.id))
-      );
-    }
+
     let comment;
 
     let parentCommentEntity = null;
@@ -333,9 +257,14 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
       parentCommentEntity = await this._commentRepository.findOne({
         id: commentEntity.get('parentId'),
       });
+      const userIdsOfParent = [parentCommentEntity.geT('createdBy')];
+      if (parentCommentEntity.get('mentions')?.length) {
+        userIdsOfParent.push(...parentCommentEntity.get('mentions'));
+      }
+      const usersOfParent = await this._userAppService.findAllByIds(userIdsOfParent);
       comment = {
         id: commentEntity.get('id'),
-        actor: commentActor,
+        actor: usersOfParent.find((user) => user.id === parentCommentEntity.get('createdBy')),
         content: parentCommentEntity.get('content'),
         media: {
           files: [],
@@ -344,9 +273,11 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
             .images.map((image) => new ImageDto(image.toObject())),
           videos: [],
         },
-        mentions: mentionUsersComment,
+        mentions: this._contentBinding.mapMentionWithUserInfo(
+          usersOfParent.filter((user) => parentCommentEntity.get('mentions').includes(user.id))
+        ),
         child: {
-          id: parentCommentEntity.get('id'),
+          id: commentEntity.get('id'),
           actor: commentActor,
           reaction: reaction.toObject(),
           content: commentEntity.get('content'),
@@ -398,6 +329,8 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
         updatedAt: commentEntity.get('updatedAt'),
       };
     }
+
+    return comment;
   }
 
   private async _sendReactContentNotification(
