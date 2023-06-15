@@ -44,6 +44,7 @@ import { ProcessSeriesDeletedHandler } from '../application/command/process-seri
 import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
 import { ProcessSeriesUpdatedHandler } from '../application/command/process-series-updated/process-series-updated.handler';
 import { FindItemsBySeriesHandler } from '../application/query/find-items-by-series/find-items-by-series.handler';
+import { ProcessReactionNotificationHandler } from '../application/command/process-reaction-notification/process-reaction-notification.handler';
 
 export const postProvider = [
   {
@@ -109,4 +110,5 @@ export const postProvider = [
   FindNewsfeedHandler,
   FindSeriesHandler,
   FindItemsBySeriesHandler,
+  ProcessReactionNotificationHandler,
 ];
