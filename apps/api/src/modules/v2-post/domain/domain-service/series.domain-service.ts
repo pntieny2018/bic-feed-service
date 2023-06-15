@@ -34,7 +34,14 @@ export class SeriesDomainService implements ISeriesDomainService {
       summary,
     });
 
+    seriesEntity.setSetting(setting);
+    const state = seriesEntity.getState();
+
     await this._contentValidator.checkCanCRUDContent(actor, groupIds, seriesEntity.get('type'));
+
+    if (state?.enableSetting) {
+      await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+    }
 
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);

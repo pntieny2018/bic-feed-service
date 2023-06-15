@@ -44,4 +44,20 @@ export class CreateSeriesRequestDto {
     name: 'cover_media',
   })
   public coverMedia: MediaDto;
+
+  @ApiProperty({
+    description: 'Setting post',
+    type: PostSettingRequestDto,
+    required: false,
+    example: {
+      canReact: true,
+      canComment: true,
+      isImportant: false,
+      importantExpiredAt: null,
+    },
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => PostSettingRequestDto)
+  public setting?: PostSettingRequestDto;
 }
