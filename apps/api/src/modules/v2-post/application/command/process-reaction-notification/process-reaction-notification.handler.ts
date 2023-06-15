@@ -167,7 +167,9 @@ export class ProcessReactionNotificationHandler
           id: v4(),
           object: activity,
           verb: VerbActivity.REACT,
-          target: TypeActivity.COMMENT,
+          target: commentEntity.isChildComment()
+            ? TypeActivity.CHILD_COMMENT
+            : TypeActivity.COMMENT,
           ignore: [],
           createdAt: reaction.createdAt,
           updatedAt: reaction.createdAt,
