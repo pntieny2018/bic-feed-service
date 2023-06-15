@@ -8,24 +8,16 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
-  Req,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
-import { DEFAULT_APP_VERSION, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
 import { ValidateSeriesTagDto } from '../dto/request';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
-import { ResponseMessages } from '../../../../common/decorators';
-import { UpdatePostRequestDto } from '../dto/request/update-post.request.dto';
-import { Request } from 'express';
-import { PostDto } from '../../application/dto';
-import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
-import { PostStatus } from '../../../../database/models/post.model';
-import { plainToInstance } from 'class-transformer';
 import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
@@ -95,11 +87,10 @@ export class ContentController {
 
   @ApiOperation({ summary: 'Update setting' })
   @Put('/:id/setting')
-  public async updatePost(
+  public async updatePostSetting(
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto,
-    @Body() contentSettingRequestDto: PostSettingRequestDto,
-    @Req() req: Request
+    @Body() contentSettingRequestDto: PostSettingRequestDto
   ): Promise<void> {
     try {
       await this._commandBus.execute<UpdateContentSettingCommand, void>(
