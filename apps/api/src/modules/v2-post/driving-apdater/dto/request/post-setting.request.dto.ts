@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, ValidateIf } from 'class-validator';
 import { Expose } from 'class-transformer';
 
 export class PostSettingRequestDto {
@@ -55,7 +55,6 @@ export class PostSettingRequestDto {
     name: 'important_expired_at',
   })
   @ValidateIf((i) => i.isImportant === true)
-  @IsOptional()
   @IsDateString()
   @Expose({
     name: 'important_expired_at',

@@ -43,6 +43,7 @@ import { FindSeriesHandler } from '../application/query/find-series/find-series.
 import { ProcessSeriesDeletedHandler } from '../application/command/process-series-deleted/process-series-deleted.handler';
 import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
 import { ProcessSeriesUpdatedHandler } from '../application/command/process-series-updated/process-series-updated.handler';
+import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 
 export const postProvider = [
   {
@@ -107,4 +108,5 @@ export const postProvider = [
   FindPostsByIdsHandler,
   FindNewsfeedHandler,
   FindSeriesHandler,
+  UpdateContentSettingHandler,
 ];
