@@ -95,7 +95,7 @@ export class SeriesAppService {
   }
 
   public async createSeries(user: UserDto, createSeriesDto: CreateSeriesDto): Promise<any> {
-    const { audience } = createSeriesDto;
+    const { audience, setting } = createSeriesDto;
     if (createSeriesDto.coverMedia?.id) {
       const images = await this._externalService.getImageIds([createSeriesDto.coverMedia.id]);
       if (images.length === 0) {
@@ -113,7 +113,9 @@ export class SeriesAppService {
       createSeriesDto.coverMedia = images[0];
     }
     if (audience.groupIds?.length > 0) {
-      await this._authorityService.checkCanCreateSeries(user, audience.groupIds);
+      const isEnableSetting =
+        setting.isImportant || setting.canComment === false || setting.canReact === false;
+      await this._authorityService.checkCanCreateSeries(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
@@ -173,7 +175,7 @@ export class SeriesAppService {
     this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
     const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     if (newAudienceIds.length) {
-      await this._authorityService.checkCanCreateSeries(user, newAudienceIds);
+      await this._authorityService.checkCanCreateSeries(user, newAudienceIds, false);
     }
     const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
     if (removeGroupIds.length) {
