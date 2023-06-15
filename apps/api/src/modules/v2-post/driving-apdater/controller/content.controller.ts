@@ -9,8 +9,9 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
@@ -19,15 +20,13 @@ import { ValidateSeriesTagsCommand } from '../../application/command/validate-se
 import { ValidateSeriesTagDto } from '../dto/request';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
 import {
-  ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
+  ContentNoEditSettingPermissionAtGroupException,
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
 } from '../../domain/exception';
-import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
-import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 
@@ -38,10 +37,7 @@ import { UpdateContentSettingCommand } from '../../application/command/update-co
   version: VERSIONS_SUPPORTED,
 })
 export class ContentController {
-  public constructor(
-    private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
-  ) {}
+  public constructor(private readonly _commandBus: CommandBus) {}
 
   @ApiOperation({ summary: 'Mark as read' })
   @ApiOkResponse({
@@ -86,6 +82,12 @@ export class ContentController {
   }
 
   @ApiOperation({ summary: 'Update setting' })
+  @ApiOkResponse({
+    description: 'Edited setting successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.edited_setting_success',
+  })
   @Put('/:id/setting')
   public async updatePostSetting(
     @Param('id', ParseUUIDPipe) id: string,
@@ -104,15 +106,12 @@ export class ContentController {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
-        case ContentNoEditSettingPermissionException:
         case ContentNoCRUDPermissionException:
-        case AccessDeniedException:
+        case ContentNoEditSettingPermissionException:
+        case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
         case DomainModelException:
         case UserNoBelongGroupException:
-        case ContentEmptyException:
-        case ContentEmptyGroupException:
-        case TagSeriesInvalidException:
           throw new BadRequestException(e);
         default:
           throw e;
