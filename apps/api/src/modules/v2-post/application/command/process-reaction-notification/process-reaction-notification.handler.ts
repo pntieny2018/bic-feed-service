@@ -182,7 +182,7 @@ export class ProcessReactionNotificationHandler
       }
       const usersOfParent = await this._userAppService.findAllByIds(userIdsOfParent);
       comment = {
-        id: commentEntity.get('id'),
+        id: parentCommentEntity.get('id'),
         actor: usersOfParent.find((user) => user.id === parentCommentEntity.get('createdBy')),
         content: parentCommentEntity.get('content'),
         media: {
