@@ -1,6 +1,6 @@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { HttpService } from '@nestjs/axios';
 import { TrendingDto } from './dto/requests';
 import { SearchDto } from './dto/requests/search.dto';
@@ -11,7 +11,7 @@ import { SentryService } from '@app/sentry';
 
 @ApiTags('Giphy')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'giphy',
 })
 export class GiphyController {

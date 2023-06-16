@@ -1,5 +1,5 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import {
   BadRequestException,
   Body,
@@ -30,7 +30,7 @@ import { RecentSearchNotFoundException } from '../../exeption/recent-search-not-
 @ApiSecurity('authorization')
 @Controller({
   path: 'recent-searches',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class RecentSearchController {
   public constructor(

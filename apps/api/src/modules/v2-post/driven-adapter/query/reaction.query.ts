@@ -1,6 +1,6 @@
 import { InjectModel } from '@nestjs/sequelize';
-import { Inject, Logger } from '@nestjs/common';
-import sequelize, { Op } from 'sequelize';
+import { Inject } from '@nestjs/common';
+import { Op, Sequelize } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 import { getDatabaseConfig } from '../../../../config/database';
 import {
@@ -14,17 +14,21 @@ import { ReactionEntity } from '../../domain/model/reaction';
 import {
   GetReactionProps,
   IReactionQuery,
+  ReactionsCount,
 } from '../../domain/query-interface/reaction.query.interface';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { OrderEnum } from '../../../../common/dto';
 
 export class ReactionQuery implements IReactionQuery {
-  @Inject(REACTION_FACTORY_TOKEN) private readonly _reactionFactory: IReactionFactory;
-  private _logger = new Logger(ReactionQuery.name);
-  @InjectModel(PostReactionModel)
-  private readonly _postReactionModel: typeof PostReactionModel;
-  @InjectModel(CommentReactionModel)
-  private readonly _commentReactionModel: typeof CommentReactionModel;
+  public constructor(
+    @Inject(REACTION_FACTORY_TOKEN)
+    private readonly _reactionFactory: IReactionFactory,
+    @InjectModel(PostReactionModel)
+    private readonly _postReactionModel: typeof PostReactionModel,
+    @InjectModel(CommentReactionModel)
+    private readonly _commentReactionModel: typeof CommentReactionModel
+  ) {}
+
   public async getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>> {
     const { schema } = getDatabaseConfig();
     const { target, targetId, latestId, limit, order, reactionName } = input;
@@ -55,7 +59,7 @@ export class ReactionQuery implements IReactionQuery {
         [Op.not]: latestId,
       };
       conditions['createdAt'] = {
-        [symbol]: sequelize.literal(
+        [symbol]: Sequelize.literal(
           `(SELECT r.created_at FROM ${schema}.${executer.model.tableName} AS r WHERE id=${latestId})`
         ),
       };
@@ -74,5 +78,77 @@ export class ReactionQuery implements IReactionQuery {
       rows: result,
       total: count,
     };
+  }
+
+  public async getAndCountReactionByComments(
+    commentIds: string[]
+  ): Promise<Map<string, ReactionsCount>> {
+    const result = await this._commentReactionModel.findAll({
+      attributes: [
+        'commentId',
+        'reactionName',
+        [Sequelize.literal(`COUNT("id")`), 'total'],
+        [Sequelize.literal(`MIN("created_at")`), 'date'],
+      ],
+      where: {
+        commentId: commentIds,
+      },
+      group: ['commentId', `reactionName`],
+      order: [[Sequelize.literal('date'), OrderEnum.ASC]],
+    });
+
+    if (!result) return;
+
+    return new Map<string, ReactionsCount>(
+      commentIds.map((commentId) => {
+        return [
+          commentId,
+          result
+            .filter((i) => {
+              return i.commentId === commentId;
+            })
+            .map((item) => {
+              item = item.toJSON();
+              return { [item['reactionName']]: parseInt(item['total']) };
+            }),
+        ];
+      })
+    );
+  }
+
+  public async getAndCountReactionByContents(
+    contentIds: string[]
+  ): Promise<Map<string, ReactionsCount>> {
+    const result = await this._postReactionModel.findAll({
+      attributes: [
+        'postId',
+        'reactionName',
+        [Sequelize.literal(`COUNT("id")`), 'total'],
+        [Sequelize.literal(`MIN("created_at")`), 'date'],
+      ],
+      where: {
+        postId: contentIds,
+      },
+      group: ['postId', `reactionName`],
+      order: [[Sequelize.literal('date'), OrderEnum.ASC]],
+    });
+
+    if (!result) return new Map<string, ReactionsCount>();
+
+    return new Map<string, ReactionsCount>(
+      contentIds.map((contentId) => {
+        return [
+          contentId,
+          result
+            .filter((i) => {
+              return i.postId === contentId;
+            })
+            .map((item) => {
+              item = item.toJSON();
+              return { [item['reactionName']]: parseInt(item['total']) };
+            }),
+        ];
+      })
+    );
   }
 }

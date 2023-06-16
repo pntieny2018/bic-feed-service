@@ -70,3 +70,7 @@ export interface IDataPostToAdd {
 export interface IDataPostToUpdate extends IDataPostToAdd {
   lang: string;
 }
+
+export interface IDataPostToDelete {
+  id: string;
+}

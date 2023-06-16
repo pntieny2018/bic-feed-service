@@ -2,7 +2,7 @@ import { GetReactionPipe } from './pipes';
 import { AuthUser } from '../auth';
 import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/request';
 import { ReactionService } from './reaction.service';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { IPostReaction } from '../../database/models/post-reaction.model';
 import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { ICommentReaction } from '../../database/models/comment-reaction.model';
@@ -14,7 +14,7 @@ import { UserDto } from '../v2-user/application';
 @ApiSecurity('authorization')
 @Controller({
   path: 'reactions',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class ReactionController {
   private _logger = new Logger(ReactionController.name);

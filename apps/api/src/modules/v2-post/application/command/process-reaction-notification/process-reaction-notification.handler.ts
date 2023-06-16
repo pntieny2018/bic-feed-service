@@ -13,21 +13,12 @@ import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface/comment-reaction.repository.interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
-import { ReactionDuplicateException } from '../../../domain/exception/reaction-duplicate.exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
 import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
-import { ContentNoReactPermissionException } from '../../../domain/exception/content-no-react-permission.exception';
 import { KafkaService } from '@app/kafka';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
-import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
-import { ObjectHelper } from '../../../../../common/helpers';
-import { ReactionEntity } from '../../../domain/model/reaction';
 import { CommentEntity } from '../../../domain/model/comment';
 import {
   COMMENT_REPOSITORY_TOKEN,
@@ -53,7 +44,6 @@ import {
 } from '../../../domain/query-interface/reaction.query.interface';
 import { v4 } from 'uuid';
 import { TypeActivity, VerbActivity } from '../../../../../notification';
-import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 
 @CommandHandler(ProcessReactionNotificationCommand)
 export class ProcessReactionNotificationHandler

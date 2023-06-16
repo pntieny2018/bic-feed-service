@@ -9,16 +9,29 @@ import {
   UpdateStatusReportDto,
 } from './dto';
 import { ReportContentService } from './report-content.service';
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { UserDto } from '../v2-user/application';
 import { ResponseMessages } from '../../common/decorators';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { PostStatus } from '../../database/models/post.model';
+import { Request } from 'express';
+import { ReportStatus } from './contstants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 
 @ApiTags('Reports')
 @Controller({
   path: 'reports',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 @ApiSecurity('authorization')
 export class ReportContentController {
@@ -37,11 +50,7 @@ export class ReportContentController {
     @AuthUser() user: UserDto,
     @Query() getOptions: GetBlockedContentOfMeDto
   ): Promise<any> {
-    try {
-      return await this._reportContentService.getContentBlockedOfMe(user, getOptions);
-    } catch (ex) {
-      console.log(ex);
-    }
+    return await this._reportContentService.getContentBlockedOfMe(user, getOptions);
   }
 
   @ApiParam({
@@ -99,9 +108,15 @@ export class ReportContentController {
   @Patch('/status')
   public async updateStatus(
     @AuthUser() user: UserDto,
-    @Body() updateStatusReportDto: UpdateStatusReportDto
+    @Body() updateStatusReportDto: UpdateStatusReportDto,
+    @Req() req: Request
   ): Promise<boolean> {
-    // TODO check permission
+    if (updateStatusReportDto.status === ReportStatus.HID) {
+      req.message = 'message.report.hidden_success';
+    } else {
+      req.message = 'message.report.ignored_success';
+    }
+
     return this._reportContentService.updateStatusReport(user, updateStatusReportDto);
   }
 }

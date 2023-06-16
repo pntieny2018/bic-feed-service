@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { LogicException } from '../../common/exceptions';
-import { DEFAULT_APP_VERSION, HTTP_STATUS_ID, VERSION_HEADER_KEY } from '../../common/constants';
+import { VERSIONS_SUPPORTED, HTTP_STATUS_ID, VERSION_HEADER_KEY } from '../../common/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -25,9 +25,6 @@ export class AuthMiddleware implements NestMiddleware {
         throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
       }
       req.user = token ? await this._authService.login(token) : null;
-    }
-    if (!req.headers[VERSION_HEADER_KEY]) {
-      req.headers[VERSION_HEADER_KEY] = DEFAULT_APP_VERSION[0];
     }
 
     next();

@@ -44,7 +44,8 @@
     "no_create_permission": "Failed to create series: you don't have permission",
     "no_update_permission": "Failed to update series: you don't have permission",
     "no_delete_permission": "Failed to delete series: you don't have permission",
-    "no_read_permission": "You do not have permission to read this series"
+    "no_read_permission": "You do not have permission to read this series",
+    "required_cover": "You have not selected any cover"
   },
   "user": {
     "no_belong_group": "User are not a member of community/group"

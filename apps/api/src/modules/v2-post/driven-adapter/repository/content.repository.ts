@@ -1,10 +1,12 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize } from 'sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
+  GetPaginationContentsProps,
   IContentRepository,
+  OrderOptions,
 } from '../../domain/repositoty-interface';
 import { PostEntity } from '../../domain/model/content';
 import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
@@ -24,14 +26,23 @@ import {
 import { PostSeriesModel } from '../../../../database/models/post-series.model';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ContentEntity } from '../../domain/model/content/content.entity';
-import { TagModel } from '../../../../database/models/tag.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
+import { getDatabaseConfig } from '../../../../config/database';
+import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
+import { UserSavePostModel } from '../../../../database/models/user-save-post.model';
+import { PostReactionModel } from '../../../../database/models/post-reaction.model';
+import { CategoryModel } from '../../../../database/models/category.model';
+import { isBoolean } from 'lodash';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
+import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 
 export class ContentRepository implements IContentRepository {
+  public LIMIT_DEFAULT = 100;
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
   @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
   @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
@@ -56,7 +67,7 @@ export class ContentRepository implements IContentRepository {
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const model = await this._entityToModel(contentEntity);
+      const model = this._entityToModel(contentEntity);
       await this._postModel.create(model, {
         transaction,
       });
@@ -98,7 +109,7 @@ export class ContentRepository implements IContentRepository {
 
   private async _setGroups(postEntity: ContentEntity, transaction): Promise<void> {
     const state = postEntity.getState();
-    if (state.attachGroupIds.length > 0) {
+    if (state.attachGroupIds?.length > 0) {
       await this._postGroupModel.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
           postId: postEntity.getId(),
@@ -108,7 +119,7 @@ export class ContentRepository implements IContentRepository {
       );
     }
 
-    if (state.detachGroupIds.length > 0) {
+    if (state.detachGroupIds?.length > 0) {
       await this._postGroupModel.destroy({
         where: {
           postId: postEntity.getId(),
@@ -123,6 +134,8 @@ export class ContentRepository implements IContentRepository {
     return {
       id: postEntity.getId(),
       content: postEntity.get('content'),
+      title: postEntity.get('title'),
+      summary: postEntity.get('summary'),
       privacy: postEntity.get('privacy'),
       isHidden: postEntity.get('isHidden'),
       isReported: postEntity.get('isReported'),
@@ -140,15 +153,15 @@ export class ContentRepository implements IContentRepository {
         ? postEntity.get('linkPreview')?.get('id')
         : null,
       mediaJson: {
-        files: postEntity.get('media').files.map((file) => file.toObject()),
-        images: postEntity.get('media').images.map((image) => image.toObject()),
-        videos: postEntity.get('media').videos.map((video) => video.toObject()),
+        files: (postEntity.get('media')?.files || []).map((file) => file.toObject()),
+        images: (postEntity.get('media')?.images || []).map((image) => image.toObject()),
+        videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
       },
-      mentions: postEntity.get('mentionUserIds'),
-      cover: postEntity.get('cover'),
+      mentions: postEntity.get('mentionUserIds') || [],
+      coverJson: postEntity.get('cover')?.toObject(),
       videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || undefined,
-      linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
+      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
+      linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
       createdAt: postEntity.get('createdAt'),
     };
@@ -215,23 +228,23 @@ export class ContentRepository implements IContentRepository {
   public async findAll(
     findAllPostOptions: FindAllPostOptions
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const include = [];
-    if (findAllPostOptions.include) {
-      const { shouldIncludeGroup, mustIncludeGroup } = findAllPostOptions.include;
-      if (shouldIncludeGroup || mustIncludeGroup) {
-        include.push({
-          model: PostGroupModel,
-          as: 'groups',
-          required: !shouldIncludeGroup,
-          where: findAllPostOptions.where?.groupArchived
-            ? { isArchived: findAllPostOptions.where.groupArchived }
-            : {},
-        });
-      }
-    }
     const findOption = this._buildFindOptions(findAllPostOptions);
+    findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
+    findOption.order = this._getOrderContent(findAllPostOptions.order);
+    findOption.offset = findAllPostOptions.offset || 0;
+    findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
+  }
+
+  private _getOrderContent(orderOptions: OrderOptions): any {
+    if (!orderOptions) return undefined;
+    const order = [];
+    if (orderOptions.isImportantFirst) {
+      order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
+    }
+    order.push(['createdAt', 'desc']);
+    return order;
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {
@@ -259,48 +272,44 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
+    const { schema } = getDatabaseConfig();
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    const userSavePostTable = UserSavePostModel.tableName;
     const findOption: FindOptions<IPost> = {};
-    if (options.where) {
-      if (options.where['id'])
-        findOption.where = {
-          ...findOption.where,
-          id: options.where['id'],
-        };
-      if (options.where['ids']) {
-        findOption.where = {
-          ...findOption.where,
-          id: options.where['ids'],
-        };
-      }
-      if (options.where['type']) {
-        findOption.where = {
-          ...findOption.where,
-          type: options.where['type'],
-        };
-      }
-    }
+    findOption.where = this._getCondition(options).where;
+    const includeAttr = [];
+    const subSelect = [];
     if (options.include) {
       const {
         shouldIncludeSeries,
         shouldIncludeGroup,
         shouldIncludeLinkPreview,
+        shouldIncludeCategory,
+        shouldIncludeSaved,
+        shouldIncludeReaction,
+        shouldIncludeMarkReadImportant,
+        shouldIncludeImportant,
+        shouldIncludeItems,
         mustIncludeGroup,
       } = options.include;
-      findOption.include = [];
       if (shouldIncludeGroup || mustIncludeGroup) {
-        findOption.include.push({
+        includeAttr.push({
           model: PostGroupModel,
           as: 'groups',
           required: !shouldIncludeGroup,
-          where:
-            typeof options.where?.groupArchived !== undefined
-              ? { isArchived: options.where.groupArchived }
-              : {},
+          where: {
+            ...(isBoolean(options.where.groupArchived) && {
+              isArchived: options.where.groupArchived,
+            }),
+            ...((options.where?.groupId || options.where?.groupIds) && {
+              groupId: options.where?.groupId || options.where?.groupIds,
+            }),
+          },
         });
       }
 
       if (shouldIncludeSeries) {
-        findOption.include.push({
+        includeAttr.push({
           model: PostSeriesModel,
           as: 'postSeries',
           required: false,
@@ -308,24 +317,262 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
+      if (shouldIncludeItems) {
+        includeAttr.push({
+          model: PostSeriesModel,
+          as: 'itemIds',
+          required: false,
+          attributes: ['postId', 'zindex'],
+        });
+      }
+
       if (shouldIncludeLinkPreview) {
-        findOption.include.push({
+        includeAttr.push({
           model: LinkPreviewModel,
           as: 'linkPreview',
           required: false,
         });
       }
+      if (shouldIncludeReaction?.userId) {
+        includeAttr.push({
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: shouldIncludeReaction.userId,
+          },
+        });
+      }
+      if (shouldIncludeCategory) {
+        includeAttr.push({
+          model: CategoryModel,
+          as: 'categories',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        });
+      }
+
+      if (shouldIncludeSaved) {
+        if (shouldIncludeSaved.userId) {
+          subSelect.push([
+            Sequelize.literal(`(
+                  COALESCE((SELECT true FROM ${schema}.${userSavePostTable} as r
+                  WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
+                    shouldIncludeSaved.userId
+                  )}), false)
+              )`),
+            'isSaved',
+          ]);
+        } else {
+          subSelect.push([Sequelize.literal(`(false)`), 'isSaved']);
+        }
+      }
+
+      if (shouldIncludeMarkReadImportant) {
+        if (shouldIncludeMarkReadImportant.userId) {
+          subSelect.push([
+            Sequelize.literal(`(
+                  COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
+                  WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
+                    shouldIncludeMarkReadImportant.userId
+                  )}), false)
+              )`),
+            'markedReadPost',
+          ]);
+        } else {
+          subSelect.push([Sequelize.literal(`(false)`), 'markedReadPost']);
+        }
+      }
+
+      if (shouldIncludeImportant) {
+        if (shouldIncludeImportant.userId) {
+          subSelect.push([
+            Sequelize.literal(`(
+          CASE WHEN is_important = TRUE AND COALESCE((SELECT TRUE FROM ${schema}.${userMarkReadPostTable} as r
+          WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
+            shouldIncludeImportant.userId
+          )}), FALSE) = FALSE THEN 1 ELSE 0 END
+               )`),
+            'colImportant',
+          ]);
+        } else {
+          subSelect.push([Sequelize.literal(`"PostModel".is_important`), 'colImportant']);
+        }
+      }
     }
 
-    findOption.attributes = {
-      ...findOption.attributes,
-      ...options.attributes,
-    };
+    if (subSelect.length) {
+      findOption.attributes = {
+        include: [...subSelect],
+      };
+    }
+    if (includeAttr.length) findOption.include = includeAttr;
+    return findOption;
+  }
+
+  private _getCondition(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
+    const findOption: FindOptions<IPost> = {};
+    const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    const userSavePostTable = UserSavePostModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
+    if (options.where) {
+      const condition = [];
+      if (options.where['id'])
+        condition.push({
+          id: options.where['id'],
+        });
+      if (options.where['ids']) {
+        condition.push({
+          id: options.where['ids'],
+        });
+      }
+      if (options.where.type) {
+        condition.push({
+          type: options.where.type,
+        });
+      }
+
+      if (isBoolean(options.where.isImportant)) {
+        condition.push({
+          isImportant: options.where.isImportant,
+        });
+      }
+
+      if (options.where.status) {
+        condition.push({
+          status: options.where.status,
+        });
+      }
+
+      if (options.where.createdBy) {
+        condition.push({
+          createdBy: options.where.createdBy,
+        });
+      }
+
+      if (isBoolean(options.where.isHidden)) {
+        condition.push({
+          isHidden: options.where.isHidden,
+        });
+      }
+
+      if (options.where.excludeReportedByUserId) {
+        condition.push(
+          Sequelize.literal(
+            `NOT EXISTS ( 
+                      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+                        WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this._postModel.sequelize.escape(
+                          options.where.excludeReportedByUserId
+                        )}
+                    )`
+          )
+        );
+      }
+
+      if (options.where.savedByUserId) {
+        condition.push(
+          Sequelize.literal(
+            `EXISTS ( 
+                      SELECT sp.user_id FROM  ${schema}.${userSavePostTable} sp
+                        WHERE sp.post_id = "PostModel".id AND sp.user_id = ${this._postModel.sequelize.escape(
+                          options.where.savedByUserId
+                        )}
+                    )`
+          )
+        );
+      }
+      if (options.where.inNewsfeedUserId) {
+        condition.push(
+          Sequelize.literal(
+            `EXISTS ( 
+                      SELECT nf.user_id FROM  ${schema}.${UserNewsFeedModel.tableName} nf
+                        WHERE nf.post_id = "PostModel".id AND nf.user_id = ${this._postModel.sequelize.escape(
+                          options.where.inNewsfeedUserId
+                        )}
+                    )`
+          )
+        );
+      }
+      if (options.where.importantWithUserId) {
+        condition.push(
+          Sequelize.literal(
+            `"PostModel".is_important = TRUE AND NOT EXISTS ( 
+                      SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
+                        WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
+                          options.where.importantWithUserId
+                        )}
+                    )`
+          )
+        );
+      }
+      if (options.where.notImportantWithUserId) {
+        condition.push(
+          Sequelize.literal(
+            `("PostModel".is_important = FALSE OR EXISTS ( 
+                      SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
+                        WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
+                          options.where.notImportantWithUserId
+                        )}
+                    ))`
+          )
+        );
+      }
+      if (
+        (options.where?.groupId || options.where?.groupIds) &&
+        !options.include?.shouldIncludeGroup &&
+        !options.include?.mustIncludeGroup
+      ) {
+        let groupConditions = '';
+        if (options.where.groupId) {
+          groupConditions = `AND g.group_id = ${this._postModel.sequelize.escape(
+            options.where.groupId
+          )}`;
+        } else if (options.where.groupIds?.length) {
+          groupConditions = `AND g.group_id IN (${options.where.groupIds
+            .map((groupId) => this._postModel.sequelize.escape(groupId))
+            .join(', ')})`;
+        }
+        condition.push(
+          Sequelize.literal(
+            `EXISTS ( 
+                      SELECT g.group_id FROM  ${schema}.${postGroupTable} g
+                        WHERE g.post_id = "PostModel".id ${groupConditions}
+                      )`
+          )
+        );
+      }
+
+      if (
+        isBoolean(options.where.groupArchived) &&
+        !options.include?.shouldIncludeGroup &&
+        !options.include?.mustIncludeGroup
+      ) {
+        condition.push(
+          Sequelize.literal(
+            `EXISTS (
+                      SELECT g.group_id FROM  ${schema}.${postGroupTable} g
+                        WHERE g.post_id = "PostModel".id  AND g.is_archived = ${options.where.groupArchived})`
+          )
+        );
+      }
+
+      if (condition.length) {
+        findOption.where = {
+          [Op.and]: condition,
+        };
+      }
+    }
+
     return findOption;
   }
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
+    post = post.toJSON();
     if (post.type === PostType.POST) {
       return this._modelToPostEntity(post);
     } else if (post.type === PostType.SERIES) {
@@ -375,6 +622,14 @@ export class ContentRepository implements IContentRepository {
       },
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
       videoIdProcessing: post.videoIdProcessing,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: post.ownerReactions
+        ? post.ownerReactions.map((item) => ({
+            id: item.id,
+            reactionName: item.reactionName,
+          }))
+        : undefined,
     });
   }
 
@@ -382,6 +637,7 @@ export class ContentRepository implements IContentRepository {
     if (post === null) return null;
     return this._articleFactory.reconstitute({
       id: post.id,
+      content: post.content,
       isReported: post.isReported,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
@@ -405,13 +661,25 @@ export class ContentRepository implements IContentRepository {
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      tags: post.tagsJson,
-      cover: new ImageEntity(post.coverJson),
+      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+      },
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       wordCount: post.wordCount,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: post.ownerReactions
+        ? post.ownerReactions.map((item) => ({
+            id: item.id,
+            reactionName: item.reactionName,
+          }))
+        : undefined,
     });
   }
 
-  private _modelToSeriesEntity(post: PostModel): SeriesEntity {
+  private _modelToSeriesEntity(post: IPost): SeriesEntity {
     if (post === null) return null;
     return this._seriesFactory.reconstitute({
       id: post.id,
@@ -436,14 +704,35 @@ export class ContentRepository implements IContentRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       groupIds: post.groups?.map((group) => group.groupId),
-      cover: new ImageEntity(post.coverJson),
-      items: post.items?.map((item) => {
-        if (item.type === PostType.ARTICLE) {
-          return this._modelToArticleEntity(item);
-        } else if (item.type === PostType.POST) {
-          return this._modelToPostEntity(item);
-        }
-      }),
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      itemIds:
+        post.itemIds
+          ?.sort((a, b) => {
+            return a.zindex - b.zindex;
+          })
+          .map((item) => item.postId) || [],
     });
+  }
+
+  public async getPagination(
+    getPaginationContentsProps: GetPaginationContentsProps
+  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
+    const { after, before, limit } = getPaginationContentsProps;
+    const findOption = this._buildFindOptions(getPaginationContentsProps);
+    findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
+    const paginator = new CursorPaginator(
+      this._postModel,
+      ['createdAt'],
+      { before, after, limit },
+      OrderEnum.DESC
+    );
+    const { rows, meta } = await paginator.paginate(findOption);
+
+    return {
+      rows: rows.map((row) => this._modelToEntity(row)),
+      meta,
+    };
   }
 }

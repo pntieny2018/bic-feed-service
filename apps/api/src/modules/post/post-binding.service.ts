@@ -271,8 +271,12 @@ export class PostBindingService {
         if (attributes.includes('wordCount')) {
           post.wordCount = findPost?.wordCount || 0;
         }
-        if (attributes.includes('totalUsersSeen'))
+        if (attributes.includes('totalUsersSeen')) {
           post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+        }
+        if (attributes.includes('wordCount')) {
+          post.wordCount = findPost?.wordCount || 0;
+        }
         if (attributes.includes('setting')) {
           post.setting = {
             importantExpiredAt: findPost.importantExpiredAt,

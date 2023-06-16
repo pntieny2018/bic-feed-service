@@ -21,6 +21,8 @@ export const ERRORS = {
     CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
     CONTENT_ACCESS_DENIED: 'content.access_denied',
     CONTENT_NO_COMMENT_PERMISSION: 'content.no_comment_permission',
+    CONTENT_NO_CRUD_PERMISSION_AT_GROUP: 'content.no_crud_permission_at_group',
+    CONTENT_NO_EDIT_SETTING_PERMISSION_AT_GROUP: 'content.no_edit_setting_permission_at_group',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
@@ -44,6 +46,7 @@ export const ERRORS = {
     SERIES_NO_UPDATE_PERMISSION: 'series.no_update_permission',
     SERIES_NO_CREATE_PERMISSION: 'series.no_create_permission',
     SERIES_NO_READ_PERMISSION: 'series.no_read_permission',
+    SERIRES_REQUIRED_COVER: 'series.required_cover',
   },
   MENTION: {
     USER_NOT_FOUND: 'mention.user_not_found',
@@ -72,4 +75,5 @@ export const ERRORS = {
   DATABASE_ERROR: 'database_error',
   DOMAIN_MODEL_VALIDATION: 'domain_model_validation',
   INTERNAL_SERVER_ERROR: 'api.internal_server_error',
+  CURSOR_PARAMS_INVALID: 'cursor_params_invalid',
 };

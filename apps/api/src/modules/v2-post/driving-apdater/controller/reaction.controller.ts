@@ -17,13 +17,13 @@ import {
 } from '../dto/request';
 import { ReactionListDto } from '../../application/dto';
 import { ReactionDto } from '../../../reaction/dto/reaction.dto';
-import { DEFAULT_APP_VERSION } from '../../../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
 @Controller({
   path: 'reactions',
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
 })
 export class ReactionController {
   public constructor(

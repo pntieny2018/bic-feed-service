@@ -1,5 +1,5 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { v4, validate as isUUID } from 'uuid';
+import { validate as isUUID } from 'uuid';
 import { emoji } from 'node-emoji';
 import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
@@ -20,7 +20,7 @@ export class ReactionEntity extends DomainAggregateRoot<ReactionProps> {
     if (!isUUID(this._props.id)) {
       throw new Error('Reaction ID is not UUID');
     }
-    if (!isUUID(this._props.targetId)) {
+    if (this._props.targetId && !isUUID(this._props.targetId)) {
       throw new Error('Target ID is not UUID');
     }
     if (!isUUID(this._props.createdBy)) {
