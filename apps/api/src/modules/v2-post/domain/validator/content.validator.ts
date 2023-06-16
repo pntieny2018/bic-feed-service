@@ -121,17 +121,13 @@ export class ContentValidator implements IContentValidator {
     const postType = contentEntity.get('type');
     const state = contentEntity.getState();
     const { detachGroupIds } = state;
-    const setting = contentEntity.get('setting');
-    const enableSetting =
-      (setting && setting.isImportant) ||
-      setting.canComment === false ||
-      setting.canReact === false;
+    const isEnableSetting = contentEntity.isEnableSetting();
 
     await this.checkCanCRUDContent(userAuth, groupIds, postType);
 
     if (detachGroupIds?.length) await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
 
-    if (enableSetting) await this.checkCanEditContentSetting(userAuth, groupIds);
+    if (isEnableSetting) await this.checkCanEditContentSetting(userAuth, groupIds);
   }
 
   public async validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void> {

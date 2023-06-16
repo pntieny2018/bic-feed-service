@@ -68,6 +68,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   public async update(input: UpdateSeriesProps): Promise<void> {
     const { seriesEntity, groups, newData } = input;
     const { actor, groupIds, coverMedia } = newData;
+    const isEnableSetting = seriesEntity.isEnableSetting();
 
     if (coverMedia) {
       const images = await this._mediaDomainService.getAvailableImages(
@@ -103,6 +104,7 @@ export class SeriesDomainService implements ISeriesDomainService {
           seriesEntity.get('type')
         );
       }
+      if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
     seriesEntity.updateAttribute(newData);

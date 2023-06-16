@@ -234,4 +234,11 @@ export class ContentEntity<
   public allowReact(): boolean {
     return this._props.setting.canReact;
   }
+
+  public isEnableSetting(): boolean {
+    const setting = this._props.setting;
+    return (
+      setting && (setting.isImportant || setting.canComment === false || setting.canReact === false)
+    );
+  }
 }
