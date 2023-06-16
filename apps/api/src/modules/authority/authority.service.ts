@@ -95,6 +95,31 @@ export class AuthorityService {
     }
   }
 
+  public async checkCanEditSetting(user: UserDto, groupAudienceIds: string[]): Promise<void> {
+    const notEditSettingInGroups: GroupDto[] = [];
+    const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
+    const ability = await this._buildAbility(user);
+    for (const group of groups) {
+      const canEditPostSetting = ability.can(
+        PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
+        subject(SUBJECT.GROUP, { id: group.id })
+      );
+      if (!canEditPostSetting) {
+        notEditSettingInGroups.push(group);
+      }
+    }
+
+    if (notEditSettingInGroups.length > 0) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have ${permissionToCommonName(
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
+        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
+      });
+    }
+  }
+
   public async checkCanCreatePost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);

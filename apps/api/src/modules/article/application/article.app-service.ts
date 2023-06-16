@@ -225,12 +225,18 @@ export class ArticleAppService {
       if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
+      const setting = articleBefore.setting;
+      const isEnableSetting =
+        setting &&
+        (setting.isImportant || setting.canComment === false || setting.canReact === false);
+
       const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
       await this._authorityService.checkCanUpdatePost(user, oldGroupIds);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
         await this._authorityService.checkCanCreatePost(user, newAudienceIds);
+        if (isEnableSetting) await this._authorityService.checkCanEditSetting(user, newAudienceIds);
       }
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
