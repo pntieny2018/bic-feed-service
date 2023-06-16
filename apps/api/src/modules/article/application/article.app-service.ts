@@ -32,7 +32,6 @@ import { PostHelper } from '../../post/post.helper';
 import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
-import { isEmpty } from 'lodash';
 import { ReactionService } from '../../reaction';
 
 @Injectable()
@@ -263,7 +262,7 @@ export class ArticleAppService {
   private async _preCheck(article: ArticleResponseDto, user: UserDto): Promise<void> {
     await this._authorityService.checkPostOwner(article, user.id);
 
-    const { audience, setting } = article;
+    const { audience } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     if (article.coverMedia === null) throw new BadRequestException('Cover is required');
     const groupIds = audience.groups.map((group) => group.id);
