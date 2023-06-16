@@ -80,6 +80,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       postEntity.increaseTotalSeen();
     }
 
+    if (postEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(postEntity, authUser.id);
+      postEntity.setMarkReadImportant();
+    }
+
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
       actor: new UserDto(authUser),
