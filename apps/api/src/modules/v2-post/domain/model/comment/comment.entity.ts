@@ -1,9 +1,10 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
+import { NIL, validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
 import { isEmpty } from 'lodash';
+import { ReactionEntity } from '../reaction';
 
 export type CommentProps = {
   id: string;
@@ -25,6 +26,7 @@ export type CommentProps = {
   totalReply?: number;
   childs?: CommentEntity[];
   mentions?: string[];
+  ownerReactions?: ReactionEntity[];
 };
 
 export class CommentEntity extends DomainAggregateRoot<CommentProps> {
@@ -77,5 +79,9 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
       isEmpty(this._props.media.images) &&
       isEmpty(this._props.mentions)
     );
+  }
+
+  public isChildComment(): boolean {
+    return this._props.parentId !== NIL;
   }
 }

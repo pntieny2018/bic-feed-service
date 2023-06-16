@@ -1,18 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PostType } from '../../data-type';
 import {
-  IContentRepository,
-  ITagRepository,
   CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IMediaRepository,
+  ITagRepository,
+  MEDIA_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import { IPostValidator } from './interface';
 import { ContentValidator } from './content.validator';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../../../v2-group/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
@@ -24,10 +21,6 @@ import {
   UserDto,
 } from '../../../v2-user/application';
 import { ContentEmptyException } from '../exception/content-empty.exception';
-import { TagSeriesInvalidException } from '../exception/tag-series-invalid.exception';
-import { TagEntity } from '../model/tag';
-import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
-import { SeriesEntity } from '../model/content/series.entity';
 
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
@@ -39,62 +32,13 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    protected readonly _contentRepository: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
     @Inject(MEDIA_REPOSITORY_TOKEN)
     private readonly _mediaRepo: IMediaRepository
   ) {
-    super(_groupAppService, _userApplicationService, _authorityAppService);
-  }
-
-  public async validateSeriesAndTags(
-    groups: GroupDto[] = [],
-    seriesIds: string[],
-    tags: TagEntity[]
-  ): Promise<void> {
-    const seriesTagErrorData = {
-      seriesIds: [],
-      tagIds: [],
-      seriesNames: [],
-      tagNames: [],
-    };
-    if (seriesIds?.length) {
-      const groupIds = groups.map((e) => e.id);
-      const series = await this._contentRepository.findAll({
-        attributes: ['id', 'title'],
-        include: {
-          mustIncludeGroup: true,
-        },
-        where: {
-          ids: seriesIds,
-          type: PostType.SERIES,
-          groupArchived: false,
-        },
-      });
-      series.forEach((item: SeriesEntity) => {
-        const isValid = item.get('groupIds').some((groupId) => groupIds.includes(groupId));
-        if (!isValid) {
-          seriesTagErrorData.seriesIds.push(item.get('id'));
-          seriesTagErrorData.seriesNames.push(item.get('title'));
-        }
-      });
-    }
-
-    if (tags?.length) {
-      const rootGroupIds = groups.map((e) => e.rootGroupId);
-      const invalidTags = tags.filter((tag) => !rootGroupIds.includes(tag.get('groupId')));
-      if (invalidTags) {
-        invalidTags.forEach((e) => {
-          seriesTagErrorData.tagIds.push(e.get('id'));
-          seriesTagErrorData.tagNames.push(e.get('name'));
-        });
-      }
-    }
-
-    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
-      throw new TagSeriesInvalidException(seriesTagErrorData);
-    }
+    super(_groupAppService, _userApplicationService, _authorityAppService, _contentRepository);
   }
 
   public async validatePublishContent(

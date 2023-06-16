@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
@@ -14,7 +14,7 @@ import { UserDto } from '../v2-user/application';
 @ApiSecurity('authorization')
 @ApiTags('Admin')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'admin',
 })
 export class AdminController {

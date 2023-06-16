@@ -9,9 +9,10 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_APP_VERSION } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
@@ -27,13 +28,15 @@ import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
-import { ContentRequireGroupException } from '../v2-post/domain/exception/content-require-group.exception';
-import { SeriesNoReadPermissionException } from '../v2-post/domain/exception/series-no-read-permission.exception';
+import {
+  ContentRequireGroupException,
+  SeriesNoReadPermissionException,
+} from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
 @Controller({
-  version: DEFAULT_APP_VERSION,
+  version: VERSIONS_SUPPORTED,
   path: 'series',
 })
 export class SeriesController {
@@ -56,6 +59,7 @@ export class SeriesController {
     type: SeriesResponseDto,
   })
   @Get('/:id')
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
@@ -86,6 +90,7 @@ export class SeriesController {
   })
   @Post('/')
   @InjectUserToBody()
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public async create(
     @AuthUser() user: UserDto,
     @Body() createSeriesDto: CreateSeriesDto
@@ -102,6 +107,7 @@ export class SeriesController {
     success: 'message.series.updated_success',
   })
   @Put('/:id')
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
@@ -119,6 +125,7 @@ export class SeriesController {
   @ResponseMessages({
     success: 'message.series.deleted_success',
   })
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @Delete('/:id')
   public async delete(
     @AuthUser() user: UserDto,
