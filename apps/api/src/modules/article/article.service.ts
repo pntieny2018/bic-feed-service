@@ -18,7 +18,6 @@ import { LogicException } from '../../common/exceptions';
 import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
@@ -32,12 +31,7 @@ import { PostService } from '../post/post.service';
 import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
-import {
-  CreateArticleDto,
-  GetArticleDto,
-  GetListArticlesDto,
-  UpdateArticleDto,
-} from './dto/requests';
+import { CreateArticleDto, GetArticleDto, UpdateArticleDto } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
