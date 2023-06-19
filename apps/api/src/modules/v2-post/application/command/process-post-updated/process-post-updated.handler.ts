@@ -88,31 +88,29 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     });
     let oldActivity = undefined;
 
-    if (state === 'update') {
-      const mentionUsers = await this._userApplicationService.findAllByIds(before.mentionUserIds);
-      const mentions = this._contentBinding.mapMentionWithUserInfo(mentionUsers);
-      const oldGroups = await this._groupApplicationService.findAllByIds(before.groupIds);
-      oldActivity = this._postActivityService.createPayload({
-        id: after.id,
-        title: null,
-        content: after.content,
-        contentType: after.type,
-        setting: after.setting,
-        audience: {
-          groups: oldGroups,
-        },
-        mentions: mentions as any,
-        actor: after.actor,
-        createdAt: after.createdAt,
-      });
-    }
+    const oldMentionUsers = await this._userApplicationService.findAllByIds(before.mentionUserIds);
+    const oldMentions = this._contentBinding.mapMentionWithUserInfo(oldMentionUsers);
+    const oldGroups = await this._groupApplicationService.findAllByIds(before.groupIds);
+    oldActivity = this._postActivityService.createPayload({
+      id: before.id,
+      title: null,
+      content: before.content,
+      contentType: before.type,
+      setting: before.setting,
+      audience: {
+        groups: oldGroups,
+      },
+      mentions: oldMentions as any,
+      actor: before.actor,
+      createdAt: before.createdAt,
+    });
     await this._notificationService.publishPostNotification({
       key: after.id,
       value: {
         actor: {
           id: after.actor.id,
         },
-        event: state === 'update' ? PostHasBeenPublished : PostHasBeenUpdated,
+        event: PostHasBeenUpdated,
         data: updatedActivity,
         meta: {
           post: {
