@@ -43,7 +43,7 @@ export class UserRepository implements IUserRepository {
       if (!userWithGroups) {
         const response = await lastValueFrom(
           this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.GET_USER, {
               username: username,
             })
           )
@@ -85,7 +85,7 @@ export class UserRepository implements IUserRepository {
       try {
         const response = await lastValueFrom(
           this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.USERS_PATH, {
               ids: id,
             })
           )
@@ -115,7 +115,7 @@ export class UserRepository implements IUserRepository {
       if (notFoundUserIds.length > 0) {
         const response = await lastValueFrom(
           this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.USERS_PATH, {
               ids: notFoundUserIds.join(','),
             })
           )
@@ -152,7 +152,7 @@ export class UserRepository implements IUserRepository {
     try {
       const response = await lastValueFrom(
         this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.CHECK_CUD_TAG, {
             userId,
             rootGroupId,
           })

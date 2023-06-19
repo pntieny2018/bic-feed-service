@@ -29,9 +29,9 @@ const application = [
       useFactory: (configService: ConfigService) => {
         const axiosConfig = configService.get<IAxiosConfig>('axios');
         return {
-          baseURL: axiosConfig.group.baseUrl,
-          maxRedirects: axiosConfig.group.maxRedirects,
-          timeout: axiosConfig.group.timeout,
+          baseURL: axiosConfig.user.baseUrl,
+          maxRedirects: axiosConfig.user.maxRedirects,
+          timeout: axiosConfig.user.timeout,
         };
       },
     }),
