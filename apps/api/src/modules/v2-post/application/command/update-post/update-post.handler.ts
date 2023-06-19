@@ -23,7 +23,7 @@ import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { MediaService } from '../../../../media';
-import { clone } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
 
@@ -64,7 +64,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       throw new ContentNotFoundException();
     }
 
-    const postEntityBefore = clone(postEntity);
+    const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
       groupIds || postEntity.get('groupIds')
     );
