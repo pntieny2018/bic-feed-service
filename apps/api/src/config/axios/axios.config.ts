@@ -6,6 +6,11 @@ export const getAxiosConfig = (): IAxiosConfig => ({
     maxRedirects: 5,
     timeout: 10000,
   },
+  user: {
+    baseUrl: process.env.BE_USER_API_ENDPOINT,
+    maxRedirects: 5,
+    timeout: 10000,
+  },
   upload: {
     baseUrl: process.env.UPLOAD_ENDPOINT,
     maxRedirects: 5,
