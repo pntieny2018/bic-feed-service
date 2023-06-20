@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner } from 'nest-commander';
 import { PostModel, PostType } from '../database/models/post.model';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
@@ -32,13 +33,14 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
   };
 
   public async run(): Promise<any> {
+    const { schema } = getDatabaseConfig();
     try {
       const posts = await this._postModel.findAll({
         where: {
           [Op.or]: [
             {
               content: {
-                [Op.like]: `%"url":"data:%`,
+                [Op.like]: `%"url": "data:%`,
               },
             },
             {
@@ -83,10 +85,17 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
             MigrateArticlesContainErrorImageCommand.overrideUrl
           )
         );
-        await post.update({ content: JSON.stringify(newContent) });
+        await this._postModel.sequelize.query(
+          `UPDATE ${schema}.posts SET old_content = content, content = :content WHERE id = :postId`,
+          {
+            replacements: {
+              postId: post.id,
+              content: JSON.stringify(newContent),
+            },
+          }
+        );
       }
-
-      this._logger.log(`Updated ${posts.length} articles`);
+      this._logger.log(`Updated and backup ${posts.length} articles`);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
     }
