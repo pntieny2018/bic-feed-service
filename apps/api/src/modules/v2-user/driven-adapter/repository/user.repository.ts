@@ -1,3 +1,4 @@
+import qs from 'qs';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
 import { UserBadge, UserEntity } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
@@ -87,11 +88,12 @@ export class UserRepository implements IUserRepository {
     if (!user) {
       try {
         const response = await lastValueFrom(
-          this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.USERS_PATH, {
-              ids: id,
-            })
-          )
+          this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+            params: {
+              ids: [id],
+            },
+            paramsSerializer: (params) => qs.stringify(params),
+          })
         );
         if (response.status === HttpStatus.OK) {
           user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
@@ -117,11 +119,12 @@ export class UserRepository implements IUserRepository {
     try {
       if (notFoundUserIds.length > 0) {
         const response = await lastValueFrom(
-          this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.USERS_PATH, {
-              ids: notFoundUserIds.join(','),
-            })
-          )
+          this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+            params: {
+              ids: notFoundUserIds,
+            },
+            paramsSerializer: (params) => qs.stringify(params),
+          })
         );
         if (response.status === HttpStatus.OK) {
           users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
