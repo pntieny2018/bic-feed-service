@@ -35,12 +35,22 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
     try {
       const posts = await this._postModel.findAll({
         where: {
-          content: {
-            [Op.like]: `%"url": "data:%`,
-          },
+          [Op.or]: [
+            {
+              content: {
+                [Op.like]: `%"url":"data:%`,
+              },
+            },
+            {
+              content: {
+                [Op.like]: `%"url":"data:%`,
+              },
+            },
+          ],
           type: PostType.ARTICLE,
         },
       });
+
       if (!posts || posts.length === 0) {
         this._logger.log(`Not found error articles`);
         return;
@@ -75,6 +85,7 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
         );
         await post.update({ content: JSON.stringify(newContent) });
       }
+
       this._logger.log(`Updated ${posts.length} articles`);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
