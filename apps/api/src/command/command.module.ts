@@ -36,6 +36,7 @@ import { MigrateLinkPreviewCommand } from './migrate-link-preview.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigrateWordCountCommand } from './migrate-word-count.command';
+import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { MigrateWordCountCommand } from './migrate-word-count.command';
     MigratePostMentionsCommand,
     MigrateWordCountCommand,
     FixCommentRepliesCountCommand,
+    MigrateArticlesContainErrorImageCommand,
   ],
 })
 export class CommandModule {}
