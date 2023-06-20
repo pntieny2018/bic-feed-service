@@ -1,11 +1,14 @@
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { getDatabaseConfig } from '../config/database';
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import { PostModel, PostType } from '../database/models/post.model';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
 
+interface ICommandOptions {
+  rollback: boolean;
+}
 @Command({
   name: 'migrate:articles-contain-error-image',
   description: 'Migrate the articles contain the error image (base64)',
@@ -32,7 +35,57 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
     return node;
   };
 
-  public async run(): Promise<any> {
+  @Option({
+    flags: '-r, --rollback [boolean]',
+  })
+  public async run(params: string[], options?: ICommandOptions): Promise<any> {
+    if (Boolean(options.rollback)) await this.rollBack();
+    else await this.migrateContent();
+    process.exit();
+  }
+
+  public async rollBack(): Promise<any> {
+    try {
+      const { schema } = getDatabaseConfig();
+      const rollBackPosts = await this._postModel.sequelize.query(
+        `
+        SELECT
+          "id"
+        FROM
+          ${schema}."posts" AS "PostModel"
+        WHERE ("PostModel"."deleted_at" IS NULL
+          AND(("PostModel"."old_content" LIKE :optionRaw
+            OR "PostModel"."old_content" LIKE :optionFormat)
+          AND "PostModel"."type" = 'ARTICLE'))`,
+        {
+          replacements: {
+            optionRaw: '%"url":"data:%',
+            optionFormat: '%"url":" data:%',
+          },
+          type: QueryTypes.SELECT,
+        }
+      );
+      if (rollBackPosts) {
+        const postIds = rollBackPosts.map((post) => post['id']);
+        await this._postModel.sequelize.query(
+          `UPDATE ${schema}.posts SET content = old_content WHERE id IN (:ids)`,
+          {
+            replacements: {
+              ids: postIds,
+            },
+            type: QueryTypes.UPDATE,
+          }
+        );
+        this._logger.log(`Rollback ${postIds.length} articles`);
+      } else {
+        this._logger.log(`Not found data to rollback`);
+      }
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+    }
+  }
+
+  public async migrateContent(): Promise<any> {
     const { schema } = getDatabaseConfig();
     try {
       const posts = await this._postModel.findAll({
@@ -92,6 +145,7 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
               postId: post.id,
               content: JSON.stringify(newContent),
             },
+            type: QueryTypes.UPDATE,
           }
         );
       }
@@ -99,7 +153,6 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
     }
-    process.exit();
   }
 
   private _recurseChildren(children: any, func: any): any {
