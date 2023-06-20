@@ -83,7 +83,6 @@ import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-cont
     MigrateCommentMentionsCommand,
     MigratePostMentionsCommand,
     MigrateWordCountCommand,
-    FixCommentRepliesCountCommand,
     MigrateArticlesContainErrorImageCommand,
   ],
 })
