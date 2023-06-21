@@ -7,29 +7,36 @@ import { ImageDto } from '../image.dto';
 import { VideoDto } from '../video.dto';
 import { PostStatus } from '../../../data-type/post-status.enum';
 
-export class PostMessagePayload {
+export class ArticleMessagePayload {
   public id: string;
   public actor: UserDto;
   public setting: PostSettingDto;
   public type: PostType;
   public groupIds: string[];
-  public communityIds: string[];
-  public tags: TagDto[];
-  public media: {
+  public communityIds?: string[];
+  public media?: {
     files: FileDto[];
     images: ImageDto[];
     videos: VideoDto[];
   };
+  public categories?: {
+    id: string;
+    name: string;
+  }[];
+  public coverMedia?: ImageDto;
+  public tags: TagDto[];
   public seriesIds: string[];
   public content: string;
-  public mentionUserIds: string[];
-  public createdAt: Date;
-  public updatedAt: Date;
+  public title: string;
+  public summary: string;
   public lang: string;
   public isHidden: boolean;
   public status: PostStatus;
+  public createdAt: Date;
+  public updatedAt: Date;
+  public publishedAt: Date;
 
-  public constructor(data: Partial<PostMessagePayload>) {
+  public constructor(data: Partial<ArticleMessagePayload>) {
     Object.assign(this, data);
   }
 }

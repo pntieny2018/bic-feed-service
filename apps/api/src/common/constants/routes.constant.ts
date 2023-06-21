@@ -42,4 +42,18 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
+  ARTICLE: {
+    CREATE: {
+      PATH: '/articles',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_4_0),
+    },
+    GET_DETAIL: {
+      PATH: '/articles/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_4_0),
+    },
+    DELETE: {
+      PATH: '/articles/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+  },
 };
