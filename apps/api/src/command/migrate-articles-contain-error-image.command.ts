@@ -76,7 +76,7 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
             type: QueryTypes.UPDATE,
           }
         );
-        this._logger.log(`Rollback ${postIds.length} articles`);
+        this._logger.log(`Rollback ${postIds.length} articles have id (${postIds.join(', ')})`);
       } else {
         this._logger.log(`Not found data to rollback`);
       }
