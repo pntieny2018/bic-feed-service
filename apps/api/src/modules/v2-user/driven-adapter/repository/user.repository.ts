@@ -1,3 +1,4 @@
+import qs from 'qs';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
 import { UserBadge, UserEntity } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
@@ -7,6 +8,8 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 import { RedisService } from '@app/redis';
+import { ConfigService } from '@nestjs/config';
+import { IAxiosConfig } from '../../../../config/axios';
 
 type Permission = {
   communities: Record<string, string[]>;
@@ -33,7 +36,8 @@ export class UserRepository implements IUserRepository {
 
   public constructor(
     private readonly _httpService: HttpService,
-    private readonly _store: RedisService
+    private readonly _store: RedisService,
+    private readonly _configService: ConfigService
   ) {}
 
   public async findByUserName(username: string): Promise<UserEntity> {
@@ -43,7 +47,7 @@ export class UserRepository implements IUserRepository {
       if (!userWithGroups) {
         const response = await lastValueFrom(
           this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.GET_USER, {
               username: username,
             })
           )
@@ -84,11 +88,12 @@ export class UserRepository implements IUserRepository {
     if (!user) {
       try {
         const response = await lastValueFrom(
-          this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
-              ids: id,
-            })
-          )
+          this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+            params: {
+              ids: [id],
+            },
+            paramsSerializer: (params) => qs.stringify(params),
+          })
         );
         if (response.status === HttpStatus.OK) {
           user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
@@ -114,11 +119,12 @@ export class UserRepository implements IUserRepository {
     try {
       if (notFoundUserIds.length > 0) {
         const response = await lastValueFrom(
-          this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
-              ids: notFoundUserIds.join(','),
-            })
-          )
+          this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+            params: {
+              ids: notFoundUserIds,
+            },
+            paramsSerializer: (params) => qs.stringify(params),
+          })
         );
         if (response.status === HttpStatus.OK) {
           users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
@@ -148,14 +154,19 @@ export class UserRepository implements IUserRepository {
     };
   }
 
+  /**
+   * Note: Need to override domain to group endpoint. Change domain to user service soon
+   */
   public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
+    const axiosConfig = this._configService.get<IAxiosConfig>('axios');
     try {
       const response = await lastValueFrom(
         this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.CHECK_CUD_TAG, {
             userId,
             rootGroupId,
-          })
+          }),
+          { baseURL: axiosConfig.group.baseUrl }
         )
       );
       return AxiosHelper.getDataResponse<boolean>(response);

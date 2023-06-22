@@ -24,7 +24,6 @@ export class KafkaService {
     const headers = {
       requestId: this._clsService.getId() ?? v4(),
     };
-
     const message = hasKey
       ? {
           key: payload['key'],

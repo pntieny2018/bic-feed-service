@@ -48,7 +48,7 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
-
+import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
 export const postProvider = [
   {
     provide: CONTENT_VALIDATOR_TOKEN,

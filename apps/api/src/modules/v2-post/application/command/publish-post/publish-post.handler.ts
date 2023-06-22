@@ -22,6 +22,8 @@ import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { clone } from 'lodash';
+import { MediaService } from '../../../../media';
+import { cloneDeep } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
 
@@ -58,7 +60,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       throw new ContentNotFoundException();
     }
 
-    const postEntityBefore = clone(postEntity);
+    const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
       groupIds || postEntity.get('groupIds')
     );
@@ -75,11 +77,10 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       },
     });
 
-    if (postEntity.getState().isChangeStatus) {
+    if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
       await this._postDomainService.markSeen(postEntity, authUser.id);
       postEntity.increaseTotalSeen();
     }
-
     if (postEntity.isImportant()) {
       await this._postDomainService.markReadImportant(postEntity, authUser.id);
       postEntity.setMarkReadImportant();
@@ -90,7 +91,6 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       actor: new UserDto(authUser),
       mentionUsers,
     });
-
     this._sendEvent(postEntityBefore, postEntity, result);
 
     return result;
@@ -152,7 +152,6 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
           updatedAt: postEntityAfter.get('updatedAt'),
         },
       };
-
       this._kafkaService.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
         key: postEntityAfter.getId(),
         value: new PostChangedMessagePayload(payload),
