@@ -68,6 +68,7 @@ export const ERRORS = {
   },
   IMAGE_RESOURCE_INVALID: 'image_resource_invalid',
   TAG_SERIES_INVALID: 'tag_series_invalid',
+  CATEGORY_INVALID: 'category_invalid',
 
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',
