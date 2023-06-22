@@ -32,7 +32,7 @@ interface ICommandOptions {
   updateIndex: boolean;
 }
 
-//npx ts-node -r tsconfig-paths/register src/command/cli.ts es:index-post --update-index --old-index=8-12-2022
+//npx ts-node -r tsconfig-paths/register apps/api/src/command/cli.ts es:index-post --update-index --old-index=8-12-2022
 //node dist/src/command/cli.js es:index-post --update-index --old-index=001
 @Command({ name: 'es:index-post', description: 'Reindex post in elasticsearch' })
 export class IndexPostCommand implements CommandRunner {
