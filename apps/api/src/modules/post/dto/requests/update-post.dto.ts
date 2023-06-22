@@ -5,7 +5,6 @@ import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { UserMentionDto } from '../../../mention/dto';
-import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 
