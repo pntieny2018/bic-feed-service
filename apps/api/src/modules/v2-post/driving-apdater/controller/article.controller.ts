@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   ForbiddenException,
@@ -8,6 +9,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -17,11 +19,14 @@ import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import {
+  ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentNotFoundException,
   ContentRequireGroupException,
+  InvalidResourceImageException,
+  SeriesRequiredCoverException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
@@ -37,6 +42,7 @@ import {
   DeleteArticleCommand,
   DeleteArticleCommandPayload,
 } from '../../application/command/delete-article/delete-article.command';
+import { UpdateArticleRequestDto } from '../dto/request/update-artice.request.dto';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -128,6 +134,41 @@ export class ArticleController {
         case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Update article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+    description: 'Update article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.updated_success',
+  })
+  @Put(ROUTES.ARTICLE.UPDATE.PATH)
+  @Version(ROUTES.ARTICLE.UPDATE.VERSIONS)
+  public async update(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateArticleRequestDto: UpdateArticleRequestDto
+  ): Promise<void> {
+    try {
+      //TODO: Implement updateArticle method
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentEmptyGroupException:
+        case SeriesRequiredCoverException:
+        case InvalidResourceImageException:
+        case DomainModelException:
+          throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
