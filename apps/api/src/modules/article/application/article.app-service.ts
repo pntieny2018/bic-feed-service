@@ -32,7 +32,6 @@ import { PostHelper } from '../../post/post.helper';
 import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
-import { isEmpty } from 'lodash';
 import { ReactionService } from '../../reaction';
 
 @Injectable()

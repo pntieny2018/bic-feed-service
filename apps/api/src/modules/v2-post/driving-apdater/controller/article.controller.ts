@@ -73,7 +73,7 @@ export class ArticleController {
     }
   }
 
-  @ApiOperation({ summary: 'Create article' })
+  @ApiOperation({ summary: 'Create draft article' })
   @ApiOkResponse({
     type: ArticleResponseDto,
     description: 'Create article successfully',
