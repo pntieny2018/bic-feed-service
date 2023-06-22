@@ -17,10 +17,11 @@ import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
 export class FindTimelineGroupHandler
   implements IQueryHandler<FindTimelineGroupQuery, FindTimelineGroupDto>
 {
-  @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
-  @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository;
-
-  public constructor(private _queryBus: QueryBus) {}
+  public constructor(
+    @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
+    private _queryBus: QueryBus
+  ) {}
 
   public async execute(query: FindTimelineGroupQuery): Promise<any> {
     const { rows: ids, meta: meta } = await this._getContentIdsByUser(query);

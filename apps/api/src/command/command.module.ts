@@ -82,7 +82,6 @@ import { MigrateWordCountCommand } from './migrate-word-count.command';
     MigrateCommentMentionsCommand,
     MigratePostMentionsCommand,
     MigrateWordCountCommand,
-    FixCommentRepliesCountCommand,
   ],
 })
 export class CommandModule {}

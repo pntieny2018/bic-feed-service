@@ -403,7 +403,7 @@ export class ArticleService {
   public async create(authUser: UserDto, createArticleDto: CreateArticleDto): Promise<any> {
     let transaction;
     try {
-      const { title, summary, content, setting, mentions, audience, categories, tags, series } =
+      const { title, summary, content, mentions, audience, categories, tags, series } =
         createArticleDto;
       const authUserId = authUser.id;
 
@@ -428,10 +428,10 @@ export class ArticleService {
           content: content,
           createdBy: authUserId,
           updatedBy: authUserId,
-          isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canComment: setting.canComment,
-          canReact: setting.canReact,
+          isImportant: false, //setting.isImportant,
+          importantExpiredAt: null, //setting.isImportant === false ? null : setting.importantExpiredAt,
+          canComment: true, //setting.canComment,
+          canReact: true, //setting.canReact,
           privacy: null,
           tagsJson: tagList,
           linkPreviewId: linkPreview?.id || null,
@@ -548,8 +548,7 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { coverMedia, audience, categories, series, tags, setting, wordCount } =
-        updateArticleDto;
+      const { coverMedia, audience, categories, series, tags, wordCount } = updateArticleDto;
 
       const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
 
@@ -604,26 +603,6 @@ export class ArticleService {
       });
 
       await transaction.commit();
-
-      if (setting && setting.isImportant) {
-        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
-          where: {
-            postId: post.id,
-            userId: authUserId,
-          },
-        });
-        if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.bulkCreate(
-            [
-              {
-                postId: post.id,
-                userId: authUserId,
-              },
-            ],
-            { ignoreDuplicates: true }
-          );
-        }
-      }
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -636,7 +615,7 @@ export class ArticleService {
     updateArticleDto: UpdateArticleDto,
     authUserId: string
   ): Promise<Partial<IPost>> {
-    const { content, setting, audience, title, summary, wordCount } = updateArticleDto;
+    const { content, audience, title, summary, wordCount } = updateArticleDto;
     const dataUpdate = {
       updatedBy: authUserId,
     };
@@ -648,22 +627,9 @@ export class ArticleService {
     if (content !== null) {
       dataUpdate['content'] = content;
     }
-    if (setting && setting.hasOwnProperty('canComment')) {
-      dataUpdate['canComment'] = setting.canComment;
-    }
-    if (setting && setting.hasOwnProperty('canReact')) {
-      dataUpdate['canReact'] = setting.canReact;
-    }
 
     if (wordCount !== null) {
       dataUpdate['wordCount'] = wordCount;
-    }
-
-    if (setting && setting.hasOwnProperty('isImportant')) {
-      dataUpdate['isImportant'] = setting.isImportant;
-    }
-    if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
-      dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
     }
 
     if (title !== null) {

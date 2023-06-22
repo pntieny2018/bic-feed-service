@@ -10,7 +10,6 @@ export type UpdatePostCommandPayload = {
   tagIds?: string[];
   seriesIds?: string[];
   mentionUserIds?: string[];
-  setting?: PostSettingDto;
   linkPreview?: {
     url: string;
     domain: string;

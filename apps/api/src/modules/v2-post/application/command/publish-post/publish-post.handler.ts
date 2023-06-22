@@ -6,7 +6,6 @@ import {
 } from '../../../domain/domain-service/interface';
 import { PublishPostCommand } from './publish-post.command';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
@@ -22,7 +21,6 @@ import {
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
-import { MediaService } from '../../../../media';
 import { cloneDeep } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
@@ -30,16 +28,17 @@ import { KafkaService } from '@app/kafka';
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
-    @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    private readonly _kafkaService: KafkaService,
-    private readonly _mediaService: MediaService
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: ContentBinding,
+    private readonly _kafkaService: KafkaService
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {
@@ -79,10 +78,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     if (postEntity.getState().isChangeStatus) {
       await this._postDomainService.markSeen(postEntity, authUser.id);
       postEntity.increaseTotalSeen();
-      if (postEntity.isImportant()) {
-        await this._postDomainService.markReadImportant(postEntity, authUser.id);
-        postEntity.setMarkReadImportant();
-      }
+    }
+
+    if (postEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(postEntity, authUser.id);
+      postEntity.setMarkReadImportant();
     }
 
     const result = await this._contentBinding.postBinding(postEntity, {

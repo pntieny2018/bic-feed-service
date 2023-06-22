@@ -1,6 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
 import { UserDto } from '../../../../v2-user/application';
-import { PostSettingDto } from '../../dto';
 
 export type AutoSavePostCommandPayload = {
   id: string;
@@ -10,7 +9,6 @@ export type AutoSavePostCommandPayload = {
   tagIds?: string[];
   seriesIds?: string[];
   mentionUserIds?: string[];
-  setting?: PostSettingDto;
   linkPreview?: {
     url: string;
     domain: string;

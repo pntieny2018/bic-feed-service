@@ -20,10 +20,9 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
   }
 
   public updateAttribute(data: PublishPostCommandPayload): void {
-    const { authUser, content, seriesIds, groupIds, setting, mentionUserIds } = data;
+    const { authUser, content, seriesIds, groupIds } = data;
     super.update({
       authUser,
-      setting,
       groupIds,
     });
 
