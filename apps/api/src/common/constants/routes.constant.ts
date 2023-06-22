@@ -1,5 +1,5 @@
 import { AppHelper } from '../helpers/app.helper';
-import { VERSION_1_3_0, VERSION_1_4_0, VERSION_1_5_0 } from './app.constant';
+import { VERSION_1_4_0, VERSION_1_5_0, VERSION_1_6_0 } from './app.constant';
 
 export const ROUTES = {
   TAG: {
@@ -46,6 +46,10 @@ export const ROUTES = {
     CREATE: {
       PATH: '/articles',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_4_0),
+    },
+    UPDATE: {
+      PATH: '/articles/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
     },
     GET_DETAIL: {
       PATH: '/articles/:id',
