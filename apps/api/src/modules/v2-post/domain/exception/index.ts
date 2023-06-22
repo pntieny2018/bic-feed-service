@@ -31,3 +31,4 @@ export * from './content-no-edit-setting-permission-at-group.exception';
 export * from './invalid-resource-image.exception';
 export * from './invalid-cursor-params.exception';
 export * from './series-no-read-permission.exception';
+export * from './article-required-cover.exception';

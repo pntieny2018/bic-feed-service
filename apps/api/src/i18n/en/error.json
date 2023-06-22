@@ -36,7 +36,8 @@
     "no_create_permission": "Failed to create article: you don't have permission",
     "no_update_permission": "Failed to update article: you don't have permission",
     "no_delete_permission": "Failed to delete article: you don't have permission",
-    "no_read_permission": "You do not have permission to read this article"
+    "no_read_permission": "You do not have permission to read this article",
+    "required_cover": "You have not selected any cover"
   },
   "series": {
     "not_found": "Series not found",

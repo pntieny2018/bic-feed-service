@@ -34,6 +34,7 @@ export const ERRORS = {
     ARTICLE_NO_CREATE_PERMISSION: 'article.no_create_permission',
     ARTICLE_NO_DELETE_PERMISSION: 'article.no_delete_permission',
     ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
+    ARTICLE_REQUIRED_COVER: 'article.required_cover',
   },
   POST: {
     POST_NOT_FOUND: 'post.not_found',
