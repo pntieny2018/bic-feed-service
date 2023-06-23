@@ -21,13 +21,9 @@ export type UpdateArticleCommandPayload = {
 
   groupIds?: string[];
 
-  hashtags?: string[];
-
   coverMedia?: MediaDto;
 
   wordCount?: number;
-
-  mentions?: string[];
 
   linkPreview?: {
     url: string;
