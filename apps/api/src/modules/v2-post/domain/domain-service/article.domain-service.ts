@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
