@@ -28,6 +28,7 @@ import {
   ContentNotFoundException,
   ContentRequireGroupException,
   InvalidResourceImageException,
+  TagSeriesInvalidException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
@@ -178,6 +179,7 @@ export class ArticleController {
         case ArticleRequiredCoverException:
         case InvalidResourceImageException:
         case CategoryInvalidException:
+        case TagSeriesInvalidException:
         case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionException:
