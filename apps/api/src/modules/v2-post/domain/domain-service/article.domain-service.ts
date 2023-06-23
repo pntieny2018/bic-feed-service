@@ -51,18 +51,21 @@ export class ArticleDomainService implements IArticleDomainService {
       articleEntity.setCover(images[0]);
     }
 
-    if (tags && tags.length) {
+    if (tags) {
       const newTags = await this._tagRepository.findAll({ ids: tags });
       articleEntity.setTags(newTags);
     }
 
-    if (categories && categories.length) {
+    if (categories) {
       const newCategories = await this._categoryRepository.findAll({ where: { ids: categories } });
       articleEntity.setCategories(newCategories);
     }
 
+    const groups = await this._groupAppService.findAllByIds(
+      groupIds || articleEntity.getGroupIds()
+    );
+
     if (groupIds) {
-      const groups = await this._groupAppService.findAllByIds(groupIds);
       const oldGroupIds = articleEntity.get('groupIds');
       const isEnableSetting = articleEntity.isEnableSetting();
 
@@ -87,9 +90,13 @@ export class ArticleDomainService implements IArticleDomainService {
       if (isEnableSetting) {
         await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
       }
-
-      await this._contentValidator.validateSeriesAndTags(groups, series, articleEntity.get('tags'));
     }
+
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      series || articleEntity.getSeriesIds(),
+      articleEntity.get('tags')
+    );
 
     articleEntity.updateAttribute(newData);
 

@@ -21,11 +21,8 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
   }
 
   public updateAttribute(data: UpdateArticleCommandPayload): void {
-    const { actor, content, series, groupIds, title, summary, wordCount } = data;
-    super.update({
-      authUser: actor,
-      groupIds,
-    });
+    const { actor, content, series, title, summary, wordCount } = data;
+    super.update({ authUser: actor });
 
     if (series) {
       const currentSeries = this._props.seriesIds || [];
@@ -49,20 +46,16 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
   }
 
   public setCategories(categoryEntities: CategoryEntity[]): void {
-    if (!categoryEntities) return;
-
     const entityIds = (this._props.categories || []).map((category) => category.get('id'));
     const newEntiyIds = (categoryEntities || []).map((category) => category.get('id'));
 
-    this._state.attachSeriesIds = difference(newEntiyIds, entityIds);
-    this._state.detachSeriesIds = difference(entityIds, newEntiyIds);
+    this._state.attachCategoryIds = difference(newEntiyIds, entityIds);
+    this._state.detachCategoryIds = difference(entityIds, newEntiyIds);
 
     this._props.categories = categoryEntities;
   }
 
   public setTags(newTags: TagEntity[]): void {
-    if (!newTags) return;
-
     const entityTagIds = (this._props.tags || []).map((tag) => tag.get('id'));
     const newTagIds = newTags.map((tag) => tag.get('id'));
 
