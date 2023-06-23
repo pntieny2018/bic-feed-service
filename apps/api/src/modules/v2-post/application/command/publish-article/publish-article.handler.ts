@@ -64,9 +64,6 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
       });
     }
 
-    return this._contentBinding.articleBinding(articleEntity, {
-      actor,
-      authUser: actor,
-    });
+    return this._contentBinding.articleBinding(articleEntity, { actor });
   }
 }
