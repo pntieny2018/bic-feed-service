@@ -95,7 +95,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setGroups(groupIds);
       seriesEntity.setPrivacyFromGroups(groups);
       const state = seriesEntity.getState();
-      const attachGroupIds = state.attachGroupIds;
+      const { attachGroupIds, detachGroupIds } = state;
 
       if (attachGroupIds?.length) {
         await this._contentValidator.checkCanCRUDContent(
@@ -104,7 +104,10 @@ export class SeriesDomainService implements ISeriesDomainService {
           seriesEntity.get('type')
         );
       }
-      if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+
+      if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
+        await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+      }
     }
 
     seriesEntity.updateAttribute(newData);
