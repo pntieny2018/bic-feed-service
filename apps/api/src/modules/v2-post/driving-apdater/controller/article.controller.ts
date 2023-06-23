@@ -180,6 +180,7 @@ export class ArticleController {
         case CategoryInvalidException:
         case DomainModelException:
           throw new BadRequestException(e);
+        case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
