@@ -45,6 +45,8 @@ export type ContentState = {
   detachGroupIds?: string[];
   attachSeriesIds?: string[];
   detachSeriesIds?: string[];
+  attachCategoryIds?: string[];
+  detachCategoryIds?: string[];
   attachTagIds?: string[];
   detachTagIds?: string[];
   attachFileIds?: string[];
@@ -71,6 +73,8 @@ export class ContentEntity<
       detachGroupIds: [],
       attachSeriesIds: [],
       detachSeriesIds: [],
+      attachCategoryIds: [],
+      detachCategoryIds: [],
       attachTagIds: [],
       detachTagIds: [],
       attachFileIds: [],
@@ -144,6 +148,10 @@ export class ContentEntity<
 
   public isPublished(): boolean {
     return this._props.status === PostStatus.PUBLISHED;
+  }
+
+  public isWaitingSchedule(): boolean {
+    return this._props.status === PostStatus.WAITING_SCHEDULE;
   }
 
   public isProcessing(): boolean {
