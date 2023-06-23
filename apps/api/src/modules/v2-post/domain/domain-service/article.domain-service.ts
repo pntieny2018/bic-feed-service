@@ -3,7 +3,7 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
-import { UpdateArticleProps, IArticleDomainService } from './interface';
+import { UpdateArticleProps, IArticleDomainService, PublishArticleProps } from './interface';
 import {
   CATEGORY_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -16,6 +16,7 @@ import { InvalidResourceImageException } from '../exception/invalid-resource-ima
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { ContentEmptyException } from '../exception/content-empty.exception';
+import { ArticleEntity } from '../model/content';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {
@@ -33,6 +34,32 @@ export class ArticleDomainService implements IArticleDomainService {
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository
   ) {}
+
+  public async publish(inputData: PublishArticleProps): Promise<ArticleEntity> {
+    const { articleEntity, actor } = inputData;
+
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
+
+    const groupIds = articleEntity.get('groupIds');
+    const groups = await this._groupAppService.findAllByIds(articleEntity.getGroupIds());
+    const isEnableSetting = articleEntity.isEnableSetting();
+
+    await this._contentValidator.checkCanCRUDContent(actor, groupIds, articleEntity.get('type'));
+
+    if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      articleEntity.getSeriesIds(),
+      articleEntity.get('tags')
+    );
+
+    articleEntity.setPublish();
+
+    await this._contentRepository.update(articleEntity);
+
+    return articleEntity;
+  }
 
   public async update(inputData: UpdateArticleProps): Promise<void> {
     const { articleEntity, newData } = inputData;

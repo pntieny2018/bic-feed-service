@@ -34,3 +34,4 @@ export * from './series-no-read-permission.exception';
 export * from './article-required-cover.exception';
 export * from './category-invalid.exception';
 export * from './tag-series-invalid.exception';
+export * from './content-empty.exception';

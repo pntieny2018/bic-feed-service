@@ -21,6 +21,7 @@ import { ROUTES } from '../../../../common/constants/routes.constant';
 import {
   ArticleRequiredCoverException,
   CategoryInvalidException,
+  ContentEmptyException,
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
@@ -32,7 +33,7 @@ import {
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
-import { plainToInstance } from 'class-transformer';
+import { instanceToInstance, plainToInstance } from 'class-transformer';
 import { ArticleDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
@@ -46,6 +47,7 @@ import {
 } from '../../application/command/delete-article/delete-article.command';
 import { UpdateArticleRequestDto } from '../dto/request/update-artice.request.dto';
 import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
+import { PublishArticleCommand } from '../../application/command/publish-article/publish-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -148,7 +150,6 @@ export class ArticleController {
 
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
-    type: ArticleResponseDto,
     description: 'Update article successfully',
   })
   @ResponseMessages({
@@ -175,6 +176,51 @@ export class ArticleController {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
+        case ContentEmptyException:
+        case ContentEmptyGroupException:
+        case ArticleRequiredCoverException:
+        case InvalidResourceImageException:
+        case CategoryInvalidException:
+        case TagSeriesInvalidException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        case ContentNoCRUDPermissionException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Publish article' })
+  @ApiOkResponse({
+    type: ArticleDto,
+    description: 'Publish article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.published_success',
+  })
+  @Put(ROUTES.ARTICLE.PUBLISH.PATH)
+  @Version(ROUTES.ARTICLE.PUBLISH.VERSIONS)
+  public async publish(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<ArticleDto> {
+    try {
+      const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
+        new PublishArticleCommand({
+          id,
+          actor: user,
+        })
+      );
+      return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentEmptyException:
         case ContentEmptyGroupException:
         case ArticleRequiredCoverException:
         case InvalidResourceImageException:

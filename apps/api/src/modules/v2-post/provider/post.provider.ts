@@ -51,6 +51,7 @@ import { UpdateContentSettingHandler } from '../application/command/update-conte
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
+import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
 
 export const postProvider = [
   {
@@ -121,6 +122,7 @@ export const postProvider = [
   FindSeriesHandler,
   FindItemsBySeriesHandler,
   ProcessReactionNotificationHandler,
+  PublishArticleHandler,
   UpdateArticleHandler,
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,

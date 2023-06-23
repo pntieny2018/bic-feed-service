@@ -51,6 +51,10 @@ export const ROUTES = {
       PATH: '/articles/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
     },
+    PUBLISH: {
+      PATH: '/articles/:id/publish',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
+    },
     GET_DETAIL: {
       PATH: '/articles/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_4_0),
