@@ -548,7 +548,7 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { coverMedia, audience, categories, series, tags, wordCount } = updateArticleDto;
+      const { coverMedia, audience, categories, series, tags } = updateArticleDto;
 
       const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
 
