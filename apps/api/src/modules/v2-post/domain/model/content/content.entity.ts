@@ -130,6 +130,10 @@ export class ContentEntity<
     return this._props.createdBy;
   }
 
+  public isNotUsersSeen(): boolean {
+    return this._props.aggregation.totalUsersSeen === 0;
+  }
+
   public getType(): PostType {
     return this._props.type;
   }

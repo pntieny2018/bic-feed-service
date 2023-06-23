@@ -591,9 +591,6 @@ export class ArticleService {
         dataUpdate['coverJson'] = coverMedia;
       }
 
-      if (wordCount !== null) {
-        dataUpdate['wordCount'] = wordCount;
-      }
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
