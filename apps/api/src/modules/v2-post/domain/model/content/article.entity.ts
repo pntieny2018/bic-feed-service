@@ -75,7 +75,6 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
       (isEmpty(this._props.content) ||
         isEmpty(this._props.cover) ||
         isEmpty(this._props.title) ||
-        isEmpty(this._props.summary) ||
         isEmpty(this._props.categories))
     );
   }
