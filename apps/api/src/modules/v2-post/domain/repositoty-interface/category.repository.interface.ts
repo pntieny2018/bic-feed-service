@@ -1,4 +1,6 @@
-export type FindOneCategoryOptions = {
+import { CategoryEntity } from '../model/category';
+
+export type FindCategoryOptions = {
   where: {
     id?: string;
     ids?: string[];
@@ -8,7 +10,9 @@ export type FindOneCategoryOptions = {
 };
 
 export interface ICategoryRepository {
-  count(whereOptions: FindOneCategoryOptions): Promise<number>;
+  count(whereOptions: FindCategoryOptions): Promise<number>;
+
+  findAll(input: FindCategoryOptions): Promise<CategoryEntity[]>;
 }
 
 export const CATEGORY_REPOSITORY_TOKEN = 'CATEGORY_REPOSITORY_TOKEN';

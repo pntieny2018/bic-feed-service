@@ -15,6 +15,7 @@ export class CategoryValidator implements ICategoryValidator {
       where: {
         ids: categoryIds,
         createdBy,
+        shouldDisjunctionLevel: true,
       },
     });
 

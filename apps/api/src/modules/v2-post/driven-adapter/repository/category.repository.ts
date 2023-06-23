@@ -1,22 +1,32 @@
 import { Op, WhereOptions } from 'sequelize';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CategoryModel, ICategory } from '../../../../database/models/category.model';
-import { FindOneCategoryOptions, ICategoryRepository } from '../../domain/repositoty-interface';
+import { FindCategoryOptions, ICategoryRepository } from '../../domain/repositoty-interface';
+import { CategoryEntity } from '../../domain/model/category';
+import { CATEGORY_FACTORY_TOKEN, ICategoryFactory } from '../../domain/factory/interface';
 
 @Injectable()
 export class CategoryRepository implements ICategoryRepository {
   public constructor(
     @InjectModel(CategoryModel)
-    private readonly _categoryModel: typeof CategoryModel
+    private readonly _categoryModel: typeof CategoryModel,
+    @Inject(CATEGORY_FACTORY_TOKEN)
+    private readonly _categoryFactory: ICategoryFactory
   ) {}
 
-  public async count(options: FindOneCategoryOptions): Promise<number> {
+  public async count(options: FindCategoryOptions): Promise<number> {
     const where = this._getCondition(options);
     return this._categoryModel.count({ where });
   }
 
-  private _getCondition(options: FindOneCategoryOptions): WhereOptions<ICategory> {
+  public async findAll(options: FindCategoryOptions): Promise<CategoryEntity[]> {
+    const where = this._getCondition(options);
+    const rows = await this._categoryModel.findAll({ where });
+    return rows.map((row) => this._categoryFactory.reconstitute(row));
+  }
+
+  private _getCondition(options: FindCategoryOptions): WhereOptions<ICategory> {
     let whereOptions: WhereOptions<ICategory> = {};
     if (options.where) {
       if (options.where['id']) {

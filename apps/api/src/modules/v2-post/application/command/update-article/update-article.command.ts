@@ -24,14 +24,6 @@ export type UpdateArticleCommandPayload = {
   coverMedia?: MediaDto;
 
   wordCount?: number;
-
-  linkPreview?: {
-    url: string;
-    domain: string;
-    image: string;
-    title: string;
-    description: string;
-  };
 };
 
 export class UpdateArticleCommand implements ICommand {
