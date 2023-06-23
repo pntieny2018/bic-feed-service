@@ -1,4 +1,5 @@
 import {
+  ARTICLE_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
@@ -48,6 +49,8 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
+import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
+import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
 
 export const postProvider = [
   {
@@ -77,6 +80,10 @@ export const postProvider = [
   {
     provide: SERIES_DOMAIN_SERVICE_TOKEN,
     useClass: SeriesDomainService,
+  },
+  {
+    provide: ARTICLE_DOMAIN_SERVICE_TOKEN,
+    useClass: ArticleDomainService,
   },
   {
     provide: CONTENT_REPOSITORY_TOKEN,
@@ -114,6 +121,7 @@ export const postProvider = [
   FindSeriesHandler,
   FindItemsBySeriesHandler,
   ProcessReactionNotificationHandler,
+  UpdateArticleHandler,
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,

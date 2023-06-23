@@ -175,6 +175,12 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.updated_success',
   })
+  @Version([
+    VERSIONS_SUPPORTED[0],
+    VERSIONS_SUPPORTED[1],
+    VERSIONS_SUPPORTED[2],
+    VERSIONS_SUPPORTED[3],
+  ])
   @Put('/:id')
   @ResponseMessages({ success: 'Article updated' })
   @InjectUserToBody()

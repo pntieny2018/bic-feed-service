@@ -19,6 +19,8 @@ import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import {
+  ArticleRequiredCoverException,
+  CategoryInvalidException,
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
@@ -26,7 +28,6 @@ import {
   ContentNotFoundException,
   ContentRequireGroupException,
   InvalidResourceImageException,
-  SeriesRequiredCoverException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
@@ -43,6 +44,7 @@ import {
   DeleteArticleCommandPayload,
 } from '../../application/command/delete-article/delete-article.command';
 import { UpdateArticleRequestDto } from '../dto/request/update-artice.request.dto';
+import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -159,14 +161,23 @@ export class ArticleController {
     @Body() updateArticleRequestDto: UpdateArticleRequestDto
   ): Promise<void> {
     try {
-      //TODO: Implement updateArticle method
+      const { audience } = updateArticleRequestDto;
+      await this._commandBus.execute<UpdateArticleCommand, void>(
+        new UpdateArticleCommand({
+          id,
+          actor: user,
+          ...updateArticleRequestDto,
+          groupIds: audience?.groupIds,
+        })
+      );
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case ContentEmptyGroupException:
-        case SeriesRequiredCoverException:
+        case ArticleRequiredCoverException:
         case InvalidResourceImageException:
+        case CategoryInvalidException:
         case DomainModelException:
           throw new BadRequestException(e);
         case ContentNoCRUDPermissionAtGroupException:
