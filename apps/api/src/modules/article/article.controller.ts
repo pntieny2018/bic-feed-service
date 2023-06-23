@@ -200,6 +200,12 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.published_success',
   })
+  @Version([
+    VERSIONS_SUPPORTED[0],
+    VERSIONS_SUPPORTED[1],
+    VERSIONS_SUPPORTED[2],
+    VERSIONS_SUPPORTED[3],
+  ])
   @Put('/:id/publish')
   public async publish(
     @AuthUser() user: UserDto,
