@@ -15,11 +15,10 @@ import {
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
+import { ContentEmptyException } from '../exception/content-empty.exception';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {
-  private readonly _logger = new Logger(ArticleDomainService.name);
-
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupAppService: IGroupApplicationService,
@@ -99,6 +98,8 @@ export class ArticleDomainService implements IArticleDomainService {
     );
 
     articleEntity.updateAttribute(newData);
+
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
     if (!articleEntity.isChanged()) return;
 

@@ -1,5 +1,5 @@
 import { TagEntity } from '../tag';
-import { difference } from 'lodash';
+import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
 import { ContentEntity, ContentProps } from './content.entity';
@@ -67,5 +67,16 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
 
   public setCover(coverMedia: ImageEntity): void {
     this._props.cover = coverMedia;
+  }
+
+  public isValidArticleToPublish(): boolean {
+    return (
+      (this.isPublished() || this.isWaitingSchedule()) &&
+      (isEmpty(this._props.content) ||
+        isEmpty(this._props.cover) ||
+        isEmpty(this._props.title) ||
+        isEmpty(this._props.summary) ||
+        isEmpty(this._props.categories))
+    );
   }
 }
