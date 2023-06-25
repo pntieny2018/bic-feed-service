@@ -5,6 +5,7 @@ import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ArticleChangedMessagePayload } from '../../application/dto/message';
 import { ProcessArticleDeletedCommand } from '../../application/command/process-article-deleted/process-article-deleted.command';
 import { ProcessArticlePublishedCommand } from '../../application/command/process-article-published/process-article-published.command';
+import { ProcessArticleUpdatedCommand } from '../../application/command/process-article-updated/process-article-updated.command';
 
 @Controller()
 export class ArticleConsumer {
@@ -18,6 +19,11 @@ export class ArticleConsumer {
       case 'publish':
         await this._commandBus.execute<ProcessArticlePublishedCommand, void>(
           new ProcessArticlePublishedCommand(payload)
+        );
+        break;
+      case 'update':
+        await this._commandBus.execute<ProcessArticleUpdatedCommand, void>(
+          new ProcessArticleUpdatedCommand(payload)
         );
         break;
       case 'delete':

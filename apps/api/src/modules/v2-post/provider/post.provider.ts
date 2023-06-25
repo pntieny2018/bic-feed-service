@@ -55,6 +55,7 @@ import { ArticleDomainService } from '../domain/domain-service/article.domain-se
 import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
 import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
 import { ArticleValidator } from '../domain/validator/article.validator';
+import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
 
 export const postProvider = [
   {
@@ -133,6 +134,7 @@ export const postProvider = [
   UpdateArticleHandler,
   DeleteArticleHandler,
   ProcessArticlePublishedHandler,
+  ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
 ];

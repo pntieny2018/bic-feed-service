@@ -145,6 +145,7 @@ export class SearchConsumer {
       content,
       title,
       summary,
+      lang,
       groupIds,
       communityIds,
       actor,
@@ -167,6 +168,27 @@ export class SearchConsumer {
             groupIds,
             communityIds,
             createdBy: actor.id,
+            updatedAt,
+            createdAt,
+            title,
+            summary,
+            coverMedia,
+            categories,
+            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
+          },
+        ]);
+        break;
+      case 'update':
+        await this._postSearchService.updatePostsToSearch([
+          {
+            id,
+            type,
+            content,
+            isHidden,
+            groupIds,
+            communityIds,
+            createdBy: actor.id,
+            lang,
             updatedAt,
             createdAt,
             title,
