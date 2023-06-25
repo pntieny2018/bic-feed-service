@@ -34,6 +34,7 @@ export type ContentProps = {
   publishedAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
+  communityIds?: string[];
   wordCount?: number;
   aggregation?: {
     commentsCount: number;
@@ -215,6 +216,11 @@ export class ContentEntity<
 
     this._props.groupIds = groupIds;
   }
+
+  public setCommunity(communityIds: string[]): void {
+    this._props.communityIds = communityIds;
+  }
+
   public setSetting(setting: PostSettingDto): void {
     let isEnableSetting = false;
     if (
