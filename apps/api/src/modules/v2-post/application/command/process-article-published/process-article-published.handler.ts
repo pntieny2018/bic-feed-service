@@ -1,7 +1,13 @@
+import { uniq } from 'lodash';
 import { SentryService } from '@app/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  ITagRepository,
+  TAG_REPOSITORY_TOKEN,
+} from '../../../domain/repositoty-interface';
 import { ArticleHasBeenPublished } from '../../../../../common/constants';
 import { NotificationService } from '../../../../../notification';
 import { PostActivityService } from '../../../../../notification/activities';
@@ -9,6 +15,7 @@ import { ProcessArticlePublishedCommand } from './process-article-Published.comm
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { SeriesAddedItemsEvent } from '../../../../../events/series';
 import { ArticleMessagePayload } from '../../dto/message/article.message-payload';
+import { SeriesEntity } from '../../../domain/model/content';
 
 @CommandHandler(ProcessArticlePublishedCommand)
 export class ProcessArticlePublishedHandler
@@ -19,6 +26,8 @@ export class ProcessArticlePublishedHandler
   public constructor(
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     private readonly _sentryService: SentryService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService, //TODO improve interface later
@@ -48,7 +57,23 @@ export class ProcessArticlePublishedHandler
           await this._tagRepository.update(tag);
         }
       }
-      await this._processNotification(after);
+
+      const seriesEntites = (await this._contentRepository.findAll({
+        attributes: {
+          exclude: ['content'],
+        },
+        where: {
+          groupArchived: false,
+          isHidden: false,
+          ids: seriesIds,
+        },
+      })) as SeriesEntity[];
+      const seriesActors = uniq(seriesEntites.map((series) => series.get('createdBy')));
+
+      await this._processNotification({
+        ...after,
+        seriesActors,
+      });
     } catch (err) {
       this._logger.error(JSON.stringify(err?.stack));
       this._sentryService.captureException(err);
@@ -56,7 +81,7 @@ export class ProcessArticlePublishedHandler
   }
 
   private async _processNotification(articlePayload: ArticleMessagePayload): Promise<void> {
-    const { id, series, setting, type, groupIds, title, content, createdAt, actor } =
+    const { id, seriesActors, setting, type, groupIds, title, content, createdAt, actor } =
       articlePayload;
 
     const activity = this._postActivityService.createPayload({
@@ -88,7 +113,7 @@ export class ProcessArticlePublishedHandler
         data: activity,
         meta: {
           post: {
-            ignoreUserIds: series?.map((series) => series.createdBy),
+            ignoreUserIds: seriesActors,
           },
         },
       },

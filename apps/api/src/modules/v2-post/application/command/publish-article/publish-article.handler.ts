@@ -100,7 +100,6 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
           groupIds: entity.get('groupIds'),
           communityIds: result.communities.map((community) => community.id),
           seriesIds: entity.get('seriesIds'),
-          series: result.series,
           tags: (entity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
           title: entity.get('title'),
           summary: entity.get('summary'),
