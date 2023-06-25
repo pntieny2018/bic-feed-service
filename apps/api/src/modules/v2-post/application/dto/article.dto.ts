@@ -24,6 +24,7 @@ export class ArticleDto {
   public series: {
     title: string;
     id: string;
+    createdBy?: string;
   }[];
   public setting: PostSettingDto;
   public actor: UserDto;

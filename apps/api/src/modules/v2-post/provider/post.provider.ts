@@ -50,6 +50,7 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
+import { ProcessArticlePublishedHandler } from '../application/command/process-article-published/process-article-published.handler';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
 import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
@@ -131,6 +132,7 @@ export const postProvider = [
   PublishArticleHandler,
   UpdateArticleHandler,
   DeleteArticleHandler,
+  ProcessArticlePublishedHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
 ];
