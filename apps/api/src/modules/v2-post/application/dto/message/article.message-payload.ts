@@ -27,9 +27,8 @@ export class ArticleMessagePayload {
   public tags: TagDto[];
   public seriesIds: string[];
   public series?: {
-    title: string;
     id: string;
-    createdBy?: string;
+    createdBy: string;
   }[];
   public content: string;
   public title: string;
