@@ -138,9 +138,45 @@ export class SearchConsumer {
   public async articleChanged(
     @Payload('value') payload: ArticleChangedMessagePayload
   ): Promise<void> {
-    const { before, state } = payload;
+    const { before, after, state } = payload;
+    const {
+      id,
+      type,
+      content,
+      title,
+      summary,
+      groupIds,
+      communityIds,
+      actor,
+      createdAt,
+      updatedAt,
+      isHidden,
+      coverMedia,
+      tags,
+      categories,
+    } = after || {};
 
     switch (state) {
+      case 'publish':
+        await this._postSearchService.addPostsToSearch([
+          {
+            id,
+            type,
+            content,
+            isHidden,
+            groupIds,
+            communityIds,
+            createdBy: actor.id,
+            updatedAt,
+            createdAt,
+            title,
+            summary,
+            coverMedia,
+            categories,
+            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
+          },
+        ]);
+        break;
       case 'delete':
         await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
         break;

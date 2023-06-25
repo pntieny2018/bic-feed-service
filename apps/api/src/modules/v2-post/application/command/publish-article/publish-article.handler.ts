@@ -1,5 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { ArticleDto } from '../../dto';
+import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
+import { ArticleDto, ImageDto, TagDto } from '../../dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PublishArticleCommand } from './publish-article.command';
 import {
@@ -17,6 +18,7 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
+import { ArticleChangedMessagePayload } from '../../dto/message';
 
 @CommandHandler(PublishArticleCommand)
 export class PublishArticleHandler implements ICommandHandler<PublishArticleCommand, ArticleDto> {
@@ -30,7 +32,8 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding
+    private readonly _contentBinding: ContentBinding,
+    private readonly _kafkaService: KafkaService
   ) {}
 
   public async execute(command: PublishArticleCommand): Promise<ArticleDto> {
@@ -61,12 +64,14 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
 
     if (!articleEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
-    if (!articleEntity.isPublished()) {
-      await this._articleDomainService.publish({
-        articleEntity,
-        actor,
-      });
+    if (articleEntity.isPublished()) {
+      return this._contentBinding.articleBinding(articleEntity, { actor });
     }
+
+    await this._articleDomainService.publish({
+      articleEntity,
+      actor,
+    });
 
     await this._postDomainService.markSeen(articleEntity, actor.id);
     articleEntity.increaseTotalSeen();
@@ -76,6 +81,43 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
       articleEntity.setMarkReadImportant();
     }
 
-    return this._contentBinding.articleBinding(articleEntity, { actor });
+    const articleDto = await this._contentBinding.articleBinding(articleEntity, { actor });
+
+    this._sendEvent(articleEntity, articleDto);
+
+    return articleDto;
+  }
+
+  private _sendEvent(entity: ArticleEntity, result: ArticleDto): void {
+    if (entity.isPublished()) {
+      const payload: ArticleChangedMessagePayload = {
+        state: 'publish',
+        after: {
+          id: entity.get('id'),
+          actor: result.actor,
+          type: entity.get('type'),
+          setting: entity.get('setting'),
+          groupIds: entity.get('groupIds'),
+          communityIds: result.communities.map((community) => community.id),
+          seriesIds: entity.get('seriesIds'),
+          tags: (entity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
+          title: entity.get('title'),
+          summary: entity.get('summary'),
+          content: entity.get('content'),
+          lang: entity.get('lang'),
+          isHidden: entity.get('isHidden'),
+          coverMedia: new ImageDto(entity.get('cover').toObject()),
+          status: entity.get('status'),
+          createdAt: entity.get('createdAt'),
+          updatedAt: entity.get('updatedAt'),
+          publishedAt: entity.get('publishedAt'),
+        },
+      };
+
+      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
+        key: entity.getId(),
+        value: new ArticleChangedMessagePayload(payload),
+      });
+    }
   }
 }
