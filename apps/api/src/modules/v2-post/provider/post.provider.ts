@@ -9,6 +9,7 @@ import {
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
 import {
+  ARTICLE_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
@@ -52,6 +53,7 @@ import { ProcessArticleDeletedHandler } from '../application/command/process-art
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
 import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
+import { ArticleValidator } from '../domain/validator/article.validator';
 
 export const postProvider = [
   {
@@ -61,6 +63,10 @@ export const postProvider = [
   {
     provide: POST_VALIDATOR_TOKEN,
     useClass: PostValidator,
+  },
+  {
+    provide: ARTICLE_VALIDATOR_TOKEN,
+    useClass: ArticleValidator,
   },
   {
     provide: POST_FACTORY_TOKEN,
