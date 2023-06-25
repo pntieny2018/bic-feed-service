@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import { Inject, Injectable } from '@nestjs/common';
 import { ArticleEntity } from '../model/content';
 import { UserDto } from '../../../v2-user/application';
@@ -34,7 +35,9 @@ export class ArticleValidator implements IArticleValidator {
 
     const { attachGroupIds, detachGroupIds } = state;
     const groups = await this._groupAppService.findAllByIds(groupIds);
+    const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
+    articleEntity.setCommunity(communityIds);
     await this._contentValidator.checkCanCRUDContent(actor, groupIds, postType);
 
     if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
@@ -65,9 +68,11 @@ export class ArticleValidator implements IArticleValidator {
       ? await this._tagRepository.findAll({ ids: tagIds })
       : articleEntity.get('tags');
     const groups = await this._groupAppService.findAllByIds(groupIdsNeedFind);
+    const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
     articleEntity.setTags(newTags);
     articleEntity.setGroups(groupIdsNeedFind);
+    articleEntity.setCommunity(communityIds);
     articleEntity.setPrivacyFromGroups(groups);
 
     if (articleEntity.isPublished() || articleEntity.isWaitingSchedule()) {

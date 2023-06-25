@@ -16,6 +16,7 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
+import { UserDto } from '../../../../v2-user/application';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { ArticleChangedMessagePayload } from '../../dto/message';
@@ -81,24 +82,22 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
       articleEntity.setMarkReadImportant();
     }
 
-    const articleDto = await this._contentBinding.articleBinding(articleEntity, { actor });
+    this._sendEvent(articleEntity, actor);
 
-    this._sendEvent(articleEntity, articleDto);
-
-    return articleDto;
+    return this._contentBinding.articleBinding(articleEntity, { actor });
   }
 
-  private _sendEvent(entity: ArticleEntity, result: ArticleDto): void {
+  private _sendEvent(entity: ArticleEntity, actor: UserDto): void {
     if (entity.isPublished()) {
       const payload: ArticleChangedMessagePayload = {
         state: 'publish',
         after: {
           id: entity.get('id'),
-          actor: result.actor,
+          actor,
           type: entity.get('type'),
           setting: entity.get('setting'),
           groupIds: entity.get('groupIds'),
-          communityIds: result.communities.map((community) => community.id),
+          communityIds: entity.get('communityIds'),
           seriesIds: entity.get('seriesIds'),
           tags: (entity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
           title: entity.get('title'),

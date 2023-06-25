@@ -109,6 +109,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
           type: entityAfter.get('type'),
           setting: entityAfter.get('setting'),
           groupIds: entityAfter.get('groupIds'),
+          communityIds: entityAfter.get('communityIds'),
           seriesIds: entityAfter.get('seriesIds'),
           tags: (entityAfter.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
           title: entityAfter.get('title'),
