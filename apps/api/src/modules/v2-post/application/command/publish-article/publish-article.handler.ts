@@ -12,6 +12,8 @@ import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/vali
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
+  IPostDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
@@ -21,6 +23,8 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
   public constructor(
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
     private readonly _articleDomainService: IArticleDomainService,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -62,6 +66,14 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
         articleEntity,
         actor,
       });
+    }
+
+    await this._postDomainService.markSeen(articleEntity, actor.id);
+    articleEntity.increaseTotalSeen();
+
+    if (articleEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(articleEntity, actor.id);
+      articleEntity.setMarkReadImportant();
     }
 
     return this._contentBinding.articleBinding(articleEntity, { actor });
