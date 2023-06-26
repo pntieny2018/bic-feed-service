@@ -107,7 +107,7 @@ export class ProcessArticleUpdatedHandler
       contentType: before.type,
       setting: before.setting,
       audience: {
-        groups: (after.groupIds ?? []).map((id) => ({ id })),
+        groups: (before.groupIds ?? []).map((id) => ({ id })),
       },
       actor: before.actor,
       createdAt: before.createdAt,
@@ -144,13 +144,13 @@ export class ProcessArticleUpdatedHandler
       },
     })) as SeriesEntity[];
 
-    const addedSeries = seriesEntites.filter((series) =>
+    const addSeries = seriesEntites.filter((series) =>
       state.attachSeriesIds.includes(series.get('id'))
     );
-    const removedSeries = seriesEntites.filter((series) =>
+    const removeSeries = seriesEntites.filter((series) =>
       state.detachSeriesIds.includes(series.get('id'))
     );
-    const removeSeriesWithState = removedSeries.map((item: SeriesEntity) => ({
+    const removeSeriesWithState = removeSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
@@ -158,7 +158,7 @@ export class ProcessArticleUpdatedHandler
       },
       state: 'remove',
     }));
-    const newSeriesWithState = addedSeries.map((item: SeriesEntity) => ({
+    const newSeriesWithState = addSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
