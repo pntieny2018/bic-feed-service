@@ -53,14 +53,10 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
       !articleEntity ||
       !(articleEntity instanceof ArticleEntity) ||
       articleEntity.isHidden() ||
-      (articleEntity.isPublished() && !articleEntity.getGroupIds()?.length)
+      articleEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
     }
-
-    this._contentValidator.checkCanReadContent(articleEntity, actor);
-
-    if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (articleEntity.isPublished()) {
       return this._contentBinding.articleBinding(articleEntity, { actor });
