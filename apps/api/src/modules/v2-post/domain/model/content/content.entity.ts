@@ -259,4 +259,8 @@ export class ContentEntity<
       setting && (setting.isImportant || setting.canComment === false || setting.canReact === false)
     );
   }
+
+  public isInArchivedGroups(): boolean {
+    return this.isPublished() && !this.getGroupIds()?.length;
+  }
 }

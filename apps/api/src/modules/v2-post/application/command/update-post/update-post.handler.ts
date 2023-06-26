@@ -59,7 +59,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       !postEntity ||
       postEntity.isHidden() ||
       !(postEntity instanceof PostEntity) ||
-      (postEntity.isPublished() && !postEntity.getGroupIds()?.length)
+      postEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
     }
