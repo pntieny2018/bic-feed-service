@@ -3,10 +3,7 @@ import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { ArticleDto, ImageDto, TagDto } from '../../dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PublishArticleCommand } from './publish-article.command';
-import {
-  ContentNoCRUDPermissionException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
+import { AccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
@@ -63,7 +60,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
 
     this._contentValidator.checkCanReadContent(articleEntity, actor);
 
-    if (!articleEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
+    if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (articleEntity.isPublished()) {
       return this._contentBinding.articleBinding(articleEntity, { actor });

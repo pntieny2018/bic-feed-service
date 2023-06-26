@@ -3,8 +3,8 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateArticleCommand } from './update-article.command';
 import {
+  AccessDeniedException,
   ArticleRequiredCoverException,
-  ContentNoCRUDPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -63,7 +63,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
 
     this._contentValidator.checkCanReadContent(articleEntity, actor);
 
-    if (!articleEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
+    if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
 

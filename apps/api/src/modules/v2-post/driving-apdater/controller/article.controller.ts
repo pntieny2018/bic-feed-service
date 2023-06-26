@@ -138,6 +138,7 @@ export class ArticleController {
           throw new NotFoundException(e);
         case DomainModelException:
           throw new BadRequestException(e);
+        case AccessDeniedException:
         case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
@@ -184,6 +185,7 @@ export class ArticleController {
         case TagSeriesInvalidException:
         case DomainModelException:
           throw new BadRequestException(e);
+        case AccessDeniedException:
         case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
@@ -228,6 +230,7 @@ export class ArticleController {
         case TagSeriesInvalidException:
         case DomainModelException:
           throw new BadRequestException(e);
+        case AccessDeniedException:
         case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:

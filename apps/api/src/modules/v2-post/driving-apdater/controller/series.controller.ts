@@ -96,6 +96,7 @@ export class SeriesController {
         case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
+        case AccessDeniedException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
@@ -138,6 +139,7 @@ export class SeriesController {
         case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
+        case AccessDeniedException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
@@ -226,6 +228,7 @@ export class SeriesController {
           throw new NotFoundException(e);
         case DomainModelException:
           throw new BadRequestException(e);
+        case AccessDeniedException:
         case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
