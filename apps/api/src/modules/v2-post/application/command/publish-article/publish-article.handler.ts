@@ -3,7 +3,7 @@ import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { ArticleDto, ImageDto, TagDto } from '../../dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PublishArticleCommand } from './publish-article.command';
-import { AccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
+import { ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
