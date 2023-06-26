@@ -49,9 +49,9 @@ export class ArticleDomainService implements IArticleDomainService {
 
     this._setArticleEntityAttributes(articleEntity, newData);
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
-
     articleEntity.setPublish();
+
+    await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
