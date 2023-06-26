@@ -7,6 +7,10 @@ export class ArticleChangedMessagePayload {
     state?: {
       attachGroupIds: string[];
       detachGroupIds: string[];
+      attachTagIds?: string[];
+      detachTagIds?: string[];
+      attachSeriesIds?: string[];
+      detachSeriesIds?: string[];
     };
   };
 

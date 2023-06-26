@@ -119,6 +119,10 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
           state: {
             attachGroupIds: entityAfter.getState().attachGroupIds,
             detachGroupIds: entityAfter.getState().detachGroupIds,
+            attachTagIds: entityAfter.getState().attachTagIds,
+            detachTagIds: entityAfter.getState().detachTagIds,
+            attachSeriesIds: entityAfter.getState().attachSeriesIds,
+            detachSeriesIds: entityAfter.getState().detachSeriesIds,
           },
           isHidden: entityAfter.get('isHidden'),
           coverMedia: new ImageDto(entityAfter.get('cover').toObject()),

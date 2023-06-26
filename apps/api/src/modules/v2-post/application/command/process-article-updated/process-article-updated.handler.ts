@@ -1,4 +1,3 @@
-import { uniq } from 'lodash';
 import { SentryService } from '@app/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -10,12 +9,16 @@ import {
 } from '../../../domain/repositoty-interface';
 import { ArticleHasBeenUpdated } from '../../../../../common/constants';
 import { NotificationService } from '../../../../../notification';
-import { PostActivityService } from '../../../../../notification/activities';
+import { ISeriesState, PostActivityService } from '../../../../../notification/activities';
 import { ProcessArticleUpdatedCommand } from './process-article-updated.command';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesAddedItemsEvent } from '../../../../../events/series';
-import { ArticleMessagePayload } from '../../dto/message/article.message-payload';
+import {
+  SeriesAddedItemsEvent,
+  SeriesChangedItemsEvent,
+  SeriesRemovedItemsEvent,
+} from '../../../../../events/series';
 import { SeriesEntity } from '../../../domain/model/content';
+import { ArticleChangedMessagePayload } from '../../dto/message';
 
 @CommandHandler(ProcessArticleUpdatedCommand)
 export class ProcessArticleUpdatedHandler
@@ -35,87 +38,219 @@ export class ProcessArticleUpdatedHandler
   ) {}
 
   public async execute(command: ProcessArticleUpdatedCommand): Promise<void> {
-    const { after } = command.payload;
-    const { id, actor, tags, seriesIds } = after || {};
-
-    for (const seriesId of seriesIds) {
-      this._internalEventEmitter.emit(
-        new SeriesAddedItemsEvent({
-          itemIds: [id],
-          seriesId: seriesId,
-          actor,
-          context: 'publish',
-        })
-      );
-    }
-
     try {
-      if (tags?.length) {
-        const tagEntities = await this._tagRepository.findAll({ ids: tags.map((tag) => tag.id) });
-        for (const tag of tagEntities) {
-          tag.increaseTotalUsed();
-          await this._tagRepository.update(tag);
-        }
-      }
-      const seriesEntites = (await this._contentRepository.findAll({
-        attributes: {
-          include: ['content'],
-        },
-        where: {
-          groupArchived: false,
-          isHidden: false,
-          ids: seriesIds,
-        },
-      })) as SeriesEntity[];
-      const seriesActors = uniq(seriesEntites.map((series) => series.get('createdBy')));
-
-      await this._processNotification({
-        ...after,
-        seriesActors,
-      });
+      await this._processTagsUsed(command.payload);
+      await this._processNotification(command.payload);
+      await this._processSeriesItemsChanged(command.payload);
     } catch (err) {
       this._logger.error(JSON.stringify(err?.stack));
       this._sentryService.captureException(err);
     }
   }
 
-  private async _processNotification(articlePayload: ArticleMessagePayload): Promise<void> {
-    const { id, seriesActors, setting, type, groupIds, title, content, createdAt, actor } =
-      articlePayload;
+  private async _processTagsUsed(payload: ArticleChangedMessagePayload): Promise<void> {
+    const { after } = payload;
+    const { state } = after || {};
+    const { attachTagIds, detachTagIds } = state;
 
-    const activity = this._postActivityService.createPayload({
-      id,
-      actor: {
-        id: actor.id,
+    const tagEntities = await this._tagRepository.findAll({
+      ids: [...attachTagIds, ...detachTagIds],
+    });
+
+    const tagsMap = new Map(tagEntities.map((tag) => [tag.get('id'), tag]));
+
+    for (const id of attachTagIds) {
+      const tag = tagsMap.get(id);
+      tag.increaseTotalUsed();
+      await this._tagRepository.update(tag);
+    }
+
+    for (const id of detachTagIds) {
+      const tag = tagsMap.get(id);
+      if (tag.get('totalUsed') > 0) {
+        tag.decreaseTotalUsed();
+        await this._tagRepository.update(tag);
+      }
+    }
+  }
+
+  private async _processNotification(payload: ArticleChangedMessagePayload): Promise<void> {
+    const { before, after } = payload;
+
+    if (after.isHidden) return;
+
+    const seriesEntites = (await this._contentRepository.findAll({
+      where: {
+        groupArchived: false,
+        isHidden: false,
+        ids: after.seriesIds,
       },
-      title,
-      content,
-      contentType: type,
-      setting: {
-        canComment: setting.canComment,
-        canReact: setting.canReact,
-        isImportant: setting.isImportant,
-      },
+    })) as SeriesEntity[];
+
+    const updatedActivity = this._postActivityService.createPayload({
+      id: after.id,
+      title: after.title,
+      content: after.content,
+      contentType: after.type,
+      setting: after.setting,
       audience: {
-        groups: (groupIds ?? []).map((id) => ({ id })),
+        groups: (after.groupIds ?? []).map((id) => ({ id })),
       },
-      createdAt,
+      actor: after.actor,
+      createdAt: after.createdAt,
+    });
+
+    const oldActivity = this._postActivityService.createPayload({
+      id: before.id,
+      title: before.title,
+      content: before.content,
+      contentType: before.type,
+      setting: before.setting,
+      audience: {
+        groups: (after.groupIds ?? []).map((id) => ({ id })),
+      },
+      actor: before.actor,
+      createdAt: before.createdAt,
     });
 
     await this._notificationService.publishPostNotification({
-      key: `${id}`,
+      key: `${after.id}`,
       value: {
-        actor: {
-          id: actor.id,
-        },
+        actor: after.actor,
         event: ArticleHasBeenUpdated,
-        data: activity,
+        data: updatedActivity,
         meta: {
           post: {
-            ignoreUserIds: seriesActors,
+            oldData: oldActivity,
+            ignoreUserIds: seriesEntites?.map((series) => series.get('createdBy')),
           },
         },
       },
     });
+  }
+
+  private async _processSeriesItemsChanged(payload: ArticleChangedMessagePayload): Promise<void> {
+    const { after } = payload;
+    const { state } = after || {};
+    const { attachSeriesIds, detachSeriesIds } = state;
+
+    const seriesIdsNeedToFind = [...attachSeriesIds, ...detachSeriesIds];
+
+    const seriesEntites = (await this._contentRepository.findAll({
+      where: {
+        groupArchived: false,
+        isHidden: false,
+        ids: seriesIdsNeedToFind,
+      },
+    })) as SeriesEntity[];
+
+    const addedSeries = seriesEntites.filter((series) =>
+      state.attachSeriesIds.includes(series.get('id'))
+    );
+    const removedSeries = seriesEntites.filter((series) =>
+      state.detachSeriesIds.includes(series.get('id'))
+    );
+    const removeSeriesWithState = removedSeries.map((item: SeriesEntity) => ({
+      id: item.get('id'),
+      title: item.get('title'),
+      actor: {
+        id: item.get('createdBy'),
+      },
+      state: 'remove',
+    }));
+    const newSeriesWithState = addedSeries.map((item: SeriesEntity) => ({
+      id: item.get('id'),
+      title: item.get('title'),
+      actor: {
+        id: item.get('createdBy'),
+      },
+      state: 'add',
+    }));
+
+    let skipNotifyForNewItems = [];
+    let skipNotifyForRemoveItems = [];
+
+    if (newSeriesWithState.length && removeSeriesWithState.length) {
+      const result = new Map<string, ISeriesState[]>();
+
+      [...newSeriesWithState, ...removeSeriesWithState].forEach((item: ISeriesState): void => {
+        const key = item.actor.id;
+        if (!result.has(key)) {
+          result.set(key, []);
+        }
+        const items = result.get(key);
+        items.push(item);
+        result.set(key, items);
+      });
+
+      const sameOwnerItems = [];
+
+      result.forEach((r) => {
+        const newItem = r.filter((i) => i.state === 'add');
+        const removeItem = r.filter((i) => i.state === 'remove');
+        if (newItem.length && removeItem.length) {
+          sameOwnerItems.push(r);
+          skipNotifyForNewItems = newItem.map((i) => i.id);
+          skipNotifyForRemoveItems = removeItem.map((i) => i.id);
+        }
+      });
+
+      if (sameOwnerItems.length && !after.isHidden) {
+        sameOwnerItems.forEach((so) => {
+          this._internalEventEmitter.emit(
+            new SeriesChangedItemsEvent({
+              content: {
+                id: after.id,
+                content: after.content,
+                type: after.type,
+                createdBy: after.actor.id,
+                createdAt: after.createdAt,
+                updatedAt: after.createdAt,
+              } as any,
+              series: so,
+              actor: after.actor,
+            })
+          );
+        });
+      }
+    }
+
+    if (attachSeriesIds.length > 0) {
+      attachSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesAddedItemsEvent({
+            itemIds: [after.id],
+            seriesId: seriesId,
+            skipNotify: skipNotifyForNewItems.includes(seriesId) || after.isHidden,
+            actor: after.actor,
+            context: 'publish',
+          })
+        )
+      );
+    }
+
+    if (detachSeriesIds.length > 0) {
+      detachSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
+            items: [
+              {
+                id: after.id,
+                title: after.title,
+                content: after.content,
+                type: after.type,
+                createdBy: after.actor.id,
+                groupIds: after.groupIds,
+                createdAt: after.createdAt,
+              },
+            ],
+            seriesId: seriesId,
+            skipNotify: skipNotifyForRemoveItems.includes(seriesId) || after.isHidden,
+            actor: after.actor,
+            contentIsDeleted: false,
+          })
+        )
+      );
+    }
   }
 }
