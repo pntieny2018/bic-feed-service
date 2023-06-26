@@ -714,7 +714,7 @@ export class ContentBinding implements IContentBinding {
 
   public filterSecretGroupCannotAccess(groups: GroupDto[], authUser?: UserDto): GroupDto[] {
     return groups.filter((group) => {
-      const isUserNotInGroup = authUser?.groups.includes(group.id);
+      const isUserNotInGroup = !authUser?.groups.includes(group.id);
       const isGuest = !authUser;
       return !(group.privacy === GroupPrivacy.SECRET && (isUserNotInGroup || isGuest));
     });
