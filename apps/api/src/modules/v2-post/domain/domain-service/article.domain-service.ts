@@ -44,9 +44,12 @@ export class ArticleDomainService implements IArticleDomainService {
   ) {}
 
   public async publish(inputData: PublishArticleProps): Promise<ArticleEntity> {
-    const { articleEntity, actor } = inputData;
+    const { articleEntity, newData } = inputData;
+    const { actor } = newData;
 
-    await this._articleValidator.validatePublishAction(articleEntity, actor);
+    this._setArticleEntityAttributes(articleEntity, newData);
+
+    await this._articleValidator.validateArticle(articleEntity, actor);
 
     articleEntity.setPublish();
 
@@ -63,7 +66,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     this._setArticleEntityAttributes(articleEntity, newData);
 
-    await this._articleValidator.validateUpdateAction(articleEntity, actor);
+    await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
@@ -78,7 +81,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     this._setArticleEntityAttributes(articleEntity, newData);
 
-    await this._articleValidator.validateUpdateAction(articleEntity, actor);
+    await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (!articleEntity.isChanged()) return;
 

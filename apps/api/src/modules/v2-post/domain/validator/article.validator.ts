@@ -14,31 +14,7 @@ export class ArticleValidator implements IArticleValidator {
     private readonly _contentValidator: IContentValidator
   ) {}
 
-  public async validatePublishAction(articleEntity: ArticleEntity, actor: UserDto): Promise<void> {
-    const state = articleEntity.getState();
-    const postType = articleEntity.get('type');
-    const groupIds = articleEntity.get('groupIds');
-    const isEnableSetting = articleEntity.isEnableSetting();
-
-    const { attachGroupIds, detachGroupIds } = state;
-    const groups = await this._groupAppService.findAllByIds(groupIds);
-    const communityIds = uniq(groups.map((group) => group.rootGroupId));
-
-    articleEntity.setCommunity(communityIds);
-    await this._contentValidator.checkCanCRUDContent(actor, groupIds, postType);
-
-    if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
-      await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
-    }
-
-    await this._contentValidator.validateSeriesAndTags(
-      groups,
-      articleEntity.get('seriesIds'),
-      articleEntity.get('tags')
-    );
-  }
-
-  public async validateUpdateAction(articleEntity: ArticleEntity, actor: UserDto): Promise<void> {
+  public async validateArticle(articleEntity: ArticleEntity, actor: UserDto): Promise<void> {
     const groupIds = articleEntity.get('groupIds');
     const groups = await this._groupAppService.findAllByIds(groupIds);
     const communityIds = uniq(groups.map((group) => group.rootGroupId));

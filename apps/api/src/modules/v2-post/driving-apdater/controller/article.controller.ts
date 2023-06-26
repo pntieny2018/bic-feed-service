@@ -50,6 +50,7 @@ import { UpdateArticleRequestDto } from '../dto/request/update-artice.request.dt
 import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
 import { PublishArticleCommand } from '../../application/command/publish-article/publish-article.command';
 import { AutoSaveArticleCommand } from '../../application/command/auto-save-article/auto-save-article.command';
+import { PublishArticleRequestDto } from '../dto/request/publish-artice.request.dto';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -257,13 +258,17 @@ export class ArticleController {
   @Version(ROUTES.ARTICLE.PUBLISH.VERSIONS)
   public async publish(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() publishArticleRequestDto: PublishArticleRequestDto
   ): Promise<ArticleDto> {
     try {
+      const { audience } = publishArticleRequestDto;
       const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
         new PublishArticleCommand({
           id,
           actor: user,
+          ...publishArticleRequestDto,
+          groupIds: audience?.groupIds,
         })
       );
       return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

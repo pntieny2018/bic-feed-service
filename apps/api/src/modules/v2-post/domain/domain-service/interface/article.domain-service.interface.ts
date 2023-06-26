@@ -1,6 +1,5 @@
 import { ArticleEntity } from '../../model/content';
 import { UpdateArticleCommandPayload } from '../../../application/command/update-article/update-article.command';
-import { UserDto } from 'apps/api/src/modules/v2-user/application';
 
 export type ArticlePayload = UpdateArticleCommandPayload;
 
@@ -11,7 +10,7 @@ export type UpdateArticleProps = {
 
 export type PublishArticleProps = {
   articleEntity: ArticleEntity;
-  actor: UserDto;
+  newData: ArticlePayload;
 };
 
 export interface IArticleDomainService {
