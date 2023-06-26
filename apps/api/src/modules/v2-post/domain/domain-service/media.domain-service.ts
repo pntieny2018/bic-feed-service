@@ -63,7 +63,7 @@ export class MediaDomainService implements IMediaDomainService {
   ): Promise<ImageEntity[]> {
     if (!imagesIds || imagesIds.length === 0) return [];
 
-    imageEntities = imageEntities || [];
+    imageEntities = (imageEntities || []).filter((image) => image);
     const currentImageIds = imageEntities.map((e) => e.get('id'));
     const notChangedIds = intersection(currentImageIds, imagesIds);
     const addingImageIds = difference(imagesIds, currentImageIds);
