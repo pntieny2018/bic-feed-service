@@ -70,7 +70,7 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
   }
 
   public isValidArticleToPublish(): boolean {
-    return (
+    return !(
       (this.isPublished() || this.isWaitingSchedule()) &&
       (isEmpty(this._props.content) ||
         isEmpty(this._props.cover) ||
