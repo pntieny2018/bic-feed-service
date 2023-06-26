@@ -56,6 +56,7 @@ import { UpdateArticleHandler } from '../application/command/update-article/upda
 import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
+import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
 
 export const postProvider = [
   {
@@ -130,6 +131,7 @@ export const postProvider = [
   FindSeriesHandler,
   FindItemsBySeriesHandler,
   ProcessReactionNotificationHandler,
+  AutoSaveArticleHandler,
   PublishArticleHandler,
   UpdateArticleHandler,
   DeleteArticleHandler,

@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Version,
@@ -48,6 +49,7 @@ import {
 import { UpdateArticleRequestDto } from '../dto/request/update-artice.request.dto';
 import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
 import { PublishArticleCommand } from '../../application/command/publish-article/publish-article.command';
+import { AutoSaveArticleCommand } from '../../application/command/auto-save-article/auto-save-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -136,6 +138,53 @@ export class ArticleController {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        case AccessDeniedException:
+        case ContentNoCRUDPermissionException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Auto save article' })
+  @ApiOkResponse({
+    description: 'Update article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.updated_success',
+  })
+  @Patch(ROUTES.ARTICLE.AUTO_SAVE.PATH)
+  @Version(ROUTES.ARTICLE.AUTO_SAVE.VERSIONS)
+  public async autoSave(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateArticleRequestDto: UpdateArticleRequestDto
+  ): Promise<void> {
+    try {
+      const { audience } = updateArticleRequestDto;
+      await this._commandBus.execute<AutoSaveArticleCommand, void>(
+        new AutoSaveArticleCommand({
+          id,
+          actor: user,
+          ...updateArticleRequestDto,
+          groupIds: audience?.groupIds,
+        })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentEmptyException:
+        case ContentEmptyGroupException:
+        case ArticleRequiredCoverException:
+        case InvalidResourceImageException:
+        case CategoryInvalidException:
+        case TagSeriesInvalidException:
         case DomainModelException:
           throw new BadRequestException(e);
         case AccessDeniedException:

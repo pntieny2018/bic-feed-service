@@ -21,8 +21,8 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
   }
 
   public updateAttribute(data: UpdateArticleCommandPayload): void {
-    const { actor, content, series, title, summary, wordCount } = data;
-    super.update({ authUser: actor });
+    const { actor, content, series, title, summary, groupIds, wordCount } = data;
+    super.update({ authUser: actor, groupIds });
 
     if (series) {
       const currentSeries = this._props.seriesIds || [];
