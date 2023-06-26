@@ -50,8 +50,6 @@ export class AutoSaveArticleHandler implements ICommandHandler<AutoSaveArticleCo
       throw new ContentNotFoundException();
     }
 
-    this._contentValidator.checkCanReadContent(articleEntity, actor);
-
     if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();

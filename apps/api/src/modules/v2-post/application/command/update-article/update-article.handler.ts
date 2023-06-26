@@ -2,11 +2,7 @@ import { cloneDeep } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateArticleCommand } from './update-article.command';
-import {
-  AccessDeniedException,
-  ArticleRequiredCoverException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
+import { ArticleRequiredCoverException, ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
@@ -56,14 +52,10 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
       !articleEntity ||
       !(articleEntity instanceof ArticleEntity) ||
       articleEntity.isHidden() ||
-      (articleEntity.isPublished() && !articleEntity.getGroupIds()?.length)
+      articleEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
     }
-
-    this._contentValidator.checkCanReadContent(articleEntity, actor);
-
-    if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
 
