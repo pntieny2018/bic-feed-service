@@ -37,6 +37,7 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
+import { QuizModel } from './quiz.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -101,6 +102,8 @@ export interface IPost {
   items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
+  quizId?: string;
+  quiz?: QuizModel;
   publishedAt?: Date;
   errorLog?: any;
   mediaJson?: any;
@@ -204,6 +207,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public cover: string;
+
+  @AllowNull(true)
+  @Column
+  public quizId: string;
 
   @AllowNull(false)
   @Column

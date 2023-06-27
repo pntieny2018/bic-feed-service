@@ -44,5 +44,10 @@
   "report": {
     "ignored_success": "Ignored content successfully",
     "hidden_success": "Hidden content successfully"
+  },
+  "quiz": {
+    "created_success": "Created quiz successfully",
+    "updated_success": "Updated quiz successfully",
+    "deleted_success": "Deleted quiz successfully"
   }
 }

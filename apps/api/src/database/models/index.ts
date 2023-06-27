@@ -25,6 +25,7 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
 import { UserSavePostModel } from './user-save-post.model';
 import { UserSeenPostModel } from './user-seen-post.model';
+import { QuizModel } from './quiz.model';
 
 export default [
   PostModel,
@@ -54,4 +55,5 @@ export default [
   PostTagModel,
   ReportContentDetailModel,
   FailedProcessPostModel,
+  QuizModel,
 ];
