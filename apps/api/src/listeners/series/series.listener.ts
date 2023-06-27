@@ -57,7 +57,7 @@ export class SeriesListener {
     const posts = await this._postService.getPostsWithSeries(itemsSorted.map((item) => item.id));
     for (const post of posts) {
       await this._postSearchService.updateAttributePostToSearch(post, {
-        seriesIds: (post.postSeries || []).map((series) => series.seriesId),
+        seriesIds: post.postSeries.map((series) => series.seriesId),
       });
     }
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));

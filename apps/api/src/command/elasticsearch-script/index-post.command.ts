@@ -93,7 +93,7 @@ export class IndexPostCommand implements CommandRunner {
 
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
-    //await this._deleteAllDocuments();
+    await this._deleteAllDocuments();
     await this._indexPost();
 
     process.exit();
@@ -211,7 +211,7 @@ export class IndexPostCommand implements CommandRunner {
             item.content = post.content;
             item.media = post.mediaJson;
             item.mentionUserIds = post.mentions;
-            item.seriesIds = (post.postSeries || []).map((series) => series.seriesId);
+            item.seriesIds = post.postSeries.map((series) => series.seriesId);
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;
@@ -222,7 +222,7 @@ export class IndexPostCommand implements CommandRunner {
               id: category.id,
               name: category.name,
             }));
-            item.seriesIds = (post.postSeries || []).map((series) => series.seriesId);
+            item.seriesIds = post.postSeries.map((series) => series.seriesId);
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
