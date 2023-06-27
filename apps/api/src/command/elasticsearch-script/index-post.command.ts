@@ -1,6 +1,7 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
+import { PostSeriesModel } from '../../database/models/post-series.model';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
@@ -44,6 +45,7 @@ export class IndexPostCommand implements CommandRunner {
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
+    @InjectModel(PostSeriesModel) private _postSeriesModel: typeof PostSeriesModel,
     private _configService: ConfigService,
     protected readonly elasticsearchService: ElasticsearchService,
     @InjectConnection() private _sequelizeConnection: Sequelize
@@ -208,6 +210,7 @@ export class IndexPostCommand implements CommandRunner {
             item.content = post.content;
             item.media = post.mediaJson;
             item.mentionUserIds = post.mentions;
+            item.seriesIds = (post.postSeries || []).map((series) => series.seriesId);
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;
@@ -218,6 +221,7 @@ export class IndexPostCommand implements CommandRunner {
               id: category.id,
               name: category.name,
             }));
+            item.seriesIds = (post.postSeries || []).map((series) => series.seriesId);
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
@@ -284,6 +288,12 @@ export class IndexPostCommand implements CommandRunner {
           required: false,
           through: { attributes: [] },
           attributes: ['id', 'name'],
+        },
+        {
+          model: PostSeriesModel,
+          as: 'postSeries',
+          required: false,
+          attributes: ['seriesId'],
         },
         { model: LinkPreviewModel, as: 'linkPreview', required: false },
       ],

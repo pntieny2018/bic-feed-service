@@ -50,7 +50,7 @@ export class SeriesRemovedItemsListener {
     const posts = await this._postService.getPostsWithSeries(items.map((item) => item.id));
     for (const post of posts) {
       await this._postSearchService.updateAttributePostToSearch(post, {
-        seriesIds: post.postSeries?.map((series) => series.seriesId),
+        seriesIds: (post.postSeries || []).map((series) => series.seriesId),
       });
     }
   }
