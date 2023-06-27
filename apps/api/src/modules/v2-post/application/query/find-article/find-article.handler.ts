@@ -7,11 +7,7 @@ import {
 import { ArticleDto } from '../../dto';
 import { FindArticleQuery } from './find-article.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
@@ -77,7 +73,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
 
     return this._contentBinding.articleBinding(articleEntity, {
       groups,
-      authUser: new UserDto(authUser),
+      authUser: authUser,
     });
   }
 }
