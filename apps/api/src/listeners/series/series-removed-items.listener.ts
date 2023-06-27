@@ -26,7 +26,7 @@ export class SeriesRemovedItemsListener {
         event.payload.items[0]
       )}`
     );
-    const { seriesId, skipNotify } = event.payload;
+    const { seriesId, items, skipNotify } = event.payload;
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
     });
@@ -45,6 +45,18 @@ export class SeriesRemovedItemsListener {
       }
 
       this._notifyDeletedItems(event).catch((ex) => this._logger.error(ex, ex?.stack));
+    }
+
+    for (const item of items) {
+      const post = await this._postService.findPostById(item.id, {
+        withSeries: true,
+      });
+
+      if (post) {
+        await this._postSearchService.updateAttributePostToSearch(post, {
+          seriesIds: post.postSeries?.map((series) => series.seriesId),
+        });
+      }
     }
   }
 

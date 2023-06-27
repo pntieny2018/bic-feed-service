@@ -27,7 +27,7 @@ export class SeriesAddedItemsListener {
       )}`
     );
 
-    const { seriesId, skipNotify } = event.payload;
+    const { seriesId, itemIds, skipNotify } = event.payload;
 
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
@@ -42,6 +42,18 @@ export class SeriesAddedItemsListener {
       this._postSearchService.updateAttributePostToSearch(series, {
         items,
       });
+    }
+
+    for (const item of itemIds) {
+      const post = await this._postService.findPostById(item, {
+        withSeries: true,
+      });
+
+      if (post) {
+        await this._postSearchService.updateAttributePostToSearch(post, {
+          seriesIds: post.postSeries?.map((series) => series.seriesId),
+        });
+      }
     }
 
     if (skipNotify) {

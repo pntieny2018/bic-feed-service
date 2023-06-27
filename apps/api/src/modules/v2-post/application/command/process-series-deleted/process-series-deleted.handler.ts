@@ -2,6 +2,7 @@ import { SentryService } from '@app/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { IPost } from '../../../../../database/models/post.model';
 import { PostEntity } from '../../../domain/model/content';
 import { SeriesHasBeenDeleted } from '../../../../../common/constants';
 import { NotificationService, TypeActivity, VerbActivity } from '../../../../../notification';
@@ -12,6 +13,7 @@ import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { SeriesMessagePayload } from '../../dto/message/series.message-payload';
+import { SearchService } from '../../../../search/search.service';
 
 @CommandHandler(ProcessSeriesDeletedCommand)
 export class ProcessSeriesDeletedHandler
@@ -23,6 +25,7 @@ export class ProcessSeriesDeletedHandler
     private _sentryService: SentryService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
+    private readonly _postSearchService: SearchService,
     private readonly _notificationService: NotificationService //TODO improve interface later
   ) {}
 
@@ -34,15 +37,22 @@ export class ProcessSeriesDeletedHandler
     if (!itemIds || !itemIds.length) return;
 
     if (!isHidden) {
-      const items = await this._contentRepository.findAll({
+      const items = (await this._contentRepository.findAll({
         where: {
           ids: itemIds,
           groupArchived: false,
         },
         include: {
           shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
         },
-      });
+      })) as (PostEntity | ArticleEntity)[];
+
+      for (const item of items) {
+        await this._postSearchService.updateAttributePostToSearch({ id: item.getId() } as IPost, {
+          seriesIds: item.getSeriesIds() || [],
+        });
+      }
 
       if (items.every((item) => item.isOwner(actor.id))) return;
 

@@ -1957,4 +1957,41 @@ export class PostService {
       this.sentryService.captureException(ex);
     }
   }
+
+  public async findPostById(
+    id: string,
+    options: {
+      withGroups?: boolean;
+      withSeries?: boolean;
+    }
+  ): Promise<IPost> {
+    const include = [];
+    if (options.withGroups) {
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: false,
+        where: {
+          isArchived: false,
+        },
+        attributes: ['groupId'],
+      });
+    }
+    if (options.withSeries) {
+      include.push({
+        model: PostSeriesModel,
+        required: false,
+        as: 'postSeries',
+        attributes: ['seriesId'],
+      });
+    }
+    const result = await this.postModel.findOne({
+      include,
+      where: {
+        id,
+      },
+    });
+
+    return result;
+  }
 }
