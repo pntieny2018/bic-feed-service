@@ -33,42 +33,52 @@ export class QuizController {
     @AuthUser() user: UserDto,
     @Body() createQuizDto: CreateQuizRequestDto
   ): Promise<any> {
-    console.log('111111111');
-    return [
-      {
-        question: 'What is the capital of Vietnam?',
-        answers: [
-          {
-            answer: 'Hanoi',
-            isCorrect: true,
-          },
-          {
-            answer: 'Ho Chi Minh',
-            isCorrect: false,
-          },
-          {
-            answer: 'Da Nang',
-            isCorrect: false,
-          },
-        ],
-      },
-      {
-        question: 'What is purpose of life?',
-        answers: [
-          {
-            answer: 'To be happy',
-            isCorrect: true,
-          },
-          {
-            answer: 'To be rich',
-            isCorrect: false,
-          },
-          {
-            answer: 'To be famous',
-            isCorrect: false,
-          },
-        ],
-      },
-    ];
+    return {
+      id: 'ef541ba5-7b39-43fa-9cfd-a5289a78d82f',
+      content_id: 'ef541ba5-7b39-43fa-9cfd-a5289a78d82f',
+      title: 'title',
+      description: 'description',
+      number_of_questions: 50,
+      number_of_answers: 3,
+      number_of_questions_display: 12,
+      number_of_answers_display: 4,
+      is_random: true,
+      questions: [
+        {
+          question: 'What is the capital of Vietnam?',
+          answers: [
+            {
+              answer: 'Hanoi',
+              is_correct: true,
+            },
+            {
+              answer: 'Ho Chi Minh',
+              is_correct: false,
+            },
+            {
+              answer: 'Da Nang',
+              is_correct: false,
+            },
+          ],
+        },
+        {
+          question: 'What is purpose of life?',
+          answers: [
+            {
+              answer: 'To be happy',
+              is_correct: true,
+            },
+            {
+              answer: 'To be rich',
+              is_correct: false,
+            },
+            {
+              answer: 'To be famous',
+              is_correct: false,
+            },
+          ],
+        },
+      ],
+    };
   }
 }
