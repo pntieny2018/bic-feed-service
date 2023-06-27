@@ -37,6 +37,7 @@ import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.comman
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
+import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-important-post.command';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-cont
     MigratePostMentionsCommand,
     MigrateWordCountCommand,
     MigrateArticlesContainErrorImageCommand,
+    MigrateMarkReadImportantPostCommand,
   ],
 })
 export class CommandModule {}
