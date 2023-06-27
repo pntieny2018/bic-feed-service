@@ -103,7 +103,7 @@ export class SearchPostsDto extends PageOptionsDto {
   public type?: PostType;
 
   @ApiProperty({
-    default: RULES.LIMIT_MAX_SERIES,
+    default: RULES.LIMIT_ATTACHED_SERIES,
     required: false,
   })
   @Expose({

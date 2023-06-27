@@ -1,5 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { RULES } from '../../constant';
 import {
   ARTICLE_FACTORY_TOKEN,
   IArticleFactory,
@@ -39,6 +40,7 @@ import {
 import { ContentEntity } from '../model/content/content.entity';
 import { ArticleEntity } from '../model/content/article.entity';
 import { UserDto } from '../../../v2-user/application';
+import { ContentLimitAttachedSeriesException } from '../exception';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -151,6 +153,11 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('groupIds')
     );
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+
+    if (postEntity.isOverLimtedToAttachSeries()) {
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
     await this._contentValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),
@@ -218,6 +225,11 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('groupIds')
     );
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+
+    if (postEntity.isOverLimtedToAttachSeries()) {
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
     await this._contentValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),

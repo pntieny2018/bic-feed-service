@@ -40,7 +40,7 @@ export class SearchArticlesDto extends PageOptionsDto {
   public categoryIds?: string[];
 
   @ApiProperty({
-    default: RULES.LIMIT_MAX_SERIES,
+    default: RULES.LIMIT_ATTACHED_SERIES,
     required: false,
   })
   @Expose({

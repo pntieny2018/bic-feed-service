@@ -36,3 +36,4 @@ export * from './category-invalid.exception';
 export * from './tag-series-invalid.exception';
 export * from './content-empty.exception';
 export * from './access-denied.exception';
+export * from './content-limit-attached-series';
