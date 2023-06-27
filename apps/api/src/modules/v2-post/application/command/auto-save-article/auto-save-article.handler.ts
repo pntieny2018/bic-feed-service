@@ -50,6 +50,8 @@ export class AutoSaveArticleHandler implements ICommandHandler<AutoSaveArticleCo
       throw new ContentNotFoundException();
     }
 
+    if (articleEntity.isPublished()) return;
+
     if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
