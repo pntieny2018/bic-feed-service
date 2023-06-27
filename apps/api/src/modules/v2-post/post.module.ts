@@ -43,8 +43,8 @@ import { SearchModule } from '../search';
     UserModuleV2,
     MediaModule,
     KafkaModule,
-    NotificationModule,
     SearchModule,
+    NotificationModule,
   ],
   controllers: [
     TagController,
