@@ -8,7 +8,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 
@@ -21,7 +21,13 @@ export interface IQuiz {
   numQuestionDisplay: number;
   numAnswerDisplay: number;
   isRandom: boolean;
-  questions: string;
+  questions: {
+    question: string;
+    answers: {
+      answer: string;
+      isCorrect: boolean;
+    }[];
+  }[];
   createdBy: string;
   updatedBy: string;
   createdAt: Date;
@@ -59,7 +65,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @Column
   public isRandom: boolean;
 
-  @Column
+  @Column({
+    type: DataTypes.JSONB,
+  })
   public questions: any;
 
   @AllowNull(false)

@@ -38,6 +38,12 @@
       ],
       "@app/kafka/*": [
         "libs/kafka/src/*"
+      ],
+      "@app/openai": [
+        "libs/openai/src"
+      ],
+      "@app/openai/*": [
+        "libs/openai/src/*"
       ]
     }
   },
