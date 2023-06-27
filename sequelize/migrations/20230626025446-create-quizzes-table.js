@@ -11,32 +11,40 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal('gen_random_uuid()'),
         },
+        content_id: {
+          type: Sequelize.UUID,
+          defaultValue: null,
+        },
         title: {
           type: Sequelize.STRING(65),
           allowNull: false,
           defaultValue: false,
+        },
+        status: {
+          type: Sequelize.ENUM('PENDING', 'DRAFT', 'PUBLISHED'),
+          defaultValue: 'PENDING',
         },
         description: {
           type: Sequelize.STRING(256),
           allowNull: false,
           defaultValue: false,
         },
-        num_question: {
+        number_of_questions: {
           type: Sequelize.SMALLINT,
           allowNull: false,
           defaultValue: 0,
         },
-        num_answer: {
+        number_of_answers: {
           type: Sequelize.SMALLINT,
           allowNull: false,
           defaultValue: 0,
         },
-        num_answer_display: {
+        number_of_answers_display: {
           type: Sequelize.SMALLINT,
           allowNull: false,
           defaultValue: 0,
         },
-        num_question_display: {
+        number_of_questions_display: {
           type: Sequelize.SMALLINT,
           allowNull: false,
           defaultValue: 0,
@@ -46,7 +54,11 @@ module.exports = {
           allowNull: false,
           defaultValue: true,
         },
-        data: {
+        questions: {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        },
+        meta: {
           type: Sequelize.JSONB,
           allowNull: true,
         },
@@ -71,6 +83,19 @@ module.exports = {
       },
       {
         schema: schemaName,
+      }
+    );
+
+    await queryInterface.addConstraint(
+      { tableName, schema: schemaName },
+      {
+        fields: ['content_id'],
+        type: 'foreign key',
+        references: {
+          table: 'posts',
+          field: 'id',
+        },
+        onDelete: 'CASCADE',
       }
     );
   },

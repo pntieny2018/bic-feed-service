@@ -70,5 +70,8 @@
     "no_delete_permission": "Failed to delete reaction: you don't have permission",
     "duplicate": "You have already reacted to this content"
   },
+  "quiz": {
+    "no_crud_permission_at_group": "You don't have CUD permission at group {groups}"
+  },
   "cursor_params_invalid": "Cursor params invalid"
 }

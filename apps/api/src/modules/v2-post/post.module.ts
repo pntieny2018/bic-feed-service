@@ -32,6 +32,7 @@ import { NewsFeedController } from './driving-apdater/controller/newsfeed.contro
 import { QuizController } from './driving-apdater/controller/quiz.controller';
 import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
 import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
+import { quizProvider } from './provider/quiz.provider';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
     ...commentProvider,
     ...sharedProvider,
     ...reactionProvider,
+    ...quizProvider,
   ],
 })
 export class PostModuleV2 {}

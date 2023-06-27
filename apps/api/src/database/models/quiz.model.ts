@@ -11,15 +11,17 @@ import {
 import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
+import { QuizStatus } from '../../modules/v2-post/data-type/quiz-status.enum';
 
 export interface IQuiz {
   id: string;
   title: string;
   description: string;
-  numQuestion: number;
-  numAnswer: number;
-  numQuestionDisplay: number;
-  numAnswerDisplay: number;
+  status: QuizStatus;
+  numberOfQuestions: number;
+  numberOfAnswers: number;
+  numberOfQuestionsDisplay: number;
+  numberOfAnswersDisplay: number;
   isRandom: boolean;
   questions: {
     question: string;
@@ -28,6 +30,7 @@ export interface IQuiz {
       isCorrect: boolean;
     }[];
   }[];
+  meta: any;
   createdBy: string;
   updatedBy: string;
   createdAt: Date;
@@ -51,16 +54,16 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   public description: string;
 
   @Column
-  public numQuestion: number;
+  public numberOfQuestions: number;
 
   @Column
-  public numAnswer: number;
+  public numberOfAnswers: number;
 
   @Column
-  public numQuestionDisplay: number;
+  public numberOfQuestionsDisplay: number;
 
   @Column
-  public numAnswerDisplay: number;
+  public numberOfAnswersDisplay: number;
 
   @Column
   public isRandom: boolean;
@@ -69,6 +72,14 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
     type: DataTypes.JSONB,
   })
   public questions: any;
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public meta: any;
+
+  @Column
+  public status: QuizStatus;
 
   @AllowNull(false)
   @Column
