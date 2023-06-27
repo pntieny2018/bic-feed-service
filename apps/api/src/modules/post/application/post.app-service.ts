@@ -41,6 +41,7 @@ import { MediaMarkAction, MediaType } from '../../../database/models/media.model
 import { LogicException } from '../../../common/exceptions';
 import { TargetType } from '../../report-content/contstants';
 import { ArticleResponseDto } from '../../article/dto/responses';
+import { RULES } from '../../v2-post/constant';
 
 @Injectable()
 export class PostAppService {
@@ -243,7 +244,11 @@ export class PostAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
-      await this._postService.isOverLimtedToAttachSeries(postId);
+      if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
+        throw new BadRequestException(
+          `Article can only be attached to a maximum of ${RULES.LIMIT_ATTACHED_SERIES} series`
+        );
+      }
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
