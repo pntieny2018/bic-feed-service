@@ -25,6 +25,7 @@ import { UserDto } from '../../v2-user/application';
 import { LogicException } from '../../../common/exceptions';
 import { IPostGroup } from '../../../database/models/post-group.model';
 import { ExternalService } from '../../../app/external.service';
+import { RULES } from '../../v2-post/constant';
 
 @Injectable()
 export class SeriesAppService {
@@ -279,6 +280,17 @@ export class SeriesAppService {
         code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
         message: `Items parameter is invalid`,
       });
+    }
+
+    const seriesIdsList = posts.map((post) => post.postSeries);
+    const isOverLimtedToAttachSeries = !seriesIdsList.every(
+      (seriesIds) => seriesIds.length < RULES.LIMIT_ATTACHED_SERIES
+    );
+
+    if (isOverLimtedToAttachSeries) {
+      throw new BadRequestException(
+        `Article can only be attached to a maximum of ${RULES.LIMIT_ATTACHED_SERIES} series`
+      );
     }
 
     await this._authorityService.checkCanUpdateSeries(
