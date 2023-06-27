@@ -44,16 +44,11 @@ export class SeriesAddedItemsListener {
       });
     }
 
-    for (const item of itemIds) {
-      const post = await this._postService.findPostById(item, {
-        withSeries: true,
+    const posts = await this._postService.getPostsWithSeries(itemIds);
+    for (const post of posts) {
+      await this._postSearchService.updateAttributePostToSearch(post, {
+        seriesIds: post.postSeries?.map((series) => series.seriesId),
       });
-
-      if (post) {
-        await this._postSearchService.updateAttributePostToSearch(post, {
-          seriesIds: post.postSeries?.map((series) => series.seriesId),
-        });
-      }
     }
 
     if (skipNotify) {

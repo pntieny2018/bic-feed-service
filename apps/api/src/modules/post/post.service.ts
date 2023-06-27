@@ -1958,37 +1958,18 @@ export class PostService {
     }
   }
 
-  public async findPostById(
-    id: string,
-    options: {
-      withGroups?: boolean;
-      withSeries?: boolean;
-    }
-  ): Promise<IPost> {
+  public async getPostsWithSeries(ids: string[]): Promise<IPost[]> {
     const include = [];
-    if (options.withGroups) {
-      include.push({
-        model: PostGroupModel,
-        as: 'groups',
-        required: false,
-        where: {
-          isArchived: false,
-        },
-        attributes: ['groupId'],
-      });
-    }
-    if (options.withSeries) {
-      include.push({
-        model: PostSeriesModel,
-        required: false,
-        as: 'postSeries',
-        attributes: ['seriesId'],
-      });
-    }
-    const result = await this.postModel.findOne({
+    include.push({
+      model: PostSeriesModel,
+      required: false,
+      as: 'postSeries',
+      attributes: ['seriesId'],
+    });
+    const result = await this.postModel.findAll({
       include,
       where: {
-        id,
+        id: ids,
       },
     });
 

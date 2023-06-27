@@ -47,16 +47,11 @@ export class SeriesRemovedItemsListener {
       this._notifyDeletedItems(event).catch((ex) => this._logger.error(ex, ex?.stack));
     }
 
-    for (const item of items) {
-      const post = await this._postService.findPostById(item.id, {
-        withSeries: true,
+    const posts = await this._postService.getPostsWithSeries(items.map((item) => item.id));
+    for (const post of posts) {
+      await this._postSearchService.updateAttributePostToSearch(post, {
+        seriesIds: post.postSeries?.map((series) => series.seriesId),
       });
-
-      if (post) {
-        await this._postSearchService.updateAttributePostToSearch(post, {
-          seriesIds: post.postSeries?.map((series) => series.seriesId),
-        });
-      }
     }
   }
 
