@@ -33,6 +33,7 @@ import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
 import { ReactionService } from '../../reaction';
+import { RULES } from '../../v2-post/constant';
 
 @Injectable()
 export class ArticleAppService {
@@ -241,6 +242,13 @@ export class ArticleAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+
+      if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
+        throw new BadRequestException(
+          `Article can only be attached to a maximum of ${RULES.LIMIT_ATTACHED_SERIES} series`
+        );
+      }
+
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
@@ -268,6 +276,8 @@ export class ArticleAppService {
     const groupIds = audience.groups.map((group) => group.id);
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
+
+    await this._postService.isOverLimtedToAttachSeries(article.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),

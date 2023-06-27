@@ -154,7 +154,6 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Req() req: Request
   ): Promise<PostResponseDto> {
-    console.log('old version');
     const publishResult = await this._postAppService.publishPost(user, postId);
     if (
       publishResult?.media?.videos?.length > 0 &&

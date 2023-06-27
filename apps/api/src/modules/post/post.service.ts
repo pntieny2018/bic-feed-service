@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import {
@@ -60,6 +60,7 @@ import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/resp
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import { RULES } from '../v2-post/constant';
 
 @Injectable()
 export class PostService {
@@ -1974,5 +1975,15 @@ export class PostService {
     });
 
     return result;
+  }
+
+  public async isOverLimtedToAttachSeries(id: string): Promise<void> {
+    const post = (await this.getPostsWithSeries([id]))[0];
+    const seriesIds = post.postSeries || [];
+    if (seriesIds.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new BadRequestException(
+        `Article can only be attached to a maximum of ${RULES.LIMIT_ATTACHED_SERIES} series`
+      );
+    }
   }
 }

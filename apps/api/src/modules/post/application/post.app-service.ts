@@ -243,6 +243,7 @@ export class PostAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+      await this._postService.isOverLimtedToAttachSeries(postId);
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
@@ -462,11 +463,13 @@ export class PostAppService {
   private async _preCheck(post: PostResponseDto, user: UserDto): Promise<void> {
     await this._authorityService.checkPostOwner(post, user.id);
 
-    const { audience, setting } = post;
+    const { audience } = post;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     const groupIds = audience.groups.map((group) => group.id);
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
+
+    await this._postService.isOverLimtedToAttachSeries(post.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
