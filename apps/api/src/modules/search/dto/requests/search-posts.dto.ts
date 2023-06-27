@@ -4,11 +4,13 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   ValidateIf,
 } from 'class-validator';
+import { RULES } from '../../../v2-post/constant';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 import { PostType } from '../../../../database/models/post.model';
 
@@ -99,6 +101,18 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsEnum(PostType)
   @ValidateIf((i) => i.type !== '')
   public type?: PostType;
+
+  @ApiProperty({
+    default: RULES.LIMIT_MAX_SERIES,
+    required: false,
+  })
+  @Expose({
+    name: 'limit_series',
+  })
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  public limitSeries?: number;
 
   public notIncludeIds?: string[];
   public tagId?: string;

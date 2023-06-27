@@ -526,7 +526,7 @@ export class SearchService {
     authUser: UserDto,
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
-    const { limit, offset, groupIds, categoryIds, contentSearch } = searchDto;
+    const { limit, offset, groupIds, categoryIds, contentSearch, limitSeries } = searchDto;
     const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleSearchResponseDto>([], {
@@ -601,6 +601,7 @@ export class SearchService {
       notIncludeIds,
       tagName,
       tagId,
+      limitSeries,
     }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
@@ -621,6 +622,7 @@ export class SearchService {
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
             ...(tagId ? this._getTagIdFilter(tagId) : this._getTagFilter(tagName)),
+            ...(limitSeries && this._limitSeriesFilter(limitSeries)),
           ],
           should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -690,13 +692,15 @@ export class SearchService {
     notIncludeIds?: string[];
     limit: number;
     offset: number;
+    limitSeries?: number;
   }): Promise<{
     index: string;
     body: any;
     from: number;
     size: number;
   }> {
-    const { contentSearch, groupIds, categoryIds, limit, offset, notIncludeIds } = props;
+    const { contentSearch, groupIds, categoryIds, limit, offset, notIncludeIds, limitSeries } =
+      props;
     const body: BodyES = {
       query: {
         bool: {
@@ -721,6 +725,9 @@ export class SearchService {
     }
     if (groupIds && groupIds.length) {
       body.query.bool.filter.push(...this._getAudienceFilter(groupIds));
+    }
+    if (limitSeries) {
+      body.query.bool.filter.push(...this._limitSeriesFilter(limitSeries));
     }
 
     body['sort'] = [...this._getSort(contentSearch)];
@@ -903,6 +910,19 @@ export class SearchService {
       ];
     }
     return [];
+  }
+
+  private _limitSeriesFilter(limitSeries: number): any {
+    const { seriesIds } = ELASTIC_POST_MAPPING_PATH;
+    return [
+      {
+        script: {
+          script: {
+            inline: `doc['${seriesIds}'].length < ${limitSeries} `,
+          },
+        },
+      },
+    ];
   }
 
   private _getMatchKeyword(type: PostType, keyword: string): any {
