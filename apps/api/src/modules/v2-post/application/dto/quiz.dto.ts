@@ -1,4 +1,5 @@
 import { UserDto } from '../../../v2-user/application';
+import { QuestionDto } from './question.dto';
 
 export class QuizDto {
   public id: string;
@@ -10,13 +11,7 @@ export class QuizDto {
   public description?: string;
   public numberOfQuestionsDisplay?: number;
   public numberOfAnswersDisplay?: number;
-  public questions?: {
-    question: string;
-    answers: {
-      answer: string;
-      isCorrect?: boolean;
-    }[];
-  }[];
+  public questions?: QuestionDto[];
   public createdAt: Date;
   public updatedAt: Date;
   public status: string;

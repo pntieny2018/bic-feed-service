@@ -42,6 +42,17 @@ export class QuizRepository implements IQuizRepository {
     await this._quizModel.update(
       {
         title: data.get('title'),
+        description: data.get('description'),
+        numberOfQuestions: data.get('numberOfQuestions'),
+        numberOfAnswers: data.get('numberOfAnswers'),
+        numberOfQuestionsDisplay: data.get('numberOfQuestionsDisplay'),
+        numberOfAnswersDisplay: data.get('numberOfAnswersDisplay'),
+        status: data.get('status'),
+        isRandom: data.get('isRandom'),
+        questions: data.get('questions'),
+        updatedBy: data.get('updatedBy'),
+        updatedAt: data.get('updatedAt'),
+        meta: data.get('meta'),
       },
       { where: { id: data.get('id') } }
     );

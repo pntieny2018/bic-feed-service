@@ -6,15 +6,13 @@ export type GenerateQuestionProps = {
 
 export type GenerateQuestionResponse = {
   model: string;
-  context: {
-    role: string;
-    content: string;
-  }[];
   usage: {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
   };
+  maxTokens: number;
+  completion: any;
   questions: {
     question: string;
     answers: {

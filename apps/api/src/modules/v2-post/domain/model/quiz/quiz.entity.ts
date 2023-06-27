@@ -92,4 +92,48 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
       );
     }
   }
+
+  public updateAttribute(data: Partial<QuizProps>): void {
+    if (data.questions) {
+      this._props.questions = data.questions;
+    }
+
+    if (data.title) {
+      this._props.title = data.title;
+    }
+
+    if (data.description) {
+      this._props.description = data.description;
+    }
+
+    if (data.numberOfQuestions) {
+      this._props.numberOfQuestions = data.numberOfQuestions;
+    }
+
+    if (data.numberOfAnswers) {
+      this._props.numberOfAnswers = data.numberOfAnswers;
+    }
+
+    if (data.numberOfQuestionsDisplay) {
+      this._props.numberOfQuestionsDisplay = data.numberOfQuestionsDisplay;
+    }
+
+    if (data.numberOfAnswersDisplay) {
+      this._props.numberOfAnswersDisplay = data.numberOfAnswersDisplay;
+    }
+
+    if (data.isRandom) {
+      this._props.isRandom = data.isRandom;
+    }
+
+    if (data.meta) {
+      this._props.meta = data.meta;
+    }
+
+    if (data.updatedBy) {
+      this._props.updatedBy = data.updatedBy;
+    }
+
+    this._props.updatedAt = new Date();
+  }
 }

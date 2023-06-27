@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 
 export class CreateQuizRequestDto {
@@ -63,6 +63,7 @@ export class CreateQuizRequestDto {
 
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
+  @IsOptional()
   @Expose({
     name: 'is_random',
   })
