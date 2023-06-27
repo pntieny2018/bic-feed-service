@@ -23,16 +23,18 @@ export class QuizRepository implements IQuizRepository {
       id: data.get('id'),
       title: data.get('title'),
       description: data.get('description'),
-      numQuestion: data.get('numQuestion'),
-      numAnswer: data.get('numAnswer'),
-      numQuestionDisplay: data.get('numQuestionDisplay'),
-      numAnswerDisplay: data.get('numAnswerDisplay'),
+      numberOfQuestions: data.get('numberOfQuestions'),
+      numberOfAnswers: data.get('numberOfAnswers'),
+      numberOfQuestionsDisplay: data.get('numberOfQuestionsDisplay'),
+      numberOfAnswersDisplay: data.get('numberOfAnswersDisplay'),
+      status: data.get('status'),
       isRandom: data.get('isRandom'),
       questions: data.get('questions'),
       createdBy: data.get('createdBy'),
       updatedBy: data.get('updatedBy'),
       createdAt: data.get('createdAt'),
       updatedAt: data.get('updatedAt'),
+      meta: data.get('meta'),
     });
   }
 

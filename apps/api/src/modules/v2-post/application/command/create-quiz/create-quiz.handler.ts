@@ -1,53 +1,100 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import {
-  ITagDomainService,
-  TAG_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagDuplicateNameException } from '../../../domain/exception';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { ContentNotFoundException } from '../../../domain/exception';
 import { CreateQuizCommand } from './create-quiz.command';
-import { TagNoCreatePermissionException } from '../../../domain/exception';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { TagDto } from '../../dto';
+import { QuizDto } from '../../dto';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
+import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
+import {
+  IQuizDomainService,
+  QUIZ_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/quiz.domain-service.interface';
+import { ContentEntity } from '../../../domain/model/content/content.entity';
+import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
+import { ArticleEntity, PostEntity } from '../../../domain/model/content';
+import { StringHelper } from '../../../../../common/helpers';
+import { ContentEmptyException } from '../../../domain/exception/content-empty.exception';
 
 @CommandHandler(CreateQuizCommand)
-export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, TagDto> {
-  @Inject(TAG_REPOSITORY_TOKEN)
-  private readonly _tagRepository: ITagRepository;
-  @Inject(TAG_DOMAIN_SERVICE_TOKEN)
-  private readonly _tagDomainService: ITagDomainService;
+export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, QuizDto> {
+  @Inject(CONTENT_REPOSITORY_TOKEN)
+  private readonly _contentRepository: IContentRepository;
+  @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
+  private readonly _quizDomainService: IQuizDomainService;
+  @Inject(QUIZ_VALIDATOR_TOKEN)
+  private readonly _quizValidator: IQuizValidator;
   @Inject(USER_APPLICATION_TOKEN)
   private readonly _userAppService: IUserApplicationService;
+  @Inject(GROUP_APPLICATION_TOKEN)
+  private readonly _groupAppService: IGroupApplicationService;
+  @Inject(OPEN_AI_SERVICE_TOKEN)
+  private readonly _openaiService: IOpenaiService;
+  public async execute(command: CreateQuizCommand): Promise<QuizDto> {
+    const { authUser, contentId } = command.payload;
 
-  public async execute(command: CreateQuizCommand): Promise<TagDto> {
-    const { name, groupId, userId } = command.payload;
+    const contentEntity = await this._getContent(contentId);
+    const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
+    await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
 
-    const canCreateTag = await this._userAppService.canCudTagInCommunityByUserId(userId, groupId);
-    if (!canCreateTag) {
-      throw new TagNoCreatePermissionException();
+    //questions
+    const rawContent = this._getRawContent(contentEntity);
+    if (!rawContent) {
+      throw new ContentEmptyException();
     }
-
-    const findTagNameInGroup = await this._tagRepository.findOne({
-      groupId,
-      name,
+    const response = await this._openaiService.generateQuestion({
+      content: rawContent,
+      numberOfQuestions: command.payload.numberOfQuestions,
+      numberOfAnswers: command.payload.numberOfAnswers,
     });
-    if (findTagNameInGroup) {
-      throw new TagDuplicateNameException();
+    console.log(JSON.stringify(response, null, 2));
+    const quizEntity = await this._quizDomainService.create({
+      ...command.payload,
+      questions: response.questions,
+      meta: response.usage,
+    });
+
+    return new QuizDto({
+      id: quizEntity.get('id'),
+      contentId: quizEntity.get('contentId'),
+      status: quizEntity.get('status'),
+      title: quizEntity.get('title'),
+      description: quizEntity.get('description'),
+      numberOfQuestions: quizEntity.get('numberOfQuestions'),
+      numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
+      numberOfAnswers: quizEntity.get('numberOfAnswers'),
+      numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
+      isRandom: quizEntity.get('isRandom'),
+      questions: quizEntity.get('questions'),
+      createdAt: quizEntity.get('createdAt'),
+      updatedAt: quizEntity.get('updatedAt'),
+    });
+  }
+
+  private _getRawContent(contentEntity: ContentEntity): string {
+    if (contentEntity instanceof PostEntity) {
+      return StringHelper.removeMarkdownCharacter(contentEntity.get('content'));
+    } else if (contentEntity instanceof ArticleEntity) {
+      return StringHelper.serializeEditorContentToText(contentEntity.get('content'));
     }
-
-    const tagEntity = await this._tagDomainService.createTag({
-      name,
-      groupId,
-      userId,
+    return null;
+  }
+  private async _getContent(contentId: string): Promise<ContentEntity> {
+    const contentEntity = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
     });
-
-    return new TagDto({
-      id: tagEntity.get('id'),
-      name: tagEntity.get('name'),
-      groupId: tagEntity.get('groupId'),
-      slug: tagEntity.get('slug'),
-      totalUsed: tagEntity.get('totalUsed'),
-    });
+    if (!contentEntity || contentEntity.isHidden() || !contentEntity.isPublished()) {
+      throw new ContentNotFoundException();
+    }
+    return contentEntity;
   }
 }

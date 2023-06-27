@@ -3,25 +3,42 @@ import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { IQuizFactory } from './interface/quiz.factory.interface';
 import { QuizEntity, QuizProps } from '../model/quiz';
+import { QuizCreateProps } from '../domain-service/interface/quiz.domain-service.interface';
+import { QuizStatus } from '../../data-type/quiz-status.enum';
 
 export class QuizFactory implements IQuizFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public create(options: any): QuizEntity {
-    const { name, groupId, userId } = options;
+  public create(options: QuizCreateProps): QuizEntity {
+    const {
+      authUser,
+      title,
+      description,
+      questions,
+      contentId,
+      isRandom,
+      numberOfAnswers,
+      numberOfQuestions,
+      numberOfAnswersDisplay,
+      numberOfQuestionsDisplay,
+      meta,
+    } = options;
     const now = new Date();
     const quizEntity = new QuizEntity({
       id: v4(),
-      title: 'title',
-      description: 'description',
-      numQuestion: 10,
-      numAnswer: 4,
-      numQuestionDisplay: 10,
-      numAnswerDisplay: 4,
-      isRandom: true,
-      questions: [],
-      createdBy: userId,
-      updatedBy: userId,
+      contentId,
+      title: title || null,
+      description: description || null,
+      numberOfQuestions,
+      numberOfQuestionsDisplay: numberOfQuestionsDisplay || numberOfQuestions,
+      numberOfAnswers,
+      numberOfAnswersDisplay: numberOfAnswersDisplay || numberOfAnswers,
+      isRandom: isRandom || true,
+      questions,
+      meta,
+      status: QuizStatus.DRAFT,
+      createdBy: authUser.id,
+      updatedBy: authUser.id,
       createdAt: now,
       updatedAt: now,
     });

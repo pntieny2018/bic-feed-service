@@ -6,6 +6,7 @@ export const PERMISSION_KEY = {
   EDIT_OWN_CONTENT_SETTING: 'edit_own_content_setting',
   //PUBLISH_UNPUBLISH_POST: 'publish_unpublish_post',
   PIN_CONTENT: 'pin_content',
+  CUD_QUIZ: 'cud_quiz',
 };
 
 export const SUBJECT = {

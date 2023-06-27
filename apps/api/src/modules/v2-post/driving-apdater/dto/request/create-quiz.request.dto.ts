@@ -17,9 +17,9 @@ export class CreateQuizRequestDto {
   public title: string;
 
   @ApiProperty({ type: String })
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(255)
-  public description: string;
+  public description?: string;
 
   @ApiProperty({ type: Number })
   @Type(() => Number)

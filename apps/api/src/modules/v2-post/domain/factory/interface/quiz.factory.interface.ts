@@ -1,12 +1,8 @@
 import { QuizEntity, QuizProps } from '../../model/quiz';
+import { QuizCreateProps } from '../../domain-service/interface/quiz.domain-service.interface';
 
-export type CreateTagProps = Readonly<{
-  name: string;
-  groupId: string;
-  userId: string;
-}>;
 export interface IQuizFactory {
-  create(props: CreateTagProps): QuizEntity;
+  create(props: QuizCreateProps): QuizEntity;
 
   reconstitute(props: QuizProps): QuizEntity;
 }

@@ -1,13 +1,34 @@
-import { Body, Controller, Post, Version } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  NotFoundException,
+  Post,
+  Version,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ClassTransformer } from 'class-transformer';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
+import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
+import {
+  ContentNotFoundException,
+  TagDuplicateNameException,
+  TagNoCreatePermissionException,
+  TagNotFoundException,
+} from '../../domain/exception';
+import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
+import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
+import { PostDto, QuizDto } from '../../application/dto';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception/quiz-no-crud-permission-at-group.exception';
+import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -30,55 +51,27 @@ export class QuizController {
   @Post(ROUTES.QUIZ.CREATE.PATH)
   @Version(ROUTES.QUIZ.CREATE.VERSIONS)
   public async create(
-    @AuthUser() user: UserDto,
+    @AuthUser() authUser: UserDto,
     @Body() createQuizDto: CreateQuizRequestDto
-  ): Promise<any> {
-    return {
-      id: 'ef541ba5-7b39-43fa-9cfd-a5289a78d82f',
-      content_id: 'ef541ba5-7b39-43fa-9cfd-a5289a78d82f',
-      title: 'title',
-      description: 'description',
-      number_of_questions: 50,
-      number_of_answers: 3,
-      number_of_questions_display: 12,
-      number_of_answers_display: 4,
-      is_random: true,
-      questions: [
-        {
-          question: 'What is the capital of Vietnam?',
-          answers: [
-            {
-              answer: 'Hanoi',
-              is_correct: true,
-            },
-            {
-              answer: 'Ho Chi Minh',
-              is_correct: false,
-            },
-            {
-              answer: 'Da Nang',
-              is_correct: false,
-            },
-          ],
-        },
-        {
-          question: 'What is purpose of life?',
-          answers: [
-            {
-              answer: 'To be happy',
-              is_correct: true,
-            },
-            {
-              answer: 'To be rich',
-              is_correct: false,
-            },
-            {
-              answer: 'To be famous',
-              is_correct: false,
-            },
-          ],
-        },
-      ],
-    };
+  ): Promise<QuizDto> {
+    try {
+      const quiz = await this._commandBus.execute<CreateQuizCommand, QuizDto>(
+        new CreateQuizCommand({ ...createQuizDto, authUser })
+      );
+
+      return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case QuizNoCRUDPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        case ContentEmptyException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }

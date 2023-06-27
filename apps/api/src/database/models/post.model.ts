@@ -102,7 +102,6 @@ export interface IPost {
   items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
-  quizId?: string;
   quiz?: QuizModel;
   publishedAt?: Date;
   errorLog?: any;
@@ -207,10 +206,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public cover: string;
-
-  @AllowNull(true)
-  @Column
-  public quizId: string;
 
   @AllowNull(false)
   @Column

@@ -24,6 +24,9 @@ export const ERRORS = {
     CONTENT_NO_CRUD_PERMISSION_AT_GROUP: 'content.no_crud_permission_at_group',
     CONTENT_NO_EDIT_SETTING_PERMISSION_AT_GROUP: 'content.no_edit_setting_permission_at_group',
   },
+  QUIZ: {
+    QUIZ_NO_CRUD_PERMISSION_AT_GROUP: 'quiz.no_crud_permission_at_group',
+  },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
   },
