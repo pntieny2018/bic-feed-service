@@ -7,6 +7,12 @@ import {
   GenerateQuestionResponse,
   IOpenaiService,
 } from '@app/openai/openai.service.interface';
+import {
+  MAX_COMPLETION_TOKEN,
+  MAX_TOKEN,
+  TOKEN_IN_CONTEXT,
+  TOKEN_PER_QUESTION_OR_ANSWER,
+} from '@app/openai/constant';
 
 @Injectable()
 export class OpenaiService implements IOpenaiService {
@@ -18,14 +24,29 @@ export class OpenaiService implements IOpenaiService {
   public constructor(private readonly _configService: ConfigService) {}
 
   public async generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse> {
-    if (props.content.length > 16000) throw new Error('Max length is 16000 characters');
+    const inputTokens = this._getInputTokens(props);
+
+    const completionTokens = this._getCompletionTokens(props);
+    if (completionTokens >= MAX_COMPLETION_TOKEN) {
+      throw new Error(
+        `The number of tokens in questions and answers cannot exceed ${MAX_COMPLETION_TOKEN} tokens`
+      );
+    }
+
+    const remainingTokens = MAX_TOKEN - completionTokens;
+    console.log('completionTokens', completionTokens);
+    console.log('availableTokens', remainingTokens);
+    console.log('inputTokens', inputTokens);
+    if (inputTokens > remainingTokens) {
+      throw new Error(`The number of tokens in content cannot exceed ${remainingTokens} tokens`);
+    }
 
     const messages = this._getContext({
       content: props.content,
       numQuestion: props.numberOfQuestions,
       numAnswer: props.numberOfAnswers,
     });
-    const model = this._getModel(props);
+    const model = this._getModel(inputTokens + completionTokens);
     const openAIConfig = this._configService.get<IOpenAIConfig>('openai');
     const configuration = new Configuration({
       apiKey: openAIConfig.apiKey,
@@ -36,40 +57,55 @@ export class OpenaiService implements IOpenaiService {
       const completion = await this._openAI.createChatCompletion({
         model,
         messages,
-        max_tokens: this._getLimitTokenCompletion(props),
+        max_tokens: completionTokens,
       });
-      console.log(completion);
+      console.log('completion', JSON.stringify(completion.data));
+      const questions = this._getQuestionFromText(completion.data.choices[0].message.content);
       return {
         usage: {
           promptTokens: completion.data.usage.prompt_tokens,
           completionTokens: completion.data.usage.completion_tokens,
           totalTokens: completion.data.usage.total_tokens,
         },
-        questions: JSON.parse(completion.data.choices[0].message.content),
+        questions,
         model,
-        context: messages,
+        maxTokens: completionTokens,
+        completion: completion.data,
       };
     } catch (e) {
-      console.log(e);
+      throw new Error(e.response.data.error.message);
     }
   }
 
-  private _getModel(props: GenerateQuestionProps): string {
-    const { content } = props;
-    if (content.length <= 2000) {
-      return this._model.gpt_4k;
-    } else {
-      //return this._model.gpt_16k;
-      return this._model.gpt_4k;
+  private _getQuestions(content: string): any {
+    try {
+      const items = JSON.parse(content);
+      return items.map((item) => ({
+        question: item.question,
+        answers: item.answers.map((item) => ({
+          answer: item.answer,
+          isCorrect: item.isCorrect || false,
+        })),
+      }));
+    } catch (e) {
+      return [];
     }
   }
-
-  private _getLimitTokenCompletion(props: GenerateQuestionProps): number {
+  private _getInputTokens(props: GenerateQuestionProps): number {
     const { content } = props;
-    if (content.length <= 2000) {
-      return 2000;
+    const tokenInContent = content.length; //TODO: get from lambda
+    return TOKEN_IN_CONTEXT + tokenInContent;
+  }
+  private _getCompletionTokens(props: GenerateQuestionProps): number {
+    const { numberOfQuestions, numberOfAnswers } = props;
+    return numberOfQuestions * (numberOfAnswers + 1) * TOKEN_PER_QUESTION_OR_ANSWER;
+  }
+
+  private _getModel(totalTokens: number): string {
+    if (totalTokens <= 4000) {
+      return this._model.gpt_4k;
     } else {
-      return 8000;
+      return this._model.gpt_16k;
     }
   }
 
@@ -79,18 +115,52 @@ export class OpenaiService implements IOpenaiService {
     numAnswer: number;
   }): { role: string; content: string }[] {
     const { content, numQuestion, numAnswer } = input;
-    const jsonFormat =
-      '```[{"question":"What is the purpose of the article?","answers":[{"answer":"Tom","isCorrect":true},{"answer":"Tom","isCorrect":false}]}]```';
     return [
       {
-        role: 'system',
-        content: `Read article from user then create ${numQuestion} questions with ${numAnswer} answer choices per question, include correct answer. 
-        You must response in the same language as the article. Follow json format: ${jsonFormat}`,
-      },
-      {
         role: 'user',
-        content,
+        content: `Read the following article and then following THE STEP-BY-STEP INSTRUCTIONS after the end of the article:\n\n
+    === Start of the article ===\n\n
+    ${content}
+    \n\n=== End of the article ===\n\nSTEP-BY-STEP INSTRUCTIONS\n\n
+    1. Generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. It is very important that the language of all questions and choices must be the same as the detected language.\n
+    2. Each question must start with the exact format "[{question number}]" where {question number} is a number. Each choice in a multiple-choice question must start exactly with "{alphabet})" where {alphabet} can be A, B, C, etc. It is very important that each choice must be present in the required format.\n
+    3. Right after each question and before the next question, provide only the alphabet of the correct choice with the exact format "=> {alphabet}" where {alphabet} can be A, B, C, etc.\n
+    4. The questions should be geared towards a general audience and should focus on factual information from the article.\n
+    5. All your responses must be in the detected language of the above article.`,
       },
     ];
+  }
+
+  private _getQuestionFromText(text: string): {
+    question: string;
+    answers: {
+      answer: string;
+      isCorrect: boolean;
+    }[];
+  }[] {
+    const regex = /\[(\d+)\]([^\n?]+)\?([\s\S]*?)=> ([A-Z])/g;
+    const questions = [];
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      const questionNumber = match[1];
+      const questionText = match[2].trim();
+      const answers = [];
+      const correctAnswer = match[4];
+
+      const answerRegex = /([A-Z])\)([^\n]+)/g;
+      let answerMatch;
+      while ((answerMatch = answerRegex.exec(match[3])) !== null) {
+        const answerLetter = answerMatch[1];
+        const answerText = answerMatch[2].trim();
+        const isCorrect = answerLetter === correctAnswer;
+
+        answers.push({ answer: answerText, isCorrect });
+      }
+
+      questions.push({ question: questionText, answers });
+    }
+
+    return questions;
   }
 }

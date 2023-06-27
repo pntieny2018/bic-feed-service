@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ContentNotFoundException } from '../../../domain/exception';
+import { ContentNotFoundException, OpenAIException } from '../../../domain/exception';
 import { CreateQuizCommand } from './create-quiz.command';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { QuizDto } from '../../dto';
@@ -13,12 +13,16 @@ import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../../../domain/validator/
 import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/quiz.domain-service.interface';
+} from '../../../domain/domain-service/interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import { StringHelper } from '../../../../../common/helpers';
 import { ContentEmptyException } from '../../../domain/exception/content-empty.exception';
+import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface/content.domain-service.interface';
 
 @CommandHandler(CreateQuizCommand)
 export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, QuizDto> {
@@ -34,28 +38,40 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
   private readonly _groupAppService: IGroupApplicationService;
   @Inject(OPEN_AI_SERVICE_TOKEN)
   private readonly _openaiService: IOpenaiService;
+  @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+  private readonly _contentDomainService: IContentDomainService;
   public async execute(command: CreateQuizCommand): Promise<QuizDto> {
     const { authUser, contentId } = command.payload;
 
-    const contentEntity = await this._getContent(contentId);
+    const contentEntity = await this._contentDomainService.getContent(contentId);
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
 
     //questions
-    const rawContent = this._getRawContent(contentEntity);
+    const rawContent = this._contentDomainService.getRawContent(contentEntity);
     if (!rawContent) {
       throw new ContentEmptyException();
     }
-    const response = await this._openaiService.generateQuestion({
-      content: rawContent,
-      numberOfQuestions: command.payload.numberOfQuestions,
-      numberOfAnswers: command.payload.numberOfAnswers,
-    });
-    console.log(JSON.stringify(response, null, 2));
+
+    let response = null;
+    try {
+      response = await this._openaiService.generateQuestion({
+        content: rawContent,
+        numberOfQuestions: command.payload.numberOfQuestions,
+        numberOfAnswers: command.payload.numberOfAnswers,
+      });
+    } catch (e) {
+      throw new OpenAIException(e.message);
+    }
     const quizEntity = await this._quizDomainService.create({
       ...command.payload,
       questions: response.questions,
-      meta: response.usage,
+      meta: {
+        usage: response.usage,
+        model: response.model,
+        maxTokens: response.maxTokens,
+        completion: response.completion,
+      },
     });
 
     return new QuizDto({

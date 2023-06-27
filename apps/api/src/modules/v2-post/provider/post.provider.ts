@@ -46,6 +46,8 @@ import { ProcessSeriesUpdatedHandler } from '../application/command/process-seri
 import { FindItemsBySeriesHandler } from '../application/query/find-items-by-series/find-items-by-series.handler';
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
+import { CONTENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/content.domain-service.interface';
+import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 
 export const postProvider = [
   {
@@ -87,6 +89,10 @@ export const postProvider = [
   {
     provide: MENTION_VALIDATOR_TOKEN,
     useClass: MentionValidator,
+  },
+  {
+    provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+    useClass: ContentDomainService,
   },
   /** Application */
   CreateDraftPostHandler,
