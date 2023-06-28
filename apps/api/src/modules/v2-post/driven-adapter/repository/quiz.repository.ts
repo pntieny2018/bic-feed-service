@@ -2,7 +2,11 @@ import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
 import { TagModel } from '../../../../database/models/tag.model';
-import { FindOneQuizProps, IQuizRepository } from '../../domain/repositoty-interface';
+import {
+  FindAllQuizProps,
+  FindOneQuizProps,
+  IQuizRepository,
+} from '../../domain/repositoty-interface';
 import { QuizEntity } from '../../domain/model/quiz';
 import { QuizModel } from '../../../../database/models/quiz.model';
 import {
@@ -22,6 +26,7 @@ export class QuizRepository implements IQuizRepository {
     await this._quizModel.create({
       id: data.get('id'),
       title: data.get('title'),
+      contentId: data.get('contentId'),
       description: data.get('description'),
       numberOfQuestions: data.get('numberOfQuestions'),
       numberOfAnswers: data.get('numberOfAnswers'),
@@ -71,6 +76,21 @@ export class QuizRepository implements IQuizRepository {
     }
     const entity = await this._quizModel.findOne(findOptions);
     return this._modelToEntity(entity);
+  }
+
+  public async findAll(input: FindAllQuizProps): Promise<QuizEntity[]> {
+    const findOptions: FindOptions = {
+      where: {},
+    };
+    if (input.contentId) {
+      findOptions.where['contentId'] = input.contentId;
+    }
+
+    if (input.status) {
+      findOptions.where['status'] = input.status;
+    }
+    const rows = await this._quizModel.findAll(findOptions);
+    return rows.map((row) => this._modelToEntity(row));
   }
 
   private _modelToEntity(quiz: QuizModel): QuizEntity {
