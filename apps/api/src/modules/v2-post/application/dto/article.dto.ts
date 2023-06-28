@@ -6,6 +6,7 @@ import { PostPrivacy, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
 import { TagDto } from './tag.dto';
 import { ImageDto } from './image.dto';
+import { QuizDto } from './quiz.dto';
 
 export class ArticleDto {
   public id: string;
@@ -25,6 +26,7 @@ export class ArticleDto {
     title: string;
     id: string;
   }[];
+  public quiz?: QuizDto;
   public setting: PostSettingDto;
   public actor: UserDto;
   public status: PostStatus;
