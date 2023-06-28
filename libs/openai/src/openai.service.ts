@@ -70,6 +70,7 @@ export class OpenaiService implements IOpenaiService {
         completion: completion.data,
       };
     } catch (e) {
+      console.log(e);
       throw new Error(e.response.data.error.message);
     }
   }
@@ -167,7 +168,7 @@ export class OpenaiService implements IOpenaiService {
         const questionText = questionMatch[2];
         currentQuestion = { question: questionText, answers: [] };
       }
-      const answerMatch = line.match(/^([A-Za-z])\) (.+)$/);
+      const answerMatch = line.match(/([A-Za-z])\) (.+)$/);
       if (answerMatch && currentQuestion !== null) {
         const answerText = answerMatch[2] ?? '';
         currentQuestion.answers.push({ answer: answerText, isCorrect: false });
