@@ -63,8 +63,6 @@ export class ContentBinding implements IContentBinding {
       users.push(...dataBinding?.mentionUsers);
     }
     if (dataBinding?.actor) {
-      delete dataBinding.actor.permissions;
-      delete dataBinding.actor.groups;
       users.push(dataBinding.actor);
     }
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
@@ -155,8 +153,6 @@ export class ContentBinding implements IContentBinding {
     });
 
     if (dataBinding?.actor) {
-      delete dataBinding.actor.permissions;
-      delete dataBinding.actor.groups;
       users.push(dataBinding.actor);
     }
 
@@ -167,7 +163,7 @@ export class ContentBinding implements IContentBinding {
       (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
