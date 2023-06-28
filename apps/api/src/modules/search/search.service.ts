@@ -1,3 +1,4 @@
+import { pick } from 'lodash';
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -375,9 +376,19 @@ export class SearchService {
       }
     }
 
-    const quizzesMapper = new Map<string, QuizDto>(
+    const quizzesMapper = new Map<string, Partial<QuizDto>>(
       quizEntities.map((quiz) => {
-        return [quiz.get('contentId'), new QuizDto(quiz.toObject())];
+        return [
+          quiz.get('contentId'),
+          pick(new QuizDto(quiz.toObject()), [
+            'id',
+            'title',
+            'description',
+            'status',
+            'createdAt',
+            'updatedAt',
+          ]),
+        ];
       })
     );
 
@@ -400,7 +411,7 @@ export class SearchService {
       groups: GroupDto[];
       users: UserDto[];
       articles: any;
-      quizzesMapper: Map<string, QuizDto>;
+      quizzesMapper: Map<string, Partial<QuizDto>>;
     }
   ): any {
     const { groups, users, articles, quizzesMapper } = dataBinding;
