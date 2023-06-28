@@ -40,6 +40,8 @@ import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
+import { QuizModel } from '../../../../database/models/quiz.model';
+import { QuizStatus } from '../../data-type/quiz-status.enum';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
@@ -284,6 +286,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeSeries,
         shouldIncludeGroup,
         shouldIncludeLinkPreview,
+        shouldIncludeQuiz,
         shouldIncludeCategory,
         shouldIncludeSaved,
         shouldIncludeReaction,
@@ -333,6 +336,7 @@ export class ContentRepository implements IContentRepository {
           required: false,
         });
       }
+
       if (shouldIncludeReaction?.userId) {
         includeAttr.push({
           model: PostReactionModel,
@@ -343,6 +347,19 @@ export class ContentRepository implements IContentRepository {
           },
         });
       }
+
+      if (shouldIncludeQuiz) {
+        includeAttr.push({
+          model: QuizModel,
+          as: 'quizzes',
+          required: false,
+          where: {
+            status: QuizStatus.PUBLISHED,
+          },
+          attributes: ['id', 'title', 'description', 'status'],
+        });
+      }
+
       if (shouldIncludeCategory) {
         includeAttr.push({
           model: CategoryModel,
