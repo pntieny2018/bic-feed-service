@@ -25,6 +25,7 @@ export class FindPostsByIdsHandler
         shouldIncludeGroup: true,
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
         },
