@@ -42,6 +42,7 @@ export class SearchArticlesDto extends PageOptionsDto {
     type: Boolean,
     required: false,
     default: false,
+    name: 'limit_series',
   })
   @Expose({
     name: 'limit_series',
