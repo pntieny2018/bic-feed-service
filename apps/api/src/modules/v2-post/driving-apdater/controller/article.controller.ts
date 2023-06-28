@@ -24,6 +24,7 @@ import {
   CategoryInvalidException,
   ContentEmptyException,
   ContentEmptyGroupException,
+  ContentLimitAttachedSeriesException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
@@ -235,6 +236,7 @@ export class ArticleController {
         case CategoryInvalidException:
         case TagSeriesInvalidException:
         case DomainModelException:
+        case ContentLimitAttachedSeriesException:
           throw new BadRequestException(e);
         case AccessDeniedException:
         case ContentNoCRUDPermissionException:
@@ -285,6 +287,7 @@ export class ArticleController {
         case CategoryInvalidException:
         case TagSeriesInvalidException:
         case DomainModelException:
+        case ContentLimitAttachedSeriesException:
           throw new BadRequestException(e);
         case AccessDeniedException:
         case ContentNoCRUDPermissionException:
