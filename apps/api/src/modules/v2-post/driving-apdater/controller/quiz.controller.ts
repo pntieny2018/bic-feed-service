@@ -62,6 +62,7 @@ export class QuizController {
 
       return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
+      console.log(e);
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
