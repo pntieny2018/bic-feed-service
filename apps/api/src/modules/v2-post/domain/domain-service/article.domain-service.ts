@@ -52,7 +52,7 @@ export class ArticleDomainService implements IArticleDomainService {
     const { articleEntity, newData } = inputData;
     const { actor } = newData;
 
-    this._setArticleEntityAttributes(articleEntity, newData);
+    await this._setArticleEntityAttributes(articleEntity, newData);
 
     articleEntity.setPublish();
 
@@ -71,7 +71,7 @@ export class ArticleDomainService implements IArticleDomainService {
     const { articleEntity, newData } = inputData;
     const { actor } = newData;
 
-    this._setArticleEntityAttributes(articleEntity, newData);
+    await this._setArticleEntityAttributes(articleEntity, newData);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
@@ -90,7 +90,7 @@ export class ArticleDomainService implements IArticleDomainService {
     const { articleEntity, newData } = inputData;
     const { actor } = newData;
 
-    this._setArticleEntityAttributes(articleEntity, newData);
+    await this._setArticleEntityAttributes(articleEntity, newData);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 

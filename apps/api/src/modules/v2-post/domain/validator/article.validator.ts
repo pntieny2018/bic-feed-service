@@ -23,7 +23,7 @@ export class ArticleValidator implements IArticleValidator {
     articleEntity.setPrivacyFromGroups(groups);
 
     if (articleEntity.isPublished() || articleEntity.isWaitingSchedule()) {
-      this._contentValidator.validatePublishContent(articleEntity, actor, groupIds);
+      await this._contentValidator.validatePublishContent(articleEntity, actor, groupIds);
 
       await this._contentValidator.validateSeriesAndTags(
         groups,
