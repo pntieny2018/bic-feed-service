@@ -24,12 +24,12 @@ export class ArticleValidator implements IArticleValidator {
 
     if (articleEntity.isPublished() || articleEntity.isWaitingSchedule()) {
       this._contentValidator.validatePublishContent(articleEntity, actor, groupIds);
-    }
 
-    await this._contentValidator.validateSeriesAndTags(
-      groups,
-      articleEntity.get('seriesIds'),
-      articleEntity.get('tags')
-    );
+      await this._contentValidator.validateSeriesAndTags(
+        groups,
+        articleEntity.get('seriesIds'),
+        articleEntity.get('tags')
+      );
+    }
   }
 }
