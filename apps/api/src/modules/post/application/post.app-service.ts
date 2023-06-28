@@ -474,7 +474,7 @@ export class PostAppService {
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
 
-    await this._postService.isOverLimtedToAttachSeries(post.id);
+    await this._postService.validateLimtedToAttachSeries([post.id]);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),

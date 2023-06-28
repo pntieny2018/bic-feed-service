@@ -1977,10 +1977,16 @@ export class PostService {
     return result;
   }
 
-  public async isOverLimtedToAttachSeries(id: string): Promise<void> {
-    const post = (await this.getPostsWithSeries([id]))[0];
-    const seriesIds = post.postSeries || [];
-    if (seriesIds.length > RULES.LIMIT_ATTACHED_SERIES) {
+  public async validateLimtedToAttachSeries(ids: string[]): Promise<void> {
+    const posts = await this.getPostsWithSeries(ids);
+
+    const seriesIdsList = posts.map((post) => post.postSeries);
+
+    const isOverLimtedToAttachSeries = !seriesIdsList.every(
+      (seriesIds) => seriesIds.length < RULES.LIMIT_ATTACHED_SERIES
+    );
+
+    if (isOverLimtedToAttachSeries) {
       throw new BadRequestException(
         `Article can only be attached to a maximum of ${RULES.LIMIT_ATTACHED_SERIES} series`
       );

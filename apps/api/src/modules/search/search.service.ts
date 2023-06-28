@@ -1020,4 +1020,13 @@ export class SearchService {
 
     return queries;
   }
+
+  public async updateSeriesAtrributeForPostSearch(ids: string[]): Promise<void> {
+    const posts = await this.postService.getPostsWithSeries(ids);
+    for (const post of posts) {
+      await this.updateAttributePostToSearch(post, {
+        seriesIds: post.postSeries.map((series) => series.seriesId),
+      });
+    }
+  }
 }

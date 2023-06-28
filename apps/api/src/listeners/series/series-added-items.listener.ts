@@ -29,6 +29,8 @@ export class SeriesAddedItemsListener {
 
     const { seriesId, itemIds, skipNotify } = event.payload;
 
+    await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
+
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
     });
@@ -41,13 +43,6 @@ export class SeriesAddedItemsListener {
 
       this._postSearchService.updateAttributePostToSearch(series, {
         items,
-      });
-    }
-
-    const posts = await this._postService.getPostsWithSeries(itemIds);
-    for (const post of posts) {
-      await this._postSearchService.updateAttributePostToSearch(post, {
-        seriesIds: post.postSeries.map((series) => series.seriesId),
       });
     }
 

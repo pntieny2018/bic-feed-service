@@ -54,12 +54,9 @@ export class SeriesListener {
     const itemsSorted = series.items.sort(
       (a, b) => a['PostSeriesModel'].zindex - b['PostSeriesModel'].zindex
     );
-    const posts = await this._postService.getPostsWithSeries(itemsSorted.map((item) => item.id));
-    for (const post of posts) {
-      await this._postSearchService.updateAttributePostToSearch(post, {
-        seriesIds: post.postSeries.map((series) => series.seriesId),
-      });
-    }
+    await this._postSearchService.updateSeriesAtrributeForPostSearch(
+      itemsSorted.map((item) => item.id)
+    );
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
     if (items.every((item) => item.createdBy === series.createdBy)) return;
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
