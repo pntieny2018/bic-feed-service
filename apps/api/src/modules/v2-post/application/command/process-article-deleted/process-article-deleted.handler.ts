@@ -74,9 +74,7 @@ export class ProcessArticleDeletedHandler
 
     const activity = this._postActivityService.createPayload({
       id,
-      actor: {
-        id: actor.id,
-      },
+      actor,
       title,
       content,
       contentType: type,
