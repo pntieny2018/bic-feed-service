@@ -43,6 +43,7 @@ export class OpenaiService implements IOpenaiService {
       numQuestion: props.numberOfQuestions,
       numAnswer: props.numberOfAnswers,
     });
+    console.log('messages', messages);
     const model = this._getModel(inputTokens + completionTokens);
     const openAIConfig = this._configService.get<IOpenAIConfig>('openai');
     const configuration = new Configuration({
@@ -56,7 +57,7 @@ export class OpenaiService implements IOpenaiService {
         messages,
         max_tokens: completionTokens,
       });
-      console.log('completion', JSON.stringify(completion.data));
+      // console.log('completion', JSON.stringify(completion.data));
       const questions = this._getQuestionFromText(completion.data.choices[0].message.content);
       return {
         usage: {
@@ -72,21 +73,6 @@ export class OpenaiService implements IOpenaiService {
     } catch (e) {
       console.log(e);
       throw new Error(e.response.data.error.message);
-    }
-  }
-
-  private _getQuestions(content: string): any {
-    try {
-      const items = JSON.parse(content);
-      return items.map((item) => ({
-        question: item.question,
-        answers: item.answers.map((item) => ({
-          answer: item.answer,
-          isCorrect: item.isCorrect || false,
-        })),
-      }));
-    } catch (e) {
-      return [];
     }
   }
   private _getInputTokens(props: GenerateQuestionProps): number {
@@ -116,20 +102,38 @@ export class OpenaiService implements IOpenaiService {
     return [
       {
         role: 'system',
-        content: `Read the article:`,
+        content: `You will be provided an articles (delimited with XML tags). You must first detect the original language of the above article. State it clearly using the exact format "Language = . 
+                    Then generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. 
+                    It is very important that the language of all questions and choices must be the same as the detected language.\n
+                  You must reply in format:\n
+                  """" 
+                  [1] <question 1>
+                  a) <choice 1>
+                  b) <choice 2>
+                  c) <choice 3>
+                  => a
+                  [2] <question 2>
+                  a) <choice 1>
+                  b) <choice 2>
+                  c) <choice 3>
+                  => c
+                  """"`,
       },
       {
-        role: 'system',
+        role: 'user',
         content: `<article>${content}</article>`,
       },
-      {
-        role: 'system',
-        content: `1. Generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. It is very important that the language of all questions and choices must be the same as the detected language.\n
-        2. Each question must start with the exact format "[{question number}]" where {question number} is a number. Each choice in a multiple-choice question must start exactly with "{alphabet})" where {alphabet} can be A, B, C, etc. It is very important that each choice must be present in the required format.\n
-        3. Right after each question and before the next question, provide only the alphabet of the correct choice with the exact format "=> {alphabet}" where {alphabet} can be A, B, C, etc.\n
-        4. The questions should be geared towards a general audience and should focus on factual information from the article.\n
-        5. All your responses must be in the detected language of the above article.`,
-      },
+      //       {
+      //         role: 'user',
+      //         content: `
+      // 1. You must first detect the original language of the above article.\n
+      // 2. Then you must totally ignore the language used to write this prompt.\n
+      // 3. In the same language as the detected language of the above article, generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. It is very important that the language of all questions and choices must be the same as the detected language.\n
+      // 4. Each question must start with the exact format "[{question number}]" where {question number} is a number. Each choice in a multiple-choice question must start exactly with "{alphabet})" where {alphabet} can be A, B, C, etc. It is very important that each choice must be present in the required format.\n
+      // 5. Right after each question and before the next question, provide only the alphabet of the correct choice with the exact format "=> {alphabet}" where {alphabet} can be A, B, C, etc.\n
+      // 6. The questions should be geared towards a general audience and should focus on factual information from the article.\n
+      // 7. All your responses must be in the detected language of the above article.`,
+      //       },
     ];
     // return [
     //   {
@@ -176,7 +180,9 @@ export class OpenaiService implements IOpenaiService {
       if (line.includes('=>') && currentQuestion !== null) {
         const answerCorrect = line.trim().slice(2).trim();
         const indexAnswerCorrect = answerCorrect.toLowerCase().charCodeAt(0) - 97;
-        currentQuestion.answers[indexAnswerCorrect].isCorrect = true;
+        if (currentQuestion.answers[indexAnswerCorrect]) {
+          currentQuestion.answers[indexAnswerCorrect].isCorrect = true;
+        }
       }
     }
     if (currentQuestion !== null) questions.push(currentQuestion);
