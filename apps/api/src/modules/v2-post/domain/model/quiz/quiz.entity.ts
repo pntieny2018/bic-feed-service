@@ -33,6 +33,7 @@ export type QuizProps = {
 export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public constructor(props: QuizProps) {
     super(props);
+    this.validateNumberDisplay();
   }
 
   public validate(): void {
@@ -73,22 +74,18 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
         `Number of answer must be between 0 and ${RULES.QUIZ_MAX_ANSWER}`
       );
     }
+  }
 
-    if (
-      this._props.numberOfAnswersDisplay &&
-      this._props.numberOfAnswersDisplay > this._props.numberOfAnswers
-    ) {
+  public validateNumberDisplay(): void {
+    if (this._props.numberOfQuestions < this._props.numberOfQuestionsDisplay) {
       throw new DomainModelException(
-        `Number of answer display cannot exceed ${this._props.numberOfAnswers}`
+        `Number of questions display cannot exceed ${this._props.numberOfQuestions}`
       );
     }
 
-    if (
-      this._props.numberOfQuestionsDisplay &&
-      this._props.numberOfQuestionsDisplay > this._props.numberOfQuestions
-    ) {
+    if (this._props.numberOfAnswers < this._props.numberOfAnswersDisplay) {
       throw new DomainModelException(
-        `Number of question display cannot exceed ${this._props.numberOfQuestions}`
+        `Number of answers display cannot exceed ${this._props.numberOfQuestions}`
       );
     }
   }
@@ -126,6 +123,10 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
       this._props.isRandom = data.isRandom;
     }
 
+    if (data.status) {
+      this._props.status = data.status;
+    }
+
     if (data.meta) {
       this._props.meta = data.meta;
     }
@@ -135,5 +136,6 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
 
     this._props.updatedAt = new Date();
+    this.validateNumberDisplay();
   }
 }

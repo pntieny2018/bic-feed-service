@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -76,7 +77,7 @@ export class QuizController {
     }
   }
 
-  @ApiOperation({ summary: 'Regenerate a quiz' })
+  @ApiOperation({ summary: 'Generate a quiz' })
   @ApiOkResponse({
     type: CreateTagDto,
     description: 'Regenerate quiz successfully',
@@ -84,8 +85,8 @@ export class QuizController {
   @ResponseMessages({
     success: 'message.quiz.created_success',
   })
-  @Post(ROUTES.QUIZ.REGENERATE.PATH)
-  @Version(ROUTES.QUIZ.REGENERATE.VERSIONS)
+  @Put(ROUTES.QUIZ.GENERATE.PATH)
+  @Version(ROUTES.QUIZ.GENERATE.VERSIONS)
   public async regenerate(
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto,
@@ -121,7 +122,7 @@ export class QuizController {
   @ResponseMessages({
     success: 'message.quiz.updated_success',
   })
-  @Post(ROUTES.QUIZ.UPDATE.PATH)
+  @Put(ROUTES.QUIZ.UPDATE.PATH)
   @Version(ROUTES.QUIZ.UPDATE.VERSIONS)
   public async update(
     @Param('id', ParseUUIDPipe) quizId: string,

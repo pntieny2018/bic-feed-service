@@ -64,7 +64,6 @@ export class QuizRepository implements IQuizRepository {
 
   public async findOne(input: FindOneQuizProps): Promise<QuizEntity> {
     const findOptions: FindOptions = {
-      attributes: TagModel.loadAllAttributes(),
       where: {},
     };
     if (input.id) {

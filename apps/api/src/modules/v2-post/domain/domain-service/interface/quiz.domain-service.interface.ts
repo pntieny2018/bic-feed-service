@@ -1,6 +1,7 @@
 import { QuizEntity } from '../../model/quiz';
 import { UserDto } from '../../../../v2-user/application';
 import { QuestionDto } from '../../../application/dto/question.dto';
+import { QuizStatus } from '../../../data-type/quiz-status.enum';
 
 export type QuizCreateProps = {
   contentId: string;
@@ -33,6 +34,7 @@ export type QuizUpdateProps = {
   isRandom?: boolean;
   authUser: UserDto;
   meta?: any;
+  status?: QuizStatus;
 };
 
 export interface IQuizDomainService {

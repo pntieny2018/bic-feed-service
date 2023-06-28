@@ -18,6 +18,7 @@ import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { IQuizValidator } from './interface/quiz.validator.interface';
 import { QuizNoCRUDPermissionAtGroupException } from '../exception/quiz-no-crud-permission-at-group.exception';
+import { QuizEntity } from '../model/quiz';
 
 @Injectable()
 export class QuizValidator implements IQuizValidator {

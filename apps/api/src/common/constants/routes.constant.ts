@@ -61,8 +61,8 @@ export const ROUTES = {
       PATH: '/quizzes',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
-    REGENERATE: {
-      PATH: '/quizzes/:id/regenerate',
+    GENERATE: {
+      PATH: '/quizzes/:id/generate',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UPDATE: {
