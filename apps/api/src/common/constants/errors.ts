@@ -9,6 +9,7 @@ export const ERRORS = {
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
   },
   CONTENT: {
+    HAS_QUIZ: 'content.has_quiz',
     EMPTY: 'content.empty',
     EMPTY_GROUP: 'content.empty_group',
     AUDIENCE_NO_BELONG: 'content.audience_no_belong',

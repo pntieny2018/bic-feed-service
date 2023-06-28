@@ -9,6 +9,7 @@
     "no_delete_permission": "Failed to delete tag: you don't have permission"
   },
   "content": {
+    "has_quiz": "Content already has quiz",
     "not_found": "Content not found",
     "no_crud_permission": "You don't have CRUD permission",
     "no_edit_setting_permission": "You don't have edit setting permission",

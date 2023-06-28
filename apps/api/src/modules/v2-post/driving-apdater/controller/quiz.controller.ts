@@ -19,7 +19,11 @@ import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
-import { ContentNotFoundException, OpenAIException } from '../../domain/exception';
+import {
+  ContentHasQuizException,
+  ContentNotFoundException,
+  OpenAIException,
+} from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
 import { QuizDto } from '../../application/dto';
@@ -62,7 +66,6 @@ export class QuizController {
 
       return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
-      console.log(e);
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
@@ -70,6 +73,7 @@ export class QuizController {
           throw new ForbiddenException(e);
         case ContentEmptyException:
         case OpenAIException:
+        case ContentHasQuizException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
