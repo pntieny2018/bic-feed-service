@@ -4,13 +4,11 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
-  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   ValidateIf,
 } from 'class-validator';
-import { RULES } from '../../../v2-post/constant';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 import { PostType } from '../../../../database/models/post.model';
 
@@ -103,17 +101,18 @@ export class SearchPostsDto extends PageOptionsDto {
   public type?: PostType;
 
   @ApiProperty({
-    default: RULES.LIMIT_ATTACHED_SERIES,
+    type: Boolean,
     required: false,
+    default: false,
   })
   @Expose({
     name: 'limit_series',
   })
-  @Type(() => Number)
-  @IsInt()
   @IsOptional()
-  public limitSeries?: number;
+  @IsBoolean()
+  public limitSeries?: boolean;
 
   public notIncludeIds?: string[];
+
   public tagId?: string;
 }

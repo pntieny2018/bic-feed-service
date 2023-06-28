@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
-import { RULES } from '../../../v2-post/constant';
-import { IsArray, IsInt, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Expose } from 'class-transformer';
+import { IsArray, IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 
 export class SearchArticlesDto extends PageOptionsDto {
@@ -40,14 +39,14 @@ export class SearchArticlesDto extends PageOptionsDto {
   public categoryIds?: string[];
 
   @ApiProperty({
-    default: RULES.LIMIT_ATTACHED_SERIES,
+    type: Boolean,
     required: false,
+    default: false,
   })
   @Expose({
     name: 'limit_series',
   })
-  @Type(() => Number)
-  @IsInt()
   @IsOptional()
-  public limitSeries?: number;
+  @IsBoolean()
+  public limitSeries?: boolean;
 }

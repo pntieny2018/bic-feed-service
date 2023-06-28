@@ -31,6 +31,7 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { TagService } from '../tag/tag.service';
+import { RULES } from '../v2-post/constant';
 
 @Injectable()
 export class SearchService {
@@ -556,6 +557,7 @@ export class SearchService {
       notIncludeIds: notIncludeIds,
       limit,
       offset,
+      limitSeries,
     };
     if (categoryIds) context.categoryIds = categoryIds;
     const payload = await this.getPayloadSearchForArticles(context);
@@ -622,7 +624,7 @@ export class SearchService {
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
             ...(tagId ? this._getTagIdFilter(tagId) : this._getTagFilter(tagName)),
-            ...(limitSeries && this._limitSeriesFilter(limitSeries)),
+            ...(limitSeries && this._limitSeriesFilter()),
           ],
           should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -727,7 +729,7 @@ export class SearchService {
       body.query.bool.filter.push(...this._getAudienceFilter(groupIds));
     }
     if (limitSeries) {
-      body.query.bool.filter.push(...this._limitSeriesFilter(limitSeries));
+      body.query.bool.filter.push(...this._limitSeriesFilter());
     }
 
     body['sort'] = [...this._getSort(contentSearch)];
@@ -912,13 +914,13 @@ export class SearchService {
     return [];
   }
 
-  private _limitSeriesFilter(limitSeries: number): any {
+  private _limitSeriesFilter(): any {
     const { seriesIds } = ELASTIC_POST_MAPPING_PATH;
     return [
       {
         script: {
           script: {
-            inline: `doc['${seriesIds}'].length < ${limitSeries} `,
+            inline: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
           },
         },
       },
