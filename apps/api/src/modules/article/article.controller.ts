@@ -53,7 +53,7 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/')
-  public searchSeries(
+  public searchArticles(
     @AuthUser() user: UserDto,
     @Query() searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
