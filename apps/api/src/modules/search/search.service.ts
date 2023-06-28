@@ -341,10 +341,8 @@ export class SearchService {
     const users = await this.userAppService.findAllByIds(attrUserIds);
     const groups = await this.appGroupService.findAllByIds(attrGroupIds);
     const quizEntities = await this._quizRepository.findAll({
-      where: {
-        contentIds: posts.map((post) => post.id),
-        status: QuizStatus.PUBLISHED,
-      },
+      contentIds: posts.map((post) => post.id),
+      status: QuizStatus.PUBLISHED,
     });
     await Promise.all([
       this.reactionService.bindToPosts(posts),

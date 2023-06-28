@@ -1,8 +1,9 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, Sequelize } from 'sequelize';
+import { FindOptions, Sequelize } from 'sequelize';
+import { TagModel } from '../../../../database/models/tag.model';
 import {
-  FindAllQuizOptions,
+  FindAllQuizProps,
   FindOneQuizProps,
   IQuizRepository,
 } from '../../domain/repositoty-interface';
@@ -25,6 +26,7 @@ export class QuizRepository implements IQuizRepository {
     await this._quizModel.create({
       id: data.get('id'),
       title: data.get('title'),
+      contentId: data.get('contentId'),
       description: data.get('description'),
       numberOfQuestions: data.get('numberOfQuestions'),
       numberOfAnswers: data.get('numberOfAnswers'),
@@ -76,33 +78,24 @@ export class QuizRepository implements IQuizRepository {
     return this._modelToEntity(entity);
   }
 
-  public async findAll(options: FindAllQuizOptions): Promise<QuizEntity[]> {
-    const condition = [];
-    const findOptions: FindOptions<IQuiz> = {
+  public async findAll(input: FindAllQuizProps): Promise<QuizEntity[]> {
+    const findOptions: FindOptions = {
       where: {},
     };
-    if (options.where['ids']) {
-      condition.push({
-        id: options.where['ids'],
-      });
+    if (input.ids) {
+      findOptions.where['id'] = input.ids;
     }
 
-    if (options.where['contentIds']) {
-      condition.push({
-        contentId: options.where['contentIds'],
-      });
+    if (input.contentId) {
+      findOptions.where['contentId'] = input.contentId;
     }
 
-    if (options.where['status']) {
-      condition.push({
-        status: options.where['status'],
-      });
+    if (input.contentIds) {
+      findOptions.where['contentId'] = input.contentIds;
     }
 
-    if (condition.length) {
-      findOptions.where = {
-        [Op.and]: condition,
-      };
+    if (input.status) {
+      findOptions.where['status'] = input.status;
     }
     const rows = await this._quizModel.findAll(findOptions);
     return rows.map((row) => this._modelToEntity(row));

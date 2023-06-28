@@ -1,22 +1,19 @@
-import { QuizStatus } from '../../data-type/quiz-status.enum';
 import { QuizEntity } from '../model/quiz';
 
 export type FindOneQuizProps = {
   id: string;
 };
 
-export type FindAllQuizOptions = {
-  where: {
-    ids?: string[];
-    contentIds?: string[];
-    status: QuizStatus;
-  };
+export type FindAllQuizProps = {
+  ids?: string[];
+  status: string;
+  contentId?: string;
+  contentIds?: string[];
 };
 
 export interface IQuizRepository {
   findOne(input: FindOneQuizProps): Promise<QuizEntity>;
-
-  findAll(findAllQuizProps: FindAllQuizOptions): Promise<QuizEntity[]>;
+  findAll(input: FindAllQuizProps): Promise<QuizEntity[]>;
 
   update(data: QuizEntity): Promise<void>;
 

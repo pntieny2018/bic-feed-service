@@ -34,3 +34,4 @@ export * from './series-no-read-permission.exception';
 export * from './openai.exception';
 export * from './quiz-no-crud-permission-at-group.exception';
 export * from './quiz-not-found.exception';
+export * from './content-has-quiz.exception';
