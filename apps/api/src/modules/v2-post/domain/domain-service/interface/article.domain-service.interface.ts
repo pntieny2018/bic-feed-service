@@ -15,7 +15,7 @@ export type PublishArticleProps = {
 
 export interface IArticleDomainService {
   update(input: UpdateArticleProps): Promise<void>;
-  publish(input: PublishArticleProps): Promise<ArticleEntity>;
+  publish(input: PublishArticleProps): Promise<void>;
   autoSave(inputData: UpdateArticleProps): Promise<void>;
 }
 export const ARTICLE_DOMAIN_SERVICE_TOKEN = 'ARTICLE_DOMAIN_SERVICE_TOKEN';

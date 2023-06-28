@@ -5,7 +5,6 @@ import { UpdateArticleCommand } from './update-article.command';
 import { ArticleRequiredCoverException, ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ArticleEntity } from '../../../domain/model/content';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
@@ -13,17 +12,19 @@ import {
 import { UserDto } from '../../../../v2-user/application';
 import { ArticleChangedMessagePayload } from '../../dto/message';
 import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
-import { ImageDto, TagDto } from '../../dto';
+import { ArticleDto, ImageDto, TagDto } from '../../dto';
+import { ContentBinding } from '../../binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 
 @CommandHandler(UpdateArticleCommand)
-export class UpdateArticleHandler implements ICommandHandler<UpdateArticleCommand, void> {
+export class UpdateArticleHandler implements ICommandHandler<UpdateArticleCommand, ArticleDto> {
   public constructor(
-    @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: ContentBinding,
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
     private readonly _articleDomainService: IArticleDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
@@ -33,7 +34,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
     private readonly _kafkaService: KafkaService
   ) {}
 
-  public async execute(command: UpdateArticleCommand): Promise<void> {
+  public async execute(command: UpdateArticleCommand): Promise<ArticleDto> {
     const { actor, id, coverMedia } = command.payload;
 
     const articleEntity = await this._contentRepository.findOne({
@@ -67,6 +68,8 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
     });
 
     this._sendEvent(articleEntityBefore, articleEntity, actor);
+
+    return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }
 
   private _sendEvent(
