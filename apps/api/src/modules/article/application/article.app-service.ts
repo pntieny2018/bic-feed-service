@@ -34,6 +34,7 @@ import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
 import { ReactionService } from '../../reaction';
 import { RULES } from '../../v2-post/constant';
+import { ContentLimitAttachedSeriesException } from '../../v2-post/domain/exception';
 
 @Injectable()
 export class ArticleAppService {
@@ -244,9 +245,7 @@ export class ArticleAppService {
       }
 
       if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-        throw new BadRequestException(
-          `Article can only be attached to a maximum of ${RULES.LIMIT_ATTACHED_SERIES} series`
-        );
+        throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
       }
 
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
