@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ContentNotFoundException, OpenAIException } from '../../../domain/exception';
+import { OpenAIException } from '../../../domain/exception';
 import { CreateQuizCommand } from './create-quiz.command';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { QuizDto } from '../../dto';
@@ -14,10 +14,7 @@ import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
-import { ArticleEntity, PostEntity } from '../../../domain/model/content';
-import { StringHelper } from '../../../../../common/helpers';
 import { ContentEmptyException } from '../../../domain/exception/content-empty.exception';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -53,6 +50,10 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
       throw new ContentEmptyException();
     }
 
+    const quizEntity = await this._quizDomainService.create({
+      ...command.payload,
+    });
+
     let response = null;
     try {
       response = await this._openaiService.generateQuestion({
@@ -63,8 +64,21 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
     } catch (e) {
       throw new OpenAIException(e.message);
     }
-    const quizEntity = await this._quizDomainService.create({
-      ...command.payload,
+
+    if (response.questions?.length === 0) {
+      await this._quizDomainService.update(quizEntity, {
+        authUser,
+        meta: {
+          usage: response.usage,
+          model: response.model,
+          maxTokens: response.maxTokens,
+          completion: response.completion,
+        },
+      });
+      throw new OpenAIException('No questions generated');
+    }
+    const quizEntityUpdated = await this._quizDomainService.update(quizEntity, {
+      authUser,
       questions: response.questions,
       meta: {
         usage: response.usage,
@@ -75,42 +89,19 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
     });
 
     return new QuizDto({
-      id: quizEntity.get('id'),
-      contentId: quizEntity.get('contentId'),
-      status: quizEntity.get('status'),
-      title: quizEntity.get('title'),
-      description: quizEntity.get('description'),
-      numberOfQuestions: quizEntity.get('numberOfQuestions'),
-      numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
-      numberOfAnswers: quizEntity.get('numberOfAnswers'),
-      numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
-      isRandom: quizEntity.get('isRandom'),
-      questions: quizEntity.get('questions'),
-      createdAt: quizEntity.get('createdAt'),
-      updatedAt: quizEntity.get('updatedAt'),
+      id: quizEntityUpdated.get('id'),
+      contentId: quizEntityUpdated.get('contentId'),
+      status: quizEntityUpdated.get('status'),
+      title: quizEntityUpdated.get('title'),
+      description: quizEntityUpdated.get('description'),
+      numberOfQuestions: quizEntityUpdated.get('numberOfQuestions'),
+      numberOfQuestionsDisplay: quizEntityUpdated.get('numberOfQuestionsDisplay'),
+      numberOfAnswers: quizEntityUpdated.get('numberOfAnswers'),
+      numberOfAnswersDisplay: quizEntityUpdated.get('numberOfAnswersDisplay'),
+      isRandom: quizEntityUpdated.get('isRandom'),
+      questions: quizEntityUpdated.get('questions'),
+      createdAt: quizEntityUpdated.get('createdAt'),
+      updatedAt: quizEntityUpdated.get('updatedAt'),
     });
-  }
-
-  private _getRawContent(contentEntity: ContentEntity): string {
-    if (contentEntity instanceof PostEntity) {
-      return StringHelper.removeMarkdownCharacter(contentEntity.get('content'));
-    } else if (contentEntity instanceof ArticleEntity) {
-      return StringHelper.serializeEditorContentToText(contentEntity.get('content'));
-    }
-    return null;
-  }
-  private async _getContent(contentId: string): Promise<ContentEntity> {
-    const contentEntity = await this._contentRepository.findOne({
-      where: {
-        id: contentId,
-      },
-      include: {
-        mustIncludeGroup: true,
-      },
-    });
-    if (!contentEntity || contentEntity.isHidden() || !contentEntity.isPublished()) {
-      throw new ContentNotFoundException();
-    }
-    return contentEntity;
   }
 }

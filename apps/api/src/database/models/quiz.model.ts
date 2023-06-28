@@ -17,6 +17,7 @@ export interface IQuiz {
   id: string;
   title: string;
   description: string;
+  contentId: string;
   status: QuizStatus;
   numberOfQuestions: number;
   numberOfAnswers: number;
@@ -46,6 +47,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @Default(() => uuid_v4())
   @Column
   public id: string;
+
+  @Column
+  public contentId: string;
 
   @Column
   public title: string;

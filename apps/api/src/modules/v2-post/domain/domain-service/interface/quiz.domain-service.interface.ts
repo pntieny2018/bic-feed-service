@@ -1,13 +1,14 @@
 import { QuizEntity } from '../../model/quiz';
 import { UserDto } from '../../../../v2-user/application';
 import { QuestionDto } from '../../../application/dto/question.dto';
+import { QuizStatus } from '../../../data-type/quiz-status.enum';
 
 export type QuizCreateProps = {
   contentId: string;
   numberOfQuestions: number;
   numberOfAnswers: number;
   authUser: UserDto;
-  questions: {
+  questions?: {
     question: string;
     answers: {
       answer: string;
@@ -19,7 +20,7 @@ export type QuizCreateProps = {
   numberOfQuestionsDisplay?: number;
   numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  meta: any;
+  meta?: any;
 };
 
 export type QuizUpdateProps = {
@@ -33,6 +34,7 @@ export type QuizUpdateProps = {
   isRandom?: boolean;
   authUser: UserDto;
   meta?: any;
+  status?: QuizStatus;
 };
 
 export interface IQuizDomainService {

@@ -54,7 +54,6 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
 
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
-
     const rawContent = this._contentDomainService.getRawContent(contentEntity);
     if (!rawContent) {
       throw new ContentEmptyException();
@@ -69,6 +68,18 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
       });
     } catch (e) {
       throw new OpenAIException(e.message);
+    }
+    if (response.questions?.length === 0) {
+      await this._quizDomainService.update(quizEntity, {
+        authUser,
+        meta: {
+          usage: response.usage,
+          model: response.model,
+          maxTokens: response.maxTokens,
+          completion: response.completion,
+        },
+      });
+      throw new OpenAIException('No questions generated');
     }
     const quizEntityUpdated = await this._quizDomainService.update(quizEntity, {
       ...command.payload,
