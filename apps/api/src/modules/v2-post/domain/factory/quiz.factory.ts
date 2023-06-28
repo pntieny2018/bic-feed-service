@@ -34,7 +34,7 @@ export class QuizFactory implements IQuizFactory {
       numberOfAnswers,
       numberOfAnswersDisplay: numberOfAnswersDisplay || numberOfAnswers,
       isRandom: isRandom || true,
-      questions,
+      questions: questions || [],
       meta,
       status: QuizStatus.DRAFT,
       createdBy: authUser.id,

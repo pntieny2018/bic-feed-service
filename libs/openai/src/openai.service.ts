@@ -34,9 +34,6 @@ export class OpenaiService implements IOpenaiService {
     }
 
     const remainingTokens = MAX_TOKEN - completionTokens;
-    console.log('completionTokens', completionTokens);
-    console.log('availableTokens', remainingTokens);
-    console.log('inputTokens', inputTokens);
     if (inputTokens > remainingTokens) {
       throw new Error(`The number of tokens in content cannot exceed ${remainingTokens} tokens`);
     }
@@ -117,18 +114,36 @@ export class OpenaiService implements IOpenaiService {
     const { content, numQuestion, numAnswer } = input;
     return [
       {
-        role: 'user',
-        content: `Read the following article and then following THE STEP-BY-STEP INSTRUCTIONS after the end of the article:\n\n
-    === Start of the article ===\n\n
-    ${content}
-    \n\n=== End of the article ===\n\nSTEP-BY-STEP INSTRUCTIONS\n\n
-    1. Generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. It is very important that the language of all questions and choices must be the same as the detected language.\n
-    2. Each question must start with the exact format "[{question number}]" where {question number} is a number. Each choice in a multiple-choice question must start exactly with "{alphabet})" where {alphabet} can be A, B, C, etc. It is very important that each choice must be present in the required format.\n
-    3. Right after each question and before the next question, provide only the alphabet of the correct choice with the exact format "=> {alphabet}" where {alphabet} can be A, B, C, etc.\n
-    4. The questions should be geared towards a general audience and should focus on factual information from the article.\n
-    5. All your responses must be in the detected language of the above article.`,
+        role: 'system',
+        content: `Read the article:`,
+      },
+      {
+        role: 'system',
+        content: `<article>${content}</article>`,
+      },
+      {
+        role: 'system',
+        content: `1. Generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. It is very important that the language of all questions and choices must be the same as the detected language.\n
+        2. Each question must start with the exact format "[{question number}]" where {question number} is a number. Each choice in a multiple-choice question must start exactly with "{alphabet})" where {alphabet} can be A, B, C, etc. It is very important that each choice must be present in the required format.\n
+        3. Right after each question and before the next question, provide only the alphabet of the correct choice with the exact format "=> {alphabet}" where {alphabet} can be A, B, C, etc.\n
+        4. The questions should be geared towards a general audience and should focus on factual information from the article.\n
+        5. All your responses must be in the detected language of the above article.`,
       },
     ];
+    // return [
+    //   {
+    //     role: 'user',
+    //     content: `Read the following article and then following THE STEP-BY-STEP INSTRUCTIONS after the end of the article:\n\n
+    // === Start of the article ===\n\n
+    // ${content}
+    // \n\n=== End of the article ===\n\nSTEP-BY-STEP INSTRUCTIONS\n\n
+    // 1. Generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. It is very important that the language of all questions and choices must be the same as the detected language.\n
+    // 2. Each question must start with the exact format "[{question number}]" where {question number} is a number. Each choice in a multiple-choice question must start exactly with "{alphabet})" where {alphabet} can be A, B, C, etc. It is very important that each choice must be present in the required format.\n
+    // 3. Right after each question and before the next question, provide only the alphabet of the correct choice with the exact format "=> {alphabet}" where {alphabet} can be A, B, C, etc.\n
+    // 4. The questions should be geared towards a general audience and should focus on factual information from the article.\n
+    // 5. All your responses must be in the detected language of the above article.`,
+    //   },
+    // ];
   }
 
   private _getQuestionFromText(text: string): {
@@ -138,28 +153,32 @@ export class OpenaiService implements IOpenaiService {
       isCorrect: boolean;
     }[];
   }[] {
-    const regex = /\[(\d+)\]([^\n?]+)\?([\s\S]*?)=> ([A-Z])/g;
+    const lines = text.split('\n');
     const questions = [];
-    let match;
+    let currentQuestion = null;
 
-    while ((match = regex.exec(text)) !== null) {
-      const questionNumber = match[1];
-      const questionText = match[2].trim();
-      const answers = [];
-      const correctAnswer = match[4];
+    for (const line of lines) {
+      if (line.trim() === '') continue;
+      const questionMatch = line.match(/\[(\d+)\] (.+)$/);
 
-      const answerRegex = /([A-Z])\)([^\n]+)/g;
-      let answerMatch;
-      while ((answerMatch = answerRegex.exec(match[3])) !== null) {
-        const answerLetter = answerMatch[1];
-        const answerText = answerMatch[2].trim();
-        const isCorrect = answerLetter === correctAnswer;
+      if (questionMatch) {
+        if (currentQuestion !== null) questions.push(currentQuestion);
 
-        answers.push({ answer: answerText, isCorrect });
+        const questionText = questionMatch[2];
+        currentQuestion = { question: questionText, answers: [] };
       }
-
-      questions.push({ question: questionText, answers });
+      const answerMatch = line.match(/^([A-Za-z])\) (.+)$/);
+      if (answerMatch && currentQuestion !== null) {
+        const answerText = answerMatch[2] ?? '';
+        currentQuestion.answers.push({ answer: answerText, isCorrect: false });
+      }
+      if (line.includes('=>') && currentQuestion !== null) {
+        const answerCorrect = line.trim().slice(2).trim();
+        const indexAnswerCorrect = answerCorrect.toLowerCase().charCodeAt(0) - 97;
+        currentQuestion.answers[indexAnswerCorrect].isCorrect = true;
+      }
     }
+    if (currentQuestion !== null) questions.push(currentQuestion);
 
     return questions;
   }

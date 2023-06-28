@@ -8,7 +8,7 @@ export type QuizCreateProps = {
   numberOfQuestions: number;
   numberOfAnswers: number;
   authUser: UserDto;
-  questions: {
+  questions?: {
     question: string;
     answers: {
       answer: string;
@@ -20,7 +20,7 @@ export type QuizCreateProps = {
   numberOfQuestionsDisplay?: number;
   numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  meta: any;
+  meta?: any;
 };
 
 export type QuizUpdateProps = {
