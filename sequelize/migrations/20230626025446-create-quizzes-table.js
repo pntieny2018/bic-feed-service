@@ -17,8 +17,7 @@ module.exports = {
         },
         title: {
           type: Sequelize.STRING(65),
-          allowNull: false,
-          defaultValue: false,
+          allowNull: true,
         },
         status: {
           type: Sequelize.ENUM('PENDING', 'DRAFT', 'PUBLISHED'),
@@ -26,8 +25,7 @@ module.exports = {
         },
         description: {
           type: Sequelize.STRING(256),
-          allowNull: false,
-          defaultValue: false,
+          allowNull: true,
         },
         number_of_questions: {
           type: Sequelize.SMALLINT,

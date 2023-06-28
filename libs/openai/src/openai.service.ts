@@ -27,6 +27,10 @@ export class OpenaiService implements IOpenaiService {
     const inputTokens = this._getInputTokens(props);
 
     const completionTokens = this._getCompletionTokens(props);
+    if (props.numberOfQuestions <= 0 || props.numberOfAnswers <= 0) {
+      throw new Error('The number of questions and answers must be greater than 0');
+    }
+
     if (completionTokens >= MAX_COMPLETION_TOKEN) {
       throw new Error(
         `The number of tokens in questions and answers cannot exceed ${MAX_COMPLETION_TOKEN} tokens`
@@ -57,7 +61,7 @@ export class OpenaiService implements IOpenaiService {
         messages,
         max_tokens: completionTokens,
       });
-      // console.log('completion', JSON.stringify(completion.data));
+      console.log('completion', JSON.stringify(completion.data));
       const questions = this._getQuestionFromText(completion.data.choices[0].message.content);
       return {
         usage: {
@@ -102,7 +106,7 @@ export class OpenaiService implements IOpenaiService {
     return [
       {
         role: 'system',
-        content: `You will be provided an articles (delimited with XML tags). You must first detect the original language of the above article. State it clearly using the exact format "Language = . 
+        content: `You will be provided an articles (delimited with XML tags). You must first detect the original language of the above article. 
                     Then generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. 
                     It is very important that the language of all questions and choices must be the same as the detected language.\n
                   You must reply in format:\n
