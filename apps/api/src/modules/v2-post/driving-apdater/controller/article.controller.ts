@@ -240,6 +240,7 @@ export class ArticleController {
         case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
+        case AccessDeniedException:
           throw new ForbiddenException(e);
         default:
           throw e;
