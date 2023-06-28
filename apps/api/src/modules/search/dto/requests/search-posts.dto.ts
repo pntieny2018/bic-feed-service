@@ -106,6 +106,7 @@ export class SearchPostsDto extends PageOptionsDto {
     default: false,
     name: 'limit_series',
   })
+  @Transform(({ value }) => value == 'true')
   @Expose({
     name: 'limit_series',
   })

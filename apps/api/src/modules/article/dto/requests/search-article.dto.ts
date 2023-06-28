@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 
@@ -47,6 +47,7 @@ export class SearchArticlesDto extends PageOptionsDto {
   @Expose({
     name: 'limit_series',
   })
+  @Transform(({ value }) => value == 'true')
   @IsOptional()
   @IsBoolean()
   public limitSeries?: boolean;

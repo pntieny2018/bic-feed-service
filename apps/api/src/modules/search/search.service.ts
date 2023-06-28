@@ -624,7 +624,7 @@ export class SearchService {
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
             ...(tagId ? this._getTagIdFilter(tagId) : this._getTagFilter(tagName)),
-            ...(limitSeries && this._limitSeriesFilter()),
+            ...(limitSeries ? this._limitSeriesFilter() : []),
           ],
           should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
