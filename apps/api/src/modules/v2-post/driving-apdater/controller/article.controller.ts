@@ -212,10 +212,10 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateArticleRequestDto: UpdateArticleRequestDto
-  ): Promise<void> {
+  ): Promise<ArticleDto> {
     try {
       const { audience } = updateArticleRequestDto;
-      await this._commandBus.execute<UpdateArticleCommand, void>(
+      const articleDto = await this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
         new UpdateArticleCommand({
           id,
           actor: user,
@@ -223,6 +223,7 @@ export class ArticleController {
           groupIds: audience?.groupIds,
         })
       );
+      return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
