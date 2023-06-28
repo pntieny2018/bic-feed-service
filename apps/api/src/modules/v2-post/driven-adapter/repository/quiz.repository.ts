@@ -1,7 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
-import { TagModel } from '../../../../database/models/tag.model';
 import {
   FindAllQuizProps,
   FindOneQuizProps,
@@ -79,7 +78,7 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async findAll(input: FindAllQuizProps): Promise<QuizEntity[]> {
-    const findOptions: FindOptions = {
+    const findOptions: FindOptions<IQuiz> = {
       where: {},
     };
     if (input.ids) {
