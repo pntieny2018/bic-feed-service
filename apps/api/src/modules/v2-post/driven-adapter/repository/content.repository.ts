@@ -42,6 +42,7 @@ import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 import { QuizModel } from '../../../../database/models/quiz.model';
 import { QuizStatus } from '../../data-type/quiz-status.enum';
+import { QuizEntity } from '../../domain/model/quiz';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
@@ -351,12 +352,12 @@ export class ContentRepository implements IContentRepository {
       if (shouldIncludeQuiz) {
         includeAttr.push({
           model: QuizModel,
-          as: 'quizzes',
+          as: 'quiz',
           required: false,
           where: {
             status: QuizStatus.PUBLISHED,
           },
-          attributes: ['id', 'title', 'description', 'status'],
+          attributes: ['id', 'title', 'description', 'status', 'created_at', 'updated_at'],
         });
       }
 
@@ -627,6 +628,7 @@ export class ContentRepository implements IContentRepository {
       mentionUserIds: post.mentions,
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
+      quiz: post.quiz ? new QuizEntity(post.quiz) : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
@@ -678,6 +680,7 @@ export class ContentRepository implements IContentRepository {
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
+      quiz: post.quiz ? new QuizEntity(post.quiz) : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       aggregation: {
         commentsCount: post.commentsCount,
