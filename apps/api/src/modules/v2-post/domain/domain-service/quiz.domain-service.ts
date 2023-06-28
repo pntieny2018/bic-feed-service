@@ -20,6 +20,7 @@ export class QuizDomainService implements IQuizDomainService {
       await this._quizRepository.create(quizEntity);
       quizEntity.commit();
     } catch (e) {
+      console.log(e);
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
