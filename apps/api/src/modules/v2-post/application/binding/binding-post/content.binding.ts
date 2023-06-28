@@ -259,9 +259,10 @@ export class ContentBinding implements IContentBinding {
     let items = [];
     let userIdsNeedToFind = [seriesEntity.get('createdBy')];
     if (seriesEntity.get('itemIds')?.length) {
+      const itemIds = seriesEntity.get('itemIds');
       items = await this._contentRepo.findAll({
         where: {
-          ids: seriesEntity.get('itemIds'),
+          ids: itemIds,
           excludeReportedByUserId: dataBinding.authUser?.id,
           isHidden: false,
           status: PostStatus.PUBLISHED,
@@ -271,6 +272,7 @@ export class ContentBinding implements IContentBinding {
         },
       });
 
+      items.sort((a, b) => itemIds.indexOf(a.get('id')) - itemIds.indexOf(b.get('id')));
       userIdsNeedToFind = uniq([
         ...items.map((item) => item.get('createdBy')),
         ...userIdsNeedToFind,
