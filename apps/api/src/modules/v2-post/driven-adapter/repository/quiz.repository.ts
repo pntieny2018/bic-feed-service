@@ -1,10 +1,13 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize } from 'sequelize';
-import { TagModel } from '../../../../database/models/tag.model';
-import { FindOneQuizProps, IQuizRepository } from '../../domain/repositoty-interface';
+import { FindOptions, Op, Sequelize } from 'sequelize';
+import {
+  FindAllQuizOptions,
+  FindOneQuizProps,
+  IQuizRepository,
+} from '../../domain/repositoty-interface';
 import { QuizEntity } from '../../domain/model/quiz';
-import { QuizModel } from '../../../../database/models/quiz.model';
+import { IQuiz, QuizModel } from '../../../../database/models/quiz.model';
 import {
   IQuizFactory,
   QUIZ_FACTORY_TOKEN,
@@ -71,6 +74,38 @@ export class QuizRepository implements IQuizRepository {
     }
     const entity = await this._quizModel.findOne(findOptions);
     return this._modelToEntity(entity);
+  }
+
+  public async findAll(options: FindAllQuizOptions): Promise<QuizEntity[]> {
+    const condition = [];
+    const findOptions: FindOptions<IQuiz> = {
+      where: {},
+    };
+    if (options.where['ids']) {
+      condition.push({
+        id: options.where['ids'],
+      });
+    }
+
+    if (options.where['contentIds']) {
+      condition.push({
+        contentId: options.where['contentIds'],
+      });
+    }
+
+    if (options.where['status']) {
+      condition.push({
+        status: options.where['status'],
+      });
+    }
+
+    if (condition.length) {
+      findOptions.where = {
+        [Op.and]: condition,
+      };
+    }
+    const rows = await this._quizModel.findAll(findOptions);
+    return rows.map((row) => this._modelToEntity(row));
   }
 
   private _modelToEntity(quiz: QuizModel): QuizEntity {
