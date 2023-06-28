@@ -48,7 +48,7 @@ export class ArticleDomainService implements IArticleDomainService {
     private readonly _tagRepository: ITagRepository
   ) {}
 
-  public async publish(inputData: PublishArticleProps): Promise<ArticleEntity> {
+  public async publish(inputData: PublishArticleProps): Promise<void> {
     const { articleEntity, newData } = inputData;
     const { actor } = newData;
 
@@ -65,8 +65,6 @@ export class ArticleDomainService implements IArticleDomainService {
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
     await this._contentRepository.update(articleEntity);
-
-    return articleEntity;
   }
 
   public async update(inputData: UpdateArticleProps): Promise<void> {

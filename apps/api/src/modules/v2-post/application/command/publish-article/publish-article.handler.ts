@@ -6,7 +6,6 @@ import { PublishArticleCommand } from './publish-article.command';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ArticleEntity } from '../../../domain/model/content';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
@@ -25,8 +24,6 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
     private readonly _articleDomainService: IArticleDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
-    @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
@@ -77,7 +74,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
 
     this._sendEvent(articleEntity, actor);
 
-    return this._contentBinding.articleBinding(articleEntity, { actor });
+    return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }
 
   private _sendEvent(entity: ArticleEntity, actor: UserDto): void {
