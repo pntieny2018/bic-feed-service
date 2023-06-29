@@ -19,6 +19,10 @@ import {
 } from '../../../../../events/series';
 import { SeriesEntity } from '../../../domain/model/content';
 import { ArticleChangedMessagePayload } from '../../dto/message';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
 
 @CommandHandler(ProcessArticleUpdatedCommand)
 export class ProcessArticleUpdatedHandler
@@ -31,6 +35,8 @@ export class ProcessArticleUpdatedHandler
     private readonly _tagRepository: ITagRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupApplicationService: IGroupApplicationService,
     private readonly _sentryService: SentryService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService, //TODO improve interface later
@@ -87,6 +93,7 @@ export class ProcessArticleUpdatedHandler
       },
     })) as SeriesEntity[];
 
+    const groups = await this._groupApplicationService.findAllByIds(after.groupIds);
     const updatedActivity = this._postActivityService.createPayload({
       id: after.id,
       title: after.title,
@@ -94,12 +101,13 @@ export class ProcessArticleUpdatedHandler
       contentType: after.type,
       setting: after.setting,
       audience: {
-        groups: (after.groupIds ?? []).map((id) => ({ id })),
+        groups,
       },
       actor: after.actor,
       createdAt: after.createdAt,
     });
 
+    const oldGroups = await this._groupApplicationService.findAllByIds(before.groupIds);
     const oldActivity = this._postActivityService.createPayload({
       id: before.id,
       title: before.title,
@@ -107,7 +115,7 @@ export class ProcessArticleUpdatedHandler
       contentType: before.type,
       setting: before.setting,
       audience: {
-        groups: (before.groupIds ?? []).map((id) => ({ id })),
+        groups: oldGroups,
       },
       actor: before.actor,
       createdAt: before.createdAt,

@@ -16,6 +16,10 @@ import { InternalEventEmitterService } from '../../../../../app/custom/event-emi
 import { SeriesAddedItemsEvent } from '../../../../../events/series';
 import { ArticleMessagePayload } from '../../dto/message/article.message-payload';
 import { SeriesEntity } from '../../../domain/model/content';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
 
 @CommandHandler(ProcessArticlePublishedCommand)
 export class ProcessArticlePublishedHandler
@@ -28,6 +32,8 @@ export class ProcessArticlePublishedHandler
     private readonly _tagRepository: ITagRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupApplicationService: IGroupApplicationService,
     private readonly _sentryService: SentryService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService, //TODO improve interface later
@@ -84,6 +90,7 @@ export class ProcessArticlePublishedHandler
     const { id, seriesActors, setting, type, groupIds, title, content, createdAt, actor } =
       articlePayload;
 
+    const groups = await this._groupApplicationService.findAllByIds(groupIds);
     const activity = this._postActivityService.createPayload({
       id,
       actor,
@@ -96,7 +103,7 @@ export class ProcessArticlePublishedHandler
         isImportant: setting.isImportant,
       },
       audience: {
-        groups: (groupIds ?? []).map((id) => ({ id })),
+        groups,
       },
       createdAt,
     });

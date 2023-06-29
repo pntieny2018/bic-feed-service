@@ -61,7 +61,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
   }
 
   private async _processNotification(command: ProcessPostUpdatedCommand): Promise<void> {
-    const { before, after, state } = command.payload;
+    const { before, after } = command.payload;
 
     const series = await this._contentRepository.findAll({
       attributes: {
