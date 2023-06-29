@@ -24,7 +24,6 @@ export const ERRORS = {
     CONTENT_NO_CRUD_PERMISSION_AT_GROUP: 'content.no_crud_permission_at_group',
     CONTENT_NO_EDIT_SETTING_PERMISSION_AT_GROUP: 'content.no_edit_setting_permission_at_group',
     CONTENT_NO_REACT_PERMISSION: 'content.no_react_permission',
-    CONTENT_LIMIT_ATTACHED_SERIES: 'content.limit_attached_series',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
@@ -36,6 +35,7 @@ export const ERRORS = {
     ARTICLE_NO_DELETE_PERMISSION: 'article.no_delete_permission',
     ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
     ARTICLE_REQUIRED_COVER: 'article.required_cover',
+    ARTICLE_LIMIT_ATTACHED_SERIES: 'article.limit_attached_series',
   },
   POST: {
     POST_NOT_FOUND: 'post.not_found',
@@ -43,6 +43,7 @@ export const ERRORS = {
     POST_NO_CREATE_PERMISSION: 'post.no_create_permission',
     POST_NO_DELETE_PERMISSION: 'post.no_delete_permission',
     POST_NO_READ_PERMISSION: 'post.no_read_permission',
+    POST_LIMIT_ATTACHED_SERIES: 'post.limit_attached_series',
   },
   SERIES: {
     SERIES_NOT_FOUND: 'post.not_found',
