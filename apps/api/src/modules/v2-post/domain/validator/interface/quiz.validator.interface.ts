@@ -1,6 +1,5 @@
 import { UserDto } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application/group.dto';
-import { QuizEntity } from '../../model/quiz';
 
 export interface IQuizValidator {
   checkCanCUDQuizInGroups(user: UserDto, groups: GroupDto[]): Promise<void>;
