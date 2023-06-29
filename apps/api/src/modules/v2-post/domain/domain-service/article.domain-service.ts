@@ -21,7 +21,7 @@ import {
 } from '../repositoty-interface';
 import {
   ContentEmptyException,
-  ContentLimitAttachedSeriesException,
+  ArticleLimitAttachedSeriesException,
   InvalidResourceImageException,
 } from '../exception';
 import {
@@ -59,7 +59,7 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (articleEntity.isOverLimtedToAttachSeries()) {
-      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
@@ -76,7 +76,7 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (articleEntity.isOverLimtedToAttachSeries()) {
-      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();

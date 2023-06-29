@@ -42,7 +42,7 @@ import { LogicException } from '../../../common/exceptions';
 import { TargetType } from '../../report-content/contstants';
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { RULES } from '../../v2-post/constant';
-import { ContentLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import { PostLimitAttachedSeriesException } from '../../v2-post/domain/exception';
 
 @Injectable()
 export class PostAppService {
@@ -246,7 +246,7 @@ export class PostAppService {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
       if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-        throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+        throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
       }
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }

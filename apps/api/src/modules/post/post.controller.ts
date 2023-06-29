@@ -30,7 +30,7 @@ import { ArticleResponseDto } from '../article/dto/responses';
 import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
-  ContentLimitAttachedSeriesException,
+  PostLimitAttachedSeriesException,
 } from '../v2-post/domain/exception';
 import { PostStatus } from '../../database/models/post.model';
 
@@ -143,7 +143,7 @@ export class PostController {
       return result;
     } catch (e) {
       switch (e.constructor) {
-        case ContentLimitAttachedSeriesException:
+        case PostLimitAttachedSeriesException:
           throw new BadRequestException(e);
         default:
           throw e;
@@ -177,7 +177,7 @@ export class PostController {
       return publishResult;
     } catch (e) {
       switch (e.constructor) {
-        case ContentLimitAttachedSeriesException:
+        case PostLimitAttachedSeriesException:
           throw new ForbiddenException(e);
         default:
           throw e;

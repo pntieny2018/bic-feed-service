@@ -40,7 +40,7 @@ import {
 import { ContentEntity } from '../model/content/content.entity';
 import { ArticleEntity } from '../model/content/article.entity';
 import { UserDto } from '../../../v2-user/application';
-import { ContentLimitAttachedSeriesException } from '../exception';
+import { PostLimitAttachedSeriesException } from '../exception';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -155,7 +155,7 @@ export class PostDomainService implements IPostDomainService {
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
 
     if (postEntity.isOverLimtedToAttachSeries()) {
-      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     await this._contentValidator.validateSeriesAndTags(
@@ -227,7 +227,7 @@ export class PostDomainService implements IPostDomainService {
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
 
     if (postEntity.isOverLimtedToAttachSeries()) {
-      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     await this._contentValidator.validateSeriesAndTags(

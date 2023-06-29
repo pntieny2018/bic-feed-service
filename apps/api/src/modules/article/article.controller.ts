@@ -34,7 +34,7 @@ import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
 import {
-  ContentLimitAttachedSeriesException,
+  ArticleLimitAttachedSeriesException,
   ContentNoCRUDPermissionException,
   ContentRequireGroupException,
 } from '../v2-post/domain/exception';
@@ -196,7 +196,7 @@ export class ArticleController {
       return result;
     } catch (e) {
       switch (e.constructor) {
-        case ContentLimitAttachedSeriesException:
+        case ArticleLimitAttachedSeriesException:
           throw new BadRequestException(e);
         default:
           throw e;
@@ -228,7 +228,7 @@ export class ArticleController {
       return result;
     } catch (e) {
       switch (e.constructor) {
-        case ContentLimitAttachedSeriesException:
+        case ArticleLimitAttachedSeriesException:
           throw new ForbiddenException(e);
         default:
           throw e;
@@ -255,7 +255,7 @@ export class ArticleController {
       return result;
     } catch (e) {
       switch (e.constructor) {
-        case ContentLimitAttachedSeriesException:
+        case ArticleLimitAttachedSeriesException:
           throw new ForbiddenException(e);
         default:
           throw e;

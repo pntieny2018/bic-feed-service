@@ -26,7 +26,7 @@ import { LogicException } from '../../../common/exceptions';
 import { IPostGroup } from '../../../database/models/post-group.model';
 import { ExternalService } from '../../../app/external.service';
 import { RULES } from '../../v2-post/constant';
-import { ContentLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
 
 @Injectable()
 export class SeriesAppService {
@@ -289,7 +289,7 @@ export class SeriesAppService {
     );
 
     if (isOverLimtedToAttachSeries) {
-      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     await this._authorityService.checkCanUpdateSeries(

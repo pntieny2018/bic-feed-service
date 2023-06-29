@@ -61,7 +61,10 @@ import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { RULES } from '../v2-post/constant';
-import { ContentLimitAttachedSeriesException } from '../v2-post/domain/exception';
+import {
+  PostLimitAttachedSeriesException,
+  ArticleLimitAttachedSeriesException,
+} from '../v2-post/domain/exception';
 
 @Injectable()
 export class PostService {
@@ -1988,7 +1991,11 @@ export class PostService {
     );
 
     if (isOverLimtedToAttachSeries) {
-      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      if (posts[0].type === PostType.POST)
+        throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      else {
+        throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      }
     }
   }
 }

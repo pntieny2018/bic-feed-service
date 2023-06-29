@@ -30,7 +30,7 @@ import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import {
-  ContentLimitAttachedSeriesException,
+  ArticleLimitAttachedSeriesException,
   ContentRequireGroupException,
   SeriesNoReadPermissionException,
 } from '../v2-post/domain/exception';
@@ -187,7 +187,7 @@ export class SeriesController {
       await this._seriesAppService.addItems(id, itemIds, user);
     } catch (e) {
       switch (e.constructor) {
-        case ContentLimitAttachedSeriesException:
+        case ArticleLimitAttachedSeriesException:
           throw new BadRequestException(e);
         default:
           throw e;

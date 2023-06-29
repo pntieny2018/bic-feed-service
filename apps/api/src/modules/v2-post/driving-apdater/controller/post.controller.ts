@@ -23,6 +23,7 @@ import {
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
   ContentRequireGroupException,
+  PostLimitAttachedSeriesException,
 } from '../../domain/exception';
 import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -130,6 +131,7 @@ export class PostController {
         case ContentNoCRUDPermissionException:
         case AccessDeniedException:
           throw new ForbiddenException(e);
+        case PostLimitAttachedSeriesException:
         case DomainModelException:
         case UserNoBelongGroupException:
         case ContentEmptyException:
@@ -187,6 +189,7 @@ export class PostController {
         case ContentNoCRUDPermissionException:
         case AccessDeniedException:
           throw new ForbiddenException(e);
+        case PostLimitAttachedSeriesException:
         case DomainModelException:
         case UserNoBelongGroupException:
         case ContentEmptyException:
