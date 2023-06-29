@@ -207,6 +207,8 @@ export class PostDomainService implements IPostDomainService {
     postEntity.updateAttribute(newData);
     postEntity.setPrivacyFromGroups(groups);
 
+    if (postEntity.hasVideoProcessing()) postEntity.setProcessing();
+
     await this._postValidator.validatePublishContent(
       postEntity,
       authUser,
