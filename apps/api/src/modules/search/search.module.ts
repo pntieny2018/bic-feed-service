@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { IKafkaConfig } from '../../config/kafka';
@@ -20,7 +20,14 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
   };
 };
 @Module({
-  imports: [PostModuleV2, UserModuleV2, GroupModuleV2, PostModule, ReactionModule, TagModule],
+  imports: [
+    forwardRef(() => PostModuleV2),
+    UserModuleV2,
+    GroupModuleV2,
+    PostModule,
+    ReactionModule,
+    TagModule,
+  ],
   controllers: [SearchController, SearchConsumer],
   providers: [SearchService],
   exports: [SearchService],
