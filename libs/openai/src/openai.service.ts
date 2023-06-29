@@ -8,6 +8,7 @@ import {
   IOpenaiService,
 } from '@app/openai/openai.service.interface';
 import {
+  CORRECT_ANSWER_KEY,
   MAX_COMPLETION_TOKEN,
   MAX_TOKEN,
   TOKEN_IN_CONTEXT,
@@ -107,20 +108,20 @@ export class OpenaiService implements IOpenaiService {
       {
         role: 'system',
         content: `You will be provided an articles (delimited with XML tags). You must first detect the original language of the above article. 
-                    Then generate ${numQuestion} multiple-choice questions with ${numAnswer} choices each with 1 and only 1 correct choice. 
+                    Then create ${numQuestion} questions with ${numAnswer} answer choices per question and only 1 correct choice. 
                     It is very important that the language of all questions and choices must be the same as the detected language.\n
-                  You must reply in format:\n
+                  Follow this format:\n
                   """" 
                   [1] <question 1>
                   a) <choice 1>
                   b) <choice 2>
                   c) <choice 3>
-                  => a
+                  ${CORRECT_ANSWER_KEY} a
                   [2] <question 2>
                   a) <choice 1>
                   b) <choice 2>
                   c) <choice 3>
-                  => c
+                  ${CORRECT_ANSWER_KEY} c
                   """"`,
       },
       {
@@ -181,8 +182,8 @@ export class OpenaiService implements IOpenaiService {
         const answerText = answerMatch[2] ?? '';
         currentQuestion.answers.push({ answer: answerText, isCorrect: false });
       }
-      if (line.includes('=>') && currentQuestion !== null) {
-        const answerCorrect = line.trim().slice(2).trim();
+      if (line.includes(CORRECT_ANSWER_KEY) && currentQuestion !== null) {
+        const answerCorrect = line.trim().slice(CORRECT_ANSWER_KEY.length).trim();
         const indexAnswerCorrect = answerCorrect.toLowerCase().charCodeAt(0) - 97;
         if (currentQuestion.answers[indexAnswerCorrect]) {
           currentQuestion.answers[indexAnswerCorrect].isCorrect = true;

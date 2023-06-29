@@ -64,21 +64,12 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
       response = await this._openaiService.generateQuestion({
         content: rawContent,
         numberOfQuestions: numberOfQuestions || quizEntity.get('numberOfQuestions'),
-        numberOfAnswers: numberOfAnswers || quizEntity.get('numberOfQuestions'),
+        numberOfAnswers: numberOfAnswers || quizEntity.get('numberOfAnswers'),
       });
     } catch (e) {
       throw new OpenAIException(e.message);
     }
     if (response.questions?.length === 0) {
-      await this._quizDomainService.update(quizEntity, {
-        authUser,
-        meta: {
-          usage: response.usage,
-          model: response.model,
-          maxTokens: response.maxTokens,
-          completion: response.completion,
-        },
-      });
       throw new OpenAIException('No questions generated');
     }
     const quizEntityUpdated = await this._quizDomainService.update(quizEntity, {
