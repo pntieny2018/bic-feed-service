@@ -5,8 +5,10 @@ export type FindOneQuizProps = {
 };
 
 export type FindAllQuizProps = {
-  contentId: string;
+  ids?: string[];
   status: string;
+  contentId?: string;
+  contentIds?: string[];
 };
 
 export interface IQuizRepository {

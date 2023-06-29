@@ -73,5 +73,6 @@ import { quizProvider } from './provider/quiz.provider';
     ...reactionProvider,
     ...quizProvider,
   ],
+  exports: [...quizProvider],
 })
 export class PostModuleV2 {}

@@ -6,7 +6,15 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { Inject, Injectable } from '@nestjs/common';
-import { FileDto, ImageDto, PostDto, SeriesDto, UserMentionDto, VideoDto } from '../../dto';
+import {
+  FileDto,
+  ImageDto,
+  PostDto,
+  QuizDto,
+  SeriesDto,
+  UserMentionDto,
+  VideoDto,
+} from '../../dto';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -102,6 +110,7 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
+      quiz: postEntity.get('quiz') ? new QuizDto(postEntity.get('quiz').toObject()) : undefined,
       communities,
       media: {
         files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
@@ -208,6 +217,9 @@ export class ContentBinding implements IContentBinding {
             id: series.get('id'),
             title: series.get('title'),
           }))
+        : undefined,
+      quiz: articleEntity.get('quiz')
+        ? new QuizDto(articleEntity.get('quiz').toObject())
         : undefined,
       communities,
       actor,
@@ -413,6 +425,7 @@ export class ContentBinding implements IContentBinding {
         name: tag.get('name'),
         groupId: tag.get('groupId'),
       })),
+      quiz: entity.get('quiz') ? new QuizDto(entity.get('quiz').toObject()) : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -486,6 +499,7 @@ export class ContentBinding implements IContentBinding {
             title: dataBinding.series.get(seriesId)?.getTitle(),
           }))
         : undefined,
+      quiz: entity.get('quiz') ? new QuizDto(entity.get('quiz').toObject()) : undefined,
       communities: rootGroupIds.map((rootGroupId) => dataBinding.communities.get(rootGroupId)),
       actor: dataBinding.users.get(entity.getCreatedBy()),
       status: entity.get('status'),

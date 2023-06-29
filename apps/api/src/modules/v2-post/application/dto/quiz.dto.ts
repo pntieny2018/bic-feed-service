@@ -1,4 +1,3 @@
-import { UserDto } from '../../../v2-user/application';
 import { QuestionDto } from './question.dto';
 
 export class QuizDto {

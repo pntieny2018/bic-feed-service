@@ -9,6 +9,7 @@ import {
   Default,
   DeletedAt,
   HasMany,
+  HasOne,
   Model,
   PrimaryKey,
   Sequelize,
@@ -19,7 +20,6 @@ import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
 import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
-import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
@@ -274,6 +274,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: IPost[];
+
+  @HasOne(() => QuizModel, 'contentId')
+  public quiz?: QuizModel;
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 

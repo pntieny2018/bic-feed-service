@@ -41,6 +41,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
         },

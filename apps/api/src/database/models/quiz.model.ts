@@ -7,11 +7,13 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { QuizStatus } from '../../modules/v2-post/data-type/quiz-status.enum';
+import { PostModel } from './post.model';
 
 export interface IQuiz {
   id: string;
@@ -50,6 +52,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
 
   @Column
   public contentId: string;
+
+  @BelongsTo(() => PostModel, 'contentId')
+  public post?: PostModel;
 
   @Column
   public title: string;

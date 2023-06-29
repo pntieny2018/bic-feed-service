@@ -1,14 +1,13 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
-import { TagModel } from '../../../../database/models/tag.model';
 import {
   FindAllQuizProps,
   FindOneQuizProps,
   IQuizRepository,
 } from '../../domain/repositoty-interface';
 import { QuizEntity } from '../../domain/model/quiz';
-import { QuizModel } from '../../../../database/models/quiz.model';
+import { IQuiz, QuizModel } from '../../../../database/models/quiz.model';
 import {
   IQuizFactory,
   QUIZ_FACTORY_TOKEN,
@@ -79,11 +78,19 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async findAll(input: FindAllQuizProps): Promise<QuizEntity[]> {
-    const findOptions: FindOptions = {
+    const findOptions: FindOptions<IQuiz> = {
       where: {},
     };
+    if (input.ids) {
+      findOptions.where['id'] = input.ids;
+    }
+
     if (input.contentId) {
       findOptions.where['contentId'] = input.contentId;
+    }
+
+    if (input.contentIds) {
+      findOptions.where['contentId'] = input.contentIds;
     }
 
     if (input.status) {
