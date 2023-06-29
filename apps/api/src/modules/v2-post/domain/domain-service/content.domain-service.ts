@@ -14,6 +14,9 @@ export class ContentDomainService implements IContentDomainService {
 
   public async getContent(id: string): Promise<ContentEntity> {
     const entity = await this._contentRepository.findOne({
+      include: {
+        mustIncludeGroup: true,
+      },
       where: {
         id,
       },
