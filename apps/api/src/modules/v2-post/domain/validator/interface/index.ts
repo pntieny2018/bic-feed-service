@@ -5,4 +5,3 @@ export * from './media.validator.interface';
 export * from './mention.validator.interface';
 export * from './category.validator.interface';
 export * from './article.validator.interface';
-export * from './series.validator.interface';
