@@ -58,6 +58,8 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
       throw new ContentNotFoundException();
     }
 
+    if (!articleEntity.isPublished()) return;
+
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
 
     const articleEntityBefore = cloneDeep(articleEntity);

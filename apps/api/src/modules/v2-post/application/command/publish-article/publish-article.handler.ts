@@ -55,9 +55,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
       throw new ContentNotFoundException();
     }
 
-    if (articleEntity.isPublished()) {
-      return this._contentBinding.articleBinding(articleEntity, { actor });
-    }
+    if (articleEntity.isPublished()) return;
 
     await this._articleDomainService.publish({
       articleEntity,

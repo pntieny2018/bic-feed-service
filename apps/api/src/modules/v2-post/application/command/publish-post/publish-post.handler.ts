@@ -58,6 +58,8 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       throw new ContentNotFoundException();
     }
 
+    if (postEntity.isPublished()) return;
+
     const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
       groupIds || postEntity.get('groupIds')
