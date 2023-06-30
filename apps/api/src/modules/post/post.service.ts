@@ -61,6 +61,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { RULES } from '../v2-post/constant';
+import { isBoolean } from 'lodash';
 import {
   PostLimitAttachedSeriesException,
   ArticleLimitAttachedSeriesException,
@@ -1963,13 +1964,22 @@ export class PostService {
     }
   }
 
-  public async getPostsWithSeries(ids: string[]): Promise<IPost[]> {
+  public async getPostsWithSeries(ids: string[], groupArchived?: boolean): Promise<IPost[]> {
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = PostGroupModel.tableName;
     const include = [];
     include.push({
       model: PostSeriesModel,
       required: false,
       as: 'postSeries',
       attributes: ['seriesId'],
+      where: isBoolean(groupArchived)
+        ? Sequelize.literal(
+            `EXISTS (
+                SELECT seriesGroups.post_id FROM ${schema}.${postGroupTableName} as seriesGroups
+                  WHERE seriesGroups.post_id = "postSeries".series_id  AND seriesGroups.is_archived = ${groupArchived})`
+          )
+        : undefined,
     });
     const result = await this.postModel.findAll({
       include,
