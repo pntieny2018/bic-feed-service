@@ -63,6 +63,7 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
     const result = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,
+      authUser: actor,
     });
 
     this._sendEvent(seriesEntity, result);

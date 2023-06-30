@@ -22,6 +22,7 @@ export interface IContentBinding {
     dataBinding?: {
       actor?: UserDto;
       groups?: GroupDto[];
+      authUser?: UserDto;
     }
   ): Promise<SeriesDto>;
 
