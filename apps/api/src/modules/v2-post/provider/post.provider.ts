@@ -13,6 +13,7 @@ import {
   CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
+  SERIES_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
@@ -57,6 +58,7 @@ import { PublishArticleHandler } from '../application/command/publish-article/pu
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
 import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
+import { SeriesValidator } from '../domain/validator/series.validator';
 
 export const postProvider = [
   {
@@ -70,6 +72,10 @@ export const postProvider = [
   {
     provide: ARTICLE_VALIDATOR_TOKEN,
     useClass: ArticleValidator,
+  },
+  {
+    provide: SERIES_VALIDATOR_TOKEN,
+    useClass: SeriesValidator,
   },
   {
     provide: POST_FACTORY_TOKEN,
