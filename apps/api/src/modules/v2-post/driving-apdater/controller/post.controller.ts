@@ -131,12 +131,12 @@ export class PostController {
         case ContentNoCRUDPermissionException:
         case AccessDeniedException:
           throw new ForbiddenException(e);
-        case ContentNoPublishYetException:
         case DomainModelException:
         case UserNoBelongGroupException:
         case ContentEmptyException:
         case ContentEmptyGroupException:
         case TagSeriesInvalidException:
+        case ContentNoPublishYetException:
           throw new BadRequestException(e);
         default:
           throw e;
