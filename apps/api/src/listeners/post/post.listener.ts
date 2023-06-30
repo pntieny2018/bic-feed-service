@@ -2,7 +2,7 @@ import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
 import { MediaMarkAction, MediaStatus, MediaType } from '../../database/models/media.model';
-import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
+import { PostStatus, PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -26,12 +26,6 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
 import { SeriesService } from '../../modules/series/series.service';
-import {
-  ActorObject,
-  AudienceObject,
-  MentionObject,
-  SettingObject,
-} from '../../notification/dto/requests/notification-activity.dto';
 import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
 import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
 
