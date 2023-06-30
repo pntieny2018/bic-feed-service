@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import {
   BadRequestException,
   ForbiddenException,
@@ -245,9 +246,8 @@ export class PostAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
-      if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-        throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-      }
+      await this.validateUpdateSeriesData(postId, series);
+
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
@@ -473,7 +473,7 @@ export class PostAppService {
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
 
-    await this._postService.validateLimtedToAttachSeries([post.id]);
+    await this._postService.validateLimtedToAttachSeries(post.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
@@ -567,6 +567,21 @@ export class PostAppService {
       await this._postService.reorderPinnedPostGroups(groupId, postIds);
     } catch (ex) {
       this._logger.error(JSON.stringify(ex?.stack));
+    }
+  }
+
+  public async validateUpdateSeriesData(postId: string, series: string[]): Promise<void> {
+    if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
+    const post = (await this._postService.getPostsWithSeries([postId], true))[0];
+    const seriesIds = post.postSeries.map((item) => item.seriesId);
+    const isOverLimtedToAttachSeries =
+      uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
+
+    if (isOverLimtedToAttachSeries) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

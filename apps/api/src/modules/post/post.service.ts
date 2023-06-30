@@ -1991,17 +1991,12 @@ export class PostService {
     return result;
   }
 
-  public async validateLimtedToAttachSeries(ids: string[]): Promise<void> {
-    const posts = await this.getPostsWithSeries(ids);
-
-    const seriesIdsList = posts.map((post) => post.postSeries);
-
-    const isOverLimtedToAttachSeries = !seriesIdsList.every(
-      (seriesIds) => seriesIds.length < RULES.LIMIT_ATTACHED_SERIES
-    );
+  public async validateLimtedToAttachSeries(id: string): Promise<void> {
+    const post = (await this.getPostsWithSeries([id]))[0];
+    const isOverLimtedToAttachSeries = post.postSeries.length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimtedToAttachSeries) {
-      if (posts[0].type === PostType.POST)
+      if (post.type === PostType.POST)
         throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
       else {
         throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
