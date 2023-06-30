@@ -21,6 +21,7 @@ import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
+  ContentNoPublishYetException,
   ContentNotFoundException,
   ContentRequireGroupException,
 } from '../../domain/exception';
@@ -130,6 +131,7 @@ export class PostController {
         case ContentNoCRUDPermissionException:
         case AccessDeniedException:
           throw new ForbiddenException(e);
+        case ContentNoPublishYetException:
         case DomainModelException:
         case UserNoBelongGroupException:
         case ContentEmptyException:

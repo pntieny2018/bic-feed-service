@@ -11,7 +11,7 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ContentNotFoundException } from '../../../domain/exception';
+import { ContentNoPublishYetException, ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
 import {
@@ -64,7 +64,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       throw new ContentNotFoundException();
     }
 
-    if (!postEntity.isPublished()) return;
+    if (!postEntity.isPublished()) throw new ContentNoPublishYetException();
 
     const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(

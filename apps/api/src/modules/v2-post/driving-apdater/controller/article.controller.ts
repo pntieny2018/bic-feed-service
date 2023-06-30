@@ -27,6 +27,7 @@ import {
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
+  ContentNoPublishYetException,
   ContentNotFoundException,
   ContentRequireGroupException,
   InvalidResourceImageException,
@@ -180,6 +181,7 @@ export class ArticleController {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
+        case ContentNoPublishYetException:
         case ContentEmptyException:
         case ContentEmptyGroupException:
         case ArticleRequiredCoverException:

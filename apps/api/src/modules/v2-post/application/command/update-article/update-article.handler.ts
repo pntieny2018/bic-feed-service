@@ -2,7 +2,11 @@ import { cloneDeep } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateArticleCommand } from './update-article.command';
-import { ArticleRequiredCoverException, ContentNotFoundException } from '../../../domain/exception';
+import {
+  ArticleRequiredCoverException,
+  ContentNoPublishYetException,
+  ContentNotFoundException,
+} from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ArticleEntity } from '../../../domain/model/content';
 import {
@@ -58,7 +62,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
       throw new ContentNotFoundException();
     }
 
-    if (!articleEntity.isPublished()) return;
+    if (!articleEntity.isPublished()) throw new ContentNoPublishYetException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
 
