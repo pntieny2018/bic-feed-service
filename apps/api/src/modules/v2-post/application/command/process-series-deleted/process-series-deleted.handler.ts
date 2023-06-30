@@ -2,7 +2,6 @@ import { SentryService } from '@app/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { IPost } from '../../../../../database/models/post.model';
 import { PostEntity } from '../../../domain/model/content';
 import { SeriesHasBeenDeleted } from '../../../../../common/constants';
 import { NotificationService, TypeActivity, VerbActivity } from '../../../../../notification';
@@ -48,11 +47,7 @@ export class ProcessSeriesDeletedHandler
         },
       })) as (PostEntity | ArticleEntity)[];
 
-      for (const item of items) {
-        await this._postSearchService.updateAttributePostToSearch({ id: item.getId() } as IPost, {
-          seriesIds: item.getSeriesIds() || [],
-        });
-      }
+      await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
 
       if (items.every((item) => item.isOwner(actor.id))) return;
 
