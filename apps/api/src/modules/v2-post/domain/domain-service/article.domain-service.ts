@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { RULES } from '../../constant';
 import { ArticleEntity } from '../model/content';
 import {
   IMediaDomainService,
@@ -19,11 +18,7 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import {
-  ContentEmptyException,
-  ArticleLimitAttachedSeriesException,
-  InvalidResourceImageException,
-} from '../exception';
+import { ContentEmptyException, InvalidResourceImageException } from '../exception';
 import {
   ARTICLE_VALIDATOR_TOKEN,
   CATEGORY_VALIDATOR_TOKEN,
@@ -58,9 +53,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
-    if (articleEntity.isOverLimtedToAttachSeries()) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-    }
+    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
@@ -75,9 +68,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
-    if (articleEntity.isOverLimtedToAttachSeries()) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-    }
+    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
