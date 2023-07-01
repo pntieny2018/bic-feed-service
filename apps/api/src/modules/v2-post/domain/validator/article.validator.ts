@@ -53,15 +53,15 @@ export class ArticleValidator implements IArticleValidator {
       },
     })) as ArticleEntity;
 
-    if (contentWithArchivedGroups) {
-      const series = uniq([
-        ...articleEntity.getSeriesIds(),
-        ...contentWithArchivedGroups?.getSeriesIds(),
-      ]);
+    if (!contentWithArchivedGroups) return;
 
-      if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
-        throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-      }
+    const series = uniq([
+      ...articleEntity.getSeriesIds(),
+      ...contentWithArchivedGroups?.getSeriesIds(),
+    ]);
+
+    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

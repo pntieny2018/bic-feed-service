@@ -145,15 +145,15 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       },
     })) as PostEntity;
 
-    if (contentWithArchivedGroups) {
-      const series = uniq([
-        ...postEntity.getSeriesIds(),
-        ...contentWithArchivedGroups?.getSeriesIds(),
-      ]);
+    if (!contentWithArchivedGroups) return;
 
-      if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
-        throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-      }
+    const series = uniq([
+      ...postEntity.getSeriesIds(),
+      ...contentWithArchivedGroups?.getSeriesIds(),
+    ]);
+
+    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }
