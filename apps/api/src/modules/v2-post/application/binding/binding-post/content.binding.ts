@@ -484,7 +484,9 @@ export class ContentBinding implements IContentBinding {
             title: dataBinding.series.get(seriesId)?.getTitle(),
           }))
         : undefined,
-      communities: rootGroupIds.map((rootGroupId) => dataBinding.communities.get(rootGroupId)),
+      communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
+        dataBinding.communities.get(rootGroupId)
+      ),
       actor: dataBinding.users.get(entity.getCreatedBy()),
       status: entity.get('status'),
       title: entity.get('title'),
