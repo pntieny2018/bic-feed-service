@@ -479,9 +479,9 @@ export class PostListener {
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const posts = await this._postService.getsByMedia(videoId);
     const contentSeries = await this._postService.getPostsWithSeries(posts.map((post) => post.id));
-    posts.forEach((post) => {
-      this._postService
-        .updateData([post.id], {
+    for (const post of posts) {
+      try {
+        await this._postService.updateData([post.id], {
           videoIdProcessing: null,
           status: PostStatus.PUBLISHED,
           mediaJson: {
@@ -501,11 +501,12 @@ export class PostListener {
             files: [],
             images: [],
           },
-        })
-        .catch((e) => {
-          this._logger.error(JSON.stringify(e?.stack));
-          this._sentryService.captureException(e);
         });
+      } catch (e) {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      }
+
       const postActivity = this._postActivityService.createPayload({
         id: post.id,
         title: null,
@@ -518,7 +519,7 @@ export class PostListener {
         actor: post.actor,
         createdAt: post.createdAt,
       });
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
           actor: {
@@ -552,7 +553,8 @@ export class PostListener {
       for (const key in mentions) {
         mentionUserIds.push(mentions[key].id);
       }
-      this._postSearchService.addPostsToSearch([
+
+      await this._postSearchService.addPostsToSearch([
         {
           id,
           type,
@@ -582,19 +584,15 @@ export class PostListener {
         this._logger.error(JSON.stringify(error?.stack));
         this._sentryService.captureException(error);
       }
-    });
+    }
 
-    const postWithSeries = await this._postService.getListWithGroupsByIds(
-      posts.map((post) => post.id),
-      false
-    );
-    for (const post of postWithSeries) {
+    for (const post of contentSeries) {
       if (post['postSeries']?.length > 0) {
         for (const seriesItem of post['postSeries']) {
           this._internalEventEmitter.emit(
             new SeriesAddedItemsEvent({
               itemIds: [post.id],
-              seriesId: seriesItem.id,
+              seriesId: seriesItem.seriesId,
               actor: {
                 id: post.createdBy,
               },
