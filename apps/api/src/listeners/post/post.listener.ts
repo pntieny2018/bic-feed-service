@@ -167,12 +167,6 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    // this._postHistoryService
-    //   .saveEditedHistory(post.id, { oldData: null, newData: post })
-    //   .catch((e) => {
-    //     this._logger.error(JSON.stringify(e?.stack));
-    //     this._sentryService.captureException(e);
-    //   });
 
     await this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -193,6 +187,7 @@ export class PostListener {
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);
     }
+    const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
     this._postSearchService.addPostsToSearch([
       {
         id,
@@ -203,6 +198,7 @@ export class PostListener {
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        seriesIds: contentSeries.postSeries.map((item) => item.seriesId),
         tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         createdBy,
         createdAt,
@@ -439,7 +435,7 @@ export class PostListener {
             seriesId: seriesId,
             skipNotify: skipNotifyForNewItems.includes(seriesId) || newPost.isHidden,
             actor: actor,
-            context: 'publish',
+            context: 'update',
           })
         )
       );
@@ -487,6 +483,7 @@ export class PostListener {
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const posts = await this._postService.getsByMedia(videoId);
+    const contentSeries = await this._postService.getPostsWithSeries(posts.map((post) => post.id));
     posts.forEach((post) => {
       this._postService
         .updateData([post.id], {
@@ -570,6 +567,9 @@ export class PostListener {
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
+          seriesIds: (contentSeries.find((item) => item.id === id).postSeries || []).map(
+            (series) => series.seriesId
+          ),
           tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
           createdBy,
           createdAt,

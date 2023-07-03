@@ -27,9 +27,9 @@ export class SeriesAddedItemsListener {
       )}`
     );
 
-    const { seriesId, itemIds, skipNotify } = event.payload;
+    const { seriesId, skipNotify } = event.payload;
 
-    await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
+    await this._updateSeriesAtrribute(event);
 
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
@@ -81,5 +81,13 @@ export class SeriesAddedItemsListener {
         },
       },
     });
+  }
+
+  private async _updateSeriesAtrribute(event: SeriesAddedItemsEvent): Promise<void> {
+    const { itemIds, context } = event.payload;
+
+    if (context === 'publish') return;
+
+    await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
   }
 }

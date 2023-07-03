@@ -25,6 +25,7 @@ import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
 import { ISeriesState, PostActivityService } from '../../notification/activities';
 import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class ArticleListener {
@@ -33,6 +34,7 @@ export class ArticleListener {
   public constructor(
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
+    private readonly _postService: PostService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
@@ -147,13 +149,7 @@ export class ArticleListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    // this._postServiceHistory
-    //   .saveEditedHistory(article.id, { oldData: null, newData: article })
-    //   .catch((e) => {
-    //     this._logger.error(JSON.stringify(e?.stack));
-    //     this._sentryService.captureException(e);
-    //   });
-
+    const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
     this._postSearchService
       .addPostsToSearch([
         {
@@ -163,6 +159,7 @@ export class ArticleListener {
           isHidden,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
+          seriesIds: contentSeries.postSeries.map((item) => item.seriesId),
           createdBy,
           updatedAt,
           createdAt,
@@ -426,7 +423,7 @@ export class ArticleListener {
           seriesId: seriesId,
           skipNotify: skipNotifyForNewItems.includes(seriesId) || newArticle.isHidden,
           actor: actor,
-          context: 'publish',
+          context: 'update',
         })
       );
     }
