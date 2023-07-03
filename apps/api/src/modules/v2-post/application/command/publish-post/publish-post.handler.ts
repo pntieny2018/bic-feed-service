@@ -113,7 +113,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
 
       const seriesIds = uniq([
         ...postEntityAfter.getSeriesIds(),
-        ...contentWithArchivedGroups?.getSeriesIds(),
+        ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
       ]);
 
       const payload: PostChangedMessagePayload = {

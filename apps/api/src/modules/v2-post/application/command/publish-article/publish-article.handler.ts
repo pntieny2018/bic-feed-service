@@ -92,7 +92,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
 
       const seriesIds = uniq([
         ...entity.getSeriesIds(),
-        ...contentWithArchivedGroups?.getSeriesIds(),
+        ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
       ]);
 
       const payload: ArticleChangedMessagePayload = {
