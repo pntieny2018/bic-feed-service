@@ -263,12 +263,6 @@ export class PostListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    // this._postHistoryService
-    //   .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
-    //   .catch((e) => {
-    //     this._sentryService.captureException(e);
-    //   });
-
     const mentionUserIds = [];
     const mentionMap = new Map<string, UserDto>();
 
@@ -327,7 +321,7 @@ export class PostListener {
         },
       });
     }
-
+    const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
     this._postSearchService.updatePostsToSearch([
       {
         id,
@@ -338,6 +332,7 @@ export class PostListener {
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        seriesIds: contentSeries.postSeries.map((item) => item.seriesId),
         tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         createdBy,
         createdAt,
@@ -435,7 +430,7 @@ export class PostListener {
             seriesId: seriesId,
             skipNotify: skipNotifyForNewItems.includes(seriesId) || newPost.isHidden,
             actor: actor,
-            context: 'update',
+            context: 'publish',
           })
         )
       );

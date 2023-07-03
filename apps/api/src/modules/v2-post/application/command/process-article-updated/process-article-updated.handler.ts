@@ -223,7 +223,7 @@ export class ProcessArticleUpdatedHandler
             seriesId: seriesId,
             skipNotify: skipNotifyForNewItems.includes(seriesId) || after.isHidden,
             actor: after.actor,
-            context: 'update',
+            context: 'publish',
           })
         )
       );

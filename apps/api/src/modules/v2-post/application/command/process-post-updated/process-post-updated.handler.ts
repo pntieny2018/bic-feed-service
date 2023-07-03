@@ -212,7 +212,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
             seriesId: seriesId,
             skipNotify: skipNotifyForNewItems.includes(seriesId) || after.isHidden,
             actor: after.actor,
-            context: 'update',
+            context: 'publish',
           })
         )
       );

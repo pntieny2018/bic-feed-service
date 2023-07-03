@@ -266,12 +266,8 @@ export class ArticleListener {
     }
 
     if (status !== PostStatus.PUBLISHED) return;
-    // this._postServiceHistory
-    //   .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
-    //   .catch((e) => {
-    //     this._logger.debug(JSON.stringify(e?.stack));
-    //     this._sentryService.captureException(e);
-    //   });
+
+    const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
 
     this._postSearchService.updatePostsToSearch([
       {
@@ -281,6 +277,7 @@ export class ArticleListener {
         isHidden,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        seriesIds: contentSeries.postSeries.map((item) => item.seriesId),
         createdAt,
         updatedAt,
         createdBy,
@@ -423,7 +420,7 @@ export class ArticleListener {
           seriesId: seriesId,
           skipNotify: skipNotifyForNewItems.includes(seriesId) || newArticle.isHidden,
           actor: actor,
-          context: 'update',
+          context: 'publish',
         })
       );
     }
