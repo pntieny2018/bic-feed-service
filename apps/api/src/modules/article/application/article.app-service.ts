@@ -32,7 +32,6 @@ import { PostHelper } from '../../post/post.helper';
 import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
-import { isEmpty } from 'lodash';
 import { ReactionService } from '../../reaction';
 
 @Injectable()
@@ -172,11 +171,9 @@ export class ArticleAppService {
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting } = createArticleDto;
+    const { audience } = createArticleDto;
     if (audience.groupIds) {
-      const isEnableSetting =
-        setting.isImportant || setting.canComment === false || setting.canReact === false;
-      await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
+      await this._authorityService.checkCanCreatePost(user, audience.groupIds);
     }
 
     const created = await this._articleService.create(user, createArticleDto);
@@ -191,7 +188,7 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, series, setting, coverMedia, tags } = updateArticleDto;
+    const { audience, series, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -227,20 +224,18 @@ export class ArticleAppService {
       if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
-      let isEnableSetting = false;
-      if (
+      const setting = articleBefore.setting;
+      const isEnableSetting =
         setting &&
-        (setting.isImportant || setting.canComment === false || setting.canReact === false)
-      ) {
-        isEnableSetting = true;
-      }
+        (setting.isImportant || setting.canComment === false || setting.canReact === false);
 
       const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
-      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
-        await this._authorityService.checkCanCreatePost(user, newAudienceIds, isEnableSetting);
+        await this._authorityService.checkCanCreatePost(user, newAudienceIds);
+        if (isEnableSetting) await this._authorityService.checkCanEditSetting(user, newAudienceIds);
       }
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
@@ -267,14 +262,12 @@ export class ArticleAppService {
   private async _preCheck(article: ArticleResponseDto, user: UserDto): Promise<void> {
     await this._authorityService.checkPostOwner(article, user.id);
 
-    const { audience, setting } = article;
+    const { audience } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     if (article.coverMedia === null) throw new BadRequestException('Cover is required');
     const groupIds = audience.groups.map((group) => group.id);
 
-    const isEnableSetting =
-      setting.isImportant || setting.canComment === false || setting.canReact === false;
-    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
+    await this._authorityService.checkCanCreatePost(user, groupIds);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),

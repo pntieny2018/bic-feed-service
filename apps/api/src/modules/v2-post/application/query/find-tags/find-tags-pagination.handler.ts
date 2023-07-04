@@ -13,8 +13,10 @@ import { FindTagsPaginationDto } from './find-tags-pagination.dto';
 export class FindTagsPaginationHandler
   implements IQueryHandler<FindTagsPaginationQuery, FindTagsPaginationDto>
 {
-  @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
-  @Inject(TAG_QUERY_TOKEN) private readonly _tagQuery: ITagQuery;
+  public constructor(
+    @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
+    @Inject(TAG_QUERY_TOKEN) private readonly _tagQuery: ITagQuery
+  ) {}
 
   public async execute(query: FindTagsPaginationQuery): Promise<FindTagsPaginationDto> {
     const { groupIds, name, offset, limit } = query.payload;

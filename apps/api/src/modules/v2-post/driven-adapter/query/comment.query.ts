@@ -18,6 +18,7 @@ import { CursorPaginationResult } from '../../../../common/types/cursor-paginati
 import { ReactionEntity } from '../../domain/model/reaction';
 import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
+import { UserDto } from '../../../v2-user/application';
 
 export class CommentQuery implements ICommentQuery {
   public constructor(
@@ -146,5 +147,60 @@ export class CommentQuery implements ICommentQuery {
     };
 
     return { rows, meta };
+  }
+
+  public async findComment(id: string, authUser: UserDto): Promise<CommentEntity> {
+    const findOptions: FindOptions = {
+      include: [
+        authUser
+          ? {
+              model: CommentReactionModel,
+              on: {
+                [Op.and]: {
+                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
+                  created_by: authUser.id,
+                },
+              },
+            }
+          : {},
+      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
+      where: {
+        id,
+        isHidden: false,
+      },
+    };
+    const data = await this._commentModel.findOne(findOptions);
+    const row = data.toJSON();
+    return this._factory.reconstitute({
+      id: row.id,
+      postId: row.postId,
+      parentId: row.parentId,
+      edited: row.edited,
+      isHidden: row.isHidden,
+      giphyId: row.giphyId,
+      totalReply: row.totalReply,
+      createdBy: row.createdBy,
+      updatedBy: row.updatedBy,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      content: row.content,
+      mentions: row.mentions,
+      media: {
+        images: (row.mediaJson?.images || []).map((image) => new ImageEntity(image)),
+        files: (row.mediaJson?.files || []).map((file) => new FileEntity(file)),
+        videos: (row.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
+      },
+      ownerReactions: (row?.ownerReactions || []).map(
+        (reaction) =>
+          new ReactionEntity({
+            id: reaction.id,
+            target: REACTION_TARGET.COMMENT,
+            targetId: row.id,
+            reactionName: reaction.reactionName,
+            createdBy: reaction.createdBy,
+            createdAt: reaction.createdAt,
+          })
+      ),
+    });
   }
 }

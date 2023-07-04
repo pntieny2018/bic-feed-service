@@ -5,6 +5,7 @@ import { ArticleEntity } from '../model/content/article.entity';
 import { SeriesEntity } from '../model/content/series.entity';
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { ContentEntity } from '../model/content/content.entity';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
@@ -98,7 +99,7 @@ export type GetPaginationContentsProps = FindAllPostOptions & CursorPaginationPr
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
-  update(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
+  update(data: ContentEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
