@@ -12,9 +12,9 @@ export class FixContentPrivacyCommand implements CommandRunner {
 
   public constructor(
     @InjectModel(PostModel)
-    private _postModel: typeof PostModel,
+    private readonly _postModel: typeof PostModel,
     @Inject(GROUP_APPLICATION_TOKEN)
-    public readonly groupAppService: IGroupApplicationService
+    private readonly groupAppService: IGroupApplicationService
   ) {}
 
   private async _delay(time: number): Promise<unknown> {
