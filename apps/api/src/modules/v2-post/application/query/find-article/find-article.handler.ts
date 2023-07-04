@@ -7,13 +7,16 @@ import {
 import { ArticleDto } from '../../dto';
 import { FindArticleQuery } from './find-article.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { UserDto } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+} from '../../../domain/query-interface/reaction.query.interface';
 
 @QueryHandler(FindArticleQuery)
 export class FindArticleHandler implements IQueryHandler<FindArticleQuery, ArticleDto> {
