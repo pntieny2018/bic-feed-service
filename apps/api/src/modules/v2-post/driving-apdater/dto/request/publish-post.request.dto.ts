@@ -52,22 +52,6 @@ export class PublishPostRequestDto {
   public media?: MediaRequestDto;
 
   @ApiProperty({
-    description: 'Setting post',
-    type: PostSettingDto,
-    required: false,
-    example: {
-      canReact: true,
-      canComment: true,
-      isImportant: false,
-      importantExpiredAt: null,
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => PostSettingDto)
-  public setting?: PostSettingDto;
-
-  @ApiProperty({
     type: UserMentionDto,
     example: {
       dangdiep: {

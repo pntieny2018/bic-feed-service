@@ -121,6 +121,7 @@ export class CommentController {
       return data;
     } catch (e) {
       switch (e.constructor) {
+        case CommentNotFoundException:
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case InvalidCursorParamsException:

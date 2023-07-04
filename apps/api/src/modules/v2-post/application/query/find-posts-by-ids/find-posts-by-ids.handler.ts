@@ -12,8 +12,10 @@ import { ArticleEntity } from '../../../domain/model/content/article.entity';
 export class FindPostsByIdsHandler
   implements IQueryHandler<FindPostsByIdsQuery, (PostDto | ArticleDto | SeriesDto)[]>
 {
-  @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
-  @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
+  public constructor(
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
+  ) {}
 
   public async execute(query: FindPostsByIdsQuery): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
     const { ids, authUser } = query.payload;

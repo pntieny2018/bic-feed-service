@@ -84,7 +84,7 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  public async update(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
+  public async update(contentEntity: ContentEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const model = this._entityToModel(contentEntity);

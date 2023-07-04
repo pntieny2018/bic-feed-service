@@ -6,7 +6,6 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CreateDraftPostCommand } from './create-draft-post.command';
 import { CreateDraftPostDto } from './create-draft-post.dto';
-import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -18,8 +17,6 @@ export class CreateDraftPostHandler
   implements ICommandHandler<CreateDraftPostCommand, CreateDraftPostDto>
 {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
