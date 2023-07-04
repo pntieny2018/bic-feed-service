@@ -63,8 +63,6 @@ export class ContentBinding implements IContentBinding {
       users.push(...dataBinding?.mentionUsers);
     }
     if (dataBinding?.actor) {
-      delete dataBinding.actor.permissions;
-      delete dataBinding.actor.groups;
       users.push(dataBinding.actor);
     }
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
@@ -155,8 +153,6 @@ export class ContentBinding implements IContentBinding {
     });
 
     if (dataBinding?.actor) {
-      delete dataBinding.actor.permissions;
-      delete dataBinding.actor.groups;
       users.push(dataBinding.actor);
     }
 
@@ -167,7 +163,7 @@ export class ContentBinding implements IContentBinding {
       (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
@@ -259,9 +255,10 @@ export class ContentBinding implements IContentBinding {
     let items = [];
     let userIdsNeedToFind = [seriesEntity.get('createdBy')];
     if (seriesEntity.get('itemIds')?.length) {
+      const itemIds = seriesEntity.get('itemIds');
       items = await this._contentRepo.findAll({
         where: {
-          ids: seriesEntity.get('itemIds'),
+          ids: itemIds,
           excludeReportedByUserId: dataBinding.authUser?.id,
           isHidden: false,
           status: PostStatus.PUBLISHED,
@@ -271,6 +268,7 @@ export class ContentBinding implements IContentBinding {
         },
       });
 
+      items.sort((a, b) => itemIds.indexOf(a.get('id')) - itemIds.indexOf(b.get('id')));
       userIdsNeedToFind = uniq([
         ...items.map((item) => item.get('createdBy')),
         ...userIdsNeedToFind,
@@ -486,7 +484,9 @@ export class ContentBinding implements IContentBinding {
             title: dataBinding.series.get(seriesId)?.getTitle(),
           }))
         : undefined,
-      communities: rootGroupIds.map((rootGroupId) => dataBinding.communities.get(rootGroupId)),
+      communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
+        dataBinding.communities.get(rootGroupId)
+      ),
       actor: dataBinding.users.get(entity.getCreatedBy()),
       status: entity.get('status'),
       title: entity.get('title'),
@@ -714,7 +714,7 @@ export class ContentBinding implements IContentBinding {
 
   public filterSecretGroupCannotAccess(groups: GroupDto[], authUser?: UserDto): GroupDto[] {
     return groups.filter((group) => {
-      const isUserNotInGroup = authUser?.groups.includes(group.id);
+      const isUserNotInGroup = !authUser?.groups.includes(group.id);
       const isGuest = !authUser;
       return !(group.privacy === GroupPrivacy.SECRET && (isUserNotInGroup || isGuest));
     });

@@ -21,7 +21,8 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
+    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
   ) {}
 
   public async execute(query: FindArticleQuery): Promise<ArticleDto> {
@@ -69,7 +70,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
 
     return this._contentBinding.articleBinding(articleEntity, {
       groups,
-      authUser: new UserDto(authUser),
+      authUser,
     });
   }
 }
