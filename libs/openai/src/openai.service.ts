@@ -107,9 +107,9 @@ export class OpenaiService implements IOpenaiService {
     return [
       {
         role: 'system',
-        content: `You will be provided an articles (delimited with XML tags). You must first detect the original language of the above article. 
-                    Then create ${numQuestion} questions with ${numAnswer} answer choices per question and only 1 correct choice. 
-                    It is very important that the language of all questions and choices must be the same as the detected language.\n
+        content: `You are quiz creator. You will be provided an article (delimited with XML tags).
+                    Please read the article and create ${numQuestion} questions, each question must have ${numAnswer} answer choices and indicate which answer is correct. 
+                    The language of all the questions and answers must be the same as the article.\n
                   Follow this format:\n
                   """" 
                   [1] <question 1>
