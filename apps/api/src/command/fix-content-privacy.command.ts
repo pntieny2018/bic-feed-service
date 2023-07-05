@@ -1,5 +1,8 @@
+import { flatten, uniq } from 'lodash';
+import { QueryTypes } from 'sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner } from 'nest-commander';
 import { GroupPrivacy } from '../modules/v2-group/data-type';
 import { PostGroupModel } from '../database/models/post-group.model';
@@ -17,19 +20,15 @@ export class FixContentPrivacyCommand implements CommandRunner {
     private readonly groupAppService: IGroupApplicationService
   ) {}
 
-  private async _delay(time: number): Promise<unknown> {
-    return new Promise((resolve) => setTimeout(resolve, time));
-  }
-
   public async run(): Promise<any> {
-    const limitEach = 100;
+    const limitEach = 300;
     let offset = 0;
     let hasMore = true;
     let total = 0;
     let totalKeep = 0;
     let totalError = 0;
     let totalUpdated = 0;
-    const groupPrivacyMapper = new Map<string, GroupPrivacy>();
+    let groupPrivacyMapper = new Map<string, GroupPrivacy>();
 
     while (hasMore) {
       const posts = await this._getPostsToUpdate(offset, limitEach);
@@ -39,10 +38,14 @@ export class FixContentPrivacyCommand implements CommandRunner {
         let updated = 0;
         let keep = 0;
         let error = 0;
+        const groupIds = uniq(
+          flatten(posts.map((post) => post.groups.map((group) => group.groupId)))
+        );
+        groupPrivacyMapper = await this._buildGroupPrivacy(groupIds, groupPrivacyMapper);
         for (const post of posts) {
           if (post.groups.length) {
             try {
-              const privacy = await this._getPrivacy(
+              const privacy = this._getPrivacy(
                 post.groups.map((group) => group.groupId),
                 groupPrivacyMapper
               );
@@ -64,7 +67,6 @@ export class FixContentPrivacyCommand implements CommandRunner {
         this._logger.log(`Updated ${updated}/${posts.length}`);
         this._logger.log(`Error ${error}/${posts.length}`);
         this._logger.log('-----------------------------------');
-        await this._delay(1000);
       }
     }
     this._logger.log(
@@ -75,9 +77,7 @@ export class FixContentPrivacyCommand implements CommandRunner {
 
   private async _getPostsToUpdate(offset: number, limit: number): Promise<IPost[]> {
     const rows = await this._postModel.findAll({
-      attributes: {
-        exclude: ['content'],
-      },
+      attributes: ['id', 'created_at'],
       include: [
         {
           model: PostGroupModel,
@@ -99,27 +99,41 @@ export class FixContentPrivacyCommand implements CommandRunner {
   }
 
   private async _updatePrivacy(postId: string, privacy: PostPrivacy): Promise<void> {
-    await this._postModel.update(
-      { privacy },
+    const { schema } = getDatabaseConfig();
+    await this._postModel.sequelize.query(
+      `UPDATE ${schema}.posts SET privacy = :privacy WHERE id = :postId`,
       {
-        where: {
-          id: postId,
+        replacements: {
+          postId,
+          privacy,
         },
+        type: QueryTypes.UPDATE,
       }
     );
   }
 
-  private async _getPrivacy(
+  private async _buildGroupPrivacy(
     groupIds: string[],
     groupPrivacyMapper: Map<string, GroupPrivacy>
-  ): Promise<PostPrivacy> {
+  ): Promise<Map<string, GroupPrivacy>> {
     const groupsIdsNeedToFind = groupIds.filter((groupId) => !groupPrivacyMapper.has(groupId));
 
     if (groupsIdsNeedToFind.length) {
-      const groups = await this.groupAppService.findAllByIds(groupsIdsNeedToFind);
-      groups.forEach((group) => groupPrivacyMapper.set(group.id, group.privacy));
+      const chunkSize = 30;
+      for (let i = 0; i < groupsIdsNeedToFind.length; i += chunkSize) {
+        const chunk = groupsIdsNeedToFind.slice(i, i + chunkSize);
+        const groups = await this.groupAppService.findAllByIds(chunk);
+        groups.forEach((group) => groupPrivacyMapper.set(group.id, group.privacy));
+      }
     }
 
+    return groupPrivacyMapper;
+  }
+
+  private _getPrivacy(
+    groupIds: string[],
+    groupPrivacyMapper: Map<string, GroupPrivacy>
+  ): PostPrivacy {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const groupId of groupIds) {
