@@ -156,6 +156,10 @@ export class ContentEntity<
     return this._props.status === PostStatus.PROCESSING;
   }
 
+  public isVisible(): boolean {
+    return !this._props.isHidden && this.isPublished() && this._props.groupIds?.length > 0;
+  }
+
   public isHidden(): boolean {
     return this._props.isHidden;
   }
