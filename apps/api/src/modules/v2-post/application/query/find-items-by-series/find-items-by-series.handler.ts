@@ -106,9 +106,11 @@ export class FindItemsBySeriesHandler
     })) as (PostEntity | ArticleEntity)[];
 
     return new Map<string, PostEntity | ArticleEntity>(
-      items.map((item) => {
-        return [item.getId(), item];
-      })
+      items
+        .filter((item) => !item.isHidden() && item.isPublished())
+        .map((item) => {
+          return [item.getId(), item];
+        })
     );
   }
 }

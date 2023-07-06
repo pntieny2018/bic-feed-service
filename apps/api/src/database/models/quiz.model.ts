@@ -12,7 +12,7 @@ import {
 import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { QuizStatus } from '../../modules/v2-post/data-type/quiz-status.enum';
+import { QuizGenStatus, QuizStatus } from '../../modules/v2-post/data-type/quiz-status.enum';
 import { PostModel } from './post.model';
 
 export interface IQuiz {
@@ -21,6 +21,7 @@ export interface IQuiz {
   description: string;
   contentId: string;
   status: QuizStatus;
+  genStatus: QuizGenStatus;
   numberOfQuestions: number;
   numberOfAnswers: number;
   numberOfQuestionsDisplay: number;
@@ -91,6 +92,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
 
   @Column
   public status: QuizStatus;
+
+  @Column
+  public genStatus: QuizGenStatus;
 
   @AllowNull(false)
   @Column

@@ -14,11 +14,7 @@ import {
 import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
@@ -81,18 +77,15 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       },
     });
 
-    if (postEntity.getState().isChangeStatus) {
-      await this._postDomainService.markSeen(postEntity, authUser.id);
-      postEntity.increaseTotalSeen();
-      if (postEntity.isImportant()) {
-        await this._postDomainService.markReadImportant(postEntity, authUser.id);
-        postEntity.setMarkReadImportant();
-      }
+    if (postEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(postEntity, authUser.id);
+      postEntity.setMarkReadImportant();
     }
 
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
-      actor: new UserDto(authUser),
+      actor: authUser,
+      authUser,
       mentionUsers,
     });
 

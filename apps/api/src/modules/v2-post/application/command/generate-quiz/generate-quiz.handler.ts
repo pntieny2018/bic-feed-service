@@ -50,7 +50,9 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
-    const contentEntity = await this._contentDomainService.getContent(quizEntity.get('contentId'));
+    const contentEntity = await this._contentDomainService.getVisibleContent(
+      quizEntity.get('contentId')
+    );
 
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
@@ -72,6 +74,7 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
     if (response.questions?.length === 0) {
       throw new OpenAIException('No questions generated');
     }
+    quizEntity.setProcessed();
     const quizEntityUpdated = await this._quizDomainService.update(quizEntity, {
       ...command.payload,
       questions: response.questions,
@@ -87,6 +90,7 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
       id: quizEntityUpdated.get('id'),
       contentId: quizEntityUpdated.get('contentId'),
       status: quizEntityUpdated.get('status'),
+      genStatus: quizEntityUpdated.get('genStatus'),
       title: quizEntityUpdated.get('title'),
       description: quizEntityUpdated.get('description'),
       numberOfQuestions: quizEntityUpdated.get('numberOfQuestions'),

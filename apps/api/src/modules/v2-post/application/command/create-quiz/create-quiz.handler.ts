@@ -25,8 +25,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface/content.domain-service.interface';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
-import { ContentHasQuizException } from '../../../domain/exception/content-has-quiz.exception';
+import { ContentHasQuizException } from '../../../domain/exception';
 
 @CommandHandler(CreateQuizCommand)
 export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, QuizDto> {
@@ -51,17 +50,10 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
   public async execute(command: CreateQuizCommand): Promise<QuizDto> {
     const { authUser, contentId } = command.payload;
 
-    const contentEntity = await this._contentDomainService.getContent(contentId);
+    const contentEntity = await this._contentDomainService.getVisibleContent(contentId);
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
-
-    const publishedQuiz = await this._quizRepo.findAll({
-      contentId,
-      status: QuizStatus.PUBLISHED,
-    });
-    if (publishedQuiz.length > 0) {
-      throw new ContentHasQuizException();
-    }
+    await this._checkContentHasQuiz(contentId);
     //questions
     const rawContent = this._contentDomainService.getRawContent(contentEntity);
     if (!rawContent) {
@@ -95,6 +87,7 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
       });
       throw new OpenAIException('No questions generated');
     }
+    quizEntity.setProcessed();
     const quizEntityUpdated = await this._quizDomainService.update(quizEntity, {
       authUser,
       questions: response.questions,
@@ -110,6 +103,7 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
       id: quizEntityUpdated.get('id'),
       contentId: quizEntityUpdated.get('contentId'),
       status: quizEntityUpdated.get('status'),
+      genStatus: quizEntityUpdated.get('genStatus'),
       title: quizEntityUpdated.get('title'),
       description: quizEntityUpdated.get('description'),
       numberOfQuestions: quizEntityUpdated.get('numberOfQuestions'),
@@ -121,5 +115,14 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
       createdAt: quizEntityUpdated.get('createdAt'),
       updatedAt: quizEntityUpdated.get('updatedAt'),
     });
+  }
+
+  private async _checkContentHasQuiz(contentId: string): Promise<void> {
+    const publishedQuiz = await this._quizRepo.findAll({
+      contentId,
+    });
+    if (publishedQuiz.length > 0) {
+      throw new ContentHasQuizException();
+    }
   }
 }

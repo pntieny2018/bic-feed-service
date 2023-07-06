@@ -14,8 +14,10 @@ export type GenerateQuestionResponse = {
   maxTokens: number;
   completion: any;
   questions: {
+    id: string;
     question: string;
     answers: {
+      id: string;
       answer: string;
       isCorrect: boolean;
     }[];

@@ -96,6 +96,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     const result = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,
+      authUser: actor,
     });
 
     this._sendEvent(seriesEntityBefore, seriesEntity, result);
