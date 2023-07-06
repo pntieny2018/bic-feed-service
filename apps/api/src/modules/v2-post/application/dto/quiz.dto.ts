@@ -1,4 +1,5 @@
 import { QuestionDto } from './question.dto';
+import { QuizGenStatus, QuizStatus } from '../../data-type';
 
 export class QuizDto {
   public id: string;
@@ -13,8 +14,8 @@ export class QuizDto {
   public questions?: QuestionDto[];
   public createdAt: Date;
   public updatedAt: Date;
-  public status: string;
-  public genStatus: string;
+  public status: QuizStatus;
+  public genStatus: QuizGenStatus;
   public constructor(data: Partial<QuizDto>) {
     Object.assign(this, data);
   }
