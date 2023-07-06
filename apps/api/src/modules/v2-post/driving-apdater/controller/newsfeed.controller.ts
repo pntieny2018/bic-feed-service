@@ -41,7 +41,7 @@ export class NewsFeedController {
   public async consum(@Payload('value') payload: PostChangedMessagePayload): Promise<any> {
     console.log('payload', payload);
 
-    await new Promise((r) => setTimeout(r, 1 * 60000));
+    await new Promise((r) => setTimeout(r, 1 * 1000));
 
     console.log('done message');
   }

@@ -1,5 +1,11 @@
 export enum QuizStatus {
-  PENDING = 'PENDING',
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
+}
+
+export enum QuizGenStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  PROCESSED = 'PROCESSED',
+  FAILED = 'FAILED',
 }

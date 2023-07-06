@@ -1,8 +1,10 @@
 name: internal
 run-name: ${{ github.ref_name }}
 on:
-  push:
-    branches: [ "internal-*"]
+  pull_request:
+    types:
+      - closed
+    branches: ["internal"]
 
 permissions:
   contents: read    # This is required for actions/checkout
@@ -10,7 +12,7 @@ permissions:
 
 jobs:
   internal:
-    if: startsWith(github.ref_name, 'internal-')
+    if: ${{ github.ref_name == 'internal' }}
     runs-on: ubuntu-22.04
     environment: internal
     env:

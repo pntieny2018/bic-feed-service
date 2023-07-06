@@ -128,6 +128,10 @@ export class ContentEntity<
     return this._props.createdBy;
   }
 
+  public isNotUsersSeen(): boolean {
+    return this._props.aggregation.totalUsersSeen === 0;
+  }
+
   public getType(): PostType {
     return this._props.type;
   }
@@ -150,6 +154,10 @@ export class ContentEntity<
 
   public isProcessing(): boolean {
     return this._props.status === PostStatus.PROCESSING;
+  }
+
+  public isVisible(): boolean {
+    return !this._props.isHidden && this.isPublished() && this._props.groupIds?.length > 0;
   }
 
   public isHidden(): boolean {
