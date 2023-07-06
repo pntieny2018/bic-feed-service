@@ -6,7 +6,6 @@ import { UserDto } from '../../../v2-user/application';
 
 export type GetPaginationCommentProps = CursorPaginationProps & {
   authUser?: UserDto;
-  order: OrderEnum;
   postId: string;
   parentId?: string;
 };
