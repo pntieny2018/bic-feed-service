@@ -12,7 +12,7 @@ export class ContentDomainService implements IContentDomainService {
   @Inject(CONTENT_REPOSITORY_TOKEN)
   private readonly _contentRepository: IContentRepository;
 
-  public async getContent(id: string): Promise<ContentEntity> {
+  public async getVisibleContent(id: string): Promise<ContentEntity> {
     const entity = await this._contentRepository.findOne({
       include: {
         mustIncludeGroup: true,
@@ -22,7 +22,7 @@ export class ContentDomainService implements IContentDomainService {
       },
     });
 
-    if (!entity || entity.isHidden() || !entity.isPublished()) {
+    if (!entity || !entity.isVisible()) {
       throw new ContentNotFoundException();
     }
     return entity;

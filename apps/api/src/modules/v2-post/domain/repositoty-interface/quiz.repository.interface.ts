@@ -6,7 +6,7 @@ export type FindOneQuizProps = {
 
 export type FindAllQuizProps = {
   ids?: string[];
-  status: string;
+  status?: string;
   contentId?: string;
   contentIds?: string[];
 };

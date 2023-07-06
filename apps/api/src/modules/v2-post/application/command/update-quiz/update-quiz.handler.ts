@@ -49,7 +49,9 @@ export class UpdateQuizHandler implements ICommandHandler<UpdateQuizCommand, Qui
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
-    const contentEntity = await this._contentDomainService.getContent(quizEntity.get('contentId'));
+    const contentEntity = await this._contentDomainService.getVisibleContent(
+      quizEntity.get('contentId')
+    );
 
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);

@@ -149,6 +149,7 @@ export class QuizController {
         case ContentEmptyException:
         case OpenAIException:
         case DomainModelException:
+        case ContentHasQuizException:
           throw new BadRequestException(e);
         default:
           throw e;

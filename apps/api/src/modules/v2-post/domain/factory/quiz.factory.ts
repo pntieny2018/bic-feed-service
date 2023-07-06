@@ -4,7 +4,7 @@ import { EventPublisher } from '@nestjs/cqrs';
 import { IQuizFactory } from './interface/quiz.factory.interface';
 import { QuizEntity, QuizProps } from '../model/quiz';
 import { QuizCreateProps } from '../domain-service/interface/quiz.domain-service.interface';
-import { QuizStatus } from '../../data-type/quiz-status.enum';
+import { QuizGenStatus, QuizStatus } from '../../data-type/quiz-status.enum';
 
 export class QuizFactory implements IQuizFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
@@ -34,9 +34,18 @@ export class QuizFactory implements IQuizFactory {
       numberOfAnswers,
       numberOfAnswersDisplay: numberOfAnswersDisplay || numberOfAnswers,
       isRandom: isRandom || true,
-      questions: questions || [],
+      questions: (questions || []).map((question) => ({
+        id: v4(),
+        question: question.question,
+        answers: question.answers.map((answer) => ({
+          id: v4(),
+          answer: answer.answer,
+          isCorrect: answer.isCorrect,
+        })),
+      })),
       meta,
       status: QuizStatus.DRAFT,
+      genStatus: QuizGenStatus.PROCESSED,
       createdBy: authUser.id,
       updatedBy: authUser.id,
       createdAt: now,

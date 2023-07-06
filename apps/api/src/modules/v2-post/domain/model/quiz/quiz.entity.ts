@@ -2,11 +2,13 @@ import { RULES } from '../../../constant';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
+import { QuizGenStatus, QuizStatus } from '../../../data-type';
 
 export type Question = {
+  id: string;
   question: string;
   answers: {
+    id: string;
     answer: string;
     isCorrect: boolean;
   }[];
@@ -16,6 +18,7 @@ export type QuizProps = {
   title: string;
   contentId: string;
   status: QuizStatus;
+  genStatus: QuizGenStatus;
   description: string;
   numberOfQuestions: number;
   numberOfAnswers: number;
@@ -33,6 +36,7 @@ export type QuizProps = {
 export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public constructor(props: QuizProps) {
     super(props);
+    console.log('props=', props);
     this.validateNumberDisplay();
   }
 
@@ -137,5 +141,9 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
     this._props.updatedAt = new Date();
     this.validateNumberDisplay();
+  }
+
+  public setProcessed(): void {
+    this._props.genStatus = QuizGenStatus.PROCESSED;
   }
 }
