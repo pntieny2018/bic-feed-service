@@ -1,3 +1,4 @@
+import { QuizStatus } from '../../data-type';
 import { QuizEntity } from '../model/quiz';
 
 export type FindOneQuizProps = {
@@ -6,13 +7,14 @@ export type FindOneQuizProps = {
 
 export type FindAllQuizProps = {
   ids?: string[];
-  status: string;
+  status: QuizStatus;
   contentId?: string;
   contentIds?: string[];
 };
 
 export interface IQuizRepository {
   findOne(input: FindOneQuizProps): Promise<QuizEntity>;
+
   findAll(input: FindAllQuizProps): Promise<QuizEntity[]>;
 
   update(data: QuizEntity): Promise<void>;

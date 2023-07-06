@@ -53,7 +53,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @Column
   public contentId: string;
 
-  @BelongsTo(() => PostModel, 'contentId')
+  @BelongsTo(() => PostModel, {
+    foreignKey: 'contentId',
+  })
   public post?: PostModel;
 
   @Column

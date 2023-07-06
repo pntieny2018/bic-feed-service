@@ -1,6 +1,6 @@
-import { TAG_QUERY_TOKEN } from '../domain/query-interface';
+import { QUIZ_QUERY_TOKEN, TAG_QUERY_TOKEN } from '../domain/query-interface';
 import { QUIZ_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { TagQuery } from '../driven-adapter/query';
+import { QuizQuery, TagQuery } from '../driven-adapter/query';
 import { QuizRepository } from '../driven-adapter/repository/quiz.repository';
 import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/quiz.domain-service.interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
@@ -13,6 +13,7 @@ import { OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { OpenaiService } from '@app/openai';
 import { GenerateQuizHandler } from '../application/command/generate-quiz/generate-quiz.handler';
 import { UpdateQuizHandler } from '../application/command/update-quiz/update-quiz.handler';
+import { FindDraftQuizzesHandler } from '../application/query/find-draft-quizzes/find-draft-quizzes.handler';
 
 export const quizProvider = [
   {
@@ -22,6 +23,10 @@ export const quizProvider = [
   {
     provide: TAG_QUERY_TOKEN,
     useClass: TagQuery,
+  },
+  {
+    provide: QUIZ_QUERY_TOKEN,
+    useClass: QuizQuery,
   },
   {
     provide: QUIZ_DOMAIN_SERVICE_TOKEN,
@@ -43,4 +48,5 @@ export const quizProvider = [
   CreateQuizHandler,
   GenerateQuizHandler,
   UpdateQuizHandler,
+  FindDraftQuizzesHandler,
 ];

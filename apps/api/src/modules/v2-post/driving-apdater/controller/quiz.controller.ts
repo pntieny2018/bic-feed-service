@@ -3,16 +3,18 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
+import { instanceToInstance, plainToInstance } from 'class-transformer';
 import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
@@ -34,6 +36,9 @@ import { GenerateQuizCommand } from '../../application/command/generate-quiz/gen
 import { GenerateQuizRequestDto } from '../dto/request/generate-quiz.request.dto';
 import { UpdateQuizRequestDto } from '../dto/request/update-quiz.request.dto';
 import { UpdateQuizCommand } from '../../application/command/update-quiz/update-quiz.command';
+import { GetDraftQuizzesDto } from '../dto/request';
+import { FindDraftQuizzesDto } from '../../application/query/find-draft-quizzes/find-draft-quizzes.dto';
+import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizzes/find-draft-quizzes.query';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -43,7 +48,36 @@ export class QuizController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
-  private _classTransformer = new ClassTransformer();
+
+  @ApiOperation({ summary: 'Get draft quiz' })
+  @ApiOkResponse({
+    type: FindDraftQuizzesDto,
+  })
+  @ResponseMessages({
+    success: 'Get draft quizzes successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_DRAFT.PATH)
+  @Version(ROUTES.QUIZ.GET_DRAFT.VERSIONS)
+  public async getDraft(
+    @AuthUser() user: UserDto,
+    @Query() getDraftQuizzesDto: GetDraftQuizzesDto
+  ): Promise<FindDraftQuizzesDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindDraftQuizzesQuery({ authUser: user, ...getDraftQuizzesDto })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
 
   @ApiOperation({ summary: 'Create new quiz' })
   @ApiOkResponse({
