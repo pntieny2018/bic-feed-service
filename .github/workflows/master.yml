@@ -1,10 +1,9 @@
 name: master
 run-name: ${{ github.ref_name }}
 on:
-  pull_request:
-    types:
-      - closed
-    branches: ["master"]
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 permissions:
   contents: read    # This is required for actions/checkout
@@ -12,7 +11,7 @@ permissions:
 
 jobs:
   master:
-    if: ${{ github.ref_name == 'master' }}
+    # if: ${{ github.ref_name == 'master' }}
     runs-on: ubuntu-22.04
     environment: master
     env:
@@ -26,6 +25,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        ref: master
 
     - name: Configure AWS Credentials with IAM Role
       uses: aws-actions/configure-aws-credentials@v2

@@ -453,6 +453,7 @@ export class SearchService {
             username: user.username,
             avatar: user.avatar,
             showingBadges: user.showingBadges,
+            isVerified: user.isVerified,
           };
         }
         if (post.mentionUserIds && post.mentionUserIds.includes(user.id)) {
