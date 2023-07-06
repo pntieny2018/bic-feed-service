@@ -20,8 +20,8 @@ module.exports = {
           allowNull: true,
         },
         status: {
-          type: Sequelize.ENUM('PENDING', 'DRAFT', 'PUBLISHED'),
-          defaultValue: 'PENDING',
+          type: Sequelize.ENUM('DRAFT', 'PUBLISHED'),
+          defaultValue: 'DRAFT',
         },
         description: {
           type: Sequelize.STRING(256),
