@@ -165,7 +165,23 @@ export class QuizRepository implements IQuizRepository {
   private _modelToEntity(quiz: QuizModel): QuizEntity {
     if (quiz === null) return null;
     return this._factory.reconstitute({
-      ...quiz.toJSON(),
+      id: quiz.id,
+      title: quiz.title,
+      contentId: quiz.contentId,
+      status: quiz.status,
+      genStatus: quiz.genStatus,
+      description: quiz.description,
+      numberOfQuestions: quiz.numberOfQuestions,
+      numberOfAnswers: quiz.numberOfAnswers,
+      numberOfQuestionsDisplay: quiz.numberOfQuestionsDisplay,
+      numberOfAnswersDisplay: quiz.numberOfAnswersDisplay,
+      isRandom: quiz.isRandom,
+      questions: quiz.questions,
+      meta: quiz.meta,
+      createdBy: quiz.createdBy,
+      updatedBy: quiz.updatedBy,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
       ...(quiz.post && {
         content: this._contentRepository.modelToEntity(quiz.post),
       }),

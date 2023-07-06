@@ -22,17 +22,17 @@ export type QuizProps = {
   genStatus: QuizGenStatus;
   description: string;
   content?: PostEntity | SeriesEntity | ArticleEntity;
-  numberOfQuestions: number;
-  numberOfAnswers: number;
-  numberOfQuestionsDisplay: number;
-  numberOfAnswersDisplay: number;
-  isRandom: boolean;
-  questions: Question[];
-  meta: any;
-  createdBy: string;
-  updatedBy: string;
+  numberOfQuestions?: number;
+  numberOfAnswers?: number;
+  numberOfQuestionsDisplay?: number;
+  numberOfAnswersDisplay?: number;
+  isRandom?: boolean;
+  questions?: Question[];
+  meta?: any;
+  createdBy?: string;
+  updatedBy?: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 };
 
 export class QuizEntity extends DomainAggregateRoot<QuizProps> {

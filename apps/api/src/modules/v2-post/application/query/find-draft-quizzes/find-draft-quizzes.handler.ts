@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { QuizEntity } from '../../../domain/model/quiz';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindDraftQuizzesDto } from './find-draft-quizzes.dto';
@@ -8,7 +9,6 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
-import { QuizDto } from '../../dto';
 
 @QueryHandler(FindDraftQuizzesQuery)
 export class FindDraftQuizzesHandler
@@ -31,34 +31,26 @@ export class FindDraftQuizzesHandler
 
     if (!rows || rows.length === 0) return new FindDraftQuizzesDto([], meta);
 
-    const quizzesMapper = new Map<string, QuizDto>();
-    const content: (PostEntity | SeriesEntity | ArticleEntity)[] = [];
+    const contents: (PostEntity | SeriesEntity | ArticleEntity)[] = [];
 
     rows.forEach((row) => {
-      quizzesMapper.set(
-        row.get('contentId'),
-        new QuizDto({
-          id: row.get('id'),
-          title: row.get('title'),
-          description: row.get('description'),
-          status: row.get('status'),
-          genStatus: row.get('genStatus'),
-          createdAt: row.get('createdAt'),
-          updatedAt: row.get('updatedAt'),
-        })
-      );
-      content.push(row.get('content'));
+      const content = row.get('content');
+      const draftQuiz = new QuizEntity({
+        id: row.get('id'),
+        title: row.get('title'),
+        contentId: row.get('contentId'),
+        description: row.get('description'),
+        status: row.get('status'),
+        genStatus: row.get('genStatus'),
+        createdAt: row.get('createdAt'),
+        updatedAt: row.get('updatedAt'),
+      });
+      content.setQuiz(draftQuiz);
+      contents.push(content);
     });
 
-    const contentBinding = await this._contentBinding.contentsBinding(content, authUser);
+    const contentBinding = await this._contentBinding.contentsBinding(contents, authUser);
 
-    const result = contentBinding.map((content) => {
-      return {
-        ...content,
-        quiz: quizzesMapper.get(content.id),
-      };
-    });
-
-    return new FindDraftQuizzesDto(result, meta);
+    return new FindDraftQuizzesDto(contentBinding, meta);
   }
 }
