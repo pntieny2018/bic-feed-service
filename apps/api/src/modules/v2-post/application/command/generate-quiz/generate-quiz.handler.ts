@@ -46,7 +46,7 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
   private readonly _openaiService: IOpenaiService;
   public async execute(command: GenerateQuizCommand): Promise<QuizDto> {
     const { authUser, quizId, numberOfQuestions, numberOfAnswers } = command.payload;
-    const quizEntity = await this._quizRepository.findOne({ id: quizId });
+    const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }

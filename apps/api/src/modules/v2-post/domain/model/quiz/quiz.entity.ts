@@ -3,6 +3,7 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
 
 export type Question = {
   id: string;
@@ -20,6 +21,7 @@ export type QuizProps = {
   status: QuizStatus;
   genStatus: QuizGenStatus;
   description: string;
+  content?: PostEntity | SeriesEntity | ArticleEntity;
   numberOfQuestions: number;
   numberOfAnswers: number;
   numberOfQuestionsDisplay: number;
@@ -36,7 +38,6 @@ export type QuizProps = {
 export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public constructor(props: QuizProps) {
     super(props);
-    console.log('props=', props);
     this.validateNumberDisplay();
   }
 

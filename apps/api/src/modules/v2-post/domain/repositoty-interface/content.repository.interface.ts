@@ -115,6 +115,8 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+
+  modelToEntity(post: IPost): PostEntity | ArticleEntity | SeriesEntity;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

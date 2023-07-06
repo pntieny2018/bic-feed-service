@@ -225,7 +225,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const findOption = this._buildFindOptions(findOnePostOptions);
     const entity = await this._postModel.findOne(findOption);
-    return this._modelToEntity(entity);
+    return this.modelToEntity(entity);
   }
 
   public async findAll(
@@ -237,7 +237,7 @@ export class ContentRepository implements IContentRepository {
     findOption.offset = findAllPostOptions.offset || 0;
     findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
-    return rows.map((row) => this._modelToEntity(row));
+    return rows.map((row) => this.modelToEntity(row));
   }
 
   private _getOrderContent(orderOptions: OrderOptions): any {
@@ -588,17 +588,18 @@ export class ContentRepository implements IContentRepository {
     return findOption;
   }
 
-  private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
+  public modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
     post = post.toJSON();
-    if (post.type === PostType.POST) {
-      return this._modelToPostEntity(post);
-    } else if (post.type === PostType.SERIES) {
-      return this._modelToSeriesEntity(post);
-    } else if (post.type === PostType.ARTICLE) {
-      return this._modelToArticleEntity(post);
-    } else {
-      return null;
+    switch (post.type) {
+      case PostType.POST:
+        return this._modelToPostEntity(post);
+      case PostType.SERIES:
+        return this._modelToSeriesEntity(post);
+      case PostType.ARTICLE:
+        return this._modelToArticleEntity(post);
+      default:
+        return null;
     }
   }
 
@@ -751,7 +752,7 @@ export class ContentRepository implements IContentRepository {
     const { rows, meta } = await paginator.paginate(findOption);
 
     return {
-      rows: rows.map((row) => this._modelToEntity(row)),
+      rows: rows.map((row) => this.modelToEntity(row)),
       meta,
     };
   }

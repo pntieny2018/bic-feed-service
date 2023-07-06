@@ -24,6 +24,7 @@ import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
 import {
   ContentHasQuizException,
   ContentNotFoundException,
+  InvalidCursorParamsException,
   OpenAIException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -69,8 +70,7 @@ export class QuizController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
+        case InvalidCursorParamsException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
