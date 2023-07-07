@@ -145,7 +145,7 @@ export class QuizRepository implements IQuizRepository {
 
     if (contentId) where['contentId'] = contentId;
 
-    if (contentIds) where['contentIds'] = contentIds;
+    if (contentIds) where['contentId'] = contentIds;
 
     if (status) where['status'] = status;
 
