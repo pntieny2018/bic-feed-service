@@ -224,13 +224,8 @@ export class ContentEntity<
     };
   }
 
-  public update(data: {
-    authUser: { id: string };
-    groupIds?: string[];
-    setting?: PostSettingDto;
-  }): void {
-    const { authUser, groupIds, setting } = data;
-    if (setting) this.setSetting(setting);
+  public update(data: { authUser: { id: string }; groupIds?: string[] }): void {
+    const { authUser, groupIds } = data;
     if (groupIds) this.setGroups(groupIds);
     this._props.updatedAt = new Date();
     this._props.updatedBy = authUser.id;
@@ -238,5 +233,16 @@ export class ContentEntity<
 
   public allowComment(): boolean {
     return this._props.setting.canComment;
+  }
+
+  public allowReact(): boolean {
+    return this._props.setting.canReact;
+  }
+
+  public isEnableSetting(): boolean {
+    const setting = this._props.setting;
+    return (
+      setting && (setting.isImportant || setting.canComment === false || setting.canReact === false)
+    );
   }
 }

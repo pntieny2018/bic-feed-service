@@ -124,11 +124,9 @@ export class PostAppService {
   }
 
   public async createPost(user: UserDto, createPostDto: CreatePostDto): Promise<any> {
-    const { audience, setting } = createPostDto;
+    const { audience } = createPostDto;
     if (audience.groupIds?.length > 0) {
-      const isEnableSetting = setting.isImportant;
-      setting.canComment === false || setting.canReact === false;
-      await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
+      await this._authorityService.checkCanCreatePost(user, audience.groupIds);
     }
     const created = await this._postService.create(user, createPostDto);
     if (created) {
@@ -145,7 +143,7 @@ export class PostAppService {
     postId: string,
     updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience, setting, tags, series, media } = updatePostDto;
+    const { audience, tags, series, media } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     let imageIdsNeedToAdd = [],
@@ -233,20 +231,13 @@ export class PostAppService {
         throw new BadRequestException('Audience is required');
       }
 
-      let isEnableSetting = false;
-      if (
-        setting &&
-        (setting.isImportant || setting.canComment === false || setting.canReact === false)
-      ) {
-        isEnableSetting = true;
-      }
       // this._postService.checkContent(updatePostDto.content, updatePostDto.media); // disable because some case user only need to update audience
       const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
-      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
-        await this._authorityService.checkCanCreatePost(user, newAudienceIds, isEnableSetting);
+        await this._authorityService.checkCanCreatePost(user, newAudienceIds);
       }
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
@@ -475,9 +466,7 @@ export class PostAppService {
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     const groupIds = audience.groups.map((group) => group.id);
 
-    const isEnableSetting =
-      setting.isImportant || setting.canComment === false || setting.canReact === false;
-    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
+    await this._authorityService.checkCanCreatePost(user, groupIds);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
