@@ -15,8 +15,6 @@ export type UpdateSeriesCommandPayload = {
   summary?: string;
 
   coverMedia?: MediaDto;
-
-  setting?: PostSettingDto;
 };
 
 export class UpdateSeriesCommand implements ICommand {

@@ -24,6 +24,7 @@ export const ERRORS = {
     CONTENT_NO_COMMENT_PERMISSION: 'content.no_comment_permission',
     CONTENT_NO_CRUD_PERMISSION_AT_GROUP: 'content.no_crud_permission_at_group',
     CONTENT_NO_EDIT_SETTING_PERMISSION_AT_GROUP: 'content.no_edit_setting_permission_at_group',
+    CONTENT_NO_REACT_PERMISSION: 'content.no_react_permission',
   },
   QUIZ: {
     QUIZ_NOT_FOUND: 'quiz.not_found',

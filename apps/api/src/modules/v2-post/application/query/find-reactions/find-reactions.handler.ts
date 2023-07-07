@@ -13,8 +13,10 @@ import { ReactionDto } from '../../dto';
 
 @QueryHandler(FindReactionsQuery)
 export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, FindReactionsDto> {
-  @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
-  @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
+  public constructor(
+    @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService,
+    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
+  ) {}
 
   public async execute(query: FindReactionsQuery): Promise<FindReactionsDto> {
     const { rows, total } = await this._reactionQuery.getPagination(query.payload);

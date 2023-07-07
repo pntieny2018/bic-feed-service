@@ -510,7 +510,9 @@ export class ContentBinding implements IContentBinding {
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
           ? new QuizDto(entity.get('quiz').toObject())
           : undefined,
-      communities: rootGroupIds.map((rootGroupId) => dataBinding.communities.get(rootGroupId)),
+      communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
+        dataBinding.communities.get(rootGroupId)
+      ),
       actor: dataBinding.users.get(entity.getCreatedBy()),
       status: entity.get('status'),
       title: entity.get('title'),
