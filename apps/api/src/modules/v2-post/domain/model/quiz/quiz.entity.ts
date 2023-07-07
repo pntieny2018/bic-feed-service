@@ -3,6 +3,7 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
 
 export type Question = {
   id: string;
@@ -20,23 +21,23 @@ export type QuizProps = {
   status: QuizStatus;
   genStatus: QuizGenStatus;
   description: string;
-  numberOfQuestions: number;
-  numberOfAnswers: number;
-  numberOfQuestionsDisplay: number;
-  numberOfAnswersDisplay: number;
-  isRandom: boolean;
-  questions: Question[];
-  meta: any;
-  createdBy: string;
-  updatedBy: string;
+  content?: PostEntity | SeriesEntity | ArticleEntity;
+  numberOfQuestions?: number;
+  numberOfAnswers?: number;
+  numberOfQuestionsDisplay?: number;
+  numberOfAnswersDisplay?: number;
+  isRandom?: boolean;
+  questions?: Question[];
+  meta?: any;
+  createdBy?: string;
+  updatedBy?: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 };
 
 export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public constructor(props: QuizProps) {
     super(props);
-    console.log('props=', props);
     this.validateNumberDisplay();
   }
 
@@ -145,5 +146,13 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
   public setProcessed(): void {
     this._props.genStatus = QuizGenStatus.PROCESSED;
+  }
+
+  public isOwner(userId: string): boolean {
+    return this._props.createdBy === userId;
+  }
+
+  public isVisible(userId: string): boolean {
+    return this._props.status === QuizStatus.PUBLISHED || this.isOwner(userId);
   }
 }

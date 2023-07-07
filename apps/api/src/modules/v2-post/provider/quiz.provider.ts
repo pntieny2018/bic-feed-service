@@ -13,6 +13,7 @@ import { OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { OpenaiService } from '@app/openai';
 import { GenerateQuizHandler } from '../application/command/generate-quiz/generate-quiz.handler';
 import { UpdateQuizHandler } from '../application/command/update-quiz/update-quiz.handler';
+import { FindDraftQuizzesHandler } from '../application/query/find-draft-quizzes/find-draft-quizzes.handler';
 
 export const quizProvider = [
   {
@@ -43,4 +44,5 @@ export const quizProvider = [
   CreateQuizHandler,
   GenerateQuizHandler,
   UpdateQuizHandler,
+  FindDraftQuizzesHandler,
 ];

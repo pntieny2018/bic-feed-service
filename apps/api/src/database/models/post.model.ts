@@ -275,7 +275,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: IPost[];
 
-  @HasOne(() => QuizModel, 'contentId')
+  @HasOne(() => QuizModel, {
+    foreignKey: 'contentId',
+  })
   public quiz?: QuizModel;
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;

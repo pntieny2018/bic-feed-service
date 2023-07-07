@@ -108,7 +108,10 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
-      quiz: postEntity.get('quiz') ? new QuizDto(postEntity.get('quiz').toObject()) : undefined,
+      quiz:
+        postEntity.get('quiz') && postEntity.get('quiz').isVisible(dataBinding.authUser.id)
+          ? new QuizDto(postEntity.get('quiz').toObject())
+          : undefined,
       communities,
       media: {
         files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
@@ -214,9 +217,10 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
-      quiz: articleEntity.get('quiz')
-        ? new QuizDto(articleEntity.get('quiz').toObject())
-        : undefined,
+      quiz:
+        articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(dataBinding.authUser.id)
+          ? new QuizDto(articleEntity.get('quiz').toObject())
+          : undefined,
       communities,
       actor,
       status: articleEntity.get('status'),
@@ -363,12 +367,12 @@ export class ContentBinding implements IContentBinding {
     for (const contentEntity of contentEntities) {
       if (contentEntity instanceof PostEntity) {
         result.push(
-          this._getPostDto(contentEntity, { users, groups, communities, reactionsCount })
+          this._getPostDto(contentEntity, authUser, { users, groups, communities, reactionsCount })
         );
       }
       if (contentEntity instanceof ArticleEntity) {
         result.push(
-          this._getArticleDto(contentEntity, {
+          this._getArticleDto(contentEntity, authUser, {
             users,
             groups,
             communities,
@@ -378,7 +382,7 @@ export class ContentBinding implements IContentBinding {
       }
       if (contentEntity instanceof SeriesEntity) {
         result.push(
-          this._getSeriesDto(contentEntity, {
+          this._getSeriesDto(contentEntity, authUser, {
             users,
             groups,
             communities,
@@ -394,6 +398,7 @@ export class ContentBinding implements IContentBinding {
 
   private _getPostDto(
     entity: PostEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -423,7 +428,10 @@ export class ContentBinding implements IContentBinding {
         name: tag.get('name'),
         groupId: tag.get('groupId'),
       })),
-      quiz: entity.get('quiz') ? new QuizDto(entity.get('quiz').toObject()) : undefined,
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto(entity.get('quiz').toObject())
+          : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -461,6 +469,7 @@ export class ContentBinding implements IContentBinding {
 
   private _getArticleDto(
     entity: ArticleEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -497,7 +506,10 @@ export class ContentBinding implements IContentBinding {
             title: dataBinding.series.get(seriesId)?.getTitle(),
           }))
         : undefined,
-      quiz: entity.get('quiz') ? new QuizDto(entity.get('quiz').toObject()) : undefined,
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto(entity.get('quiz').toObject())
+          : undefined,
       communities: rootGroupIds.map((rootGroupId) => dataBinding.communities.get(rootGroupId)),
       actor: dataBinding.users.get(entity.getCreatedBy()),
       status: entity.get('status'),
@@ -524,6 +536,7 @@ export class ContentBinding implements IContentBinding {
 
   private _getSeriesDto(
     entity: SeriesEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -559,6 +572,10 @@ export class ContentBinding implements IContentBinding {
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto(entity.get('quiz').toObject())
+          : undefined,
       items: items.map((item) => {
         if (item instanceof PostEntity) {
           return {

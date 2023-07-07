@@ -119,7 +119,9 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
 
   private async _checkContentHasQuiz(contentId: string): Promise<void> {
     const publishedQuiz = await this._quizRepo.findAll({
-      contentId,
+      where: {
+        contentId,
+      },
     });
     if (publishedQuiz.length > 0) {
       throw new ContentHasQuizException();

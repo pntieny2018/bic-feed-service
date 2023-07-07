@@ -41,7 +41,6 @@ import { CursorPaginationResult } from '../../../../common/types/cursor-paginati
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 import { QuizModel } from '../../../../database/models/quiz.model';
-import { QuizStatus } from '../../data-type/quiz-status.enum';
 import { QuizEntity } from '../../domain/model/quiz';
 
 export class ContentRepository implements IContentRepository {
@@ -354,10 +353,17 @@ export class ContentRepository implements IContentRepository {
           model: QuizModel,
           as: 'quiz',
           required: false,
-          where: {
-            status: QuizStatus.PUBLISHED,
-          },
-          attributes: ['id', 'title', 'description', 'status', 'created_at', 'updated_at'],
+          attributes: [
+            'id',
+            'title',
+            'contentId',
+            'description',
+            'status',
+            'genStatus',
+            'createdBy',
+            'createdAt',
+            'updatedAt',
+          ],
         });
       }
 
@@ -591,14 +597,15 @@ export class ContentRepository implements IContentRepository {
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
     post = post.toJSON();
-    if (post.type === PostType.POST) {
-      return this._modelToPostEntity(post);
-    } else if (post.type === PostType.SERIES) {
-      return this._modelToSeriesEntity(post);
-    } else if (post.type === PostType.ARTICLE) {
-      return this._modelToArticleEntity(post);
-    } else {
-      return null;
+    switch (post.type) {
+      case PostType.POST:
+        return this._modelToPostEntity(post);
+      case PostType.SERIES:
+        return this._modelToSeriesEntity(post);
+      case PostType.ARTICLE:
+        return this._modelToArticleEntity(post);
+      default:
+        return null;
     }
   }
 
