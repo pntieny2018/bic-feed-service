@@ -1,56 +1,48 @@
 import { Inject } from '@nestjs/common';
-import { QuizEntity } from '../../../domain/model/quiz';
-import { ArticleEntity, PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { QuizStatus } from '../../../data-type';
+import { ArticleDto, PostDto, SeriesDto } from '../../dto';
 import { FindDraftQuizzesDto } from './find-draft-quizzes.dto';
+import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
 import { FindDraftQuizzesQuery } from './find-draft-quizzes.query';
-import { IQuizQuery, QUIZ_QUERY_TOKEN } from '../../../domain/query-interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../binding/binding-post/content.interface';
+import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 
 @QueryHandler(FindDraftQuizzesQuery)
 export class FindDraftQuizzesHandler
   implements IQueryHandler<FindDraftQuizzesQuery, FindDraftQuizzesDto>
 {
   public constructor(
-    @Inject(QUIZ_QUERY_TOKEN)
-    private readonly _quizQuery: IQuizQuery,
-    @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding
+    private readonly _queryBus: QueryBus,
+    @Inject(QUIZ_REPOSITORY_TOKEN)
+    private readonly _quizRepository: IQuizRepository
   ) {}
 
   public async execute(query: FindDraftQuizzesQuery): Promise<FindDraftQuizzesDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._quizQuery.getDraft({
+    const { rows, meta } = await this._quizRepository.getPagination({
       ...query.payload,
-      authUserId: authUser.id,
+      where: {
+        createdBy: authUser.id,
+        status: QuizStatus.DRAFT,
+      },
+      attributes: ['id', 'contentId', 'createdAt'],
     });
 
     if (!rows || rows.length === 0) return new FindDraftQuizzesDto([], meta);
 
-    const contents: (PostEntity | SeriesEntity | ArticleEntity)[] = [];
+    const contentIds = rows.map((row) => row.get('contentId'));
 
-    rows.forEach((row) => {
-      const content = row.get('content');
-      const draftQuiz = new QuizEntity({
-        id: row.get('id'),
-        title: row.get('title'),
-        contentId: row.get('contentId'),
-        description: row.get('description'),
-        status: row.get('status'),
-        genStatus: row.get('genStatus'),
-        createdAt: row.get('createdAt'),
-        updatedAt: row.get('updatedAt'),
-      });
-      content.setQuiz(draftQuiz);
-      contents.push(content);
-    });
+    const contents = await this._queryBus.execute<
+      FindPostsByIdsQuery,
+      (PostDto | ArticleDto | SeriesDto)[]
+    >(
+      new FindPostsByIdsQuery({
+        ids: contentIds,
+        authUser,
+      })
+    );
 
-    const contentBinding = await this._contentBinding.contentsBinding(contents, authUser);
-
-    return new FindDraftQuizzesDto(contentBinding, meta);
+    return new FindDraftQuizzesDto(contents, meta);
   }
 }

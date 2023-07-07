@@ -1,6 +1,6 @@
-import { QUIZ_QUERY_TOKEN, TAG_QUERY_TOKEN } from '../domain/query-interface';
+import { TAG_QUERY_TOKEN } from '../domain/query-interface';
 import { QUIZ_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { QuizQuery, TagQuery } from '../driven-adapter/query';
+import { TagQuery } from '../driven-adapter/query';
 import { QuizRepository } from '../driven-adapter/repository/quiz.repository';
 import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/quiz.domain-service.interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
@@ -23,10 +23,6 @@ export const quizProvider = [
   {
     provide: TAG_QUERY_TOKEN,
     useClass: TagQuery,
-  },
-  {
-    provide: QUIZ_QUERY_TOKEN,
-    useClass: QuizQuery,
   },
   {
     provide: QUIZ_DOMAIN_SERVICE_TOKEN,

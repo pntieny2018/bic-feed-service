@@ -3,11 +3,9 @@ import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, WhereOptions } from 'sequelize';
 import {
-  CONTENT_REPOSITORY_TOKEN,
   FindAllQuizProps,
   FindOneQuizProps,
   GetPaginationQuizzesProps,
-  IContentRepository,
   IQuizRepository,
 } from '../../domain/repositoty-interface';
 import { QuizEntity } from '../../domain/model/quiz';
@@ -25,8 +23,6 @@ export class QuizRepository implements IQuizRepository {
   public constructor(
     @Inject(QUIZ_FACTORY_TOKEN)
     private readonly _factory: IQuizFactory,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
     @InjectModel(QuizModel)
     private readonly _quizModel: typeof QuizModel
   ) {}
@@ -182,9 +178,6 @@ export class QuizRepository implements IQuizRepository {
       updatedBy: quiz.updatedBy,
       createdAt: quiz.createdAt,
       updatedAt: quiz.updatedAt,
-      ...(quiz.post && {
-        content: this._contentRepository.modelToEntity(quiz.post),
-      }),
     });
   }
 

@@ -41,7 +41,6 @@ import { CursorPaginationResult } from '../../../../common/types/cursor-paginati
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 import { QuizModel } from '../../../../database/models/quiz.model';
-import { QuizStatus } from '../../data-type/quiz-status.enum';
 import { QuizEntity } from '../../domain/model/quiz';
 
 export class ContentRepository implements IContentRepository {
@@ -225,7 +224,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const findOption = this._buildFindOptions(findOnePostOptions);
     const entity = await this._postModel.findOne(findOption);
-    return this.modelToEntity(entity);
+    return this._modelToEntity(entity);
   }
 
   public async findAll(
@@ -237,7 +236,7 @@ export class ContentRepository implements IContentRepository {
     findOption.offset = findAllPostOptions.offset || 0;
     findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
-    return rows.map((row) => this.modelToEntity(row));
+    return rows.map((row) => this._modelToEntity(row));
   }
 
   private _getOrderContent(orderOptions: OrderOptions): any {
@@ -354,10 +353,17 @@ export class ContentRepository implements IContentRepository {
           model: QuizModel,
           as: 'quiz',
           required: false,
-          where: {
-            status: QuizStatus.PUBLISHED,
-          },
-          attributes: ['id', 'title', 'description', 'status', 'created_at', 'updated_at'],
+          attributes: [
+            'id',
+            'title',
+            'contentId',
+            'description',
+            'status',
+            'genStatus',
+            'createdBy',
+            'createdAt',
+            'updatedAt',
+          ],
         });
       }
 
@@ -588,7 +594,7 @@ export class ContentRepository implements IContentRepository {
     return findOption;
   }
 
-  public modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
+  private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
     post = post.toJSON();
     switch (post.type) {
@@ -752,7 +758,7 @@ export class ContentRepository implements IContentRepository {
     const { rows, meta } = await paginator.paginate(findOption);
 
     return {
-      rows: rows.map((row) => this.modelToEntity(row)),
+      rows: rows.map((row) => this._modelToEntity(row)),
       meta,
     };
   }

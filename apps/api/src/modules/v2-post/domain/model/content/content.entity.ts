@@ -245,8 +245,4 @@ export class ContentEntity<
   public allowComment(): boolean {
     return this._props.setting.canComment;
   }
-
-  public setQuiz(quiz: QuizEntity): void {
-    this._props.quiz = quiz;
-  }
 }

@@ -147,4 +147,12 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public setProcessed(): void {
     this._props.genStatus = QuizGenStatus.PROCESSED;
   }
+
+  public isOwner(userId: string): boolean {
+    return this._props.createdBy === userId;
+  }
+
+  public isVisible(userId: string): boolean {
+    return this._props.status === QuizStatus.PUBLISHED || this.isOwner(userId);
+  }
 }
