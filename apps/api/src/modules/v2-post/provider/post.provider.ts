@@ -48,6 +48,8 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
+import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
+
 export const postProvider = [
   {
     provide: CONTENT_VALIDATOR_TOKEN,
@@ -116,4 +118,5 @@ export const postProvider = [
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
+  FindDraftContentsHandler,
 ];
