@@ -5,6 +5,7 @@ import { IContentDomainService } from './interface/content.domain-service.interf
 import { ContentNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity } from '../model/content';
 import { StringHelper } from '../../../../common/helpers';
+import { UserDto } from '../../../v2-user/application';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);

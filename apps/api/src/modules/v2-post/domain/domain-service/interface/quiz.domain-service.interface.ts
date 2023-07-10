@@ -32,7 +32,6 @@ export type QuizUpdateProps = {
   numberOfQuestionsDisplay?: number;
   numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  authUser: UserDto;
   meta?: any;
   status?: QuizStatus;
 };
@@ -40,5 +39,6 @@ export type QuizUpdateProps = {
 export interface IQuizDomainService {
   create(data: QuizCreateProps): Promise<QuizEntity>;
   update(quizEntity: QuizEntity, data: QuizUpdateProps): Promise<QuizEntity>;
+  generateQuestions(quizEntity: QuizEntity): Promise<QuizEntity>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

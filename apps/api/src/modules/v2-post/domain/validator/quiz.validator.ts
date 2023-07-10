@@ -41,20 +41,20 @@ export class QuizValidator implements IQuizValidator {
   ) {}
 
   public async checkCanCUDQuizInGroups(user: UserDto, groups: GroupDto[]): Promise<void> {
-    const notCreatableInGroups: GroupDto[] = [];
+    const noPermissionInGroups: GroupDto[] = [];
     const ability = await this._authorityAppService.buildAbility(user);
     for (const group of groups) {
       if (!ability.can(PERMISSION_KEY.CUD_QUIZ, subject(SUBJECT.GROUP, { id: group.id }))) {
-        notCreatableInGroups.push(group);
+        noPermissionInGroups.push(group);
       }
     }
 
-    if (notCreatableInGroups.length) {
+    if (noPermissionInGroups.length) {
       throw new QuizNoCRUDPermissionAtGroupException(
         {
-          groupsDenied: notCreatableInGroups.map((e) => e.id),
+          groupsDenied: noPermissionInGroups.map((e) => e.id),
         },
-        notCreatableInGroups.map((e) => e.name)
+        noPermissionInGroups.map((e) => e.name)
       );
     }
   }

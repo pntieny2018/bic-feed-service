@@ -14,6 +14,9 @@ import { OpenaiService } from '@app/openai';
 import { GenerateQuizHandler } from '../application/command/generate-quiz/generate-quiz.handler';
 import { UpdateQuizHandler } from '../application/command/update-quiz/update-quiz.handler';
 import { FindDraftQuizzesHandler } from '../application/query/find-draft-quizzes/find-draft-quizzes.handler';
+import { QUIZ_BINDING_TOKEN } from '../application/binding/binding-quiz/quiz.interface';
+import { QuizBinding } from '../application/binding/binding-quiz/quiz.binding';
+import { ProcessGenerationQuizHandler } from '../application/command/process-generation-quiz/process-generation-quiz.handler';
 
 export const quizProvider = [
   {
@@ -40,9 +43,14 @@ export const quizProvider = [
     provide: OPEN_AI_SERVICE_TOKEN,
     useClass: OpenaiService,
   },
+  {
+    provide: QUIZ_BINDING_TOKEN,
+    useClass: QuizBinding,
+  },
   /** Application */
   CreateQuizHandler,
   GenerateQuizHandler,
   UpdateQuizHandler,
   FindDraftQuizzesHandler,
+  ProcessGenerationQuizHandler,
 ];

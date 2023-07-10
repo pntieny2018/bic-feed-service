@@ -1,10 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { UserDto } from '../../../../v2-user/application';
 
 export type CreateQuizCommandPayload = {
   quizId: string;
-  authUser: UserDto;
 };
-export class GenerateQuizCommand implements ICommand {
+export class ProcessGenerationQuizCommand implements ICommand {
   public constructor(public readonly payload: CreateQuizCommandPayload) {}
 }

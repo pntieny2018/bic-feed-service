@@ -10,6 +10,7 @@ import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { PostSettingDto } from '../../../application/dto';
 import { QuizEntity } from '../quiz';
+import { UserDto } from '../../../../v2-user/application';
 
 export type ContentProps = {
   id: string;

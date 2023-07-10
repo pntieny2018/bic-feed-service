@@ -40,6 +40,7 @@ import { UpdateQuizCommand } from '../../application/command/update-quiz/update-
 import { GetDraftQuizzesDto } from '../dto/request';
 import { FindDraftQuizzesDto } from '../../application/query/find-draft-quizzes/find-draft-quizzes.dto';
 import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizzes/find-draft-quizzes.query';
+import { KafkaService } from '@app/kafka';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -47,7 +48,8 @@ import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizze
 export class QuizController {
   public constructor(
     private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
+    private readonly _queryBus: QueryBus,
+    private readonly _kafkaService: KafkaService
   ) {}
 
   @ApiOperation({ summary: 'Get draft quiz' })
@@ -189,5 +191,19 @@ export class QuizController {
           throw e;
       }
     }
+  }
+
+  @Put('send-event')
+  public async testSendEvent(): Promise<any> {
+    this._kafkaService.emit('dev.content_service.quiz_processed', {
+      contentId: '4fd4f2c0-a36c-4eb4-9b02-0cdc0e918718',
+      contentType: 'POST',
+      //title: null,
+      //content: 'Nơi có mật độ cá mập cao nhất thế giới',
+      quizId: '89a2ddea-3d37-4912-b459-47266763f645',
+      //genStatus: 'FAILED',
+      genStatus: 'PROCESSED',
+      createdBy: '0fa01fde-7c15-4d55-b60a-8e990123bc2e',
+    });
   }
 }

@@ -29,6 +29,10 @@ export type QuizProps = {
   isRandom?: boolean;
   questions?: Question[];
   meta?: any;
+  error?: {
+    code: string;
+    message: string;
+  };
   createdBy?: string;
   updatedBy?: string;
   createdAt: Date;
@@ -154,5 +158,9 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
   public isVisible(userId: string): boolean {
     return this._props.status === QuizStatus.PUBLISHED || this.isOwner(userId);
+  }
+  public setFail(error: any): void {
+    this._props.error = error;
+    this._props.genStatus = QuizGenStatus.FAILED;
   }
 }
