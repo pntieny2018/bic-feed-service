@@ -1,39 +1,35 @@
 import { Inject } from '@nestjs/common';
-import { FindDraftQuizzesDto } from './find-draft-quizzes.dto';
+import { FindDraftContentsDto } from './find-draft-contents.dto';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindDraftQuizzesQuery } from './find-draft-quizzes.query';
+import { FindDraftContentsQuery } from './find-draft-contents.query';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
-  IQuizDomainService,
-  QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 
-@QueryHandler(FindDraftQuizzesQuery)
-export class FindDraftQuizzesHandler
-  implements IQueryHandler<FindDraftQuizzesQuery, FindDraftQuizzesDto>
+@QueryHandler(FindDraftContentsQuery)
+export class FindDraftContentsHandler
+  implements IQueryHandler<FindDraftContentsQuery, FindDraftContentsDto>
 {
   public constructor(
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
-    private readonly _quizDomainService: IQuizDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(query: FindDraftQuizzesQuery): Promise<FindDraftQuizzesDto> {
+  public async execute(query: FindDraftContentsQuery): Promise<FindDraftContentsDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._quizDomainService.getDrafts(query.payload);
+    const { rows, meta } = await this._contentDomainService.getDraftsPagination(query.payload);
 
-    if (!rows || rows.length === 0) return new FindDraftQuizzesDto([], meta);
+    if (!rows || rows.length === 0) return new FindDraftContentsDto([], meta);
 
-    const contentIds = rows.map((row) => row.get('contentId'));
+    const contentIds = rows.map((row) => row.getId());
 
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids: contentIds,
@@ -42,6 +38,6 @@ export class FindDraftQuizzesHandler
 
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
-    return new FindDraftQuizzesDto(contents, meta);
+    return new FindDraftContentsDto(contents, meta);
   }
 }
