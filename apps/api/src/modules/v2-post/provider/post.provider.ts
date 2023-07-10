@@ -1,4 +1,5 @@
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
@@ -15,6 +16,7 @@ import {
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
+import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { CreateDraftPostHandler } from '../application/command/create-draft-post/create-draft-post.handler';
@@ -48,8 +50,7 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
-import { CONTENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/content.domain-service.interface';
-import { ContentDomainService } from '../domain/domain-service/content.domain-service';
+import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
 
 export const postProvider = [
   {
@@ -123,4 +124,5 @@ export const postProvider = [
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
+  FindDraftContentsHandler,
 ];
