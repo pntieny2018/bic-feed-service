@@ -12,7 +12,7 @@ export class CreateQuizRequestDto {
   public contentId: string;
 
   @ApiProperty({ type: String })
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(64)
   public title: string;
 

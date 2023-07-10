@@ -17,6 +17,13 @@ import { FindDraftQuizzesHandler } from '../application/query/find-draft-quizzes
 import { QUIZ_BINDING_TOKEN } from '../application/binding/binding-quiz/quiz.interface';
 import { QuizBinding } from '../application/binding/binding-quiz/quiz.binding';
 import { ProcessGenerationQuizHandler } from '../application/command/process-generation-quiz/process-generation-quiz.handler';
+import { FindQuizHandler } from '../application/query/find-quiz/find-quiz.handler';
+import { QuizCreatedEvent } from '../domain/event/quiz-created.event';
+import {
+  QuizCreatedEventHandler,
+  QuizGeneratedEventHandler,
+  QuizRegenerateEventHandler,
+} from '../application/event-handler';
 
 export const quizProvider = [
   {
@@ -53,4 +60,8 @@ export const quizProvider = [
   UpdateQuizHandler,
   FindDraftQuizzesHandler,
   ProcessGenerationQuizHandler,
+  FindQuizHandler,
+  QuizCreatedEventHandler,
+  QuizRegenerateEventHandler,
+  QuizGeneratedEventHandler,
 ];

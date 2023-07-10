@@ -30,6 +30,7 @@ export const ERRORS = {
     QUIZ_NO_CRUD_PERMISSION_AT_GROUP: 'quiz.no_crud_permission_at_group',
     OPENAI_EXCEPTION: 'quiz.openai_exception',
     GENERATE_FAIL: 'quiz.generate_fail',
+    QUIZ_PROCESSING: 'quiz.quiz_processing',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',

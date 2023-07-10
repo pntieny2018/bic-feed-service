@@ -23,7 +23,7 @@ import {
 } from '../repositoty-interface';
 import { IQuizValidator } from './interface/quiz.validator.interface';
 import { QuizNoCRUDPermissionAtGroupException } from '../exception/quiz-no-crud-permission-at-group.exception';
-import { ContentHasQuizException, ContentNotFoundException } from '../exception';
+import { QuizEntity } from '../model/quiz';
 
 @Injectable()
 export class QuizValidator implements IQuizValidator {

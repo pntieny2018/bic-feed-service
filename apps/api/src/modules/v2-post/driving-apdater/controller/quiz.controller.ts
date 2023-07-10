@@ -41,6 +41,7 @@ import { GetDraftQuizzesDto } from '../dto/request';
 import { FindDraftQuizzesDto } from '../../application/query/find-draft-quizzes/find-draft-quizzes.dto';
 import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizzes/find-draft-quizzes.query';
 import { KafkaService } from '@app/kafka';
+import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -193,6 +194,26 @@ export class QuizController {
     }
   }
 
+  @ApiOperation({ summary: 'Get quiz' })
+  @Get(ROUTES.QUIZ.GET_QUIZ_DETAIL.PATH)
+  @Version(ROUTES.QUIZ.UPDATE.VERSIONS)
+  public async getQuizDetail(
+    @Param('id', ParseUUIDPipe) quizId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizDto> {
+    try {
+      const data = await this._queryBus.execute(new FindQuizQuery({ authUser, quizId }));
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
   @Put('send-event')
   public async testSendEvent(): Promise<any> {
     this._kafkaService.emit('dev.content_service.quiz_processed', {
@@ -201,8 +222,8 @@ export class QuizController {
       //title: null,
       //content: 'Nơi có mật độ cá mập cao nhất thế giới',
       quizId: '89a2ddea-3d37-4912-b459-47266763f645',
-      //genStatus: 'FAILED',
-      genStatus: 'PROCESSED',
+      genStatus: 'FAILED',
+      //genStatus: 'PROCESSED',
       createdBy: '0fa01fde-7c15-4d55-b60a-8e990123bc2e',
     });
   }

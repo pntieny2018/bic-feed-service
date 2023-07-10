@@ -39,6 +39,7 @@ export type QuizUpdateProps = {
 export interface IQuizDomainService {
   create(data: QuizCreateProps): Promise<QuizEntity>;
   update(quizEntity: QuizEntity, data: QuizUpdateProps): Promise<QuizEntity>;
+  reGenerate(quizEntity: QuizEntity): Promise<void>;
   generateQuestions(quizEntity: QuizEntity): Promise<QuizEntity>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

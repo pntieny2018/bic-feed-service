@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { QuizNotFoundException } from '../../../domain/exception';
 import { GenerateQuizCommand } from './generate-quiz.command';
@@ -12,18 +12,26 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface/content.domain-service.interface';
+import { QuizRegenerateEvent } from '../../../domain/event/quiz-regenerate.event';
+import {
+  IQuizDomainService,
+  QUIZ_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 
 @CommandHandler(GenerateQuizCommand)
 export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand, void> {
   public constructor(
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
+    @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
+    private readonly _quizDomainService: IQuizDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
     @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService
+    private readonly _groupAppService: IGroupApplicationService,
+    private readonly event: EventBus
   ) {}
 
   public async execute(command: GenerateQuizCommand): Promise<void> {
@@ -38,5 +46,6 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
 
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
+    await this._quizDomainService.reGenerate(quizEntity);
   }
 }
