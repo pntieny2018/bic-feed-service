@@ -29,6 +29,10 @@ export type QuizProps = {
   isRandom?: boolean;
   questions?: Question[];
   meta?: any;
+  error?: {
+    code: string;
+    message: string;
+  };
   createdBy?: string;
   updatedBy?: string;
   createdAt: Date;
@@ -95,6 +99,26 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
   }
 
+  public validatePublishing(): void {
+    if (this._props.status !== QuizStatus.PUBLISHED) return;
+
+    if (this._props.questions.length === 0) {
+      throw new DomainModelException(`Quiz must have at least one question`);
+    }
+
+    if (this._props.questions.some((question) => question.answers.length === 0)) {
+      throw new DomainModelException(`Question must have at least one answer`);
+    }
+
+    if (this._props.questions.some((question) => !question.id)) {
+      throw new DomainModelException(`Question ID is required`);
+    }
+    if (this._props.questions.some((question) => question.answers.some((answer) => !answer.id))) {
+      throw new DomainModelException(`Answer ID is required`);
+    }
+    this.validateNumberDisplay();
+  }
+
   public updateAttribute(data: Partial<QuizProps>): void {
     if (data.questions) {
       this._props.questions = data.questions;
@@ -141,7 +165,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
 
     this._props.updatedAt = new Date();
-    this.validateNumberDisplay();
+    this.validatePublishing();
   }
 
   public setProcessed(): void {
@@ -154,5 +178,33 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
   public isVisible(userId: string): boolean {
     return this._props.status === QuizStatus.PUBLISHED || this.isOwner(userId);
+  }
+  public setFail(error: { code: string; message: string }): void {
+    this._props.error = error;
+    this._props.genStatus = QuizGenStatus.FAILED;
+  }
+
+  public setProcessing(): void {
+    this._props.genStatus = QuizGenStatus.PROCESSING;
+  }
+
+  public setPending(): void {
+    this._props.genStatus = QuizGenStatus.PENDING;
+  }
+
+  public isPending(): boolean {
+    return this._props.genStatus === QuizGenStatus.PENDING;
+  }
+
+  public isProcessing(): boolean {
+    return this._props.genStatus === QuizGenStatus.PROCESSING;
+  }
+
+  public isGenerateFailed(): boolean {
+    return this._props.genStatus === QuizGenStatus.FAILED;
+  }
+
+  public isGenerateProcessed(): boolean {
+    return this._props.genStatus === QuizGenStatus.PROCESSED;
   }
 }

@@ -45,7 +45,7 @@ export class QuizFactory implements IQuizFactory {
       })),
       meta,
       status: QuizStatus.DRAFT,
-      genStatus: QuizGenStatus.PROCESSED,
+      genStatus: QuizGenStatus.PENDING,
       createdBy: authUser.id,
       updatedBy: authUser.id,
       createdAt: now,

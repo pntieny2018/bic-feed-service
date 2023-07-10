@@ -16,6 +16,10 @@ export class QuizDto {
   public updatedAt: Date;
   public status: QuizStatus;
   public genStatus: QuizGenStatus;
+  public error?: {
+    code: string;
+    message: string;
+  };
   public constructor(data: Partial<QuizDto>) {
     Object.assign(this, data);
   }

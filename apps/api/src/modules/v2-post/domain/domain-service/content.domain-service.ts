@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 import { PostStatus } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
@@ -7,12 +7,13 @@ import {
   GetContentByIdsProps,
   GetDraftsProps,
   IContentDomainService,
-} from './interface/content.domain-service.interface';
+} from './interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 
 export class ContentDomainService implements IContentDomainService {
+  private readonly _logger = new Logger(ContentDomainService.name);
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository

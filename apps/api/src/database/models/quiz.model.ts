@@ -35,6 +35,7 @@ export interface IQuiz {
     }[];
   }[];
   meta: any;
+  error: any;
   createdBy: string;
   updatedBy: string;
   createdAt: Date;
@@ -95,6 +96,11 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
 
   @Column
   public genStatus: QuizGenStatus;
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public error: any;
 
   @AllowNull(false)
   @Column

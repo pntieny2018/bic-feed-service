@@ -33,6 +33,7 @@ import { QuizController } from './driving-apdater/controller/quiz.controller';
 import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
 import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
 import { quizProvider } from './provider/quiz.provider';
+import { QuizConsumer } from './driving-apdater/consumer/quiz.consumer';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { quizProvider } from './provider/quiz.provider';
     PostConsumer,
     SeriesConsumer,
     ArticleConsumer,
+    QuizConsumer,
     SeriesController,
     QuizController,
   ],
