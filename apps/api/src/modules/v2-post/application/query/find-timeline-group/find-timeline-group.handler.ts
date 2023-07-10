@@ -1,39 +1,50 @@
 import { Inject } from '@nestjs/common';
-import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ArticleDto, PostDto, SeriesDto } from '../../dto';
 import { FindTimelineGroupQuery } from './find-timeline-group.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { PostStatus } from '../../../data-type';
-import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FindTimelineGroupDto } from './find-timeline-group.dto';
 import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+} from '../../binding/binding-post/content.interface';
+import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface';
 
 @QueryHandler(FindTimelineGroupQuery)
 export class FindTimelineGroupHandler
   implements IQueryHandler<FindTimelineGroupQuery, FindTimelineGroupDto>
 {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
-    private _queryBus: QueryBus
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService
   ) {}
 
   public async execute(query: FindTimelineGroupQuery): Promise<any> {
     const { rows: ids, meta: meta } = await this._getContentIdsByUser(query);
 
-    const result = await this._queryBus.execute<
-      FindPostsByIdsQuery,
-      (PostDto | ArticleDto | SeriesDto)[]
-    >(
-      new FindPostsByIdsQuery({
-        ids,
-        authUser: query.payload.authUser,
-      })
+    const contentEntities = await this._contentDomainService.getContentByIds({
+      ids,
+      authUser: query.payload.authUser,
+    });
+
+    const result = await this._contentBinding.contentsBinding(
+      contentEntities,
+      query.payload.authUser
     );
 
     return {

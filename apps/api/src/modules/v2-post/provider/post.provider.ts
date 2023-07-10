@@ -1,4 +1,5 @@
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
@@ -48,6 +49,9 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
+import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
+import { ContentDomainService } from '../domain/domain-service/content.domain-service';
+
 export const postProvider = [
   {
     provide: CONTENT_VALIDATOR_TOKEN,
@@ -89,6 +93,10 @@ export const postProvider = [
     provide: MENTION_VALIDATOR_TOKEN,
     useClass: MentionValidator,
   },
+  {
+    provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+    useClass: ContentDomainService,
+  },
   /** Application */
   CreateDraftPostHandler,
   PublishPostHandler,
@@ -116,4 +124,5 @@ export const postProvider = [
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
+  FindDraftContentsHandler,
 ];

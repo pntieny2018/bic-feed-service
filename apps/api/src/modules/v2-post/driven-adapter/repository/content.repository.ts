@@ -38,7 +38,7 @@ import { PostReactionModel } from '../../../../database/models/post-reaction.mod
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { CursorPaginator, OrderEnum } from '../../../../common/dto';
+import { CursorPaginator } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 
 export class ContentRepository implements IContentRepository {
@@ -404,12 +404,18 @@ export class ContentRepository implements IContentRepository {
       }
     }
 
-    if (subSelect.length) {
-      findOption.attributes = {
-        include: [...subSelect],
-      };
-    }
+    const { include = [], exclude = [] } = options.attributes || {};
+    findOption.attributes = {
+      ...((include.length || subSelect.length) && {
+        include: [...include, ...subSelect],
+      }),
+      ...(exclude.length && {
+        exclude,
+      }),
+    };
+
     if (includeAttr.length) findOption.include = includeAttr;
+
     return findOption;
   }
 
@@ -719,14 +725,14 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit } = getPaginationContentsProps;
+    const { after, before, limit, order } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
     findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
     const paginator = new CursorPaginator(
       this._postModel,
       ['createdAt'],
       { before, after, limit },
-      OrderEnum.DESC
+      order
     );
     const { rows, meta } = await paginator.paginate(findOption);
 
