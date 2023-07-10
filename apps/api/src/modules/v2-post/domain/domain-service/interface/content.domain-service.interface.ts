@@ -21,7 +21,6 @@ export type GetContentByIdsProps = {
 export interface IContentDomainService {
   getVisibleContent(id: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
-
   getContentByIds(
     data: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
