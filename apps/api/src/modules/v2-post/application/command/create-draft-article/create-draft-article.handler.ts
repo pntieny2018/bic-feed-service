@@ -5,12 +5,6 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { CreateDraftArticleCommand } from './create-draft-article.command';
-import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
 import { ArticleDto } from '../../dto';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
@@ -20,14 +14,8 @@ export class CreateDraftArticleHandler
   implements ICommandHandler<CreateDraftArticleCommand, ArticleDto>
 {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupApplicationService: IGroupApplicationService,
-    @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
   ) {}
 

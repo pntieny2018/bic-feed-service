@@ -1,52 +1,39 @@
 import { Inject } from '@nestjs/common';
-import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
-import { ArticleDto, PostDto, SeriesDto } from '../../dto';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindNewsfeedQuery } from './find-newsfeed.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { ContentBinding } from '../../binding/binding-post/content.binding';
-import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
 import { PostStatus } from '../../../data-type';
-import {
-  IPostDomainService,
-  POST_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FindNewsfeedDto } from './find-newsfeed.dto';
 import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
+import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface';
+import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
+import { ContentBinding } from '../../binding/binding-post/content.binding';
 
 @QueryHandler(FindNewsfeedQuery)
 export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, FindNewsfeedDto> {
-  @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
-  @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
-  @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository;
-  @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator;
-  @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
-  @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
-  @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService;
-
-  public constructor(private _queryBus: QueryBus) {}
+  public constructor(
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: ContentBinding,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService
+  ) {}
 
   public async execute(query: FindNewsfeedQuery): Promise<any> {
     const { rows: ids, meta: meta } = await this._getContentIdsInNewsfeed(query);
-    const result = await this._queryBus.execute<
-      FindPostsByIdsQuery,
-      (PostDto | ArticleDto | SeriesDto)[]
-    >(
-      new FindPostsByIdsQuery({
-        ids,
-        authUser: query.payload.authUser,
-      })
+    const contentEntities = await this._contentDomainService.getContentByIds({
+      ids,
+      authUser: query.payload.authUser,
+    });
+
+    const result = await this._contentBinding.contentsBinding(
+      contentEntities,
+      query.payload.authUser
     );
 
     return {

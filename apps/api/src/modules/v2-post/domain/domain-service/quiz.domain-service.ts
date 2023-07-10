@@ -1,15 +1,19 @@
-import { Inject, Logger } from '@nestjs/common';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
-import { IQuizDomainService, QuizCreateProps, QuizUpdateProps } from './interface';
-import { QuizEntity } from '../model/quiz';
-import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
 import { cloneDeep } from 'lodash';
-import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
+import { QuizEntity } from '../model/quiz';
+import { QuizStatus } from '../../data-type';
+import { Inject, Logger } from '@nestjs/common';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
-  IContentDomainService,
-} from './interface/content.domain-service.interface';
+  GetQuizDraftsProps,
+  IQuizDomainService,
+  QuizCreateProps,
+  QuizUpdateProps,
+} from './interface';
+import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
+import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from './interface';
 import { ERRORS } from '../../../../common/constants/errors';
 import { EventBus } from '@nestjs/cqrs';
 import { QuizCreatedEvent } from '../event/quiz-created.event';
@@ -18,7 +22,6 @@ import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
-
   public constructor(
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
@@ -54,6 +57,18 @@ export class QuizDomainService implements IQuizDomainService {
       throw new DatabaseException();
     }
     return newQuizEntity;
+  }
+
+  public async getDrafts(input: GetQuizDraftsProps): Promise<CursorPaginationResult<QuizEntity>> {
+    const { authUser } = input;
+    return this._quizRepository.getPagination({
+      ...input,
+      where: {
+        createdBy: authUser.id,
+        status: QuizStatus.DRAFT,
+      },
+      attributes: ['id', 'contentId', 'createdAt'],
+    });
   }
 
   public async reGenerate(quizEntity: QuizEntity): Promise<void> {

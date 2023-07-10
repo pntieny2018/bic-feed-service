@@ -22,12 +22,14 @@ import {
 
 @QueryHandler(FindPostQuery)
 export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
-  @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
-  @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
-  @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository;
-  @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator;
-  @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding;
-  @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
+  public constructor(
+    @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
+    @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
+    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
+    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
+  ) {}
 
   public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;

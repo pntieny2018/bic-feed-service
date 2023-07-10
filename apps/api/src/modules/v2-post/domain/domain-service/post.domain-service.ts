@@ -38,6 +38,7 @@ import {
 } from './interface/media.domain-service.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { ArticleEntity } from '../model/content/article.entity';
+import { UserDto } from '../../../v2-user/application';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -205,11 +206,8 @@ export class PostDomainService implements IPostDomainService {
 
     postEntity.updateAttribute(newData);
     postEntity.setPrivacyFromGroups(groups);
-    if (postEntity.hasVideoProcessing()) {
-      postEntity.setProcessing();
-    } else {
-      postEntity.setPublish();
-    }
+
+    if (postEntity.hasVideoProcessing()) postEntity.setProcessing();
 
     await this._postValidator.validatePublishContent(
       postEntity,
@@ -227,6 +225,31 @@ export class PostDomainService implements IPostDomainService {
     await this._contentRepository.update(postEntity);
 
     postEntity.commit();
+  }
+
+  public async updateSetting(input: {
+    entity: ContentEntity;
+    authUser: UserDto;
+    canComment: boolean;
+    canReact: boolean;
+    isImportant: boolean;
+    importantExpiredAt: Date;
+  }): Promise<void> {
+    const { entity, authUser, canReact, canComment, isImportant, importantExpiredAt } = input;
+    await this._postValidator.checkCanEditContentSetting(authUser, entity.get('groupIds'));
+    entity.setSetting({
+      canComment,
+      canReact,
+      isImportant,
+      importantExpiredAt,
+    });
+    await this._contentRepository.update(entity);
+
+    if (isImportant) {
+      await this.markReadImportant(entity, authUser.id);
+    }
+
+    entity.commit();
   }
 
   public async markSeen(contentEntity: ContentEntity, userId: string): Promise<void> {

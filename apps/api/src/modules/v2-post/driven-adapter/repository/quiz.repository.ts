@@ -139,8 +139,6 @@ export class QuizRepository implements IQuizRepository {
 
     if (createdBy) where['createdBy'] = createdBy;
 
-    if (status) where['status'] = status;
-
     if (id) where['id'] = id;
 
     if (ids) where['id'] = ids;

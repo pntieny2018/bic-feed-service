@@ -35,10 +35,13 @@ export class SeriesDomainService implements ISeriesDomainService {
     });
 
     seriesEntity.setSetting(setting);
-    const isEnableSetting = seriesEntity.getState().enableSetting;
+    const state = seriesEntity.getState();
 
     await this._contentValidator.checkCanCRUDContent(actor, groupIds, seriesEntity.get('type'));
-    if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+
+    if (state?.enableSetting) {
+      await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+    }
 
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
@@ -64,9 +67,8 @@ export class SeriesDomainService implements ISeriesDomainService {
 
   public async update(input: UpdateSeriesProps): Promise<void> {
     const { seriesEntity, groups, newData } = input;
-    const { actor, groupIds, coverMedia, setting } = newData;
-
-    seriesEntity.setSetting(setting || seriesEntity.get('setting'));
+    const { actor, groupIds, coverMedia } = newData;
+    const isEnableSetting = seriesEntity.isEnableSetting();
 
     if (coverMedia) {
       const images = await this._mediaDomainService.getAvailableImages(
@@ -93,8 +95,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setGroups(groupIds);
       seriesEntity.setPrivacyFromGroups(groups);
       const state = seriesEntity.getState();
-      const attachGroupIds = state.attachGroupIds;
-      const isEnableSetting = state.enableSetting;
+      const { attachGroupIds, detachGroupIds } = state;
 
       if (attachGroupIds?.length) {
         await this._contentValidator.checkCanCRUDContent(
@@ -103,7 +104,10 @@ export class SeriesDomainService implements ISeriesDomainService {
           seriesEntity.get('type')
         );
       }
-      if (isEnableSetting) await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+
+      if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
+        await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
+      }
     }
 
     seriesEntity.updateAttribute(newData);

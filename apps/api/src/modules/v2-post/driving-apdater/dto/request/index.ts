@@ -13,6 +13,7 @@ export * from './create-series.request.dto';
 export * from './get-list-comments.dto';
 export * from './get-comments-arround-id.request.dto';
 export * from './validate-series-tag.dto';
+export * from './get-draft-contents.request.dto';
 export * from './get-timeline.request.dto';
 export * from './get-newsfeed.request.dto';
 export * from './get-draft-quizzes.dto';

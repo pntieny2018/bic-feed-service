@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteReactionCommand } from './delete-reaction.command';
 import {
   IReactionDomainService,
@@ -16,15 +16,22 @@ import {
   ReactionNotHaveAuthorityException,
 } from '../../../domain/exception';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { ReactionDto } from '../../dto';
+import { ProcessReactionNotificationCommand } from '../process-reaction-notification/process-reaction-notification.command';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(DeleteReactionCommand)
 export class DeleteReactionHandler implements ICommandHandler<DeleteReactionCommand, void> {
-  @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
-  private readonly _reactionDomainService: IReactionDomainService;
-  @Inject(POST_REACTION_REPOSITORY_TOKEN)
-  private readonly _postReactionRepository: IPostReactionRepository;
-  @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
-  private readonly _commentReactionRepository: ICommentReactionRepository;
+  public constructor(
+    @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
+    private readonly _reactionDomainService: IReactionDomainService,
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepository: IPostReactionRepository,
+    @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
+    private readonly _commentReactionRepository: ICommentReactionRepository,
+    @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService,
+    private readonly _commandBus: CommandBus
+  ) {}
 
   public async execute(command: DeleteReactionCommand): Promise<void> {
     const { target, targetId, reactionName, userId } = command.payload;
@@ -58,5 +65,22 @@ export class DeleteReactionHandler implements ICommandHandler<DeleteReactionComm
     }
 
     await this._reactionDomainService.deleteReaction(command.payload.target, reaction.get('id'));
+
+    const actor = await this._userAppService.findOne(reaction.get('createdBy'));
+    const reactionDto = new ReactionDto({
+      id: reaction.get('id'),
+      target: reaction.get('target'),
+      targetId: reaction.get('targetId'),
+      reactionName: reaction.get('reactionName'),
+      createdAt: reaction.get('createdAt'),
+      actor,
+    });
+
+    this._commandBus.execute(
+      new ProcessReactionNotificationCommand({
+        reaction: reactionDto,
+        action: 'delete',
+      })
+    );
   }
 }

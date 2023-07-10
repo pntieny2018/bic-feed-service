@@ -56,27 +56,6 @@ export class CreatePostDto {
   public media: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
-    description: 'Setting post',
-    type: PostSettingDto,
-    required: false,
-    example: {
-      ['can_react']: true,
-      ['can_comment']: true,
-      ['is_important']: false,
-      ['important_expired_at']: null,
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => PostSettingDto)
-  public setting?: PostSettingDto = {
-    canReact: true,
-    canComment: true,
-    isImportant: false,
-    importantExpiredAt: null,
-  };
-
-  @ApiProperty({
     type: UserMentionDto,
     example: {
       dangdiep: {
