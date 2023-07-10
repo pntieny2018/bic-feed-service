@@ -1,47 +1,46 @@
 import { Inject } from '@nestjs/common';
-import { QuizStatus } from '../../../data-type';
-import { ArticleDto, PostDto, SeriesDto } from '../../dto';
 import { FindDraftQuizzesDto } from './find-draft-quizzes.dto';
-import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindDraftQuizzesQuery } from './find-draft-quizzes.query';
-import { FindPostsByIdsQuery } from '../find-posts-by-ids/find-posts-by-ids.query';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
+  IQuizDomainService,
+  QUIZ_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+} from '../../binding/binding-post/content.interface';
 
 @QueryHandler(FindDraftQuizzesQuery)
 export class FindDraftQuizzesHandler
   implements IQueryHandler<FindDraftQuizzesQuery, FindDraftQuizzesDto>
 {
   public constructor(
-    private readonly _queryBus: QueryBus,
-    @Inject(QUIZ_REPOSITORY_TOKEN)
-    private readonly _quizRepository: IQuizRepository
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
+    @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
+    private readonly _quizDomainService: IQuizDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService
   ) {}
 
   public async execute(query: FindDraftQuizzesQuery): Promise<FindDraftQuizzesDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._quizRepository.getPagination({
-      ...query.payload,
-      where: {
-        createdBy: authUser.id,
-        status: QuizStatus.DRAFT,
-      },
-      attributes: ['id', 'contentId', 'createdAt'],
-    });
+    const { rows, meta } = await this._quizDomainService.getDrafts(query.payload);
 
     if (!rows || rows.length === 0) return new FindDraftQuizzesDto([], meta);
 
     const contentIds = rows.map((row) => row.get('contentId'));
 
-    const contents = await this._queryBus.execute<
-      FindPostsByIdsQuery,
-      (PostDto | ArticleDto | SeriesDto)[]
-    >(
-      new FindPostsByIdsQuery({
-        ids: contentIds,
-        authUser,
-      })
-    );
+    const contentEntities = await this._contentDomainService.getContentByIds({
+      ids: contentIds,
+      authUser,
+    });
+
+    const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
     return new FindDraftQuizzesDto(contents, meta);
   }

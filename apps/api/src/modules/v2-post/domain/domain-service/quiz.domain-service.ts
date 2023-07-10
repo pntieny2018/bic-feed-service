@@ -1,22 +1,27 @@
+import { cloneDeep } from 'lodash';
+import { QuizEntity } from '../model/quiz';
+import { QuizStatus } from '../../data-type';
 import { Inject, Logger } from '@nestjs/common';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
+  GetQuizDraftsProps,
   IQuizDomainService,
   QuizCreateProps,
   QuizUpdateProps,
 } from './interface/quiz.domain-service.interface';
-import { QuizEntity } from '../model/quiz';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
-import { cloneDeep } from 'lodash';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
 
-  @Inject(QUIZ_REPOSITORY_TOKEN)
-  private readonly _quizRepository: IQuizRepository;
-  @Inject(QUIZ_FACTORY_TOKEN)
-  private readonly _quizFactory: IQuizFactory;
+  public constructor(
+    @Inject(QUIZ_FACTORY_TOKEN)
+    private readonly _quizFactory: IQuizFactory,
+    @Inject(QUIZ_REPOSITORY_TOKEN)
+    private readonly _quizRepository: IQuizRepository
+  ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
     const quizEntity = this._quizFactory.create(input);
@@ -24,7 +29,6 @@ export class QuizDomainService implements IQuizDomainService {
       await this._quizRepository.create(quizEntity);
       quizEntity.commit();
     } catch (e) {
-      console.log(e);
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
@@ -41,5 +45,17 @@ export class QuizDomainService implements IQuizDomainService {
       throw new DatabaseException();
     }
     return newQuizEntity;
+  }
+
+  public async getDrafts(input: GetQuizDraftsProps): Promise<CursorPaginationResult<QuizEntity>> {
+    const { authUser } = input;
+    return this._quizRepository.getPagination({
+      ...input,
+      where: {
+        createdBy: authUser.id,
+        status: QuizStatus.DRAFT,
+      },
+      attributes: ['id', 'contentId', 'createdAt'],
+    });
   }
 }
