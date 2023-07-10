@@ -14,7 +14,15 @@ export type GetDraftsProps = {
   after?: string;
 };
 
+export type GetContentByIdsProps = {
+  authUser?: UserDto;
+  ids: string[];
+};
+
 export interface IContentDomainService {
+  getContentByIds(
+    data: GetContentByIdsProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   getDrafts(
     data: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
