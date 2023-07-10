@@ -102,6 +102,10 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public validatePublishing(): void {
     if (this._props.status !== QuizStatus.PUBLISHED) return;
 
+    if (!this._props.title) {
+      throw new DomainModelException(`Quiz title is required`);
+    }
+
     if (this._props.questions.length === 0) {
       throw new DomainModelException(`Quiz must have at least one question`);
     }
