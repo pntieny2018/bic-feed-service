@@ -23,7 +23,7 @@ export interface IContentDomainService {
   getContentByIds(
     data: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
-  getDrafts(
+  getDraftsPagination(
     data: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
 }

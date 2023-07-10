@@ -16,7 +16,7 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async getDrafts(
+  public async getDraftsPagination(
     input: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
     const { authUser, isProcessing, type } = input;
