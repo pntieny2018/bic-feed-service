@@ -77,6 +77,7 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeGroup: true,
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
         },
