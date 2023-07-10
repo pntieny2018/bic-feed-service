@@ -88,7 +88,7 @@ export class PostEntity extends ContentEntity<PostProps> {
     this._updateImagesState(images);
   }
   private _updateFilesState(files: FileEntity[]): void {
-    const currentFileIds = this._props.media.files.map((file) => file.get('id'));
+    const currentFileIds = (this._props.media.files || []).map((file) => file.get('id'));
     for (const file of files) {
       if (!currentFileIds.includes(file.get('id'))) {
         this._state.attachFileIds.push(file.get('id'));
@@ -108,7 +108,7 @@ export class PostEntity extends ContentEntity<PostProps> {
   }
 
   private _updateImagesState(images: ImageEntity[]): void {
-    const currentImageIds = this._props.media.images.map((image) => image.get('id'));
+    const currentImageIds = (this._props.media.images || []).map((image) => image.get('id'));
     for (const image of images) {
       if (!currentImageIds.includes(image.get('id'))) {
         this._state.attachImageIds.push(image.get('id'));
@@ -132,7 +132,7 @@ export class PostEntity extends ContentEntity<PostProps> {
   }
 
   private _updateVideosState(videos: VideoEntity[]): void {
-    const currentVideoIds = this._props.media.videos.map((video) => video.get('id'));
+    const currentVideoIds = (this._props.media.videos || []).map((video) => video.get('id'));
     for (const video of videos) {
       if (!currentVideoIds.includes(video.get('id'))) {
         if (!video.isProcessed()) {
