@@ -20,6 +20,7 @@ import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import {
+  ArticleLimitAttachedSeriesException,
   ArticleRequiredCoverException,
   CategoryInvalidException,
   ContentEmptyException,
@@ -237,6 +238,7 @@ export class ArticleController {
         case CategoryInvalidException:
         case TagSeriesInvalidException:
         case DomainModelException:
+        case ArticleLimitAttachedSeriesException:
           throw new BadRequestException(e);
         case AccessDeniedException:
         case ContentNoCRUDPermissionException:
@@ -287,6 +289,7 @@ export class ArticleController {
         case CategoryInvalidException:
         case TagSeriesInvalidException:
         case DomainModelException:
+        case ArticleLimitAttachedSeriesException:
           throw new BadRequestException(e);
         case AccessDeniedException:
         case ContentNoCRUDPermissionException:

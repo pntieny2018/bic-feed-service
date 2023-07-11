@@ -1,4 +1,5 @@
 import { TagEntity } from '../tag';
+import { RULES } from '../../../constant';
 import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
@@ -78,5 +79,9 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
         isEmpty(this._props.categories) ||
         isEmpty(this._props.groupIds))
     );
+  }
+
+  public isOverLimtedToAttachSeries(): boolean {
+    return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
   }
 }

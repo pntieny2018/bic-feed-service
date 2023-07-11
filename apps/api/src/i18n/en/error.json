@@ -29,7 +29,8 @@
     "no_create_permission": "Failed to create post: you don't have permission",
     "no_update_permission": "Failed to update post: you don't have permission",
     "no_delete_permission": "Failed to delete post: you don't have permission",
-    "no_read_permission": "You do not have permission to read this post"
+    "no_read_permission": "You do not have permission to read this post",
+    "limit_attached_series": "Post can only be attached to a maximum of {limit} series"
   },
   "article": {
     "not_found": "Article not found",
@@ -38,7 +39,8 @@
     "no_update_permission": "Failed to update article: you don't have permission",
     "no_delete_permission": "Failed to delete article: you don't have permission",
     "no_read_permission": "You do not have permission to read this article",
-    "required_cover": "You have not selected any cover"
+    "required_cover": "You have not selected any cover",
+    "limit_attached_series": "Article can only be attached to a maximum of {limit} series"
   },
   "series": {
     "not_found": "Series not found",

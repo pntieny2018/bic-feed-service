@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -29,6 +30,7 @@ import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import {
+  ArticleLimitAttachedSeriesException,
   ContentRequireGroupException,
   SeriesNoReadPermissionException,
 } from '../v2-post/domain/exception';
@@ -180,7 +182,16 @@ export class SeriesController {
     @Body() addItemsInSeriesDto: AddItemsInSeriesDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    const { itemIds } = addItemsInSeriesDto;
-    await this._seriesAppService.addItems(id, itemIds, user);
+    try {
+      const { itemIds } = addItemsInSeriesDto;
+      await this._seriesAppService.addItems(id, itemIds, user);
+    } catch (e) {
+      switch (e.constructor) {
+        case ArticleLimitAttachedSeriesException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }

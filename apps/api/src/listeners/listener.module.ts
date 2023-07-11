@@ -24,7 +24,7 @@ import { FilterUserModule } from '../modules/filter-user';
 import { FollowModule } from '../modules/follow';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
-import {SeriesChangedItemsListener} from "./series/series-changed-items.listener";
+import { SeriesChangedItemsListener } from './series/series-changed-items.listener';
 
 @Module({
   imports: [
