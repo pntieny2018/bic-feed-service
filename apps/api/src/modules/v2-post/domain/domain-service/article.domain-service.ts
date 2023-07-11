@@ -9,6 +9,7 @@ import {
   IArticleDomainService,
   PublishArticleProps,
   ArticlePayload,
+  ScheduleArticleProps,
 } from './interface';
 import {
   CATEGORY_REPOSITORY_TOKEN,
@@ -50,6 +51,23 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._setArticleEntityAttributes(articleEntity, newData);
 
     articleEntity.setPublish();
+
+    await this._articleValidator.validateArticle(articleEntity, actor);
+
+    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
+
+    await this._contentRepository.update(articleEntity);
+  }
+
+  public async schedule(inputData: ScheduleArticleProps): Promise<void> {
+    const { articleEntity, newData } = inputData;
+    const { actor, scheduledAt } = newData;
+
+    await this._setArticleEntityAttributes(articleEntity, newData);
+
+    articleEntity.setWaitingSchedule(scheduledAt);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 

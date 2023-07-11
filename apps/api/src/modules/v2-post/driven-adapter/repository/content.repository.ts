@@ -173,6 +173,7 @@ export class ContentRepository implements IContentRepository {
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
       createdAt: postEntity.get('createdAt'),
+      scheduledAt: postEntity.get('scheduledAt'),
     };
   }
 
@@ -704,6 +705,7 @@ export class ContentRepository implements IContentRepository {
       updatedAt: post.updatedAt,
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
+      scheduledAt: post.scheduledAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),

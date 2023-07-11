@@ -32,6 +32,7 @@ export type ContentProps = {
   ownerReactions?: { id: string; reactionName: string }[];
   errorLog?: any;
   publishedAt?: Date;
+  scheduledAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
   communityIds?: string[];

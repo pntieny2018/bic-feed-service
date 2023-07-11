@@ -48,11 +48,15 @@ import {
   DeleteArticleCommand,
   DeleteArticleCommandPayload,
 } from '../../application/command/delete-article/delete-article.command';
-import { UpdateArticleRequestDto } from '../dto/request/update-artice.request.dto';
+import {
+  PublishArticleRequestDto,
+  UpdateArticleRequestDto,
+  ScheduleArticleRequestDto,
+} from '../dto/request';
 import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
 import { PublishArticleCommand } from '../../application/command/publish-article/publish-article.command';
 import { AutoSaveArticleCommand } from '../../application/command/auto-save-article/auto-save-article.command';
-import { PublishArticleRequestDto } from '../dto/request/publish-artice.request.dto';
+import { ScheduleArticleCommand } from '../../application/command/schedule-article/schedule-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -274,6 +278,56 @@ export class ArticleController {
           id,
           actor: user,
           ...publishArticleRequestDto,
+          groupIds: audience?.groupIds,
+        })
+      );
+      return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentEmptyException:
+        case ContentEmptyGroupException:
+        case ArticleRequiredCoverException:
+        case InvalidResourceImageException:
+        case CategoryInvalidException:
+        case TagSeriesInvalidException:
+        case DomainModelException:
+        case ArticleLimitAttachedSeriesException:
+          throw new BadRequestException(e);
+        case AccessDeniedException:
+        case ContentNoCRUDPermissionException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case ContentNoEditSettingPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Schedule article' })
+  @ApiOkResponse({
+    type: ArticleDto,
+    description: 'Schedule article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.scheduled_success',
+  })
+  @Put(ROUTES.ARTICLE.SCHEDULE.PATH)
+  @Version(ROUTES.ARTICLE.SCHEDULE.VERSIONS)
+  public async schedule(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() scheduleArticleRequestDto: ScheduleArticleRequestDto
+  ): Promise<ArticleDto> {
+    try {
+      const { audience } = scheduleArticleRequestDto;
+      const articleDto = await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
+        new ScheduleArticleCommand({
+          id,
+          actor: user,
+          ...scheduleArticleRequestDto,
           groupIds: audience?.groupIds,
         })
       );

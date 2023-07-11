@@ -194,6 +194,7 @@ export class ContentBinding implements IContentBinding {
       content: articleEntity.get('content'),
       createdAt: articleEntity.get('createdAt'),
       publishedAt: articleEntity.get('publishedAt'),
+      scheduledAt: articleEntity.get('scheduledAt'),
       tags: (articleEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
