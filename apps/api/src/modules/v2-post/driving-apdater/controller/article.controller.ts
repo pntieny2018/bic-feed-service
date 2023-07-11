@@ -20,11 +20,13 @@ import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import {
+  ArticleInvalidScheduledTimeException,
   ArticleLimitAttachedSeriesException,
   ArticleRequiredCoverException,
   CategoryInvalidException,
   ContentEmptyException,
   ContentEmptyGroupException,
+  ContentHasBeenPublishedException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
@@ -344,6 +346,8 @@ export class ArticleController {
         case TagSeriesInvalidException:
         case DomainModelException:
         case ArticleLimitAttachedSeriesException:
+        case ContentHasBeenPublishedException:
+        case ArticleInvalidScheduledTimeException:
           throw new BadRequestException(e);
         case AccessDeniedException:
         case ContentNoCRUDPermissionException:

@@ -41,7 +41,8 @@
     "no_delete_permission": "Failed to delete article: you don't have permission",
     "no_read_permission": "You do not have permission to read this article",
     "required_cover": "You have not selected any cover",
-    "limit_attached_series": "Article can only be attached to a maximum of {limit} series"
+    "limit_attached_series": "Article can only be attached to a maximum of {limit} series",
+    "invalid_scheduled_time": "The scheduled time is invalid"
   },
   "series": {
     "not_found": "Series not found",

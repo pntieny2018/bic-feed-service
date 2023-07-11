@@ -38,6 +38,7 @@ export const ERRORS = {
     ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
     ARTICLE_REQUIRED_COVER: 'article.required_cover',
     ARTICLE_LIMIT_ATTACHED_SERIES: 'article.limit_attached_series',
+    ARTICLE_INVALID_SCHEDULED_TIME: 'article.invalid_scheduled_time',
   },
   POST: {
     POST_NOT_FOUND: 'post.not_found',

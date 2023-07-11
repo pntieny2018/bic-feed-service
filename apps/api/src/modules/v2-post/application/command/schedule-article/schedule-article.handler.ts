@@ -8,6 +8,7 @@ import { ArticleEntity } from '../../../domain/model/content';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ScheduleArticleCommand } from './schedule-article.command';
 import {
+  ArticleInvalidScheduledTimeException,
   ContentHasBeenPublishedException,
   ContentNotFoundException,
 } from '../../../domain/exception';
@@ -27,7 +28,7 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
   ) {}
 
   public async execute(command: ScheduleArticleCommand): Promise<ArticleDto> {
-    const { actor, id } = command.payload;
+    const { actor, id, scheduledAt } = command.payload;
 
     const articleEntity = await this._contentRepository.findOne({
       where: {
@@ -51,6 +52,10 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
     }
 
     if (articleEntity.isPublished()) throw new ContentHasBeenPublishedException();
+
+    if (!scheduledAt.getTime() || scheduledAt.getTime() <= Date.now()) {
+      throw new ArticleInvalidScheduledTimeException();
+    }
 
     await this._articleDomainService.schedule({
       articleEntity,
