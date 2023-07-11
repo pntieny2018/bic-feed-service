@@ -244,6 +244,7 @@ export class ArticleController {
         case CategoryInvalidException:
         case TagSeriesInvalidException:
         case DomainModelException:
+        case ContentNoPublishYetException:
         case ArticleLimitAttachedSeriesException:
           throw new BadRequestException(e);
         case AccessDeniedException:
