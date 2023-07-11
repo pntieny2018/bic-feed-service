@@ -21,7 +21,8 @@
     "no_react_permission": "React action on this content is not available",
     "no_crud_permission_at_group": "You don't have CRUD permission at group {groups}",
     "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}",
-    "no_publish_yet": "Content has not been published yet"
+    "no_publish_yet": "Content has not been published yet",
+    "has_been_published": "Content has been published"
   },
   "post": {
     "not_found": "Post not found",
