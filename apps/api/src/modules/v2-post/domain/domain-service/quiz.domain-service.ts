@@ -71,12 +71,13 @@ export class QuizDomainService implements IQuizDomainService {
     });
   }
 
-  public async reGenerate(quizEntity: QuizEntity): Promise<void> {
+  public async reGenerate(quizEntity: QuizEntity): Promise<QuizEntity> {
     const cloneQuizEntity = cloneDeep(quizEntity);
     cloneQuizEntity.setPending();
     try {
       await this._quizRepository.update(cloneQuizEntity);
       this.event.publish(new QuizRegenerateEvent(quizEntity.get('id')));
+      return cloneQuizEntity;
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

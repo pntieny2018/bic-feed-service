@@ -49,7 +49,7 @@ export type GetQuizDraftsProps = {
 export interface IQuizDomainService {
   create(data: QuizCreateProps): Promise<QuizEntity>;
   update(quizEntity: QuizEntity, data: QuizUpdateProps): Promise<QuizEntity>;
-  reGenerate(quizEntity: QuizEntity): Promise<void>;
+  reGenerate(quizEntity: QuizEntity): Promise<QuizEntity>;
   generateQuestions(quizEntity: QuizEntity): Promise<QuizEntity>;
   getDrafts(data: GetQuizDraftsProps): Promise<CursorPaginationResult<QuizEntity>>;
 }
