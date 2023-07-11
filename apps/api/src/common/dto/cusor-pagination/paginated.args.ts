@@ -10,9 +10,7 @@ export class PaginatedArgs implements IPaginationArgs {
     default: 25,
     required: false,
   })
-  @Expose({
-    name: 'limit',
-  })
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Max(PAGING_DEFAULT_LIMIT)

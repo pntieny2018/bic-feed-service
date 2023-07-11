@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { QuizNotFoundException } from '../../../domain/exception';
 import { GenerateQuizCommand } from './generate-quiz.command';
@@ -12,14 +12,16 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface/content.domain-service.interface';
-import { QuizRegenerateEvent } from '../../../domain/event/quiz-regenerate.event';
 import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
+import { QUIZ_BINDING_TOKEN } from '../../binding/binding-quiz/quiz.interface';
+import { QuizBinding } from '../../binding/binding-quiz/quiz.binding';
+import { QuizDto } from '../../dto';
 
 @CommandHandler(GenerateQuizCommand)
-export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand, void> {
+export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand, QuizDto> {
   public constructor(
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
@@ -31,10 +33,11 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
     private readonly _quizValidator: IQuizValidator,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupAppService: IGroupApplicationService,
-    private readonly event: EventBus
+    @Inject(QUIZ_BINDING_TOKEN)
+    private readonly _quizBinding: QuizBinding
   ) {}
 
-  public async execute(command: GenerateQuizCommand): Promise<void> {
+  public async execute(command: GenerateQuizCommand): Promise<QuizDto> {
     const { authUser, quizId } = command.payload;
     const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
     if (!quizEntity) {
@@ -47,5 +50,7 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
     await this._quizDomainService.reGenerate(quizEntity);
+
+    return this._quizBinding.binding(quizEntity);
   }
 }
