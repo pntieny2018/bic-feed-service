@@ -20,7 +20,8 @@
     "no_comment_permission": "Comment action on this content is not available",
     "no_react_permission": "React action on this content is not available",
     "no_crud_permission_at_group": "You don't have CRUD permission at group {groups}",
-    "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}"
+    "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}",
+    "no_publish_yet": "Content has not been published yet"
   },
   "post": {
     "not_found": "Post not found",
@@ -36,7 +37,8 @@
     "no_create_permission": "Failed to create article: you don't have permission",
     "no_update_permission": "Failed to update article: you don't have permission",
     "no_delete_permission": "Failed to delete article: you don't have permission",
-    "no_read_permission": "You do not have permission to read this article"
+    "no_read_permission": "You do not have permission to read this article",
+    "required_cover": "You have not selected any cover"
   },
   "series": {
     "not_found": "Series not found",
@@ -65,6 +67,7 @@
     "can_not_empty": "The comment can't be empty"
   },
   "tag_series_invalid": "Tag series invalid",
+  "category_invalid": "Category invalid",
   "reaction": {
     "not_found": "Reaction not found",
     "not_have_authority": "You don't have authority to do this action",

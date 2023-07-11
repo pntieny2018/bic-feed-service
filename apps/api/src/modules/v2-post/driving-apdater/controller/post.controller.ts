@@ -21,6 +21,7 @@ import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
+  ContentNoPublishYetException,
   ContentNotFoundException,
   ContentRequireGroupException,
 } from '../../domain/exception';
@@ -135,6 +136,7 @@ export class PostController {
         case ContentEmptyException:
         case ContentEmptyGroupException:
         case TagSeriesInvalidException:
+        case ContentNoPublishYetException:
           throw new BadRequestException(e);
         default:
           throw e;

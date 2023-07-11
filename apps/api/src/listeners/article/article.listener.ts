@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
-import { MediaStatus, MediaType } from '../../database/models/media.model';
 import { PostStatus } from '../../database/models/post.model';
 import {
   ArticleHasBeenDeletedEvent,

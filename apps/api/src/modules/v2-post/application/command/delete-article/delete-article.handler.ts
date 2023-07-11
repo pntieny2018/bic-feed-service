@@ -3,10 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteArticleCommand } from './delete-article.command';
 import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import {
-  ContentNoCRUDPermissionException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
+import { AccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
 import { ArticleEntity } from '../../../domain/model/content';
 import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { UserDto } from '../../../../v2-user/application';
@@ -40,7 +37,7 @@ export class DeleteArticleHandler implements ICommandHandler<DeleteArticleComman
     if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
       throw new ContentNotFoundException();
     }
-    if (!articleEntity.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
+    if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
 
     if (articleEntity.isPublished()) {
       await this._contentValidator.checkCanCRUDContent(
