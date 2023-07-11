@@ -11,6 +11,9 @@ export class PaginatedArgs implements IPaginationArgs {
     required: false,
   })
   @IsOptional()
+  @Expose({
+    name: 'limit',
+  })
   @Type(() => Number)
   @IsInt()
   @Max(PAGING_DEFAULT_LIMIT)
