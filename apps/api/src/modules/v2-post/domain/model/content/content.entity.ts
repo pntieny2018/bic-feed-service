@@ -110,17 +110,20 @@ export class ContentEntity<
       return;
     }
     let totalPrivate = 0;
-    let totalOpen = 0;
+    let totalClosed = 0;
     for (const group of groups) {
       if (group.privacy === GroupPrivacy.OPEN) {
         this._props.privacy = PostPrivacy.OPEN;
+        return;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
+      if (group.privacy === GroupPrivacy.CLOSED) totalClosed++;
       if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
     }
 
-    if (totalOpen > 0) this._props.privacy = PostPrivacy.OPEN;
-    if (totalPrivate > 0) this._props.privacy = PostPrivacy.OPEN;
+    if (totalClosed > 0) this._props.privacy = PostPrivacy.CLOSED;
+    if (totalPrivate > 0) this._props.privacy = PostPrivacy.PRIVATE;
+
+    if (totalClosed === 0 && totalPrivate === 0) this._props.privacy = PostPrivacy.SECRET;
   }
 
   public getId(): string {

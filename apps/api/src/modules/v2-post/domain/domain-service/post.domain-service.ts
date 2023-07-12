@@ -132,7 +132,7 @@ export class PostDomainService implements IPostDomainService {
         videos,
       });
     }
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
@@ -199,18 +199,15 @@ export class PostDomainService implements IPostDomainService {
         videos,
       });
     }
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
 
     postEntity.updateAttribute(newData);
     postEntity.setPrivacyFromGroups(groups);
-    if (postEntity.hasVideoProcessing()) {
-      postEntity.setProcessing();
-    } else {
-      postEntity.setPublish();
-    }
+
+    if (postEntity.hasVideoProcessing()) postEntity.setProcessing();
 
     await this._postValidator.validatePublishContent(
       postEntity,

@@ -2,7 +2,7 @@ import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
 import { MediaMarkAction, MediaStatus, MediaType } from '../../database/models/media.model';
-import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
+import { PostStatus, PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -26,12 +26,6 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
 import { SeriesService } from '../../modules/series/series.service';
-import {
-  ActorObject,
-  AudienceObject,
-  MentionObject,
-  SettingObject,
-} from '../../notification/dto/requests/notification-activity.dto';
 import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
 import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
 
@@ -649,6 +643,32 @@ export class PostListener {
           this._logger.error(JSON.stringify(e?.stack));
           this._sentryService.captureException(e);
         });
+
+      const postActivity = this._postActivityService.createPayload({
+        title: null,
+        actor: post.actor,
+        content: post.content,
+        createdAt: post.createdAt,
+        setting: {
+          canComment: post.setting.canComment,
+          canReact: post.setting.canReact,
+          isImportant: post.setting.isImportant,
+        },
+        id: post.id,
+        audience: post.audience,
+        contentType: PostType.POST,
+        mentions: post.mentions as any,
+      });
+      this._notificationService.publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor: {
+            id: post.actor.id,
+          },
+          event: event.getEventName(),
+          data: postActivity,
+        },
+      });
     });
   }
 

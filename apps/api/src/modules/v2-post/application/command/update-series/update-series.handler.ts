@@ -57,6 +57,9 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
       include: {
         mustIncludeGroup: true,
         shouldIncludeItems: true,
+        shouldIncludeMarkReadImportant: {
+          userId: actor?.id,
+        },
         shouldIncludeSaved: {
           userId: actor.id,
         },
@@ -96,6 +99,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
     const result = await this._contentBinding.seriesBinding(seriesEntity, {
       actor,
       groups,
+      authUser: actor,
     });
 
     this._sendEvent(seriesEntityBefore, seriesEntity, result);

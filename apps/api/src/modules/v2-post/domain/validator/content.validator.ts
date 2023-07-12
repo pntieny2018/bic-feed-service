@@ -127,7 +127,10 @@ export class ContentValidator implements IContentValidator {
 
     if (detachGroupIds?.length) await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
 
-    if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
+    if (
+      isEnableSetting &&
+      (state.isChangeStatus || attachGroupIds?.length || detachGroupIds?.length)
+    ) {
       await this.checkCanEditContentSetting(userAuth, groupIds);
     }
   }

@@ -7,13 +7,16 @@ import {
 import { ArticleDto } from '../../dto';
 import { FindArticleQuery } from './find-article.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { UserDto } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+} from '../../../domain/query-interface/reaction.query.interface';
 
 @QueryHandler(FindArticleQuery)
 export class FindArticleHandler implements IQueryHandler<FindArticleQuery, ArticleDto> {
@@ -21,7 +24,8 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
+    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
   ) {}
 
   public async execute(query: FindArticleQuery): Promise<ArticleDto> {
@@ -69,7 +73,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
 
     return this._contentBinding.articleBinding(articleEntity, {
       groups,
-      authUser: new UserDto(authUser),
+      authUser,
     });
   }
 }
