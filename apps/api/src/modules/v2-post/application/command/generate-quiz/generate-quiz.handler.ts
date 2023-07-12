@@ -49,8 +49,8 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
 
     const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
     await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
-    await this._quizDomainService.reGenerate(quizEntity);
+    const quizEntityUpdated = await this._quizDomainService.reGenerate(quizEntity);
 
-    return this._quizBinding.binding(quizEntity);
+    return this._quizBinding.binding(quizEntityUpdated);
   }
 }

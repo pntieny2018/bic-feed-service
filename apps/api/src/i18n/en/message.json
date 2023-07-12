@@ -49,6 +49,7 @@
   "quiz": {
     "created_success": "Created quiz successfully",
     "updated_success": "Updated quiz successfully",
-    "deleted_success": "Deleted quiz successfully"
+    "deleted_success": "Deleted quiz successfully",
+    "published_success": "Published quiz successfully"
   }
 }

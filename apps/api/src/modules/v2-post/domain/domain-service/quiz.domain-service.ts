@@ -91,6 +91,8 @@ export class QuizDomainService implements IQuizDomainService {
         code: ERRORS.QUIZ.QUIZ_PROCESSING,
         message: 'Quiz is processing',
       });
+      await this._quizRepository.update(cloneQuizEntity);
+      return cloneQuizEntity;
     }
 
     const contentEntity = await this._contentDomainService.getVisibleContent(
@@ -102,6 +104,8 @@ export class QuizDomainService implements IQuizDomainService {
         code: ERRORS.CONTENT.CONTENT_NOT_FOUND,
         message: 'Content not found',
       });
+      await this._quizRepository.update(cloneQuizEntity);
+      return cloneQuizEntity;
     }
 
     try {
