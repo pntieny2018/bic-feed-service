@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -42,6 +43,9 @@ import { FindDraftQuizzesDto } from '../../application/query/find-draft-quizzes/
 import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizzes/find-draft-quizzes.query';
 import { KafkaService } from '@app/kafka';
 import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
+import { Request } from 'express';
+import { PostStatus } from '../../../../database/models/post.model';
+import { QuizStatus } from '../../data-type';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -124,9 +128,6 @@ export class QuizController {
     type: CreateTagDto,
     description: 'Regenerate quiz successfully',
   })
-  @ResponseMessages({
-    success: 'message.quiz.created_success',
-  })
   @Put(ROUTES.QUIZ.GENERATE.PATH)
   @Version(ROUTES.QUIZ.GENERATE.VERSIONS)
   public async regenerate(
@@ -169,12 +170,17 @@ export class QuizController {
   public async update(
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto,
-    @Body() updateQuizDto: UpdateQuizRequestDto
+    @Body() updateQuizDto: UpdateQuizRequestDto,
+    @Req() req: Request
   ): Promise<QuizDto> {
     try {
       const quiz = await this._commandBus.execute<UpdateQuizCommand, QuizDto>(
         new UpdateQuizCommand({ ...updateQuizDto, quizId, authUser })
       );
+
+      if (updateQuizDto.status === QuizStatus.PUBLISHED) {
+        req.message = 'message.quiz.published_success';
+      }
 
       return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
