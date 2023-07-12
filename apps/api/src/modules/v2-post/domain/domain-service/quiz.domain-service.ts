@@ -123,6 +123,8 @@ export class QuizDomainService implements IQuizDomainService {
           code: ERRORS.QUIZ.GENERATE_FAIL,
           message: 'No questions generated',
         });
+        await this._quizRepository.update(cloneQuizEntity);
+        return cloneQuizEntity;
       }
 
       cloneQuizEntity.setProcessed();
@@ -140,8 +142,10 @@ export class QuizDomainService implements IQuizDomainService {
         code: ERRORS.QUIZ.GENERATE_FAIL,
         message: e.message,
       });
+      await this._quizRepository.update(cloneQuizEntity);
+      return cloneQuizEntity;
     }
-
+    console.log('processed quiz id:', cloneQuizEntity.get('id'));
     await this._quizRepository.update(cloneQuizEntity);
     this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
     return cloneQuizEntity;
