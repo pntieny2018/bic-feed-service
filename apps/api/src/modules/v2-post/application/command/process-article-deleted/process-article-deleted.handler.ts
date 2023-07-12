@@ -7,7 +7,7 @@ import { NotificationService } from '../../../../../notification';
 import { PostActivityService } from '../../../../../notification/activities';
 import { ProcessArticleDeletedCommand } from './process-article-deleted.command';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesRemovedItemsEvent } from 'apps/api/src/events/series';
+import { SeriesRemovedItemsEvent } from '../../../../../events/series';
 import { ArticleMessagePayload } from '../../dto/message/article.message-payload';
 
 @CommandHandler(ProcessArticleDeletedCommand)
@@ -74,9 +74,7 @@ export class ProcessArticleDeletedHandler
 
     const activity = this._postActivityService.createPayload({
       id,
-      actor: {
-        id: actor.id,
-      },
+      actor,
       title,
       content,
       contentType: type,

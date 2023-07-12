@@ -34,6 +34,7 @@ export type ContentProps = {
   publishedAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
+  communityIds?: string[];
   wordCount?: number;
   aggregation?: {
     commentsCount: number;
@@ -45,6 +46,8 @@ export type ContentState = {
   detachGroupIds?: string[];
   attachSeriesIds?: string[];
   detachSeriesIds?: string[];
+  attachCategoryIds?: string[];
+  detachCategoryIds?: string[];
   attachTagIds?: string[];
   detachTagIds?: string[];
   attachFileIds?: string[];
@@ -71,6 +74,8 @@ export class ContentEntity<
       detachGroupIds: [],
       attachSeriesIds: [],
       detachSeriesIds: [],
+      attachCategoryIds: [],
+      detachCategoryIds: [],
       attachTagIds: [],
       detachTagIds: [],
       attachFileIds: [],
@@ -153,6 +158,10 @@ export class ContentEntity<
     return this._props.status === PostStatus.PUBLISHED;
   }
 
+  public isWaitingSchedule(): boolean {
+    return this._props.status === PostStatus.WAITING_SCHEDULE;
+  }
+
   public isProcessing(): boolean {
     return this._props.status === PostStatus.PROCESSING;
   }
@@ -210,6 +219,11 @@ export class ContentEntity<
 
     this._props.groupIds = groupIds;
   }
+
+  public setCommunity(communityIds: string[]): void {
+    this._props.communityIds = communityIds;
+  }
+
   public setSetting(setting: PostSettingDto): void {
     let isEnableSetting = false;
     if (
@@ -247,5 +261,9 @@ export class ContentEntity<
     return (
       setting && (setting.isImportant || setting.canComment === false || setting.canReact === false)
     );
+  }
+
+  public isInArchivedGroups(): boolean {
+    return this.isPublished() && !this.getGroupIds()?.length;
   }
 }

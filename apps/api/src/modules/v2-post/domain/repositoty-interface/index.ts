@@ -6,3 +6,4 @@ export * from './comment-reaction.repository.interface';
 export * from './post-reaction.repository.interface';
 export * from './media.repository.interface';
 export * from './series.repository.interface';
+export * from './category.repository.interface';

@@ -11,7 +11,7 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ContentNotFoundException } from '../../../domain/exception';
+import { ContentNoPublishYetException, ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
@@ -58,10 +58,12 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       !postEntity ||
       postEntity.isHidden() ||
       !(postEntity instanceof PostEntity) ||
-      (postEntity.isPublished() && !postEntity.getGroupIds()?.length)
+      postEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
     }
+
+    if (!postEntity.isPublished()) throw new ContentNoPublishYetException();
 
     const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
