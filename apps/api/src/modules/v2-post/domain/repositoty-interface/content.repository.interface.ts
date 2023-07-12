@@ -20,6 +20,7 @@ export type FindOnePostOptions = {
     groupIds?: string[];
     createdBy?: string;
     isImportant?: string;
+    scheduledAt?: Date;
     savedByUserId?: string;
     type?: PostType;
     status?: PostStatus;
@@ -61,6 +62,7 @@ export type FindAllPostOptions = {
     groupIds?: string[];
     createdBy?: string;
     isImportant?: boolean;
+    scheduledAt?: Date;
     isHidden?: boolean;
     savedByUserId?: string;
     status?: PostStatus;

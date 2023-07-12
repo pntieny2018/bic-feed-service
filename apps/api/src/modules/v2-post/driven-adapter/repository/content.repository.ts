@@ -507,6 +507,12 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
+      if (options.where.scheduledAt) {
+        condition.push({
+          scheduledAt: { [Op.lte]: options.where.scheduledAt },
+        });
+      }
+
       if (options.where.excludeReportedByUserId) {
         condition.push(
           Sequelize.literal(

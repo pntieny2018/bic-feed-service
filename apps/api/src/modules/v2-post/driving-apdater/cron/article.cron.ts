@@ -7,7 +7,7 @@ export class ArticleCron {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   @Cron(CronExpression.EVERY_30_MINUTES)
-  public async jobScheduledArticle(): Promise<void> {
+  public async hanldeJobScheduledArticle(): Promise<void> {
     return;
   }
 }
