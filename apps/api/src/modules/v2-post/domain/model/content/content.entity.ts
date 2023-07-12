@@ -195,6 +195,14 @@ export class ContentEntity<
     this._props.status = PostStatus.PROCESSING;
   }
 
+  public setScheduleFailed(): void {
+    this._props.status = PostStatus.SCHEDULE_FAILED;
+  }
+
+  public setErrorLog(errorLog: unknown): void {
+    this._props.errorLog = errorLog;
+  }
+
   public increaseTotalSeen(): void {
     this._props.aggregation.totalUsersSeen += 1;
   }

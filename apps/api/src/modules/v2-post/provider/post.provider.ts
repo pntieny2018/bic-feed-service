@@ -61,6 +61,8 @@ import { AutoSaveArticleHandler } from '../application/command/auto-save-article
 import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
+import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
+import { ArticleCron } from '../driving-apdater/cron/article.cron';
 
 export const postProvider = [
   {
@@ -115,6 +117,9 @@ export const postProvider = [
     provide: CONTENT_DOMAIN_SERVICE_TOKEN,
     useClass: ContentDomainService,
   },
+  /** CronService */
+  ArticleCron,
+
   /** Application */
   CreateDraftPostHandler,
   PublishPostHandler,
@@ -144,6 +149,7 @@ export const postProvider = [
   UpdateArticleHandler,
   DeleteArticleHandler,
   ScheduleArticleHandler,
+  ProcessArticleScheduledHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,

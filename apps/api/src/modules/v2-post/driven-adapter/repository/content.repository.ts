@@ -150,6 +150,7 @@ export class ContentRepository implements IContentRepository {
       isReported: postEntity.get('isReported'),
       type: postEntity.get('type'),
       status: postEntity.get('status'),
+      errorLog: postEntity.get('errorLog'),
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
       isImportant: postEntity.get('setting')?.isImportant,
