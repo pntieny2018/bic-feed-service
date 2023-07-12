@@ -18,7 +18,6 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
-import { cloneDeep } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
 
