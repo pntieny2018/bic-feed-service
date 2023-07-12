@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { ArticleDto, ImageDto, TagDto } from '../../dto';
@@ -72,13 +73,28 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
       articleEntity.setMarkReadImportant();
     }
 
-    this._sendEvent(articleEntity, actor);
+    await this._sendEvent(articleEntity, actor);
 
     return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }
 
-  private _sendEvent(entity: ArticleEntity, actor: UserDto): void {
+  private async _sendEvent(entity: ArticleEntity, actor: UserDto): Promise<void> {
     if (entity.isPublished()) {
+      const contentWithArchivedGroups = (await this._contentRepository.findOne({
+        where: {
+          id: entity.getId(),
+          groupArchived: true,
+        },
+        include: {
+          shouldIncludeSeries: true,
+        },
+      })) as ArticleEntity;
+
+      const seriesIds = uniq([
+        ...entity.getSeriesIds(),
+        ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
+      ]);
+
       const payload: ArticleChangedMessagePayload = {
         state: 'publish',
         after: {
@@ -88,7 +104,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
           setting: entity.get('setting'),
           groupIds: entity.get('groupIds'),
           communityIds: entity.get('communityIds'),
-          seriesIds: entity.get('seriesIds'),
+          seriesIds,
           tags: (entity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
           title: entity.get('title'),
           summary: entity.get('summary'),

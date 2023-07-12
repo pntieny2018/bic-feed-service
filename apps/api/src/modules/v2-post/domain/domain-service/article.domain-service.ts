@@ -53,6 +53,8 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
+    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
     await this._contentRepository.update(articleEntity);
@@ -65,6 +67,8 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._setArticleEntityAttributes(articleEntity, newData);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
+
+    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 

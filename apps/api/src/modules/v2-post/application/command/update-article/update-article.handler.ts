@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, uniq } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateArticleCommand } from './update-article.command';
@@ -73,17 +73,32 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
       newData: command.payload,
     });
 
-    this._sendEvent(articleEntityBefore, articleEntity, actor);
+    await this._sendEvent(articleEntityBefore, articleEntity, actor);
 
     return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }
 
-  private _sendEvent(
+  private async _sendEvent(
     entityBefore: ArticleEntity,
     entityAfter: ArticleEntity,
     actor: UserDto
-  ): void {
+  ): Promise<void> {
     if (entityAfter.isPublished()) {
+      const contentWithArchivedGroups = (await this._contentRepository.findOne({
+        where: {
+          id: entityAfter.getId(),
+          groupArchived: true,
+        },
+        include: {
+          shouldIncludeSeries: true,
+        },
+      })) as ArticleEntity;
+
+      const seriesIds = uniq([
+        ...entityAfter.getSeriesIds(),
+        ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
+      ]);
+
       const payload: ArticleChangedMessagePayload = {
         state: 'update',
         before: {
@@ -111,7 +126,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
           setting: entityAfter.get('setting'),
           groupIds: entityAfter.get('groupIds'),
           communityIds: entityAfter.get('communityIds'),
-          seriesIds: entityAfter.get('seriesIds'),
+          seriesIds,
           tags: (entityAfter.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
           title: entityAfter.get('title'),
           summary: entityAfter.get('summary'),

@@ -37,3 +37,5 @@ export * from './tag-series-invalid.exception';
 export * from './content-no-publish-yet.exception';
 export * from './content-empty.exception';
 export * from './access-denied.exception';
+export * from './article-limit-attached-series';
+export * from './post-limit-attached-series';

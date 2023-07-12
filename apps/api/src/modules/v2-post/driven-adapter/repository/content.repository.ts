@@ -307,6 +307,7 @@ export class ContentRepository implements IContentRepository {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const userSavePostTable = UserSavePostModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
     const findOption: FindOptions<IPost> = {};
     findOption.where = this._getCondition(options).where;
     const includeAttr = [];
@@ -346,6 +347,13 @@ export class ContentRepository implements IContentRepository {
           as: 'postSeries',
           required: false,
           attributes: ['seriesId'],
+          where: isBoolean(options.where.groupArchived)
+            ? Sequelize.literal(
+                `EXISTS (
+                SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
+                  WHERE seriesGroups.post_id = "postSeries".series_id  AND seriesGroups.is_archived = ${options.where.groupArchived})`
+              )
+            : undefined,
         });
       }
 

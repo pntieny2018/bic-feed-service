@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -29,6 +30,7 @@ import { ArticleResponseDto } from '../article/dto/responses';
 import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
+  PostLimitAttachedSeriesException,
 } from '../v2-post/domain/exception';
 import { PostStatus } from '../../database/models/post.model';
 
@@ -136,7 +138,17 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    return this._postAppService.updatePost(user, postId, updatePostDto);
+    try {
+      const result = this._postAppService.updatePost(user, postId, updatePostDto);
+      return result;
+    } catch (e) {
+      switch (e.constructor) {
+        case PostLimitAttachedSeriesException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Publish post' })
@@ -154,15 +166,23 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Req() req: Request
   ): Promise<PostResponseDto> {
-    console.log('old version');
-    const publishResult = await this._postAppService.publishPost(user, postId);
-    if (
-      publishResult?.media?.videos?.length > 0 &&
-      publishResult.status === PostStatus.PROCESSING
-    ) {
-      req.message = 'message.post.published_success_with_video_waiting_process';
+    try {
+      const publishResult = await this._postAppService.publishPost(user, postId);
+      if (
+        publishResult?.media?.videos?.length > 0 &&
+        publishResult.status === PostStatus.PROCESSING
+      ) {
+        req.message = 'message.post.published_success_with_video_waiting_process';
+      }
+      return publishResult;
+    } catch (e) {
+      switch (e.constructor) {
+        case PostLimitAttachedSeriesException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
     }
-    return publishResult;
   }
 
   @ApiOperation({ summary: 'Delete post' })

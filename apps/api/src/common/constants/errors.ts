@@ -36,6 +36,7 @@ export const ERRORS = {
     ARTICLE_NO_DELETE_PERMISSION: 'article.no_delete_permission',
     ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
     ARTICLE_REQUIRED_COVER: 'article.required_cover',
+    ARTICLE_LIMIT_ATTACHED_SERIES: 'article.limit_attached_series',
   },
   POST: {
     POST_NOT_FOUND: 'post.not_found',
@@ -43,6 +44,7 @@ export const ERRORS = {
     POST_NO_CREATE_PERMISSION: 'post.no_create_permission',
     POST_NO_DELETE_PERMISSION: 'post.no_delete_permission',
     POST_NO_READ_PERMISSION: 'post.no_read_permission',
+    POST_LIMIT_ATTACHED_SERIES: 'post.limit_attached_series',
   },
   SERIES: {
     SERIES_NOT_FOUND: 'post.not_found',

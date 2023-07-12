@@ -10,6 +10,8 @@ export interface IPostValidator extends IContentValidator {
       videosIds?: string[];
     }
   ): void;
+
+  validateLimtedToAttachSeries(postEntity: PostEntity): Promise<void>;
 }
 
 export const POST_VALIDATOR_TOKEN = 'POST_VALIDATOR_TOKEN';
