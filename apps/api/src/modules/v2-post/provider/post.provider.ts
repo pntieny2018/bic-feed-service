@@ -15,6 +15,7 @@ import {
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
+import { ArticleCron } from '../driving-apdater/cron/article.cron';
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
@@ -62,7 +63,6 @@ import { FindDraftContentsHandler } from '../application/query/find-draft-conten
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
 import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
-import { ArticleCron } from '../driving-apdater/cron/article.cron';
 
 export const postProvider = [
   {
