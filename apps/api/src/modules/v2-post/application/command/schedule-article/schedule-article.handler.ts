@@ -29,6 +29,7 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
 
   public async execute(command: ScheduleArticleCommand): Promise<ArticleDto> {
     const { actor, id, scheduledAt } = command.payload;
+    const scheduledDate = new Date(scheduledAt);
 
     const articleEntity = await this._contentRepository.findOne({
       where: {
@@ -53,7 +54,7 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
 
     if (articleEntity.isPublished()) throw new ContentHasBeenPublishedException();
 
-    if (!scheduledAt.getTime() || scheduledAt.getTime() <= Date.now()) {
+    if (!scheduledDate.getTime() || scheduledDate.getTime() <= Date.now()) {
       throw new ArticleInvalidScheduledTimeException();
     }
 
