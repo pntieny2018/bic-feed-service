@@ -39,14 +39,13 @@ export type PublishArticleProps = {
 };
 
 export type ScheduleArticleProps = {
-  articleEntity: ArticleEntity;
-  newData: ArticlePayload;
+  payload: ArticlePayload;
 };
 
 export interface IArticleDomainService {
   update(input: UpdateArticleProps): Promise<void>;
   publish(input: PublishArticleProps): Promise<void>;
-  schedule(input: ScheduleArticleProps): Promise<void>;
+  schedule(input: ScheduleArticleProps): Promise<ArticleEntity>;
   autoSave(inputData: UpdateArticleProps): Promise<void>;
 }
 export const ARTICLE_DOMAIN_SERVICE_TOKEN = 'ARTICLE_DOMAIN_SERVICE_TOKEN';
