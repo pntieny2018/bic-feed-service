@@ -60,6 +60,7 @@ import { ProcessArticleUpdatedHandler } from '../application/command/process-art
 import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
 import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
+import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
 
 export const postProvider = [
   {
@@ -142,6 +143,7 @@ export const postProvider = [
   PublishArticleHandler,
   UpdateArticleHandler,
   DeleteArticleHandler,
+  ScheduleArticleHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,
