@@ -9,6 +9,8 @@ export interface IUserRepository {
 
   getPermissionsByUserId(id: string): Promise<UserPermission>;
 
+  getPermissionsByUserIds(userIds: string[]): Promise<UserPermission[]>;
+
   canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean>;
 }
 
