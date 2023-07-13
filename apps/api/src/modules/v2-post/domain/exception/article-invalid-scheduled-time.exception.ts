@@ -7,7 +7,7 @@ export class ArticleInvalidScheduledTimeException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.ARTICLE.ARTICLE_INVALID_SCHEDULED_TIME,
-      message || i18n.t(`error.article.invalid_scheduled_time`)
+      message || i18n?.t(`error.article.invalid_scheduled_time`)
     );
   }
 }

@@ -7,7 +7,7 @@ export class ContentHasBeenPublishedException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_HAS_BEEN_PUBLISHED,
-      message || i18n.t(`error.content.has_been_published'`),
+      message || i18n?.t(`error.content.has_been_published'`),
       errors
     );
   }
