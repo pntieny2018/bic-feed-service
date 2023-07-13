@@ -185,7 +185,7 @@ export class ContentEntity<
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
-      this._props.createdAt = new Date();
+      this._props.publishedAt = new Date();
     }
     this._props.status = PostStatus.PUBLISHED;
   }
