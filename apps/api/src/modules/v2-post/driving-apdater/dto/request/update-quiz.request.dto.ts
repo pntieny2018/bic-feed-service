@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
-import { QuestionDto } from '../../../application/dto/question.dto';
 import { OrderEnum } from '../../../../../common/dto';
 import { QuizStatus } from '../../../data-type/quiz-status.enum';
+import { QuizQuestionRequestDto } from './quiz-question.request.dto';
 
 export class UpdateQuizRequestDto {
   @ApiProperty({ type: String })
@@ -67,8 +67,8 @@ export class UpdateQuizRequestDto {
   @ApiProperty()
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => QuestionDto)
-  public questions?: QuestionDto[];
+  @Type(() => QuizQuestionRequestDto)
+  public questions?: QuizQuestionRequestDto[];
 
   @ApiProperty({ enum: QuizStatus, required: false })
   @IsOptional()
