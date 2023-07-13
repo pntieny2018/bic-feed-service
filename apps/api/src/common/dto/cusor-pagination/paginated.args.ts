@@ -10,6 +10,7 @@ export class PaginatedArgs implements IPaginationArgs {
     default: 25,
     required: false,
   })
+  @IsOptional()
   @Expose({
     name: 'limit',
   })

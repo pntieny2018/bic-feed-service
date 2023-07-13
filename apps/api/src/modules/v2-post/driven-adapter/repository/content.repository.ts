@@ -663,7 +663,7 @@ export class ContentRepository implements IContentRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       content: post.content,
-      mentionUserIds: post.mentions,
+      mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
