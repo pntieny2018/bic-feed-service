@@ -88,10 +88,7 @@ export class QuizDomainService implements IQuizDomainService {
   public async generateQuestions(quizEntity: QuizEntity): Promise<QuizEntity> {
     const cloneQuizEntity = cloneDeep(quizEntity);
     if (cloneQuizEntity.isProcessing()) {
-      cloneQuizEntity.setFail({
-        code: ERRORS.QUIZ.QUIZ_PROCESSING,
-        message: 'Quiz is processing',
-      });
+      cloneQuizEntity.setProcessing();
       await this._quizRepository.update(cloneQuizEntity);
       return cloneQuizEntity;
     }
