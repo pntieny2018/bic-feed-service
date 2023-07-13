@@ -14,7 +14,7 @@ export class SearchConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after, state } = payload;
+    const { after, state } = payload;
     const {
       id,
       type,
