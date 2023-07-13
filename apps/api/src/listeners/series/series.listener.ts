@@ -81,7 +81,17 @@ export class SeriesListener {
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
     this._logger.debug(`[onSeriesPublished] ${JSON.stringify(event.payload.series)}`);
     const { series, actor } = event.payload;
-    const { id, createdBy, audience, createdAt, updatedAt, title, summary, coverMedia } = series;
+    const {
+      id,
+      createdBy,
+      audience,
+      createdAt,
+      updatedAt,
+      publishedAt,
+      title,
+      summary,
+      coverMedia,
+    } = series;
     const groupIds = audience.groups.map((group) => group.id);
 
     this._postSearchService.addPostsToSearch([
@@ -89,6 +99,7 @@ export class SeriesListener {
         id,
         createdAt,
         updatedAt,
+        publishedAt,
         createdBy,
         title,
         summary,
@@ -161,10 +172,11 @@ export class SeriesListener {
     const { newSeries, oldSeries, actor } = event.payload;
     const {
       id,
-      createdBy,
-      updatedAt,
-      audience,
       createdAt,
+      updatedAt,
+      publishedAt,
+      createdBy,
+      audience,
       lang,
       summary,
       title,
@@ -181,6 +193,7 @@ export class SeriesListener {
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
         updatedAt,
+        publishedAt,
         createdBy,
         isHidden: false,
         lang,
