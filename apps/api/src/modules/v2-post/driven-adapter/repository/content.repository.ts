@@ -38,7 +38,7 @@ import { PostReactionModel } from '../../../../database/models/post-reaction.mod
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { CursorPaginator } from '../../../../common/dto';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
 
@@ -264,7 +264,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const findOption = this._buildFindOptions(findAllPostOptions);
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
+    findOption.order = this._getOrderContent(findAllPostOptions.orderOptions);
     findOption.offset = findAllPostOptions.offset || 0;
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
@@ -273,17 +273,13 @@ export class ContentRepository implements IContentRepository {
   private _getOrderContent(orderOptions: OrderOptions): any {
     if (!orderOptions) return undefined;
     const order = [];
-
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
+      order.push([this._sequelizeConnection.literal('"colImportant"'), OrderEnum.DESC]);
     }
-
-    if (orderOptions.isPublishedAt) {
-      order.push(['publishedAt', 'desc']);
-    } else {
-      order.push(['createdAt', 'desc']);
+    if (orderOptions.isPublished) {
+      order.push(['publishedAt', OrderEnum.DESC]);
     }
-
+    order.push(['createdAt', OrderEnum.DESC]);
     return order;
   }
 
@@ -782,10 +778,12 @@ export class ContentRepository implements IContentRepository {
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
     const { after, before, limit, order } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
-    findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
+    const orderBuilder = this._getOrderContent(getPaginationContentsProps.orderOptions);
+    const cursorColumns = orderBuilder?.map((order) => order[0]);
+
     const paginator = new CursorPaginator(
       this._postModel,
-      ['createdAt'],
+      cursorColumns || ['createdAt'],
       { before, after, limit },
       order
     );

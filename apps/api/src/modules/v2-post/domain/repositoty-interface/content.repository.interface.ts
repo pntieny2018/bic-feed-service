@@ -9,7 +9,7 @@ import { ContentEntity } from '../model/content/content.entity';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
-  isPublishedAt?: boolean;
+  isPublished?: boolean;
 };
 export type FindOnePostOptions = {
   where: {
@@ -50,7 +50,7 @@ export type FindOnePostOptions = {
     };
   };
   attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
-  order?: OrderOptions;
+  orderOptions?: OrderOptions;
 };
 
 export type FindAllPostOptions = {
@@ -95,7 +95,7 @@ export type FindAllPostOptions = {
   limit?: number;
   offset?: number;
   after?: string;
-  order?: OrderOptions;
+  orderOptions?: OrderOptions;
 };
 
 export type GetPaginationContentsProps = FindAllPostOptions & CursorPaginationProps;
