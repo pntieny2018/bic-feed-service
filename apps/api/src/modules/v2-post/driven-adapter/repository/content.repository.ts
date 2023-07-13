@@ -266,7 +266,6 @@ export class ContentRepository implements IContentRepository {
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
     findOption.order = this._getOrderContent(findAllPostOptions.order);
     findOption.offset = findAllPostOptions.offset || 0;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }
@@ -274,10 +273,17 @@ export class ContentRepository implements IContentRepository {
   private _getOrderContent(orderOptions: OrderOptions): any {
     if (!orderOptions) return undefined;
     const order = [];
+
     if (orderOptions.isImportantFirst) {
       order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
     }
-    order.push(['createdAt', 'desc']);
+
+    if (orderOptions.isPublishedAt) {
+      order.push(['publishedAt', 'desc']);
+    } else {
+      order.push(['createdAt', 'desc']);
+    }
+
     return order;
   }
 

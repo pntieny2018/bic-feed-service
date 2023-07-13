@@ -71,6 +71,7 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       limit: limit + 1,
       order: {
         isImportantFirst: isImportant,
+        isPublishedAt: true,
       },
     });
 

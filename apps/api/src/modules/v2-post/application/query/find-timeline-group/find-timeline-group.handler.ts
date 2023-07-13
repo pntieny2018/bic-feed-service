@@ -84,6 +84,7 @@ export class FindTimelineGroupHandler
       limit: limit + 1,
       order: {
         isImportantFirst: true,
+        isPublishedAt: true,
       },
     });
 

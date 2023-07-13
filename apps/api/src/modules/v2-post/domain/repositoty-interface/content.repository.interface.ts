@@ -9,6 +9,7 @@ import { ContentEntity } from '../model/content/content.entity';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
+  isPublishedAt?: boolean;
 };
 export type FindOnePostOptions = {
   where: {
