@@ -79,7 +79,7 @@ export class ArticleAppService {
     }
     const postsSorted = await this._postService.getPostsByFilter(condition, {
       sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
-        ? 'publishedAt'
+        ? 'scheduledAt'
         : 'createdAt',
       sortBy: order,
       limit: limit + 1,
