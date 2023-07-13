@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { Cron } from '@nestjs/schedule';
 import { CommandBus } from '@nestjs/cqrs';
 import { RedisService } from '@app/redis';
@@ -18,6 +19,8 @@ export class ArticleCron {
 
   @Cron(CRON_RUN_SCHEDULED_ARTICLE)
   public async hanldeJobScheduledArticle(): Promise<void> {
+    const bufferTimeInMinute = 1;
+    const beforeDate = moment().add(bufferTimeInMinute, 'minute').toDate();
     const canRunScheduleArticle = await this._redisService.setNxEx(
       CACHE_KEYS.IS_RUNNING_ARTICLE_SCHEDULE,
       true
@@ -27,7 +30,7 @@ export class ArticleCron {
       try {
         await this._commandBus.execute<ProcessArticleScheduledCommand, void>(
           new ProcessArticleScheduledCommand({
-            beforeDate: new Date(),
+            beforeDate,
           })
         );
       } catch (err) {
