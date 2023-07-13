@@ -80,7 +80,8 @@ export class ProcessArticleScheduledHandler
       } catch (e) {
         row.setScheduleFailed();
         row.setErrorLog({
-          message: e.message,
+          message: e?.message,
+          code: e?.code,
           stack: JSON.stringify(e?.stack),
         });
         await this._contentRepository.update(row);
