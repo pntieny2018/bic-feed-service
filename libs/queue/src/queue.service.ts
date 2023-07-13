@@ -34,7 +34,7 @@ export class QueueService {
   }
 
   public async addQuizJob(data: any): Promise<void> {
-    const jobName: string = QUEUES.QUIZ_PENDING.JOB_NAME;
+    const jobName: string = QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING;
     await this._quizPendingQueue.add(jobName, data);
   }
 }
