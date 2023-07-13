@@ -174,6 +174,7 @@ export class ContentRepository implements IContentRepository {
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
       createdAt: postEntity.get('createdAt'),
+      publishedAt: postEntity.get('publishedAt'),
       scheduledAt: postEntity.get('scheduledAt'),
     };
   }
