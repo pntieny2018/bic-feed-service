@@ -11,7 +11,7 @@ export class QuizProcessor {
     private readonly _queryBus: QueryBus
   ) {}
 
-  @Process(QUEUES.QUIZ_PENDING.JOB_NAME)
+  @Process(QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING)
   public async postChanged(job: Job): Promise<void> {
     const { quizId } = job.data;
     await this._commandBus.execute<ProcessGenerationQuizCommand, void>(

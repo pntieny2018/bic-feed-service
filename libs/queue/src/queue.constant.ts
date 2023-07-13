@@ -1,6 +1,8 @@
 export const QUEUES = {
   QUIZ_PENDING: {
-    QUEUE_NAME: 'QUIZ_PENDING',
-    JOB_NAME: 'QUIZ_PENDING_JOB',
+    QUEUE_NAME: 'QuizPending',
+    JOBS: {
+      PROCESS_QUIZ_PENDING: 'ProcessQuizPending',
+    },
   },
 };

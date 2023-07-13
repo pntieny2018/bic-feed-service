@@ -2,7 +2,7 @@ import { TAG_QUERY_TOKEN } from '../domain/query-interface';
 import { QUIZ_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { TagQuery } from '../driven-adapter/query';
 import { QuizRepository } from '../driven-adapter/repository/quiz.repository';
-import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/quiz.domain-service.interface';
+import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
 import { QUIZ_FACTORY_TOKEN } from '../domain/factory/interface/quiz.factory.interface';
 import { QuizFactory } from '../domain/factory/quiz.factory';
@@ -18,7 +18,6 @@ import { QUIZ_BINDING_TOKEN } from '../application/binding/binding-quiz/quiz.int
 import { QuizBinding } from '../application/binding/binding-quiz/quiz.binding';
 import { ProcessGenerationQuizHandler } from '../application/command/process-generation-quiz/process-generation-quiz.handler';
 import { FindQuizHandler } from '../application/query/find-quiz/find-quiz.handler';
-import { QuizCreatedEvent } from '../domain/event/quiz-created.event';
 import {
   QuizCreatedEventHandler,
   QuizGeneratedEventHandler,

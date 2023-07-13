@@ -33,7 +33,6 @@ import { QuizController } from './driving-apdater/controller/quiz.controller';
 import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
 import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
 import { quizProvider } from './provider/quiz.provider';
-import { QuizConsumer } from './driving-apdater/consumer/quiz.consumer';
 import { QueueModule } from '@app/queue';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
 
@@ -63,7 +62,6 @@ import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor'
     PostConsumer,
     SeriesConsumer,
     ArticleConsumer,
-    QuizConsumer,
     SeriesController,
     QuizController,
   ],
