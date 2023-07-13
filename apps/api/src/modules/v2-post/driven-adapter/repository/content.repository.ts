@@ -776,7 +776,7 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit, order } = getPaginationContentsProps;
+    const { after, before, limit = this.LIMIT_DEFAULT, order } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this._getOrderContent(getPaginationContentsProps.orderOptions);
     const cursorColumns = orderBuilder?.map((order) => order[0]);
