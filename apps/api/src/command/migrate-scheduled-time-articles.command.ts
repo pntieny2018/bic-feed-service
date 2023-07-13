@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner } from 'nest-commander';
-import { PostModel, PostStatus, PostType } from '../database/models/post.model';
+import { PostModel, PostType } from '../database/models/post.model';
 
 @Command({
   name: 'migrate:scheduled-time-articles',
@@ -22,11 +22,10 @@ export class MigrateScheduledTimeArticlesCommand implements CommandRunner {
       const { schema } = getDatabaseConfig();
       const results = await this._postModel.sequelize.query(
         `UPDATE ${schema}.posts SET scheduled_at = published_at 
-          WHERE scheduled_at IS NULL AND published_at IS NOT NULL`,
+          WHERE type = :type AND scheduled_at IS NULL AND published_at IS NOT NULL`,
         {
           replacements: {
             type: PostType.ARTICLE,
-            status: PostStatus.WAITING_SCHEDULE,
           },
           type: QueryTypes.UPDATE,
         }
