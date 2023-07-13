@@ -25,6 +25,7 @@ export class PostMessagePayload {
   public mentionUserIds: string[];
   public createdAt: Date;
   public updatedAt: Date;
+  public publishedAt?: Date;
   public lang: string;
   public isHidden: boolean;
   public status: PostStatus;
