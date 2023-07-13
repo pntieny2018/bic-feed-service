@@ -129,7 +129,9 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
     if (
       this._props.questions.some((question) =>
-        question.answers.every((answer) => !answer.isCorrect)
+        question.answers.every((answer) => {
+          return answer.isCorrect === false;
+        })
       )
     ) {
       throw new DomainModelException(`Dont have correct answer`);
