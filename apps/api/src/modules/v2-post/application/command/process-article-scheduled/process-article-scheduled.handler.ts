@@ -52,7 +52,7 @@ export class ProcessArticleScheduledHandler
 
     if (isBoolean(hasNextPage) && hasNextPage === false) return;
 
-    const { rows, meta } = await this._contentDomainService.getScheduledContentPagination({
+    const { rows, meta } = await this._contentDomainService.getScheduledContent({
       ...payload,
       after: endCursor,
     });

@@ -66,7 +66,7 @@ export class ContentDomainService implements IContentDomainService {
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
   }
 
-  public async getScheduledContentPagination(
+  public async getScheduledContent(
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
     const { beforeDate } = input;

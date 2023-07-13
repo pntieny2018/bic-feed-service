@@ -34,7 +34,7 @@ export interface IContentDomainService {
   getDraftsPagination(
     data: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
-  getScheduledContentPagination(
+  getScheduledContent(
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
 }
