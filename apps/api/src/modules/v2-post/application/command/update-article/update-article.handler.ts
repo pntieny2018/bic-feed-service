@@ -62,7 +62,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
       throw new ContentNotFoundException();
     }
 
-    if (!articleEntity.isPublished()) throw new ContentNoPublishYetException();
+    if (articleEntity.isDraft()) throw new ContentNoPublishYetException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
 

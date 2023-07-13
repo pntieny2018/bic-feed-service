@@ -49,6 +49,9 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
       },
     });
     if (

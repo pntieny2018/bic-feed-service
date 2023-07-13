@@ -636,6 +636,32 @@ export class PostListener {
           this._logger.error(JSON.stringify(e?.stack));
           this._sentryService.captureException(e);
         });
+
+      const postActivity = this._postActivityService.createPayload({
+        title: null,
+        actor: post.actor,
+        content: post.content,
+        createdAt: post.createdAt,
+        setting: {
+          canComment: post.setting.canComment,
+          canReact: post.setting.canReact,
+          isImportant: post.setting.isImportant,
+        },
+        id: post.id,
+        audience: post.audience,
+        contentType: PostType.POST,
+        mentions: post.mentions as any,
+      });
+      this._notificationService.publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor: {
+            id: post.actor.id,
+          },
+          event: event.getEventName(),
+          data: postActivity,
+        },
+      });
     });
   }
 

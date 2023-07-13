@@ -135,7 +135,7 @@ export class PostDomainService implements IPostDomainService {
         videos,
       });
     }
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
@@ -205,7 +205,7 @@ export class PostDomainService implements IPostDomainService {
         videos,
       });
     }
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
