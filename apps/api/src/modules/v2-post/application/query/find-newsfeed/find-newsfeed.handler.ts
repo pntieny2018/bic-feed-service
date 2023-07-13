@@ -5,7 +5,7 @@ import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/re
 import { PostStatus } from '../../../data-type';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FindNewsfeedDto } from './find-newsfeed.dto';
-import { createCursor, getLimitFromAfter } from '../../../../../common/dto';
+import { OrderEnum } from '../../../../../common/dto';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -45,9 +45,8 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
   private async _getContentIdsInNewsfeed(
     query: FindNewsfeedQuery
   ): Promise<CursorPaginationResult<string>> {
-    const { isMine, type, isSaved, limit, isImportant, after, authUser } = query.payload;
-    const offset = getLimitFromAfter(after);
-    const rows = await this._contentRepository.findAll({
+    const { isMine, type, isSaved, limit, isImportant, after, before, authUser } = query.payload;
+    const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
         exclude: ['content'],
       },
@@ -67,23 +66,19 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
           userId: authUser.id,
         },
       },
-      offset,
-      limit: limit + 1,
-      order: {
+      limit,
+      order: OrderEnum.DESC,
+      orderOptions: {
         isImportantFirst: isImportant,
-        isPublishedAt: true,
+        isPublished: true,
       },
+      before,
+      after,
     });
 
-    const hasMore = rows.length > limit;
-
-    if (hasMore) rows.pop();
     return {
       rows: rows.map((row) => row.getId()),
-      meta: {
-        hasNextPage: hasMore,
-        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
-      },
+      meta,
     };
   }
 }
