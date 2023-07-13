@@ -110,7 +110,13 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
       throw new DomainModelException(`Quiz must have at least one question`);
     }
 
-    if (this._props.questions.some((question) => question.answers.length === 0)) {
+    if (this._props.questions.length === 0) {
+      throw new DomainModelException(`Quiz must have at least one question`);
+    }
+
+    if (
+      this._props.questions.some((question) => !question.answers || question.answers.length === 0)
+    ) {
       throw new DomainModelException(`Question must have at least one answer`);
     }
 
@@ -119,6 +125,14 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
     if (this._props.questions.some((question) => question.answers.some((answer) => !answer.id))) {
       throw new DomainModelException(`Answer ID is required`);
+    }
+
+    if (
+      this._props.questions.some((question) =>
+        question.answers.every((answer) => !answer.isCorrect)
+      )
+    ) {
+      throw new DomainModelException(`Dont have correct answer`);
     }
     this.validateNumberDisplay();
   }

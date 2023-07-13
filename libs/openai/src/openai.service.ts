@@ -49,7 +49,6 @@ export class OpenaiService implements IOpenaiService {
       numQuestion: props.numberOfQuestions,
       numAnswer: props.numberOfAnswers,
     });
-    console.log('messages', messages);
     const model = this._getModel(inputTokens + completionTokens);
     const openAIConfig = this._configService.get<IOpenAIConfig>('openai');
     const configuration = new Configuration({
@@ -63,7 +62,6 @@ export class OpenaiService implements IOpenaiService {
         messages,
         max_tokens: completionTokens,
       });
-      console.log('completion', JSON.stringify(completion.data));
       const questions = this._getQuestionFromText(completion.data.choices[0].message.content);
       return {
         usage: {
@@ -77,8 +75,7 @@ export class OpenaiService implements IOpenaiService {
         completion: completion.data,
       };
     } catch (e) {
-      console.log(e);
-      throw new Error(e.response.data.error.message);
+      throw e;
     }
   }
   private _getInputTokens(props: GenerateQuestionProps): number {

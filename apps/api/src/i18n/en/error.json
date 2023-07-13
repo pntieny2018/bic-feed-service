@@ -74,7 +74,8 @@
   },
   "quiz": {
     "not_found": "Quiz not found",
-    "no_crud_permission_at_group": "You don't have CUD permission at group {groups}"
+    "no_crud_permission_at_group": "You don't have CUD permission at group {groups}",
+    "generate_limited": "Generate quiz is limited request per minute"
   },
   "cursor_params_invalid": "Cursor params invalid"
 }

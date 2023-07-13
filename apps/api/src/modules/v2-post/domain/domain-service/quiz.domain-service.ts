@@ -19,6 +19,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { QuizCreatedEvent } from '../event/quiz-created.event';
 import { QuizGeneratedEvent } from '../event/quiz-generated.event';
 import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
+import { QuizGenerationLimitException } from '../exception/quiz-generation-limit.exception';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -140,12 +141,14 @@ export class QuizDomainService implements IQuizDomainService {
     } catch (e) {
       cloneQuizEntity.setFail({
         code: ERRORS.QUIZ.GENERATE_FAIL,
-        message: e.message,
+        message: e.response.data?.error?.message || '',
       });
       await this._quizRepository.update(cloneQuizEntity);
+      if (e.response?.status === 429) {
+        throw new QuizGenerationLimitException();
+      }
       return cloneQuizEntity;
     }
-    console.log('processed quiz id:', cloneQuizEntity.get('id'));
     await this._quizRepository.update(cloneQuizEntity);
     this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
     return cloneQuizEntity;

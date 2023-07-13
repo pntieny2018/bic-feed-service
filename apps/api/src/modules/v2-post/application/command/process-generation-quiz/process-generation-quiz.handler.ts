@@ -21,9 +21,7 @@ export class ProcessGenerationQuizHandler
   public async execute(command: ProcessGenerationQuizCommand): Promise<void> {
     const { quizId } = command.payload;
     const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
-    if (!quizEntity) {
-      throw new QuizNotFoundException();
-    }
+    if (!quizEntity) return;
     await this._quizDomainService.generateQuestions(quizEntity);
   }
 }

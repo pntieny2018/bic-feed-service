@@ -8,7 +8,7 @@ export class QuizNoCRUDPermissionAtGroupException extends DomainException {
     super(
       ERRORS.QUIZ.QUIZ_NO_CRUD_PERMISSION_AT_GROUP,
       message ||
-        i18n.t(`error.quiz.no_crud_permission_at_group`, {
+        i18n?.t(`error.quiz.no_crud_permission_at_group`, {
           args: { groups: groups.join(', ') },
         }),
       errors
