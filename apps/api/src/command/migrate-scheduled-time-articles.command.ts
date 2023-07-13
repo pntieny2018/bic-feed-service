@@ -22,8 +22,7 @@ export class MigrateScheduledTimeArticlesCommand implements CommandRunner {
       const { schema } = getDatabaseConfig();
       const results = await this._postModel.sequelize.query(
         `UPDATE ${schema}.posts SET scheduled_at = published_at 
-          WHERE type = :type AND status = :status 
-          AND scheduled_at IS NULL AND published_at IS NOT NULL`,
+          WHERE scheduled_at IS NULL AND published_at IS NOT NULL`,
         {
           replacements: {
             type: PostType.ARTICLE,
