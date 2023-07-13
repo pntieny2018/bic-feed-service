@@ -44,6 +44,12 @@
       ],
       "@app/openai/*": [
         "libs/openai/src/*"
+      ],
+      "@app/queue": [
+        "libs/queue/src"
+      ],
+      "@app/queue/*": [
+        "libs/queue/src/*"
       ]
     }
   },

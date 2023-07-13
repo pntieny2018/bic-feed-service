@@ -27,6 +27,7 @@ export const ERRORS = {
     CONTENT_NO_REACT_PERMISSION: 'content.no_react_permission',
   },
   QUIZ: {
+    GENERATE_LIMITED: 'quiz.generate_limited',
     QUIZ_NOT_FOUND: 'quiz.not_found',
     QUIZ_NO_CRUD_PERMISSION_AT_GROUP: 'quiz.no_crud_permission_at_group',
     OPENAI_EXCEPTION: 'quiz.openai_exception',
