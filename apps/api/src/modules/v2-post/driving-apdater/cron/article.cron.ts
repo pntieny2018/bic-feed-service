@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { CommandBus } from '@nestjs/cqrs';
 import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { CACHE_KEYS } from '../../../../common/constants';
+import { Injectable, Logger } from '@nestjs/common';
+import { CACHE_KEYS, CRON_RUN_SCHEDULED_ARTICLE } from '../../../../common/constants';
 import { ProcessArticleScheduledCommand } from '../../application/command/process-article-scheduled/process-article-scheduled.command';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class ArticleCron {
     private readonly _sentryService: SentryService
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CRON_RUN_SCHEDULED_ARTICLE)
   public async hanldeJobScheduledArticle(): Promise<void> {
     const canRunScheduleArticle = await this._redisService.setNxEx(
       CACHE_KEYS.IS_RUNNING_ARTICLE_SCHEDULE,
