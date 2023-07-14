@@ -110,6 +110,15 @@ export class ArticleAppService {
       excludeExtraneousValues: true,
     });
 
+    /**
+     * Temporarily set publish to backward compatible with mobile
+     */
+    result.forEach((article) => {
+      if (article.status === PostStatus.WAITING_SCHEDULE) {
+        article.publishedAt = article.scheduledAt;
+      }
+    });
+
     return new PageDto<ArticleResponseDto>(result, {
       limit,
       offset,

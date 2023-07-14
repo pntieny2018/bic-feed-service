@@ -194,7 +194,12 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: articleEntity.get('content'),
       createdAt: articleEntity.get('createdAt'),
-      publishedAt: articleEntity.get('publishedAt'),
+      /**
+       * Temporarily set publish to backward compatible with mobile
+       */
+      publishedAt: articleEntity.isWaitingSchedule()
+        ? articleEntity.get('scheduledAt')
+        : articleEntity.get('publishedAt'),
       scheduledAt: articleEntity.get('scheduledAt'),
       tags: (articleEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
