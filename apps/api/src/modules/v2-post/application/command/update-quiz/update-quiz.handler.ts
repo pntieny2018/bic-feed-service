@@ -24,25 +24,30 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface/content.domain-service.interface';
+import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../../binding/binding-quiz/quiz.interface';
 
 @CommandHandler(UpdateQuizCommand)
 export class UpdateQuizHandler implements ICommandHandler<UpdateQuizCommand, QuizDto> {
-  @Inject(CONTENT_REPOSITORY_TOKEN)
-  private readonly _contentRepository: IContentRepository;
-  @Inject(QUIZ_REPOSITORY_TOKEN)
-  private readonly _quizRepository: IQuizRepository;
-  @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
-  private readonly _quizDomainService: IQuizDomainService;
-  @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-  private readonly _contentDomainService: IContentDomainService;
-  @Inject(QUIZ_VALIDATOR_TOKEN)
-  private readonly _quizValidator: IQuizValidator;
-  @Inject(USER_APPLICATION_TOKEN)
-  private readonly _userAppService: IUserApplicationService;
-  @Inject(GROUP_APPLICATION_TOKEN)
-  private readonly _groupAppService: IGroupApplicationService;
-  @Inject(OPEN_AI_SERVICE_TOKEN)
-  private readonly _openaiService: IOpenaiService;
+  public constructor(
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(QUIZ_REPOSITORY_TOKEN)
+    private readonly _quizRepository: IQuizRepository,
+    @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
+    private readonly _quizDomainService: IQuizDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
+    @Inject(QUIZ_VALIDATOR_TOKEN)
+    private readonly _quizValidator: IQuizValidator,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
+    @Inject(OPEN_AI_SERVICE_TOKEN)
+    private readonly _openaiService: IOpenaiService,
+    @Inject(QUIZ_BINDING_TOKEN)
+    private readonly _quizBinding: IQuizBinding
+  ) {}
   public async execute(command: UpdateQuizCommand): Promise<QuizDto> {
     const { authUser, quizId, questions } = command.payload;
     const quizEntity = await this._quizRepository.findOne({
@@ -63,21 +68,7 @@ export class UpdateQuizHandler implements ICommandHandler<UpdateQuizCommand, Qui
       ...command.payload,
       questions,
     });
-
-    return new QuizDto({
-      id: quizEntityUpdated.get('id'),
-      contentId: quizEntityUpdated.get('contentId'),
-      status: quizEntityUpdated.get('status'),
-      title: quizEntityUpdated.get('title'),
-      description: quizEntityUpdated.get('description'),
-      numberOfQuestions: quizEntityUpdated.get('numberOfQuestions'),
-      numberOfQuestionsDisplay: quizEntityUpdated.get('numberOfQuestionsDisplay'),
-      numberOfAnswers: quizEntityUpdated.get('numberOfAnswers'),
-      numberOfAnswersDisplay: quizEntityUpdated.get('numberOfAnswersDisplay'),
-      isRandom: quizEntityUpdated.get('isRandom'),
-      questions: quizEntityUpdated.get('questions'),
-      createdAt: quizEntityUpdated.get('createdAt'),
-      updatedAt: quizEntityUpdated.get('updatedAt'),
-    });
+    console.log('quizEntityUpdated', JSON.stringify(quizEntityUpdated.get('questions'), null, 2));
+    return this._quizBinding.binding(quizEntityUpdated);
   }
 }
