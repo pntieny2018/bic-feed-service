@@ -103,6 +103,7 @@ export class QuizDomainService implements IQuizDomainService {
         message: 'Content not found',
       });
       await this._quizRepository.update(cloneQuizEntity);
+      this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
       return cloneQuizEntity;
     }
 
@@ -122,6 +123,7 @@ export class QuizDomainService implements IQuizDomainService {
           message: 'No questions generated',
         });
         await this._quizRepository.update(cloneQuizEntity);
+        this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
         return cloneQuizEntity;
       }
 
@@ -140,11 +142,10 @@ export class QuizDomainService implements IQuizDomainService {
         code: ERRORS.QUIZ.GENERATE_FAIL,
         message: e.response.data?.error?.message || '',
       });
-      await this._quizRepository.update(cloneQuizEntity);
+      /*await this._quizRepository.update(cloneQuizEntity);
       if (e.response?.status === 429) {
         throw new QuizGenerationLimitException();
-      }
-      return cloneQuizEntity;
+      }*/
     }
     await this._quizRepository.update(cloneQuizEntity);
     this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
