@@ -21,7 +21,8 @@
   "content": {
     "no_comment_permission": "Tính năng bình luận không có sẵn cho nội dung này",
     "no_crud_permission_at_group": "Tính năng thêm/xoá/sửa nội dung này không có sẵn trong group {groups}",
-    "no_edit_setting_permission_at_group": "Tính năng sửa nội dung này không có sẵn trong group {groups}"
+    "no_edit_setting_permission_at_group": "Tính năng sửa nội dung này không có sẵn trong group {groups}",
+    "limit_attached_series": "Nội dung chỉ có thể được đính kèm với tối đa {limit} sê-ri"
   },
   "comment": {
     "not_found": "Không tìm thấy bình luận",

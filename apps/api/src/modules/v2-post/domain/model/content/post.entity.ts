@@ -1,4 +1,5 @@
 import { ContentEntity, ContentProps } from './content.entity';
+import { RULES } from '../../../constant';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
 import { LinkPreviewEntity } from '../link-preview';
@@ -152,5 +153,9 @@ export class PostEntity extends ContentEntity<PostProps> {
       ...this._props.media,
       videos,
     };
+  }
+
+  public isOverLimtedToAttachSeries(): boolean {
+    return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
   }
 }

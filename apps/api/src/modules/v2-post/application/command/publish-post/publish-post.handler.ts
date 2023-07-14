@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { cloneDeep, uniq } from 'lodash';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   IPostDomainService,
@@ -17,7 +18,6 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
-import { cloneDeep } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
 
@@ -54,6 +54,13 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       throw new ContentNotFoundException();
     }
 
+    if (postEntity.isPublished()) {
+      return this._contentBinding.postBinding(postEntity, {
+        actor: authUser,
+        authUser,
+      });
+    }
+
     const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
       groupIds || postEntity.get('groupIds')
@@ -86,18 +93,33 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       authUser,
       mentionUsers,
     });
-    this._sendEvent(postEntityBefore, postEntity, result);
+    await this._sendEvent(postEntityBefore, postEntity, result);
 
     return result;
   }
 
-  private _sendEvent(
+  private async _sendEvent(
     postEntityBefore: PostEntity,
     postEntityAfter: PostEntity,
     result: PostDto
-  ): void {
+  ): Promise<void> {
     if (!postEntityAfter.isChanged()) return;
     if (postEntityAfter.isPublished()) {
+      const contentWithArchivedGroups = (await this._contentRepository.findOne({
+        where: {
+          id: postEntityAfter.getId(),
+          groupArchived: true,
+        },
+        include: {
+          shouldIncludeSeries: true,
+        },
+      })) as PostEntity;
+
+      const seriesIds = uniq([
+        ...postEntityAfter.getSeriesIds(),
+        ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
+      ]);
+
       const payload: PostChangedMessagePayload = {
         state: postEntityAfter.getState().isChangeStatus ? 'publish' : 'update',
         before: {
@@ -123,7 +145,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
           communityIds: result.communities.map((community) => community.id),
           tags: result.tags,
           media: result.media,
-          seriesIds: postEntityAfter.get('seriesIds'),
+          seriesIds,
           content: postEntityAfter.get('content'),
           mentionUserIds: postEntityAfter.get('mentionUserIds'),
           lang: postEntityAfter.get('lang'),

@@ -1,4 +1,5 @@
 import {
+  ARTICLE_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
@@ -8,6 +9,7 @@ import {
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
 import {
+  ARTICLE_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
@@ -48,6 +50,14 @@ import { ProcessReactionNotificationHandler } from '../application/command/proce
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
 import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
 import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
+import { ProcessArticlePublishedHandler } from '../application/command/process-article-published/process-article-published.handler';
+import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
+import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
+import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
+import { ArticleValidator } from '../domain/validator/article.validator';
+import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
+import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
+
 export const postProvider = [
   {
     provide: CONTENT_VALIDATOR_TOKEN,
@@ -56,6 +66,10 @@ export const postProvider = [
   {
     provide: POST_VALIDATOR_TOKEN,
     useClass: PostValidator,
+  },
+  {
+    provide: ARTICLE_VALIDATOR_TOKEN,
+    useClass: ArticleValidator,
   },
   {
     provide: POST_FACTORY_TOKEN,
@@ -76,6 +90,10 @@ export const postProvider = [
   {
     provide: SERIES_DOMAIN_SERVICE_TOKEN,
     useClass: SeriesDomainService,
+  },
+  {
+    provide: ARTICLE_DOMAIN_SERVICE_TOKEN,
+    useClass: ArticleDomainService,
   },
   {
     provide: CONTENT_REPOSITORY_TOKEN,
@@ -113,7 +131,12 @@ export const postProvider = [
   FindSeriesHandler,
   FindItemsBySeriesHandler,
   ProcessReactionNotificationHandler,
+  AutoSaveArticleHandler,
+  PublishArticleHandler,
+  UpdateArticleHandler,
   DeleteArticleHandler,
+  ProcessArticlePublishedHandler,
+  ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
 ];

@@ -1,4 +1,4 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
@@ -40,29 +40,33 @@ import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
+import { PostCategoryModel } from '../../../../database/models/post-category.model';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
-  @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
-  @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
-  @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
-  private _logger = new Logger(ContentRepository.name);
-  @InjectModel(PostModel)
-  private readonly _postModel: typeof PostModel;
-  @InjectModel(PostGroupModel)
-  private readonly _postGroupModel: typeof PostGroupModel;
-  @InjectModel(PostSeriesModel)
-  private readonly _postSeriesModel: typeof PostSeriesModel;
-  @InjectModel(PostTagModel)
-  private readonly _postTagModel: typeof PostTagModel;
-  @InjectModel(LinkPreviewModel)
-  private readonly _linkPreviewModel: typeof LinkPreviewModel;
-  @InjectModel(UserSeenPostModel)
-  private readonly _userSeenPostModel: typeof UserSeenPostModel;
-  @InjectModel(UserMarkReadPostModel)
-  private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel;
-
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
+  public constructor(
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize,
+    @Inject(POST_FACTORY_TOKEN)
+    private readonly _postFactory: IPostFactory,
+    @Inject(ARTICLE_FACTORY_TOKEN)
+    private readonly _articleFactory: IArticleFactory,
+    @Inject(SERIES_FACTORY_TOKEN)
+    private readonly _seriesFactory: ISeriesFactory,
+    @InjectModel(PostModel)
+    private readonly _postModel: typeof PostModel,
+    @InjectModel(PostGroupModel)
+    private readonly _postGroupModel: typeof PostGroupModel,
+    @InjectModel(PostSeriesModel)
+    private readonly _postSeriesModel: typeof PostSeriesModel,
+    @InjectModel(PostTagModel)
+    private readonly _postTagModel: typeof PostTagModel,
+    @InjectModel(PostCategoryModel)
+    private readonly _postCategoryModel: typeof PostCategoryModel,
+    @InjectModel(UserSeenPostModel)
+    private readonly _userSeenPostModel: typeof UserSeenPostModel,
+    @InjectModel(UserMarkReadPostModel)
+    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+  ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
@@ -98,7 +102,12 @@ export class ContentRepository implements IContentRepository {
       if (contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity) {
         await this._setSeries(contentEntity, transaction);
         await this._setTags(contentEntity, transaction);
+
+        if (contentEntity instanceof ArticleEntity) {
+          await this._setCategories(contentEntity, transaction);
+        }
       }
+
       await this._setGroups(contentEntity, transaction);
       await transaction.commit();
     } catch (error) {
@@ -213,6 +222,29 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
+  private async _setCategories(contentEntity: ArticleEntity, transaction): Promise<void> {
+    const state = contentEntity.getState();
+    if (state.attachCategoryIds.length > 0) {
+      await this._postCategoryModel.bulkCreate(
+        state.attachCategoryIds.map((categoryId) => ({
+          postId: contentEntity.getId(),
+          categoryId,
+        })),
+        { transaction, ignoreDuplicates: true }
+      );
+    }
+
+    if (state.detachCategoryIds.length > 0) {
+      await this._postCategoryModel.destroy({
+        where: {
+          postId: contentEntity.getId(),
+          categoryId: state.detachCategoryIds,
+        },
+        transaction,
+      });
+    }
+  }
+
   public async delete(id: string): Promise<void> {
     await this._postModel.destroy({ where: { id } });
   }
@@ -275,6 +307,7 @@ export class ContentRepository implements IContentRepository {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const userSavePostTable = UserSavePostModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
     const findOption: FindOptions<IPost> = {};
     findOption.where = this._getCondition(options).where;
     const includeAttr = [];
@@ -314,6 +347,13 @@ export class ContentRepository implements IContentRepository {
           as: 'postSeries',
           required: false,
           attributes: ['seriesId'],
+          where: isBoolean(options.where.groupArchived)
+            ? Sequelize.literal(
+                `EXISTS (
+                SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
+                  WHERE seriesGroups.post_id = "postSeries".series_id  AND seriesGroups.is_archived = ${options.where.groupArchived})`
+              )
+            : undefined,
         });
       }
 

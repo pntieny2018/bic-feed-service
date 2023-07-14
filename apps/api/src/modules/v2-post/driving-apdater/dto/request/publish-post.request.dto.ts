@@ -1,11 +1,10 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from '../../../../media/dto';
 import { UserMentionDto } from '../../../../mention/dto';
 import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
-import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
 import { MediaRequestDto } from './media.request.dto';
 
 export class PublishPostRequestDto {

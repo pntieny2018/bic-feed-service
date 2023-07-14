@@ -22,5 +22,5 @@ export interface ISeriesAddItemsPayload {
   itemIds: string[];
   actor: Partial<UserDto>;
   skipNotify?: boolean;
-  context: 'publish' | 'add'; // publish: when publish post,article or edit post, article; add when series add item
+  context: 'publish' | 'add'; // publish: when publish post,article edit post, article; add when series add item
 }
