@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner } from 'nest-commander';
-import { PostModel, PostType } from '../database/models/post.model';
+import { PostModel, PostStatus, PostType } from '../database/models/post.model';
 
 @Command({
   name: 'migrate:scheduled-time-articles',
@@ -21,7 +21,7 @@ export class MigrateScheduledTimeArticlesCommand implements CommandRunner {
     try {
       const { schema } = getDatabaseConfig();
       const results = await this._postModel.sequelize.query(
-        `UPDATE ${schema}.posts SET scheduled_at = published_at 
+        `UPDATE ${schema}.posts SET scheduled_at = published_at
           WHERE type = :type AND scheduled_at IS NULL AND published_at IS NOT NULL`,
         {
           replacements: {
@@ -31,6 +31,21 @@ export class MigrateScheduledTimeArticlesCommand implements CommandRunner {
         }
       );
       this._logger.log(`UPDATE ${results[1]}, ${results[1]} rows affected`);
+
+      const resultSetNull = await this._postModel.sequelize.query(
+        `UPDATE ${schema}.posts SET published_at = NULL 
+          WHERE type = :type AND (status = :failed OR status = :waiting)`,
+        {
+          replacements: {
+            type: PostType.ARTICLE,
+            failed: PostStatus.SCHEDULE_FAILED,
+            waiting: PostStatus.WAITING_SCHEDULE,
+          },
+          type: QueryTypes.UPDATE,
+        }
+      );
+
+      this._logger.log(`UPDATE ${resultSetNull[1]}, ${resultSetNull[1]} rows affected`);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
     }
