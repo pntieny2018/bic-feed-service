@@ -25,7 +25,7 @@ export class QuizBinding implements IQuizBinding {
         answers: question.answers.map((answer) => ({
           id: answer.id,
           answer: answer.answer,
-          isCorrect: answer.isCorrect || undefined,
+          isCorrect: answer.isCorrect,
         })),
       })),
       createdAt: entity.get('createdAt'),
