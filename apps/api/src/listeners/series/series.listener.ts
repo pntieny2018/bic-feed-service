@@ -54,6 +54,9 @@ export class SeriesListener {
     const itemsSorted = series.items.sort(
       (a, b) => a['PostSeriesModel'].zindex - b['PostSeriesModel'].zindex
     );
+    await this._postSearchService.updateSeriesAtrributeForPostSearch(
+      itemsSorted.map((item) => item.id)
+    );
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
     if (items.every((item) => item.createdBy === series.createdBy)) return;
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);

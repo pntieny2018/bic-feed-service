@@ -37,6 +37,7 @@ import {
   UpdateCommentCommandPayload,
 } from '../../application/command/update-comment/update-comment.command';
 import {
+  AccessDeniedException,
   CommentNotFoundException,
   CommentReplyNotExistException,
   ContentNoCRUDPermissionException,
@@ -166,6 +167,7 @@ export class CommentController {
         case ContentNotFoundException:
         case MentionUserNotFoundException:
           throw new NotFoundException(e);
+        case AccessDeniedException:
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
@@ -214,6 +216,7 @@ export class CommentController {
         case CommentReplyNotExistException:
         case MentionUserNotFoundException:
           throw new NotFoundException(e);
+        case AccessDeniedException:
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
@@ -260,6 +263,7 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentNotFoundException:
           throw new NotFoundException(e);
+        case AccessDeniedException:
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
         case ContentNoCRUDPermissionException:
@@ -297,6 +301,7 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentNotFoundException:
           throw new NotFoundException(e);
+        case AccessDeniedException:
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
         case ContentNoCRUDPermissionException:

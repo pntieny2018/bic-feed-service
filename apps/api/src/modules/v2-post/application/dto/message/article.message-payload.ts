@@ -26,6 +26,7 @@ export class ArticleMessagePayload {
   public coverMedia?: ImageDto;
   public tags: TagDto[];
   public seriesIds: string[];
+  public seriesActors?: string[];
   public content: string;
   public title: string;
   public summary: string;

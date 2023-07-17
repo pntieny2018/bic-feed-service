@@ -1,8 +1,10 @@
+import { TagEntity } from '../tag';
+import { RULES } from '../../../constant';
+import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
 import { ContentEntity, ContentProps } from './content.entity';
-import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
-import { TagEntity } from '../tag';
+import { UpdateArticleCommandPayload } from '../../../application/command/update-article/update-article.command';
 
 export type ArticleProps = ContentProps & {
   title: string;
@@ -19,23 +21,24 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
     super(props);
   }
 
-  public updateAttribute(data: PublishPostCommandPayload): void {
-    const { authUser, content, seriesIds, groupIds } = data;
-    super.update({
-      authUser,
-      groupIds,
-    });
+  /**
+   * Note: Summary can be empty string
+   */
+  public updateAttribute(data: UpdateArticleCommandPayload): void {
+    const { actor, content, series, title, summary, groupIds, wordCount } = data;
+    super.update({ authUser: actor, groupIds });
 
-    if (content) this._props.content = content;
-    if (seriesIds) {
-      this._state.attachSeriesIds = seriesIds.filter(
-        (seriesId) => !this._props.seriesIds?.includes(seriesId)
-      );
-      this._state.detachSeriesIds = this._props.seriesIds?.filter(
-        (seriesId) => !seriesIds.includes(seriesId)
-      );
-      this._props.seriesIds = seriesIds;
+    if (series) {
+      const currentSeries = this._props.seriesIds || [];
+      this._state.attachSeriesIds = difference(series, currentSeries);
+      this._state.detachSeriesIds = difference(currentSeries, series);
+      this._props.seriesIds = series;
     }
+
+    if (wordCount) this._props.wordCount = wordCount;
+    if (content) this._props.content = content;
+    if (title) this._props.title = title;
+    if (summary !== undefined) this._props.summary = summary;
   }
 
   public getSeriesIds(): string[] {
@@ -47,24 +50,41 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
   }
 
   public setCategories(categoryEntities: CategoryEntity[]): void {
+    const entityIds = (this._props.categories || []).map((category) => category.get('id'));
+    const newEntiyIds = (categoryEntities || []).map((category) => category.get('id'));
+
+    this._state.attachCategoryIds = difference(newEntiyIds, entityIds);
+    this._state.detachCategoryIds = difference(entityIds, newEntiyIds);
+
     this._props.categories = categoryEntities;
   }
 
   public setTags(newTags: TagEntity[]): void {
-    if (!newTags) return;
-    const entityTagIds = this._props.tags?.map((tag) => tag.get('id')) || [];
-    for (const tag of newTags) {
-      if (!entityTagIds.includes(tag.get('id'))) {
-        this._state.attachTagIds.push(tag.get('id'));
-      }
-    }
-
+    const entityTagIds = (this._props.tags || []).map((tag) => tag.get('id'));
     const newTagIds = newTags.map((tag) => tag.get('id'));
-    for (const tagId of entityTagIds) {
-      if (!newTagIds.includes(tagId)) {
-        this._state.detachTagIds.push(tagId);
-      }
-    }
+
+    this._state.attachTagIds = difference(newTagIds, entityTagIds);
+    this._state.detachTagIds = difference(entityTagIds, newTagIds);
+
     this._props.tags = newTags;
+  }
+
+  public setCover(coverMedia: ImageEntity): void {
+    this._props.cover = coverMedia;
+  }
+
+  public isValidArticleToPublish(): boolean {
+    return !(
+      (this.isPublished() || this.isWaitingSchedule()) &&
+      (isEmpty(this._props.content) ||
+        isEmpty(this._props.cover) ||
+        isEmpty(this._props.title) ||
+        isEmpty(this._props.categories) ||
+        isEmpty(this._props.groupIds))
+    );
+  }
+
+  public isOverLimtedToAttachSeries(): boolean {
+    return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
   }
 }
