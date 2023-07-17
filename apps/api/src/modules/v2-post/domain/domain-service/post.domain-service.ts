@@ -43,23 +43,26 @@ import { UserDto } from '../../../v2-user/application';
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
 
-  @Inject(CONTENT_REPOSITORY_TOKEN)
-  private readonly _contentRepository: IContentRepository;
-  @Inject(POST_FACTORY_TOKEN)
-  private readonly _postFactory: IPostFactory;
-  @Inject(ARTICLE_FACTORY_TOKEN)
-  private readonly _articleFactory: IArticleFactory;
-  @Inject(POST_VALIDATOR_TOKEN)
-  private readonly _postValidator: IPostValidator;
-  @Inject(CONTENT_VALIDATOR_TOKEN)
-  private readonly _contentValidator: IContentValidator;
-  @Inject(MENTION_VALIDATOR_TOKEN)
-  private readonly _mentionValidator: IMentionValidator;
-  @Inject(LINK_PREVIEW_DOMAIN_SERVICE_TOKEN)
-  private readonly _linkPreviewDomainService: ILinkPreviewDomainService;
-  @Inject(TAG_REPOSITORY_TOKEN)
-  private readonly _tagRepo: ITagRepository;
-  @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService;
+  public constructor(
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(POST_FACTORY_TOKEN)
+    private readonly _postFactory: IPostFactory,
+    @Inject(ARTICLE_FACTORY_TOKEN)
+    private readonly _articleFactory: IArticleFactory,
+    @Inject(POST_VALIDATOR_TOKEN)
+    private readonly _postValidator: IPostValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
+    @Inject(MENTION_VALIDATOR_TOKEN)
+    private readonly _mentionValidator: IMentionValidator,
+    @Inject(LINK_PREVIEW_DOMAIN_SERVICE_TOKEN)
+    private readonly _linkPreviewDomainService: ILinkPreviewDomainService,
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepo: ITagRepository,
+    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
+    private readonly _mediaDomainService: IMediaDomainService
+  ) {}
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
@@ -132,7 +135,7 @@ export class PostDomainService implements IPostDomainService {
         videos,
       });
     }
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
@@ -151,6 +154,9 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('groupIds')
     );
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+
+    await this._postValidator.validateLimtedToAttachSeries(postEntity);
+
     await this._contentValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),
@@ -199,7 +205,7 @@ export class PostDomainService implements IPostDomainService {
         videos,
       });
     }
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
@@ -215,6 +221,9 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('groupIds')
     );
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+
+    await this._postValidator.validateLimtedToAttachSeries(postEntity);
+
     await this._contentValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),

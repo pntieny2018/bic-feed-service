@@ -60,6 +60,12 @@ import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/resp
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import { RULES } from '../v2-post/constant';
+import { isBoolean } from 'lodash';
+import {
+  PostLimitAttachedSeriesException,
+  ArticleLimitAttachedSeriesException,
+} from '../v2-post/domain/exception';
 
 @Injectable()
 export class PostService {
@@ -748,7 +754,7 @@ export class PostService {
 
       const dataUpdate = {
         status: PostStatus.PUBLISHED,
-        createdAt: new Date(),
+        publishedAt: new Date(),
       };
       if (post.media.videos?.length > 0 && post.media.videos[0].status !== MediaStatus.COMPLETED) {
         dataUpdate['status'] = PostStatus.PROCESSING;
@@ -763,6 +769,7 @@ export class PostService {
         },
       });
       post.status = dataUpdate['status'];
+      post.publishedAt = dataUpdate['publishedAt'];
       if (post.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -1955,6 +1962,46 @@ export class PostService {
     } catch (ex) {
       this.logger.error(JSON.stringify(ex?.stack));
       this.sentryService.captureException(ex);
+    }
+  }
+
+  public async getPostsWithSeries(ids: string[], groupArchived?: boolean): Promise<IPost[]> {
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = PostGroupModel.tableName;
+    const include = [];
+    include.push({
+      model: PostSeriesModel,
+      required: false,
+      as: 'postSeries',
+      attributes: ['seriesId'],
+      where: isBoolean(groupArchived)
+        ? Sequelize.literal(
+            `EXISTS (
+                SELECT seriesGroups.post_id FROM ${schema}.${postGroupTableName} as seriesGroups
+                  WHERE seriesGroups.post_id = "postSeries".series_id  AND seriesGroups.is_archived = ${groupArchived})`
+          )
+        : undefined,
+    });
+    const result = await this.postModel.findAll({
+      include,
+      where: {
+        id: ids,
+      },
+    });
+
+    return result;
+  }
+
+  public async validateLimtedToAttachSeries(id: string): Promise<void> {
+    const post = (await this.getPostsWithSeries([id]))[0];
+    const isOverLimtedToAttachSeries = post.postSeries.length > RULES.LIMIT_ATTACHED_SERIES;
+
+    if (isOverLimtedToAttachSeries) {
+      if (post.type === PostType.POST)
+        throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      else {
+        throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
@@ -40,29 +40,33 @@ import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
+import { PostCategoryModel } from '../../../../database/models/post-category.model';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
-  @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
-  @Inject(ARTICLE_FACTORY_TOKEN) private readonly _articleFactory: IArticleFactory;
-  @Inject(SERIES_FACTORY_TOKEN) private readonly _seriesFactory: ISeriesFactory;
-  private _logger = new Logger(ContentRepository.name);
-  @InjectModel(PostModel)
-  private readonly _postModel: typeof PostModel;
-  @InjectModel(PostGroupModel)
-  private readonly _postGroupModel: typeof PostGroupModel;
-  @InjectModel(PostSeriesModel)
-  private readonly _postSeriesModel: typeof PostSeriesModel;
-  @InjectModel(PostTagModel)
-  private readonly _postTagModel: typeof PostTagModel;
-  @InjectModel(LinkPreviewModel)
-  private readonly _linkPreviewModel: typeof LinkPreviewModel;
-  @InjectModel(UserSeenPostModel)
-  private readonly _userSeenPostModel: typeof UserSeenPostModel;
-  @InjectModel(UserMarkReadPostModel)
-  private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel;
-
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
+  public constructor(
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize,
+    @Inject(POST_FACTORY_TOKEN)
+    private readonly _postFactory: IPostFactory,
+    @Inject(ARTICLE_FACTORY_TOKEN)
+    private readonly _articleFactory: IArticleFactory,
+    @Inject(SERIES_FACTORY_TOKEN)
+    private readonly _seriesFactory: ISeriesFactory,
+    @InjectModel(PostModel)
+    private readonly _postModel: typeof PostModel,
+    @InjectModel(PostGroupModel)
+    private readonly _postGroupModel: typeof PostGroupModel,
+    @InjectModel(PostSeriesModel)
+    private readonly _postSeriesModel: typeof PostSeriesModel,
+    @InjectModel(PostTagModel)
+    private readonly _postTagModel: typeof PostTagModel,
+    @InjectModel(PostCategoryModel)
+    private readonly _postCategoryModel: typeof PostCategoryModel,
+    @InjectModel(UserSeenPostModel)
+    private readonly _userSeenPostModel: typeof UserSeenPostModel,
+    @InjectModel(UserMarkReadPostModel)
+    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+  ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
@@ -98,7 +102,12 @@ export class ContentRepository implements IContentRepository {
       if (contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity) {
         await this._setSeries(contentEntity, transaction);
         await this._setTags(contentEntity, transaction);
+
+        if (contentEntity instanceof ArticleEntity) {
+          await this._setCategories(contentEntity, transaction);
+        }
       }
+
       await this._setGroups(contentEntity, transaction);
       await transaction.commit();
     } catch (error) {
@@ -141,6 +150,7 @@ export class ContentRepository implements IContentRepository {
       isReported: postEntity.get('isReported'),
       type: postEntity.get('type'),
       status: postEntity.get('status'),
+      errorLog: postEntity.get('errorLog'),
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
       isImportant: postEntity.get('setting')?.isImportant,
@@ -164,6 +174,8 @@ export class ContentRepository implements IContentRepository {
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
       createdAt: postEntity.get('createdAt'),
+      publishedAt: postEntity.get('publishedAt'),
+      scheduledAt: postEntity.get('scheduledAt'),
     };
   }
 
@@ -213,6 +225,29 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
+  private async _setCategories(contentEntity: ArticleEntity, transaction): Promise<void> {
+    const state = contentEntity.getState();
+    if (state.attachCategoryIds.length > 0) {
+      await this._postCategoryModel.bulkCreate(
+        state.attachCategoryIds.map((categoryId) => ({
+          postId: contentEntity.getId(),
+          categoryId,
+        })),
+        { transaction, ignoreDuplicates: true }
+      );
+    }
+
+    if (state.detachCategoryIds.length > 0) {
+      await this._postCategoryModel.destroy({
+        where: {
+          postId: contentEntity.getId(),
+          categoryId: state.detachCategoryIds,
+        },
+        transaction,
+      });
+    }
+  }
+
   public async delete(id: string): Promise<void> {
     await this._postModel.destroy({ where: { id } });
   }
@@ -230,9 +265,8 @@ export class ContentRepository implements IContentRepository {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const findOption = this._buildFindOptions(findAllPostOptions);
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
+    findOption.order = this._getOrderContent(findAllPostOptions.orderOptions);
     findOption.offset = findAllPostOptions.offset || 0;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }
@@ -241,9 +275,12 @@ export class ContentRepository implements IContentRepository {
     if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
+      order.push([this._sequelizeConnection.literal('"colImportant"'), OrderEnum.DESC]);
     }
-    order.push(['createdAt', 'desc']);
+    if (orderOptions.isPublished) {
+      order.push(['publishedAt', OrderEnum.DESC]);
+    }
+    order.push(['createdAt', OrderEnum.DESC]);
     return order;
   }
 
@@ -275,6 +312,7 @@ export class ContentRepository implements IContentRepository {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const userSavePostTable = UserSavePostModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
     const findOption: FindOptions<IPost> = {};
     findOption.where = this._getCondition(options).where;
     const includeAttr = [];
@@ -314,6 +352,13 @@ export class ContentRepository implements IContentRepository {
           as: 'postSeries',
           required: false,
           attributes: ['seriesId'],
+          where: isBoolean(options.where.groupArchived)
+            ? Sequelize.literal(
+                `EXISTS (
+                SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
+                  WHERE seriesGroups.post_id = "postSeries".series_id  AND seriesGroups.is_archived = ${options.where.groupArchived})`
+              )
+            : undefined,
         });
       }
 
@@ -404,12 +449,18 @@ export class ContentRepository implements IContentRepository {
       }
     }
 
-    if (subSelect.length) {
-      findOption.attributes = {
-        include: [...subSelect],
-      };
-    }
+    const { include = [], exclude = [] } = options.attributes || {};
+    findOption.attributes = {
+      ...((include.length || subSelect.length) && {
+        include: [...include, ...subSelect],
+      }),
+      ...(exclude.length && {
+        exclude,
+      }),
+    };
+
     if (includeAttr.length) findOption.include = includeAttr;
+
     return findOption;
   }
 
@@ -457,6 +508,12 @@ export class ContentRepository implements IContentRepository {
       if (isBoolean(options.where.isHidden)) {
         condition.push({
           isHidden: options.where.isHidden,
+        });
+      }
+
+      if (options.where.scheduledAt) {
+        condition.push({
+          scheduledAt: { [Op.lte]: options.where.scheduledAt },
         });
       }
 
@@ -607,7 +664,7 @@ export class ContentRepository implements IContentRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       content: post.content,
-      mentionUserIds: post.mentions,
+      mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
@@ -658,6 +715,7 @@ export class ContentRepository implements IContentRepository {
       updatedAt: post.updatedAt,
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
+      scheduledAt: post.scheduledAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
@@ -719,14 +777,16 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit } = getPaginationContentsProps;
+    const { after, before, limit = this.LIMIT_DEFAULT, order } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
-    findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
+    const orderBuilder = this._getOrderContent(getPaginationContentsProps.orderOptions);
+    const cursorColumns = orderBuilder?.map((order) => order[0]);
+
     const paginator = new CursorPaginator(
       this._postModel,
-      ['createdAt'],
+      cursorColumns || ['createdAt'],
       { before, after, limit },
-      OrderEnum.DESC
+      order
     );
     const { rows, meta } = await paginator.paginate(findOption);
 

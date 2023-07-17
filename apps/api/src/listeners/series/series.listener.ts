@@ -54,6 +54,9 @@ export class SeriesListener {
     const itemsSorted = series.items.sort(
       (a, b) => a['PostSeriesModel'].zindex - b['PostSeriesModel'].zindex
     );
+    await this._postSearchService.updateSeriesAtrributeForPostSearch(
+      itemsSorted.map((item) => item.id)
+    );
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
     if (items.every((item) => item.createdBy === series.createdBy)) return;
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
@@ -78,7 +81,17 @@ export class SeriesListener {
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
     this._logger.debug(`[onSeriesPublished] ${JSON.stringify(event.payload.series)}`);
     const { series, actor } = event.payload;
-    const { id, createdBy, audience, createdAt, updatedAt, title, summary, coverMedia } = series;
+    const {
+      id,
+      createdBy,
+      audience,
+      createdAt,
+      updatedAt,
+      publishedAt,
+      title,
+      summary,
+      coverMedia,
+    } = series;
     const groupIds = audience.groups.map((group) => group.id);
 
     this._postSearchService.addPostsToSearch([
@@ -86,6 +99,7 @@ export class SeriesListener {
         id,
         createdAt,
         updatedAt,
+        publishedAt,
         createdBy,
         title,
         summary,
@@ -158,10 +172,11 @@ export class SeriesListener {
     const { newSeries, oldSeries, actor } = event.payload;
     const {
       id,
-      createdBy,
-      updatedAt,
-      audience,
       createdAt,
+      updatedAt,
+      publishedAt,
+      createdBy,
+      audience,
       lang,
       summary,
       title,
@@ -178,6 +193,7 @@ export class SeriesListener {
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
         updatedAt,
+        publishedAt,
         createdBy,
         isHidden: false,
         lang,

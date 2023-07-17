@@ -7,7 +7,7 @@ export class CommentReplyNotExistException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.COMMENT.REPLY_NOT_EXIST,
-      message || i18n.t(`error.comment.reply_not_exist`),
+      message || i18n?.t(`error.comment.reply_not_exist`),
       errors
     );
   }

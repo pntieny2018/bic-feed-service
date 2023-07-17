@@ -7,7 +7,7 @@ export class PostNotOwnerException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.POST.POST_NO_UPDATE_PERMISSION,
-      message || i18n.t(`error.post.no_update_permission`)
+      message || i18n?.t(`error.post.no_update_permission`)
     );
   }
 }

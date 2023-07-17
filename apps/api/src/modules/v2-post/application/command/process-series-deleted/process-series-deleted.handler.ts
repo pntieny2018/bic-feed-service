@@ -12,6 +12,7 @@ import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { SeriesMessagePayload } from '../../dto/message/series.message-payload';
+import { SearchService } from '../../../../search/search.service';
 
 @CommandHandler(ProcessSeriesDeletedCommand)
 export class ProcessSeriesDeletedHandler
@@ -23,6 +24,7 @@ export class ProcessSeriesDeletedHandler
     private _sentryService: SentryService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
+    private readonly _postSearchService: SearchService,
     private readonly _notificationService: NotificationService //TODO improve interface later
   ) {}
 
@@ -34,15 +36,18 @@ export class ProcessSeriesDeletedHandler
     if (!itemIds || !itemIds.length) return;
 
     if (!isHidden) {
-      const items = await this._contentRepository.findAll({
+      const items = (await this._contentRepository.findAll({
         where: {
           ids: itemIds,
           groupArchived: false,
         },
         include: {
           shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
         },
-      });
+      })) as (PostEntity | ArticleEntity)[];
+
+      await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
 
       if (items.every((item) => item.isOwner(actor.id))) return;
 

@@ -238,7 +238,7 @@ export class ReportContentService {
     `;
 
     const orderAndPaginateQuery = `    
-       ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+       ORDER BY rc.published_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
        LIMIT :limit OFFSET :offset
     `;
 

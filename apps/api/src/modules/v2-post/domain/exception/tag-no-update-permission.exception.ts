@@ -5,6 +5,9 @@ import { ERRORS } from '../../../../common/constants/errors';
 export class TagNoUpdatePermissionException extends DomainException {
   public constructor(message?: string) {
     const i18n = I18nContext.current();
-    super(ERRORS.TAG.TAG_NO_UPDATE_PERMISSION, message || i18n.t(`error.tag.no_update_permission`));
+    super(
+      ERRORS.TAG.TAG_NO_UPDATE_PERMISSION,
+      message || i18n?.t(`error.tag.no_update_permission`)
+    );
   }
 }

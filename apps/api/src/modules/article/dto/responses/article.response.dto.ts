@@ -72,6 +72,13 @@ export class ArticleResponseDto extends PostResponseDto {
   @Expose()
   public publishedAt?: Date;
 
+  @ApiProperty({
+    type: Date,
+    name: 'scheduled_at',
+  })
+  @Expose()
+  public scheduledAt?: Date;
+
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);
   }

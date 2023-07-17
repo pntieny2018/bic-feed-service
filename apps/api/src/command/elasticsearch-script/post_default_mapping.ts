@@ -47,6 +47,9 @@ export const POST_DEFAULT_MAPPING = {
           },
         },
       },
+      seriesIds: {
+        type: 'keyword',
+      },
       items: {
         properties: {
           id: {
@@ -112,6 +115,9 @@ export const POST_DEFAULT_MAPPING = {
         type: 'date',
       },
       updatedAt: {
+        type: 'date',
+      },
+      publishedAt: {
         type: 'date',
       },
       createdBy: {

@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
@@ -33,6 +34,8 @@ import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
 import { ReactionService } from '../../reaction';
+import { RULES } from '../../v2-post/constant';
+import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
 
 @Injectable()
 export class ArticleAppService {
@@ -76,7 +79,7 @@ export class ArticleAppService {
     }
     const postsSorted = await this._postService.getPostsByFilter(condition, {
       sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
-        ? 'publishedAt'
+        ? 'scheduledAt'
         : 'createdAt',
       sortBy: order,
       limit: limit + 1,
@@ -105,6 +108,15 @@ export class ArticleAppService {
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
+    });
+
+    /**
+     * Temporarily set publish to backward compatible with mobile
+     */
+    result.forEach((article) => {
+      if (article.status === PostStatus.WAITING_SCHEDULE) {
+        article.publishedAt = article.scheduledAt;
+      }
     });
 
     return new PageDto<ArticleResponseDto>(result, {
@@ -241,6 +253,7 @@ export class ArticleAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+      await this.validateUpdateSeriesData(articleId, series);
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
@@ -268,6 +281,8 @@ export class ArticleAppService {
     const groupIds = audience.groups.map((group) => group.id);
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
+
+    await this._postService.validateLimtedToAttachSeries(article.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
@@ -414,5 +429,20 @@ export class ArticleAppService {
       });
     }
     return true;
+  }
+
+  public async validateUpdateSeriesData(articleId: string, series: string[]): Promise<void> {
+    if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
+    const article = (await this._postService.getPostsWithSeries([articleId], true))[0];
+    const seriesIds = article.postSeries.map((item) => item.seriesId);
+    const isOverLimtedToAttachSeries =
+      uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
+
+    if (isOverLimtedToAttachSeries) {
+      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
   }
 }

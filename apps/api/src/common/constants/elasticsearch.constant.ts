@@ -12,6 +12,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
     id: 'items.id',
     zindex: 'items.zindex',
   },
+  seriesIds: 'seriesIds',
   groupIds: 'groupIds',
   title: {
     default: 'title.default',
@@ -29,6 +30,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
   type: 'type',
   createdAt: 'createdAt',
   createdBy: 'createdBy',
+  publishedAt: 'publishedAt',
   media: 'media',
   coverMedia: 'coverMedia',
   linkPreview: 'linkPreview',

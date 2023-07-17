@@ -49,6 +49,9 @@ export const POST_ES_MAPPING = {
           },
         },
       },
+      seriesIds: {
+        type: 'keyword',
+      },
       tags: {
         properties: {
           id: {
@@ -102,6 +105,9 @@ export const POST_ES_MAPPING = {
         type: 'date',
       },
       updatedAt: {
+        type: 'date',
+      },
+      publishedAt: {
         type: 'date',
       },
       createdBy: {

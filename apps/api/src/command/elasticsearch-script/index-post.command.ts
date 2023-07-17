@@ -1,6 +1,7 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
+import { PostSeriesModel } from '../../database/models/post-series.model';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
@@ -44,12 +45,14 @@ export class IndexPostCommand implements CommandRunner {
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
+    @InjectModel(PostSeriesModel) private _postSeriesModel: typeof PostSeriesModel,
     private _configService: ConfigService,
     protected readonly elasticsearchService: ElasticsearchService,
     @InjectConnection() private _sequelizeConnection: Sequelize
   ) {}
 
-  public delay(time) {
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  public delay(time: any): Promise<unknown> {
     return new Promise((resolve) => setTimeout(resolve, time));
   }
 
@@ -78,7 +81,7 @@ export class IndexPostCommand implements CommandRunner {
 
     if (shouldUpdateIndex) {
       await this._deleteIndex();
-      console.log('updating index...');
+      this._logger.log('updating index...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_en_${currentDate}`, POST_EN_MAPPING);
@@ -90,7 +93,7 @@ export class IndexPostCommand implements CommandRunner {
 
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
-    //await this._deleteAllDocuments();
+    await this._deleteAllDocuments();
     await this._indexPost();
 
     process.exit();
@@ -102,10 +105,10 @@ export class IndexPostCommand implements CommandRunner {
         index: indexName,
         ...mapping,
       });
-      console.log('Created index ' + JSON.stringify(createIndexResult, null, 4));
+      this._logger.log('Created index ' + JSON.stringify(createIndexResult, null, 4));
       return true;
     } catch (e) {
-      console.log(e);
+      this._logger.error(JSON.stringify(e?.stack));
       return false;
     }
   }
@@ -114,7 +117,7 @@ export class IndexPostCommand implements CommandRunner {
       const deleteIndexResult = await this.elasticsearchService.indices.delete({
         index: indexName,
       });
-      console.log('Deleted index' + JSON.stringify(deleteIndexResult, null, 4));
+      this._logger.log('Deleted index' + JSON.stringify(deleteIndexResult, null, 4));
       return true;
     } catch (e) {
       return false;
@@ -122,7 +125,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _updateAlias(currentDefaultIndex, prevVersionDate, currentDate): Promise<void> {
-    console.log('Updating alias...');
+    this._logger.log('Updating alias...');
     const actionList: any = [
       {
         add: {
@@ -166,7 +169,7 @@ export class IndexPostCommand implements CommandRunner {
       actions: actionList,
     });
 
-    console.log('Updated alias: ', updateAliasResult);
+    this._logger.log('Updated alias: ', updateAliasResult);
   }
 
   private async _indexPost(): Promise<void> {
@@ -196,6 +199,7 @@ export class IndexPostCommand implements CommandRunner {
             communityIds,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
+            publishedAt: post.publishedAt,
             createdBy: post.createdBy,
           };
           const tagList = post.tagsJson ?? [];
@@ -208,6 +212,7 @@ export class IndexPostCommand implements CommandRunner {
             item.content = post.content;
             item.media = post.mediaJson;
             item.mentionUserIds = post.mentions;
+            item.seriesIds = post.postSeries.map((series) => series.seriesId);
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;
@@ -218,6 +223,7 @@ export class IndexPostCommand implements CommandRunner {
               id: category.id,
               name: category.name,
             }));
+            item.seriesIds = post.postSeries.map((series) => series.seriesId);
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
@@ -238,14 +244,14 @@ export class IndexPostCommand implements CommandRunner {
         updated += totalUpdated;
         offset = offset + limitEach;
         total += posts.length;
-        console.log(`Created ${totalCreated}/${posts.length}`);
-        console.log(`Updated ${totalUpdated}/${posts.length}`);
-        console.log('-----------------------------------');
+        this._logger.log(`Created ${totalCreated}/${posts.length}`);
+        this._logger.log(`Updated ${totalUpdated}/${posts.length}`);
+        this._logger.log('-----------------------------------');
         await this.delay(1000);
       }
     }
 
-    console.log(`Done. Total created: ${created} - total updated: ${updated} / ${total}`);
+    this._logger.log(`Done. Total created: ${created} - total updated: ${updated} / ${total}`);
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
@@ -285,6 +291,12 @@ export class IndexPostCommand implements CommandRunner {
           through: { attributes: [] },
           attributes: ['id', 'name'],
         },
+        {
+          model: PostSeriesModel,
+          as: 'postSeries',
+          required: false,
+          attributes: ['seriesId'],
+        },
         { model: LinkPreviewModel, as: 'linkPreview', required: false },
       ],
       where: {
@@ -293,7 +305,7 @@ export class IndexPostCommand implements CommandRunner {
       },
       offset,
       limit,
-      order: [['createdAt', 'desc']],
+      order: [['publishedAt', 'desc']],
     });
     return rows;
   }
@@ -304,13 +316,13 @@ export class IndexPostCommand implements CommandRunner {
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     await this.elasticsearchService.deleteByQuery({ index, body: { query: { match_all: {} } } });
-    console.log(`Deleted all documents`);
+    this._logger.log(`Deleted all documents`);
   }
 
   private async _deleteIndex(): Promise<void> {
     const index =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts*';
     await this.elasticsearchService.indices.delete({ index });
-    console.log(`Deleted Index`);
+    this._logger.log(`Deleted Index`);
   }
 }

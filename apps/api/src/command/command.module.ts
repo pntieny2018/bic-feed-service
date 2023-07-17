@@ -38,6 +38,9 @@ import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-important-post.command';
+import { FixContentPrivacyCommand } from './fix-content-privacy.command';
+import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
+import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
 
 @Module({
   imports: [
@@ -86,6 +89,9 @@ import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-importa
     MigrateWordCountCommand,
     MigrateArticlesContainErrorImageCommand,
     MigrateMarkReadImportantPostCommand,
+    FixContentPrivacyCommand,
+    MigrateScheduledTimeArticlesCommand,
+    MigratePublishedTimeContentCommand,
   ],
 })
 export class CommandModule {}

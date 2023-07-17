@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../../database';
 import { GroupModuleV2 } from '../v2-group/group.module';
@@ -25,6 +25,7 @@ import { PostConsumer } from './driving-apdater/consumer/post.consumer';
 import { MediaModule } from '../media';
 import { NotificationModule } from '../../notification';
 import { KafkaModule } from '@app/kafka';
+import { SearchModule } from '../search';
 import { SeriesController } from './driving-apdater/controller/series.controller';
 import { ContentController } from './driving-apdater/controller/content.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
@@ -42,6 +43,7 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
     UserModuleV2,
     MediaModule,
     KafkaModule,
+    forwardRef(() => SearchModule),
     NotificationModule,
   ],
   controllers: [

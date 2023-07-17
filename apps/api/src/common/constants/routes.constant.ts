@@ -1,5 +1,5 @@
 import { AppHelper } from '../helpers/app.helper';
-import { VERSION_1_3_0, VERSION_1_4_0, VERSION_1_5_0 } from './app.constant';
+import { VERSION_1_4_0, VERSION_1_5_0, VERSION_1_6_0, VERSION_1_7_0 } from './app.constant';
 
 export const ROUTES = {
   TAG: {
@@ -47,8 +47,24 @@ export const ROUTES = {
       PATH: '/articles',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_4_0),
     },
-    GET_DETAIL: {
+    UPDATE: {
       PATH: '/articles/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
+    },
+    AUTO_SAVE: {
+      PATH: '/articles/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
+    },
+    PUBLISH: {
+      PATH: '/articles/:id/publish',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
+    },
+    SCHEDULE: {
+      PATH: '/articles/:id/schedule',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_7_0),
+    },
+    GET_DETAIL: {
+      PATH: '/articles/:id([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_4_0),
     },
     DELETE: {

@@ -9,7 +9,7 @@ import {
 import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { MediaType } from '../../../../../database/models/media.model';
-import { PostHasBeenPublished, PostHasBeenUpdated } from '../../../../../common/constants';
+import { PostHasBeenUpdated } from '../../../../../common/constants';
 import { NotificationService } from '../../../../../notification';
 import { ISeriesState, PostActivityService } from '../../../../../notification/activities';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
@@ -61,7 +61,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
   }
 
   private async _processNotification(command: ProcessPostUpdatedCommand): Promise<void> {
-    const { before, after, state } = command.payload;
+    const { before, after } = command.payload;
 
     const series = await this._contentRepository.findAll({
       attributes: {

@@ -84,11 +84,15 @@ export class CursorPaginator<T extends Model> {
 
     const operator = this._getOperator();
 
-    return this._recursivelyGetPaginationQuery(cursors, this.cursorColumns, operator);
+    return this._recursivelyGetPaginationQuery(cursors, [...this.cursorColumns], operator);
   }
 
   private _encode(row: T): string {
-    const payload = this.cursorColumns.reduce((returnValue, column) => {
+    const attributes = Object.keys(this.modelClass.getAttributes());
+    const encodeColumn = this.cursorColumns.filter((column) =>
+      attributes.includes(column as string)
+    );
+    const payload = encodeColumn.reduce((returnValue, column) => {
       return {
         ...returnValue,
         [column]: row.getDataValue(column),
@@ -118,9 +122,6 @@ export class CursorPaginator<T extends Model> {
   private _isValidCursor(cursors: CursorParam): boolean {
     const cursorKeys = Object.keys(cursors);
     const attributes = Object.keys(this.modelClass.getAttributes());
-
-    if (cursorKeys.length !== this.cursorColumns.length) return false;
-
     return cursorKeys.every((column) => attributes.includes(column));
   }
 
@@ -129,23 +130,26 @@ export class CursorPaginator<T extends Model> {
     cursorColumns: (keyof Attributes<T>)[],
     operator: symbol
   ): WhereOptions {
-    if (cursorColumns.length === 1) {
+    const attributes = Object.keys(this.modelClass.getAttributes());
+    const encodeColumn = cursorColumns.filter((column) => attributes.includes(column as string));
+
+    if (encodeColumn.length === 1) {
       return {
-        [cursorColumns[0]]: {
-          [operator]: cursors[cursorColumns[0] as string],
+        [encodeColumn[0]]: {
+          [operator]: cursors[encodeColumn[0] as string],
         },
       };
     } else {
       return {
         [Op.or]: [
           {
-            [cursorColumns[0]]: {
-              [operator]: cursors[cursorColumns[0] as string],
+            [encodeColumn[0]]: {
+              [operator]: cursors[encodeColumn[0] as string],
             },
           },
           {
-            [cursorColumns[0]]: cursors[cursorColumns[0] as string],
-            ...this._recursivelyGetPaginationQuery(cursors, cursorColumns.slice(1), operator),
+            [encodeColumn[0]]: cursors[encodeColumn[0] as string],
+            ...this._recursivelyGetPaginationQuery(cursors, encodeColumn.slice(1), operator),
           },
         ],
       };

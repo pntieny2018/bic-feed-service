@@ -14,7 +14,7 @@ export class SearchConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after, state } = payload;
+    const { after, state } = payload;
     const {
       id,
       type,
@@ -23,10 +23,12 @@ export class SearchConsumer {
       mentionUserIds,
       groupIds,
       communityIds,
+      seriesIds,
       tags,
       actor,
       createdAt,
       updatedAt,
+      publishedAt,
       lang,
       isHidden,
     } = after;
@@ -42,10 +44,12 @@ export class SearchConsumer {
           mentionUserIds,
           groupIds,
           communityIds,
+          seriesIds,
           tags,
           createdBy: actor.id,
           createdAt,
           updatedAt,
+          publishedAt,
         },
       ]);
       return;
@@ -60,10 +64,12 @@ export class SearchConsumer {
         mentionUserIds,
         groupIds,
         communityIds,
+        seriesIds,
         tags,
         createdBy: actor.id,
         createdAt,
         updatedAt,
+        publishedAt,
         lang,
       },
     ]);
@@ -84,6 +90,7 @@ export class SearchConsumer {
       actor,
       createdAt,
       updatedAt,
+      publishedAt,
       lang,
       isHidden,
       coverMedia,
@@ -96,6 +103,7 @@ export class SearchConsumer {
             id,
             createdAt,
             updatedAt,
+            publishedAt,
             createdBy: actor.id,
             title,
             summary,
@@ -116,6 +124,7 @@ export class SearchConsumer {
             communityIds,
             createdAt,
             updatedAt,
+            publishedAt,
             createdBy: actor.id,
             isHidden,
             lang,
@@ -138,9 +147,73 @@ export class SearchConsumer {
   public async articleChanged(
     @Payload('value') payload: ArticleChangedMessagePayload
   ): Promise<void> {
-    const { before, state } = payload;
+    const { before, after, state } = payload;
+    const {
+      id,
+      type,
+      content,
+      title,
+      summary,
+      lang,
+      groupIds,
+      communityIds,
+      seriesIds,
+      actor,
+      createdAt,
+      updatedAt,
+      publishedAt,
+      isHidden,
+      coverMedia,
+      tags,
+      categories,
+    } = after || {};
 
     switch (state) {
+      case 'publish':
+        await this._postSearchService.addPostsToSearch([
+          {
+            id,
+            type,
+            content,
+            isHidden,
+            groupIds,
+            communityIds,
+            seriesIds,
+            createdBy: actor.id,
+            updatedAt,
+            createdAt,
+            publishedAt,
+            title,
+            summary,
+            coverMedia,
+            categories,
+            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
+          },
+        ]);
+        break;
+      case 'update':
+        await this._postSearchService.updatePostsToSearch([
+          {
+            id,
+            type,
+            content,
+            isHidden,
+            groupIds,
+            communityIds,
+            seriesIds,
+            createdBy: actor.id,
+            lang,
+            updatedAt,
+            createdAt,
+            publishedAt,
+            title,
+            summary,
+            coverMedia,
+            categories,
+            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
+          },
+        ]);
+        break;
       case 'delete':
         await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
         break;

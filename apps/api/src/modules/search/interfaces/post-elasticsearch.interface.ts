@@ -1,4 +1,4 @@
-import { MediaStatus, MediaType } from '../../../database/models/media.model';
+import { MediaType } from '../../../database/models/media.model';
 import { PostType } from '../../../database/models/post.model';
 
 export interface ICoverMedia {
@@ -20,8 +20,10 @@ export interface IPostElasticsearch {
   media: any;
   groupIds: string[];
   communityIds: string[];
+  seriesIds?: string[];
   createdAt: string;
   updatedAt: string;
+  publishedAt: Date;
   createdBy: string;
   mentionUserIds: string[];
   categories?: {
@@ -47,8 +49,10 @@ export interface IDataPostToAdd {
   id: string;
   groupIds: string[];
   communityIds: string[];
+  seriesIds?: string[];
   createdAt: Date;
   updatedAt: Date;
+  publishedAt: Date;
   createdBy: string;
   type: PostType;
   isHidden: boolean;

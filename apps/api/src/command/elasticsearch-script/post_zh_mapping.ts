@@ -39,6 +39,9 @@ export const POST_ZH_MAPPING = {
           },
         },
       },
+      seriesIds: {
+        type: 'keyword',
+      },
       tags: {
         properties: {
           id: {
@@ -92,6 +95,9 @@ export const POST_ZH_MAPPING = {
         type: 'date',
       },
       updatedAt: {
+        type: 'date',
+      },
+      publishedAt: {
         type: 'date',
       },
       createdBy: {

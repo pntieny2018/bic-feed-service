@@ -36,6 +36,9 @@ export const POST_JA_MAPPING = {
           },
         },
       },
+      seriesIds: {
+        type: 'keyword',
+      },
       items: {
         properties: {
           id: {
@@ -99,6 +102,9 @@ export const POST_JA_MAPPING = {
         type: 'date',
       },
       updatedAt: {
+        type: 'date',
+      },
+      publishedAt: {
         type: 'date',
       },
       createdBy: {
