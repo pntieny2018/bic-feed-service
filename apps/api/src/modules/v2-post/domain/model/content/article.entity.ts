@@ -33,10 +33,10 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
       this._props.seriesIds = series;
     }
 
+    if (wordCount) this._props.wordCount = wordCount;
     if (content) this._props.content = content;
     if (title) this._props.title = title;
-    if (summary) this._props.summary = summary;
-    if (wordCount) this._props.wordCount = wordCount;
+    if (summary !== undefined) this._props.summary = summary;
   }
 
   public setWaitingSchedule(scheduledAt: Date): void {
