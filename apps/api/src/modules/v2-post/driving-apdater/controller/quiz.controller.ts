@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -27,12 +28,13 @@ import {
   ContentNotFoundException,
   InvalidCursorParamsException,
   OpenAIException,
+  QuizNotFoundException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
 import { QuizDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception/quiz-no-crud-permission-at-group.exception';
+import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception';
 import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
 import { GenerateQuizRequestDto } from '../dto/request/generate-quiz.request.dto';
@@ -44,8 +46,8 @@ import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizze
 import { KafkaService } from '@app/kafka';
 import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
 import { Request } from 'express';
-import { PostStatus } from '../../../../database/models/post.model';
 import { QuizStatus } from '../../data-type';
+import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -143,6 +145,7 @@ export class QuizController {
       return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case QuizNotFoundException:
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case QuizNoCRUDPermissionAtGroupException:
@@ -185,6 +188,7 @@ export class QuizController {
       return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case QuizNotFoundException:
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case QuizNoCRUDPermissionAtGroupException:
@@ -220,17 +224,35 @@ export class QuizController {
     }
   }
 
-  @Put('send-event')
-  public async testSendEvent(): Promise<any> {
-    this._kafkaService.emit('dev.content_service.quiz_processed', {
-      contentId: '4fd4f2c0-a36c-4eb4-9b02-0cdc0e918718',
-      contentType: 'POST',
-      //title: null,
-      //content: 'Nơi có mật độ cá mập cao nhất thế giới',
-      quizId: '89a2ddea-3d37-4912-b459-47266763f645',
-      genStatus: 'FAILED',
-      //genStatus: 'PROCESSED',
-      createdBy: '0fa01fde-7c15-4d55-b60a-8e990123bc2e',
-    });
+  @ApiOperation({ summary: 'Delete a quiz' })
+  @ApiOkResponse({
+    type: CreateTagDto,
+    description: 'Delete quiz successfully',
+  })
+  @ResponseMessages({
+    success: 'message.quiz.deleted_success',
+  })
+  @Delete(ROUTES.QUIZ.DELETE.PATH)
+  @Version(ROUTES.QUIZ.DELETE.VERSIONS)
+  public async delete(
+    @Param('id', ParseUUIDPipe) quizId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
+        new DeleteQuizCommand({ quizId, authUser })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizNotFoundException:
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case QuizNoCRUDPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+        default:
+          throw e;
+      }
+    }
   }
 }

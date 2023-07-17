@@ -73,6 +73,10 @@ export const ROUTES = {
       PATH: '/quizzes/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    DELETE: {
+      PATH: '/quizzes/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
     GET_QUIZ_DETAIL: {
       PATH: '/quizzes/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),

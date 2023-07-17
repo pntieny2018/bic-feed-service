@@ -36,28 +36,10 @@ export class CreateQuizHandler implements ICommandHandler<CreateQuizCommand, Qui
     private readonly _quizBinding: IQuizBinding
   ) {}
   public async execute(command: CreateQuizCommand): Promise<QuizDto> {
-    const { authUser, contentId } = command.payload;
-
-    const contentEntity = await this._contentDomainService.getVisibleContent(contentId);
-    const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
-    await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
-    await this._checkContentHasQuiz(contentId);
-
     const quizEntity = await this._quizDomainService.create({
       ...command.payload,
     });
 
     return this._quizBinding.binding(quizEntity);
-  }
-
-  private async _checkContentHasQuiz(contentId: string): Promise<void> {
-    const publishedQuiz = await this._quizRepo.findAll({
-      where: {
-        contentId,
-      },
-    });
-    if (publishedQuiz.length > 0) {
-      throw new ContentHasQuizException();
-    }
   }
 }

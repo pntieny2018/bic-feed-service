@@ -49,26 +49,9 @@ export class UpdateQuizHandler implements ICommandHandler<UpdateQuizCommand, Qui
     private readonly _quizBinding: IQuizBinding
   ) {}
   public async execute(command: UpdateQuizCommand): Promise<QuizDto> {
-    const { authUser, quizId, questions } = command.payload;
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
-    });
-    if (!quizEntity) {
-      throw new QuizNotFoundException();
-    }
-    const contentEntity = await this._contentDomainService.getVisibleContent(
-      quizEntity.get('contentId')
-    );
-
-    const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
-    await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
-    const quizEntityUpdated = await this._quizDomainService.update(quizEntity, {
+    const quizEntityUpdated = await this._quizDomainService.update({
       ...command.payload,
-      questions,
     });
-    console.log('quizEntityUpdated', JSON.stringify(quizEntityUpdated.get('questions'), null, 2));
     return this._quizBinding.binding(quizEntityUpdated);
   }
 }

@@ -5,7 +5,9 @@ import { Inject, Logger } from '@nestjs/common';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   GetQuizDraftsProps,
+  IContentDomainService,
   IQuizDomainService,
   QuizCreateProps,
   QuizUpdateProps,
@@ -13,13 +15,15 @@ import {
 import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
-import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from './interface';
 import { ERRORS } from '../../../../common/constants/errors';
 import { EventBus } from '@nestjs/cqrs';
 import { QuizCreatedEvent } from '../event/quiz-created.event';
 import { QuizGeneratedEvent } from '../event/quiz-generated.event';
 import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
-import { QuizGenerationLimitException } from '../exception/quiz-generation-limit.exception';
+import { ContentHasQuizException, QuizNotFoundException } from '../exception';
+import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
+import { UserDto } from '../../../v2-user/application';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -32,10 +36,27 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _openaiService: IOpenaiService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
+    @Inject(QUIZ_VALIDATOR_TOKEN)
+    private readonly _quizValidator: IQuizValidator,
     private readonly event: EventBus
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
+    const { authUser, contentId } = input;
+
+    await this._quizValidator.checkCanCUDQuizInContent(contentId, authUser);
+
+    const quizEntitiesInContent = await this._quizRepository.findAll({
+      where: {
+        contentId,
+      },
+    });
+    if (quizEntitiesInContent.length > 0) {
+      throw new ContentHasQuizException();
+    }
+
     const quizEntity = this._quizFactory.create(input);
     try {
       await this._quizRepository.create(quizEntity);
@@ -48,16 +69,61 @@ export class QuizDomainService implements IQuizDomainService {
     return quizEntity;
   }
 
-  public async update(quizEntity: QuizEntity, input: QuizUpdateProps): Promise<QuizEntity> {
-    const newQuizEntity = cloneDeep(quizEntity);
-    newQuizEntity.updateAttribute(input);
+  public async update(input: QuizUpdateProps): Promise<QuizEntity> {
+    const { authUser, quizId } = input;
+
+    const quizEntity = await this._quizRepository.findOne({
+      where: {
+        id: quizId,
+      },
+    });
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    quizEntity.updateAttribute(input);
     try {
-      await this._quizRepository.update(newQuizEntity);
+      await this._quizRepository.update(quizEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-    return newQuizEntity;
+    return quizEntity;
+  }
+
+  public async getQuiz(quizId: string, authUser: UserDto): Promise<QuizEntity> {
+    const quizEntity = await this._quizRepository.findOne({
+      where: {
+        id: quizId,
+      },
+    });
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    return quizEntity;
+  }
+
+  public async delete(quizId: string, authUser: UserDto): Promise<void> {
+    const quizEntity = await this._quizRepository.findOne({
+      where: {
+        id: quizId,
+      },
+    });
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    try {
+      await this._quizRepository.delete(quizId);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
   }
 
   public async getDrafts(input: GetQuizDraftsProps): Promise<CursorPaginationResult<QuizEntity>> {
@@ -72,26 +138,28 @@ export class QuizDomainService implements IQuizDomainService {
     });
   }
 
-  public async reGenerate(quizEntity: QuizEntity): Promise<QuizEntity> {
-    const cloneQuizEntity = cloneDeep(quizEntity);
-    cloneQuizEntity.setPending();
+  public async reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity> {
+    const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    quizEntity.setPending();
     try {
-      await this._quizRepository.update(cloneQuizEntity);
+      await this._quizRepository.update(quizEntity);
       this.event.publish(new QuizRegenerateEvent(quizEntity.get('id')));
-      return cloneQuizEntity;
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
+
+    return quizEntity;
   }
 
-  public async generateQuestions(quizEntity: QuizEntity): Promise<QuizEntity> {
+  public async generateQuestions(quizEntity: QuizEntity): Promise<void> {
     const cloneQuizEntity = cloneDeep(quizEntity);
-    if (cloneQuizEntity.isProcessing()) {
-      cloneQuizEntity.setProcessing();
-      await this._quizRepository.update(cloneQuizEntity);
-      return cloneQuizEntity;
-    }
+    if (cloneQuizEntity.isProcessing()) return;
 
     const contentEntity = await this._contentDomainService.getVisibleContent(
       cloneQuizEntity.get('contentId')
@@ -104,7 +172,7 @@ export class QuizDomainService implements IQuizDomainService {
       });
       await this._quizRepository.update(cloneQuizEntity);
       this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
-      return cloneQuizEntity;
+      return;
     }
 
     try {
@@ -124,7 +192,7 @@ export class QuizDomainService implements IQuizDomainService {
         });
         await this._quizRepository.update(cloneQuizEntity);
         this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
-        return cloneQuizEntity;
+        return;
       }
 
       cloneQuizEntity.setProcessed();
@@ -149,6 +217,5 @@ export class QuizDomainService implements IQuizDomainService {
     }
     await this._quizRepository.update(cloneQuizEntity);
     this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
-    return cloneQuizEntity;
   }
 }

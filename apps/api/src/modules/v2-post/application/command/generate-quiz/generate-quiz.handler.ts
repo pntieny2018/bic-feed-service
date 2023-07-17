@@ -39,17 +39,7 @@ export class GenerateQuizHandler implements ICommandHandler<GenerateQuizCommand,
 
   public async execute(command: GenerateQuizCommand): Promise<QuizDto> {
     const { authUser, quizId } = command.payload;
-    const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
-    if (!quizEntity) {
-      throw new QuizNotFoundException();
-    }
-    const contentEntity = await this._contentDomainService.getVisibleContent(
-      quizEntity.get('contentId')
-    );
-
-    const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
-    await this._quizValidator.checkCanCUDQuizInGroups(authUser, groups);
-    const quizEntityUpdated = await this._quizDomainService.reGenerate(quizEntity);
+    const quizEntityUpdated = await this._quizDomainService.reGenerate(quizId, authUser);
 
     return this._quizBinding.binding(quizEntityUpdated);
   }
