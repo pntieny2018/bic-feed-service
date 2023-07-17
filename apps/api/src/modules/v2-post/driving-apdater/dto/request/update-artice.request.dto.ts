@@ -15,7 +15,7 @@ export class UpdateArticleRequestDto extends PublishPostRequestDto {
     type: String,
   })
   @IsOptional()
-  public summary?: string = null;
+  public summary?: string;
 
   @ApiPropertyOptional({
     type: [String],
