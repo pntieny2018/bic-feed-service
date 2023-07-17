@@ -113,12 +113,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.updated_success',
   })
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-  ])
+  @Version([VERSIONS_SUPPORTED[0]])
   @Put('/:id')
   @ResponseMessages({ success: 'Article updated' })
   @InjectUserToBody()
@@ -148,12 +143,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.published_success',
   })
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-  ])
+  @Version([VERSIONS_SUPPORTED[0]])
   @Put('/:id/publish')
   public async publish(
     @AuthUser() user: UserDto,
@@ -180,13 +170,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.scheduled_success',
   })
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-    VERSIONS_SUPPORTED[4],
-  ])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @Put('/:id/schedule')
   public async schedule(
     @AuthUser() user: UserDto,
