@@ -1,4 +1,3 @@
-import { uniq } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { ArticleDto } from '../../dto';
 import { isBoolean } from 'class-validator';
@@ -8,11 +7,7 @@ import {
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
 import { IPaginatedInfo, OrderEnum } from '../../../../../common/dto';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PublishArticleCommand } from '../publish-article/publish-article.command';
 import { ProcessArticleScheduledCommand } from './process-article-scheduled.command';
@@ -58,23 +53,16 @@ export class ProcessArticleScheduledHandler
     });
     if (!rows || rows.length === 0) return;
 
-    const userIds = uniq(rows.map((row) => row.getCreatedBy()));
-    const users = await this._userApplicationService.findAllByIds(userIds, {
-      withPermission: true,
-      withGroupJoined: true,
-    });
-    const usersMapper = new Map<string, UserDto>(
-      users.map((user) => {
-        return [user.id, user];
-      })
-    );
-
     for (const row of rows) {
       try {
+        const actor = await this._userApplicationService.findOne(row.getCreatedBy(), {
+          withPermission: true,
+          withGroupJoined: true,
+        });
         await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
           new PublishArticleCommand({
             id: row.getId(),
-            actor: usersMapper.get(row.getCreatedBy()),
+            actor,
           })
         );
       } catch (e) {

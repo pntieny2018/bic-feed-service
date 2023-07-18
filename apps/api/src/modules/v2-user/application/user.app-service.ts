@@ -1,10 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { UserEntity, UserProps } from '../domain/model/user';
 import {
+  FindByUsernameOption,
+  FindUserOption,
+  FindUsersOption,
+  IUserApplicationService,
+  UserDto,
+} from '.';
+import {
   IUserRepository,
   USER_REPOSITORY_TOKEN,
 } from '../domain/repositoty-interface/user.repository.interface';
-import { FindByUsernameOption, FindUserOption, IUserApplicationService, UserDto } from '.';
 
 export class UserApplicationService implements IUserApplicationService {
   public constructor(
@@ -36,12 +42,11 @@ export class UserApplicationService implements IUserApplicationService {
     return this._toDto(user, excluded);
   }
 
-  public async findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
+  public async findAllByIds(userIds: string[], options?: FindUsersOption): Promise<UserDto[]> {
     if (!userIds || userIds?.length === 0) return [];
     const rows = await this._repo.findAllByIds(userIds);
 
     const excluded = [];
-    if (!options?.withPermission) excluded.push('permissions');
     if (!options?.withGroupJoined) excluded.push('groups');
 
     return rows.map((row) => this._toDto(row, excluded));

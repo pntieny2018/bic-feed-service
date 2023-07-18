@@ -86,6 +86,8 @@ export class UserRepository implements IUserRepository {
   }
 
   public async findAllByIds(ids: string[]): Promise<UserEntity[]> {
+    if (!ids || !ids.length) return [];
+
     const uniqueIds = uniq(ids);
     let users = await this._getUsersFromCacheByIds(uniqueIds);
 
@@ -161,24 +163,7 @@ export class UserRepository implements IUserRepository {
   }
 
   private async _getUsersFromCacheByIds(ids: string[]): Promise<UserDataInCache[]> {
-    const result = [];
-    if (!ids || !ids.length) return result;
-
     const userCacheKeys = ids.map((id) => `${CACHE_KEYS.SHARE_USER}:${id}`);
-    const permissionCacheKeys = ids.map((id) => `${CACHE_KEYS.USER_PERMISSIONS}:${id}`);
-
-    const userGroups = await this._store.mget(userCacheKeys);
-    const userPermissions = await this._store.mget(permissionCacheKeys);
-
-    ids.forEach((id, index) => {
-      const user = userGroups[index];
-      const permissions = userPermissions[index];
-      if (user && permissions) {
-        user.permissions = permissions;
-        result.push(user);
-      }
-    });
-
-    return result;
+    return this._store.mget(userCacheKeys);
   }
 }
