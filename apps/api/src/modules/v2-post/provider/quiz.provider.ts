@@ -23,6 +23,7 @@ import {
   QuizGeneratedEventHandler,
   QuizRegenerateEventHandler,
 } from '../application/event-handler';
+import { DeleteQuizHandler } from '../application/command/delete-quiz/delete-quiz.handler';
 
 export const quizProvider = [
   {
@@ -63,4 +64,5 @@ export const quizProvider = [
   QuizCreatedEventHandler,
   QuizRegenerateEventHandler,
   QuizGeneratedEventHandler,
+  DeleteQuizHandler,
 ];
