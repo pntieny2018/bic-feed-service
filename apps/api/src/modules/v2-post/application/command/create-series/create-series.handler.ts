@@ -94,6 +94,7 @@ export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand,
           },
           createdAt: entity.get('createdAt'),
           updatedAt: entity.get('updatedAt'),
+          publishedAt: entity.get('publishedAt'),
         },
       };
 

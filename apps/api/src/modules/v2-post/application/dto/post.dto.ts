@@ -47,6 +47,7 @@ export class PostDto {
   }[];
   public createdAt: Date;
   public updatedAt: Date;
+  public publishedAt?: Date;
 
   public constructor(data: Partial<PostDto>) {
     Object.assign(this, data);

@@ -754,7 +754,7 @@ export class PostService {
 
       const dataUpdate = {
         status: PostStatus.PUBLISHED,
-        createdAt: new Date(),
+        publishedAt: new Date(),
       };
       if (post.media.videos?.length > 0 && post.media.videos[0].status !== MediaStatus.COMPLETED) {
         dataUpdate['status'] = PostStatus.PROCESSING;
@@ -769,6 +769,7 @@ export class PostService {
         },
       });
       post.status = dataUpdate['status'];
+      post.publishedAt = dataUpdate['publishedAt'];
       if (post.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {

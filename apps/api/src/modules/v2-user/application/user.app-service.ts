@@ -41,6 +41,15 @@ export class UserApplicationService implements IUserApplicationService {
   public async findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
     if (!userIds || userIds?.length === 0) return [];
     const rows = await this._repo.findAllByIds(userIds);
+
+    if (options && options.withPermission) {
+      const permissionsCached = await this._repo.getPermissionsByUserIds(userIds);
+      rows.forEach((row) => {
+        const permissions = permissionsCached[userIds.indexOf(row.get('id'))];
+        if (permissions) row.setPermissions(permissions);
+      });
+    }
+
     return rows.map((row) => {
       const user = this._toDto(row);
       if (!options?.withGroupJoined) {

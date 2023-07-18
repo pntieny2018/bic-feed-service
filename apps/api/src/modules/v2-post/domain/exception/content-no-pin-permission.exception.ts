@@ -7,7 +7,7 @@ export class ContentNoPinPermissionException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_NO_PIN_PERMISSION,
-      message || i18n.t(`error.content.no_pin_permission`),
+      message || i18n?.t(`error.content.no_pin_permission`),
       errors
     );
   }

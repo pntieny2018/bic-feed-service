@@ -7,7 +7,7 @@ export class SeriesNoReadPermissionException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.SERIES.SERIES_NO_READ_PERMISSION,
-      message || i18n.t(`error.series.no_read_permission`)
+      message || i18n?.t(`error.series.no_read_permission`)
     );
   }
 }

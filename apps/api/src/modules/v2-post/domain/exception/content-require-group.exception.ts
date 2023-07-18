@@ -7,7 +7,7 @@ export class ContentRequireGroupException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_GROUP_JOIN_REQUIRED,
-      message || i18n.t(`error.content.group_join_required`),
+      message || i18n?.t(`error.content.group_join_required`),
       errors
     );
   }

@@ -3,32 +3,38 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
+import { instanceToInstance } from 'class-transformer';
 import { UserDto } from '../../../v2-user/application';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
-import { ValidateSeriesTagDto } from '../dto/request';
+import { GetDraftContentsRequestDto, ValidateSeriesTagDto } from '../dto/request';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
 import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
+  InvalidCursorParamsException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
 import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
+import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
+import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -37,7 +43,38 @@ import { UpdateContentSettingCommand } from '../../application/command/update-co
   version: VERSIONS_SUPPORTED,
 })
 export class ContentController {
-  public constructor(private readonly _commandBus: CommandBus) {}
+  public constructor(
+    private readonly _commandBus: CommandBus,
+    private readonly _queryBus: QueryBus
+  ) {}
+
+  @ApiOperation({ summary: 'Get draft contents' })
+  @ApiOkResponse({
+    type: FindDraftContentsDto,
+  })
+  @ResponseMessages({
+    success: 'Get draft contents successfully',
+  })
+  @Get('/draft')
+  public async getDrafts(
+    @AuthUser() user: UserDto,
+    @Query() getListCommentsDto: GetDraftContentsRequestDto
+  ): Promise<FindDraftContentsDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindDraftContentsQuery({ authUser: user, ...getListCommentsDto })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
 
   @ApiOperation({ summary: 'Mark as read' })
   @ApiOkResponse({
