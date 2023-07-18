@@ -1,5 +1,6 @@
 import qs from 'qs';
-import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
+import { uniq } from 'lodash';
+import { AxiosHelper } from '../../../../common/helpers';
 import { UserBadge, UserEntity } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
 import { HttpService } from '@nestjs/axios';
@@ -41,10 +42,11 @@ export class UserRepository implements IUserRepository {
   ) {}
 
   public async findByUserName(username: string): Promise<UserEntity> {
+    if (!username) return null;
     try {
-      if (!username) return null;
-      let userWithGroups = await this.getUserDataFromCache(username);
-      if (!userWithGroups) {
+      const userProfile = await this._getUserProfileFromCache(username);
+      let user = await this._getUserFromCacheById(userProfile?.id);
+      if (!user) {
         const response = await lastValueFrom(
           this._httpService.get(
             AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.GET_USER, {
@@ -52,39 +54,18 @@ export class UserRepository implements IUserRepository {
             })
           )
         );
-        if (response.status !== HttpStatus.OK) {
-          return null;
-        }
-        userWithGroups = AxiosHelper.getDataResponse<UserDataInRest>(response);
+        if (response.status !== HttpStatus.OK) return null;
+        user = AxiosHelper.getDataResponse<UserDataInRest>(response);
       }
-      return new UserEntity(userWithGroups);
+      return new UserEntity(user);
     } catch (ex) {
       this._logger.debug(ex);
       return null;
     }
   }
 
-  private async getUserDataFromCache(username: string): Promise<UserDataInCache> {
-    const userCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
-    const user = await this._store.get<UserDataInCache>(userCacheKey);
-    let userWithGroups = null;
-    if (user) {
-      const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${user.id}`;
-      const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${user.id}`;
-      const [permissions, userGroups] = await this._store.mget([
-        permissionCacheKey,
-        userGroupCacheKey,
-      ]);
-      if (userGroups && permissions) {
-        userWithGroups = userGroups;
-        userWithGroups.permissions = permissions;
-      }
-    }
-    return userWithGroups;
-  }
-
   public async findOne(id: string): Promise<UserEntity> {
-    let user = await this._store.get<UserDataInCache>(`${CACHE_KEYS.SHARE_USER}:${id}`);
+    let user = await this._getUserFromCacheById(id);
     if (!user) {
       try {
         const response = await lastValueFrom(
@@ -95,27 +76,20 @@ export class UserRepository implements IUserRepository {
             paramsSerializer: (params) => qs.stringify(params),
           })
         );
-        if (response.status === HttpStatus.OK) {
-          user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
-        }
+        if (response.status !== HttpStatus.OK) return null;
+        user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
       } catch (e) {
         this._logger.debug(e);
-      }
-
-      if (!user) {
-        return null;
       }
     }
     return new UserEntity(user);
   }
 
   public async findAllByIds(ids: string[]): Promise<UserEntity[]> {
-    const keys = [...new Set(ArrayHelper.arrayUnique(ids.map((id) => id)))].map(
-      (userId) => `${CACHE_KEYS.SHARE_USER}:${userId}`
-    );
+    const uniqueIds = uniq(ids);
+    let users = await this._getUsersFromCacheByIds(uniqueIds);
 
-    let users = await this._store.mget(keys);
-    const notFoundUserIds = ids.filter((id) => !users.find((user) => user?.id === id));
+    const notFoundUserIds = uniqueIds.filter((id) => !users.find((user) => user?.id === id));
     try {
       if (notFoundUserIds.length > 0) {
         const response = await lastValueFrom(
@@ -143,22 +117,6 @@ export class UserRepository implements IUserRepository {
     return result;
   }
 
-  public async getPermissionsByUserId(userId: string): Promise<Permission> {
-    const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
-    const permissionCached = await this._store.get<Permission>(cacheKey);
-    if (permissionCached) return permissionCached;
-
-    return {
-      communities: {},
-      groups: {},
-    };
-  }
-
-  public async getPermissionsByUserIds(userIds: string[]): Promise<Permission[]> {
-    const cacheKeys = userIds.map((userId) => `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`);
-    return await this._store.mget(cacheKeys);
-  }
-
   /**
    * Note: Need to override domain to group endpoint. Change domain to user service soon
    */
@@ -179,5 +137,48 @@ export class UserRepository implements IUserRepository {
       this._logger.debug(e);
       return false;
     }
+  }
+
+  private async _getUserProfileFromCache(username: string): Promise<UserDataInCache> {
+    const profileCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
+    return this._store.get<UserDataInCache>(profileCacheKey);
+  }
+
+  private async _getUserFromCacheById(id: string): Promise<UserDataInCache> {
+    if (!id) return null;
+    let user = null;
+    const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${id}`;
+    const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${id}`;
+    const [permissions, userGroups] = await this._store.mget([
+      permissionCacheKey,
+      userGroupCacheKey,
+    ]);
+    if (userGroups && permissions) {
+      user = userGroups;
+      user.permissions = permissions;
+    }
+    return user;
+  }
+
+  private async _getUsersFromCacheByIds(ids: string[]): Promise<UserDataInCache[]> {
+    const result = [];
+    if (!ids || !ids.length) return result;
+
+    const userCacheKeys = ids.map((id) => `${CACHE_KEYS.SHARE_USER}:${id}`);
+    const permissionCacheKeys = ids.map((id) => `${CACHE_KEYS.USER_PERMISSIONS}:${id}`);
+
+    const userGroups = await this._store.mget(userCacheKeys);
+    const userPermissions = await this._store.mget(permissionCacheKeys);
+
+    ids.forEach((id, index) => {
+      const user = userGroups[index];
+      const permissions = userPermissions[index];
+      if (user && permissions) {
+        user.permissions = permissions;
+        result.push(user);
+      }
+    });
+
+    return result;
   }
 }
