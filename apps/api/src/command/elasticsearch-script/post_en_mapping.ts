@@ -111,6 +111,9 @@ export const POST_EN_MAPPING = {
       updatedAt: {
         type: 'date',
       },
+      publishedAt: {
+        type: 'date',
+      },
       createdBy: {
         type: 'keyword',
       },

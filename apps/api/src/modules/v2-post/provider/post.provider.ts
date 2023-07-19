@@ -10,11 +10,12 @@ import {
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
 import {
-  ARTICLE_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
+  ARTICLE_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
+import { ArticleCron } from '../driving-apdater/cron/article.cron';
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
@@ -59,8 +60,9 @@ import { PublishArticleHandler } from '../application/command/publish-article/pu
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
 import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
-
 import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
+import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
+import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
 
 export const postProvider = [
   {
@@ -115,6 +117,9 @@ export const postProvider = [
     provide: CONTENT_DOMAIN_SERVICE_TOKEN,
     useClass: ContentDomainService,
   },
+  /** CronService */
+  ArticleCron,
+
   /** Application */
   CreateDraftPostHandler,
   PublishPostHandler,
@@ -143,6 +148,8 @@ export const postProvider = [
   PublishArticleHandler,
   UpdateArticleHandler,
   DeleteArticleHandler,
+  ScheduleArticleHandler,
+  ProcessArticleScheduledHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,

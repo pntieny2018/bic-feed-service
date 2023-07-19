@@ -97,6 +97,7 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: postEntity.get('content'),
       createdAt: postEntity.get('createdAt'),
+      publishedAt: postEntity.get('publishedAt'),
       tags: (postEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -205,7 +206,13 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: articleEntity.get('content'),
       createdAt: articleEntity.get('createdAt'),
-      publishedAt: articleEntity.get('publishedAt'),
+      /**
+       * Temporarily set publish to backward compatible with mobile
+       */
+      publishedAt: articleEntity.isWaitingSchedule()
+        ? articleEntity.get('scheduledAt')
+        : articleEntity.get('publishedAt'),
+      scheduledAt: articleEntity.get('scheduledAt'),
       tags: (articleEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -305,6 +312,7 @@ export class ContentBinding implements IContentBinding {
             id: item.getId(),
             content: item.get('content'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             type: item.get('type'),
             actor: users.find((user) => user.id === item.get('createdBy')),
@@ -323,6 +331,7 @@ export class ContentBinding implements IContentBinding {
             summary: item.get('summary'),
             type: item.get('type'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             actor: users.find((user) => user.id === item.get('createdBy')),
             isSaved: item.get('isSaved'),
@@ -336,6 +345,7 @@ export class ContentBinding implements IContentBinding {
       }),
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
+      publishedAt: seriesEntity.get('publishedAt'),
       createdBy: seriesEntity.get('createdBy'),
       coverMedia: seriesEntity.get('cover')
         ? new ImageDto(seriesEntity.get('cover')?.toObject())
@@ -423,6 +433,7 @@ export class ContentBinding implements IContentBinding {
       },
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
+      publishedAt: entity.get('publishedAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -495,6 +506,7 @@ export class ContentBinding implements IContentBinding {
       },
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
+      publishedAt: entity.get('publishedAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -571,6 +583,7 @@ export class ContentBinding implements IContentBinding {
       summary: entity.get('summary'),
       createdAt: entity.get('createdAt'),
       updatedAt: entity.get('updatedAt'),
+      publishedAt: entity.get('publishedAt'),
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -584,6 +597,7 @@ export class ContentBinding implements IContentBinding {
             id: item.getId(),
             content: item.get('content'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             type: item.get('type'),
             media: {
@@ -600,6 +614,7 @@ export class ContentBinding implements IContentBinding {
             summary: item.get('summary'),
             type: item.get('type'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             coverMedia: item.get('cover') ? new ImageDto(item.get('cover').toObject()) : null,
           };

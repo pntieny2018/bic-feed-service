@@ -140,6 +140,7 @@ export class PostListener {
       audience,
       createdAt,
       updatedAt,
+      publishedAt,
       type,
       isHidden,
       tags,
@@ -203,6 +204,7 @@ export class PostListener {
         createdBy,
         createdAt,
         updatedAt,
+        publishedAt,
       },
     ]);
 
@@ -251,6 +253,7 @@ export class PostListener {
       lang,
       createdAt,
       updatedAt,
+      publishedAt,
       isHidden,
       tags,
     } = newPost;
@@ -337,6 +340,7 @@ export class PostListener {
         createdBy,
         createdAt,
         updatedAt,
+        publishedAt,
         lang,
       },
     ]);
@@ -480,10 +484,12 @@ export class PostListener {
     const posts = await this._postService.getsByMedia(videoId);
     const contentSeries = await this._postService.getPostsWithSeries(posts.map((post) => post.id));
     for (const post of posts) {
+      const publishedAt = new Date();
       try {
         await this._postService.updateData([post.id], {
           videoIdProcessing: null,
           status: PostStatus.PUBLISHED,
+          publishedAt,
           mediaJson: {
             videos: [
               {
@@ -571,6 +577,7 @@ export class PostListener {
           createdBy,
           createdAt,
           updatedAt,
+          publishedAt,
         },
       ]);
 

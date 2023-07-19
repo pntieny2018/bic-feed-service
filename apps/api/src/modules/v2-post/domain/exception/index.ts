@@ -43,3 +43,5 @@ export * from './openai.exception';
 export * from './quiz-no-crud-permission-at-group.exception';
 export * from './quiz-not-found.exception';
 export * from './content-has-quiz.exception';
+export * from './content-has-been-published.exception';
+export * from './article-invalid-scheduled-time.exception';
