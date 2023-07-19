@@ -8,7 +8,7 @@ import { CategoryFactory } from '../../../domain/factory';
 import { Sequelize } from 'sequelize-typescript';
 import { ICategoryRepository } from '../../../domain/repositoty-interface';
 import { CategoryEntity } from '../../../domain/model/category';
-import { categoryRecord, categoryRecords } from '../../mock/category.model.mock';
+import { categoryRecord } from '../../mock/category.model.mock';
 import { categoryEntityMock } from '../../mock/category.entity.mock';
 
 describe('CategoryRepository', () => {
