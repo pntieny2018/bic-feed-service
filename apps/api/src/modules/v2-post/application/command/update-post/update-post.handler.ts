@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { cloneDeep, uniq } from 'lodash';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   IPostDomainService,
@@ -11,7 +12,7 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { ContentNotFoundException } from '../../../domain/exception';
+import { ContentNoPublishYetException, ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
@@ -19,7 +20,6 @@ import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { MediaService } from '../../../../media';
-import { cloneDeep } from 'lodash';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
 
@@ -49,16 +49,21 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
       },
     });
     if (
       !postEntity ||
       postEntity.isHidden() ||
       !(postEntity instanceof PostEntity) ||
-      (postEntity.isPublished() && !postEntity.getGroupIds()?.length)
+      postEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
     }
+
+    if (!postEntity.isPublished()) throw new ContentNoPublishYetException();
 
     const postEntityBefore = cloneDeep(postEntity);
     const groups = await this._groupApplicationService.findAllByIds(
@@ -89,18 +94,33 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       mentionUsers,
     });
 
-    this._sendEvent(postEntityBefore, postEntity, result);
+    await this._sendEvent(postEntityBefore, postEntity, result);
 
     return result;
   }
 
-  private _sendEvent(
+  private async _sendEvent(
     postEntityBefore: PostEntity,
     postEntityAfter: PostEntity,
     result: PostDto
-  ): void {
+  ): Promise<void> {
     if (!postEntityAfter.isChanged()) return;
     if (postEntityAfter.isPublished()) {
+      const contentWithArchivedGroups = (await this._contentRepository.findOne({
+        where: {
+          id: postEntityAfter.getId(),
+          groupArchived: true,
+        },
+        include: {
+          shouldIncludeSeries: true,
+        },
+      })) as PostEntity;
+
+      const seriesIds = uniq([
+        ...postEntityAfter.getSeriesIds(),
+        ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
+      ]);
+
       const payload: PostChangedMessagePayload = {
         state: 'update',
         before: {
@@ -126,7 +146,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
           communityIds: result.communities.map((community) => community.id),
           tags: result.tags,
           media: result.media,
-          seriesIds: postEntityAfter.get('seriesIds'),
+          seriesIds,
           content: postEntityAfter.get('content'),
           mentionUserIds: postEntityAfter.get('mentionUserIds'),
           lang: postEntityAfter.get('lang'),

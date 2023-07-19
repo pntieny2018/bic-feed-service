@@ -49,6 +49,9 @@ export const POST_RU_MAPPING = {
           },
         },
       },
+      seriesIds: {
+        type: 'keyword',
+      },
       tags: {
         properties: {
           id: {

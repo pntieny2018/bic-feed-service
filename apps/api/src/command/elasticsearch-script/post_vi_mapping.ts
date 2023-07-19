@@ -44,6 +44,9 @@ export const POST_VI_MAPPING = {
           },
         },
       },
+      seriesIds: {
+        type: 'keyword',
+      },
       tags: {
         properties: {
           id: {

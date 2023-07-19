@@ -100,6 +100,21 @@ export class SearchPostsDto extends PageOptionsDto {
   @ValidateIf((i) => i.type !== '')
   public type?: PostType;
 
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    name: 'limit_series',
+  })
+  @Transform(({ value }) => value == 'true')
+  @Expose({
+    name: 'limit_series',
+  })
+  @IsOptional()
+  @IsBoolean()
+  public limitSeries?: boolean;
+
   public notIncludeIds?: string[];
+
   public tagId?: string;
 }

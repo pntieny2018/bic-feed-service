@@ -20,6 +20,7 @@ export interface IPostElasticsearch {
   media: any;
   groupIds: string[];
   communityIds: string[];
+  seriesIds?: string[];
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -47,6 +48,7 @@ export interface IDataPostToAdd {
   id: string;
   groupIds: string[];
   communityIds: string[];
+  seriesIds?: string[];
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
