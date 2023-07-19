@@ -68,4 +68,30 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
+  QUIZ: {
+    GET_DRAFT: {
+      PATH: '/quizzes/draft',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    CREATE: {
+      PATH: '/quizzes',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GENERATE: {
+      PATH: '/quizzes/:id/generate',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    UPDATE: {
+      PATH: '/quizzes/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    DELETE: {
+      PATH: '/quizzes/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_QUIZ_DETAIL: {
+      PATH: '/quizzes/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+  },
 };

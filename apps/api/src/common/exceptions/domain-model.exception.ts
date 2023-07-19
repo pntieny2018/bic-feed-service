@@ -7,7 +7,7 @@ export class DomainModelException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.DOMAIN_MODEL_VALIDATION,
-      message || i18n.t('error.common.domain_model_validation')
+      message || i18n?.t('error.common.domain_model_validation')
     );
   }
 }
