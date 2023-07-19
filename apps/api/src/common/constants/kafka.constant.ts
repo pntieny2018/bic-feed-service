@@ -24,6 +24,7 @@ export const KAFKA_TOPIC = {
   },
   CONTENT: {
     POST_CHANGED: `${process.env.KAFKA_ENV}.content_service.post_changed`,
+    QUIZ_PROCESSED: `${process.env.KAFKA_ENV}.content_service.quiz_processed`,
     POST_AUTO_SAVE: `${process.env.KAFKA_ENV}.content_service.post_auto_save`,
     ARTICLE_CHANGED: `${process.env.KAFKA_ENV}.content_service.article_changed`,
     SERIES_CHANGED: `${process.env.KAFKA_ENV}.content_service.series_changed`,

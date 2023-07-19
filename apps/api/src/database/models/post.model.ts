@@ -9,6 +9,7 @@ import {
   Default,
   DeletedAt,
   HasMany,
+  HasOne,
   Model,
   PrimaryKey,
   Sequelize,
@@ -19,7 +20,6 @@ import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
 import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
-import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
@@ -37,6 +37,7 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
+import { QuizModel } from './quiz.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -101,6 +102,7 @@ export interface IPost {
   items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
+  quiz?: QuizModel;
   publishedAt?: Date;
   errorLog?: any;
   mediaJson?: any;
@@ -272,6 +274,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: IPost[];
+
+  @HasOne(() => QuizModel, {
+    foreignKey: 'contentId',
+  })
+  public quiz?: QuizModel;
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 

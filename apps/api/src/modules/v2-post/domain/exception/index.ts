@@ -39,3 +39,7 @@ export * from './content-empty.exception';
 export * from './access-denied.exception';
 export * from './article-limit-attached-series';
 export * from './post-limit-attached-series';
+export * from './openai.exception';
+export * from './quiz-no-crud-permission-at-group.exception';
+export * from './quiz-not-found.exception';
+export * from './content-has-quiz.exception';

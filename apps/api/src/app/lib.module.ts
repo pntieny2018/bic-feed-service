@@ -17,6 +17,7 @@ import { IKafkaConfig } from '../config/kafka';
 import { KAFKA_PRODUCER } from '../common/constants';
 import { ExternalService } from './external.service';
 import { DomainEventModule } from '@beincom/nest-domain-event';
+import { OpenaiModule } from '@app/openai';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -131,6 +132,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     }),
     InternalEventEmitterModule,
     DomainEventModule,
+    OpenaiModule,
   ],
   providers: [ExternalService],
   exports: [ElasticsearchModule, ClientsModule, ExternalService],

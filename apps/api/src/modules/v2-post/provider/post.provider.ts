@@ -1,4 +1,5 @@
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
@@ -17,6 +18,7 @@ import {
 import { ContentValidator } from '../domain/validator/content.validator';
 import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
+import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { CreateDraftPostHandler } from '../application/command/create-draft-post/create-draft-post.handler';
@@ -57,6 +59,8 @@ import { PublishArticleHandler } from '../application/command/publish-article/pu
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
 import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
+
+import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
 
 export const postProvider = [
   {
@@ -107,6 +111,10 @@ export const postProvider = [
     provide: MENTION_VALIDATOR_TOKEN,
     useClass: MentionValidator,
   },
+  {
+    provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+    useClass: ContentDomainService,
+  },
   /** Application */
   CreateDraftPostHandler,
   PublishPostHandler,
@@ -139,4 +147,5 @@ export const postProvider = [
   ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
+  FindDraftContentsHandler,
 ];
