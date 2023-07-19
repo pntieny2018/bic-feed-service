@@ -18,6 +18,15 @@ export type GetContentByIdsProps = {
   authUser?: UserDto;
   ids: string[];
 };
+
+export type GetScheduledContentProps = {
+  limit: number;
+  order: OrderEnum;
+  before?: string;
+  after?: string;
+  beforeDate: Date;
+};
+
 export interface IContentDomainService {
   getVisibleContent(id: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
@@ -26,6 +35,9 @@ export interface IContentDomainService {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   getDraftsPagination(
     data: GetDraftsProps
+  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getScheduledContent(
+    input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

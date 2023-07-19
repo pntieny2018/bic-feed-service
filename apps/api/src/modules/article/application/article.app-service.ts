@@ -79,7 +79,7 @@ export class ArticleAppService {
     }
     const postsSorted = await this._postService.getPostsByFilter(condition, {
       sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
-        ? 'publishedAt'
+        ? 'scheduledAt'
         : 'createdAt',
       sortBy: order,
       limit: limit + 1,
@@ -108,6 +108,15 @@ export class ArticleAppService {
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
+    });
+
+    /**
+     * Temporarily set publish to backward compatible with mobile
+     */
+    result.forEach((article) => {
+      if (article.status === PostStatus.WAITING_SCHEDULE) {
+        article.publishedAt = article.scheduledAt;
+      }
     });
 
     return new PageDto<ArticleResponseDto>(result, {
