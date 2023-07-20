@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { QueryTypes, Transaction } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
 import {
   CommentReactionModel,
