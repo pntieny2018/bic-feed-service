@@ -1,7 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { QuizNotFoundException } from '../../../domain/exception';
 import { ProcessGenerationQuizCommand } from './process-generation-quiz.command';
 import {
   IQuizDomainService,
