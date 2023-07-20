@@ -1,10 +1,7 @@
 import { Test } from '@nestjs/testing';
-import { Transaction } from 'sequelize';
+import { QueryTypes, Transaction, TransactionOptions } from 'sequelize';
 import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
-import {
-  CommentReactionModel,
-  ICommentReaction,
-} from '../../../../../database/models/comment-reaction.model';
+import { CommentReactionModel } from '../../../../../database/models/comment-reaction.model';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
@@ -13,27 +10,15 @@ import { createMock } from '@golevelup/ts-jest';
 import { ReactionFactory } from '../../../domain/factory/interface/reaction.factory';
 import { getModelToken } from '@nestjs/sequelize';
 import {
-  FindOneCommentReactionProps,
   FindOnePostReactionProps,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
-import { ReactionEntity } from '../../../domain/model/reaction';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
 import { Sequelize } from 'sequelize-typescript';
-
-const commentReactionRecord: ICommentReaction = {
-  id: '7b63852c-5249-499a-a32b-6bdaa2761fc1',
-  commentId: '7b63852c-5249-499a-a32b-6bdaa2761fc3',
-  reactionName: 'bic_check_mark',
-  createdBy: '7b63852c-5249-499a-a32b-6bdaa2761fc2',
-  createdAt: new Date(),
-};
-
-const commentReactionEntity = new ReactionEntity({
-  ...commentReactionRecord,
-  target: REACTION_TARGET.COMMENT,
-  targetId: commentReactionRecord.commentId,
-});
+import { getDatabaseConfig } from '../../../../../config/database';
+import {
+  commentReactionEntity,
+  commentReactionRecord,
+} from '../../mock/comment-reaction.entity.mock';
 
 const transaction = createMock<Transaction>();
 
@@ -65,7 +50,6 @@ describe('CommentReactionRepository', () => {
     commentReactionRepository = moduleRef.get<CommentReactionRepository>(CommentReactionRepository);
     reactionFactoryMock = moduleRef.get<IReactionFactory>(REACTION_FACTORY_TOKEN);
     commentReactionModel = moduleRef.get<CommentReactionModel>(getModelToken(CommentReactionModel));
-
     sequelizeConnection = moduleRef.get<Sequelize>(Sequelize);
     sequelizeConnection.transaction.mockResolvedValue(transaction);
   });
@@ -74,36 +58,46 @@ describe('CommentReactionRepository', () => {
     jest.clearAllMocks();
   });
 
-  it('should findOne return a ReactionEntity', async () => {
-    const findOption: FindOnePostReactionProps = {
-      postId: commentReactionEntity.get('targetId'),
-    };
-    jest
-      .spyOn(commentReactionModel, 'findOne')
-      .mockResolvedValue({ toJSON: () => commentReactionEntity });
-    jest.spyOn(reactionFactoryMock, 'reconstitute').mockResolvedValue(commentReactionEntity);
+  describe('findOne', () => {
+    it('should findOne return a ReactionEntity', async () => {
+      const findOption: FindOnePostReactionProps = {
+        postId: commentReactionEntity.get('targetId'),
+      };
+      jest
+        .spyOn(commentReactionModel, 'findOne')
+        .mockResolvedValue({ toJSON: () => commentReactionEntity });
+      jest.spyOn(reactionFactoryMock, 'reconstitute').mockResolvedValue(commentReactionEntity);
 
-    const result = await commentReactionRepository.findOne(findOption);
-    expect(commentReactionModel.findOne).toBeCalledWith({
-      where: findOption,
+      const result = await commentReactionRepository.findOne(findOption);
+      expect(commentReactionModel.findOne).toBeCalledWith({
+        where: findOption,
+      });
+      expect(result).toEqual(commentReactionEntity);
     });
-    expect(result).toEqual(commentReactionEntity);
-  });
 
-  it('should find a null comment reaction', async () => {
-    const findOption: FindOnePostReactionProps = {
-      postId: commentReactionEntity.get('targetId'),
-    };
-    jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
+    it('should find a null comment reaction', async () => {
+      const findOption: FindOnePostReactionProps = {
+        postId: commentReactionEntity.get('targetId'),
+      };
+      jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
 
-    const result = await commentReactionRepository.findOne(findOption);
-    expect(commentReactionModel.findOne).toBeCalledWith({
-      where: findOption,
+      const result = await commentReactionRepository.findOne(findOption);
+      expect(commentReactionModel.findOne).toBeCalledWith({
+        where: findOption,
+      });
+      expect(result).toBeNull();
     });
-    expect(result).toBeNull();
   });
 
   it('should create a new comment reaction success', async () => {
+    const { schema } = getDatabaseConfig();
+    const mockTransaction = { commit: jest.fn() };
+    const mockTransactionFn = jest.fn((options: TransactionOptions, callback: Function) => {
+      callback(mockTransaction);
+      return Promise.resolve();
+    });
+    jest.spyOn(sequelizeConnection, 'transaction').mockImplementationOnce(mockTransactionFn as any);
+
     await commentReactionRepository.create(commentReactionEntity);
 
     expect(sequelizeConnection.transaction).toHaveBeenCalledWith(
@@ -112,33 +106,82 @@ describe('CommentReactionRepository', () => {
       },
       expect.any(Function)
     );
+    expect(sequelizeConnection.query).toBeCalledTimes(1);
+    expect(sequelizeConnection.query).toBeCalledWith(
+      `CALL ${schema}.create_comment_reaction(?,?,?,null)`,
+      {
+        replacements: [
+          commentReactionEntity.get('targetId'),
+          commentReactionEntity.get('createdBy'),
+          commentReactionEntity.get('reactionName'),
+        ],
+        transaction,
+        type: QueryTypes.SELECT,
+      }
+    );
   });
 
-  it('should delete a comment reaction success', async () => {
-    const destroySpy = jest.spyOn(commentReactionModel, 'destroy').mockResolvedValueOnce(1);
+  describe('delete', () => {
+    it('should delete a comment reaction success', async () => {
+      const destroySpy = jest.spyOn(commentReactionModel, 'destroy').mockResolvedValueOnce(1);
 
-    await commentReactionRepository.delete(commentReactionRecord.id);
-
-    expect(destroySpy).toBeCalledWith({
-      where: { id: commentReactionRecord.id },
-      transaction,
-    });
-    expect(transaction.commit).toBeCalled();
-  });
-
-  it('should not delete a comment reaction', async () => {
-    const logErrorSpy = jest.spyOn(commentReactionRepository['_logger'], 'error').mockReturnThis();
-    const destroySpy = jest.spyOn(commentReactionModel, 'destroy').mockReturnValue(new Error());
-    try {
       await commentReactionRepository.delete(commentReactionRecord.id);
-    } catch (error) {
-      expect(logErrorSpy).toBeCalled();
+
       expect(destroySpy).toBeCalledWith({
         where: { id: commentReactionRecord.id },
         transaction,
       });
-      expect(commentReactionModel.destroy).toBeCalled();
-      expect(transaction.rollback).toBeCalled();
-    }
+      expect(transaction.commit).toBeCalled();
+    });
+
+    it('should delete rollback on error', async () => {
+      jest
+        .spyOn(sequelizeConnection, 'rollback')
+        .mockImplementation(() => Promise.reject(new Error('Failed to rollback transaction')));
+
+      const destroySpy = jest
+        .spyOn(commentReactionModel, 'destroy')
+        .mockResolvedValueOnce(new Error('Failed to delete comment reaction'));
+      const logErrorSpy = jest
+        .spyOn(commentReactionRepository['_logger'], 'error')
+        .mockReturnThis();
+
+      try {
+        await commentReactionRepository.delete(commentReactionRecord.id);
+      } catch (error) {
+        expect(destroySpy).toBeCalledWith({
+          where: { id: commentReactionRecord.id },
+          transaction,
+        });
+        expect(transaction.rollback).toHaveBeenCalled();
+        expect(transaction.commit).toBeCalledTimes(0);
+
+        expect(logErrorSpy).toBeCalled();
+        expect(error).toBeInstanceOf(Error);
+      }
+    });
+
+    it('should throw an error if the comment reaction cannot be deleted', async () => {
+      const logErrorSpy = jest
+        .spyOn(commentReactionRepository['_logger'], 'error')
+        .mockReturnThis();
+
+      commentReactionModel.destroy.mockRejectedValue(new Error('Error deleting comment reaction'));
+
+      await expect(
+        commentReactionRepository.delete(commentReactionRecord.id)
+      ).rejects.toStrictEqual(new Error('Error deleting comment reaction'));
+      expect(logErrorSpy).toBeCalled();
+    });
+
+    it('should rollback the transaction if an error is thrown', async () => {
+      commentReactionModel.destroy.mockRejectedValue(new Error('Error deleting comment reaction'));
+      transaction.rollback.mockReturnValue(Promise.resolve());
+
+      await expect(
+        commentReactionRepository.delete(commentReactionRecord.id)
+      ).rejects.toStrictEqual(new Error('Error deleting comment reaction'));
+      expect(transaction.rollback).toHaveBeenCalled();
+    });
   });
 });

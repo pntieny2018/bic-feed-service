@@ -8,16 +8,7 @@ import { ILinkPreview, LinkPreviewModel } from '../../../../../database/models/l
 import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
 import { LINK_PREVIEW_FACTORY_TOKEN } from '../../../domain/factory/interface/link-preview.factory.interface';
 import { Sequelize } from 'sequelize-typescript';
-import { LinkPreviewEntity } from '../../../domain/model/link-preview';
-
-const mockLinkPreviewRecord: ILinkPreview = {
-  id: '7b63852c-5249-499a-a32b-6bdaa2761fc1',
-  url: 'string',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockLinkPreviewEntity = new LinkPreviewEntity(mockLinkPreviewRecord);
+import { mockLinkPreviewEntity, mockLinkPreviewRecord } from '../../mock/link-preview.entity.mock';
 
 const transaction = createMock<Transaction>();
 
@@ -72,34 +63,36 @@ describe('LinkPreviewRepository', () => {
     });
   });
 
-  it('should find link preview model success', async () => {
-    const spy = jest.spyOn(linkPreViewModel, 'findOne').mockResolvedValue({
-      toJSON: () => mockLinkPreviewRecord,
+  describe('findByUrl', () => {
+    it('should find link preview model success', async () => {
+      const spy = jest.spyOn(linkPreViewModel, 'findOne').mockResolvedValue({
+        toJSON: () => mockLinkPreviewRecord,
+      });
+      const spyReconstitute = jest
+        .spyOn(linkPreviewFactory, 'reconstitute')
+        .mockResolvedValue(mockLinkPreviewEntity);
+      const result = await repo.findByUrl(mockLinkPreviewEntity.get('url'));
+
+      expect(spy).toBeCalledWith({
+        where: {
+          url: mockLinkPreviewEntity.get('url'),
+        },
+      });
+      expect(spyReconstitute).toBeCalledWith(mockLinkPreviewRecord);
+      expect(result).toEqual(mockLinkPreviewEntity);
     });
-    const spyReconstitute = jest
-      .spyOn(linkPreviewFactory, 'reconstitute')
-      .mockResolvedValue(mockLinkPreviewEntity);
-    const result = await repo.findByUrl(mockLinkPreviewEntity.get('url'));
 
-    expect(spy).toBeCalledWith({
-      where: {
-        url: mockLinkPreviewEntity.get('url'),
-      },
+    it('should find link preview model null', async () => {
+      const spy = jest.spyOn(linkPreViewModel, 'findOne').mockResolvedValue(null);
+
+      const result = await repo.findByUrl(mockLinkPreviewEntity.get('url'));
+
+      expect(spy).toBeCalledWith({
+        where: {
+          url: mockLinkPreviewEntity.get('url'),
+        },
+      });
+      expect(result).toBeNull();
     });
-    expect(spyReconstitute).toBeCalledWith(mockLinkPreviewRecord);
-    expect(result).toEqual(mockLinkPreviewEntity);
-  });
-
-  it('should find link preview model null', async () => {
-    const spy = jest.spyOn(linkPreViewModel, 'findOne').mockResolvedValue(null);
-
-    const result = await repo.findByUrl(mockLinkPreviewEntity.get('url'));
-
-    expect(spy).toBeCalledWith({
-      where: {
-        url: mockLinkPreviewEntity.get('url'),
-      },
-    });
-    expect(result).toBeNull();
   });
 });

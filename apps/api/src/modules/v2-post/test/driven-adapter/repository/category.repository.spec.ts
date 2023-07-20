@@ -10,6 +10,7 @@ import { ICategoryRepository } from '../../../domain/repositoty-interface';
 import { CategoryEntity } from '../../../domain/model/category';
 import { categoryRecord } from '../../mock/category.model.mock';
 import { categoryEntityMock } from '../../mock/category.entity.mock';
+import { Op } from 'sequelize';
 
 describe('CategoryRepository', () => {
   let repo: ICategoryRepository;
@@ -84,6 +85,37 @@ describe('CategoryRepository', () => {
         where: {
           id: categoryRecord.id,
           createdBy: categoryRecord.createdBy,
+        },
+      });
+      expect(result).toEqual([new CategoryEntity(categoryRecord)]);
+    });
+
+    it('should find all category success with shouldDisjunctionLevel', async function () {
+      const spyFindAll = jest.spyOn(categoryModel, 'findAll').mockResolvedValue([
+        {
+          toJSON: () => categoryRecord,
+        },
+      ]);
+      jest
+        .spyOn(categoryFactory, 'reconstitute')
+        .mockReturnValue(new CategoryEntity(categoryRecord));
+
+      const result = await repo.findAll({
+        where: {
+          ids: [categoryRecord.id],
+          createdBy: categoryRecord.createdBy,
+          shouldDisjunctionLevel: true,
+        },
+      });
+
+      expect(spyFindAll).toBeCalledTimes(1);
+      expect(categoryModel.findAll).toBeCalledWith({
+        where: {
+          id: [categoryRecord.id],
+          [Op.or]: {
+            level: 1,
+            createdBy: categoryRecord.createdBy,
+          },
         },
       });
       expect(result).toEqual([new CategoryEntity(categoryRecord)]);
