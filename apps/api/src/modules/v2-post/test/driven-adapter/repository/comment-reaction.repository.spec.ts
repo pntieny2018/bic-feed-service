@@ -14,6 +14,7 @@ import { ReactionFactory } from '../../../domain/factory/interface/reaction.fact
 import { getModelToken } from '@nestjs/sequelize';
 import {
   FindOneCommentReactionProps,
+  FindOnePostReactionProps,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
 import { ReactionEntity } from '../../../domain/model/reaction';
@@ -39,7 +40,7 @@ const transaction = createMock<Transaction>();
 describe('CommentReactionRepository', () => {
   let commentReactionRepository: ICommentReactionRepository;
   let sequelizeConnection;
-  let reactionFactoryMock: IReactionFactory;
+  let reactionFactoryMock;
   let commentReactionModel;
 
   beforeEach(async () => {
@@ -73,19 +74,33 @@ describe('CommentReactionRepository', () => {
     jest.clearAllMocks();
   });
 
-  it('findOne should return a ReactionEntity', async () => {
-    const mockFindOptions: FindOneCommentReactionProps = {
-      id: commentReactionRecord.id,
+  it('should findOne return a ReactionEntity', async () => {
+    const findOption: FindOnePostReactionProps = {
+      postId: commentReactionEntity.get('targetId'),
     };
+    jest
+      .spyOn(commentReactionModel, 'findOne')
+      .mockResolvedValue({ toJSON: () => commentReactionEntity });
+    jest.spyOn(reactionFactoryMock, 'reconstitute').mockResolvedValue(commentReactionEntity);
 
-    // Mock the behavior of CommentReactionModel.findOne
-    (CommentReactionModel.findOne as jest.Mock).mockResolvedValue(commentReactionRecord);
+    const result = await commentReactionRepository.findOne(findOption);
+    expect(commentReactionModel.findOne).toBeCalledWith({
+      where: findOption,
+    });
+    expect(result).toEqual(commentReactionEntity);
+  });
 
-    const result = await commentReactionRepository.findOne(mockFindOptions);
+  it('should find a null comment reaction', async () => {
+    const findOption: FindOnePostReactionProps = {
+      postId: commentReactionEntity.get('targetId'),
+    };
+    jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
 
-    expect(CommentReactionModel.findOne).toHaveBeenCalledWith(mockFindOptions);
-
-    expect(result).toBe(commentReactionRecord);
+    const result = await commentReactionRepository.findOne(findOption);
+    expect(commentReactionModel.findOne).toBeCalledWith({
+      where: findOption,
+    });
+    expect(result).toBeNull();
   });
 
   it('should create a new comment reaction success', async () => {
