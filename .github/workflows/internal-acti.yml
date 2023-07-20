@@ -21,8 +21,8 @@ jobs:
       BITBUCKET_WORKPLACE: beincomm
       GITHUB_WORKPLACE: beincom
       ENVIRONMENT: itn
-      SERVICE: feed
-      IMAGE_NAME: beingroup/itn-bic-feed-service
+      SERVICE: activity-log
+      IMAGE_NAME: beingroup/itn-bic-activity-log-service
 
     steps:
     - name: Checkout code
