@@ -41,8 +41,9 @@ export type QuizUpdateProps = {
   authUser: UserDto;
 };
 
-export type GetQuizDraftsProps = {
+export type GetQuizzesProps = {
   authUser: UserDto;
+  status: QuizStatus;
   type?: PostType;
   limit: number;
   order: OrderEnum;
@@ -57,6 +58,6 @@ export interface IQuizDomainService {
   delete(quizId: string, authUser: UserDto): Promise<void>;
   reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity>;
   generateQuestions(quizEntity: QuizEntity): Promise<void>;
-  getDrafts(data: GetQuizDraftsProps): Promise<CursorPaginationResult<QuizEntity>>;
+  getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

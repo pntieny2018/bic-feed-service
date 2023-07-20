@@ -40,14 +40,14 @@ import { GenerateQuizCommand } from '../../application/command/generate-quiz/gen
 import { GenerateQuizRequestDto } from '../dto/request/generate-quiz.request.dto';
 import { UpdateQuizRequestDto } from '../dto/request/update-quiz.request.dto';
 import { UpdateQuizCommand } from '../../application/command/update-quiz/update-quiz.command';
-import { GetDraftQuizzesDto } from '../dto/request';
-import { FindDraftQuizzesDto } from '../../application/query/find-draft-quizzes/find-draft-quizzes.dto';
-import { FindDraftQuizzesQuery } from '../../application/query/find-draft-quizzes/find-draft-quizzes.query';
+import { FindQuizzesDto } from '../../application/query/find-quizzes/find-quizzes.dto';
+import { FindQuizzesQuery } from '../../application/query/find-quizzes/find-quizzes.query';
 import { KafkaService } from '@app/kafka';
 import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
 import { Request } from 'express';
 import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
+import { GetQuizzesRequestDto } from '../dto/request';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -59,22 +59,22 @@ export class QuizController {
     private readonly _kafkaService: KafkaService
   ) {}
 
-  @ApiOperation({ summary: 'Get draft quiz' })
+  @ApiOperation({ summary: 'Get quizzes' })
   @ApiOkResponse({
-    type: FindDraftQuizzesDto,
+    type: FindQuizzesDto,
   })
   @ResponseMessages({
-    success: 'Get draft quizzes successfully',
+    success: 'Get quizzes successfully',
   })
-  @Get(ROUTES.QUIZ.GET_DRAFT.PATH)
-  @Version(ROUTES.QUIZ.GET_DRAFT.VERSIONS)
-  public async getDraft(
+  @Get(ROUTES.QUIZ.GET_QUIZZES.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZZES.VERSIONS)
+  public async get(
     @AuthUser() user: UserDto,
-    @Query() getDraftQuizzesDto: GetDraftQuizzesDto
-  ): Promise<FindDraftQuizzesDto> {
+    @Query() getQuizzesRequestDto: GetQuizzesRequestDto
+  ): Promise<FindQuizzesDto> {
     try {
       const data = await this._queryBus.execute(
-        new FindDraftQuizzesQuery({ authUser: user, ...getDraftQuizzesDto })
+        new FindQuizzesQuery({ authUser: user, ...getQuizzesRequestDto })
       );
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {

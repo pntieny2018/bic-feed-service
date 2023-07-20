@@ -69,8 +69,8 @@ export const ROUTES = {
     },
   },
   QUIZ: {
-    GET_DRAFT: {
-      PATH: '/quizzes/draft',
+    GET_QUIZZES: {
+      PATH: '/quizzes',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     CREATE: {

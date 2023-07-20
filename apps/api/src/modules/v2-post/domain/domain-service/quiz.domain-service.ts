@@ -1,12 +1,12 @@
 import { cloneDeep } from 'lodash';
 import { QuizEntity } from '../model/quiz';
-import { PostStatus, QuizStatus } from '../../data-type';
+import { PostStatus } from '../../data-type';
 import { Inject, Logger } from '@nestjs/common';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
-  GetQuizDraftsProps,
+  GetQuizzesProps,
   IContentDomainService,
   IQuizDomainService,
   QuizCreateProps,
@@ -126,23 +126,23 @@ export class QuizDomainService implements IQuizDomainService {
     }
   }
 
-  public async getDrafts(input: GetQuizDraftsProps): Promise<CursorPaginationResult<QuizEntity>> {
-    const { authUser, type } = input;
+  public async getQuizzes(input: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>> {
+    const { authUser, type, status } = input;
     return this._quizRepository.getPagination({
       ...input,
       where: {
         createdBy: authUser.id,
-        status: QuizStatus.DRAFT,
-        ...(type && {
-          include: {
-            includeContent: {
-              type,
-              isHidden: true,
-              status: PostStatus.PUBLISHED,
-            },
-          },
-        }),
+        status,
       },
+      ...(type && {
+        include: {
+          includeContent: {
+            type,
+            isHidden: false,
+            status: PostStatus.PUBLISHED,
+          },
+        },
+      }),
       attributes: ['id', 'contentId', 'createdAt'],
     });
   }
