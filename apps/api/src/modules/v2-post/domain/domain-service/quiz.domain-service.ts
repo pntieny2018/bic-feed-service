@@ -1,6 +1,5 @@
 import { cloneDeep } from 'lodash';
 import { QuizEntity } from '../model/quiz';
-import { PostStatus } from '../../data-type';
 import { Inject, Logger } from '@nestjs/common';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -134,15 +133,7 @@ export class QuizDomainService implements IQuizDomainService {
         createdBy: authUser.id,
         status,
       },
-      ...(type && {
-        include: {
-          includeContent: {
-            type,
-            isHidden: false,
-            status: PostStatus.PUBLISHED,
-          },
-        },
-      }),
+      contentType: type,
       attributes: ['id', 'contentId', 'createdAt'],
     });
   }

@@ -79,6 +79,7 @@ export class QuizRepository implements IQuizRepository {
   public async findOne(input: FindOneQuizProps): Promise<QuizEntity> {
     const findOptions: FindOptions<IQuiz> = this._buildFindOptions(input);
     const entity = await this._quizModel.findOne(findOptions);
+    if (input.attributes) findOptions.attributes = input.attributes as (keyof IQuiz)[];
     return this._modelToEntity(entity);
   }
 
@@ -87,32 +88,7 @@ export class QuizRepository implements IQuizRepository {
   ): FindOptions<IQuiz> {
     const findOption: FindOptions<IQuiz> = {};
     findOption.where = this._getCondition(options);
-    const includeAttr = [];
-    if (options.include) {
-      const { includeContent } = options.include;
-      if (includeContent) {
-        includeAttr.push({
-          model: PostModel,
-          attributes: {
-            exclude: ['content'],
-          },
-          as: 'post',
-          required: true,
-          where: {
-            isHidden: includeContent.isHidden,
-            status: includeContent.status,
-            ...(includeContent.type && {
-              type: includeContent.type,
-            }),
-          },
-        });
-      }
-    }
-
     if (options.attributes) findOption.attributes = options.attributes as (keyof IQuiz)[];
-
-    if (includeAttr.length) findOption.include = includeAttr;
-
     return findOption;
   }
 
@@ -169,8 +145,35 @@ export class QuizRepository implements IQuizRepository {
   public async getPagination(
     getPaginationQuizzesProps: GetPaginationQuizzesProps
   ): Promise<CursorPaginationResult<QuizEntity>> {
-    const { after, before, limit = this.QUERY_LIMIT_DEFAULT, order } = getPaginationQuizzesProps;
-    const findOption = this._buildFindOptions(getPaginationQuizzesProps);
+    const findOption: FindOptions<IQuiz> = {};
+    const {
+      contentType,
+      after,
+      before,
+      limit = this.QUERY_LIMIT_DEFAULT,
+      order,
+      attributes,
+    } = getPaginationQuizzesProps;
+
+    findOption.where = this._getCondition(getPaginationQuizzesProps);
+
+    if (contentType) {
+      findOption.include = [
+        {
+          model: PostModel,
+          attributes: ['id'],
+          as: 'post',
+          required: true,
+          where: {
+            isHidden: false,
+            type: contentType,
+          },
+        },
+      ];
+    }
+
+    if (attributes) findOption.attributes = attributes as (keyof IQuiz)[];
+
     const paginator = new CursorPaginator(
       this._quizModel,
       ['createdAt'],
