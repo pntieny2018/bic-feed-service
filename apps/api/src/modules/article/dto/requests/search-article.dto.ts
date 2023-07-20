@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
-import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Expose, Transform } from 'class-transformer';
+import { IsArray, IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 
 export class SearchArticlesDto extends PageOptionsDto {
@@ -37,4 +37,18 @@ export class SearchArticlesDto extends PageOptionsDto {
   @IsOptional()
   @IsUUID('4', { each: true })
   public categoryIds?: string[];
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    name: 'limit_series',
+  })
+  @Expose({
+    name: 'limit_series',
+  })
+  @Transform(({ value }) => value == 'true')
+  @IsOptional()
+  @IsBoolean()
+  public limitSeries?: boolean;
 }

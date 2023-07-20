@@ -49,4 +49,8 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
   public decreaseTotalUsed(): void {
     this._props.totalUsed -= 1;
   }
+
+  public increaseTotalUsed(): void {
+    this._props.totalUsed += 1;
+  }
 }

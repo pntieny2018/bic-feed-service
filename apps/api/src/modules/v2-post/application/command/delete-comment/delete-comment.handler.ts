@@ -10,8 +10,8 @@ import {
 import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
+  AccessDeniedException,
   CommentNotFoundException,
-  ContentNoCRUDPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
@@ -36,7 +36,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     if (!comment) throw new CommentNotFoundException();
 
-    if (!comment.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
+    if (!comment.isOwner(actor.id)) throw new AccessDeniedException();
 
     const post = (await this._contentRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },

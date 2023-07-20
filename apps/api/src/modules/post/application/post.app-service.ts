@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import {
   BadRequestException,
   ForbiddenException,
@@ -41,6 +42,8 @@ import { MediaMarkAction, MediaType } from '../../../database/models/media.model
 import { LogicException } from '../../../common/exceptions';
 import { TargetType } from '../../report-content/contstants';
 import { ArticleResponseDto } from '../../article/dto/responses';
+import { RULES } from '../../v2-post/constant';
+import { PostLimitAttachedSeriesException } from '../../v2-post/domain/exception';
 
 @Injectable()
 export class PostAppService {
@@ -243,6 +246,8 @@ export class PostAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+      await this.validateUpdateSeriesData(postId, series);
+
       await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
@@ -462,11 +467,13 @@ export class PostAppService {
   private async _preCheck(post: PostResponseDto, user: UserDto): Promise<void> {
     await this._authorityService.checkPostOwner(post, user.id);
 
-    const { audience, setting } = post;
+    const { audience } = post;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     const groupIds = audience.groups.map((group) => group.id);
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
+
+    await this._postService.validateLimtedToAttachSeries(post.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
@@ -560,6 +567,21 @@ export class PostAppService {
       await this._postService.reorderPinnedPostGroups(groupId, postIds);
     } catch (ex) {
       this._logger.error(JSON.stringify(ex?.stack));
+    }
+  }
+
+  public async validateUpdateSeriesData(postId: string, series: string[]): Promise<void> {
+    if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
+    const post = (await this._postService.getPostsWithSeries([postId], true))[0];
+    const seriesIds = post.postSeries.map((item) => item.seriesId);
+    const isOverLimtedToAttachSeries =
+      uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
+
+    if (isOverLimtedToAttachSeries) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

@@ -60,7 +60,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       !(postEntity instanceof PostEntity) ||
       (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
       (postEntity.isHidden() && !postEntity.isOwner(authUser.id)) ||
-      (postEntity.isPublished() && !postEntity.getGroupIds()?.length)
+      postEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
     }

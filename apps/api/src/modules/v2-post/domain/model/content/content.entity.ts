@@ -34,6 +34,7 @@ export type ContentProps = {
   publishedAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
+  communityIds?: string[];
   wordCount?: number;
   aggregation?: {
     commentsCount: number;
@@ -45,6 +46,8 @@ export type ContentState = {
   detachGroupIds?: string[];
   attachSeriesIds?: string[];
   detachSeriesIds?: string[];
+  attachCategoryIds?: string[];
+  detachCategoryIds?: string[];
   attachTagIds?: string[];
   detachTagIds?: string[];
   attachFileIds?: string[];
@@ -71,6 +74,8 @@ export class ContentEntity<
       detachGroupIds: [],
       attachSeriesIds: [],
       detachSeriesIds: [],
+      attachCategoryIds: [],
+      detachCategoryIds: [],
       attachTagIds: [],
       detachTagIds: [],
       attachFileIds: [],
@@ -105,17 +110,20 @@ export class ContentEntity<
       return;
     }
     let totalPrivate = 0;
-    let totalOpen = 0;
+    let totalClosed = 0;
     for (const group of groups) {
       if (group.privacy === GroupPrivacy.OPEN) {
         this._props.privacy = PostPrivacy.OPEN;
+        return;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
+      if (group.privacy === GroupPrivacy.CLOSED) totalClosed++;
       if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
     }
 
-    if (totalOpen > 0) this._props.privacy = PostPrivacy.OPEN;
-    if (totalPrivate > 0) this._props.privacy = PostPrivacy.OPEN;
+    if (totalClosed > 0) this._props.privacy = PostPrivacy.CLOSED;
+    if (totalPrivate > 0) this._props.privacy = PostPrivacy.PRIVATE;
+
+    if (totalClosed === 0 && totalPrivate === 0) this._props.privacy = PostPrivacy.SECRET;
   }
 
   public getId(): string {
@@ -148,6 +156,10 @@ export class ContentEntity<
 
   public isPublished(): boolean {
     return this._props.status === PostStatus.PUBLISHED;
+  }
+
+  public isWaitingSchedule(): boolean {
+    return this._props.status === PostStatus.WAITING_SCHEDULE;
   }
 
   public isProcessing(): boolean {
@@ -207,6 +219,11 @@ export class ContentEntity<
 
     this._props.groupIds = groupIds;
   }
+
+  public setCommunity(communityIds: string[]): void {
+    this._props.communityIds = communityIds;
+  }
+
   public setSetting(setting: PostSettingDto): void {
     let isEnableSetting = false;
     if (
@@ -244,5 +261,9 @@ export class ContentEntity<
     return (
       setting && (setting.isImportant || setting.canComment === false || setting.canReact === false)
     );
+  }
+
+  public isInArchivedGroups(): boolean {
+    return this.isPublished() && !this.getGroupIds()?.length;
   }
 }

@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { uniq } from 'lodash';
+import { RULES } from '../../constant';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -21,6 +23,7 @@ import {
   UserDto,
 } from '../../../v2-user/application';
 import { ContentEmptyException } from '../exception/content-empty.exception';
+import { PostLimitAttachedSeriesException } from '../exception';
 
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
@@ -125,5 +128,32 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       }
     }
     postEntity.setMedia(mediaEntity);
+  }
+
+  public async validateLimtedToAttachSeries(postEntity: PostEntity): Promise<void> {
+    if (postEntity.isOverLimtedToAttachSeries()) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
+    const contentWithArchivedGroups = (await this._contentRepository.findOne({
+      where: {
+        id: postEntity.getId(),
+        groupArchived: true,
+      },
+      include: {
+        shouldIncludeSeries: true,
+      },
+    })) as PostEntity;
+
+    if (!contentWithArchivedGroups) return;
+
+    const series = uniq([
+      ...postEntity.getSeriesIds(),
+      ...contentWithArchivedGroups?.getSeriesIds(),
+    ]);
+
+    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
   }
 }

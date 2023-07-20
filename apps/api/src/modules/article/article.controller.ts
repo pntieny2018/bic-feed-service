@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -33,6 +34,7 @@ import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
 import {
+  ArticleLimitAttachedSeriesException,
   ContentNoCRUDPermissionException,
   ContentRequireGroupException,
 } from '../v2-post/domain/exception';
@@ -51,7 +53,7 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/')
-  public searchSeries(
+  public searchArticles(
     @AuthUser() user: UserDto,
     @Query() searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
@@ -175,6 +177,12 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.updated_success',
   })
+  @Version([
+    VERSIONS_SUPPORTED[0],
+    VERSIONS_SUPPORTED[1],
+    VERSIONS_SUPPORTED[2],
+    VERSIONS_SUPPORTED[3],
+  ])
   @Put('/:id')
   @ResponseMessages({ success: 'Article updated' })
   @InjectUserToBody()
@@ -183,7 +191,17 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    return this._articleAppService.update(user, articleId, updateArticleDto);
+    try {
+      const result = await this._articleAppService.update(user, articleId, updateArticleDto);
+      return result;
+    } catch (e) {
+      switch (e.constructor) {
+        case ArticleLimitAttachedSeriesException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Publish article' })
@@ -194,12 +212,28 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.published_success',
   })
+  @Version([
+    VERSIONS_SUPPORTED[0],
+    VERSIONS_SUPPORTED[1],
+    VERSIONS_SUPPORTED[2],
+    VERSIONS_SUPPORTED[3],
+  ])
   @Put('/:id/publish')
   public async publish(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
-    return this._articleAppService.publish(user, articleId);
+    try {
+      const result = await this._articleAppService.publish(user, articleId);
+      return result;
+    } catch (e) {
+      switch (e.constructor) {
+        case ArticleLimitAttachedSeriesException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Schedule article' })
@@ -216,7 +250,17 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() scheduleArticleDto: ScheduleArticleDto
   ): Promise<ArticleResponseDto> {
-    return this._articleAppService.schedule(user, articleId, scheduleArticleDto);
+    try {
+      const result = await this._articleAppService.schedule(user, articleId, scheduleArticleDto);
+      return result;
+    } catch (e) {
+      switch (e.constructor) {
+        case ArticleLimitAttachedSeriesException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Delete article' })
