@@ -1,5 +1,4 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { CommentController } from './comment.controller';
 import { CommentService } from './comment.service';
 import { MentionModule } from '../mention';
 import { PostModule } from '../post';
@@ -8,8 +7,6 @@ import { MediaModule } from '../media';
 import { ReactionModule } from '../reaction';
 import { FollowModule } from '../follow';
 import { GiphyModule } from '../giphy';
-import { CommentHistoryService } from './comment-history.service';
-import { CommentAppService } from './application/comment.app-service';
 import { UserModuleV2 } from '../v2-user/user.module';
 
 @Module({
@@ -23,8 +20,7 @@ import { UserModuleV2 } from '../v2-user/user.module';
     ReactionModule,
     GiphyModule,
   ],
-  controllers: [CommentController],
-  providers: [CommentService, CommentHistoryService, CommentAppService],
-  exports: [CommentService, CommentHistoryService],
+  providers: [CommentService],
+  exports: [CommentService],
 })
 export class CommentModule {}

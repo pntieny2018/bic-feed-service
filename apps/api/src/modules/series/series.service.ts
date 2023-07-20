@@ -1,9 +1,7 @@
-import { SentryService } from '@app/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { LogicException } from '../../common/exceptions';
@@ -11,19 +9,14 @@ import { ArrayHelper } from '../../common/helpers';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
-import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { AuthorityService } from '../authority';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { CommentService } from '../comment';
-import { FeedService } from '../feed/feed.service';
 import { PostBindingService } from '../post/post-binding.service';
-import { ReactionService } from '../reaction';
-import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { GetSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { UserDto } from '../v2-user/application';
-import { PostTagModel } from '../../database/models/post-tag.model';
 
 @Injectable()
 export class SeriesService {
@@ -40,24 +33,14 @@ export class SeriesService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    @InjectConnection()
-    private _sequelizeConnection: Sequelize,
-    @InjectModel(PostTagModel)
-    private _postTagModel: typeof PostTagModel,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel,
     @InjectModel(PostSeriesModel)
     private _postSeriesModel: typeof PostSeriesModel,
-    @InjectModel(UserMarkReadPostModel)
-    private _userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
-    private _authorityService: AuthorityService,
-    private readonly _sentryService: SentryService,
     private readonly _commentService: CommentService,
     private readonly _postBinding: PostBindingService,
-    private readonly _feedService: FeedService,
-    private readonly _reactionService: ReactionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService
   ) {}
@@ -135,67 +118,6 @@ export class SeriesService {
     result[0].items = await this._postService.getItemsInSeries(id, authUser);
     return result[0];
   }
-  /**
-   * Create Series
-   */
-  public async create(authUser: UserDto, createPostDto: CreateSeriesDto): Promise<IPost> {
-    let transaction;
-    try {
-      const { title, summary, audience, coverMedia, setting } = createPostDto;
-      const authUserId = authUser.id;
-      transaction = await this._sequelizeConnection.transaction();
-      const privacy = await this._postService.getPrivacy(audience.groupIds);
-      const post = await this._postModel.create(
-        {
-          title,
-          summary,
-          createdBy: authUserId,
-          updatedBy: authUserId,
-          status: PostStatus.PUBLISHED,
-          type: PostType.SERIES,
-          privacy,
-          isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canComment: setting.canComment,
-          canReact: setting.canReact,
-          coverJson: coverMedia,
-          publishedAt: new Date(),
-        },
-        { transaction }
-      );
-
-      if (audience.groupIds.length > 0) {
-        await this.addGroup(audience.groupIds, post.id, transaction);
-      }
-      await transaction.commit();
-
-      if (setting && setting.isImportant) {
-        const checkMarkImportant = await this._userMarkReadPostModel.findOne({
-          where: {
-            postId: post.id,
-            userId: authUserId,
-          },
-        });
-        if (!checkMarkImportant) {
-          await this._userMarkReadPostModel.bulkCreate(
-            [
-              {
-                postId: post.id,
-                userId: authUserId,
-              },
-            ],
-            { ignoreDuplicates: true }
-          );
-        }
-      }
-      return post;
-    } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(JSON.stringify(error?.stack));
-      this._sentryService.captureException(error);
-      throw error;
-    }
-  }
 
   public async addGroup(
     groupIds: string[],
@@ -208,50 +130,6 @@ export class SeriesService {
       groupId,
     }));
     await this._postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
-  }
-
-  /**
-   * Update Series
-   */
-  public async update(
-    post: SeriesResponseDto,
-    authUser: UserDto,
-    updateSeriesDto: UpdateSeriesDto
-  ): Promise<boolean> {
-    const authUserId = authUser.id;
-    let transaction;
-    try {
-      const { audience, title, summary, coverMedia } = updateSeriesDto;
-      transaction = await this._sequelizeConnection.transaction();
-      const privacy = await this._postService.getPrivacy(audience.groupIds);
-      const dataUpdate = {
-        updatedBy: authUserId,
-        title,
-        summary,
-        coverJson: coverMedia,
-        privacy,
-      };
-
-      await this._postModel.update(dataUpdate, {
-        where: {
-          id: post.id,
-          createdBy: authUserId,
-        },
-        transaction,
-      });
-
-      const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
-        await this.setGroupByPost(audience.groupIds, post.id, transaction);
-      }
-
-      await transaction.commit();
-      return true;
-    } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(JSON.stringify(error?.stack));
-      throw error;
-    }
   }
 
   /**
@@ -286,26 +164,6 @@ export class SeriesService {
       );
     }
     return true;
-  }
-
-  /**
-   * Delete Series
-   */
-  public async delete(authUser: UserDto, series: IPost): Promise<IPost> {
-    const seriesId = series.id;
-    try {
-      await this._postModel.destroy({
-        where: {
-          id: seriesId,
-          createdBy: authUser.id,
-        },
-      });
-
-      return series;
-    } catch (error) {
-      this._logger.error(JSON.stringify(error?.stack));
-      throw error;
-    }
   }
 
   /**

@@ -1,5 +1,5 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
@@ -15,10 +15,7 @@ import { FindTimelineGroupQuery } from '../../application/query/find-timeline-gr
   version: VERSIONS_SUPPORTED,
 })
 export class TimelineController {
-  public constructor(
-    private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
-  ) {}
+  public constructor(private readonly _queryBus: QueryBus) {}
 
   @ApiOperation({ summary: 'Get timeline in a group.' })
   @ApiOkResponse({
