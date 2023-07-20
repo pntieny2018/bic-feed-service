@@ -119,7 +119,6 @@ export class StringHelper {
       const nodes: Node[] = JSON.parse(textStringify);
       return nodes.map((node) => Node.string(node)).join('\n');
     } catch (e) {
-      console.error(e);
       return null;
     }
   }
