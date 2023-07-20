@@ -18,6 +18,8 @@ import { CursorPaginator } from '../../../../common/dto/cusor-pagination';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 
 export class QuizRepository implements IQuizRepository {
+  private readonly QUERY_LIMIT_DEFAULT = 10;
+
   public constructor(
     @Inject(QUIZ_FACTORY_TOKEN)
     private readonly _factory: IQuizFactory,
@@ -167,7 +169,7 @@ export class QuizRepository implements IQuizRepository {
   public async getPagination(
     getPaginationQuizzesProps: GetPaginationQuizzesProps
   ): Promise<CursorPaginationResult<QuizEntity>> {
-    const { after, before, limit, order } = getPaginationQuizzesProps;
+    const { after, before, limit = this.QUERY_LIMIT_DEFAULT, order } = getPaginationQuizzesProps;
     const findOption = this._buildFindOptions(getPaginationQuizzesProps);
     const paginator = new CursorPaginator(
       this._quizModel,
