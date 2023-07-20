@@ -1,6 +1,6 @@
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { PostStatus, QuizStatus } from '../../data-type';
+import { PostStatus, PostType, QuizStatus } from '../../data-type';
 import { QuizEntity, QuizProps } from '../model/quiz';
 
 export type FindOneQuizProps = {
@@ -9,15 +9,10 @@ export type FindOneQuizProps = {
     status?: QuizStatus;
   };
   include?: {
-    includePost?: {
-      required: boolean;
-      isHidden?: boolean;
-      createdBy?: string;
+    includeContent?: {
+      type?: PostType;
       status: PostStatus;
-    };
-    includeGroup?: {
-      groupArchived?: boolean;
-      required: boolean;
+      isHidden: boolean;
     };
   };
   attributes?: (keyof QuizProps)[];
@@ -32,15 +27,10 @@ export type FindAllQuizProps = {
     createdBy?: string;
   };
   include?: {
-    includePost?: {
-      required: boolean;
-      isHidden?: boolean;
-      createdBy?: string;
+    includeContent?: {
+      type?: PostType;
       status: PostStatus;
-    };
-    includeGroup?: {
-      groupArchived?: boolean;
-      required: boolean;
+      isHidden: boolean;
     };
   };
   attributes?: (keyof QuizProps)[];

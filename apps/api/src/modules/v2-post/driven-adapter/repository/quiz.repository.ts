@@ -1,4 +1,3 @@
-import { isBoolean } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, WhereOptions } from 'sequelize';
@@ -10,7 +9,6 @@ import {
 } from '../../domain/repositoty-interface';
 import { QuizEntity } from '../../domain/model/quiz';
 import { IQuiz, QuizModel } from '../../../../database/models/quiz.model';
-import { PostGroupModel } from '../../../../database/models/post-group.model';
 import { PostModel } from '../../../../database/models/post.model';
 import {
   IQuizFactory,
@@ -89,43 +87,26 @@ export class QuizRepository implements IQuizRepository {
     findOption.where = this._getCondition(options);
     const includeAttr = [];
     if (options.include) {
-      const { includePost, includeGroup } = options.include;
-      if (includePost) {
+      const { includeContent } = options.include;
+      if (includeContent) {
         includeAttr.push({
           model: PostModel,
           attributes: {
             exclude: ['content'],
           },
           as: 'post',
-          required: includePost.required,
+          required: true,
           where: {
-            ...(includePost.createdBy && {
-              createdBy: includePost.createdBy,
-            }),
-            ...(isBoolean(includePost.isHidden) && {
-              isHidden: includePost.isHidden,
-            }),
-            ...(includePost.status && {
-              status: includePost.status,
+            isHidden: includeContent.isHidden,
+            status: includeContent.status,
+            ...(includeContent.type && {
+              type: includeContent.type,
             }),
           },
-          ...(includeGroup && {
-            include: [
-              {
-                model: PostGroupModel,
-                as: 'groups',
-                required: includeGroup.required,
-                where: {
-                  ...(isBoolean(includeGroup.groupArchived) && {
-                    isArchived: includeGroup.groupArchived,
-                  }),
-                },
-              },
-            ],
-          }),
         });
       }
     }
+
     if (options.attributes) findOption.attributes = options.attributes as (keyof IQuiz)[];
 
     if (includeAttr.length) findOption.include = includeAttr;

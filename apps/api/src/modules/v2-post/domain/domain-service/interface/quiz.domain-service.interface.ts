@@ -4,6 +4,7 @@ import { UserDto } from '../../../../v2-user/application';
 import { QuestionDto } from '../../../application/dto/question.dto';
 import { QuizStatus } from '../../../data-type/quiz-status.enum';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { PostType } from '../../../data-type';
 
 export type QuizCreateProps = {
   contentId: string;
@@ -42,6 +43,7 @@ export type QuizUpdateProps = {
 
 export type GetQuizDraftsProps = {
   authUser: UserDto;
+  type?: PostType;
   limit: number;
   order: OrderEnum;
   before?: string;
