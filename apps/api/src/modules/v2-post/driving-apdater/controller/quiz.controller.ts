@@ -24,7 +24,9 @@ import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
 import {
+  AccessDeniedException,
   ContentHasQuizException,
+  ContentNoCRUDPermissionAtGroupException,
   ContentNotFoundException,
   InvalidCursorParamsException,
   OpenAIException,
@@ -247,7 +249,8 @@ export class QuizController {
         case QuizNotFoundException:
         case ContentNotFoundException:
           throw new NotFoundException(e);
-        case QuizNoCRUDPermissionAtGroupException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case AccessDeniedException:
           throw new ForbiddenException(e);
         case DomainModelException:
         default:
