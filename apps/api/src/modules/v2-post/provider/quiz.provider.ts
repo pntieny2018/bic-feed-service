@@ -13,7 +13,7 @@ import { OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { OpenaiService } from '@app/openai';
 import { GenerateQuizHandler } from '../application/command/generate-quiz/generate-quiz.handler';
 import { UpdateQuizHandler } from '../application/command/update-quiz/update-quiz.handler';
-import { FindDraftQuizzesHandler } from '../application/query/find-draft-quizzes/find-draft-quizzes.handler';
+import { FindQuizzesHandler } from '../application/query/find-quizzes/find-quizzes.handler';
 import { QUIZ_BINDING_TOKEN } from '../application/binding/binding-quiz/quiz.interface';
 import { QuizBinding } from '../application/binding/binding-quiz/quiz.binding';
 import { ProcessGenerationQuizHandler } from '../application/command/process-generation-quiz/process-generation-quiz.handler';
@@ -58,7 +58,7 @@ export const quizProvider = [
   CreateQuizHandler,
   GenerateQuizHandler,
   UpdateQuizHandler,
-  FindDraftQuizzesHandler,
+  FindQuizzesHandler,
   ProcessGenerationQuizHandler,
   FindQuizHandler,
   QuizCreatedEventHandler,
