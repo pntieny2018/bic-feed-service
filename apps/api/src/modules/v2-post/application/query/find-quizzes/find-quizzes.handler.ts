@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
-import { FindDraftQuizzesDto } from './find-draft-quizzes.dto';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindDraftQuizzesQuery } from './find-draft-quizzes.query';
+import { FindQuizzesDto } from './find-quizzes.dto';
+import { FindQuizzesQuery } from './find-quizzes.query';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -13,10 +13,8 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 
-@QueryHandler(FindDraftQuizzesQuery)
-export class FindDraftQuizzesHandler
-  implements IQueryHandler<FindDraftQuizzesQuery, FindDraftQuizzesDto>
-{
+@QueryHandler(FindQuizzesQuery)
+export class FindQuizzesHandler implements IQueryHandler<FindQuizzesQuery, FindQuizzesDto> {
   public constructor(
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
@@ -26,12 +24,12 @@ export class FindDraftQuizzesHandler
     private readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(query: FindDraftQuizzesQuery): Promise<FindDraftQuizzesDto> {
+  public async execute(query: FindQuizzesQuery): Promise<FindQuizzesDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._quizDomainService.getDrafts(query.payload);
+    const { rows, meta } = await this._quizDomainService.getQuizzes(query.payload);
 
-    if (!rows || rows.length === 0) return new FindDraftQuizzesDto([], meta);
+    if (!rows || rows.length === 0) return new FindQuizzesDto([], meta);
 
     const contentIds = rows.map((row) => row.get('contentId'));
 
@@ -42,6 +40,6 @@ export class FindDraftQuizzesHandler
 
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
-    return new FindDraftQuizzesDto(contents, meta);
+    return new FindQuizzesDto(contents, meta);
   }
 }
