@@ -104,6 +104,7 @@ export interface IPost {
   status: PostStatus;
   quiz?: QuizModel;
   publishedAt?: Date;
+  scheduledAt?: Date;
   errorLog?: any;
   mediaJson?: any;
   mentions?: string[];
@@ -214,6 +215,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public publishedAt: Date;
+
+  @AllowNull(true)
+  @Column
+  public scheduledAt?: Date;
 
   @AllowNull(true)
   @Column({

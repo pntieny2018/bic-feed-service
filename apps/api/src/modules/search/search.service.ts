@@ -312,6 +312,7 @@ export class SearchService {
         createdAt: source.createdAt,
         updatedAt: source.updatedAt,
         createdBy: source.createdBy,
+        publishedAt: source.publishedAt,
         coverMedia: source.coverMedia ?? null,
         media: source.media || {
           files: [],

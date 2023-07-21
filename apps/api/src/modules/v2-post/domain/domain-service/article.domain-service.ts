@@ -9,6 +9,7 @@ import {
   IArticleDomainService,
   PublishArticleProps,
   ArticlePayload,
+  ScheduleArticleProps,
 } from './interface';
 import {
   CATEGORY_REPOSITORY_TOKEN,
@@ -18,7 +19,12 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import { ContentEmptyException, InvalidResourceImageException } from '../exception';
+import {
+  ContentEmptyException,
+  ContentHasBeenPublishedException,
+  ContentNotFoundException,
+  InvalidResourceImageException,
+} from '../exception';
 import {
   ARTICLE_VALIDATOR_TOKEN,
   CATEGORY_VALIDATOR_TOKEN,
@@ -58,6 +64,48 @@ export class ArticleDomainService implements IArticleDomainService {
     if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
 
     await this._contentRepository.update(articleEntity);
+  }
+
+  public async schedule(inputData: ScheduleArticleProps): Promise<ArticleEntity> {
+    const { payload } = inputData;
+    const { actor, id, scheduledAt } = payload;
+
+    const articleEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeCategory: true,
+        shouldIncludeSeries: true,
+      },
+    });
+
+    if (
+      !articleEntity ||
+      !(articleEntity instanceof ArticleEntity) ||
+      articleEntity.isHidden() ||
+      articleEntity.isInArchivedGroups()
+    ) {
+      throw new ContentNotFoundException();
+    }
+
+    if (articleEntity.isPublished()) throw new ContentHasBeenPublishedException();
+
+    await this._setArticleEntityAttributes(articleEntity, payload);
+
+    articleEntity.setWaitingSchedule(scheduledAt);
+
+    await this._articleValidator.validateArticle(articleEntity, actor);
+
+    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
+
+    await this._contentRepository.update(articleEntity);
+
+    return articleEntity;
   }
 
   public async update(inputData: UpdateArticleProps): Promise<void> {

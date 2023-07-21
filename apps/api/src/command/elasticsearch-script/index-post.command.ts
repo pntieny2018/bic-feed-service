@@ -199,6 +199,7 @@ export class IndexPostCommand implements CommandRunner {
             communityIds,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
+            publishedAt: post.publishedAt,
             createdBy: post.createdBy,
           };
           const tagList = post.tagsJson ?? [];
@@ -304,7 +305,7 @@ export class IndexPostCommand implements CommandRunner {
       },
       offset,
       limit,
-      order: [['createdAt', 'desc']],
+      order: [['publishedAt', 'desc']],
     });
     return rows;
   }

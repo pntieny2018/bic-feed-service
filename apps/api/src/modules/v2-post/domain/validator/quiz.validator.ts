@@ -1,19 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { subject } from '@casl/ability';
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
 import { UserDto } from '../../../v2-user/application';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../../../v2-group/application';
-import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { IQuizValidator } from './interface/quiz.validator.interface';
-import { QuizNoCRUDPermissionAtGroupException } from '../exception/quiz-no-crud-permission-at-group.exception';
 import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from '../domain-service/interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from './interface';
+import { AccessDeniedException } from '../exception';
 
 @Injectable()
 export class QuizValidator implements IQuizValidator {
@@ -23,32 +18,20 @@ export class QuizValidator implements IQuizValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    protected readonly _contentDomainService: IContentDomainService
+    protected readonly _contentDomainService: IContentDomainService,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    protected readonly _contentValidator: IContentValidator
   ) {}
 
   public async checkCanCUDQuizInContent(contentId: string, user: UserDto): Promise<void> {
     const contentEntity = await this._contentDomainService.getVisibleContent(contentId);
-
-    const groups = await this._groupAppService.findAllByIds(contentEntity.getGroupIds());
-    await this._checkCanCUDQuizInGroups(user, groups);
-  }
-
-  private async _checkCanCUDQuizInGroups(user: UserDto, groups: GroupDto[]): Promise<void> {
-    const noPermissionInGroups: GroupDto[] = [];
-    const ability = await this._authorityAppService.buildAbility(user);
-    for (const group of groups) {
-      if (!ability.can(PERMISSION_KEY.CUD_QUIZ, subject(SUBJECT.GROUP, { id: group.id }))) {
-        noPermissionInGroups.push(group);
-      }
+    if (!contentEntity.isOwner(user.id)) {
+      throw new AccessDeniedException();
     }
-
-    if (noPermissionInGroups.length) {
-      throw new QuizNoCRUDPermissionAtGroupException(
-        {
-          groupsDenied: noPermissionInGroups.map((e) => e.id),
-        },
-        noPermissionInGroups.map((e) => e.name)
-      );
-    }
+    await this._contentValidator.checkCanCRUDContent(
+      user,
+      contentEntity.getGroupIds(),
+      contentEntity.get('type')
+    );
   }
 }

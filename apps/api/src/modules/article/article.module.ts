@@ -16,7 +16,6 @@ import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchModule } from '../search';
 import { TagModule } from '../tag';
-import { ArticleCronService } from './article-cron.service';
 import { UserModuleV2 } from '../v2-user/user.module';
 import { GroupModuleV2 } from '../v2-group/group.module';
 
@@ -38,13 +37,7 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     forwardRef(() => SeriesModule),
   ],
   controllers: [ArticleController],
-  providers: [
-    ArticleService,
-    ArticleAppService,
-    CanUseCategoryConstraint,
-    CanUseSeriesConstraint,
-    ArticleCronService,
-  ],
+  providers: [ArticleService, ArticleAppService, CanUseCategoryConstraint, CanUseSeriesConstraint],
   exports: [ArticleService],
 })
 export class ArticleModule {}

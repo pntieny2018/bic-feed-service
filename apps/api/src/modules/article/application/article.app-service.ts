@@ -3,7 +3,6 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
-import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
@@ -12,11 +11,9 @@ import {
 } from '../../../events/article';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
-import { TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
-import { CreateArticleDto } from '../dto/requests/create-article.dto';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
 import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
@@ -24,8 +21,7 @@ import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
-import { IPostGroup } from '../../../database/models/post-group.model';
-import { IPost, PostStatus } from '../../../database/models/post.model';
+import { PostStatus } from '../../../database/models/post.model';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
 import { ClassTransformer } from 'class-transformer';
@@ -79,7 +75,7 @@ export class ArticleAppService {
     }
     const postsSorted = await this._postService.getPostsByFilter(condition, {
       sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
-        ? 'publishedAt'
+        ? 'scheduledAt'
         : 'createdAt',
       sortBy: order,
       limit: limit + 1,
@@ -110,80 +106,20 @@ export class ArticleAppService {
       excludeExtraneousValues: true,
     });
 
+    /**
+     * Temporarily set publish to backward compatible with mobile
+     */
+    result.forEach((article) => {
+      if (article.status === PostStatus.WAITING_SCHEDULE) {
+        article.publishedAt = article.scheduledAt;
+      }
+    });
+
     return new PageDto<ArticleResponseDto>(result, {
       limit,
       offset,
       hasNextPage,
     });
-  }
-  public async get(
-    user: UserDto,
-    articleId: string,
-    getArticleDto: GetArticleDto
-  ): Promise<ArticleResponseDto> {
-    const articleResponseDto = await this._articleService.get(articleId, user, getArticleDto);
-
-    if (
-      (articleResponseDto.isHidden || articleResponseDto.status !== PostStatus.PUBLISHED) &&
-      articleResponseDto.createdBy !== user?.id
-    ) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-    const article = {
-      privacy: articleResponseDto.privacy,
-      createdBy: articleResponseDto.createdBy,
-      status: articleResponseDto.status,
-      type: articleResponseDto.type,
-      groups: articleResponseDto.audience.groups.map(
-        (g) =>
-          ({
-            groupId: g.id,
-          } as IPostGroup)
-      ),
-    } as IPost;
-
-    if (
-      !articleResponseDto ||
-      (articleResponseDto.isHidden === true && articleResponseDto.createdBy !== user?.id)
-    ) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-    if (user) {
-      await this.authorityService.checkCanReadArticle(
-        user,
-        article,
-        articleResponseDto.audience.groups
-      );
-    } else {
-      await this.authorityService.checkIsPublicArticle(article);
-    }
-
-    if (user) {
-      const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
-        TargetType.ARTICLE,
-      ]);
-      if (articleIdsReported.includes(articleId) && articleResponseDto.actor.id !== user.id) {
-        throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-      }
-    }
-
-    return articleResponseDto;
-  }
-
-  public async create(
-    user: UserDto,
-    createArticleDto: CreateArticleDto
-  ): Promise<ArticleResponseDto> {
-    const { audience } = createArticleDto;
-    if (audience.groupIds) {
-      await this._authorityService.checkCanCreatePost(user, audience.groupIds);
-    }
-
-    const created = await this._articleService.create(user, createArticleDto);
-    if (created) {
-      const article = await this._articleService.get(created.id, user, new GetArticleDto());
-      return article;
-    }
   }
 
   public async update(
@@ -383,12 +319,6 @@ export class ArticleAppService {
     };
     if (seriesIds.length) {
       const seriesGroups = await this._postService.getListWithGroupsByIds(seriesIds, true);
-      // if (seriesGroups.length < seriesIds.length) {
-      //   throw new ForbiddenException({
-      //     code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
-      //     message: `Series parameter is invalid`,
-      //   });
-      // }
       const invalidSeries = [];
       seriesGroups.forEach((item) => {
         const isValid = item.groups.some((group) => groupIds.includes(group.groupId));

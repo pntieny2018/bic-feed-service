@@ -6,6 +6,7 @@ import { StringHelper } from '../../../../common/helpers';
 import {
   GetContentByIdsProps,
   GetDraftsProps,
+  GetScheduledContentProps,
   IContentDomainService,
 } from './interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
@@ -92,5 +93,22 @@ export class ContentDomainService implements IContentDomainService {
     });
 
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+  }
+
+  public async getScheduledContent(
+    input: GetScheduledContentProps
+  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
+    const { beforeDate } = input;
+
+    return this._contentRepository.getPagination({
+      ...input,
+      where: {
+        status: PostStatus.WAITING_SCHEDULE,
+        scheduledAt: beforeDate,
+      },
+      attributes: {
+        exclude: ['content'],
+      },
+    });
   }
 }

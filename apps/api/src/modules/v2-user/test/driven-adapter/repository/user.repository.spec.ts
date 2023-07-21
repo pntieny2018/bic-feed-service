@@ -139,20 +139,6 @@ describe('UserRepository', () => {
     });
   });
 
-  describe('getPermissionsByUserId', () => {
-    it('Should returned a list permissions', async () => {
-      jest.spyOn(store, 'get').mockResolvedValue(permissionCacheKey);
-      const result = await repo.getPermissionsByUserId(bfProfile.id);
-      expect(result).toEqual(permissionCacheKey);
-    });
-
-    it('Should returned a empty object permissions', async () => {
-      jest.spyOn(store, 'get').mockResolvedValue(null);
-      const result = await repo.getPermissionsByUserId(bfProfile.id);
-      expect(result).toEqual({ communities: {}, groups: {} });
-    });
-  });
-
   describe('canCudTagInCommunityByUserId', () => {
     it('Should returned boolean', async () => {
       jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({
