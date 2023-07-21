@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -18,11 +17,8 @@ import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
-import { GetPostPipe } from '../post/pipes';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';
-import { CreateArticleDto } from './dto/requests/create-article.dto';
-import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
@@ -33,11 +29,7 @@ import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
-import {
-  ArticleLimitAttachedSeriesException,
-  ContentNoCRUDPermissionException,
-  ContentRequireGroupException,
-} from '../v2-post/domain/exception';
+import { ArticleLimitAttachedSeriesException } from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -113,62 +105,6 @@ export class ArticleController {
     return this._articleAppService.getsByParams(user, getPostsByParamsDto);
   }
 
-  // @ApiOperation({ summary: 'Get list article' })
-  // @ApiOkResponse({
-  //   type: ArticleResponseDto,
-  // })
-  // @Get('/')
-  // public getList(
-  //   @AuthUser() user: MediaDto,
-  //   @Query() getArticleListDto: GetListArticlesDto
-  // ): Promise<PageDto<ArticleResponseDto>> {
-  //   return this._articleAppService.getList(user, getArticleListDto);
-  // }
-
-  @ApiOperation({ summary: 'Get article detail' })
-  @ApiOkResponse({
-    type: ArticleResponseDto,
-  })
-  @Get('/:id')
-  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
-  public async get(
-    @AuthUser(false) user: UserDto,
-    @Param('id', ParseUUIDPipe) articleId: string,
-    @Query(GetPostPipe) getArticleDto: GetArticleDto
-  ): Promise<ArticleResponseDto> {
-    try {
-      const article = await this._articleAppService.get(user, articleId, getArticleDto);
-      return article;
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentRequireGroupException:
-          throw new ForbiddenException(e);
-        case ContentNoCRUDPermissionException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
-  }
-
-  @ApiOperation({ summary: 'Create article' })
-  @ApiOkResponse({
-    type: ArticleResponseDto,
-    description: 'Create article successfully',
-  })
-  @Post('/')
-  @InjectUserToBody()
-  @ResponseMessages({
-    success: 'message.article.created_success',
-  })
-  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
-  public async create(
-    @AuthUser() user: UserDto,
-    @Body() createArticleDto: CreateArticleDto
-  ): Promise<ArticleResponseDto> {
-    return await this._articleAppService.create(user, createArticleDto);
-  }
-
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
     type: ArticleResponseDto,
@@ -177,12 +113,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.updated_success',
   })
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-  ])
+  @Version([VERSIONS_SUPPORTED[0]])
   @Put('/:id')
   @ResponseMessages({ success: 'Article updated' })
   @InjectUserToBody()
@@ -212,12 +143,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.published_success',
   })
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-  ])
+  @Version([VERSIONS_SUPPORTED[0]])
   @Put('/:id/publish')
   public async publish(
     @AuthUser() user: UserDto,
@@ -244,13 +170,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.scheduled_success',
   })
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-    VERSIONS_SUPPORTED[4],
-  ])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   @Put('/:id/schedule')
   public async schedule(
     @AuthUser() user: UserDto,
@@ -268,22 +188,5 @@ export class ArticleController {
           throw e;
       }
     }
-  }
-
-  @ApiOperation({ summary: 'Delete article' })
-  @ApiOkResponse({
-    type: Boolean,
-    description: 'Delete article successfully',
-  })
-  @ResponseMessages({
-    success: 'message.article.deleted_success',
-  })
-  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1], VERSIONS_SUPPORTED[2]])
-  @Delete('/:id')
-  public async delete(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) articleId: string
-  ): Promise<boolean> {
-    return this._articleAppService.delete(user, articleId);
   }
 }
