@@ -20,3 +20,4 @@ export * from './get-quizzes.request.dto';
 export * from './publish-artice.request.dto';
 export * from './update-artice.request.dto';
 export * from './schedule-artice.request.dto';
+export * from './get-quizzes.request.dto';
