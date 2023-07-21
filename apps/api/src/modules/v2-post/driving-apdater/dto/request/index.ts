@@ -16,7 +16,7 @@ export * from './validate-series-tag.dto';
 export * from './get-draft-contents.request.dto';
 export * from './get-timeline.request.dto';
 export * from './get-newsfeed.request.dto';
-export * from './get-draft-quizzes.dto';
+export * from './get-quizzes.request.dto';
 export * from './publish-artice.request.dto';
 export * from './update-artice.request.dto';
 export * from './schedule-artice.request.dto';
