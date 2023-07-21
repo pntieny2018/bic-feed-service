@@ -107,6 +107,9 @@ export const POST_ES_MAPPING = {
       updatedAt: {
         type: 'date',
       },
+      publishedAt: {
+        type: 'date',
+      },
       createdBy: {
         type: 'keyword',
       },
