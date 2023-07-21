@@ -315,10 +315,6 @@ export class ContentBinding implements IContentBinding {
               images: item.get('media').images?.map((image) => new ImageDto(image.toObject())),
               videos: item.get('media').videos?.map((video) => new VideoDto(video.toObject())),
             },
-            quiz:
-              item.get('quiz') && item.get('quiz').isVisible(dataBinding.authUser.id)
-                ? new QuizDto(item.get('quiz').toObject())
-                : undefined,
           };
         }
         if (item instanceof ArticleEntity) {
@@ -336,10 +332,6 @@ export class ContentBinding implements IContentBinding {
               id: category.get('id'),
               name: category.get('name'),
             })),
-            quiz:
-              item.get('quiz') && item.get('quiz').isVisible(dataBinding.authUser.id)
-                ? new QuizDto(item.get('quiz').toObject())
-                : undefined,
           };
         }
       }),
