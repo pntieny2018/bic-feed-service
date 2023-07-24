@@ -258,4 +258,34 @@ export class QuizController {
       }
     }
   }
+
+  @ApiOperation({ summary: 'Start a quiz' })
+  @ApiOkResponse({
+    type: CreateTagDto,
+    description: 'Start quiz successfully',
+  })
+  @Post(ROUTES.QUIZ.START_QUIZ.PATH)
+  @Version(ROUTES.QUIZ.START_QUIZ.VERSIONS)
+  public async startQuiz(
+    @Param('id', ParseUUIDPipe) quizId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
+        new DeleteQuizCommand({ quizId, authUser })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizNotFoundException:
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+        default:
+          throw e;
+      }
+    }
+  }
 }
