@@ -1,0 +1,6 @@
+account_id: "296763675441"
+region: ap-southeast-1
+vpc_id: vpc-094c956eb1b19d929
+vpc_endpoint_id: vpce-0004fbe0555c9d0b3
+subnet_ids:
+  - subnet-0a99afa9be95bd6cc

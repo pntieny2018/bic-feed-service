@@ -1,2 +1,6 @@
 account_id: "210668178631"
 region: ap-southeast-1
+vpc_id: vpc-056cce79284ffce92
+vpc_endpoint_id: vpce-0fb3413ce3cbc3495
+subnet_ids:
+  - subnet-0b69228abc5419286
