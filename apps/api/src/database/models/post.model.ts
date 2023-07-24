@@ -373,6 +373,39 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
+  public static excludeReportedByUser(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    return Sequelize.literal(
+      `NOT EXISTS ( 
+        SELECT target_id FROM ${schema}.${reportContentDetailTable} rp
+          WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this.sequelize.escape(userId)}
+      )`
+    );
+  }
+
+  public static filterSavedByUser(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const userSavePostTable = UserSavePostModel.tableName;
+    return Sequelize.literal(
+      `EXISTS ( 
+          SELECT sp.user_id FROM ${schema}.${userSavePostTable} sp
+            WHERE sp.post_id = "PostModel".id AND sp.user_id = ${this.sequelize.escape(userId)}
+        )`
+    );
+  }
+
+  public static filterInNewsfeedUser(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const userNewsFeedTable = UserNewsFeedModel.tableName;
+    return Sequelize.literal(
+      `EXISTS ( 
+          SELECT nf.user_id FROM  ${schema}.${userNewsFeedTable} nf
+            WHERE nf.post_id = "PostModel".id AND nf.user_id = ${this.sequelize.escape(userId)}
+        )`
+    );
+  }
+
   public static notIncludePostsReported(
     userId: string,
     options?: {

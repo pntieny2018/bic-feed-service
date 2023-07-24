@@ -32,14 +32,11 @@ import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
 import { getDatabaseConfig } from '../../../../config/database';
-import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
-import { UserSavePostModel } from '../../../../database/models/user-save-post.model';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
-import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
 
 export class ContentRepository implements IContentRepository {
@@ -433,8 +430,6 @@ export class ContentRepository implements IContentRepository {
     let conditions: WhereOptions<IPost> | undefined;
     const condition = [];
     const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
-    const userSavePostTable = UserSavePostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
 
     if (options.where) {
@@ -486,42 +481,15 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (options.where.excludeReportedByUserId) {
-        condition.push(
-          Sequelize.literal(
-            `NOT EXISTS ( 
-                      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-                        WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this._postModel.sequelize.escape(
-                          options.where.excludeReportedByUserId
-                        )}
-                    )`
-          )
-        );
+        condition.push(PostModel.excludeReportedByUser(options.where.excludeReportedByUserId));
       }
 
       if (options.where.savedByUserId) {
-        condition.push(
-          Sequelize.literal(
-            `EXISTS ( 
-                      SELECT sp.user_id FROM  ${schema}.${userSavePostTable} sp
-                        WHERE sp.post_id = "PostModel".id AND sp.user_id = ${this._postModel.sequelize.escape(
-                          options.where.savedByUserId
-                        )}
-                    )`
-          )
-        );
+        condition.push(PostModel.filterSavedByUser(options.where.savedByUserId));
       }
 
       if (options.where.inNewsfeedUserId) {
-        condition.push(
-          Sequelize.literal(
-            `EXISTS ( 
-                      SELECT nf.user_id FROM  ${schema}.${UserNewsFeedModel.tableName} nf
-                        WHERE nf.post_id = "PostModel".id AND nf.user_id = ${this._postModel.sequelize.escape(
-                          options.where.inNewsfeedUserId
-                        )}
-                    )`
-          )
-        );
+        condition.push(PostModel.filterInNewsfeedUser(options.where.inNewsfeedUserId));
       }
 
       if (
