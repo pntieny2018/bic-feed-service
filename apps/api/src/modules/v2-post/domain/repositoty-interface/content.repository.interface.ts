@@ -25,8 +25,6 @@ export type FindOnePostOptions = {
     savedByUserId?: string;
     type?: PostType;
     status?: PostStatus;
-    importantWithUserId?: string;
-    notImportantWithUserId?: string;
     inNewsfeedUserId?: string;
   };
   include?: {
@@ -67,8 +65,6 @@ export type FindAllPostOptions = {
     isHidden?: boolean;
     savedByUserId?: string;
     status?: PostStatus;
-    importantWithUserId?: string;
-    notImportantWithUserId?: string;
     inNewsfeedUserId?: string;
   };
   include?: {

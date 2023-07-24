@@ -45,7 +45,8 @@ import { PostCategoryModel } from '../../../../database/models/post-category.mod
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
   public constructor(
-    @InjectConnection() private readonly _sequelizeConnection: Sequelize,
+    @InjectConnection()
+    private readonly _sequelizeConnection: Sequelize,
     @Inject(POST_FACTORY_TOKEN)
     private readonly _postFactory: IPostFactory,
     @Inject(ARTICLE_FACTORY_TOKEN)
@@ -275,7 +276,7 @@ export class ContentRepository implements IContentRepository {
     if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"colImportant"'), OrderEnum.DESC]);
+      order.push([this._sequelizeConnection.literal('"isReadImportant"'), OrderEnum.DESC]);
     }
     if (orderOptions.isPublished) {
       order.push(['publishedAt', OrderEnum.DESC]);
@@ -310,8 +311,6 @@ export class ContentRepository implements IContentRepository {
 
   private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
     const { schema } = getDatabaseConfig();
-    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const userSavePostTable = UserSavePostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
     const findOption: FindOptions<IPost> = {};
     findOption.where = this._getCondition(options).where;
@@ -356,7 +355,7 @@ export class ContentRepository implements IContentRepository {
             ? Sequelize.literal(
                 `EXISTS (
                 SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
-                  WHERE seriesGroups.post_id = "postSeries".series_id  AND seriesGroups.is_archived = ${options.where.groupArchived})`
+                  WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${options.where.groupArchived})`
               )
             : undefined,
         });
@@ -401,51 +400,17 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (shouldIncludeSaved) {
-        if (shouldIncludeSaved.userId) {
-          subSelect.push([
-            Sequelize.literal(`(
-                  COALESCE((SELECT true FROM ${schema}.${userSavePostTable} as r
-                  WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
-                    shouldIncludeSaved.userId
-                  )}), false)
-              )`),
-            'isSaved',
-          ]);
-        } else {
-          subSelect.push([Sequelize.literal(`(false)`), 'isSaved']);
-        }
+        subSelect.push(PostModel.loadSaved(shouldIncludeSaved.userId, 'isSaved'));
       }
 
       if (shouldIncludeMarkReadImportant) {
-        if (shouldIncludeMarkReadImportant.userId) {
-          subSelect.push([
-            Sequelize.literal(`(
-                  COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
-                  WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
-                    shouldIncludeMarkReadImportant.userId
-                  )}), false)
-              )`),
-            'markedReadPost',
-          ]);
-        } else {
-          subSelect.push([Sequelize.literal(`(false)`), 'markedReadPost']);
-        }
+        subSelect.push(
+          PostModel.loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
+        );
       }
 
       if (shouldIncludeImportant) {
-        if (shouldIncludeImportant.userId) {
-          subSelect.push([
-            Sequelize.literal(`(
-          CASE WHEN is_important = TRUE AND COALESCE((SELECT TRUE FROM ${schema}.${userMarkReadPostTable} as r
-          WHERE r.post_id = "PostModel".id AND r.user_id = ${this._postModel.sequelize.escape(
-            shouldIncludeImportant.userId
-          )}), FALSE) = FALSE THEN 1 ELSE 0 END
-               )`),
-            'colImportant',
-          ]);
-        } else {
-          subSelect.push([Sequelize.literal(`"PostModel".is_important`), 'colImportant']);
-        }
+        subSelect.push(PostModel.loadImportant(shouldIncludeImportant.userId, 'isReadImportant'));
       }
     }
 
@@ -551,30 +516,6 @@ export class ContentRepository implements IContentRepository {
                           options.where.inNewsfeedUserId
                         )}
                     )`
-          )
-        );
-      }
-      if (options.where.importantWithUserId) {
-        condition.push(
-          Sequelize.literal(
-            `"PostModel".is_important = TRUE AND NOT EXISTS ( 
-                      SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
-                        WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
-                          options.where.importantWithUserId
-                        )}
-                    )`
-          )
-        );
-      }
-      if (options.where.notImportantWithUserId) {
-        condition.push(
-          Sequelize.literal(
-            `("PostModel".is_important = FALSE OR EXISTS ( 
-                      SELECT mr.user_id FROM  ${schema}.${UserMarkReadPostModel.tableName} mr
-                        WHERE mr.post_id = "PostModel".id AND mr.user_id = ${this._postModel.sequelize.escape(
-                          options.where.notImportantWithUserId
-                        )}
-                    ))`
           )
         );
       }
