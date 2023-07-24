@@ -18,10 +18,9 @@ export class LinkPreviewDomainService implements ILinkPreviewDomainService {
   private readonly _linkPreviewFactory: ILinkPreviewFactory;
 
   public async findOrUpsert(input: LinkPreviewDto): Promise<LinkPreviewEntity> {
-    const url = input?.url;
-    if (!url) return null;
+    if (!input?.url) return null;
     try {
-      let linkPreviewEntity = await this._linkPreviewRepo.findByUrl(url);
+      let linkPreviewEntity = await this._linkPreviewRepo.findByUrl(input.url);
       if (!linkPreviewEntity) {
         linkPreviewEntity = this._linkPreviewFactory.createLinkPreview(input);
         await this._linkPreviewRepo.create(linkPreviewEntity);
