@@ -7,7 +7,8 @@ from aws_cdk import (
     aws_logs as logs,
     custom_resources as cr,
     BundlingOptions,
-    CfnOutput
+    CfnOutput,
+    Duration
 )
 from constructs import Construct
 import os
@@ -84,7 +85,8 @@ class BicContentApiGatewayStack(Stack):
             #     key1 = "value1"
             # ),
             # log_retention = logs.RetentionDays.THREE_MONTHS,
-            memory_size = 128,
+            memory_size = 256,
+            timeout = Duration.seconds(15),
             vpc = ec2.Vpc.from_lookup(self, 'ExistingVPC', vpc_id=parameters['vpc_id']),
             vpc_subnets = ec2.SubnetSelection(
                 subnet_filters = [
