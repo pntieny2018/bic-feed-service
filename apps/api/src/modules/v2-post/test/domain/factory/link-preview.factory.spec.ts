@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { commentRecord } from '../../mock/comment.model.mock';
 import { EventPublisher } from '@nestjs/cqrs';
 import { createMock } from '@golevelup/ts-jest';
 import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
@@ -28,8 +27,8 @@ describe('LinkPreviewFactory', function () {
     jest.clearAllMocks();
   });
 
-  describe('createComment', () => {
-    it('should return a CommentEntity success', () => {
+  describe('createLinkPreview', () => {
+    it('should return a link preview success', () => {
       const result = linkPreviewFactory.createLinkPreview({
         url: 'string',
         domain: 'string',
@@ -43,7 +42,7 @@ describe('LinkPreviewFactory', function () {
   });
 
   describe('reconstitute', () => {
-    it('should return a CommentEntity success', () => {
+    it('should return a LinkPreviewEntity success', () => {
       const result = linkPreviewFactory.reconstitute(mockLinkPreviewRecord);
 
       expect(result).toEqual(eventPublisher.mergeObjectContext(mockLinkPreviewEntity));
