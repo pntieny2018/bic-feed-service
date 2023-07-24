@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, Sequelize } from 'sequelize';
+import { FindOptions, Op, Sequelize, WhereOptions } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
@@ -313,7 +313,7 @@ export class ContentRepository implements IContentRepository {
     const { schema } = getDatabaseConfig();
     const postGroupTable = PostGroupModel.tableName;
     const findOption: FindOptions<IPost> = {};
-    findOption.where = this._getCondition(options).where;
+    findOption.where = this._getCondition(options);
     const includeAttr = [];
     const subSelect = [];
     if (options.include) {
@@ -338,8 +338,8 @@ export class ContentRepository implements IContentRepository {
             ...(isBoolean(options.where.groupArchived) && {
               isArchived: options.where.groupArchived,
             }),
-            ...((options.where?.groupId || options.where?.groupIds) && {
-              groupId: options.where?.groupId || options.where?.groupIds,
+            ...(options.where?.groupIds && {
+              groupId: options.where?.groupIds,
             }),
           },
         });
@@ -429,23 +429,26 @@ export class ContentRepository implements IContentRepository {
     return findOption;
   }
 
-  private _getCondition(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
-    const findOption: FindOptions<IPost> = {};
+  private _getCondition(options: FindOnePostOptions | FindAllPostOptions): WhereOptions<IPost> {
+    let conditions: WhereOptions<IPost> | undefined;
+    const condition = [];
     const { schema } = getDatabaseConfig();
     const reportContentDetailTable = ReportContentDetailModel.tableName;
     const userSavePostTable = UserSavePostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
+
     if (options.where) {
-      const condition = [];
       if (options.where['id'])
         condition.push({
           id: options.where['id'],
         });
+
       if (options.where['ids']) {
         condition.push({
           id: options.where['ids'],
         });
       }
+
       if (options.where.type) {
         condition.push({
           type: options.where.type,
@@ -507,6 +510,7 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
+
       if (options.where.inNewsfeedUserId) {
         condition.push(
           Sequelize.literal(
@@ -519,17 +523,14 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
+
       if (
-        (options.where?.groupId || options.where?.groupIds) &&
+        options.where?.groupIds &&
         !options.include?.shouldIncludeGroup &&
         !options.include?.mustIncludeGroup
       ) {
         let groupConditions = '';
-        if (options.where.groupId) {
-          groupConditions = `AND g.group_id = ${this._postModel.sequelize.escape(
-            options.where.groupId
-          )}`;
-        } else if (options.where.groupIds?.length) {
+        if (options.where.groupIds?.length) {
           groupConditions = `AND g.group_id IN (${options.where.groupIds
             .map((groupId) => this._postModel.sequelize.escape(groupId))
             .join(', ')})`;
@@ -557,15 +558,15 @@ export class ContentRepository implements IContentRepository {
           )
         );
       }
-
-      if (condition.length) {
-        findOption.where = {
-          [Op.and]: condition,
-        };
-      }
     }
 
-    return findOption;
+    if (condition.length) {
+      conditions = {
+        [Op.and]: condition,
+      };
+    }
+
+    return conditions;
   }
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
