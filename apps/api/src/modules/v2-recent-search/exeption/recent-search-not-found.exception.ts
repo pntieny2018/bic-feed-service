@@ -7,7 +7,7 @@ export class RecentSearchNotFoundException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.RECENT_SEARCH.RECENT_SEARCH_NOT_FOUND,
-      message || i18n.t(`error.recent_search.not_found`)
+      message || i18n?.t(`error.recent_search.not_found`)
     );
   }
 }

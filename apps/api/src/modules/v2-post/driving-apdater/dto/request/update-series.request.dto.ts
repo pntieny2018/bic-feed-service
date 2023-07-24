@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from './media.request.dto';
-import { PostSettingRequestDto } from './post-setting.request.dto';
 
 export class UpdateSeriesRequestDto {
   @ApiProperty({
@@ -23,12 +22,18 @@ export class UpdateSeriesRequestDto {
   @Type(() => String)
   @MaxLength(64)
   @IsOptional()
+  @Expose({
+    name: 'title',
+  })
   public title?: string;
 
   @ApiProperty({ type: String })
   @Type(() => String)
   @MaxLength(255)
   @IsOptional()
+  @Expose({
+    name: 'summary',
+  })
   public summary?: string;
 
   @ApiProperty({

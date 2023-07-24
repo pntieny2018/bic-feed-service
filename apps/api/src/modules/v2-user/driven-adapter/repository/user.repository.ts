@@ -154,6 +154,11 @@ export class UserRepository implements IUserRepository {
     };
   }
 
+  public async getPermissionsByUserIds(userIds: string[]): Promise<Permission[]> {
+    const cacheKeys = userIds.map((userId) => `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`);
+    return await this._store.mget(cacheKeys);
+  }
+
   /**
    * Note: Need to override domain to group endpoint. Change domain to user service soon
    */

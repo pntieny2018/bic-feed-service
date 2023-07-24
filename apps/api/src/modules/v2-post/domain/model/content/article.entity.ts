@@ -3,8 +3,9 @@ import { RULES } from '../../../constant';
 import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
+import { PostStatus } from '../../../data-type';
 import { ContentEntity, ContentProps } from './content.entity';
-import { UpdateArticleCommandPayload } from '../../../application/command/update-article/update-article.command';
+import { ArticlePayload } from '../../domain-service/interface';
 
 export type ArticleProps = ContentProps & {
   title: string;
@@ -21,10 +22,7 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
     super(props);
   }
 
-  /**
-   * Note: Summary can be empty string
-   */
-  public updateAttribute(data: UpdateArticleCommandPayload): void {
+  public updateAttribute(data: ArticlePayload): void {
     const { actor, content, series, title, summary, groupIds, wordCount } = data;
     super.update({ authUser: actor, groupIds });
 
@@ -39,6 +37,13 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
     if (content) this._props.content = content;
     if (title) this._props.title = title;
     if (summary !== undefined) this._props.summary = summary;
+  }
+
+  public setWaitingSchedule(scheduledAt: Date): void {
+    if (this.isPublished()) return;
+    this._state.isChangeStatus = true;
+    this._props.scheduledAt = scheduledAt;
+    this._props.status = PostStatus.WAITING_SCHEDULE;
   }
 
   public getSeriesIds(): string[] {

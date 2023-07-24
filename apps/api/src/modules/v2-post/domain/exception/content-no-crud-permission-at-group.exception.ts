@@ -8,7 +8,7 @@ export class ContentNoCRUDPermissionAtGroupException extends DomainException {
     super(
       ERRORS.CONTENT.CONTENT_NO_CRUD_PERMISSION_AT_GROUP,
       message ||
-        i18n.t(`error.content.no_crud_permission_at_group`, {
+        i18n?.t(`error.content.no_crud_permission_at_group`, {
           args: { groups: groups.join(', ') },
         }),
       errors

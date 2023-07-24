@@ -24,7 +24,8 @@ export const ERRORS = {
     CONTENT_NO_CRUD_PERMISSION_AT_GROUP: 'content.no_crud_permission_at_group',
     CONTENT_NO_EDIT_SETTING_PERMISSION_AT_GROUP: 'content.no_edit_setting_permission_at_group',
     CONTENT_NO_REACT_PERMISSION: 'content.no_react_permission',
-    CONTENT_NO_PUBLISH_YET: 'no_publish_yet',
+    CONTENT_NO_PUBLISH_YET: 'content.no_publish_yet',
+    CONTENT_HAS_BEEN_PUBLISHED: 'content.has_been_published',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
@@ -37,6 +38,7 @@ export const ERRORS = {
     ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
     ARTICLE_REQUIRED_COVER: 'article.required_cover',
     ARTICLE_LIMIT_ATTACHED_SERIES: 'article.limit_attached_series',
+    ARTICLE_INVALID_SCHEDULED_TIME: 'article.invalid_scheduled_time',
   },
   POST: {
     POST_NOT_FOUND: 'post.not_found',

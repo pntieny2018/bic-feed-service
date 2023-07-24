@@ -1,6 +1,6 @@
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 import { IPaginationArgs } from './paginated.interface';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { PAGING_DEFAULT_LIMIT } from '../../constants';
 
@@ -10,20 +10,24 @@ export class PaginatedArgs implements IPaginationArgs {
     default: 25,
     required: false,
   })
+  @IsOptional()
+  @Expose({
+    name: 'limit',
+  })
   @Type(() => Number)
   @IsInt()
   @Max(PAGING_DEFAULT_LIMIT)
   @Min(1)
   public limit = 10;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   @Expose({
     name: 'before',
   })
   public before?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   @Expose({
     name: 'after',

@@ -496,12 +496,12 @@ export class ArticleService {
         status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this._postService.getPrivacy(groupIds);
-      const createdAt = new Date();
+      const publishedAt = new Date();
       await this.postModel.update(
         {
           status,
           privacy: postPrivacy,
-          createdAt,
+          publishedAt,
         },
         {
           where: {
@@ -511,7 +511,7 @@ export class ArticleService {
         }
       );
       article.status = status;
-      article.createdAt = createdAt;
+      article.publishedAt = publishedAt;
       if (article.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -641,7 +641,7 @@ export class ArticleService {
 
   public async schedule(articleId: string, scheduleArticleDto: ScheduleArticleDto): Promise<void> {
     await this.postModel.update(
-      { status: PostStatus.WAITING_SCHEDULE, publishedAt: scheduleArticleDto.publishedAt },
+      { status: PostStatus.WAITING_SCHEDULE, scheduledAt: scheduleArticleDto.publishedAt },
       { where: { id: articleId } }
     );
   }
