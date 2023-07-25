@@ -21,6 +21,7 @@ import { QuizQuestionModel } from '../../../../database/models/quiz-question.mod
 import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
 import { UserTakeQuizModel } from '../../../../database/models/user_take_quiz.model';
 import { TakeQuizEntity } from '../../domain/model/user-taking-quiz';
+import { PostGroupModel } from '../../../../database/models/post-group.model';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
@@ -155,6 +156,20 @@ export class QuizRepository implements IQuizRepository {
   ): FindOptions<IQuiz> {
     const findOption: FindOptions<IQuiz> = {};
     findOption.where = this._getCondition(options);
+    findOption.include = [
+      {
+        model: QuizQuestionModel,
+        as: 'questions',
+        required: false,
+        include: [
+          {
+            model: QuizAnswerModel,
+            as: 'answers',
+            required: false,
+          },
+        ],
+      },
+    ];
     if (options.attributes) findOption.attributes = options.attributes as (keyof IQuiz)[];
     return findOption;
   }
@@ -201,7 +216,7 @@ export class QuizRepository implements IQuizRepository {
       numberOfAnswersDisplay: quiz.numberOfAnswersDisplay,
       timeLimit: quiz.timeLimit,
       isRandom: quiz.isRandom,
-      questions: quiz.questions.map((question) => ({
+      questions: (quiz.questions || []).map((question) => ({
         id: question.id,
         question: question.content,
         answers: question.answers.map((answer) => ({
