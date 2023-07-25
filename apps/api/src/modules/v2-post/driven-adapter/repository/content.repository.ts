@@ -402,7 +402,6 @@ export class ContentRepository implements IContentRepository {
           attributes: [
             'id',
             'title',
-            'contentId',
             'description',
             'status',
             'genStatus',

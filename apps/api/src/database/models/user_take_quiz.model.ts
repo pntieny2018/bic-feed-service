@@ -80,9 +80,9 @@ export class UserTakeQuizModel
   public finishedAt: Date;
 
   @BelongsTo(() => PostModel, {
-    foreignKey: 'contentId',
+    foreignKey: 'postId',
   })
-  public post?: PostModel;
+  public post?: IPost;
 
   @BelongsTo(() => QuizModel, {
     foreignKey: 'quizId',

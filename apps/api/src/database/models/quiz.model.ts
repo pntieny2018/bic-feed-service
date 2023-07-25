@@ -81,9 +81,6 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @Column
   public isRandom: boolean;
 
-  @HasMany(() => QuizQuestionModel)
-  public questions: IQuizQuestion[];
-
   @Column({
     type: DataTypes.JSONB,
   })
@@ -115,4 +112,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  @HasMany(() => QuizQuestionModel, {
+    foreignKey: 'quizId',
+  })
+  public questions: IQuizQuestion[];
 }

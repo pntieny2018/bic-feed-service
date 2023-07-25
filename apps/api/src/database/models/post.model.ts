@@ -38,7 +38,7 @@ import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
 import { IQuiz, QuizModel } from './quiz.model';
-import { UserTakeQuizModel } from './user_take_quiz.model';
+import { IUserTakeQuiz, UserTakeQuizModel } from './user_take_quiz.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -104,6 +104,7 @@ export interface IPost {
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
   quiz?: IQuiz;
+  takeQuizzes?: IUserTakeQuiz[];
   publishedAt?: Date;
   scheduledAt?: Date;
   errorLog?: any;
@@ -282,14 +283,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public items?: IPost[];
 
   @HasOne(() => QuizModel, {
-    foreignKey: 'contentId',
+    foreignKey: 'postId',
   })
-  public quiz?: QuizModel;
+  public quiz?: IQuiz;
 
-  public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
-
-  @HasMany(() => UserTakeQuizModel)
-  public takeQuizzes: UserTakeQuizModel[];
+  @HasMany(() => UserTakeQuizModel, 'postId')
+  public takeQuizzes: IUserTakeQuiz[];
 
   @HasMany(() => PostGroupModel)
   public groups: PostGroupModel[];
