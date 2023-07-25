@@ -4,6 +4,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { ITagFactory } from '../../../domain/factory/interface';
 import { TagFactory } from '../../../domain/factory';
 import { mockTagEntity, mockTagRecord } from '../../mock/tag.entity.mock';
+import { TagEntity } from '../../../domain/model/tag';
 
 describe('TagFactory', function () {
   let tagFactory: ITagFactory;
@@ -37,6 +38,7 @@ describe('TagFactory', function () {
       });
 
       expect(result).toBeDefined();
+      expect(eventPublisher.mergeObjectContext).toBeCalledWith(expect.any(TagEntity));
     });
   });
 

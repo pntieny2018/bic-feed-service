@@ -23,5 +23,16 @@ describe('CategoryFactory', () => {
       const res = await categoryFactory.reconstitute(categoryRecord);
       expect(res).toEqual(categoryEntityMock);
     });
+
+    it('should throw an error if category id is not uuid', async () => {
+      try {
+        await categoryFactory.reconstitute({
+          ...categoryRecord,
+          id: 'not-uuid',
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
   });
 });

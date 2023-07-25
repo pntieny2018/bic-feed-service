@@ -47,7 +47,7 @@ export class FindTimelineGroupHandler
   ): Promise<CursorPaginationResult<string>> {
     const { groupId, isMine, type, isSaved, limit, isImportant, after, authUser } = query.payload;
     const group = await this._groupAppService.findOne(groupId);
-    const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+    const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser?.groups);
     const offset = getLimitFromAfter(after);
     const rows = await this._contentRepository.findAll({
       attributes: {
@@ -66,7 +66,7 @@ export class FindTimelineGroupHandler
       },
       include: {
         shouldIncludeImportant: {
-          userId: authUser.id,
+          userId: authUser?.id,
         },
       },
       offset,

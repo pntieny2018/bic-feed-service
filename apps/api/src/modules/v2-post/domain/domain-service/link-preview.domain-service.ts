@@ -12,10 +12,12 @@ import { LinkPreviewDto } from '../../application/dto';
 export class LinkPreviewDomainService implements ILinkPreviewDomainService {
   private readonly _logger = new Logger(LinkPreviewDomainService.name);
 
-  @Inject(LINK_PREVIEW_REPOSITORY_TOKEN)
-  private readonly _linkPreviewRepo: ILinkPreviewRepository;
-  @Inject(LINK_PREVIEW_FACTORY_TOKEN)
-  private readonly _linkPreviewFactory: ILinkPreviewFactory;
+  public constructor(
+    @Inject(LINK_PREVIEW_REPOSITORY_TOKEN)
+    private readonly _linkPreviewRepo: ILinkPreviewRepository,
+    @Inject(LINK_PREVIEW_FACTORY_TOKEN)
+    private readonly _linkPreviewFactory: ILinkPreviewFactory
+  ) {}
 
   public async findOrUpsert(input: LinkPreviewDto): Promise<LinkPreviewEntity> {
     if (!input?.url) return null;

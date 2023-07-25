@@ -3,6 +3,7 @@ import { EventPublisher } from '@nestjs/cqrs';
 import { createMock } from '@golevelup/ts-jest';
 import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
 import { mockLinkPreviewEntity, mockLinkPreviewRecord } from '../../mock/link-preview.entity.mock';
+import { LinkPreviewEntity } from '../../../domain/model/link-preview';
 
 describe('LinkPreviewFactory', function () {
   let linkPreviewFactory: LinkPreviewFactory;
@@ -38,6 +39,7 @@ describe('LinkPreviewFactory', function () {
       });
 
       expect(result).toBeDefined();
+      expect(eventPublisher.mergeObjectContext).toBeCalledWith(expect.any(LinkPreviewEntity));
     });
   });
 
@@ -46,6 +48,17 @@ describe('LinkPreviewFactory', function () {
       const result = linkPreviewFactory.reconstitute(mockLinkPreviewRecord);
 
       expect(result).toEqual(eventPublisher.mergeObjectContext(mockLinkPreviewEntity));
+    });
+
+    it('should throw an error if link preview id is not uuid', async () => {
+      try {
+        await linkPreviewFactory.reconstitute({
+          id: 'not-uuid',
+          ...mockLinkPreviewRecord,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
     });
   });
 });

@@ -32,6 +32,8 @@ export class GroupApplicationService implements IGroupApplicationService {
    * Guest can see post in current group(joinned or close) and child group(joined)
    */
   public getGroupIdAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[] {
+    if (!groupIdsUserJoined) return [group.id];
+
     const childGroupIds = [
       ...group.child.open,
       ...group.child.closed,

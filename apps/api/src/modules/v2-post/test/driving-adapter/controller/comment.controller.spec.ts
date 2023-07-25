@@ -7,11 +7,14 @@ import { OrderEnum } from '../../../../../common/dto';
 import { CommentController } from '../../../driving-apdater/controller/comment.controller';
 import { GetListCommentsDto } from '../../../driving-apdater/dto/request';
 import {
+  CommentNotFoundException,
+  CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
   InvalidCursorParamsException,
 } from '../../../domain/exception';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { commentMock } from '../../mock/comment.model.mock';
 
 describe('CommentController', () => {
   let commentController: CommentController;
@@ -39,41 +42,8 @@ describe('CommentController', () => {
     jest.clearAllMocks();
   });
 
-  const commentMock = {
-    edited: false,
-    total_reply: 39,
-    id: '7a821691-64cb-4846-9933-d31cbe5ce558',
-    parent_id: '00000000-0000-0000-0000-000000000000',
-    post_id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-    content: '1',
-    giphy_id: '',
-    giphy_url: null,
-    created_at: '2022-09-30T03:07:57.216Z',
-    created_by: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
-    updated_at: '2022-09-30T06:18:30.616Z',
-    actor: {
-      id: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
-      username: 'ngoclinh',
-      fullname: 'linh',
-      email: 'ngoclinh@tgm.vn',
-      avatar:
-        'https://media.beincom.io/image/variants/user/avatar/8d7b4502-0c6f-4d5c-a4b5-9efde7d58699',
-      is_deactivated: false,
-      is_verified: true,
-      showing_badges: [],
-    },
-    media: {
-      files: [],
-      images: [],
-      videos: [],
-    },
-    owner_reactions: [],
-    reactions_count: [],
-    mentions: {},
-  };
-
   describe('getList', () => {
-    it('should return an array of posts', async () => {
+    it('should return an array of comments', async () => {
       const listCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
         order: OrderEnum.DESC,
@@ -150,7 +120,7 @@ describe('CommentController', () => {
             {
               ...commentMock,
               child: {
-                list: [],
+                list: [commentMock],
                 meta: {},
               },
             },
@@ -176,7 +146,7 @@ describe('CommentController', () => {
           {
             ...commentMock,
             child: {
-              list: [],
+              list: [commentMock],
               meta: {},
             },
           },
@@ -240,21 +210,21 @@ describe('CommentController', () => {
     it('should create a comment successfully', async () => {
       const createCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-        content: '1',
+        content: 'sample content',
         media: {
           images: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb1',
             },
           ],
           files: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb2',
             },
           ],
           videos: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb3',
             },
           ],
         },
@@ -266,12 +236,12 @@ describe('CommentController', () => {
       expect(command.execute).toBeCalledWith({
         payload: {
           postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-          content: '1',
+          content: 'sample content',
           actor: userMock,
           media: {
-            images: ['1'],
-            files: ['1'],
-            videos: ['1'],
+            images: ['b114b2dd-39b4-43ae-8643-c9e3228feeb1'],
+            files: ['b114b2dd-39b4-43ae-8643-c9e3228feeb2'],
+            videos: ['b114b2dd-39b4-43ae-8643-c9e3228feeb3'],
           },
         },
       });
@@ -345,17 +315,17 @@ describe('CommentController', () => {
         media: {
           images: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb1',
             },
           ],
           files: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb2',
             },
           ],
           videos: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb3',
             },
           ],
         },
@@ -375,9 +345,9 @@ describe('CommentController', () => {
           content: '1',
           actor: userMock,
           media: {
-            images: ['1'],
-            files: ['1'],
-            videos: ['1'],
+            images: ['b114b2dd-39b4-43ae-8643-c9e3228feeb1'],
+            files: ['b114b2dd-39b4-43ae-8643-c9e3228feeb2'],
+            videos: ['b114b2dd-39b4-43ae-8643-c9e3228feeb3'],
           },
         },
       });
@@ -390,12 +360,12 @@ describe('CommentController', () => {
       jest
         .spyOn(command, 'execute')
         .mockImplementation(() =>
-          Promise.reject(new ContentNotFoundException('Comment not found'))
+          Promise.reject(new CommentReplyNotExistException('Comment Reply Not Exist Exception'))
         );
 
       await expect(
         commentController.reply(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', replyCommentDto)
-      ).rejects.toThrow(new NotFoundException('Comment not found'));
+      ).rejects.toThrow(new NotFoundException('Comment Reply Not Exist Exception'));
     });
 
     it('should throw BadRequestException when domain model exception ', async () => {

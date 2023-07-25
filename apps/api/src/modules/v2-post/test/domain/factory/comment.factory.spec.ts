@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { commentRecord } from '../../mock/comment.model.mock';
 import { EventPublisher } from '@nestjs/cqrs';
 import { createMock } from '@golevelup/ts-jest';
+import { CommentEntity } from '../../../domain/model/comment';
 
 describe('CommentFactory', function () {
   let commentFactory: CommentFactory;
@@ -36,6 +37,7 @@ describe('CommentFactory', function () {
       });
 
       expect(result).toBeDefined();
+      expect(eventPublisher.mergeObjectContext).toBeCalledWith(expect.any(CommentEntity));
     });
   });
 
@@ -49,6 +51,20 @@ describe('CommentFactory', function () {
       });
 
       expect(result).toBeDefined();
+      expect(eventPublisher.mergeObjectContext).toBeCalledWith(expect.any(CommentEntity));
+    });
+
+    it('should throw an error if comment id is not uuid', async () => {
+      try {
+        await commentFactory.reconstitute({
+          id: 'not-uuid',
+          postId: commentRecord.postId,
+          createdBy: commentRecord.createdBy,
+          updatedBy: commentRecord.updatedBy,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
     });
   });
 });

@@ -14,7 +14,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { LinkPreviewRepository } from '../../../driven-adapter/repository/link-preview.repository';
 import { I18nContext } from 'nestjs-i18n';
 import { LinkPreviewDto } from '../../../application/dto';
-import { mockLinkPreviewEntity, mockLinkPreviewRecord } from '../../mock/link-preview.entity.mock';
+import { mockLinkPreviewEntity } from '../../mock/link-preview.entity.mock';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 
 describe('LinkPreviewDomainService', () => {

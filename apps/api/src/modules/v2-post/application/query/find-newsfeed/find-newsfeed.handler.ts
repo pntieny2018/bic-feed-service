@@ -47,17 +47,17 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       where: {
         isHidden: false,
         status: PostStatus.PUBLISHED,
-        inNewsfeedUserId: authUser.id,
+        inNewsfeedUserId: authUser?.id,
         groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+        excludeReportedByUserId: authUser?.id,
         isImportant,
-        createdBy: isMine ? authUser.id : undefined,
-        savedByUserId: isSaved ? authUser.id : undefined,
+        createdBy: isMine ? authUser?.id : undefined,
+        savedByUserId: isSaved ? authUser?.id : undefined,
         type,
       },
       include: {
         shouldIncludeImportant: {
-          userId: authUser.id,
+          userId: authUser?.id,
         },
       },
       offset,
