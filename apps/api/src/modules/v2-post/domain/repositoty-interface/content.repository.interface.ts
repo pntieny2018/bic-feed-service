@@ -11,48 +11,11 @@ export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublished?: boolean;
 };
-export type FindOnePostOptions = {
-  where: {
-    id: string;
-    groupArchived?: boolean;
-    isHidden?: boolean;
-    excludeReportedByUserId?: string;
-    groupIds?: string[];
-    createdBy?: string;
-    isImportant?: string;
-    scheduledAt?: Date;
-    savedByUserId?: string;
-    type?: PostType;
-    status?: PostStatus;
-    inNewsfeedUserId?: string;
-  };
-  include?: {
-    mustIncludeGroup?: boolean;
-    shouldIncludeGroup?: boolean;
-    shouldIncludeSeries?: boolean;
-    shouldIncludeCategory?: boolean;
-    shouldIncludeLinkPreview?: boolean;
-    shouldIncludeItems?: boolean;
-    shouldIncludeReaction?: {
-      userId?: string;
-    };
-    shouldIncludeSaved?: {
-      userId?: string;
-    };
-    shouldIncludeMarkReadImportant?: {
-      userId: string;
-    };
-    shouldIncludeImportant?: {
-      userId: string;
-    };
-  };
-  attributes?: { exclude?: (keyof IPost)[] };
-  orderOptions?: OrderOptions;
-};
 
-export type FindAllPostOptions = {
+export type FindContentOptions = {
   where: {
     type?: PostType;
+    id?: string;
     ids?: string[];
     groupArchived?: boolean;
     excludeReportedByUserId?: string;
@@ -86,23 +49,20 @@ export type FindAllPostOptions = {
     };
   };
   attributes?: { exclude?: (keyof IPost)[] };
-  limit?: number;
-  offset?: number;
-  after?: string;
   orderOptions?: OrderOptions;
 };
 
-export type GetPaginationContentsProps = FindAllPostOptions & CursorPaginationProps;
+export type GetPaginationContentsProps = FindContentOptions & CursorPaginationProps;
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
   findOne(
-    findOnePostOptions: FindOnePostOptions
+    findOnePostOptions: FindContentOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
   findAll(
-    findAllPostOptions: FindAllPostOptions
+    findAllPostOptions: FindContentOptions
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;
