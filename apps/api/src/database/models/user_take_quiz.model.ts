@@ -18,13 +18,25 @@ import { IQuiz, QuizModel } from './quiz.model';
 export interface IUserTakeQuiz {
   id: string;
   quizId: string;
-  contentId: string;
+  postId: string;
   timeLimit: number;
   score: number;
   totalQuestionsCompleted: number;
   startedAt: Date;
   finishedAt: Date;
-  quizSnapshot: Pick<IQuiz, 'title' | 'description' | 'questions'>;
+  quizSnapshot: {
+    title: string;
+    description: string;
+    questions: {
+      id: string;
+      content: string;
+      answers: {
+        id: string;
+        content: string;
+        isCorrect: boolean;
+      }[];
+    }[];
+  };
   createdBy: string;
   updatedBy: string;
   createdAt: Date;
@@ -50,7 +62,7 @@ export class UserTakeQuizModel
   public quizId: string;
 
   @Column
-  public contentId: string;
+  public postId: string;
 
   @Column
   public score: number;

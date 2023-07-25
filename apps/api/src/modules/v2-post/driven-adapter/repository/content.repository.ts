@@ -332,6 +332,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeImportant,
         shouldIncludeItems,
         mustIncludeGroup,
+        shouldIncludeTakeQuiz,
       } = options.include;
       if (shouldIncludeGroup || mustIncludeGroup) {
         includeAttr.push({
@@ -394,6 +395,25 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (shouldIncludeQuiz) {
+        includeAttr.push({
+          model: QuizModel,
+          as: 'quiz',
+          required: false,
+          attributes: [
+            'id',
+            'title',
+            'contentId',
+            'description',
+            'status',
+            'genStatus',
+            'createdBy',
+            'createdAt',
+            'updatedAt',
+          ],
+        });
+      }
+
+      if (shouldIncludeTakeQuiz) {
         includeAttr.push({
           model: QuizModel,
           as: 'quiz',
@@ -692,7 +712,18 @@ export class ContentRepository implements IContentRepository {
       mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      quiz: post.quiz ? new QuizEntity(post.quiz) : undefined,
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+          })
+        : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
@@ -745,7 +776,18 @@ export class ContentRepository implements IContentRepository {
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      quiz: post.quiz ? new QuizEntity(post.quiz) : undefined,
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+          })
+        : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       aggregation: {
         commentsCount: post.commentsCount,

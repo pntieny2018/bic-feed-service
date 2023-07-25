@@ -1,1 +1,1 @@
-export * from './user-taking-quiz.entity';
+export * from './take-quiz.entity';

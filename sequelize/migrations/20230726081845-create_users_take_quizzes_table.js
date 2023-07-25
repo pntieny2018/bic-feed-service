@@ -1,6 +1,7 @@
 'use strict';
+
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'quizzes';
+const tableName = 'users_take_quizzes';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
@@ -11,54 +12,43 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal('gen_random_uuid()'),
         },
+        quiz_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+        },
         post_id: {
           type: Sequelize.UUID,
-          defaultValue: null,
+          allowNull: false,
         },
-        title: {
-          type: Sequelize.STRING(65),
+
+        time_limit: {
+          type: Sequelize.INTEGER,
           allowNull: true,
         },
-        status: {
-          type: Sequelize.ENUM('DRAFT', 'PUBLISHED'),
-          defaultValue: 'DRAFT',
-        },
-        description: {
-          type: Sequelize.STRING(256),
+        score: {
+          type: Sequelize.INTEGER,
           allowNull: true,
         },
-        number_of_questions: {
-          type: Sequelize.SMALLINT,
-          allowNull: false,
-          defaultValue: 0,
+        total_questions_completed: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
         },
-        number_of_answers: {
-          type: Sequelize.SMALLINT,
+        started_at: {
+          type: Sequelize.DATE,
           allowNull: false,
-          defaultValue: 0,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
         },
-        number_of_answers_display: {
-          type: Sequelize.SMALLINT,
-          allowNull: false,
-          defaultValue: 0,
+        finished_at: {
+          type: Sequelize.DATE,
+          allowNull: true,
         },
-        number_of_questions_display: {
-          type: Sequelize.SMALLINT,
-          allowNull: false,
-          defaultValue: 0,
-        },
-        is_random: {
-          type: Sequelize.BOOLEAN,
-          allowNull: false,
-          defaultValue: true,
-        },
-        meta: {
+        quiz_snapshot: {
           type: Sequelize.JSONB,
           allowNull: true,
         },
         created_by: {
           type: Sequelize.UUID,
-          allowNull: true,
+          allowNull: false,
         },
         updated_by: {
           type: Sequelize.UUID,
@@ -92,14 +82,11 @@ module.exports = {
         onDelete: 'CASCADE',
       }
     );
+
+    await queryInterface.addIndex(tableName, ['quiz_id']);
   },
 
   async down(queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
+    await queryInterface.dropTable(tableName);
   },
 };

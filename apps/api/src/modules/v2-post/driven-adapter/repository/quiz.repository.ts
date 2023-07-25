@@ -14,8 +14,13 @@ import {
   IQuizFactory,
   QUIZ_FACTORY_TOKEN,
 } from '../../domain/factory/interface/quiz.factory.interface';
-import { CursorPaginator } from '../../../../common/dto/cusor-pagination';
+import { CursorPaginator } from '../../../../common/dto';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { UserTakeQuizDetailModel } from '../../../../database/models/user_take_quiz_detail.model';
+import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
+import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
+import { UserTakeQuizModel } from '../../../../database/models/user_take_quiz.model';
+import { TakeQuizEntity } from '../../domain/model/user-taking-quiz';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
@@ -24,56 +29,118 @@ export class QuizRepository implements IQuizRepository {
     @Inject(QUIZ_FACTORY_TOKEN)
     private readonly _factory: IQuizFactory,
     @InjectModel(QuizModel)
-    private readonly _quizModel: typeof QuizModel
+    private readonly _quizModel: typeof QuizModel,
+
+    @InjectModel(QuizQuestionModel)
+    private readonly _quizQuestionModel: typeof QuizQuestionModel,
+
+    @InjectModel(QuizAnswerModel)
+    private readonly _quizAnswerModel: typeof QuizAnswerModel,
+
+    @InjectModel(UserTakeQuizDetailModel)
+    private readonly _userTakeQuizDetailModel: typeof UserTakeQuizDetailModel,
+
+    @InjectModel(UserTakeQuizModel)
+    private readonly _userTakeQuizModel: typeof UserTakeQuizModel
   ) {}
 
-  public async create(data: QuizEntity): Promise<void> {
+  public async create(quizEntity: QuizEntity): Promise<void> {
     await this._quizModel.create({
-      id: data.get('id'),
-      title: data.get('title'),
-      contentId: data.get('contentId'),
-      description: data.get('description'),
-      numberOfQuestions: data.get('numberOfQuestions'),
-      numberOfAnswers: data.get('numberOfAnswers'),
-      numberOfQuestionsDisplay: data.get('numberOfQuestionsDisplay'),
-      numberOfAnswersDisplay: data.get('numberOfAnswersDisplay'),
-      status: data.get('status'),
-      genStatus: data.get('genStatus'),
-      error: data.get('error'),
-      isRandom: data.get('isRandom'),
-      questions: data.get('questions'),
-      createdBy: data.get('createdBy'),
-      updatedBy: data.get('updatedBy'),
-      createdAt: data.get('createdAt'),
-      updatedAt: data.get('updatedAt'),
-      meta: data.get('meta'),
+      id: quizEntity.get('id'),
+      title: quizEntity.get('title'),
+      postId: quizEntity.get('contentId'),
+      description: quizEntity.get('description'),
+      numberOfQuestions: quizEntity.get('numberOfQuestions'),
+      numberOfAnswers: quizEntity.get('numberOfAnswers'),
+      numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
+      numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
+      status: quizEntity.get('status'),
+      genStatus: quizEntity.get('genStatus'),
+      error: quizEntity.get('error'),
+      isRandom: quizEntity.get('isRandom'),
+      createdBy: quizEntity.get('createdBy'),
+      updatedBy: quizEntity.get('updatedBy'),
+      createdAt: quizEntity.get('createdAt'),
+      updatedAt: quizEntity.get('updatedAt'),
+      meta: quizEntity.get('meta'),
     });
   }
 
-  public async update(data: QuizEntity): Promise<void> {
+  public async update(quizEntity: QuizEntity): Promise<void> {
     await this._quizModel.update(
       {
-        title: data.get('title'),
-        description: data.get('description'),
-        numberOfQuestions: data.get('numberOfQuestions'),
-        numberOfAnswers: data.get('numberOfAnswers'),
-        numberOfQuestionsDisplay: data.get('numberOfQuestionsDisplay'),
-        numberOfAnswersDisplay: data.get('numberOfAnswersDisplay'),
-        status: data.get('status'),
-        error: data.get('error'),
-        genStatus: data.get('genStatus'),
-        isRandom: data.get('isRandom'),
-        questions: data.get('questions'),
-        updatedBy: data.get('updatedBy'),
-        updatedAt: data.get('updatedAt'),
-        meta: data.get('meta'),
+        title: quizEntity.get('title'),
+        description: quizEntity.get('description'),
+        numberOfQuestions: quizEntity.get('numberOfQuestions'),
+        numberOfAnswers: quizEntity.get('numberOfAnswers'),
+        numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
+        numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
+        status: quizEntity.get('status'),
+        error: quizEntity.get('error'),
+        timeLimit: quizEntity.get('timeLimit'),
+        genStatus: quizEntity.get('genStatus'),
+        isRandom: quizEntity.get('isRandom'),
+        updatedBy: quizEntity.get('updatedBy'),
+        updatedAt: quizEntity.get('updatedAt'),
+        meta: quizEntity.get('meta'),
       },
-      { where: { id: data.get('id') } }
+      { where: { id: quizEntity.get('id') } }
     );
+    if (quizEntity.get('questions') !== undefined) {
+      await this._quizQuestionModel.destroy({ where: { quizId: quizEntity.get('id') } });
+      await this._quizQuestionModel.bulkCreate(
+        quizEntity.get('questions').map((question) => ({
+          id: question.id,
+          quizId: quizEntity.get('id'),
+          content: question.question,
+        }))
+      );
+      await this._quizAnswerModel.bulkCreate(
+        quizEntity.get('questions').flatMap((question) =>
+          question.answers.map((answer) => ({
+            id: answer.id,
+            quizId: quizEntity.get('id'),
+            questionId: question.id,
+            content: answer.answer,
+            isCorrect: answer.isCorrect,
+          }))
+        )
+      );
+    }
   }
 
   public async delete(id: string): Promise<void> {
     await this._quizModel.destroy({ where: { id: id } });
+  }
+
+  public async createTakeQuiz(takeQuizEntity: TakeQuizEntity): Promise<void> {
+    await this._userTakeQuizModel.create({
+      id: takeQuizEntity.get('id'),
+      quizId: takeQuizEntity.get('quizId'),
+      postId: takeQuizEntity.get('contentId'),
+      quizSnapshot: {
+        title: takeQuizEntity.get('quizSnapshot').title,
+        description: takeQuizEntity.get('quizSnapshot').description,
+        questions: takeQuizEntity.get('quizSnapshot').questions.map((question) => ({
+          id: question.id,
+          content: question.question,
+          answers: question.answers.map((answer) => ({
+            id: answer.id,
+            content: answer.answer,
+            isCorrect: answer.isCorrect,
+          })),
+        })),
+      },
+      score: takeQuizEntity.get('score'),
+      timeLimit: takeQuizEntity.get('timeLimit'),
+      totalQuestionsCompleted: takeQuizEntity.get('totalQuestionsCompleted'),
+      startedAt: takeQuizEntity.get('startedAt'),
+      finishedAt: takeQuizEntity.get('finishedAt'),
+      createdBy: takeQuizEntity.get('createdBy'),
+      updatedBy: takeQuizEntity.get('updatedBy'),
+      createdAt: takeQuizEntity.get('createdAt'),
+      updatedAt: takeQuizEntity.get('updatedAt'),
+    });
   }
 
   public async findOne(input: FindOneQuizProps): Promise<QuizEntity> {
@@ -124,7 +191,7 @@ export class QuizRepository implements IQuizRepository {
     return this._factory.reconstitute({
       id: quiz.id,
       title: quiz.title,
-      contentId: quiz.contentId,
+      contentId: quiz.postId,
       status: quiz.status,
       genStatus: quiz.genStatus,
       description: quiz.description,
@@ -132,8 +199,17 @@ export class QuizRepository implements IQuizRepository {
       numberOfAnswers: quiz.numberOfAnswers,
       numberOfQuestionsDisplay: quiz.numberOfQuestionsDisplay,
       numberOfAnswersDisplay: quiz.numberOfAnswersDisplay,
+      timeLimit: quiz.timeLimit,
       isRandom: quiz.isRandom,
-      questions: quiz.questions,
+      questions: quiz.questions.map((question) => ({
+        id: question.id,
+        question: question.content,
+        answers: question.answers.map((answer) => ({
+          id: answer.id,
+          answer: answer.content,
+          isCorrect: answer.isCorrect,
+        })),
+      })),
       meta: quiz.meta,
       createdBy: quiz.createdBy,
       updatedBy: quiz.updatedBy,

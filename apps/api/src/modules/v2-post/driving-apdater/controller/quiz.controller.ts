@@ -50,6 +50,7 @@ import { Request } from 'express';
 import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
 import { GetQuizzesRequestDto } from '../dto/request';
+import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -129,7 +130,7 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Generate a quiz' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: QuizDto,
     description: 'Regenerate quiz successfully',
   })
   @Put(ROUTES.QUIZ.GENERATE.PATH)
@@ -164,7 +165,7 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Update a quiz' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: QuizDto,
     description: 'Update quiz successfully',
   })
   @ResponseMessages({
@@ -227,10 +228,6 @@ export class QuizController {
   }
 
   @ApiOperation({ summary: 'Delete a quiz' })
-  @ApiOkResponse({
-    type: CreateTagDto,
-    description: 'Delete quiz successfully',
-  })
   @ResponseMessages({
     success: 'message.quiz.deleted_success',
   })
@@ -261,12 +258,38 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Start a quiz' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: String,
     description: 'Start quiz successfully',
   })
   @Post(ROUTES.QUIZ.START_QUIZ.PATH)
   @Version(ROUTES.QUIZ.START_QUIZ.VERSIONS)
   public async startQuiz(
+    @Param('id', ParseUUIDPipe) quizId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<StartQuizCommand, QuizDto>(
+        new StartQuizCommand({ quizId, authUser })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizNotFoundException:
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get take quiz' })
+  @Post(ROUTES.QUIZ.START_QUIZ.PATH)
+  @Version(ROUTES.QUIZ.START_QUIZ.VERSIONS)
+  public async getTakeQuiz(
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {

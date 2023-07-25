@@ -1,39 +1,36 @@
 import {
   AllowNull,
+  BelongsTo,
   Column,
   CreatedAt,
   Default,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
   UpdatedAt,
-  BelongsTo,
 } from 'sequelize-typescript';
 import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { QuizGenStatus, QuizStatus } from '../../modules/v2-post/data-type/quiz-status.enum';
 import { PostModel } from './post.model';
+import { IQuizQuestion, QuizQuestionModel } from './quiz-question.model';
 
 export interface IQuiz {
   id: string;
   title: string;
   description: string;
-  contentId: string;
+  postId: string;
   status: QuizStatus;
   genStatus: QuizGenStatus;
+  timeLimit: number;
   numberOfQuestions: number;
   numberOfAnswers: number;
   numberOfQuestionsDisplay: number;
   numberOfAnswersDisplay: number;
   isRandom: boolean;
-  questions: {
-    question: string;
-    answers: {
-      answer: string;
-      isCorrect: boolean;
-    }[];
-  }[];
+  questions: IQuizQuestion[];
   meta: any;
   error: any;
   createdBy: string;
@@ -53,10 +50,10 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   public id: string;
 
   @Column
-  public contentId: string;
+  public postId: string;
 
   @BelongsTo(() => PostModel, {
-    foreignKey: 'contentId',
+    foreignKey: 'postId',
   })
   public post?: PostModel;
 
@@ -65,6 +62,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
 
   @Column
   public description: string;
+
+  @Column
+  public timeLimit: number;
 
   @Column
   public numberOfQuestions: number;
@@ -81,10 +81,8 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @Column
   public isRandom: boolean;
 
-  @Column({
-    type: DataTypes.JSONB,
-  })
-  public questions: any;
+  @HasMany(() => QuizQuestionModel)
+  public questions: IQuizQuestion[];
 
   @Column({
     type: DataTypes.JSONB,

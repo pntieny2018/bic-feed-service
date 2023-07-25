@@ -1,7 +1,7 @@
 'use strict';
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'users_take_quizzes';
+const tableName = 'user_take_quiz_detail';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
@@ -12,47 +12,17 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal('gen_random_uuid()'),
         },
-        quiz_id: {
+        user_take_quiz_id: {
           type: Sequelize.UUID,
           allowNull: false,
         },
-        content_id: {
+        question_id: {
           type: Sequelize.UUID,
           allowNull: false,
         },
-
-        time_limit: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        score: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        total_questions_completed: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        started_at: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-        },
-        finished_at: {
-          type: Sequelize.DATE,
-          allowNull: true,
-        },
-        quiz_snapshot: {
-          type: Sequelize.JSONB,
-          allowNull: true,
-        },
-        created_by: {
+        answer_id: {
           type: Sequelize.UUID,
           allowNull: false,
-        },
-        updated_by: {
-          type: Sequelize.UUID,
-          allowNull: true,
         },
         created_at: {
           type: Sequelize.DATE,
@@ -73,10 +43,10 @@ module.exports = {
     await queryInterface.addConstraint(
       { tableName, schema: schemaName },
       {
-        fields: ['content_id'],
+        fields: ['user_take_quiz_id'],
         type: 'foreign key',
         references: {
-          table: 'posts',
+          table: 'users_take_quizzes',
           field: 'id',
         },
         onDelete: 'CASCADE',

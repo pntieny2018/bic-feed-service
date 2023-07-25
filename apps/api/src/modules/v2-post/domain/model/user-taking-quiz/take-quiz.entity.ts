@@ -3,7 +3,8 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { Question } from '../quiz';
 
-export type UserTakeQuizProps = {
+export type TakeQuizProps = {
+  id: string;
   contentId: string;
   quizId: string;
   quizSnapshot: {
@@ -11,7 +12,7 @@ export type UserTakeQuizProps = {
     description: string;
     questions: Question[];
   };
-  score: string;
+  score: number;
   timeLimit: number;
   totalQuestionsCompleted: number;
   startedAt: Date;
@@ -22,8 +23,8 @@ export type UserTakeQuizProps = {
   updatedAt: Date;
 };
 
-export class UserTakingQuizEntity extends DomainAggregateRoot<UserTakeQuizProps> {
-  public constructor(props: UserTakeQuizProps) {
+export class TakeQuizEntity extends DomainAggregateRoot<TakeQuizProps> {
+  public constructor(props: TakeQuizProps) {
     super(props);
   }
 
