@@ -81,7 +81,9 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   @Column
   public isRandom: boolean;
 
-  @HasMany(() => QuizQuestionModel)
+  @HasMany(() => QuizQuestionModel, {
+    foreignKey: 'quizId',
+  })
   public questions: IQuizQuestion[];
 
   @Column({

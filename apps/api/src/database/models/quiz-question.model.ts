@@ -1,14 +1,24 @@
-import { Column, Default, HasMany, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  Default,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { IQuizAnswer, QuizAnswerModel } from './quiz-answer.model';
+import { IQuiz, QuizModel } from './quiz.model';
 
 export interface IQuizQuestion {
   id: string;
   quizId: string;
   content: string;
   answers: IQuizAnswer[];
+  quiz?: IQuiz;
 }
 @Table({
   tableName: 'quiz_questions',
@@ -30,6 +40,13 @@ export class QuizQuestionModel
   @Column
   public content: string;
 
-  @HasMany(() => QuizAnswerModel)
+  @HasMany(() => QuizAnswerModel, {
+    foreignKey: 'questionId',
+  })
   public answers: IQuizAnswer[];
+
+  @BelongsTo(() => QuizModel, {
+    foreignKey: 'quizId',
+  })
+  public quiz?: QuizModel;
 }

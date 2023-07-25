@@ -1,7 +1,9 @@
-import { Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
+import { QuizModel } from './quiz.model';
+import { IQuizQuestion, QuizQuestionModel } from './quiz-question.model';
 
 export interface IQuizAnswer {
   id: string;
@@ -35,4 +37,9 @@ export class QuizAnswerModel
 
   @Column
   public isCorrect: boolean;
+
+  @BelongsTo(() => QuizQuestionModel, {
+    foreignKey: 'questionId',
+  })
+  public quizQuestion?: IQuizQuestion;
 }
