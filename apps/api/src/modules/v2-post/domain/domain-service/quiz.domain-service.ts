@@ -23,6 +23,7 @@ import { ContentHasQuizException, QuizNotFoundException } from '../exception';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
+import { TakeQuizEntity } from '../model/user-taking-quiz';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -56,7 +57,7 @@ export class QuizDomainService implements IQuizDomainService {
       throw new ContentHasQuizException();
     }
 
-    const quizEntity = this._quizFactory.create(input);
+    const quizEntity = this._quizFactory.createQuiz(input);
     try {
       await this._quizRepository.create(quizEntity);
       quizEntity.commit();
@@ -123,6 +124,18 @@ export class QuizDomainService implements IQuizDomainService {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
+  }
+
+  public async startQuiz(quizEntity: QuizEntity, authUser: UserDto): Promise<TakeQuizEntity> {
+    const takeQuizEntity = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
+    try {
+      await this._quizRepository.createTakeQuiz(takeQuizEntity);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+
+    return takeQuizEntity;
   }
 
   public async getQuizzes(input: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>> {

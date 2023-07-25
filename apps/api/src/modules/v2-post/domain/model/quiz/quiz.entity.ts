@@ -21,6 +21,7 @@ export type QuizProps = {
   status: QuizStatus;
   genStatus: QuizGenStatus;
   description: string;
+  timeLimit: number;
   content?: PostEntity | SeriesEntity | ArticleEntity;
   numberOfQuestions?: number;
   numberOfAnswers?: number;
@@ -120,13 +121,6 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
       throw new DomainModelException(`Question must have at least one answer`);
     }
 
-    if (this._props.questions.some((question) => !question.id)) {
-      throw new DomainModelException(`Question ID is required`);
-    }
-    if (this._props.questions.some((question) => question.answers.some((answer) => !answer.id))) {
-      throw new DomainModelException(`Answer ID is required`);
-    }
-
     if (
       this._props.questions.some((question) =>
         question.answers.every((answer) => {
@@ -218,6 +212,10 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
   public isProcessing(): boolean {
     return this._props.genStatus === QuizGenStatus.PROCESSING;
+  }
+
+  public isPublished(): boolean {
+    return this._props.status === QuizStatus.PUBLISHED;
   }
 
   public isGenerateFailed(): boolean {

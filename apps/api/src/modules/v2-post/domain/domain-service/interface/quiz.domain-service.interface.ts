@@ -5,6 +5,7 @@ import { QuestionDto } from '../../../application/dto/question.dto';
 import { QuizStatus } from '../../../data-type/quiz-status.enum';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { PostType } from '../../../data-type';
+import { TakeQuizEntity } from '../../model/user-taking-quiz';
 
 export type QuizCreateProps = {
   contentId: string;
@@ -56,6 +57,7 @@ export interface IQuizDomainService {
   update(data: QuizUpdateProps): Promise<QuizEntity>;
   getQuiz(quizId: string, authUser: UserDto): Promise<QuizEntity>;
   delete(quizId: string, authUser: UserDto): Promise<void>;
+  startQuiz(quizEntity: QuizEntity, authUser: UserDto): Promise<TakeQuizEntity>;
   reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity>;
   generateQuestions(quizEntity: QuizEntity): Promise<void>;
   getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
