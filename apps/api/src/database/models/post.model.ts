@@ -406,6 +406,17 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     );
   }
 
+  public static filterInGroupArchivedCondition(groupArchived: boolean): Literal {
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+    return Sequelize.literal(
+      `EXISTS (
+          SELECT g.group_id FROM  ${schema}.${postGroupTable} g
+            WHERE g.post_id = "PostModel".id  AND g.is_archived = ${groupArchived}
+        )`
+    );
+  }
+
   public static notIncludePostsReported(
     userId: string,
     options?: {

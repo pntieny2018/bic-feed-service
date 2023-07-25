@@ -76,6 +76,7 @@ export class FindTimelineGroupHandler
         type,
       },
       include: {
+        mustIncludeGroup: true,
         shouldIncludeImportant: {
           userId: authUser.id,
         },

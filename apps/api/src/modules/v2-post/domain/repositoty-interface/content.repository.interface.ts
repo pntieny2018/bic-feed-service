@@ -46,7 +46,7 @@ export type FindOnePostOptions = {
       userId: string;
     };
   };
-  attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
+  attributes?: { exclude?: (keyof IPost)[] };
   orderOptions?: OrderOptions;
 };
 
@@ -85,7 +85,7 @@ export type FindAllPostOptions = {
       userId: string;
     };
   };
-  attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
+  attributes?: { exclude?: (keyof IPost)[] };
   limit?: number;
   offset?: number;
   after?: string;

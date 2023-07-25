@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
+import { Literal } from 'sequelize/types/utils';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, Sequelize, WhereOptions } from 'sequelize';
+import { FindOptions, Includeable, Op, Sequelize, WhereOptions } from 'sequelize';
 import {
   FindAllPostOptions,
   FindOnePostOptions,
@@ -31,7 +32,6 @@ import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
 import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
-import { getDatabaseConfig } from '../../../../config/database';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
@@ -306,28 +306,44 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
-    const { schema } = getDatabaseConfig();
-    const postGroupTable = PostGroupModel.tableName;
-    const findOption: FindOptions<IPost> = {};
-    findOption.where = this._getCondition(options);
-    const includeAttr = [];
-    const subSelect = [];
+  private _buildSubSelect(options: FindOnePostOptions | FindAllPostOptions): [Literal, string][] {
+    const subSelect: [Literal, string][] = [];
+    const { shouldIncludeSaved, shouldIncludeMarkReadImportant, shouldIncludeImportant } =
+      options.include || {};
+
+    if (shouldIncludeSaved) {
+      subSelect.push(PostModel.loadSaved(shouldIncludeSaved.userId, 'isSaved'));
+    }
+
+    if (shouldIncludeMarkReadImportant) {
+      subSelect.push(
+        PostModel.loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
+      );
+    }
+
+    if (shouldIncludeImportant) {
+      subSelect.push(PostModel.loadImportant(shouldIncludeImportant.userId, 'isReadImportant'));
+    }
+
+    return subSelect;
+  }
+
+  private _buildRelationOptions(options: FindOnePostOptions | FindAllPostOptions): Includeable[] {
+    const includeable = [];
+
     if (options.include) {
       const {
         shouldIncludeSeries,
         shouldIncludeGroup,
         shouldIncludeLinkPreview,
         shouldIncludeCategory,
-        shouldIncludeSaved,
         shouldIncludeReaction,
-        shouldIncludeMarkReadImportant,
-        shouldIncludeImportant,
         shouldIncludeItems,
         mustIncludeGroup,
       } = options.include;
+
       if (shouldIncludeGroup || mustIncludeGroup) {
-        includeAttr.push({
+        includeable.push({
           model: PostGroupModel,
           as: 'groups',
           required: !shouldIncludeGroup,
@@ -343,7 +359,7 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (shouldIncludeSeries) {
-        includeAttr.push({
+        includeable.push({
           model: PostSeriesModel,
           as: 'postSeries',
           required: false,
@@ -359,7 +375,7 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (shouldIncludeItems) {
-        includeAttr.push({
+        includeable.push({
           model: PostSeriesModel,
           as: 'itemIds',
           required: false,
@@ -368,14 +384,14 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (shouldIncludeLinkPreview) {
-        includeAttr.push({
+        includeable.push({
           model: LinkPreviewModel,
           as: 'linkPreview',
           required: false,
         });
       }
       if (shouldIncludeReaction?.userId) {
-        includeAttr.push({
+        includeable.push({
           model: PostReactionModel,
           as: 'ownerReactions',
           required: false,
@@ -385,7 +401,7 @@ export class ContentRepository implements IContentRepository {
         });
       }
       if (shouldIncludeCategory) {
-        includeAttr.push({
+        includeable.push({
           model: CategoryModel,
           as: 'categories',
           required: false,
@@ -395,42 +411,33 @@ export class ContentRepository implements IContentRepository {
           attributes: ['id', 'name'],
         });
       }
-
-      if (shouldIncludeSaved) {
-        subSelect.push(PostModel.loadSaved(shouldIncludeSaved.userId, 'isSaved'));
-      }
-
-      if (shouldIncludeMarkReadImportant) {
-        subSelect.push(
-          PostModel.loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
-        );
-      }
-
-      if (shouldIncludeImportant) {
-        subSelect.push(PostModel.loadImportant(shouldIncludeImportant.userId, 'isReadImportant'));
-      }
     }
 
-    const { include = [], exclude = [] } = options.attributes || {};
-    findOption.attributes = {
-      ...((include.length || subSelect.length) && {
-        include: [...include, ...subSelect],
-      }),
-      ...(exclude.length && {
-        exclude,
-      }),
-    };
+    // const { exclude = [] } = options.attributes || {};
+    // findOption.attributes = {
+    //   ...(subSelect.length && {
+    //     include: [...subSelect],
+    //   }),
+    //   ...(exclude.length && {
+    //     exclude,
+    //   }),
+    // };
 
-    if (includeAttr.length) findOption.include = includeAttr;
+    return includeable;
+  }
+
+  private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
+    const findOption: FindOptions<IPost> = {};
+    findOption.where = this._buildWhereOptions(options);
 
     return findOption;
   }
 
-  private _getCondition(options: FindOnePostOptions | FindAllPostOptions): WhereOptions<IPost> {
-    let conditions: WhereOptions<IPost> | undefined;
+  private _buildWhereOptions(
+    options: FindOnePostOptions | FindAllPostOptions
+  ): WhereOptions<IPost> {
     const condition = [];
-    const { schema } = getDatabaseConfig();
-    const postGroupTable = PostGroupModel.tableName;
+    let whereOptions: WhereOptions<IPost> | undefined;
 
     if (options.where) {
       if (options.where['id'])
@@ -493,48 +500,21 @@ export class ContentRepository implements IContentRepository {
       }
 
       if (
-        options.where?.groupIds &&
-        !options.include?.shouldIncludeGroup &&
-        !options.include?.mustIncludeGroup
-      ) {
-        let groupConditions = '';
-        if (options.where.groupIds?.length) {
-          groupConditions = `AND g.group_id IN (${options.where.groupIds
-            .map((groupId) => this._postModel.sequelize.escape(groupId))
-            .join(', ')})`;
-        }
-        condition.push(
-          Sequelize.literal(
-            `EXISTS ( 
-                      SELECT g.group_id FROM  ${schema}.${postGroupTable} g
-                        WHERE g.post_id = "PostModel".id ${groupConditions}
-                      )`
-          )
-        );
-      }
-
-      if (
         isBoolean(options.where.groupArchived) &&
         !options.include?.shouldIncludeGroup &&
         !options.include?.mustIncludeGroup
       ) {
-        condition.push(
-          Sequelize.literal(
-            `EXISTS (
-                      SELECT g.group_id FROM  ${schema}.${postGroupTable} g
-                        WHERE g.post_id = "PostModel".id  AND g.is_archived = ${options.where.groupArchived})`
-          )
-        );
+        condition.push(PostModel.filterInGroupArchivedCondition(options.where.groupArchived));
       }
     }
 
     if (condition.length) {
-      conditions = {
+      whereOptions = {
         [Op.and]: condition,
       };
     }
 
-    return conditions;
+    return whereOptions;
   }
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
