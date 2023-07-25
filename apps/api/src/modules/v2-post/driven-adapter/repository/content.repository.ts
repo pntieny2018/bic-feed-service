@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { Literal } from 'sequelize/types/utils';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
 import { FindOptions, Includeable, Op, Sequelize, WhereOptions } from 'sequelize';
 import {
-  FindAllPostOptions,
-  FindOnePostOptions,
+  FindContentOptions,
   GetPaginationContentsProps,
   IContentRepository,
   OrderOptions,
@@ -40,7 +40,6 @@ import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
 
 export class ContentRepository implements IContentRepository {
-  public LIMIT_DEFAULT = 100;
   public constructor(
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
@@ -251,25 +250,23 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findOne(
-    findOnePostOptions: FindOnePostOptions
+    findOnePostOptions: FindContentOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const findOption = this._buildFindOptions(findOnePostOptions);
+    const findOption = this.buildFindOptions(findOnePostOptions);
     const entity = await this._postModel.findOne(findOption);
     return this._modelToEntity(entity);
   }
 
   public async findAll(
-    findAllPostOptions: FindAllPostOptions
+    findAllPostOptions: FindContentOptions
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const findOption = this._buildFindOptions(findAllPostOptions);
-    findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
-    findOption.order = this._getOrderContent(findAllPostOptions.orderOptions);
-    findOption.offset = findAllPostOptions.offset || 0;
+    const findOption = this.buildFindOptions(findAllPostOptions);
+    findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }
 
-  private _getOrderContent(orderOptions: OrderOptions): any {
+  protected buildOrderByOptions(orderOptions: OrderOptions): any {
     if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
@@ -306,7 +303,9 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  private _buildSubSelect(options: FindOnePostOptions | FindAllPostOptions): [Literal, string][] {
+  private _buildSubSelect(options: FindContentOptions): [Literal, string][] {
+    if (!options?.include) return [];
+
     const subSelect: [Literal, string][] = [];
     const { shouldIncludeSaved, shouldIncludeMarkReadImportant, shouldIncludeImportant } =
       options.include || {};
@@ -328,189 +327,188 @@ export class ContentRepository implements IContentRepository {
     return subSelect;
   }
 
-  private _buildRelationOptions(options: FindOnePostOptions | FindAllPostOptions): Includeable[] {
+  private _buildRelationOptions(options: FindContentOptions): Includeable[] {
+    if (!options?.include) return [];
+
     const includeable = [];
+    const { groupArchived, groupIds } = options.where || {};
+    const {
+      shouldIncludeSeries,
+      shouldIncludeGroup,
+      shouldIncludeLinkPreview,
+      shouldIncludeCategory,
+      shouldIncludeReaction,
+      shouldIncludeItems,
+      mustIncludeGroup,
+    } = options.include;
 
-    if (options.include) {
-      const {
-        shouldIncludeSeries,
-        shouldIncludeGroup,
-        shouldIncludeLinkPreview,
-        shouldIncludeCategory,
-        shouldIncludeReaction,
-        shouldIncludeItems,
-        mustIncludeGroup,
-      } = options.include;
-
-      if (shouldIncludeGroup || mustIncludeGroup) {
-        includeable.push({
-          model: PostGroupModel,
-          as: 'groups',
-          required: !shouldIncludeGroup,
-          where: {
-            ...(isBoolean(options.where.groupArchived) && {
-              isArchived: options.where.groupArchived,
-            }),
-            ...(options.where?.groupIds && {
-              groupId: options.where?.groupIds,
-            }),
-          },
-        });
-      }
-
-      if (shouldIncludeSeries) {
-        includeable.push({
-          model: PostSeriesModel,
-          as: 'postSeries',
-          required: false,
-          attributes: ['seriesId'],
-          where: isBoolean(options.where.groupArchived)
-            ? Sequelize.literal(
-                `EXISTS (
-                SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
-                  WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${options.where.groupArchived})`
-              )
-            : undefined,
-        });
-      }
-
-      if (shouldIncludeItems) {
-        includeable.push({
-          model: PostSeriesModel,
-          as: 'itemIds',
-          required: false,
-          attributes: ['postId', 'zindex'],
-        });
-      }
-
-      if (shouldIncludeLinkPreview) {
-        includeable.push({
-          model: LinkPreviewModel,
-          as: 'linkPreview',
-          required: false,
-        });
-      }
-      if (shouldIncludeReaction?.userId) {
-        includeable.push({
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: shouldIncludeReaction.userId,
-          },
-        });
-      }
-      if (shouldIncludeCategory) {
-        includeable.push({
-          model: CategoryModel,
-          as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        });
-      }
+    if (shouldIncludeGroup || mustIncludeGroup) {
+      includeable.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: Boolean(mustIncludeGroup),
+        where: {
+          ...(isBoolean(groupArchived) && {
+            isArchived: groupArchived,
+          }),
+          ...(groupIds && {
+            groupId: groupIds,
+          }),
+        },
+      });
     }
 
-    // const { exclude = [] } = options.attributes || {};
-    // findOption.attributes = {
-    //   ...(subSelect.length && {
-    //     include: [...subSelect],
-    //   }),
-    //   ...(exclude.length && {
-    //     exclude,
-    //   }),
-    // };
+    if (shouldIncludeSeries) {
+      includeable.push({
+        model: PostSeriesModel,
+        as: 'postSeries',
+        required: false,
+        attributes: ['seriesId'],
+        where: isBoolean(groupArchived)
+          ? PostSeriesModel.filterInGroupArchivedCondition(groupArchived)
+          : undefined,
+      });
+    }
+
+    if (shouldIncludeItems) {
+      includeable.push({
+        model: PostSeriesModel,
+        as: 'itemIds',
+        required: false,
+        attributes: ['postId', 'zindex'],
+      });
+    }
+
+    if (shouldIncludeLinkPreview) {
+      includeable.push({
+        model: LinkPreviewModel,
+        as: 'linkPreview',
+        required: false,
+      });
+    }
+
+    if (shouldIncludeReaction?.userId) {
+      includeable.push({
+        model: PostReactionModel,
+        as: 'ownerReactions',
+        required: false,
+        where: {
+          createdBy: shouldIncludeReaction.userId,
+        },
+      });
+    }
+
+    if (shouldIncludeCategory) {
+      includeable.push({
+        model: CategoryModel,
+        as: 'categories',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'name'],
+      });
+    }
 
     return includeable;
   }
 
-  private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
-    const findOption: FindOptions<IPost> = {};
-    findOption.where = this._buildWhereOptions(options);
+  protected buildFindOptions(options: FindContentOptions): FindOptions<IPost> {
+    const findOptions: FindOptions<IPost> = {};
+    const subSelect = this._buildSubSelect(options);
 
-    return findOption;
+    findOptions.where = this._buildWhereOptions(options);
+    findOptions.include = this._buildRelationOptions(options);
+
+    const { exclude = [] } = options.attributes || {};
+    findOptions.attributes = {
+      ...(subSelect.length && {
+        include: [...subSelect],
+      }),
+      ...(exclude.length && {
+        exclude,
+      }),
+    };
+
+    return findOptions;
   }
 
-  private _buildWhereOptions(
-    options: FindOnePostOptions | FindAllPostOptions
-  ): WhereOptions<IPost> {
-    const condition = [];
+  private _buildWhereOptions(options: FindContentOptions): WhereOptions<IPost> {
+    if (!options?.where) return [];
+
+    const conditions = [];
     let whereOptions: WhereOptions<IPost> | undefined;
 
-    if (options.where) {
-      if (options.where['id'])
-        condition.push({
-          id: options.where['id'],
-        });
+    if (options.where.id)
+      conditions.push({
+        id: options.where.id,
+      });
 
-      if (options.where['ids']) {
-        condition.push({
-          id: options.where['ids'],
-        });
-      }
-
-      if (options.where.type) {
-        condition.push({
-          type: options.where.type,
-        });
-      }
-
-      if (isBoolean(options.where.isImportant)) {
-        condition.push({
-          isImportant: options.where.isImportant,
-        });
-      }
-
-      if (options.where.status) {
-        condition.push({
-          status: options.where.status,
-        });
-      }
-
-      if (options.where.createdBy) {
-        condition.push({
-          createdBy: options.where.createdBy,
-        });
-      }
-
-      if (isBoolean(options.where.isHidden)) {
-        condition.push({
-          isHidden: options.where.isHidden,
-        });
-      }
-
-      if (options.where.scheduledAt) {
-        condition.push({
-          scheduledAt: { [Op.lte]: options.where.scheduledAt },
-        });
-      }
-
-      if (options.where.excludeReportedByUserId) {
-        condition.push(PostModel.excludeReportedByUser(options.where.excludeReportedByUserId));
-      }
-
-      if (options.where.savedByUserId) {
-        condition.push(PostModel.filterSavedByUser(options.where.savedByUserId));
-      }
-
-      if (options.where.inNewsfeedUserId) {
-        condition.push(PostModel.filterInNewsfeedUser(options.where.inNewsfeedUserId));
-      }
-
-      if (
-        isBoolean(options.where.groupArchived) &&
-        !options.include?.shouldIncludeGroup &&
-        !options.include?.mustIncludeGroup
-      ) {
-        condition.push(PostModel.filterInGroupArchivedCondition(options.where.groupArchived));
-      }
+    if (options.where.ids) {
+      conditions.push({
+        id: options.where.ids,
+      });
     }
 
-    if (condition.length) {
+    if (options.where.type) {
+      conditions.push({
+        type: options.where.type,
+      });
+    }
+
+    if (isBoolean(options.where.isImportant)) {
+      conditions.push({
+        isImportant: options.where.isImportant,
+      });
+    }
+
+    if (options.where.status) {
+      conditions.push({
+        status: options.where.status,
+      });
+    }
+
+    if (options.where.createdBy) {
+      conditions.push({
+        createdBy: options.where.createdBy,
+      });
+    }
+
+    if (isBoolean(options.where.isHidden)) {
+      conditions.push({
+        isHidden: options.where.isHidden,
+      });
+    }
+
+    if (options.where.scheduledAt) {
+      conditions.push({
+        scheduledAt: { [Op.lte]: options.where.scheduledAt },
+      });
+    }
+
+    if (options.where.excludeReportedByUserId) {
+      conditions.push(PostModel.excludeReportedByUser(options.where.excludeReportedByUserId));
+    }
+
+    if (options.where.savedByUserId) {
+      conditions.push(PostModel.filterSavedByUser(options.where.savedByUserId));
+    }
+
+    if (options.where.inNewsfeedUserId) {
+      conditions.push(PostModel.filterInNewsfeedUser(options.where.inNewsfeedUserId));
+    }
+
+    if (
+      isBoolean(options.where.groupArchived) &&
+      !options.include?.shouldIncludeGroup &&
+      !options.include?.mustIncludeGroup
+    ) {
+      conditions.push(PostModel.filterInGroupArchivedCondition(options.where.groupArchived));
+    }
+
+    if (conditions.length) {
       whereOptions = {
-        [Op.and]: condition,
+        [Op.and]: conditions,
       };
     }
 
@@ -667,9 +665,9 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit = this.LIMIT_DEFAULT, order } = getPaginationContentsProps;
-    const findOption = this._buildFindOptions(getPaginationContentsProps);
-    const orderBuilder = this._getOrderContent(getPaginationContentsProps.orderOptions);
+    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
+    const findOption = this.buildFindOptions(getPaginationContentsProps);
+    const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
     const cursorColumns = orderBuilder?.map((order) => order[0]);
 
     const paginator = new CursorPaginator(
