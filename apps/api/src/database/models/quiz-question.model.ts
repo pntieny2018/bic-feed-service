@@ -48,5 +48,5 @@ export class QuizQuestionModel
   @BelongsTo(() => QuizModel, {
     foreignKey: 'quizId',
   })
-  public quiz?: QuizModel;
+  public quiz?: IQuiz;
 }
