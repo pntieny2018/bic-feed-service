@@ -216,6 +216,11 @@ export class QuizController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case QuizNotFoundException:
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentEmptyException:
+        case OpenAIException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
