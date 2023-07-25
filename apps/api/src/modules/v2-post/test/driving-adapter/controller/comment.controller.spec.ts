@@ -171,14 +171,14 @@ describe('CommentController', () => {
       jest
         .spyOn(query, 'execute')
         .mockImplementation(() =>
-          Promise.reject(new ContentNotFoundException('Comment not found'))
+          Promise.reject(new CommentNotFoundException('Comment Not Found Exception'))
         );
 
       await expect(
         commentController.getCommentsArroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
           limit: 10,
         })
-      ).rejects.toThrow(new NotFoundException('Comment not found'));
+      ).rejects.toThrow(new NotFoundException('Comment Not Found Exception'));
     });
 
     it('should throw BadRequestException when domain model exception ', async () => {
@@ -421,17 +421,17 @@ describe('CommentController', () => {
         media: {
           images: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb1',
             },
           ],
           files: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb2',
             },
           ],
           videos: [
             {
-              id: '1',
+              id: 'b114b2dd-39b4-43ae-8643-c9e3228feeb3',
             },
           ],
         },
@@ -449,9 +449,9 @@ describe('CommentController', () => {
           content: '1',
           actor: userMock,
           media: {
-            images: ['1'],
-            files: ['1'],
-            videos: ['1'],
+            images: ['b114b2dd-39b4-43ae-8643-c9e3228feeb1'],
+            files: ['b114b2dd-39b4-43ae-8643-c9e3228feeb2'],
+            videos: ['b114b2dd-39b4-43ae-8643-c9e3228feeb3'],
           },
         },
       });
@@ -464,12 +464,12 @@ describe('CommentController', () => {
       jest
         .spyOn(command, 'execute')
         .mockImplementation(() =>
-          Promise.reject(new ContentNotFoundException('Comment not found'))
+          Promise.reject(new CommentNotFoundException('Comment Not Found Exception'))
         );
 
       await expect(
         commentController.update(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', updateCommentDto)
-      ).rejects.toThrow(new NotFoundException('Comment not found'));
+      ).rejects.toThrow(new NotFoundException('Comment Not Found Exception'));
     });
 
     it('should throw BadRequestException when domain model exception ', async () => {
@@ -536,12 +536,12 @@ describe('CommentController', () => {
       jest
         .spyOn(command, 'execute')
         .mockImplementation(() =>
-          Promise.reject(new ContentNotFoundException('Comment not found'))
+          Promise.reject(new CommentNotFoundException('Comment Not Found Exception'))
         );
 
       await expect(
         commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
-      ).rejects.toThrow(new NotFoundException('Comment not found'));
+      ).rejects.toThrow(new NotFoundException('Comment Not Found Exception'));
     });
 
     it('should throw BadRequestException when domain model exception ', async () => {

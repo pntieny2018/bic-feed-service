@@ -66,11 +66,13 @@ describe('TimelineController', () => {
     });
 
     it('should throw exception when get timeline', async () => {
-      const queryExecute = jest.spyOn(queryBus, 'execute').mockRejectedValue(new Error('123'));
+      const queryExecute = jest
+        .spyOn(queryBus, 'execute')
+        .mockRejectedValue(new Error('mock test error'));
 
       await expect(
         timelineController.getTimeline('1', userMock, { limit: 1 } as GetTimelineRequestDto)
-      ).rejects.toThrowError('123');
+      ).rejects.toThrowError('mock test error');
 
       expect(queryExecute).toBeCalledWith({
         payload: {
