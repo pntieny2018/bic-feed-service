@@ -23,7 +23,6 @@ import {
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { UserDto } from '../v2-user/application';
 import { ResponseMessages } from '../../common/decorators';
-import { PostStatus } from '../../database/models/post.model';
 import { Request } from 'express';
 import { ReportStatus } from './contstants';
 import { VERSIONS_SUPPORTED } from '../../common/constants';

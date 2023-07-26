@@ -7,7 +7,7 @@ export class UserNoBelongGroupException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.USER.USER_NO_BELONG_GROUP,
-      message || i18n.t(`error.user.no_belong_group`),
+      message || i18n?.t(`error.user.no_belong_group`),
       errors
     );
   }

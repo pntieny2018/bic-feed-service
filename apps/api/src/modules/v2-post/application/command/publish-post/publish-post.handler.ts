@@ -167,6 +167,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
           },
           createdAt: postEntityAfter.get('createdAt'),
           updatedAt: postEntityAfter.get('updatedAt'),
+          publishedAt: postEntityAfter.get('publishedAt'),
         },
       };
       this._kafkaService.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {

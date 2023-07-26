@@ -29,6 +29,7 @@ export class SeriesFactory implements ISeriesFactory {
       cover: null,
       createdAt: now,
       updatedAt: now,
+      publishedAt: now,
       isSaved: false,
       isReported: false,
       isHidden: false,

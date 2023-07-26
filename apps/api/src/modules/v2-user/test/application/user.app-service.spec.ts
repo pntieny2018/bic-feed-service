@@ -76,7 +76,6 @@ describe('UserApplicationService', () => {
     it('Should returned a MediaDto without group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
-      jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
       repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
       const result = await userAppService.findOne(userMocked.id, {
         withGroupJoined: false,
@@ -89,15 +88,12 @@ describe('UserApplicationService', () => {
     it('Should returned a MediaDto with group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
-      jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
       repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
-      repo.getPermissionsByUserId = jest.fn().mockResolvedValue(Promise.resolve());
       const result = await userAppService.findOne(userMocked.id, {
         withGroupJoined: true,
         withPermission: true,
       });
       expect(repo.findOne).toBeCalledWith(userMocked.id);
-      expect(repo.getPermissionsByUserId).toBeCalledWith(userMocked.id);
       expect(result).toEqual(new UserDto({ ...userDto, permissions: userPermissions }));
     });
 
@@ -105,7 +101,6 @@ describe('UserApplicationService', () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
       repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
-      repo.getPermissionsByUserId = jest.fn().mockResolvedValue(Promise.resolve());
       const result = await userAppService.findOne(userMocked.id, {
         withGroupJoined: true,
         withPermission: false,

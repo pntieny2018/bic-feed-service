@@ -1,7 +1,7 @@
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserDto } from '../../../v2-user/application';
 import { GroupDto } from '../../../v2-group/application';
-import { ArticleDto, ImageDto, PostDto, PostSettingDto } from '.';
+import { ArticleDto, ImageDto, PostDto, PostSettingDto, QuizDto } from '.';
 
 export class SeriesDto {
   public id: string;
@@ -21,6 +21,8 @@ export class SeriesDto {
   public setting: PostSettingDto;
 
   public isHidden?: boolean;
+
+  public quiz?: QuizDto;
 
   public coverMedia?: ImageDto;
 
@@ -44,6 +46,8 @@ export class SeriesDto {
   public createdAt: Date;
 
   public updatedAt?: Date;
+
+  public publishedAt?: Date;
 
   public createdBy: string;
 

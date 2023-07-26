@@ -7,7 +7,7 @@ export class ContentNoCRUDPermissionException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_NO_CRUD_PERMISSION,
-      message || i18n.t(`error.content.no_crud_permission`),
+      message || i18n?.t(`error.content.no_crud_permission`),
       errors
     );
   }

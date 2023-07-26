@@ -7,7 +7,7 @@ export class ContentPinNotFoundException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_PIN_NOT_FOUND,
-      message || i18n.t(`error.content.pin_not_found`),
+      message || i18n?.t(`error.content.pin_not_found`),
       errors
     );
   }

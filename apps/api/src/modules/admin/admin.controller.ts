@@ -5,7 +5,6 @@ import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
 import { AdminService } from './admin.service';
-import { ArticleResponseDto } from '../article/dto/responses';
 import { AuthUser } from '../auth';
 import { GetPostPipe } from '../post/pipes';
 import { GetArticleDto } from '../article/dto/requests';
