@@ -1,7 +1,7 @@
 'use strict';
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'user_take_quiz_detail';
+const tableName = 'quiz-participant-answers';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
@@ -12,7 +12,7 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal('gen_random_uuid()'),
         },
-        user_take_quiz_id: {
+        quiz_participant_id: {
           type: Sequelize.UUID,
           allowNull: false,
         },
@@ -43,10 +43,10 @@ module.exports = {
     await queryInterface.addConstraint(
       { tableName, schema: schemaName },
       {
-        fields: ['user_take_quiz_id'],
+        fields: ['quiz_participant_id'],
         type: 'foreign key',
         references: {
-          table: 'users_take_quizzes',
+          table: 'quiz_participants',
           field: 'id',
         },
         onDelete: 'CASCADE',

@@ -21,10 +21,10 @@ export class QuizBinding implements IQuizBinding {
       error: entity.get('error'),
       questions: entity.get('questions').map((question) => ({
         id: question.id,
-        question: question.question,
+        question: question.content,
         answers: question.answers.map((answer) => ({
           id: answer.id,
-          answer: answer.answer,
+          answer: answer.content,
           isCorrect: answer.isCorrect,
         })),
       })),

@@ -5,7 +5,7 @@ import { IQuizFactory } from './interface/quiz.factory.interface';
 import { QuizEntity, QuizProps } from '../model/quiz';
 import { QuizCreateProps } from '../domain-service/interface/quiz.domain-service.interface';
 import { QuizGenStatus, QuizStatus } from '../../data-type/quiz-status.enum';
-import { TakeQuizEntity } from '../model/user-taking-quiz';
+import { QuizParticipantEntity } from '../model/quiz-participant';
 import { RULES } from '../../constant';
 
 export class QuizFactory implements IQuizFactory {
@@ -49,9 +49,9 @@ export class QuizFactory implements IQuizFactory {
     return this._eventPublisher.mergeObjectContext(quizEntity);
   }
 
-  public createTakeQuiz(userId: string, quizEntity: QuizEntity): TakeQuizEntity {
+  public createTakeQuiz(userId: string, quizEntity: QuizEntity): QuizParticipantEntity {
     const now = new Date();
-    const takeQuizEntity = new TakeQuizEntity({
+    const quizParticipant = new QuizParticipantEntity({
       id: v4(),
       quizId: quizEntity.get('id'),
       contentId: quizEntity.get('contentId'),
@@ -70,7 +70,7 @@ export class QuizFactory implements IQuizFactory {
       createdAt: now,
       updatedAt: now,
     });
-    return this._eventPublisher.mergeObjectContext(takeQuizEntity);
+    return this._eventPublisher.mergeObjectContext(quizParticipant);
   }
 
   public reconstitute(properties: QuizProps): QuizEntity {

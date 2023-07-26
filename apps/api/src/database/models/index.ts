@@ -28,8 +28,8 @@ import { UserSeenPostModel } from './user-seen-post.model';
 import { QuizModel } from './quiz.model';
 import { QuizQuestionModel } from './quiz-question.model';
 import { QuizAnswerModel } from './quiz-answer.model';
-import { UserTakeQuizModel } from './user_take_quiz.model';
-import { UserTakeQuizDetailModel } from './user_take_quiz_detail.model';
+import { QuizParticipantModel } from './quiz-participant.model';
+import { QuizParticipantAnswerModel } from './quiz-participant-answers.model';
 
 export default [
   PostModel,
@@ -62,6 +62,6 @@ export default [
   QuizModel,
   QuizQuestionModel,
   QuizAnswerModel,
-  UserTakeQuizModel,
-  UserTakeQuizDetailModel,
+  QuizParticipantModel,
+  QuizParticipantAnswerModel,
 ];

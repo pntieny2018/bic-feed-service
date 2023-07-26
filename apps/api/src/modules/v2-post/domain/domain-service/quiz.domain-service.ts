@@ -23,7 +23,7 @@ import { ContentHasQuizException, QuizNotFoundException } from '../exception';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
-import { TakeQuizEntity } from '../model/user-taking-quiz';
+import { QuizParticipantEntity } from '../model/quiz-participant';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -126,16 +126,19 @@ export class QuizDomainService implements IQuizDomainService {
     }
   }
 
-  public async startQuiz(quizEntity: QuizEntity, authUser: UserDto): Promise<TakeQuizEntity> {
-    const takeQuizEntity = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
+  public async startQuiz(
+    quizEntity: QuizEntity,
+    authUser: UserDto
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipant = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
     try {
-      await this._quizRepository.createTakeQuiz(takeQuizEntity);
+      await this._quizRepository.createTakeQuiz(quizParticipant);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
 
-    return takeQuizEntity;
+    return quizParticipant;
   }
 
   public async getQuizzes(input: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>> {

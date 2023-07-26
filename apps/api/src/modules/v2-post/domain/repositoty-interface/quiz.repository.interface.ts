@@ -2,7 +2,6 @@ import { CursorPaginationProps } from '../../../../common/types/cursor-paginatio
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostType, QuizStatus } from '../../data-type';
 import { QuizEntity, QuizProps } from '../model/quiz';
-import { TakeQuizEntity } from '../model/user-taking-quiz';
 
 export type FindOneQuizProps = {
   where: {
@@ -42,11 +41,6 @@ export interface IQuizRepository {
   create(data: QuizEntity): Promise<void>;
 
   delete(id: string): Promise<void>;
-
-  createTakeQuiz(takeQuizEntity: TakeQuizEntity): Promise<void>;
-  getTakeQuiz(takeId: string): Promise<TakeQuizEntity>;
-  getAllTakeQuizzesByUser(contentId: string, userId: string): Promise<TakeQuizEntity[]>;
-
   getPagination(
     getPaginationQuizzesProps: GetPaginationQuizzesProps
   ): Promise<CursorPaginationResult<QuizEntity>>;

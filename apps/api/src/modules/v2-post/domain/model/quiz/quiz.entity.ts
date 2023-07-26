@@ -7,10 +7,10 @@ import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
 
 export type Question = {
   id: string;
-  question: string;
+  content: string;
   answers: {
     id: string;
-    answer: string;
+    content: string;
     isCorrect: boolean;
   }[];
 };

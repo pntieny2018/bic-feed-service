@@ -4,6 +4,7 @@ import {
   Column,
   CreatedAt,
   Default,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
@@ -14,8 +15,12 @@ import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { IPost, PostModel } from './post.model';
 import { IQuiz, QuizModel } from './quiz.model';
+import {
+  IQuizParticipantAnswer,
+  QuizParticipantAnswerModel,
+} from './quiz-participant-answers.model';
 
-export interface IUserTakeQuiz {
+export interface IQuizParticipant {
   id: string;
   quizId: string;
   postId: string;
@@ -43,14 +48,15 @@ export interface IUserTakeQuiz {
   updatedAt: Date;
   post?: IPost;
   quiz?: IQuiz;
+  answers?: IQuizParticipantAnswer[];
 }
 
 @Table({
-  tableName: 'users_take_quizzes',
+  tableName: 'quiz-participants',
 })
-export class UserTakeQuizModel
-  extends Model<IUserTakeQuiz, Optional<IUserTakeQuiz, 'id'>>
-  implements IUserTakeQuiz
+export class QuizParticipantModel
+  extends Model<IQuizParticipant, Optional<IQuizParticipant, 'id'>>
+  implements IQuizParticipant
 {
   @PrimaryKey
   @IsUUID()
@@ -79,16 +85,6 @@ export class UserTakeQuizModel
   @Column
   public finishedAt: Date;
 
-  @BelongsTo(() => PostModel, {
-    foreignKey: 'postId',
-  })
-  public post?: IPost;
-
-  @BelongsTo(() => QuizModel, {
-    foreignKey: 'quizId',
-  })
-  public quiz?: IQuiz;
-
   @Column({
     type: DataTypes.JSONB,
   })
@@ -109,4 +105,19 @@ export class UserTakeQuizModel
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  @BelongsTo(() => PostModel, {
+    foreignKey: 'postId',
+  })
+  public post?: IPost;
+
+  @BelongsTo(() => QuizModel, {
+    foreignKey: 'quizId',
+  })
+  public quiz?: IQuiz;
+
+  @HasMany(() => QuizParticipantAnswerModel, {
+    foreignKey: 'quizId',
+  })
+  public answers: IQuizParticipantAnswer[];
 }

@@ -16,11 +16,8 @@ import {
 } from '../../domain/factory/interface/quiz.factory.interface';
 import { CursorPaginator } from '../../../../common/dto';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { UserTakeQuizDetailModel } from '../../../../database/models/user_take_quiz_detail.model';
 import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
 import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
-import { UserTakeQuizModel } from '../../../../database/models/user_take_quiz.model';
-import { TakeQuizEntity } from '../../domain/model/user-taking-quiz';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
@@ -35,13 +32,7 @@ export class QuizRepository implements IQuizRepository {
     private readonly _quizQuestionModel: typeof QuizQuestionModel,
 
     @InjectModel(QuizAnswerModel)
-    private readonly _quizAnswerModel: typeof QuizAnswerModel,
-
-    @InjectModel(UserTakeQuizDetailModel)
-    private readonly _userTakeQuizDetailModel: typeof UserTakeQuizDetailModel,
-
-    @InjectModel(UserTakeQuizModel)
-    private readonly _userTakeQuizModel: typeof UserTakeQuizModel
+    private readonly _quizAnswerModel: typeof QuizAnswerModel
   ) {}
 
   public async create(quizEntity: QuizEntity): Promise<void> {
@@ -92,7 +83,7 @@ export class QuizRepository implements IQuizRepository {
         quizEntity.get('questions').map((question) => ({
           id: question.id,
           quizId: quizEntity.get('id'),
-          content: question.question,
+          content: question.content,
         }))
       );
       await this._quizAnswerModel.bulkCreate(
@@ -101,7 +92,7 @@ export class QuizRepository implements IQuizRepository {
             id: answer.id,
             quizId: quizEntity.get('id'),
             questionId: question.id,
-            content: answer.answer,
+            content: answer.content,
             isCorrect: answer.isCorrect,
           }))
         )
@@ -111,68 +102,6 @@ export class QuizRepository implements IQuizRepository {
 
   public async delete(id: string): Promise<void> {
     await this._quizModel.destroy({ where: { id: id } });
-  }
-
-  public async createTakeQuiz(takeQuizEntity: TakeQuizEntity): Promise<void> {
-    await this._userTakeQuizModel.create({
-      id: takeQuizEntity.get('id'),
-      quizId: takeQuizEntity.get('quizId'),
-      postId: takeQuizEntity.get('contentId'),
-      quizSnapshot: {
-        title: takeQuizEntity.get('quizSnapshot').title,
-        description: takeQuizEntity.get('quizSnapshot').description,
-        questions: takeQuizEntity.get('quizSnapshot').questions.map((question) => ({
-          id: question.id,
-          content: question.question,
-          answers: question.answers.map((answer) => ({
-            id: answer.id,
-            content: answer.answer,
-            isCorrect: answer.isCorrect,
-          })),
-        })),
-      },
-      score: takeQuizEntity.get('score'),
-      timeLimit: takeQuizEntity.get('timeLimit'),
-      totalQuestionsCompleted: takeQuizEntity.get('totalQuestionsCompleted'),
-      startedAt: takeQuizEntity.get('startedAt'),
-      finishedAt: takeQuizEntity.get('finishedAt'),
-      createdBy: takeQuizEntity.get('createdBy'),
-      updatedBy: takeQuizEntity.get('updatedBy'),
-      createdAt: takeQuizEntity.get('createdAt'),
-      updatedAt: takeQuizEntity.get('updatedAt'),
-    });
-  }
-
-  public async getTakeQuiz(takeId: string): Promise<TakeQuizEntity> {
-    const takeQuizModel = await this._userTakeQuizModel.findByPk(takeId);
-    const details = await this._userTakeQuizDetailModel.findAll({
-      where: {
-        userTakeQuizId: takeId,
-      },
-    });
-    return new TakeQuizEntity({
-      id: takeQuizModel.id,
-      contentId: takeQuizModel.postId,
-      quizId: takeQuizModel.quizId,
-      quizSnapshot: takeQuizModel.quizSnapshot,
-      score: takeQuizModel.score,
-      timeLimit: takeQuizModel.timeLimit,
-      totalQuestionsCompleted: takeQuizModel.totalQuestionsCompleted,
-      startedAt: takeQuizModel.startedAt,
-      finishedAt: takeQuizModel.finishedAt,
-      createdBy: takeQuizModel.createdBy,
-      updatedBy: takeQuizModel.updatedBy,
-      createdAt: takeQuizModel.createdAt,
-      updatedAt: takeQuizModel.updatedAt,
-      details: details.map((detail) => ({
-        id: detail.id,
-        questionId: detail.questionId,
-        answerId: detail.answerId,
-        isCorrect: detail.isCorrect,
-        createdAt: detail.createdAt,
-        updatedAt: detail.updatedAt,
-      })),
-    });
   }
 
   public async findOne(input: FindOneQuizProps): Promise<QuizEntity> {
@@ -249,10 +178,10 @@ export class QuizRepository implements IQuizRepository {
       isRandom: quiz.isRandom,
       questions: (quiz.questions || []).map((question) => ({
         id: question.id,
-        question: question.content,
+        content: question.content,
         answers: question.answers.map((answer) => ({
           id: answer.id,
-          answer: answer.content,
+          content: answer.content,
           isCorrect: answer.isCorrect,
         })),
       })),
