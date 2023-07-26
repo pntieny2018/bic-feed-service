@@ -221,7 +221,7 @@ export class QuizDomainService implements IQuizDomainService {
     } catch (e) {
       cloneQuizEntity.setFail({
         code: ERRORS.QUIZ.GENERATE_FAIL,
-        message: e.response.data?.error?.message || '',
+        message: e.response?.data?.error?.message || '',
       });
       /*await this._quizRepository.update(cloneQuizEntity);
       if (e.response?.status === 429) {

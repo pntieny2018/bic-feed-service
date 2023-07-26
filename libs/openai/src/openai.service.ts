@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Configuration, OpenAIApi } from 'openai';
 import { ConfigService } from '@nestjs/config';
 import { IOpenAIConfig } from '@app/openai/config/openai-config.interface';
@@ -11,10 +11,13 @@ import {
   CORRECT_ANSWER_KEY,
   MAX_COMPLETION_TOKEN,
   MAX_TOKEN,
-  TOKEN_IN_CONTEXT,
   TOKEN_PER_QUESTION_OR_ANSWER,
 } from '@app/openai/constant';
 import { v4 } from 'uuid';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom } from 'rxjs';
+import { ENDPOINT } from '../../../apps/api/src/common/constants/endpoint.constant';
+import { IAxiosConfig } from '../../../apps/api/src/config/axios';
 
 @Injectable()
 export class OpenaiService implements IOpenaiService {
@@ -23,10 +26,13 @@ export class OpenaiService implements IOpenaiService {
     gpt_4k: 'gpt-3.5-turbo',
     gpt_16k: 'gpt-3.5-turbo-16k',
   };
-  public constructor(private readonly _configService: ConfigService) {}
+  public constructor(
+    private readonly _configService: ConfigService,
+    private readonly _httpService: HttpService
+  ) {}
 
   public async generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse> {
-    const inputTokens = this._getInputTokens(props);
+    const inputTokens = await this._getInputTokens(props);
 
     const completionTokens = this._getCompletionTokens(props);
     if (props.numberOfQuestions <= 0 || props.numberOfAnswers <= 0) {
@@ -78,11 +84,23 @@ export class OpenaiService implements IOpenaiService {
       throw e;
     }
   }
-  private _getInputTokens(props: GenerateQuestionProps): number {
+  private async _getInputTokens(props: GenerateQuestionProps): Promise<number> {
     const { content } = props;
-    const tokenInContent = content.length; //TODO: get from lambda
-    return TOKEN_IN_CONTEXT + tokenInContent;
+    const response = await lastValueFrom(
+      this._httpService.post(
+        ENDPOINT.LAMBDA.COUNT_TOKEN,
+        {
+          content,
+        },
+        {
+          baseURL: this._configService.get<IAxiosConfig>('axios').lambda.baseUrl,
+        }
+      )
+    );
+    if (response.status !== HttpStatus.OK) return null;
+    return response.data;
   }
+
   private _getCompletionTokens(props: GenerateQuestionProps): number {
     const { numberOfQuestions, numberOfAnswers } = props;
     return numberOfQuestions * (numberOfAnswers + 1) * TOKEN_PER_QUESTION_OR_ANSWER;
