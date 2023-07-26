@@ -1,4 +1,4 @@
-import { UserEntity, UserPermission } from '../model/user';
+import { UserEntity } from '../model/user';
 
 export interface IUserRepository {
   findByUserName(username: string): Promise<UserEntity>;
@@ -6,8 +6,6 @@ export interface IUserRepository {
   findOne(id: string): Promise<UserEntity>;
 
   findAllByIds(ids: string[]): Promise<UserEntity[]>;
-
-  getPermissionsByUserId(id: string): Promise<UserPermission>;
 
   canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean>;
 }

@@ -7,7 +7,7 @@ export class ContentNoCommentPermissionException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_NO_COMMENT_PERMISSION,
-      message || i18n.t(`error.content.no_comment_permission`),
+      message || i18n?.t(`error.content.no_comment_permission`),
       errors
     );
   }

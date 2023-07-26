@@ -14,7 +14,7 @@ export class SearchConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after, state } = payload;
+    const { after, state } = payload;
     const {
       id,
       type,
@@ -28,6 +28,7 @@ export class SearchConsumer {
       actor,
       createdAt,
       updatedAt,
+      publishedAt,
       lang,
       isHidden,
     } = after;
@@ -48,6 +49,7 @@ export class SearchConsumer {
           createdBy: actor.id,
           createdAt,
           updatedAt,
+          publishedAt,
         },
       ]);
       return;
@@ -67,6 +69,7 @@ export class SearchConsumer {
         createdBy: actor.id,
         createdAt,
         updatedAt,
+        publishedAt,
         lang,
       },
     ]);
@@ -87,6 +90,7 @@ export class SearchConsumer {
       actor,
       createdAt,
       updatedAt,
+      publishedAt,
       lang,
       isHidden,
       coverMedia,
@@ -99,6 +103,7 @@ export class SearchConsumer {
             id,
             createdAt,
             updatedAt,
+            publishedAt,
             createdBy: actor.id,
             title,
             summary,
@@ -119,6 +124,7 @@ export class SearchConsumer {
             communityIds,
             createdAt,
             updatedAt,
+            publishedAt,
             createdBy: actor.id,
             isHidden,
             lang,
@@ -155,6 +161,7 @@ export class SearchConsumer {
       actor,
       createdAt,
       updatedAt,
+      publishedAt,
       isHidden,
       coverMedia,
       tags,
@@ -175,6 +182,7 @@ export class SearchConsumer {
             createdBy: actor.id,
             updatedAt,
             createdAt,
+            publishedAt,
             title,
             summary,
             coverMedia,
@@ -197,6 +205,7 @@ export class SearchConsumer {
             lang,
             updatedAt,
             createdAt,
+            publishedAt,
             title,
             summary,
             coverMedia,

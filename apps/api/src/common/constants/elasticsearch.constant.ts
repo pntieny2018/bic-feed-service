@@ -30,6 +30,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
   type: 'type',
   createdAt: 'createdAt',
   createdBy: 'createdBy',
+  publishedAt: 'publishedAt',
   media: 'media',
   coverMedia: 'coverMedia',
   linkPreview: 'linkPreview',

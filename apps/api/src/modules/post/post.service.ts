@@ -13,14 +13,13 @@ import {
 } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID } from '../../common/constants';
 import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
-import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -45,7 +44,7 @@ import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
 import { ReportTo, TargetType } from '../report-content/contstants';
-import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
+import { GetPostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
@@ -552,79 +551,6 @@ export class PostService {
     return includes;
   }
 
-  /**
-   * Create Post
-   * @param authUser MediaDto
-   * @param createPostDto PublishPostDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
-    let transaction;
-    try {
-      const { content, mentions, audience, tags, series } = createPostDto;
-      const authUserId = authUser.id;
-
-      let tagList = [];
-      if (tags) {
-        tagList = await this.tagService.getTagsByIds(tags);
-      }
-      transaction = await this.sequelizeConnection.transaction();
-      const post = await this.postModel.create(
-        {
-          status: PostStatus.DRAFT,
-          type: PostType.POST,
-          content,
-          createdBy: authUserId,
-          updatedBy: authUserId,
-          isImportant: false,
-          importantExpiredAt: null,
-          canComment: true,
-          canReact: true,
-          tagsJson: tagList,
-          mediaJson: {
-            images: [],
-            files: [],
-            videos: [],
-          },
-        },
-        { transaction }
-      );
-
-      if (audience.groupIds.length > 0) {
-        await this.addGroup(audience.groupIds, post.id, transaction);
-      }
-
-      if (mentions.length) {
-        await this.mentionService.create(
-          mentions.map((userId) => ({
-            entityId: post.id,
-            userId,
-            mentionableType: MentionableType.POST,
-          })),
-          transaction
-        );
-      }
-
-      if (tags) {
-        await this.tagService.addToPost(tags, post.id, transaction);
-      }
-
-      if (series) {
-        await this._addSeriesToPost(series, post.id, transaction);
-      }
-
-      await transaction.commit();
-
-      return post;
-    } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(error, error?.stack);
-      this.sentryService.captureException(error);
-      throw error;
-    }
-  }
-
   public async getPrivacy(groupIds: string[]): Promise<PostPrivacy> {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
@@ -643,157 +569,6 @@ export class PostService {
     if (totalOpen > 0) return PostPrivacy.CLOSED;
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
-  }
-
-  /**
-   * Update Post
-   */
-  public async update(
-    post: PostResponseDto,
-    authUser: UserDto,
-    updatePostDto: UpdatePostDto
-  ): Promise<boolean> {
-    const authUserId = authUser.id;
-    let transaction;
-    try {
-      const { media, mentions, audience, tags, series } = updatePostDto;
-
-      const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
-
-      if (
-        post.status === PostStatus.PUBLISHED &&
-        media &&
-        media.videos?.length > 0 &&
-        media.videos[0].status !== MediaStatus.COMPLETED
-      ) {
-        dataUpdate['status'] = PostStatus.PROCESSING;
-        dataUpdate['videoIdProcessing'] = media.videos[0].id;
-      }
-      dataUpdate.linkPreviewId = null;
-      if (updatePostDto.linkPreview) {
-        const linkPreview = await this.linkPreviewService.upsert(updatePostDto.linkPreview);
-        dataUpdate.linkPreviewId = linkPreview?.id || null;
-      }
-
-      if (series) {
-        const filterSeriesExist = await this.postModel.findAll({
-          where: {
-            id: series,
-          },
-        });
-        await this._updateSeriesToPost(
-          filterSeriesExist.map((series) => series.id),
-          post.id,
-          transaction
-        );
-      }
-
-      if (tags) {
-        const tagList = await this.tagService.getTagsByIds(tags);
-        await this.tagService.updateToPost(tags, post.id, transaction);
-        dataUpdate['tagsJson'] = tagList;
-      }
-
-      if (media) {
-        dataUpdate['mediaJson'] = media;
-      }
-      if (mentions) {
-        dataUpdate['mentions'] = mentions;
-      }
-
-      transaction = await this.sequelizeConnection.transaction();
-      await this.postModel.update(dataUpdate, {
-        where: {
-          id: post.id,
-          createdBy: authUserId,
-        },
-        transaction,
-      });
-
-      const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
-        await this.setGroupByPost(audience.groupIds, post.id, transaction);
-      }
-      await transaction.commit();
-
-      return true;
-    } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(error, error?.stack);
-      throw error;
-    }
-  }
-
-  protected async getDataUpdate(
-    updatePostDto: UpdatePostDto,
-    authUserId: string
-  ): Promise<Partial<IPost>> {
-    const { content, audience } = updatePostDto;
-    const dataUpdate = {
-      updatedBy: authUserId,
-    };
-    if (audience.groupIds.length) {
-      const postPrivacy = await this.getPrivacy(audience.groupIds);
-      dataUpdate['privacy'] = postPrivacy;
-    }
-
-    if (content !== null) {
-      dataUpdate['content'] = content;
-    }
-
-    return dataUpdate;
-  }
-
-  /**
-   * Publish Post
-   */
-  public async publish(post: PostResponseDto, authUser: UserDto): Promise<PostResponseDto> {
-    try {
-      const authUserId = authUser.id;
-      const groupIds = post.audience.groups.map((g) => g.id);
-
-      const dataUpdate = {
-        status: PostStatus.PUBLISHED,
-        createdAt: new Date(),
-      };
-      if (post.media.videos?.length > 0 && post.media.videos[0].status !== MediaStatus.COMPLETED) {
-        dataUpdate['status'] = PostStatus.PROCESSING;
-        dataUpdate['videoIdProcessing'] = post.media.videos[0].id;
-        post.videoIdProcessing = dataUpdate['videoIdProcessing'];
-      }
-      dataUpdate['privacy'] = await this.getPrivacy(groupIds);
-      await this.postModel.update(dataUpdate, {
-        where: {
-          id: post.id,
-          createdBy: authUserId,
-        },
-      });
-      post.status = dataUpdate['status'];
-      if (post.setting.isImportant) {
-        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
-          where: {
-            postId: post.id,
-            userId: authUserId,
-          },
-        });
-        if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.bulkCreate(
-            [
-              {
-                postId: post.id,
-                userId: authUserId,
-              },
-            ],
-            { ignoreDuplicates: true }
-          );
-        }
-        post.markedReadPost = true;
-      }
-      return post;
-    } catch (error) {
-      this.logger.error(error, error?.stack);
-      throw error;
-    }
   }
 
   /**

@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
@@ -140,6 +141,7 @@ export class ContentController {
     type: ArticleResponseDto,
   })
   @Get('/draft')
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public getDrafts(
     @AuthUser() user: UserDto,
     @Query() getDraftPostDto: GetDraftPostDto

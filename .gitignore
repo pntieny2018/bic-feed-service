@@ -44,3 +44,13 @@ internal.env
 data
 .scannerwork
 yarn.lock
+
+# Serverless
+serverless/**/*.swp
+serverless/**/package-lock.json
+serverless/**/__pycache__
+serverless/**/.pytest_cache
+serverless/.venv
+serverless/.egg-info
+serverless/.cdk.staging
+serverless/cdk.out

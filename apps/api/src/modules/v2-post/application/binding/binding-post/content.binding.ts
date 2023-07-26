@@ -6,7 +6,15 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { Inject, Injectable } from '@nestjs/common';
-import { FileDto, ImageDto, PostDto, SeriesDto, UserMentionDto, VideoDto } from '../../dto';
+import {
+  FileDto,
+  ImageDto,
+  PostDto,
+  QuizDto,
+  SeriesDto,
+  UserMentionDto,
+  VideoDto,
+} from '../../dto';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -89,6 +97,7 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: postEntity.get('content'),
       createdAt: postEntity.get('createdAt'),
+      publishedAt: postEntity.get('publishedAt'),
       tags: (postEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -100,6 +109,10 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
+      quiz:
+        postEntity.get('quiz') && postEntity.get('quiz').isVisible(dataBinding.authUser.id)
+          ? new QuizDto(postEntity.get('quiz').toObject())
+          : undefined,
       communities,
       media: {
         files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
@@ -193,7 +206,13 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: articleEntity.get('content'),
       createdAt: articleEntity.get('createdAt'),
-      publishedAt: articleEntity.get('publishedAt'),
+      /**
+       * Temporarily set publish to backward compatible with mobile
+       */
+      publishedAt: articleEntity.isWaitingSchedule()
+        ? articleEntity.get('scheduledAt')
+        : articleEntity.get('publishedAt'),
+      scheduledAt: articleEntity.get('scheduledAt'),
       tags: (articleEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -205,6 +224,10 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
+      quiz:
+        articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(dataBinding.authUser.id)
+          ? new QuizDto(articleEntity.get('quiz').toObject())
+          : undefined,
       communities,
       actor,
       status: articleEntity.get('status'),
@@ -265,6 +288,7 @@ export class ContentBinding implements IContentBinding {
         },
         include: {
           shouldIncludeCategory: true,
+          shouldIncludeQuiz: true,
         },
       });
 
@@ -289,6 +313,7 @@ export class ContentBinding implements IContentBinding {
             id: item.getId(),
             content: item.get('content'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             type: item.get('type'),
             actor: users.find((user) => user.id === item.get('createdBy')),
@@ -307,6 +332,7 @@ export class ContentBinding implements IContentBinding {
             summary: item.get('summary'),
             type: item.get('type'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             actor: users.find((user) => user.id === item.get('createdBy')),
             isSaved: item.get('isSaved'),
@@ -320,6 +346,7 @@ export class ContentBinding implements IContentBinding {
       }),
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
+      publishedAt: seriesEntity.get('publishedAt'),
       createdBy: seriesEntity.get('createdBy'),
       coverMedia: seriesEntity.get('cover')
         ? new ImageDto(seriesEntity.get('cover')?.toObject())
@@ -351,12 +378,12 @@ export class ContentBinding implements IContentBinding {
     for (const contentEntity of contentEntities) {
       if (contentEntity instanceof PostEntity) {
         result.push(
-          this._getPostDto(contentEntity, { users, groups, communities, reactionsCount })
+          this._getPostDto(contentEntity, authUser, { users, groups, communities, reactionsCount })
         );
       }
       if (contentEntity instanceof ArticleEntity) {
         result.push(
-          this._getArticleDto(contentEntity, {
+          this._getArticleDto(contentEntity, authUser, {
             users,
             groups,
             communities,
@@ -366,7 +393,7 @@ export class ContentBinding implements IContentBinding {
       }
       if (contentEntity instanceof SeriesEntity) {
         result.push(
-          this._getSeriesDto(contentEntity, {
+          this._getSeriesDto(contentEntity, authUser, {
             users,
             groups,
             communities,
@@ -382,6 +409,7 @@ export class ContentBinding implements IContentBinding {
 
   private _getPostDto(
     entity: PostEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -406,11 +434,16 @@ export class ContentBinding implements IContentBinding {
       },
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
+      publishedAt: entity.get('publishedAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
         groupId: tag.get('groupId'),
       })),
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto(entity.get('quiz').toObject())
+          : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -448,6 +481,7 @@ export class ContentBinding implements IContentBinding {
 
   private _getArticleDto(
     entity: ArticleEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -473,6 +507,7 @@ export class ContentBinding implements IContentBinding {
       },
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
+      publishedAt: entity.get('publishedAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -484,6 +519,10 @@ export class ContentBinding implements IContentBinding {
             title: dataBinding.series.get(seriesId)?.getTitle(),
           }))
         : undefined,
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto(entity.get('quiz').toObject())
+          : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -512,6 +551,7 @@ export class ContentBinding implements IContentBinding {
 
   private _getSeriesDto(
     entity: SeriesEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -544,15 +584,21 @@ export class ContentBinding implements IContentBinding {
       summary: entity.get('summary'),
       createdAt: entity.get('createdAt'),
       updatedAt: entity.get('updatedAt'),
+      publishedAt: entity.get('publishedAt'),
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto(entity.get('quiz').toObject())
+          : undefined,
       items: items.map((item) => {
         if (item instanceof PostEntity) {
           return {
             id: item.getId(),
             content: item.get('content'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             type: item.get('type'),
             media: {
@@ -569,6 +615,7 @@ export class ContentBinding implements IContentBinding {
             summary: item.get('summary'),
             type: item.get('type'),
             createdAt: item.get('createdAt'),
+            publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
             coverMedia: item.get('cover') ? new ImageDto(item.get('cover').toObject()) : null,
           };

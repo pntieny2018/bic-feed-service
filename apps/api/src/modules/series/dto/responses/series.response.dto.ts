@@ -149,6 +149,13 @@ export class SeriesResponseDto {
   public updatedAt?: Date;
 
   @ApiProperty({
+    type: Date,
+    name: 'published_at',
+  })
+  @Expose()
+  public publishedAt?: Date;
+
+  @ApiProperty({
     type: Number,
     name: 'created_by',
   })

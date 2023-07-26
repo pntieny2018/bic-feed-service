@@ -30,8 +30,12 @@ import { SeriesController } from './driving-apdater/controller/series.controller
 import { ContentController } from './driving-apdater/controller/content.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { NewsFeedController } from './driving-apdater/controller/newsfeed.controller';
+import { QuizController } from './driving-apdater/controller/quiz.controller';
 import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
 import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
+import { quizProvider } from './provider/quiz.provider';
+import { QueueModule } from '@app/queue';
+import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
 
 @Module({
   imports: [
@@ -45,6 +49,7 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
     KafkaModule,
     forwardRef(() => SearchModule),
     NotificationModule,
+    QueueModule,
   ],
   controllers: [
     TagController,
@@ -60,6 +65,7 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
     SeriesConsumer,
     ArticleConsumer,
     SeriesController,
+    QuizController,
   ],
   providers: [
     ...tagProvider,
@@ -70,6 +76,9 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
     ...commentProvider,
     ...sharedProvider,
     ...reactionProvider,
+    ...quizProvider,
+    QuizProcessor,
   ],
+  exports: [...quizProvider],
 })
 export class PostModuleV2 {}

@@ -6,6 +6,7 @@ export const PERMISSION_KEY = {
   EDIT_OWN_CONTENT_SETTING: 'edit_own_content_setting',
   //PUBLISH_UNPUBLISH_POST: 'publish_unpublish_post',
   PIN_CONTENT: 'pin_content',
+  CUD_QUIZ: 'cud_quiz',
 };
 
 export const SUBJECT = {
@@ -19,6 +20,7 @@ export const CACHE_KEYS = {
   REPORT_REASON_TYPE: 'report_reason_type',
   SHARE_USER: 'SU',
   SHARE_GROUP: 'SG',
+  IS_RUNNING_ARTICLE_SCHEDULE: 'is_running_article_schedule',
 };
 
 export class BasicPermissionDto {

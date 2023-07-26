@@ -9,6 +9,7 @@ import { UserDto } from '../../../v2-user/application';
 import { PostPrivacy, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
 import { TagDto } from './tag.dto';
+import { QuizDto } from './quiz.dto';
 
 export class PostDto {
   public id: string;
@@ -22,6 +23,7 @@ export class PostDto {
     title: string;
     id: string;
   }[];
+  public quiz?: QuizDto;
   public setting: PostSettingDto;
   public linkPreview?: LinkPreviewDto;
   public media: {
@@ -47,6 +49,7 @@ export class PostDto {
   }[];
   public createdAt: Date;
   public updatedAt: Date;
+  public publishedAt?: Date;
 
   public constructor(data: Partial<PostDto>) {
     Object.assign(this, data);
