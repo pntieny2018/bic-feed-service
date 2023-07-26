@@ -21,7 +21,6 @@ import { QuizQuestionModel } from '../../../../database/models/quiz-question.mod
 import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
 import { UserTakeQuizModel } from '../../../../database/models/user_take_quiz.model';
 import { TakeQuizEntity } from '../../domain/model/user-taking-quiz';
-import { PostGroupModel } from '../../../../database/models/post-group.model';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
@@ -141,6 +140,38 @@ export class QuizRepository implements IQuizRepository {
       updatedBy: takeQuizEntity.get('updatedBy'),
       createdAt: takeQuizEntity.get('createdAt'),
       updatedAt: takeQuizEntity.get('updatedAt'),
+    });
+  }
+
+  public async getTakeQuiz(takeId: string): Promise<TakeQuizEntity> {
+    const takeQuizModel = await this._userTakeQuizModel.findByPk(takeId);
+    const details = await this._userTakeQuizDetailModel.findAll({
+      where: {
+        userTakeQuizId: takeId,
+      },
+    });
+    return new TakeQuizEntity({
+      id: takeQuizModel.id,
+      contentId: takeQuizModel.postId,
+      quizId: takeQuizModel.quizId,
+      quizSnapshot: takeQuizModel.quizSnapshot,
+      score: takeQuizModel.score,
+      timeLimit: takeQuizModel.timeLimit,
+      totalQuestionsCompleted: takeQuizModel.totalQuestionsCompleted,
+      startedAt: takeQuizModel.startedAt,
+      finishedAt: takeQuizModel.finishedAt,
+      createdBy: takeQuizModel.createdBy,
+      updatedBy: takeQuizModel.updatedBy,
+      createdAt: takeQuizModel.createdAt,
+      updatedAt: takeQuizModel.updatedAt,
+      details: details.map((detail) => ({
+        id: detail.id,
+        questionId: detail.questionId,
+        answerId: detail.answerId,
+        isCorrect: detail.isCorrect,
+        createdAt: detail.createdAt,
+        updatedAt: detail.updatedAt,
+      })),
     });
   }
 

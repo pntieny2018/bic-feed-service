@@ -266,11 +266,12 @@ export class QuizController {
   public async startQuiz(
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
-  ): Promise<void> {
+  ): Promise<string> {
     try {
-      await this._commandBus.execute<StartQuizCommand, QuizDto>(
+      const data = await this._commandBus.execute<StartQuizCommand, string>(
         new StartQuizCommand({ quizId, authUser })
       );
+      return data;
     } catch (e) {
       switch (e.constructor) {
         case QuizNotFoundException:

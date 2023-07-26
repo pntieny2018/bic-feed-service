@@ -12,6 +12,14 @@ export type TakeQuizProps = {
     description: string;
     questions: Question[];
   };
+  details: {
+    id: string;
+    questionId: string;
+    answerId: string;
+    isCorrect: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
   score: number;
   timeLimit: number;
   totalQuestionsCompleted: number;

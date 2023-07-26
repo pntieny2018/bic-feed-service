@@ -44,6 +44,8 @@ export interface IQuizRepository {
   delete(id: string): Promise<void>;
 
   createTakeQuiz(takeQuizEntity: TakeQuizEntity): Promise<void>;
+  getTakeQuiz(takeId: string): Promise<TakeQuizEntity>;
+  getAllTakeQuizzesByUser(contentId: string, userId: string): Promise<TakeQuizEntity[]>;
 
   getPagination(
     getPaginationQuizzesProps: GetPaginationQuizzesProps

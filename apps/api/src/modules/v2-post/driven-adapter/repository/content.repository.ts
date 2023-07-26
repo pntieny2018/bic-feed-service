@@ -721,6 +721,7 @@ export class ContentRepository implements IContentRepository {
             genStatus: post.quiz.genStatus,
             timeLimit: post.quiz.timeLimit,
             createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
           })
         : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
@@ -785,6 +786,7 @@ export class ContentRepository implements IContentRepository {
             genStatus: post.quiz.genStatus,
             timeLimit: post.quiz.timeLimit,
             createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
           })
         : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
