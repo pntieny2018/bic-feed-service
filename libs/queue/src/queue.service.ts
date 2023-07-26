@@ -22,6 +22,7 @@ export class QueueService {
         )
       );
       queue.on('failed', (job, error) => {
+        console.log(error);
         if (job.attemptsMade === job.opts.attempts) {
           this.logger.error(
             `Job ${job.id} of type ${job.name} with data ${JSON.stringify(job.data)} failed. ${
