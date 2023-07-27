@@ -1,7 +1,7 @@
 'use strict';
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'quiz-participant-answers';
+const tableName = 'quiz_participant_answers';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
@@ -29,7 +29,11 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
         },
-        total_questions_completed: {
+        total_answers: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        total_correct_answers: {
           type: Sequelize.INTEGER,
           allowNull: true,
         },

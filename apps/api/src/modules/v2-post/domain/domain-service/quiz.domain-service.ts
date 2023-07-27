@@ -24,12 +24,18 @@ import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
 import { QuizParticipantEntity } from '../model/quiz-participant';
+import {
+  IQuizParticipantRepository,
+  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '../repositoty-interface/quiz-participant.repository.interface';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
   public constructor(
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
+    @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
+    private readonly _quizParticipantRepository: IQuizParticipantRepository,
     @Inject(QUIZ_FACTORY_TOKEN)
     private readonly _quizFactory: IQuizFactory,
     @Inject(OPEN_AI_SERVICE_TOKEN)
@@ -132,8 +138,9 @@ export class QuizDomainService implements IQuizDomainService {
   ): Promise<QuizParticipantEntity> {
     const quizParticipant = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
     try {
-      await this._quizRepository.createTakeQuiz(quizParticipant);
+      await this._quizParticipantRepository.create(quizParticipant);
     } catch (e) {
+      console.log(e);
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }

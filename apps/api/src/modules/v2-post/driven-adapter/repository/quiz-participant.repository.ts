@@ -6,6 +6,9 @@ import {
   IQuizParticipant,
   QuizParticipantModel,
 } from '../../../../database/models/quiz-participant.model';
+import { UserDto } from '../../../v2-user/application';
+import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
@@ -36,7 +39,8 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       },
       score: quizParticipant.get('score'),
       timeLimit: quizParticipant.get('timeLimit'),
-      totalQuestionsCompleted: quizParticipant.get('totalQuestionsCompleted'),
+      totalAnswers: quizParticipant.get('totalAnswers'),
+      totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
       startedAt: quizParticipant.get('startedAt'),
       finishedAt: quizParticipant.get('finishedAt'),
       createdBy: quizParticipant.get('createdBy'),
@@ -46,11 +50,49 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     });
   }
 
+  public async update(quizParticipant: QuizParticipantEntity): Promise<void> {
+    await this._quizParticipantModel.update(
+      {
+        score: quizParticipant.get('score'),
+        totalAnswers: quizParticipant.get('totalAnswers'),
+        totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
+        startedAt: quizParticipant.get('startedAt'),
+        finishedAt: quizParticipant.get('finishedAt'),
+        updatedBy: quizParticipant.get('updatedBy'),
+        updatedAt: quizParticipant.get('updatedAt'),
+      },
+      {
+        where: {
+          id: quizParticipant.get('id'),
+        },
+      }
+    );
+    if (quizParticipant.get('answers') !== undefined) {
+      await this._quizParticipantAnswerModel.destroy({
+        where: {
+          quizParticipantId: quizParticipant.get('id'),
+        },
+      });
+      await this._quizParticipantAnswerModel.bulkCreate(
+        quizParticipant.get('answers').map((answer) => ({
+          id: answer.id,
+          quizParticipantId: quizParticipant.get('id'),
+          questionId: answer.questionId,
+          answerId: answer.answerId,
+          isCorrect: answer.isCorrect,
+          createdAt: answer.createdAt,
+          updatedAt: answer.updatedAt,
+        }))
+      );
+    }
+  }
+
   public async findOne(takeId: string): Promise<QuizParticipantEntity> {
     const takeQuizModel = await this._quizParticipantModel.findOne({
       include: [
         {
-          model: this._quizParticipantAnswerModel,
+          model: QuizParticipantAnswerModel,
+          as: 'answers',
           required: false,
         },
       ],
@@ -60,6 +102,53 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     });
 
     return this._modelToEntity(takeQuizModel);
+  }
+
+  public async getQuizParticipantHighestScoreGroupByContentId(
+    contentIds: string[],
+    userId: string
+  ): Promise<Map<string, QuizParticipantEntity>> {
+    const rows = await this._quizParticipantModel.findAll({
+      where: {
+        postId: contentIds,
+        createdBy: userId,
+        [Op.and]: Sequelize.literal(
+          `finished_at is NOT null OR started_at + time_limit * interval '1 second' <= now()`
+        ),
+      },
+    });
+    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
+    rows.forEach((row) => {
+      const contentId = row.postId;
+      if (
+        !contentIdsMapHighestScore.has(contentId) ||
+        contentIdsMapHighestScore.get(contentId).get('score') < row.score
+      ) {
+        contentIdsMapHighestScore.set(contentId, this._modelToEntity(row));
+      }
+    });
+    return contentIdsMapHighestScore;
+  }
+
+  public async getQuizParticipantsDoingGroupByContentId(
+    contentIds: string[],
+    userId: string
+  ): Promise<Map<string, QuizParticipantEntity>> {
+    const rows = await this._quizParticipantModel.findAll({
+      where: {
+        postId: contentIds,
+        createdBy: userId,
+        [Op.and]: Sequelize.literal(
+          `finished_at is null AND started_at + time_limit * interval '1 second' > now()`
+        ),
+      },
+    });
+    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
+    rows.forEach((row) => {
+      const contentId = row.postId;
+      contentIdsMapHighestScore.set(contentId, this._modelToEntity(row));
+    });
+    return contentIdsMapHighestScore;
   }
 
   public async findAllByContentId(
@@ -82,22 +171,6 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     return rows.map((row) => this._modelToEntity(row));
   }
 
-  public async g(takeId: string): Promise<QuizParticipantEntity> {
-    const takeQuizModel = await this._quizParticipantModel.findOne({
-      include: [
-        {
-          model: this._quizParticipantAnswerModel,
-          required: false,
-        },
-      ],
-      where: {
-        id: takeId,
-      },
-    });
-
-    return this._modelToEntity(takeQuizModel);
-  }
-
   private _modelToEntity(takeQuizModel: IQuizParticipant): QuizParticipantEntity {
     return new QuizParticipantEntity({
       id: takeQuizModel.id,
@@ -106,7 +179,8 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       quizSnapshot: takeQuizModel.quizSnapshot,
       score: takeQuizModel.score,
       timeLimit: takeQuizModel.timeLimit,
-      totalQuestionsCompleted: takeQuizModel.totalQuestionsCompleted,
+      totalAnswers: takeQuizModel.totalAnswers,
+      totalCorrectAnswers: takeQuizModel.totalCorrectAnswers,
       startedAt: takeQuizModel.startedAt,
       finishedAt: takeQuizModel.finishedAt,
       createdBy: takeQuizModel.createdBy,

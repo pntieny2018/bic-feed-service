@@ -14,7 +14,6 @@ import { v4 as uuid_v4 } from 'uuid';
 export interface IQuizParticipantAnswer {
   id: string;
   quizParticipantId: string;
-  quizId: string;
   questionId: string;
   answerId: string;
   isCorrect: boolean;
@@ -23,7 +22,7 @@ export interface IQuizParticipantAnswer {
 }
 
 @Table({
-  tableName: 'quiz-participant-answers',
+  tableName: 'quiz_participant_answers',
 })
 export class QuizParticipantAnswerModel
   extends Model<IQuizParticipantAnswer, Optional<IQuizParticipantAnswer, 'id'>>
@@ -37,9 +36,6 @@ export class QuizParticipantAnswerModel
 
   @Column
   public quizParticipantId: string;
-
-  @Column
-  public quizId: string;
 
   @Column
   public questionId: string;

@@ -82,7 +82,12 @@
   "quiz": {
     "not_found": "Quiz not found",
     "no_crud_permission_at_group": "You don't have CUD permission at group {groups}",
-    "generate_limited": "Generate quiz is limited request per minute"
+    "generate_limited": "Generate quiz is limited request per minute",
+    "over_time": "Quiz is overtime. "
+  },
+  "quiz_participant": {
+    "not_fount": "Session ID not found",
+    "not_finished": "You have a quiz is not finished"
   },
   "cursor_params_invalid": "Cursor params invalid"
 }

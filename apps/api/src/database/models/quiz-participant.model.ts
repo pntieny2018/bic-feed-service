@@ -26,7 +26,8 @@ export interface IQuizParticipant {
   postId: string;
   timeLimit: number;
   score: number;
-  totalQuestionsCompleted: number;
+  totalAnswers: number;
+  totalCorrectAnswers: number;
   startedAt: Date;
   finishedAt: Date;
   quizSnapshot: {
@@ -52,7 +53,7 @@ export interface IQuizParticipant {
 }
 
 @Table({
-  tableName: 'quiz-participants',
+  tableName: 'quiz_participants',
 })
 export class QuizParticipantModel
   extends Model<IQuizParticipant, Optional<IQuizParticipant, 'id'>>
@@ -77,7 +78,10 @@ export class QuizParticipantModel
   public timeLimit: number;
 
   @Column
-  public totalQuestionsCompleted: number;
+  public totalAnswers: number;
+
+  @Column
+  public totalCorrectAnswers: number;
 
   @Column
   public startedAt: Date;
@@ -117,7 +121,7 @@ export class QuizParticipantModel
   public quiz?: IQuiz;
 
   @HasMany(() => QuizParticipantAnswerModel, {
-    foreignKey: 'quizId',
+    foreignKey: 'quizParticipantId',
   })
   public answers: IQuizParticipantAnswer[];
 }

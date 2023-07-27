@@ -31,6 +31,7 @@ import {
   InvalidCursorParamsException,
   OpenAIException,
   QuizNotFoundException,
+  QuizParticipantNotFoundException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
@@ -51,6 +52,10 @@ import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
 import { GetQuizzesRequestDto } from '../dto/request';
 import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
+import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
+import { UpdateQuizAnswersRequestDto } from '../dto/request/update-quiz-answer.request.dto';
+import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
+import { QuizParticipantDto } from '../../application/dto/quiz-participant.dto';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -250,6 +255,7 @@ export class QuizController {
         case AccessDeniedException:
           throw new ForbiddenException(e);
         case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }
@@ -268,14 +274,45 @@ export class QuizController {
     @AuthUser() authUser: UserDto
   ): Promise<string> {
     try {
-      const data = await this._commandBus.execute<StartQuizCommand, string>(
+      const quizParticipantId = await this._commandBus.execute<StartQuizCommand, string>(
         new StartQuizCommand({ quizId, authUser })
       );
-      return data;
+      return quizParticipantId;
     } catch (e) {
       switch (e.constructor) {
         case QuizNotFoundException:
         case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Update quiz answers' })
+  @Put(ROUTES.QUIZ.UPDATE_QUIZ_ANSWER.PATH)
+  @Version(ROUTES.QUIZ.UPDATE_QUIZ_ANSWER.VERSIONS)
+  public async updateQuizAnswers(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateQuizAnswersDto: UpdateQuizAnswersRequestDto,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
+        new UpdateQuizAnswerCommand({
+          quizParticipantId: id,
+          answers: updateQuizAnswersDto.answers,
+          authUser,
+        })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizNotFoundException:
           throw new NotFoundException(e);
         case ContentNoCRUDPermissionAtGroupException:
         case AccessDeniedException:
@@ -287,26 +324,24 @@ export class QuizController {
     }
   }
 
-  @ApiOperation({ summary: 'Get take quiz' })
-  @Post(ROUTES.QUIZ.START_QUIZ.PATH)
-  @Version(ROUTES.QUIZ.START_QUIZ.VERSIONS)
+  @ApiOperation({ summary: 'Get quiz result' })
+  @Get(ROUTES.QUIZ.GET_QUIZ_RESULT.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_RESULT.VERSIONS)
   public async getTakeQuiz(
-    @Param('id', ParseUUIDPipe) quizId: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
-  ): Promise<void> {
+  ): Promise<QuizParticipantDto> {
     try {
-      await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
-        new DeleteQuizCommand({ quizId, authUser })
+      const data = await this._queryBus.execute(
+        new FindQuizParticipantQuery({ authUser, quizParticipantId: id })
       );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
-        case QuizNotFoundException:
-        case ContentNotFoundException:
+        case QuizParticipantNotFoundException:
           throw new NotFoundException(e);
-        case ContentNoCRUDPermissionAtGroupException:
-        case AccessDeniedException:
-          throw new ForbiddenException(e);
         case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }

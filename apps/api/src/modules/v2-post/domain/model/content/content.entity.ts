@@ -39,7 +39,7 @@ export type ContentProps = {
   groupIds?: string[];
   communityIds?: string[];
   quiz?: QuizEntity;
-  takeQuiz?: QuizParticipantEntity[];
+  quizResults?: QuizParticipantEntity[];
   wordCount?: number;
   aggregation?: {
     commentsCount: number;

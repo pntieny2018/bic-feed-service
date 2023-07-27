@@ -1,5 +1,5 @@
 import { IsUUID } from 'class-validator';
-import { BelongsToManyAddAssociationsMixin, DataTypes, Optional, QueryTypes } from 'sequelize';
+import { DataTypes, Optional, QueryTypes } from 'sequelize';
 import {
   AllowNull,
   BelongsTo,

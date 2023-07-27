@@ -10,7 +10,7 @@ export class QuizAnswerRequestDto {
   @ApiProperty()
   @IsNotEmpty()
   @MaxLength(255)
-  public answer: string;
+  public content: string;
 
   @ApiProperty()
   @IsNotEmpty()

@@ -1,7 +1,7 @@
 'use strict';
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'quiz-participant-answers';
+const tableName = 'quiz_participant_answers';
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
@@ -22,6 +22,10 @@ module.exports = {
         },
         answer_id: {
           type: Sequelize.UUID,
+          allowNull: false,
+        },
+        is_correct: {
+          type: Sequelize.BOOLEAN,
           allowNull: false,
         },
         created_at: {

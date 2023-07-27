@@ -1,7 +1,6 @@
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
 import { Question } from '../quiz';
+import { v4 } from 'uuid';
 
 export type QuizParticipantProps = {
   id: string;
@@ -22,7 +21,8 @@ export type QuizParticipantProps = {
   }[];
   score: number;
   timeLimit: number;
-  totalQuestionsCompleted: number;
+  totalAnswers: number;
+  totalCorrectAnswers: number;
   startedAt: Date;
   finishedAt: Date;
   createdBy: string;
@@ -37,24 +37,57 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
   }
 
   public validate(): void {
-    if (this._props.createdBy && !isUUID(this._props.createdBy)) {
-      throw new DomainModelException(`Created By must be UUID`);
-    }
-
-    if (this._props.updatedBy && !isUUID(this._props.updatedBy)) {
-      throw new DomainModelException(`Updated By must be UUID`);
-    }
-
-    if (this._props.contentId && !isUUID(this._props.createdBy)) {
-      throw new DomainModelException(`Content ID must be UUID`);
-    }
-
-    if (this._props.quizId && !isUUID(this._props.updatedBy)) {
-      throw new DomainModelException(`Quiz ID must be UUID`);
-    }
+    //
   }
 
   public isOverLimitTime(): boolean {
     return this._props.startedAt.getTime() + this._props.timeLimit > new Date().getTime();
+  }
+
+  public isFinished(): boolean {
+    return !!this._props.finishedAt;
+  }
+
+  public isOwner(userId: string): boolean {
+    return this._props.createdBy === userId;
+  }
+
+  public getCorrectAnswersFromSnapshot(): Map<string, string> {
+    const correctAnswers = new Map<string, string>();
+    this._props.quizSnapshot.questions.forEach((question) => {
+      const answer = question.answers.find((answer) => answer.isCorrect);
+      correctAnswers.set(question.id, answer.id);
+    });
+    return correctAnswers;
+  }
+  public updateAnswers(
+    answers: {
+      id?: string;
+      questionId: string;
+      answerId: string;
+    }[]
+  ): void {
+    const now = new Date();
+    const correctAnswers = this.getCorrectAnswersFromSnapshot();
+
+    console.log('correctAnswers=', correctAnswers);
+    this._props.answers = answers.map((answer) => ({
+      id: answer?.id || v4(),
+      questionId: answer.questionId,
+      answerId: answer.answerId,
+      isCorrect: correctAnswers.get(answer.questionId) === answer.answerId,
+      createdAt: answer?.id ? undefined : now,
+      updatedAt: now,
+    }));
+
+    const totalCorrectAnswers = this._props.answers.filter((answer) => answer.isCorrect).length;
+    this._props.score = (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100;
+    this._props.totalAnswers = answers.length;
+    this._props.totalCorrectAnswers = totalCorrectAnswers;
+    console.log('this._props=', this._props);
+  }
+
+  public setFinishedAt(): void {
+    this._props.finishedAt = new Date();
   }
 }

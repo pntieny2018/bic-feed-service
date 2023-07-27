@@ -45,3 +45,5 @@ export * from './quiz-not-found.exception';
 export * from './content-has-quiz.exception';
 export * from './content-has-been-published.exception';
 export * from './article-invalid-scheduled-time.exception';
+export * from './quiz-over-time.exception';
+export * from './quiz-participant-not-found.exception';
