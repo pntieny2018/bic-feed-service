@@ -1,53 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Sequelize } from 'sequelize-typescript';
-import { ArrayHelper } from '../../common/helpers';
-import { Transaction } from 'sequelize';
 import { UserMentionDto } from './dto';
-import { MentionableType } from '../../common/constants';
-import { LogicException } from '../../common/exceptions';
-import { MENTION_ERROR_ID } from './errors/mention.error';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IMention, MentionModel } from '../../database/models/mention.model';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class MentionService {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService,
-    @InjectConnection() private _sequelizeConnection: Sequelize,
-    @InjectModel(MentionModel) private _mentionModel: typeof MentionModel
+    private _userAppService: IUserApplicationService
   ) {}
-
-  /**
-   * Check Valid Mentions
-   * @param groupIds
-   * @param userIds number[]
-   * @throws LogicException
-   */
-  public async checkValid(groupIds: string[], userIds: string[]): Promise<void> {
-    const users = await this._userAppService.findAllByIds(userIds, { withGroupJoined: true });
-    for (const user of users) {
-      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
-        throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
-      }
-    }
-  }
-
-  /**
-   * Create mentions
-   * @param mentions  IMention[]
-   * @param transaction Sequelize
-   */
-  public async create(
-    mentions: IMention[],
-    transaction: Transaction = null
-  ): Promise<MentionModel[]> {
-    if (transaction) {
-      return this._mentionModel.bulkCreate(mentions, { transaction });
-    }
-    return this._mentionModel.bulkCreate(mentions);
-  }
 
   /**
    * Resolve mentions by id
@@ -139,60 +99,5 @@ export class MentionService {
         post.mentions = mentions.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
       }
     }
-  }
-  /**
-   * Delete/Insert mention by entity
-   * @param userIds Array of User ID
-   * @param mentionableType Post or comment
-   * @param entityId Post ID or Comment ID
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async setMention(
-    userIds: string[],
-    mentionableType: MentionableType,
-    entityId: string,
-    transaction: Transaction
-  ): Promise<boolean> {
-    const currentMentions = await this._mentionModel.findAll({
-      where: { mentionableType, entityId },
-      transaction,
-    });
-    const currentMentionUserIds = currentMentions.map((i) => i.userId);
-
-    const deleteUserIds = ArrayHelper.arrDifferenceElements(currentMentionUserIds, userIds);
-    if (deleteUserIds.length) {
-      await this._mentionModel.destroy({
-        where: { mentionableType, entityId, userId: deleteUserIds },
-        transaction: transaction,
-      });
-    }
-
-    const addUserIds = ArrayHelper.arrDifferenceElements(userIds, currentMentionUserIds);
-    if (addUserIds.length) {
-      await this._mentionModel.bulkCreate(
-        addUserIds.map((userId) => ({
-          mentionableType,
-          entityId,
-          userId,
-        })),
-        {
-          transaction: transaction,
-        }
-      );
-    }
-    return true;
-  }
-
-  public async deleteByEntityIds(
-    entityIds: string[],
-    mentionableType: MentionableType,
-    transaction: Transaction
-  ): Promise<number> {
-    return this._mentionModel.destroy({
-      where: { entityId: entityIds, mentionableType },
-      transaction: transaction,
-    });
   }
 }
