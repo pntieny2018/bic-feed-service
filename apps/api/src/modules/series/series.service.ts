@@ -39,7 +39,6 @@ export class SeriesService {
     private _postSeriesModel: typeof PostSeriesModel,
     private readonly _commentService: CommentService,
     private readonly _postBinding: PostBindingService,
-    @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService
   ) {}
 
