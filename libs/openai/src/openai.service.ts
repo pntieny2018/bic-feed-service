@@ -156,10 +156,10 @@ export class OpenaiService implements IOpenaiService {
 
   private _getQuestionFromText(text: string): {
     id: string;
-    question: string;
+    content: string;
     answers: {
       id: string;
-      answer: string;
+      content: string;
       isCorrect: boolean;
     }[];
   }[] {

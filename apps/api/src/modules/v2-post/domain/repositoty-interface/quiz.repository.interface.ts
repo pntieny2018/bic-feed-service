@@ -41,7 +41,6 @@ export interface IQuizRepository {
   create(data: QuizEntity): Promise<void>;
 
   delete(id: string): Promise<void>;
-
   getPagination(
     getPaginationQuizzesProps: GetPaginationQuizzesProps
   ): Promise<CursorPaginationResult<QuizEntity>>;
