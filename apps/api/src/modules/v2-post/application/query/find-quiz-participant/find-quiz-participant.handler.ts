@@ -48,6 +48,18 @@ export class FindQuizParticipantHandler
   ): Promise<QuizParticipantDto> {
     const attributes: QuizParticipantDto = {
       id: quizParticipantEntity.get('id'),
+      questions: quizParticipantEntity.get('quizSnapshot').questions.map((question) => ({
+        id: question.id,
+        content: question.content,
+        answers: question.answers.map((answer) => ({
+          id: answer.id,
+          content: answer.content,
+        })),
+      })),
+      userAnswers: quizParticipantEntity.get('answers').map((answer) => ({
+        questionId: answer.questionId,
+        answerId: answer.answerId,
+      })),
       quizId: quizParticipantEntity.get('quizId'),
       contentId: quizParticipantEntity.get('contentId'),
       timeLimit: quizParticipantEntity.get('timeLimit'),
@@ -55,8 +67,6 @@ export class FindQuizParticipantHandler
       createdAt: quizParticipantEntity.get('createdAt'),
       updatedAt: quizParticipantEntity.get('updatedAt'),
     };
-    console.log('over=', quizParticipantEntity.isOverLimitTime());
-    console.log('finist=', quizParticipantEntity.isFinished());
 
     if (quizParticipantEntity.isOverLimitTime() || quizParticipantEntity.isFinished()) {
       attributes.score = quizParticipantEntity.get('score');
