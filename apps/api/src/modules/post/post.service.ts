@@ -42,7 +42,6 @@ import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
-import { ReactionService } from '../reaction';
 import { ReportTo, TargetType } from '../report-content/contstants';
 import { GetPostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
@@ -98,8 +97,6 @@ export class PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    @Inject(forwardRef(() => ReactionService))
-    protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
     protected readonly sentryService: SentryService,

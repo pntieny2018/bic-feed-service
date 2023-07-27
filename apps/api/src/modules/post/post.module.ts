@@ -37,7 +37,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     GroupModuleV2,
     MediaModule,
     MentionModule,
-    forwardRef(() => ReactionModule),
+    ReactionModule,
     AuthorityModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),

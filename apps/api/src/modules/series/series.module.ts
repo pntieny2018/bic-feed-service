@@ -3,7 +3,6 @@ import { SeriesService } from './series.service';
 import { SeriesController } from './series.controller';
 import { AuthorityModule } from '../authority';
 import { CommentModule } from '../comment';
-import { ReactionModule } from '../reaction';
 import { FeedModule } from '../feed';
 import { PostModule } from '../post';
 import { SeriesAppService } from './application/series.app-service';
@@ -16,7 +15,6 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     PostModule,
     GroupModuleV2,
     SearchModule,
-    forwardRef(() => ReactionModule),
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
   ],
