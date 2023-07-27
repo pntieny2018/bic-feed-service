@@ -28,6 +28,7 @@ export class QuizParticipantDto {
   public totalAnswers?: number;
   public totalCorrectAnswers?: number;
   public finishedAt?: Date;
+  public totalTimes?: number;
   public constructor(data: Partial<QuizParticipantDto>) {
     Object.assign(this, data);
   }
