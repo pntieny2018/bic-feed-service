@@ -6,7 +6,6 @@ import { MentionModule } from '../mention';
 import { CommentModule } from '../comment';
 import { AuthorityModule } from '../authority';
 import { ReactionModule } from '../reaction';
-import { FeedModule } from '../feed';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { IKafkaConfig } from '../../config/kafka';
@@ -39,7 +38,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     ReactionModule,
     AuthorityModule,
     forwardRef(() => CommentModule),
-    forwardRef(() => FeedModule),
     LinkPreviewModule,
     TagModule,
   ],

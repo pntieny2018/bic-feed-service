@@ -37,7 +37,6 @@ import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { CommentService } from '../comment';
-import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
@@ -97,8 +96,6 @@ export class PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    @Inject(forwardRef(() => FeedService))
-    protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
