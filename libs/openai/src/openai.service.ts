@@ -9,8 +9,8 @@ import {
 } from '@app/openai/openai.service.interface';
 import {
   CORRECT_ANSWER_KEY,
-  MAX_COMPLETION_TOKEN,
   MAX_TOKEN,
+  TOKEN_IN_CONTEXT,
   TOKEN_PER_QUESTION_OR_ANSWER,
 } from '@app/openai/constant';
 import { v4 } from 'uuid';
@@ -18,6 +18,7 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { ENDPOINT } from '../../../apps/api/src/common/constants/endpoint.constant';
 import { IAxiosConfig } from '../../../apps/api/src/config/axios';
+import { CountTokenException } from '@app/openai/openai.exception';
 
 @Injectable()
 export class OpenaiService implements IOpenaiService {
@@ -39,9 +40,11 @@ export class OpenaiService implements IOpenaiService {
       throw new Error('The number of questions and answers must be greater than 0');
     }
 
-    if (completionTokens >= MAX_COMPLETION_TOKEN) {
+    if (completionTokens >= MAX_TOKEN - inputTokens) {
       throw new Error(
-        `The number of tokens in questions and answers cannot exceed ${MAX_COMPLETION_TOKEN} tokens`
+        `The number of tokens in questions and answers cannot exceed ${
+          MAX_TOKEN - inputTokens
+        } tokens`
       );
     }
 
@@ -55,6 +58,7 @@ export class OpenaiService implements IOpenaiService {
       numQuestion: props.numberOfQuestions,
       numAnswer: props.numberOfAnswers,
     });
+
     const model = this._getModel(inputTokens + completionTokens);
     const openAIConfig = this._configService.get<IOpenAIConfig>('openai');
     const configuration = new Configuration({
@@ -97,8 +101,10 @@ export class OpenaiService implements IOpenaiService {
         }
       )
     );
-    if (response.status !== HttpStatus.OK) return null;
-    return response.data;
+    if (response.status !== HttpStatus.OK) {
+      throw new CountTokenException();
+    }
+    return +response.data + TOKEN_IN_CONTEXT;
   }
 
   private _getCompletionTokens(props: GenerateQuestionProps): number {

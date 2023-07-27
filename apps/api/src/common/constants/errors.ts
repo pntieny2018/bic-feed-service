@@ -35,6 +35,7 @@ export const ERRORS = {
     OPENAI_EXCEPTION: 'quiz.openai_exception',
     GENERATE_FAIL: 'quiz.generate_fail',
     QUIZ_PROCESSING: 'quiz.quiz_processing',
+    COUNT_TOKENS_FAILED: 'quiz.count_tokens_failed',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
