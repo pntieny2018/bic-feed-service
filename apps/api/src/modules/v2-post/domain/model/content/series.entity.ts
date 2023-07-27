@@ -22,11 +22,15 @@ export class SeriesEntity extends ContentEntity<SeriesProps> {
     return this._props.title;
   }
 
+  /**
+   * Note: Summary can be empty string
+   */
   public updateAttribute(data: UpdateSeriesCommandPayload): void {
     const { actor, title, summary } = data;
     this._props.updatedAt = new Date();
     this._props.updatedBy = actor.id;
+
     if (title) this._props.title = title;
-    if (summary) this._props.summary = summary;
+    if (summary !== undefined) this._props.summary = summary;
   }
 }

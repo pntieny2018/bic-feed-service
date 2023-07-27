@@ -75,7 +75,7 @@ export class PostEntity extends ContentEntity<PostProps> {
   }
 
   public hasVideoProcessing(): boolean {
-    return this._props.media.videos.some((video) => !video.isProcessed());
+    return (this._props.media.videos || []).some((video) => !video.isProcessed());
   }
 
   public setMedia(media: {
