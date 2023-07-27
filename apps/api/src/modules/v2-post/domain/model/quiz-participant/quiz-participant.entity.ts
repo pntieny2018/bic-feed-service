@@ -41,7 +41,7 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
   }
 
   public isOverLimitTime(): boolean {
-    return this._props.startedAt.getTime() + this._props.timeLimit > new Date().getTime();
+    return this._props.startedAt.getTime() + this._props.timeLimit < new Date().getTime();
   }
 
   public isFinished(): boolean {

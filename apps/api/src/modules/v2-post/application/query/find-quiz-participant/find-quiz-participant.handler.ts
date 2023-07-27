@@ -36,7 +36,7 @@ export class FindQuizParticipantHandler
       throw new QuizParticipantNotFoundException();
     }
 
-    if (quizParticipantEntity.isOwner(authUser.id)) {
+    if (!quizParticipantEntity.isOwner(authUser.id)) {
       throw new QuizParticipantNotFoundException();
     }
 
@@ -55,6 +55,8 @@ export class FindQuizParticipantHandler
       createdAt: quizParticipantEntity.get('createdAt'),
       updatedAt: quizParticipantEntity.get('updatedAt'),
     };
+    console.log('over=', quizParticipantEntity.isOverLimitTime());
+    console.log('finist=', quizParticipantEntity.isFinished());
 
     if (quizParticipantEntity.isOverLimitTime() || quizParticipantEntity.isFinished()) {
       attributes.score = quizParticipantEntity.get('score');
