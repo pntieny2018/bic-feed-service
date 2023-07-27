@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -20,8 +20,6 @@ import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/except
 
 @Injectable()
 export class SeriesAppService {
-  private _logger = new Logger(SeriesAppService.name);
-
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
