@@ -31,6 +31,7 @@ import {
   InvalidCursorParamsException,
   OpenAIException,
   QuizNotFoundException,
+  QuizOverTimeException,
   QuizParticipantNotFoundException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -56,6 +57,7 @@ import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-a
 import { UpdateQuizAnswersRequestDto } from '../dto/request/update-quiz-answer.request.dto';
 import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
 import { QuizParticipantDto } from '../../application/dto/quiz-participant.dto';
+import { QuizParticipantNotFinishedException } from '../../domain/exception/quiz-participant-not-finished.exception';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -291,6 +293,7 @@ export class QuizController {
         case ContentNoCRUDPermissionAtGroupException:
         case AccessDeniedException:
           throw new ForbiddenException(e);
+        case QuizParticipantNotFinishedException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
@@ -317,12 +320,13 @@ export class QuizController {
       );
     } catch (e) {
       switch (e.constructor) {
-        case QuizNotFoundException:
+        case QuizParticipantNotFoundException:
           throw new NotFoundException(e);
-        case ContentNoCRUDPermissionAtGroupException:
         case AccessDeniedException:
           throw new ForbiddenException(e);
+        case QuizOverTimeException:
         case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }

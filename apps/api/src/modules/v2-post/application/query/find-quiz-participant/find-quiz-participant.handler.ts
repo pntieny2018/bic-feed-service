@@ -13,6 +13,7 @@ import {
 import { QuizParticipantDto } from '../../dto/quiz-participant.dto';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import { QuizParticipantNotFoundException } from '../../../domain/exception';
+import { UserDto } from '../../../../v2-user/application';
 
 @QueryHandler(FindQuizParticipantQuery)
 export class FindQuizParticipantHandler
@@ -40,11 +41,12 @@ export class FindQuizParticipantHandler
       throw new QuizParticipantNotFoundException();
     }
 
-    return this._entityToDto(quizParticipantEntity);
+    return this._entityToDto(quizParticipantEntity, authUser);
   }
 
   private async _entityToDto(
-    quizParticipantEntity: QuizParticipantEntity
+    quizParticipantEntity: QuizParticipantEntity,
+    authUser: UserDto
   ): Promise<QuizParticipantDto> {
     const attributes: QuizParticipantDto = {
       id: quizParticipantEntity.get('id'),
@@ -69,6 +71,11 @@ export class FindQuizParticipantHandler
     };
 
     if (quizParticipantEntity.isOverLimitTime() || quizParticipantEntity.isFinished()) {
+      const quizParticipantEntities = await this._quizParticipantRepository.findAllByContentId(
+        quizParticipantEntity.get('contentId'),
+        authUser.id
+      );
+      attributes.totalTimes = quizParticipantEntities.length;
       attributes.score = quizParticipantEntity.get('score');
       attributes.totalAnswers = quizParticipantEntity.get('totalAnswers');
       attributes.totalCorrectAnswers = quizParticipantEntity.get('totalCorrectAnswers');
