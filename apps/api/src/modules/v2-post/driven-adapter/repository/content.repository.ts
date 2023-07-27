@@ -43,6 +43,7 @@ import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.mod
 import { QuizModel } from '../../../../database/models/quiz.model';
 import { QuizEntity } from '../../domain/model/quiz';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
+import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
@@ -332,6 +333,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeImportant,
         shouldIncludeItems,
         mustIncludeGroup,
+        shouldIncludeQuizResult,
       } = options.include;
       if (shouldIncludeGroup || mustIncludeGroup) {
         includeAttr.push({
@@ -401,7 +403,6 @@ export class ContentRepository implements IContentRepository {
           attributes: [
             'id',
             'title',
-            'contentId',
             'description',
             'status',
             'genStatus',
@@ -409,6 +410,14 @@ export class ContentRepository implements IContentRepository {
             'createdAt',
             'updatedAt',
           ],
+        });
+      }
+
+      if (shouldIncludeQuizResult) {
+        includeAttr.push({
+          model: QuizModel,
+          as: 'quizResults',
+          required: false,
         });
       }
 
@@ -692,7 +701,39 @@ export class ContentRepository implements IContentRepository {
       mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      quiz: post.quiz ? new QuizEntity(post.quiz) : undefined,
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
+          })
+        : undefined,
+      quizResults: (post.quizResults || []).map(
+        (quizResult) =>
+          new QuizParticipantEntity({
+            id: quizResult.id,
+            quizId: quizResult.quizId,
+            contentId: quizResult.postId,
+            quizSnapshot: quizResult.quizSnapshot,
+            timeLimit: quizResult.timeLimit,
+            score: quizResult.score,
+            totalAnswers: quizResult.totalAnswers,
+            totalCorrectAnswers: quizResult.totalCorrectAnswers,
+            startedAt: quizResult.startedAt,
+            finishedAt: quizResult.finishedAt,
+            answers: [],
+            updatedBy: quizResult.updatedBy,
+            updatedAt: quizResult.updatedAt,
+            createdAt: quizResult.createdAt,
+            createdBy: quizResult.createdBy,
+          })
+      ),
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
@@ -745,7 +786,19 @@ export class ContentRepository implements IContentRepository {
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      quiz: post.quiz ? new QuizEntity(post.quiz) : undefined,
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
+          })
+        : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       aggregation: {
         commentsCount: post.commentsCount,
