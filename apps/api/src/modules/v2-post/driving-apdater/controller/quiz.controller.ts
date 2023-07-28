@@ -24,11 +24,15 @@ import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
 import {
+  AccessDeniedException,
   ContentHasQuizException,
+  ContentNoCRUDPermissionAtGroupException,
   ContentNotFoundException,
   InvalidCursorParamsException,
   OpenAIException,
   QuizNotFoundException,
+  QuizOverTimeException,
+  QuizParticipantNotFoundException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
@@ -48,6 +52,12 @@ import { Request } from 'express';
 import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
 import { GetQuizzesRequestDto } from '../dto/request';
+import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
+import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
+import { UpdateQuizAnswersRequestDto } from '../dto/request/update-quiz-answer.request.dto';
+import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
+import { QuizParticipantDto } from '../../application/dto/quiz-participant.dto';
+import { QuizParticipantNotFinishedException } from '../../domain/exception/quiz-participant-not-finished.exception';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -127,7 +137,7 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Generate a quiz' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: QuizDto,
     description: 'Regenerate quiz successfully',
   })
   @Put(ROUTES.QUIZ.GENERATE.PATH)
@@ -162,7 +172,7 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Update a quiz' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: QuizDto,
     description: 'Update quiz successfully',
   })
   @ResponseMessages({
@@ -216,6 +226,11 @@ export class QuizController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case QuizNotFoundException:
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentEmptyException:
+        case OpenAIException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
@@ -225,10 +240,6 @@ export class QuizController {
   }
 
   @ApiOperation({ summary: 'Delete a quiz' })
-  @ApiOkResponse({
-    type: CreateTagDto,
-    description: 'Delete quiz successfully',
-  })
   @ResponseMessages({
     success: 'message.quiz.deleted_success',
   })
@@ -247,9 +258,99 @@ export class QuizController {
         case QuizNotFoundException:
         case ContentNotFoundException:
           throw new NotFoundException(e);
-        case QuizNoCRUDPermissionAtGroupException:
+        case ContentNoCRUDPermissionAtGroupException:
+        case AccessDeniedException:
           throw new ForbiddenException(e);
         case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Start a quiz' })
+  @ApiOkResponse({
+    type: String,
+    description: 'Start quiz successfully',
+  })
+  @Post(ROUTES.QUIZ.START_QUIZ.PATH)
+  @Version(ROUTES.QUIZ.START_QUIZ.VERSIONS)
+  public async startQuiz(
+    @Param('id', ParseUUIDPipe) quizId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<string> {
+    try {
+      const quizParticipantId = await this._commandBus.execute<StartQuizCommand, string>(
+        new StartQuizCommand({ quizId, authUser })
+      );
+      return quizParticipantId;
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizNotFoundException:
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case QuizParticipantNotFinishedException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Update quiz answers' })
+  @Put(ROUTES.QUIZ.UPDATE_QUIZ_ANSWER.PATH)
+  @Version(ROUTES.QUIZ.UPDATE_QUIZ_ANSWER.VERSIONS)
+  public async updateQuizAnswers(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateQuizAnswersDto: UpdateQuizAnswersRequestDto,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
+        new UpdateQuizAnswerCommand({
+          quizParticipantId: id,
+          answers: updateQuizAnswersDto.answers,
+          authUser,
+        })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizParticipantNotFoundException:
+          throw new NotFoundException(e);
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        case QuizOverTimeException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get quiz result' })
+  @Get(ROUTES.QUIZ.GET_QUIZ_RESULT.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_RESULT.VERSIONS)
+  public async getTakeQuiz(
+    @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizParticipantDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindQuizParticipantQuery({ authUser, quizParticipantId: id })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizParticipantNotFoundException:
+          throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }

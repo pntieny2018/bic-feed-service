@@ -1,5 +1,5 @@
 import { IsUUID } from 'class-validator';
-import { BelongsToManyAddAssociationsMixin, DataTypes, Optional, QueryTypes } from 'sequelize';
+import { DataTypes, Optional, QueryTypes } from 'sequelize';
 import {
   AllowNull,
   BelongsTo,
@@ -37,7 +37,8 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
-import { QuizModel } from './quiz.model';
+import { IQuiz, QuizModel } from './quiz.model';
+import { IQuizParticipant, QuizParticipantModel } from './quiz-participant.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -102,8 +103,10 @@ export interface IPost {
   items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
-  quiz?: QuizModel;
+  quiz?: IQuiz;
+  quizResults?: IQuizParticipant[];
   publishedAt?: Date;
+  scheduledAt?: Date;
   errorLog?: any;
   mediaJson?: any;
   mentions?: string[];
@@ -216,6 +219,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public publishedAt: Date;
 
   @AllowNull(true)
+  @Column
+  public scheduledAt?: Date;
+
+  @AllowNull(true)
   @Column({
     type: DataTypes.JSONB,
   })
@@ -276,11 +283,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public items?: IPost[];
 
   @HasOne(() => QuizModel, {
-    foreignKey: 'contentId',
+    foreignKey: 'postId',
   })
-  public quiz?: QuizModel;
+  public quiz?: IQuiz;
 
-  public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+  @HasMany(() => QuizParticipantModel, 'postId')
+  public quizResults: IQuizParticipant[];
 
   @HasMany(() => PostGroupModel)
   public groups: PostGroupModel[];

@@ -47,6 +47,7 @@ export class ArticleDto {
   }[];
   public createdAt: Date;
   public updatedAt: Date;
+  public scheduledAt?: Date;
   public publishedAt?: Date;
 
   public constructor(data: Partial<ArticleDto>) {

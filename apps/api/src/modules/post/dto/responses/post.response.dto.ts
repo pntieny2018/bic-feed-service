@@ -6,7 +6,6 @@ import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/p
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
-import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { UserMentionDto } from '../../../mention/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
@@ -270,6 +269,13 @@ export class PostResponseDto {
   })
   @Expose()
   public updatedAt?: Date;
+
+  @ApiProperty({
+    type: Date,
+    name: 'published_at',
+  })
+  @Expose()
+  public publishedAt?: Date;
 
   @ApiProperty({
     type: Number,

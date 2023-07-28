@@ -47,6 +47,8 @@ export class SeriesDto {
 
   public updatedAt?: Date;
 
+  public publishedAt?: Date;
+
   public createdBy: string;
 
   public constructor(data: Partial<SeriesDto>) {

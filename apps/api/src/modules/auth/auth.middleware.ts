@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { LogicException } from '../../common/exceptions';
-import { VERSIONS_SUPPORTED, HTTP_STATUS_ID, VERSION_HEADER_KEY } from '../../common/constants';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {

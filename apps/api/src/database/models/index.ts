@@ -26,6 +26,10 @@ import { UserNewsFeedModel } from './user-newsfeed.model';
 import { UserSavePostModel } from './user-save-post.model';
 import { UserSeenPostModel } from './user-seen-post.model';
 import { QuizModel } from './quiz.model';
+import { QuizQuestionModel } from './quiz-question.model';
+import { QuizAnswerModel } from './quiz-answer.model';
+import { QuizParticipantModel } from './quiz-participant.model';
+import { QuizParticipantAnswerModel } from './quiz-participant-answers.model';
 
 export default [
   PostModel,
@@ -56,4 +60,8 @@ export default [
   ReportContentDetailModel,
   FailedProcessPostModel,
   QuizModel,
+  QuizQuestionModel,
+  QuizAnswerModel,
+  QuizParticipantModel,
+  QuizParticipantAnswerModel,
 ];

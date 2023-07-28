@@ -62,6 +62,7 @@ export class OpenaiService implements IOpenaiService {
         messages,
         max_tokens: completionTokens,
       });
+      console.log(completion.data.usage);
       const questions = this._getQuestionFromText(completion.data.choices[0].message.content);
       return {
         usage: {
@@ -106,7 +107,7 @@ export class OpenaiService implements IOpenaiService {
       {
         role: 'system',
         content: `You are quiz creator. You will be provided an article (delimited with XML tags).
-                    Please read the article and create ${numQuestion} questions, each question must have ${numAnswer} answer choices and indicate which answer is correct. 
+                    Please read the article and create 30 questions, each question must have 3 answer choices and indicate which answer is correct. 
                     The language of all the questions and answers must be the same as the article.\n
                   Follow this format:\n
                   """" 
@@ -124,7 +125,7 @@ export class OpenaiService implements IOpenaiService {
       },
       {
         role: 'user',
-        content: `<article>${content}</article>`,
+        content: `<article>hi you go .</article>`,
       },
       //       {
       //         role: 'user',
@@ -156,10 +157,10 @@ export class OpenaiService implements IOpenaiService {
 
   private _getQuestionFromText(text: string): {
     id: string;
-    question: string;
+    content: string;
     answers: {
       id: string;
-      answer: string;
+      content: string;
       isCorrect: boolean;
     }[];
   }[] {

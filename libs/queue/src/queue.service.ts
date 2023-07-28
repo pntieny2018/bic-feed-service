@@ -22,6 +22,7 @@ export class QueueService {
         )
       );
       queue.on('failed', (job, error) => {
+        console.log(error);
         if (job.attemptsMade === job.opts.attempts) {
           this.logger.error(
             `Job ${job.id} of type ${job.name} with data ${JSON.stringify(job.data)} failed. ${
@@ -33,7 +34,7 @@ export class QueueService {
     });
   }
 
-  public async addQuizJob(data: any): Promise<void> {
+  public async addQuizJob(data: unknown): Promise<void> {
     const jobName: string = QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING;
     await this._quizPendingQueue.add(jobName, data);
   }

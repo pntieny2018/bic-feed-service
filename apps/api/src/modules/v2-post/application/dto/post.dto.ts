@@ -49,6 +49,14 @@ export class PostDto {
   }[];
   public createdAt: Date;
   public updatedAt: Date;
+  public publishedAt?: Date;
+  public quizHighestScore?: {
+    quizParticipantId: string;
+    score: number;
+  };
+  public quizDoing?: {
+    quizParticipantId: string;
+  };
 
   public constructor(data: Partial<PostDto>) {
     Object.assign(this, data);

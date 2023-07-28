@@ -11,7 +11,7 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal('gen_random_uuid()'),
         },
-        content_id: {
+        post_id: {
           type: Sequelize.UUID,
           defaultValue: null,
         },
@@ -52,10 +52,6 @@ module.exports = {
           allowNull: false,
           defaultValue: true,
         },
-        questions: {
-          type: Sequelize.JSONB,
-          allowNull: true,
-        },
         meta: {
           type: Sequelize.JSONB,
           allowNull: true,
@@ -87,7 +83,7 @@ module.exports = {
     await queryInterface.addConstraint(
       { tableName, schema: schemaName },
       {
-        fields: ['content_id'],
+        fields: ['post_id'],
         type: 'foreign key',
         references: {
           table: 'posts',

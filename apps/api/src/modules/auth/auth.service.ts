@@ -5,18 +5,13 @@ import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
-import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { ClassTransformer } from 'class-transformer';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
-import { IAppConfig } from '../../config/app';
 
 @Injectable()
 export class AuthService {
-  private _logger = new Logger(AuthService.name);
-  private _classTransformer = new ClassTransformer();
-
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
@@ -28,6 +23,7 @@ export class AuthService {
     const username = payload['cognito:username'];
     const userInfo = await this._userAppService.findByUserName(username, {
       withGroupJoined: true,
+      withPermission: true,
     });
     if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
