@@ -134,7 +134,7 @@ export class QuizDomainService implements IQuizDomainService {
         status,
       },
       contentType: type,
-      attributes: ['id', 'contentId', 'createdAt'],
+      attributes: ['id', 'createdAt'],
     });
   }
 
