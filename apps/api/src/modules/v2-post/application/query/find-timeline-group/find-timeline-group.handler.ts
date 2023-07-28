@@ -84,7 +84,7 @@ export class FindTimelineGroupHandler
       order: OrderEnum.DESC,
       orderOptions: {
         isImportantFirst: isImportant,
-        isPublished: true,
+        isPublishedByDesc: true,
       },
       before,
       after,
