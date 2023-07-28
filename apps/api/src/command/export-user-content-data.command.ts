@@ -63,10 +63,16 @@ export class ExportUserContentDataCommand implements CommandRunner {
       console.log(`Exporting ${count}/${userIds.length}`);
       if (!userId) continue;
       const user = await this._userAppService.findOne(userId);
+      const contentCounted: any = postCount.find((item) => item.createdBy === userId);
 
       data.push({
-        userInfo: user,
-        content: postCount.find((item) => item.createdBy === userId),
+        user_id: user.id,
+        username: user.username,
+        email: user.email,
+        full_name: user.fullname,
+        post_count: contentCounted.dataValues.post_count,
+        article_count: contentCounted.dataValues.article_count,
+        series_count: contentCounted.dataValues.series_count,
       });
     }
 
