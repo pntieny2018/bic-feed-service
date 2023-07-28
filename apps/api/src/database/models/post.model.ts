@@ -1,5 +1,5 @@
 import { IsUUID } from 'class-validator';
-import { DataTypes, Optional, QueryTypes } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
   BelongsTo,
@@ -371,7 +371,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     if (!authUserId) {
-      return [Sequelize.literal(`(false)`), alias ? alias : 'isImportant'];
+      return [Sequelize.literal(`"PostModel".is_important`), alias ? alias : 'isImportant'];
     }
     return [
       Sequelize.literal(`(
@@ -384,12 +384,50 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
-  public static loadContent(alias?: string): [Literal, string] {
-    return [
-      Sequelize.literal(`(CASE WHEN type = ARTICLE THEN content ELSE null END)`),
-      alias ? alias : 'content',
-    ];
+  public static excludeReportedByUser(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    return Sequelize.literal(
+      `NOT EXISTS ( 
+        SELECT target_id FROM ${schema}.${reportContentDetailTable} rp
+          WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this.sequelize.escape(userId)}
+      )`
+    );
   }
+
+  public static filterSavedByUser(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const userSavePostTable = UserSavePostModel.tableName;
+    return Sequelize.literal(
+      `EXISTS ( 
+          SELECT sp.user_id FROM ${schema}.${userSavePostTable} sp
+            WHERE sp.post_id = "PostModel".id AND sp.user_id = ${this.sequelize.escape(userId)}
+        )`
+    );
+  }
+
+  public static filterInNewsfeedUser(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const userNewsFeedTable = UserNewsFeedModel.tableName;
+    return Sequelize.literal(
+      `EXISTS ( 
+          SELECT nf.user_id FROM  ${schema}.${userNewsFeedTable} nf
+            WHERE nf.post_id = "PostModel".id AND nf.user_id = ${this.sequelize.escape(userId)}
+        )`
+    );
+  }
+
+  public static filterInGroupArchivedCondition(groupArchived: boolean): Literal {
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+    return Sequelize.literal(
+      `EXISTS (
+          SELECT g.group_id FROM  ${schema}.${postGroupTable} g
+            WHERE g.post_id = "PostModel".id  AND g.is_archived = ${groupArchived}
+        )`
+    );
+  }
+
   public static notIncludePostsReported(
     userId: string,
     options?: {
@@ -397,7 +435,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       type?: TargetType[];
     }
   ): Literal {
-    //TODO limit scope in group
     if (!userId) return Sequelize.literal(`1 = 1`);
     const { mainTableAlias, type } = options ?? {
       mainTableAlias: 'PostModel',
@@ -417,90 +454,5 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
         ${condition}
     )`);
-  }
-
-  public static loadLock(groupIds: string[], alias?: string): [Literal, string] {
-    const { schema } = getDatabaseConfig();
-    const postGroupTable = PostGroupModel.tableName;
-    return [
-      Sequelize.literal(`(
-        CASE WHEN "PostModel".privacy = '${
-          PostPrivacy.PRIVATE
-        }' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg
-          WHERE spg.post_id = "PostModel".id AND spg.group_id IN(${groupIds
-            .map((id) => this.sequelize.escape(id))
-            .join(',')}) ), FALSE) = FALSE THEN TRUE ELSE FALSE END
-               )`),
-      alias ? alias : 'isLocked',
-    ];
-  }
-
-  public static loadReactionsCount(alias?: string): [Literal, string] {
-    const { schema } = getDatabaseConfig();
-    return [
-      Sequelize.literal(`(
-                  SELECT concat(1,reaction_name_list,'=',total_list) FROM (
-                         SELECT
-                               1,
-                               string_agg(RN,',') AS reaction_name_list,
-                               string_agg(cast(TT as varchar),',') AS total_list
-                               FROM (
-                                       SELECT
-                                           COUNT(${schema}.posts_reactions.id ) as TT,
-                                           ${schema}.posts_reactions.reaction_name as RN,
-                                           MIN(${schema}.posts_reactions.created_at) as minDate
-                                       FROM   ${schema}.posts_reactions
-                                       WHERE  ${schema}.posts_reactions.post_id = "PostModel"."id"
-                                       GROUP BY ${schema}.posts_reactions.reaction_name
-                                       ORDER BY minDate ASC
-                               ) as orderBefore
-                       ) AS RC
-                  GROUP BY 1
-               )`),
-      alias ? alias : 'reactionsCount',
-    ];
-  }
-
-  public static loadCommentsCount(alias?: string): [Literal, string] {
-    const { schema } = getDatabaseConfig();
-    return [
-      Sequelize.literal(
-        `(SELECT COUNT(*) FROM ${schema}.comments WHERE ${schema}.comments.post_id="PostModel"."id")`
-      ),
-      alias ?? 'commentsCount',
-    ];
-  }
-
-  public static parseAggregatedReaction(value: string): Record<string, Record<string, number>> {
-    if (value && value !== '1=') {
-      const rawReactionsCount: string = value.substring(1);
-      const [s1, s2] = rawReactionsCount.split('=');
-      const reactionsName = s1.split(',');
-      const total = s2.split(',');
-      const reactionsCount = {};
-      reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
-      return reactionsCount;
-    }
-    return null;
-  }
-
-  public static async getTotalImportantPostInGroups(groupIds: string[]): Promise<number> {
-    const { schema } = getDatabaseConfig();
-    const query = `SELECT COUNT(*) as total
-    FROM ${schema}.posts as p
-    WHERE "p"."deleted_at" IS NULL AND "p"."status" = ${PostStatus.PUBLISHED} AND "p"."important_expired_at" > NOW()
-    AND EXISTS(
-        SELECT 1
-        from ${schema}.posts_groups AS g
-        WHERE g.post_id = p.id
-        AND g.group_id IN(:groupIds)
-      )`;
-    const result: any = await this.sequelize.query(query, {
-      replacements: {
-        groupIds,
-      },
-      type: QueryTypes.SELECT,
-    });
-    return result[0].total;
   }
 }
