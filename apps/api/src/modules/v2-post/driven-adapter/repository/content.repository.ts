@@ -434,82 +434,82 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _buildWhereOptions(options: FindContentOptions): WhereOptions<IPost> {
-    if (!options?.where) return [];
-
-    const conditions = [];
     let whereOptions: WhereOptions<IPost> | undefined;
 
-    if (options.where.id)
-      conditions.push({
-        id: options.where.id,
-      });
+    if (options?.where) {
+      const conditions = [];
+      if (options.where.id)
+        conditions.push({
+          id: options.where.id,
+        });
 
-    if (options.where.ids) {
-      conditions.push({
-        id: options.where.ids,
-      });
-    }
+      if (options.where.ids) {
+        conditions.push({
+          id: options.where.ids,
+        });
+      }
 
-    if (options.where.type) {
-      conditions.push({
-        type: options.where.type,
-      });
-    }
+      if (options.where.type) {
+        conditions.push({
+          type: options.where.type,
+        });
+      }
 
-    if (isBoolean(options.where.isImportant)) {
-      conditions.push({
-        isImportant: options.where.isImportant,
-      });
-    }
+      if (isBoolean(options.where.isImportant)) {
+        conditions.push({
+          isImportant: options.where.isImportant,
+        });
+      }
 
-    if (options.where.status) {
-      conditions.push({
-        status: options.where.status,
-      });
-    }
+      if (options.where.status) {
+        conditions.push({
+          status: options.where.status,
+        });
+      }
 
-    if (options.where.createdBy) {
-      conditions.push({
-        createdBy: options.where.createdBy,
-      });
-    }
+      if (options.where.createdBy) {
+        conditions.push({
+          createdBy: options.where.createdBy,
+        });
+      }
 
-    if (isBoolean(options.where.isHidden)) {
-      conditions.push({
-        isHidden: options.where.isHidden,
-      });
-    }
+      if (isBoolean(options.where.isHidden)) {
+        conditions.push({
+          isHidden: options.where.isHidden,
+        });
+      }
 
-    if (options.where.scheduledAt) {
-      conditions.push({
-        scheduledAt: { [Op.lte]: options.where.scheduledAt },
-      });
-    }
+      if (options.where.scheduledAt) {
+        conditions.push({
+          scheduledAt: { [Op.lte]: options.where.scheduledAt },
+        });
+      }
 
-    if (options.where.excludeReportedByUserId) {
-      conditions.push(PostModel.excludeReportedByUser(options.where.excludeReportedByUserId));
-    }
+      if (options.where.excludeReportedByUserId) {
+        conditions.push(PostModel.excludeReportedByUser(options.where.excludeReportedByUserId));
+      }
 
-    if (options.where.savedByUserId) {
-      conditions.push(PostModel.filterSavedByUser(options.where.savedByUserId));
-    }
+      if (options.where.savedByUserId) {
+        conditions.push(PostModel.filterSavedByUser(options.where.savedByUserId));
+      }
 
-    if (options.where.inNewsfeedUserId) {
-      conditions.push(PostModel.filterInNewsfeedUser(options.where.inNewsfeedUserId));
-    }
+      if (options.where.inNewsfeedUserId) {
+        conditions.push(PostModel.filterInNewsfeedUser(options.where.inNewsfeedUserId));
+      }
 
-    if (
-      isBoolean(options.where.groupArchived) &&
-      !options.include?.shouldIncludeGroup &&
-      !options.include?.mustIncludeGroup
-    ) {
-      conditions.push(PostModel.filterInGroupArchivedCondition(options.where.groupArchived));
-    }
+      if (
+        isBoolean(options.where.groupArchived) &&
+        !options.include?.shouldIncludeGroup &&
+        !options.include?.mustIncludeGroup
+      ) {
+        conditions.push(PostModel.filterInGroupArchivedCondition(options.where.groupArchived));
+      }
 
-    if (conditions.length) {
-      whereOptions = {
-        [Op.and]: conditions,
-      };
+      if (conditions.length) {
+        whereOptions = {
+          [Op.and]: conditions,
+        };
+      }
     }
 
     return whereOptions;
