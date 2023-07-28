@@ -140,7 +140,6 @@ export class QuizDomainService implements IQuizDomainService {
     try {
       await this._quizParticipantRepository.create(quizParticipant);
     } catch (e) {
-      console.log(e);
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
@@ -157,7 +156,7 @@ export class QuizDomainService implements IQuizDomainService {
         status,
       },
       contentType: type,
-      attributes: ['id', 'contentId', 'createdAt'],
+      attributes: ['id', 'postId', 'createdAt'],
     });
   }
 
