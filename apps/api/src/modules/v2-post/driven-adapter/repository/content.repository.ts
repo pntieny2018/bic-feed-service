@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { Literal } from 'sequelize/types/utils';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { FindOptions, Includeable, Op, Sequelize, WhereOptions } from 'sequelize';
+import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 import {
   FindContentOptions,
   GetPaginationContentsProps,
@@ -113,7 +113,7 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  private async _setGroups(postEntity: ContentEntity, transaction): Promise<void> {
+  private async _setGroups(postEntity: ContentEntity, transaction: Transaction): Promise<void> {
     const state = postEntity.getState();
     if (state.attachGroupIds?.length > 0) {
       await this._postGroupModel.bulkCreate(
@@ -176,7 +176,10 @@ export class ContentRepository implements IContentRepository {
     };
   }
 
-  private async _setSeries(contentEntity: PostEntity | ArticleEntity, transaction): Promise<void> {
+  private async _setSeries(
+    contentEntity: PostEntity | ArticleEntity,
+    transaction: Transaction
+  ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachSeriesIds.length > 0) {
       await this._postSeriesModel.bulkCreate(
@@ -199,7 +202,10 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  private async _setTags(contentEntity: PostEntity | ArticleEntity, transaction): Promise<void> {
+  private async _setTags(
+    contentEntity: PostEntity | ArticleEntity,
+    transaction: Transaction
+  ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachTagIds.length > 0) {
       await this._postTagModel.bulkCreate(
@@ -222,7 +228,10 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  private async _setCategories(contentEntity: ArticleEntity, transaction): Promise<void> {
+  private async _setCategories(
+    contentEntity: ArticleEntity,
+    transaction: Transaction
+  ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachCategoryIds.length > 0) {
       await this._postCategoryModel.bulkCreate(
@@ -403,9 +412,6 @@ export class ContentRepository implements IContentRepository {
         model: CategoryModel,
         as: 'categories',
         required: false,
-        through: {
-          attributes: [],
-        },
         attributes: ['id', 'name'],
       });
     }
