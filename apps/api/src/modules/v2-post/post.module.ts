@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../../database';
 import { GroupModuleV2 } from '../v2-group/group.module';
@@ -43,7 +43,7 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
     UserModuleV2,
     MediaModule,
     KafkaModule,
-    forwardRef(() => SearchModule),
+    SearchModule,
     NotificationModule,
   ],
   controllers: [
