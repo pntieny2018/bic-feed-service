@@ -70,7 +70,7 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       order: OrderEnum.DESC,
       orderOptions: {
         isImportantFirst: isImportant,
-        isPublished: true,
+        isPublishedByDesc: true,
       },
       before,
       after,
