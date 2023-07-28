@@ -62,7 +62,6 @@ export class OpenaiService implements IOpenaiService {
         messages,
         max_tokens: completionTokens,
       });
-      console.log(completion.data.usage);
       const questions = this._getQuestionFromText(completion.data.choices[0].message.content);
       return {
         usage: {
@@ -107,7 +106,7 @@ export class OpenaiService implements IOpenaiService {
       {
         role: 'system',
         content: `You are quiz creator. You will be provided an article (delimited with XML tags).
-                    Please read the article and create 30 questions, each question must have 3 answer choices and indicate which answer is correct. 
+                    Please read the article and create ${numQuestion} questions, each question must have ${numAnswer} answer choices and indicate which answer is correct. 
                     The language of all the questions and answers must be the same as the article.\n
                   Follow this format:\n
                   """" 
@@ -125,7 +124,7 @@ export class OpenaiService implements IOpenaiService {
       },
       {
         role: 'user',
-        content: `<article>hi you go .</article>`,
+        content: `<article>${content}</article>`,
       },
       //       {
       //         role: 'user',
@@ -176,12 +175,12 @@ export class OpenaiService implements IOpenaiService {
         if (currentQuestion !== null) questions.push(currentQuestion);
 
         const questionText = questionMatch[2];
-        currentQuestion = { id: v4(), question: questionText, answers: [] };
+        currentQuestion = { id: v4(), content: questionText, answers: [] };
       }
       const answerMatch = line.match(/([A-Za-z])\) (.+)$/);
       if (answerMatch && currentQuestion !== null) {
         const answerText = answerMatch[2] ?? '';
-        currentQuestion.answers.push({ id: v4(), answer: answerText, isCorrect: false });
+        currentQuestion.answers.push({ id: v4(), content: answerText, isCorrect: false });
       }
       if (line.includes(CORRECT_ANSWER_KEY) && currentQuestion !== null) {
         const answerCorrect = line.trim().slice(CORRECT_ANSWER_KEY.length).trim();
