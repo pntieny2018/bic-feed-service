@@ -281,7 +281,7 @@ export class ContentRepository implements IContentRepository {
     if (orderOptions.isImportantFirst) {
       order.push([this._sequelizeConnection.literal('"isReadImportant"'), OrderEnum.DESC]);
     }
-    if (orderOptions.isPublished) {
+    if (orderOptions.isPublishedByDesc) {
       order.push(['publishedAt', OrderEnum.DESC]);
     }
     order.push(['createdAt', OrderEnum.DESC]);
