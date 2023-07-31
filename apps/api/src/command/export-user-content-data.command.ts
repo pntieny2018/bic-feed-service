@@ -34,6 +34,9 @@ export class ExportUserContentDataCommand implements CommandRunner {
     const userIds = (
       await this._postModel.findAll({
         attributes: ['createdBy'],
+        where: {
+          status: 'PUBLISHED',
+        },
         group: ['createdBy'],
       })
     ).map((item) => item.createdBy);
@@ -55,6 +58,9 @@ export class ExportUserContentDataCommand implements CommandRunner {
           'series_count',
         ],
       ],
+      where: {
+        status: 'PUBLISHED',
+      },
       group: ['createdBy'],
     });
 
@@ -70,9 +76,9 @@ export class ExportUserContentDataCommand implements CommandRunner {
         username: user.username,
         email: user.email,
         full_name: user.fullname,
-        post_count: contentCounted.dataValues.post_count,
-        article_count: contentCounted.dataValues.article_count,
-        series_count: contentCounted.dataValues.series_count,
+        post_count: contentCounted?.dataValues.post_count,
+        article_count: contentCounted?.dataValues.article_count,
+        series_count: contentCounted?.dataValues.series_count,
       });
     }
 
