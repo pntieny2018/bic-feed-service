@@ -50,6 +50,8 @@ export class FindQuizParticipantHandler
   ): Promise<QuizParticipantDto> {
     const attributes: QuizParticipantDto = {
       id: quizParticipantEntity.get('id'),
+      title: quizParticipantEntity.get('quizSnapshot').title,
+      description: quizParticipantEntity.get('quizSnapshot').description,
       questions: quizParticipantEntity.get('quizSnapshot').questions.map((question) => ({
         id: question.id,
         content: question.content,
