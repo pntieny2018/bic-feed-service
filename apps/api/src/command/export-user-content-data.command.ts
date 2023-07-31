@@ -73,8 +73,6 @@ export class ExportUserContentDataCommand implements CommandRunner {
 
       data.push({
         user_id: user.id,
-        username: user.username,
-        email: user.email,
         full_name: user.fullname,
         post_count: contentCounted?.dataValues.post_count,
         article_count: contentCounted?.dataValues.article_count,
