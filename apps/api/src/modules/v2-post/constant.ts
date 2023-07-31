@@ -6,4 +6,5 @@ export const RULES = {
   QUIZ_MAX_QUESTION: 50,
   QUIZ_MAX_ANSWER: 6,
   QUIZ_TIME_LIMIT_DEFAULT: 30 * 60,
+  QUIZ_TIME_LIMIT_BUFFER: 5, // 5 seconds
 };
