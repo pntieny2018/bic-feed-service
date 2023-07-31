@@ -1,6 +1,7 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { Question } from '../quiz';
 import { v4 } from 'uuid';
+import { RULES } from '../../../constant';
 
 export type QuizParticipantProps = {
   id: string;
@@ -41,7 +42,11 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
   }
 
   public isOverLimitTime(): boolean {
-    return this._props.startedAt.getTime() + this._props.timeLimit < new Date().getTime();
+    return (
+      this._props.startedAt.getTime() +
+        (this._props.timeLimit + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000 <
+      new Date().getTime()
+    );
   }
 
   public isFinished(): boolean {
