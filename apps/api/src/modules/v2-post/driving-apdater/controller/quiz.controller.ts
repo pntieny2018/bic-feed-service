@@ -347,6 +347,7 @@ export class QuizController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
         case QuizParticipantNotFoundException:
           throw new NotFoundException(e);
         case DomainModelException:

@@ -3,6 +3,8 @@ import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
 import { FindQuizParticipantQuery } from './find-quiz-participant.query';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../../binding/binding-quiz/quiz.interface';
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
@@ -14,6 +16,8 @@ import { QuizParticipantDto } from '../../dto/quiz-participant.dto';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import { QuizParticipantNotFoundException } from '../../../domain/exception';
 import { UserDto } from '../../../../v2-user/application';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { ContentEntity } from '../../../domain/model/content';
 
 @QueryHandler(FindQuizParticipantQuery)
 export class FindQuizParticipantHandler
@@ -21,8 +25,8 @@ export class FindQuizParticipantHandler
 {
   public constructor(
     private readonly _queryBus: QueryBus,
-    @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
-    private readonly _quizDomainService: IQuizDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
     @Inject(QUIZ_BINDING_TOKEN)
@@ -40,6 +44,8 @@ export class FindQuizParticipantHandler
     if (!quizParticipantEntity.isOwner(authUser.id)) {
       throw new QuizParticipantNotFoundException();
     }
+
+    await this._contentDomainService.getVisibleContent(quizParticipantEntity.get('contentId'));
 
     return this._entityToDto(quizParticipantEntity, authUser);
   }
