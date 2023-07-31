@@ -1,68 +1,74 @@
 import { Inject } from '@nestjs/common';
-import { FindByUsernameOption, FindUserOption, IUserApplicationService, UserDto } from '.';
-import { UserEntity } from '../domain/model/user';
+import { UserEntity, UserProps } from '../domain/model/user';
+import {
+  FindByUsernameOption,
+  FindUserOption,
+  FindUsersOption,
+  IUserApplicationService,
+  UserDto,
+} from '.';
 import {
   IUserRepository,
   USER_REPOSITORY_TOKEN,
 } from '../domain/repositoty-interface/user.repository.interface';
 
 export class UserApplicationService implements IUserApplicationService {
-  @Inject(USER_REPOSITORY_TOKEN)
-  private readonly _repo: IUserRepository;
+  public constructor(
+    @Inject(USER_REPOSITORY_TOKEN)
+    private readonly _repo: IUserRepository
+  ) {}
 
   public async findByUserName(username: string, options?: FindByUsernameOption): Promise<UserDto> {
     if (!username) return null;
     const user = await this._repo.findByUserName(username);
     if (!user) return null;
-    const result = this._toDto(user);
-    if (!options?.withGroupJoined) {
-      delete result.groups;
-    }
 
-    return result;
+    const excluded = [];
+    if (!options?.withPermission) excluded.push('permissions');
+    if (!options?.withGroupJoined) excluded.push('groups');
+
+    return this._toDto(user, excluded);
   }
 
   public async findOne(userId: string, options?: FindUserOption): Promise<UserDto> {
     if (!userId) return null;
     const user = await this._repo.findOne(userId);
     if (!user) return null;
-    if (options && options.withPermission) {
-      const permissions = await this._repo.getPermissionsByUserId(user.get('id'));
-      user.setPermissions(permissions);
-    }
-    const result = this._toDto(user);
-    if (!options?.withGroupJoined) {
-      delete result.groups;
-    }
 
-    return result;
+    const excluded = [];
+    if (!options?.withPermission) excluded.push('permissions');
+    if (!options?.withGroupJoined) excluded.push('groups');
+
+    return this._toDto(user, excluded);
   }
 
-  public async findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
+  public async findAllByIds(userIds: string[], options?: FindUsersOption): Promise<UserDto[]> {
     if (!userIds || userIds?.length === 0) return [];
     const rows = await this._repo.findAllByIds(userIds);
-    return rows.map((row) => {
-      const user = this._toDto(row);
-      if (!options?.withGroupJoined) {
-        delete user.groups;
-      }
-      return user;
-    });
+
+    const excluded = [];
+    if (!options?.withGroupJoined) excluded.push('groups');
+
+    return rows.map((row) => this._toDto(row, excluded));
   }
 
   public async canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean> {
     return this._repo.canCudTagInCommunityByUserId(userId, communityId);
   }
 
-  private _toDto(user: UserEntity): UserDto {
+  private _toDto(user: UserEntity, excluded: (keyof UserProps)[] = []): UserDto {
     return new UserDto({
       id: user.get('id'),
       username: user.get('username'),
       fullname: user.get('fullname'),
       email: user.get('email'),
       avatar: user.get('avatar'),
-      groups: user.get('groups'),
-      permissions: user.get('permissions'),
+      ...(!excluded.includes('groups') && {
+        groups: user.get('groups'),
+      }),
+      ...(!excluded.includes('permissions') && {
+        permissions: user.get('permissions'),
+      }),
       isDeactivated: user.get('isDeactivated'),
       isVerified: user.get('isVerified'),
       showingBadges: user.get('showingBadges'),

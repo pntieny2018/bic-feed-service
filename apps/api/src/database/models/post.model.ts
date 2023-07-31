@@ -1,5 +1,5 @@
 import { IsUUID } from 'class-validator';
-import { BelongsToManyAddAssociationsMixin, DataTypes, Optional, QueryTypes } from 'sequelize';
+import { DataTypes, Optional, QueryTypes } from 'sequelize';
 import {
   AllowNull,
   BelongsTo,
@@ -9,6 +9,7 @@ import {
   Default,
   DeletedAt,
   HasMany,
+  HasOne,
   Model,
   PrimaryKey,
   Sequelize,
@@ -19,7 +20,6 @@ import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
 import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
-import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
@@ -37,6 +37,8 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
+import { IQuiz, QuizModel } from './quiz.model';
+import { IQuizParticipant, QuizParticipantModel } from './quiz-participant.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -101,7 +103,10 @@ export interface IPost {
   items?: IPost[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
+  quiz?: IQuiz;
+  quizResults?: IQuizParticipant[];
   publishedAt?: Date;
+  scheduledAt?: Date;
   errorLog?: any;
   mediaJson?: any;
   mentions?: string[];
@@ -214,6 +219,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public publishedAt: Date;
 
   @AllowNull(true)
+  @Column
+  public scheduledAt?: Date;
+
+  @AllowNull(true)
   @Column({
     type: DataTypes.JSONB,
   })
@@ -273,7 +282,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: IPost[];
 
-  public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+  @HasOne(() => QuizModel, {
+    foreignKey: 'postId',
+  })
+  public quiz?: IQuiz;
+
+  @HasMany(() => QuizParticipantModel, 'postId')
+  public quizResults: IQuizParticipant[];
 
   @HasMany(() => PostGroupModel)
   public groups: PostGroupModel[];

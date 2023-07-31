@@ -7,7 +7,7 @@ export class PostLimitAttachedSeriesException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.POST.POST_LIMIT_ATTACHED_SERIES,
-      i18n.t(`error.post.limit_attached_series`, {
+      i18n?.t(`error.post.limit_attached_series`, {
         args: { limit: limitNumber },
       })
     );

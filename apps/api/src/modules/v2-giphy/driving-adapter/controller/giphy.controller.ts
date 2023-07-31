@@ -1,7 +1,6 @@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { ClassTransformer } from 'class-transformer';
 import { GetTrendingGifRequestDto } from '../dto/request/get-trending-gif.request.dto';
 import { SearchGifRequestDto } from '../dto/request/search-gif.request.dto';
 import { GiphyResponseDto } from '../dto/response/giphy.response.dto';
@@ -16,10 +15,10 @@ import {
   path: 'giphy',
 })
 export class GiphyController {
-  @Inject(GIPHY_APPLICATION_TOKEN)
-  private readonly _giphyAppService: IGiphyApplicationService;
-  // public constructor() {}
-  private _classTransformer = new ClassTransformer();
+  public constructor(
+    @Inject(GIPHY_APPLICATION_TOKEN)
+    private readonly _giphyAppService: IGiphyApplicationService
+  ) {}
 
   @ApiOperation({ summary: 'Get trending gif' })
   @Get('/trending')

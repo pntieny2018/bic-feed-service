@@ -3,7 +3,6 @@ import { UserMentionDto } from '../../../mention/dto';
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
-import { MediaService } from '../../../media';
 import { IPost } from '../../../../database/models/post.model';
 import { PageDto } from '../../../../common/dto';
 import { IsUUID } from 'class-validator';

@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op, Sequelize } from 'sequelize';
 import {
@@ -38,9 +38,12 @@ import { PostReactionModel } from '../../../../database/models/post-reaction.mod
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { CursorPaginator } from '../../../../common/dto';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
+import { QuizModel } from '../../../../database/models/quiz.model';
+import { QuizEntity } from '../../domain/model/quiz';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
+import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
@@ -150,6 +153,7 @@ export class ContentRepository implements IContentRepository {
       isReported: postEntity.get('isReported'),
       type: postEntity.get('type'),
       status: postEntity.get('status'),
+      errorLog: postEntity.get('errorLog'),
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
       isImportant: postEntity.get('setting')?.isImportant,
@@ -173,6 +177,8 @@ export class ContentRepository implements IContentRepository {
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
       createdAt: postEntity.get('createdAt'),
+      publishedAt: postEntity.get('publishedAt'),
+      scheduledAt: postEntity.get('scheduledAt'),
     };
   }
 
@@ -262,9 +268,8 @@ export class ContentRepository implements IContentRepository {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const findOption = this._buildFindOptions(findAllPostOptions);
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
+    findOption.order = this._getOrderContent(findAllPostOptions.orderOptions);
     findOption.offset = findAllPostOptions.offset || 0;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }
@@ -273,9 +278,12 @@ export class ContentRepository implements IContentRepository {
     if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
+      order.push([this._sequelizeConnection.literal('"colImportant"'), OrderEnum.DESC]);
     }
-    order.push(['createdAt', 'desc']);
+    if (orderOptions.isPublished) {
+      order.push(['publishedAt', OrderEnum.DESC]);
+    }
+    order.push(['createdAt', OrderEnum.DESC]);
     return order;
   }
 
@@ -317,6 +325,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeSeries,
         shouldIncludeGroup,
         shouldIncludeLinkPreview,
+        shouldIncludeQuiz,
         shouldIncludeCategory,
         shouldIncludeSaved,
         shouldIncludeReaction,
@@ -324,6 +333,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeImportant,
         shouldIncludeItems,
         mustIncludeGroup,
+        shouldIncludeQuizResult,
       } = options.include;
       if (shouldIncludeGroup || mustIncludeGroup) {
         includeAttr.push({
@@ -373,6 +383,7 @@ export class ContentRepository implements IContentRepository {
           required: false,
         });
       }
+
       if (shouldIncludeReaction?.userId) {
         includeAttr.push({
           model: PostReactionModel,
@@ -383,6 +394,33 @@ export class ContentRepository implements IContentRepository {
           },
         });
       }
+
+      if (shouldIncludeQuiz) {
+        includeAttr.push({
+          model: QuizModel,
+          as: 'quiz',
+          required: false,
+          attributes: [
+            'id',
+            'title',
+            'description',
+            'status',
+            'genStatus',
+            'createdBy',
+            'createdAt',
+            'updatedAt',
+          ],
+        });
+      }
+
+      if (shouldIncludeQuizResult) {
+        includeAttr.push({
+          model: QuizModel,
+          as: 'quizResults',
+          required: false,
+        });
+      }
+
       if (shouldIncludeCategory) {
         includeAttr.push({
           model: CategoryModel,
@@ -506,6 +544,12 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
+      if (options.where.scheduledAt) {
+        condition.push({
+          scheduledAt: { [Op.lte]: options.where.scheduledAt },
+        });
+      }
+
       if (options.where.excludeReportedByUserId) {
         condition.push(
           Sequelize.literal(
@@ -619,14 +663,15 @@ export class ContentRepository implements IContentRepository {
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) return null;
     post = post.toJSON();
-    if (post.type === PostType.POST) {
-      return this._modelToPostEntity(post);
-    } else if (post.type === PostType.SERIES) {
-      return this._modelToSeriesEntity(post);
-    } else if (post.type === PostType.ARTICLE) {
-      return this._modelToArticleEntity(post);
-    } else {
-      return null;
+    switch (post.type) {
+      case PostType.POST:
+        return this._modelToPostEntity(post);
+      case PostType.SERIES:
+        return this._modelToSeriesEntity(post);
+      case PostType.ARTICLE:
+        return this._modelToArticleEntity(post);
+      default:
+        return null;
     }
   }
 
@@ -656,6 +701,39 @@ export class ContentRepository implements IContentRepository {
       mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
+          })
+        : undefined,
+      quizResults: (post.quizResults || []).map(
+        (quizResult) =>
+          new QuizParticipantEntity({
+            id: quizResult.id,
+            quizId: quizResult.quizId,
+            contentId: quizResult.postId,
+            quizSnapshot: quizResult.quizSnapshot,
+            timeLimit: quizResult.timeLimit,
+            score: quizResult.score,
+            totalAnswers: quizResult.totalAnswers,
+            totalCorrectAnswers: quizResult.totalCorrectAnswers,
+            startedAt: quizResult.startedAt,
+            finishedAt: quizResult.finishedAt,
+            answers: [],
+            updatedBy: quizResult.updatedBy,
+            updatedAt: quizResult.updatedAt,
+            createdAt: quizResult.createdAt,
+            createdBy: quizResult.createdBy,
+          })
+      ),
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
@@ -704,9 +782,23 @@ export class ContentRepository implements IContentRepository {
       updatedAt: post.updatedAt,
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
+      scheduledAt: post.scheduledAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
+          })
+        : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       aggregation: {
         commentsCount: post.commentsCount,
@@ -765,12 +857,14 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit, order } = getPaginationContentsProps;
+    const { after, before, limit = this.LIMIT_DEFAULT, order } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
-    findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
+    const orderBuilder = this._getOrderContent(getPaginationContentsProps.orderOptions);
+    const cursorColumns = orderBuilder?.map((order) => order[0]);
+
     const paginator = new CursorPaginator(
       this._postModel,
-      ['createdAt'],
+      cursorColumns || ['createdAt'],
       { before, after, limit },
       order
     );

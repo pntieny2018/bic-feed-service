@@ -1,18 +1,11 @@
 import { SentryService } from '@app/sentry';
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, FindOptions, Includeable, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID } from '../../common/constants';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper } from '../../common/helpers';
@@ -31,7 +24,7 @@ import { PostService } from '../post/post.service';
 import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
-import { CreateArticleDto, GetArticleDto, UpdateArticleDto } from './dto/requests';
+import { GetArticleDto, UpdateArticleDto } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
@@ -241,15 +234,6 @@ export class ArticleService {
     });
   }
 
-  private async _getGroupIdAndChildIdsUserCanAccess(groupId, authUser: UserDto): Promise<string[]> {
-    const group = await this.groupAppService.findOne(groupId);
-    if (!group) {
-      throw new BadRequestException(`Group ${groupId} not found`);
-    }
-    const groupIds = this.groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
-
-    return groupIds;
-  }
   /**
    * Get Article
    * @param articleId string
@@ -394,81 +378,6 @@ export class ArticleService {
   }
 
   /**
-   * Create Post
-   * @param authUser MediaDto
-   * @param createPostDto CreatePostDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async create(authUser: UserDto, createArticleDto: CreateArticleDto): Promise<any> {
-    let transaction;
-    try {
-      const { title, summary, content, mentions, audience, categories, tags, series } =
-        createArticleDto;
-      const authUserId = authUser.id;
-
-      let groupIds = [];
-      if (audience.groupIds) {
-        groupIds = audience.groupIds;
-      }
-
-      const linkPreview = await this._linkPreviewService.upsert(createArticleDto.linkPreview);
-
-      transaction = await this.sequelizeConnection.transaction();
-      let tagList = [];
-      if (tags) {
-        tagList = await this.tagService.getTagsByIds(tags);
-      }
-      const post = await this.postModel.create(
-        {
-          title,
-          summary,
-          status: PostStatus.DRAFT,
-          type: PostType.ARTICLE,
-          content: content,
-          createdBy: authUserId,
-          updatedBy: authUserId,
-          isImportant: false, //setting.isImportant,
-          importantExpiredAt: null, //setting.isImportant === false ? null : setting.importantExpiredAt,
-          canComment: true, //setting.canComment,
-          canReact: true, //setting.canReact,
-          privacy: null,
-          tagsJson: tagList,
-          linkPreviewId: linkPreview?.id || null,
-        },
-        { transaction }
-      );
-
-      await Promise.all([
-        this._seriesService.addToPost(series, post.id, transaction),
-        this.tagService.addToPost(tags, post.id, transaction),
-        this._categoryService.addToPost(categories, post.id, transaction),
-        this._postService.addGroup(groupIds, post.id, transaction),
-      ]);
-
-      if (mentions.length) {
-        await this.mentionService.create(
-          mentions.map((userId) => ({
-            entityId: post.id,
-            userId,
-            mentionableType: MentionableType.POST,
-          })),
-          transaction
-        );
-      }
-
-      await transaction.commit();
-
-      return post;
-    } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(JSON.stringify(error?.stack));
-      this.sentryService.captureException(error);
-      throw error;
-    }
-  }
-
-  /**
    * Publish article
    * @param authUser MediaDto
    * @param createArticleDto CreateArticleDto
@@ -496,12 +405,12 @@ export class ArticleService {
         status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this._postService.getPrivacy(groupIds);
-      const createdAt = new Date();
+      const publishedAt = new Date();
       await this.postModel.update(
         {
           status,
           privacy: postPrivacy,
-          createdAt,
+          publishedAt,
         },
         {
           where: {
@@ -511,7 +420,7 @@ export class ArticleService {
         }
       );
       article.status = status;
-      article.createdAt = createdAt;
+      article.publishedAt = publishedAt;
       if (article.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -641,7 +550,7 @@ export class ArticleService {
 
   public async schedule(articleId: string, scheduleArticleDto: ScheduleArticleDto): Promise<void> {
     await this.postModel.update(
-      { status: PostStatus.WAITING_SCHEDULE, publishedAt: scheduleArticleDto.publishedAt },
+      { status: PostStatus.WAITING_SCHEDULE, scheduledAt: scheduleArticleDto.publishedAt },
       { where: { id: articleId } }
     );
   }

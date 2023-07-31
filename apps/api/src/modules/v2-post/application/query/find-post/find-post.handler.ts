@@ -9,12 +9,11 @@ import { FindPostQuery } from './find-post.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentNotFoundException } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/content';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
+import { AccessDeniedException } from '../../../domain/exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { SeriesEntity } from '../../../domain/model/content/series.entity';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
@@ -43,6 +42,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
         },

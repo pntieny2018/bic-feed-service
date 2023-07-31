@@ -5,6 +5,6 @@ import { ERRORS } from '../../../../common/constants/errors';
 export class InvalidCursorParamsException extends DomainException {
   public constructor(message?: string) {
     const i18n = I18nContext.current();
-    super(ERRORS.CURSOR_PARAMS_INVALID, message || i18n.t(`error.cursor_params_invalid`));
+    super(ERRORS.CURSOR_PARAMS_INVALID, message || i18n?.t(`error.cursor_params_invalid`));
   }
 }

@@ -9,6 +9,7 @@
     "no_delete_permission": "Failed to delete tag: you don't have permission"
   },
   "content": {
+    "has_quiz": "Content already has quiz",
     "not_found": "Content not found",
     "no_crud_permission": "You don't have CRUD permission",
     "no_edit_setting_permission": "You don't have edit setting permission",
@@ -21,7 +22,8 @@
     "no_react_permission": "React action on this content is not available",
     "no_crud_permission_at_group": "You don't have CRUD permission at group {groups}",
     "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}",
-    "no_publish_yet": "Content has not been published yet"
+    "no_publish_yet": "Content has not been published yet",
+    "has_been_published": "Content has been published"
   },
   "post": {
     "not_found": "Post not found",
@@ -40,7 +42,8 @@
     "no_delete_permission": "Failed to delete article: you don't have permission",
     "no_read_permission": "You do not have permission to read this article",
     "required_cover": "You have not selected any cover",
-    "limit_attached_series": "Article can only be attached to a maximum of {limit} series"
+    "limit_attached_series": "Article can only be attached to a maximum of {limit} series",
+    "invalid_scheduled_time": "The scheduled time is invalid"
   },
   "series": {
     "not_found": "Series not found",
@@ -75,6 +78,16 @@
     "not_have_authority": "You don't have authority to do this action",
     "no_delete_permission": "Failed to delete reaction: you don't have permission",
     "duplicate": "You have already reacted to this content"
+  },
+  "quiz": {
+    "not_found": "Quiz not found",
+    "no_crud_permission_at_group": "You don't have CUD permission at group {groups}",
+    "generate_limited": "Generate quiz is limited request per minute",
+    "over_time": "Quiz is overtime. "
+  },
+  "quiz_participant": {
+    "not_fount": "Session ID not found",
+    "not_finished": "You have a quiz is not finished"
   },
   "cursor_params_invalid": "Cursor params invalid"
 }

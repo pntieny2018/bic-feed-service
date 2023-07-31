@@ -9,6 +9,7 @@ import { ContentEntity } from '../model/content/content.entity';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
+  isPublished?: boolean;
 };
 export type FindOnePostOptions = {
   where: {
@@ -20,6 +21,7 @@ export type FindOnePostOptions = {
     groupIds?: string[];
     createdBy?: string;
     isImportant?: string;
+    scheduledAt?: Date;
     savedByUserId?: string;
     type?: PostType;
     status?: PostStatus;
@@ -32,6 +34,8 @@ export type FindOnePostOptions = {
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeCategory?: boolean;
+    shouldIncludeQuiz?: boolean;
+    shouldIncludeQuizResult?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeItems?: boolean;
     shouldIncludeReaction?: {
@@ -48,7 +52,7 @@ export type FindOnePostOptions = {
     };
   };
   attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
-  order?: OrderOptions;
+  orderOptions?: OrderOptions;
 };
 
 export type FindAllPostOptions = {
@@ -61,6 +65,7 @@ export type FindAllPostOptions = {
     groupIds?: string[];
     createdBy?: string;
     isImportant?: boolean;
+    scheduledAt?: Date;
     isHidden?: boolean;
     savedByUserId?: string;
     status?: PostStatus;
@@ -74,6 +79,8 @@ export type FindAllPostOptions = {
     shouldIncludeSeries?: boolean;
     shouldIncludeItems?: boolean;
     shouldIncludeCategory?: boolean;
+    shouldIncludeQuiz?: boolean;
+    shouldIncludeQuizResult?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReaction?: {
       userId?: string;
@@ -92,7 +99,7 @@ export type FindAllPostOptions = {
   limit?: number;
   offset?: number;
   after?: string;
-  order?: OrderOptions;
+  orderOptions?: OrderOptions;
 };
 
 export type GetPaginationContentsProps = FindAllPostOptions & CursorPaginationProps;

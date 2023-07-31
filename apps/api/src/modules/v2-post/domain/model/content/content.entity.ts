@@ -9,6 +9,8 @@ import { PostPrivacy, PostType } from '../../../data-type';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { PostSettingDto } from '../../../application/dto';
+import { QuizEntity } from '../quiz';
+import { QuizParticipantEntity } from '../quiz-participant';
 
 export type ContentProps = {
   id: string;
@@ -32,9 +34,12 @@ export type ContentProps = {
   ownerReactions?: { id: string; reactionName: string }[];
   errorLog?: any;
   publishedAt?: Date;
+  scheduledAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
   communityIds?: string[];
+  quiz?: QuizEntity;
+  quizResults?: QuizParticipantEntity[];
   wordCount?: number;
   aggregation?: {
     commentsCount: number;
@@ -166,6 +171,10 @@ export class ContentEntity<
     return this._props.status === PostStatus.PROCESSING;
   }
 
+  public isVisible(): boolean {
+    return !this._props.isHidden && this.isPublished() && this._props.groupIds?.length > 0;
+  }
+
   public isHidden(): boolean {
     return this._props.isHidden;
   }
@@ -184,7 +193,7 @@ export class ContentEntity<
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
-      this._props.createdAt = new Date();
+      this._props.publishedAt = new Date();
     }
     this._props.status = PostStatus.PUBLISHED;
   }
@@ -195,6 +204,14 @@ export class ContentEntity<
 
   public setProcessing(): void {
     this._props.status = PostStatus.PROCESSING;
+  }
+
+  public setScheduleFailed(): void {
+    this._props.status = PostStatus.SCHEDULE_FAILED;
+  }
+
+  public setErrorLog(errorLog: unknown): void {
+    this._props.errorLog = errorLog;
   }
 
   public increaseTotalSeen(): void {

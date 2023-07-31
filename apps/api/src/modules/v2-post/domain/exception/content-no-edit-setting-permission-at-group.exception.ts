@@ -8,7 +8,7 @@ export class ContentNoEditSettingPermissionAtGroupException extends DomainExcept
     super(
       ERRORS.CONTENT.CONTENT_NO_EDIT_SETTING_PERMISSION_AT_GROUP,
       message ||
-        i18n.t(`error.content.no_edit_setting_permission_at_group`, {
+        i18n?.t(`error.content.no_edit_setting_permission_at_group`, {
           args: { groups: groups.join(', ') },
         }),
       errors

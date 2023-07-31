@@ -7,7 +7,7 @@ export class ArticleLimitAttachedSeriesException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.ARTICLE.ARTICLE_LIMIT_ATTACHED_SERIES,
-      i18n.t(`error.article.limit_attached_series`, {
+      i18n?.t(`error.article.limit_attached_series`, {
         args: { limit: limitNumber },
       })
     );

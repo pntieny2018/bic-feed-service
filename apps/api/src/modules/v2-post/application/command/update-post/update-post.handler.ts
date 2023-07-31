@@ -49,6 +49,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
         shouldIncludeMarkReadImportant: {
           userId: authUser?.id,
         },
@@ -168,6 +169,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
           },
           createdAt: postEntityAfter.get('createdAt'),
           updatedAt: postEntityAfter.get('updatedAt'),
+          publishedAt: postEntityAfter.get('publishedAt'),
         },
       };
 

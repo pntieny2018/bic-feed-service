@@ -7,7 +7,7 @@ export class ContentNoPublishYetException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_NO_PUBLISH_YET,
-      message || i18n.t(`error.content.no_publish_yet`),
+      message || i18n?.t(`error.content.no_publish_yet`),
       errors
     );
   }

@@ -2,7 +2,6 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ClassTransformer } from 'class-transformer';
 import { GetReactionPipe } from '../../../reaction/pipes';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
@@ -30,7 +29,6 @@ export class ReactionController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
-  private _classTransformer = new ClassTransformer();
 
   @Get('/')
   @ApiOperation({ summary: 'Get reaction.' })
