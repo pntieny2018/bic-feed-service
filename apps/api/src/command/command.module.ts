@@ -41,6 +41,7 @@ import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-importa
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
+import { ExportUserContentDataCommand } from './export-user-content-data.command';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { MigratePublishedTimeContentCommand } from './migrate-published-time-con
     FixContentPrivacyCommand,
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
+    ExportUserContentDataCommand,
   ],
 })
 export class CommandModule {}
