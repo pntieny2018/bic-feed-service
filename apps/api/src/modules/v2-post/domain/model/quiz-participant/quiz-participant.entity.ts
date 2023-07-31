@@ -74,8 +74,6 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
   ): void {
     const now = new Date();
     const correctAnswers = this.getCorrectAnswersFromSnapshot();
-
-    console.log('correctAnswers=', correctAnswers);
     this._props.answers = answers.map((answer) => ({
       id: answer?.id || v4(),
       questionId: answer.questionId,
@@ -89,7 +87,6 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     this._props.score = (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100;
     this._props.totalAnswers = answers.length;
     this._props.totalCorrectAnswers = totalCorrectAnswers;
-    console.log('this._props=', this._props);
   }
 
   public setFinishedAt(): void {
