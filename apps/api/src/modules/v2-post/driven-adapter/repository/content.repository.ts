@@ -43,6 +43,7 @@ import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.mod
 import { QuizModel } from '../../../../database/models/quiz.model';
 import { QuizEntity } from '../../domain/model/quiz';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
+import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 
 export class ContentRepository implements IContentRepository {
   public LIMIT_DEFAULT = 100;
@@ -332,7 +333,7 @@ export class ContentRepository implements IContentRepository {
         shouldIncludeImportant,
         shouldIncludeItems,
         mustIncludeGroup,
-        shouldIncludeTakeQuiz,
+        shouldIncludeQuizResult,
       } = options.include;
       if (shouldIncludeGroup || mustIncludeGroup) {
         includeAttr.push({
@@ -412,22 +413,11 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
-      if (shouldIncludeTakeQuiz) {
+      if (shouldIncludeQuizResult) {
         includeAttr.push({
           model: QuizModel,
-          as: 'quiz',
+          as: 'quizResults',
           required: false,
-          attributes: [
-            'id',
-            'title',
-            'contentId',
-            'description',
-            'status',
-            'genStatus',
-            'createdBy',
-            'createdAt',
-            'updatedAt',
-          ],
         });
       }
 
@@ -721,8 +711,29 @@ export class ContentRepository implements IContentRepository {
             genStatus: post.quiz.genStatus,
             timeLimit: post.quiz.timeLimit,
             createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
           })
         : undefined,
+      quizResults: (post.quizResults || []).map(
+        (quizResult) =>
+          new QuizParticipantEntity({
+            id: quizResult.id,
+            quizId: quizResult.quizId,
+            contentId: quizResult.postId,
+            quizSnapshot: quizResult.quizSnapshot,
+            timeLimit: quizResult.timeLimit,
+            score: quizResult.score,
+            totalAnswers: quizResult.totalAnswers,
+            totalCorrectAnswers: quizResult.totalCorrectAnswers,
+            startedAt: quizResult.startedAt,
+            finishedAt: quizResult.finishedAt,
+            answers: [],
+            updatedBy: quizResult.updatedBy,
+            updatedAt: quizResult.updatedAt,
+            createdAt: quizResult.createdAt,
+            createdBy: quizResult.createdBy,
+          })
+      ),
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
@@ -785,6 +796,7 @@ export class ContentRepository implements IContentRepository {
             genStatus: post.quiz.genStatus,
             timeLimit: post.quiz.timeLimit,
             createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
           })
         : undefined,
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),

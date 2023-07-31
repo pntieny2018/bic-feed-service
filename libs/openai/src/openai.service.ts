@@ -180,10 +180,10 @@ export class OpenaiService implements IOpenaiService {
 
   private _getQuestionFromText(text: string): {
     id: string;
-    question: string;
+    content: string;
     answers: {
       id: string;
-      answer: string;
+      content: string;
       isCorrect: boolean;
     }[];
   }[] {
@@ -199,12 +199,12 @@ export class OpenaiService implements IOpenaiService {
         if (currentQuestion !== null) questions.push(currentQuestion);
 
         const questionText = questionMatch[2];
-        currentQuestion = { id: v4(), question: questionText, answers: [] };
+        currentQuestion = { id: v4(), content: questionText, answers: [] };
       }
       const answerMatch = line.match(/([A-Za-z])\) (.+)$/);
       if (answerMatch && currentQuestion !== null) {
         const answerText = answerMatch[2] ?? '';
-        currentQuestion.answers.push({ id: v4(), answer: answerText, isCorrect: false });
+        currentQuestion.answers.push({ id: v4(), content: answerText, isCorrect: false });
       }
       if (line.includes(CORRECT_ANSWER_KEY) && currentQuestion !== null) {
         const answerCorrect = line.trim().slice(CORRECT_ANSWER_KEY.length).trim();

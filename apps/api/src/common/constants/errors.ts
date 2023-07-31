@@ -31,11 +31,16 @@ export const ERRORS = {
   QUIZ: {
     GENERATE_LIMITED: 'quiz.generate_limited',
     QUIZ_NOT_FOUND: 'quiz.not_found',
+    QUIZ_OVER_TIME: 'quiz.over_time',
     QUIZ_NO_CRUD_PERMISSION_AT_GROUP: 'quiz.no_crud_permission_at_group',
     OPENAI_EXCEPTION: 'quiz.openai_exception',
     GENERATE_FAIL: 'quiz.generate_fail',
     QUIZ_PROCESSING: 'quiz.quiz_processing',
     COUNT_TOKENS_FAILED: 'quiz.count_tokens_failed',
+  },
+  QUIZ_PARTICIPANT: {
+    NOT_FOUND: 'quiz_participant.not_found',
+    NOT_FINISHED: 'quiz_participant.not_finished',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',

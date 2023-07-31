@@ -24,11 +24,20 @@ import {
   QuizRegenerateEventHandler,
 } from '../application/event-handler';
 import { DeleteQuizHandler } from '../application/command/delete-quiz/delete-quiz.handler';
+import { StartQuizHandler } from '../application/command/start-quiz/start-quiz.handler';
+import { QUIZ_PARTICIPANT_REPOSITORY_TOKEN } from '../domain/repositoty-interface/quiz-participant.repository.interface';
+import { QuizParticipantRepository } from '../driven-adapter/repository/quiz-participant.repository';
+import { UpdateQuizAnswerHandler } from '../application/command/update-quiz-answer/update-quiz-answer.handler';
+import { FindQuizParticipantHandler } from '../application/query/find-quiz-participant/find-quiz-participant.handler';
 
 export const quizProvider = [
   {
     provide: QUIZ_REPOSITORY_TOKEN,
     useClass: QuizRepository,
+  },
+  {
+    provide: QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+    useClass: QuizParticipantRepository,
   },
   {
     provide: TAG_QUERY_TOKEN,
@@ -65,4 +74,7 @@ export const quizProvider = [
   QuizRegenerateEventHandler,
   QuizGeneratedEventHandler,
   DeleteQuizHandler,
+  StartQuizHandler,
+  UpdateQuizAnswerHandler,
+  FindQuizParticipantHandler,
 ];

@@ -99,7 +99,15 @@ export const ROUTES = {
     },
 
     START_QUIZ: {
-      PATH: '/quizzes/:id',
+      PATH: '/quizzes/:id/start',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    UPDATE_QUIZ_ANSWER: {
+      PATH: '/quizzes/:id/answers',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_QUIZ_RESULT: {
+      PATH: '/quizzes/:id/result',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },

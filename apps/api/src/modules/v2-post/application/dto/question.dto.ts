@@ -1,9 +1,9 @@
 export class QuestionDto {
   public id: string;
-  public question: string;
+  public content: string;
   public answers: {
     id: string;
-    answer: string;
+    content: string;
     isCorrect: boolean;
   }[];
   public constructor(data: Partial<QuestionDto>) {

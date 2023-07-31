@@ -15,10 +15,10 @@ export type GenerateQuestionResponse = {
   completion: any;
   questions: {
     id: string;
-    question: string;
+    content: string;
     answers: {
       id: string;
-      answer: string;
+      content: string;
       isCorrect: boolean;
     }[];
   }[];

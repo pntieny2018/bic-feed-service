@@ -11,10 +11,9 @@ import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 
-export interface IUserTakeQuizDetail {
+export interface IQuizParticipantAnswer {
   id: string;
-  userTakeQuizId: string;
-  quizId: string;
+  quizParticipantId: string;
   questionId: string;
   answerId: string;
   isCorrect: boolean;
@@ -23,11 +22,11 @@ export interface IUserTakeQuizDetail {
 }
 
 @Table({
-  tableName: 'user_take_quiz_detail',
+  tableName: 'quiz_participant_answers',
 })
-export class UserTakeQuizDetailModel
-  extends Model<IUserTakeQuizDetail, Optional<IUserTakeQuizDetail, 'id'>>
-  implements IUserTakeQuizDetail
+export class QuizParticipantAnswerModel
+  extends Model<IQuizParticipantAnswer, Optional<IQuizParticipantAnswer, 'id'>>
+  implements IQuizParticipantAnswer
 {
   @PrimaryKey
   @IsUUID()
@@ -36,10 +35,7 @@ export class UserTakeQuizDetailModel
   public id: string;
 
   @Column
-  public userTakeQuizId: string;
-
-  @Column
-  public quizId: string;
+  public quizParticipantId: string;
 
   @Column
   public questionId: string;

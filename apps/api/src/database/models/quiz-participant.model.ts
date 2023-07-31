@@ -4,6 +4,7 @@ import {
   Column,
   CreatedAt,
   Default,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
@@ -14,14 +15,19 @@ import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { IPost, PostModel } from './post.model';
 import { IQuiz, QuizModel } from './quiz.model';
+import {
+  IQuizParticipantAnswer,
+  QuizParticipantAnswerModel,
+} from './quiz-participant-answers.model';
 
-export interface IUserTakeQuiz {
+export interface IQuizParticipant {
   id: string;
   quizId: string;
   postId: string;
   timeLimit: number;
   score: number;
-  totalQuestionsCompleted: number;
+  totalAnswers: number;
+  totalCorrectAnswers: number;
   startedAt: Date;
   finishedAt: Date;
   quizSnapshot: {
@@ -43,14 +49,15 @@ export interface IUserTakeQuiz {
   updatedAt: Date;
   post?: IPost;
   quiz?: IQuiz;
+  answers?: IQuizParticipantAnswer[];
 }
 
 @Table({
-  tableName: 'users_take_quizzes',
+  tableName: 'quiz_participants',
 })
-export class UserTakeQuizModel
-  extends Model<IUserTakeQuiz, Optional<IUserTakeQuiz, 'id'>>
-  implements IUserTakeQuiz
+export class QuizParticipantModel
+  extends Model<IQuizParticipant, Optional<IQuizParticipant, 'id'>>
+  implements IQuizParticipant
 {
   @PrimaryKey
   @IsUUID()
@@ -71,23 +78,16 @@ export class UserTakeQuizModel
   public timeLimit: number;
 
   @Column
-  public totalQuestionsCompleted: number;
+  public totalAnswers: number;
+
+  @Column
+  public totalCorrectAnswers: number;
 
   @Column
   public startedAt: Date;
 
   @Column
   public finishedAt: Date;
-
-  @BelongsTo(() => PostModel, {
-    foreignKey: 'postId',
-  })
-  public post?: IPost;
-
-  @BelongsTo(() => QuizModel, {
-    foreignKey: 'quizId',
-  })
-  public quiz?: IQuiz;
 
   @Column({
     type: DataTypes.JSONB,
@@ -109,4 +109,19 @@ export class UserTakeQuizModel
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  @BelongsTo(() => PostModel, {
+    foreignKey: 'postId',
+  })
+  public post?: IPost;
+
+  @BelongsTo(() => QuizModel, {
+    foreignKey: 'quizId',
+  })
+  public quiz?: IQuiz;
+
+  @HasMany(() => QuizParticipantAnswerModel, {
+    foreignKey: 'quizParticipantId',
+  })
+  public answers: IQuizParticipantAnswer[];
 }

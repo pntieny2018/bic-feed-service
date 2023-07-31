@@ -17,16 +17,16 @@ export const quizRecordMock = {
   questions: [
     {
       id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae9',
-      question: 'question 1',
+      content: 'question 1',
       answers: [
         {
           id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae2',
-          answer: 'answer 1',
+          content: 'answer 1',
           isCorrect: true,
         },
         {
           id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae3',
-          answer: 'answer 2',
+          content: 'answer 2',
           isCorrect: false,
         },
       ],
