@@ -10,8 +10,8 @@ import {
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
 import {
-  CONTENT_VALIDATOR_TOKEN,
   ARTICLE_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
@@ -61,8 +61,8 @@ import { ArticleValidator } from '../domain/validator/article.validator';
 import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
 import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
 import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
-import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
 import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
+import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
 
 export const postProvider = [
   {
