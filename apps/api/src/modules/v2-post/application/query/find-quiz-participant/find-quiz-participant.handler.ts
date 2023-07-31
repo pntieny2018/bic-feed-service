@@ -45,13 +45,15 @@ export class FindQuizParticipantHandler
       throw new QuizParticipantNotFoundException();
     }
 
-    await this._contentDomainService.getVisibleContent(quizParticipantEntity.get('contentId'));
-
-    return this._entityToDto(quizParticipantEntity, authUser);
+    const contentEntity = await this._contentDomainService.getVisibleContent(
+      quizParticipantEntity.get('contentId')
+    );
+    return this._entityToDto(quizParticipantEntity, contentEntity, authUser);
   }
 
   private async _entityToDto(
     quizParticipantEntity: QuizParticipantEntity,
+    contentEntity: ContentEntity,
     authUser: UserDto
   ): Promise<QuizParticipantDto> {
     const attributes: QuizParticipantDto = {
@@ -71,7 +73,10 @@ export class FindQuizParticipantHandler
         answerId: answer.answerId,
       })),
       quizId: quizParticipantEntity.get('quizId'),
-      contentId: quizParticipantEntity.get('contentId'),
+      content: {
+        id: contentEntity.get('id'),
+        type: contentEntity.get('type'),
+      },
       timeLimit: quizParticipantEntity.get('timeLimit'),
       startedAt: quizParticipantEntity.get('startedAt'),
       createdAt: quizParticipantEntity.get('createdAt'),
