@@ -14,7 +14,10 @@ class QuestionNotIncludeCorrectAnswerDto {
 export class QuizParticipantDto {
   public id: string;
   public quizId: string;
-  public contentId: string;
+  public content: {
+    id: string;
+    type: string;
+  };
   public title: string;
   public description: string;
   public timeLimit: number;
