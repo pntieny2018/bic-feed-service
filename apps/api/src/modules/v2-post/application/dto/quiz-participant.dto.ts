@@ -15,6 +15,8 @@ export class QuizParticipantDto {
   public id: string;
   public quizId: string;
   public contentId: string;
+  public title: string;
+  public description: string;
   public timeLimit: number;
   public startedAt: Date;
   public createdAt: Date;
