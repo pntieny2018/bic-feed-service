@@ -120,11 +120,13 @@ export class ProcessReactionNotificationHandler
       mentions: mentionUsers,
       setting: contentEntity.get('setting'),
       media: {
-        files: (contentEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
-        images: (contentEntity.get('media').images || []).map(
+        files: (contentEntity.get('media')?.files || []).map(
+          (file) => new FileDto(file.toObject())
+        ),
+        images: (contentEntity.get('media')?.images || []).map(
           (image) => new ImageDto(image.toObject())
         ),
-        videos: (contentEntity.get('media').videos || []).map(
+        videos: (contentEntity.get('media')?.videos || []).map(
           (video) => new VideoDto(video.toObject())
         ),
       },
