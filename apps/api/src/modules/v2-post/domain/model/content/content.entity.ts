@@ -10,7 +10,7 @@ import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { PostSettingDto } from '../../../application/dto';
 import { QuizEntity } from '../quiz';
-import { UserDto } from '../../../../v2-user/application';
+import { QuizParticipantEntity } from '../quiz-participant';
 
 export type ContentProps = {
   id: string;
@@ -39,6 +39,7 @@ export type ContentProps = {
   groupIds?: string[];
   communityIds?: string[];
   quiz?: QuizEntity;
+  quizResults?: QuizParticipantEntity[];
   wordCount?: number;
   aggregation?: {
     commentsCount: number;

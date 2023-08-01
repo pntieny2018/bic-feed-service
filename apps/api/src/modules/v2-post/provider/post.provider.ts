@@ -10,8 +10,8 @@ import {
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
 import {
-  CONTENT_VALIDATOR_TOKEN,
   ARTICLE_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';

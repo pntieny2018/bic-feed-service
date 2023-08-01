@@ -13,16 +13,20 @@ export const quizRecordMock = {
   numberOfQuestionsDisplay: 3,
   numberOfAnswersDisplay: 3,
   isRandom: false,
+  timeLimit: 1800,
   questions: [
     {
-      question: 'question 1',
+      id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae9',
+      content: 'question 1',
       answers: [
         {
-          answer: 'answer 1',
+          id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae2',
+          content: 'answer 1',
           isCorrect: true,
         },
         {
-          answer: 'answer 2',
+          id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae3',
+          content: 'answer 2',
           isCorrect: false,
         },
       ],

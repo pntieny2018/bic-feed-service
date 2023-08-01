@@ -29,7 +29,7 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
       where: { id: quizEntity.get('contentId') },
     });
 
-    if (!quizEntity) return;
+    if (!contentEntity) return;
 
     this._kafkaService.emit(KAFKA_TOPIC.CONTENT.QUIZ_PROCESSED, {
       contentId: quizEntity.get('contentId'),
