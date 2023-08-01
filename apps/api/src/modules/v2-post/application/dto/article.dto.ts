@@ -49,6 +49,13 @@ export class ArticleDto {
   public updatedAt: Date;
   public scheduledAt?: Date;
   public publishedAt?: Date;
+  public quizHighestScore?: {
+    quizParticipantId: string;
+    score: number;
+  };
+  public quizDoing?: {
+    quizParticipantId: string;
+  };
 
   public constructor(data: Partial<ArticleDto>) {
     Object.assign(this, data);
