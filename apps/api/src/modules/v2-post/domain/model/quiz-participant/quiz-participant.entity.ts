@@ -2,6 +2,7 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { Question } from '../quiz';
 import { v4 } from 'uuid';
 import { RULES } from '../../../constant';
+import { ArrayHelper } from '../../../../../common/helpers';
 
 export type QuizParticipantProps = {
   id: string;
@@ -91,5 +92,16 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
 
   public setFinishedAt(): void {
     this._props.finishedAt = new Date();
+  }
+
+  public hideResult(): void {
+    this._props.score = undefined;
+    this._props.totalAnswers = undefined;
+    this._props.totalCorrectAnswers = undefined;
+    this._props.finishedAt = undefined;
+  }
+
+  public shuffleQuestions(): void {
+    this._props.quizSnapshot.questions = ArrayHelper.shuffle(this._props.quizSnapshot.questions);
   }
 }

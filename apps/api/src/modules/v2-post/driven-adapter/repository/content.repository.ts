@@ -350,11 +350,10 @@ export class ContentRepository implements IContentRepository {
       shouldIncludeGroup,
       shouldIncludeLinkPreview,
       shouldIncludeCategory,
+      shouldIncludeQuiz,
       shouldIncludeReaction,
       shouldIncludeItems,
       mustIncludeGroup,
-      shouldIncludeQuiz,
-      shouldIncludeQuizResult,
     } = options.include;
 
     if (shouldIncludeGroup || mustIncludeGroup) {
@@ -430,11 +429,21 @@ export class ContentRepository implements IContentRepository {
       });
     }
 
-    if (shouldIncludeQuizResult) {
+    if (shouldIncludeQuiz) {
       includeable.push({
         model: QuizModel,
-        as: 'quizResults',
+        as: 'quiz',
         required: false,
+        attributes: [
+          'id',
+          'title',
+          'description',
+          'status',
+          'genStatus',
+          'createdBy',
+          'createdAt',
+          'updatedAt',
+        ],
       });
     }
 

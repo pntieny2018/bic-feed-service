@@ -218,6 +218,10 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     return this._props.status === QuizStatus.PUBLISHED;
   }
 
+  public isRandomQuestion(): boolean {
+    return this._props.isRandom;
+  }
+
   public isGenerateFailed(): boolean {
     return this._props.genStatus === QuizGenStatus.FAILED;
   }
