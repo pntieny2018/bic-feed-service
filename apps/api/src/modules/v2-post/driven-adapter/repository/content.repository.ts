@@ -350,7 +350,6 @@ export class ContentRepository implements IContentRepository {
       shouldIncludeLinkPreview,
       shouldIncludeCategory,
       shouldIncludeQuiz,
-      shouldIncludeQuizResult,
       shouldIncludeReaction,
       shouldIncludeItems,
       mustIncludeGroup,
@@ -427,14 +426,6 @@ export class ContentRepository implements IContentRepository {
           'createdAt',
           'updatedAt',
         ],
-      });
-    }
-
-    if (shouldIncludeQuizResult) {
-      includeable.push({
-        model: QuizModel,
-        as: 'quizResults',
-        required: false,
       });
     }
 

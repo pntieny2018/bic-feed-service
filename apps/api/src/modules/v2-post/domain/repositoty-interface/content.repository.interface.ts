@@ -35,7 +35,6 @@ export type FindContentOptions = {
     shouldIncludeItems?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludeQuiz?: boolean;
-    shouldIncludeQuizResult?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReaction?: {
       userId?: string;
