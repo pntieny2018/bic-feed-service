@@ -42,7 +42,6 @@ import { FixContentPrivacyCommand } from './fix-content-privacy.command';
 import { ExportUserContentDataCommand } from './export-user-content-data.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
-import { ExportUserContentDataCommand } from './export-user-content-data.command';
 
 @Module({
   imports: [
