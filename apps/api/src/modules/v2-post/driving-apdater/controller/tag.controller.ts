@@ -13,9 +13,8 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ClassTransformer } from 'class-transformer';
-import { ResponseMessages } from '../../../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { AuthUser } from '../../../auth';
 import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';

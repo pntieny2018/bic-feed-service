@@ -1,9 +1,8 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Body, Controller, Get, Logger, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { ResponseMessages } from '../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
-import { AuthUser } from '../auth';
 import { CreateCategoryDto } from './dto/requests/create-category.dto';
 import { CategoryService } from './category.service';
 import { PageDto } from '../../common/dto';

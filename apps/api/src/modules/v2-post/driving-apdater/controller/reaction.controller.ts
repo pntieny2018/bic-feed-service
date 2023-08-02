@@ -7,7 +7,6 @@ import { FindReactionsQuery } from '../../application/query/find-reactions/find-
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
 import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
 import { UserDto } from '../../../v2-user/application';
-import { AuthUser } from '../../../auth';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import {
   CreateReactionRequestDto,
@@ -17,6 +16,7 @@ import {
 import { ReactionListDto } from '../../application/dto';
 import { ReactionDto } from '../../../reaction/dto/reaction.dto';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { AuthUser } from '../../../../common/decorators';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')

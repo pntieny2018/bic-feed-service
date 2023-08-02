@@ -12,10 +12,10 @@ import { UploadService } from '../upload';
 import { UploadDto, UploadType } from '../upload/dto/requests/upload.dto';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { MediaService } from './media.service';
-import { AuthUser } from '../auth';
 import { ValidatorException } from '../../common/exceptions';
 import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
 import { UserDto } from '../v2-user/application';
+import { AuthUser } from '../../common/decorators';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')

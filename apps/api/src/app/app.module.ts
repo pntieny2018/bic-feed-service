@@ -9,10 +9,8 @@ import { AppController } from './app.controller';
 import { CommentModule } from '../modules/comment';
 import { MentionModule } from '../modules/mention';
 import { NotificationModule } from '../notification';
-import { ReactionModule } from '../modules/reaction';
 import { AuthorityModule } from '../modules/authority';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { ReactionCountModule } from '../shared/reaction-count';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
@@ -33,14 +31,15 @@ import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
-import { ApiVersioningMiddleware } from '../modules/auth/api-versioning.middleware';
+import { ApiVersioningMiddleware, AuthMiddleware } from '../middlewares';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
     DatabaseModule,
+    HttpModule,
     FilterUserModule,
     LibModule,
-    AuthModule,
     CommentModule,
     FeedModule,
     PostModule,

@@ -1,4 +1,3 @@
-import { AuthUser } from '../../../auth';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Body,
@@ -12,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
 import { UserDto } from '../../../v2-user/application/user.dto';
 import { CreateCommentPipe } from '../pipes/create-comment.pipe';

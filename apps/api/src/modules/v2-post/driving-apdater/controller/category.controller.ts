@@ -2,12 +2,12 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { Controller, Get, Query } from '@nestjs/common';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { QueryBus } from '@nestjs/cqrs';
-import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { GetCategoryDto } from '../../../category/dto/requests/get-category.dto';
 import { PageDto } from '../../../../common/dto';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
 import { FindCategoriesPaginationDto } from '../../application/query/find-categories/find-categories-pagination.dto';
+import { AuthUser } from '../../../../common/decorators';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')

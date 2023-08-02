@@ -1,8 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../../../common/decorators';
-import { AuthUser } from '../../../auth';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 
 import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';

@@ -14,8 +14,7 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance, plainToInstance } from 'class-transformer';
-import { ResponseMessages } from '../../../../common/decorators';
-import { AuthUser } from '../../../auth';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';

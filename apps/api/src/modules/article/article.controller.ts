@@ -11,10 +11,9 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { ResponseMessages } from '../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
-import { AuthUser } from '../auth';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';

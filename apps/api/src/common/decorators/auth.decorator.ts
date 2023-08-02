@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { ERRORS } from '../../../common/constants';
+import { ERRORS } from '../constants';
 
 /**
  * AuthUser decorator resolve auth user info

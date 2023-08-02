@@ -5,7 +5,6 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
 import { GetRecentSearchRequestDto } from '../dto/request/get-recent-search.request.dto';
 import { RecentSearchesResponseDto } from '../dto/response/recent-searches.response.dto';
-import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { CreateRecentSearchRequestDto } from '../dto/request/create-recent-search.request.dto';
 import { CleanRecentSearchesDto } from '../../../recent-search/dto/requests/clean-recent-searches.dto';
@@ -14,6 +13,7 @@ import { DeleteRecentSearchCommand } from '../../aplication/command/delete-recen
 import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';
 import { CreateRecentSearchCommand } from '../../aplication/command/create-recent-search/create-recent-search.command';
 import { CreateRecentSearchDto } from '../../aplication/command/create-recent-search/create-recent-search.dto';
+import { AuthUser } from '../../../../common/decorators';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')

@@ -12,8 +12,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../../../common/decorators';
-import { AuthUser } from '../../../auth';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 
