@@ -1,11 +1,8 @@
-import { PostSettingDto } from '../post-setting.dto';
-import { PostType } from '../../../data-type';
+import { PostStatus, PostType } from '../../../data-type';
 import { TagDto } from '../tag.dto';
 import { UserDto } from '../../../../v2-user/application';
-import { FileDto } from '../file.dto';
-import { ImageDto } from '../image.dto';
-import { VideoDto } from '../video.dto';
-import { PostStatus } from '../../../data-type/post-status.enum';
+import { PostSettingDto } from '../post.dto';
+import { FileDto, ImageDto, VideoDto } from '../media.dto';
 
 export class ArticleMessagePayload {
   public id: string;
@@ -38,6 +35,25 @@ export class ArticleMessagePayload {
   public publishedAt: Date;
 
   public constructor(data: Partial<ArticleMessagePayload>) {
+    Object.assign(this, data);
+  }
+}
+
+export class ArticleChangedMessagePayload {
+  public state: 'publish' | 'update' | 'delete';
+  public before?: ArticleMessagePayload;
+  public after?: ArticleMessagePayload & {
+    state?: {
+      attachGroupIds: string[];
+      detachGroupIds: string[];
+      attachTagIds?: string[];
+      detachTagIds?: string[];
+      attachSeriesIds?: string[];
+      detachSeriesIds?: string[];
+    };
+  };
+
+  public constructor(data: Partial<ArticleChangedMessagePayload>) {
     Object.assign(this, data);
   }
 }

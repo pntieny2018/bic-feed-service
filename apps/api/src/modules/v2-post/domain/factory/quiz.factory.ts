@@ -4,7 +4,7 @@ import { EventPublisher } from '@nestjs/cqrs';
 import { IQuizFactory } from './interface/quiz.factory.interface';
 import { QuizEntity, QuizProps } from '../model/quiz';
 import { QuizCreateProps } from '../domain-service/interface/quiz.domain-service.interface';
-import { QuizGenStatus, QuizStatus } from '../../data-type/quiz-status.enum';
+import { QuizGenStatus, QuizStatus } from '../../data-type/quiz.enum';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 import { RULES } from '../../constant';
 

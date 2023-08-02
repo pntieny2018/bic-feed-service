@@ -9,7 +9,7 @@ import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/int
 import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { TargetType } from '../../../report-content/contstants';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import { ReactionEntity } from '../../domain/model/reaction';
 
 @Injectable()

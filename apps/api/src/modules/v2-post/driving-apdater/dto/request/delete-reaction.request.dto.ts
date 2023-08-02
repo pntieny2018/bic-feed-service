@@ -3,7 +3,7 @@ import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsUUID, ValidateIf } from 'class-validator';
 import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 
 export class DeleteReactionRequestDto {
   @ApiProperty({ example: 'POST' })

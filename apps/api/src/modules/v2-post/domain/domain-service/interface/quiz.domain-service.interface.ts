@@ -2,7 +2,7 @@ import { QuizEntity } from '../../model/quiz';
 import { OrderEnum } from '../../../../../common/dto';
 import { UserDto } from '../../../../v2-user/application';
 import { QuestionDto } from '../../../application/dto/question.dto';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
+import { QuizStatus } from '../../../data-type/quiz.enum';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { PostType } from '../../../data-type';
 import { QuizParticipantEntity } from '../../model/quiz-participant';

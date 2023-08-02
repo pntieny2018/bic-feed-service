@@ -1,11 +1,8 @@
-import { PostSettingDto } from '../post-setting.dto';
-import { PostType } from '../../../data-type';
+import { PostStatus, PostType } from '../../../data-type';
 import { TagDto } from '../tag.dto';
 import { UserDto } from '../../../../v2-user/application';
-import { FileDto } from '../file.dto';
-import { ImageDto } from '../image.dto';
-import { VideoDto } from '../video.dto';
-import { PostStatus } from '../../../data-type/post-status.enum';
+import { PostSettingDto } from '../post.dto';
+import { FileDto, ImageDto, VideoDto } from '../media.dto';
 
 export class PostMessagePayload {
   public id: string;
@@ -31,6 +28,31 @@ export class PostMessagePayload {
   public status: PostStatus;
 
   public constructor(data: Partial<PostMessagePayload>) {
+    Object.assign(this, data);
+  }
+}
+
+export class PostChangedMessagePayload {
+  public state: 'publish' | 'update' | 'delete';
+  public before: Omit<PostMessagePayload, 'tags' | 'media' | 'seriesIds' | 'communityIds'>;
+  public after: PostMessagePayload & {
+    state: {
+      attachSeriesIds: string[];
+      detachSeriesIds: string[];
+      attachGroupIds: string[];
+      detachGroupIds: string[];
+      attachTagIds: string[];
+      detachTagIds: string[];
+      attachFileIds: string[];
+      detachFileIds: string[];
+      attachImageIds: string[];
+      detachImageIds: string[];
+      attachVideoIds: string[];
+      detachVideoIds: string[];
+    };
+  };
+
+  public constructor(data: Partial<PostChangedMessagePayload>) {
     Object.assign(this, data);
   }
 }

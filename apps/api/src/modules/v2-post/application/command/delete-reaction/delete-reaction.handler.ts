@@ -15,7 +15,7 @@ import {
   ReactionNotFoundException,
   ReactionNotHaveAuthorityException,
 } from '../../../domain/exception';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import { ReactionDto } from '../../dto';
 import { ProcessReactionNotificationCommand } from '../process-reaction-notification/process-reaction-notification.command';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';

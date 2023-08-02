@@ -1,7 +1,7 @@
 import { ICommand } from '@nestjs/cqrs';
 import { UserDto } from '../../../../v2-user/application';
 import { QuestionDto } from '../../dto/question.dto';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
+import { QuizStatus } from '../../../data-type/quiz.enum';
 
 export type UpdateQuizCommandPayload = {
   quizId: string;

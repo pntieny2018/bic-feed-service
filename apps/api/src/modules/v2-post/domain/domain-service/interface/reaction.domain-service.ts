@@ -12,7 +12,7 @@ import {
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../../repositoty-interface';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
 

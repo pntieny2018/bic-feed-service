@@ -24,7 +24,7 @@ import {
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
 import { ReactionDomainService } from '../../../domain/domain-service/interface/reaction.domain-service';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 
 describe('CreateReactionHandler', () => {
   let handler: CreateReactionHandler;

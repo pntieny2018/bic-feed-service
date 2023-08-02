@@ -3,7 +3,7 @@ import { Expose } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsUUID } from 'class-validator';
 import { emoji } from 'node-emoji';
 import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 
 export class CreateReactionRequestDto {
   @ApiProperty({

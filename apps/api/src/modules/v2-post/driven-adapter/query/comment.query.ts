@@ -16,7 +16,7 @@ import { TargetType } from '../../../report-content/contstants';
 import { CursorPaginator, createCursor } from '../../../../common/dto/cusor-pagination';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { ReactionEntity } from '../../domain/model/reaction';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { UserDto } from '../../../v2-user/application';
 

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 import { OrderEnum } from '../../../../../common/dto';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
+import { QuizStatus } from '../../../data-type/quiz.enum';
 import { QuizQuestionRequestDto } from './quiz-question.request.dto';
 
 export class UpdateQuizRequestDto {

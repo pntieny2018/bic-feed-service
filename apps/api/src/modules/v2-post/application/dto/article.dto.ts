@@ -1,12 +1,11 @@
-import { PostSettingDto } from './post-setting.dto';
 import { GroupDto } from '../../../v2-group/application';
-import { PostStatus } from '../../data-type/post-status.enum';
 import { UserDto } from '../../../v2-user/application';
-import { PostPrivacy, PostType } from '../../data-type';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
 import { TagDto } from './tag.dto';
-import { ImageDto } from './image.dto';
 import { QuizDto } from './quiz.dto';
+import { PostSettingDto } from './post.dto';
+import { ImageDto } from './media.dto';
 
 export class ArticleDto {
   public id: string;

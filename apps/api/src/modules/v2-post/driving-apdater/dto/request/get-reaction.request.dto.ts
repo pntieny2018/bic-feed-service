@@ -3,7 +3,7 @@ import { IsOptional, IsUUID } from 'class-validator';
 import { NIL as NIL_UUID } from 'uuid';
 import { Expose } from 'class-transformer';
 import { OrderEnum } from '../../../../../common/dto';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 
 export class GetReactionRequestDto {
   @ApiProperty({

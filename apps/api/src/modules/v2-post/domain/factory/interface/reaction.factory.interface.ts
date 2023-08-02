@@ -1,5 +1,5 @@
 import { ReactionEntity, ReactionProps } from '../../model/reaction';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 
 export type CreateReactionOptions = Readonly<{
   target: REACTION_TARGET;
