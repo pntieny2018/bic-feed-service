@@ -8,6 +8,7 @@ import { bfProfile, cacheSG, cacheSU, permissionCacheKey } from '../../mock/user
 import * as rxjs from 'rxjs';
 import { UserEntity } from '../../../domain/model/user';
 import { InternalServerErrorException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 describe('UserRepository', () => {
   let repo: IUserRepository;
@@ -24,6 +25,10 @@ describe('UserRepository', () => {
         {
           provide: RedisService,
           useValue: createMock<RedisService>(),
+        },
+        {
+          provide: ConfigService,
+          useValue: createMock<ConfigService>(),
         },
       ],
     }).compile();
@@ -81,7 +86,7 @@ describe('UserRepository', () => {
 
   describe('findOne', () => {
     it('Should returned a UserEntity', async () => {
-      jest.spyOn(store, 'get').mockResolvedValue(cacheSU);
+      repo['_getUserFromCacheById'] = jest.fn().mockResolvedValue(cacheSU);
       const result = await repo.findOne(bfProfile.id);
       expect(result).toEqual(new UserEntity(cacheSU));
     });
@@ -107,8 +112,8 @@ describe('UserRepository', () => {
     });
 
     it('Should return null because call Group API has exception', async () => {
-      jest.spyOn(store, 'get').mockResolvedValue(null);
-      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(new InternalServerErrorException());
+      repo['_getUserFromCacheById'] = jest.fn().mockResolvedValue(null);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({status: 500});
       const result = await repo.findOne(bfProfile.id);
       expect(result).toEqual(null);
     });

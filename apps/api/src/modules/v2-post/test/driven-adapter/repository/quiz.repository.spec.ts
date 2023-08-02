@@ -22,6 +22,8 @@ import { QuizEntity } from '../../../domain/model/quiz';
 import { PostType } from '../../../data-type';
 import { CursorPaginator, OrderEnum } from '../../../../../common/dto';
 import { PostModel } from '../../../../../database/models/post.model';
+import { QuizQuestionModel } from '../../../../../database/models/quiz-question.model';
+import { QuizAnswerModel } from '../../../../../database/models/quiz-answer.model';
 
 const transaction = createMock<Transaction>();
 
@@ -42,6 +44,14 @@ describe('QuizRepository', () => {
         {
           provide: getModelToken(QuizModel),
           useValue: createMock<QuizModel>(),
+        },
+        {
+          provide: getModelToken(QuizQuestionModel),
+          useValue: createMock<QuizQuestionModel>(),
+        },
+        {
+          provide: getModelToken(QuizAnswerModel),
+          useValue: createMock<QuizAnswerModel>(),
         },
         {
           provide: QUIZ_FACTORY_TOKEN,
@@ -69,7 +79,7 @@ describe('QuizRepository', () => {
       expect(spyOnModelCreate).toBeCalledWith({
         id: quizEntityMock.get('id'),
         title: quizEntityMock.get('title'),
-        contentId: quizEntityMock.get('contentId'),
+        postId: quizEntityMock.get('contentId'),
         description: quizEntityMock.get('description'),
         numberOfQuestions: quizEntityMock.get('numberOfQuestions'),
         numberOfAnswers: quizEntityMock.get('numberOfAnswers'),
@@ -79,7 +89,6 @@ describe('QuizRepository', () => {
         genStatus: quizEntityMock.get('genStatus'),
         error: quizEntityMock.get('error'),
         isRandom: quizEntityMock.get('isRandom'),
-        questions: quizEntityMock.get('questions'),
         createdBy: quizEntityMock.get('createdBy'),
         updatedBy: quizEntityMock.get('updatedBy'),
         createdAt: quizEntityMock.get('createdAt'),
@@ -107,10 +116,10 @@ describe('QuizRepository', () => {
           error: quizEntityMock.get('error'),
           genStatus: quizEntityMock.get('genStatus'),
           isRandom: quizEntityMock.get('isRandom'),
-          questions: quizEntityMock.get('questions'),
           updatedBy: quizEntityMock.get('updatedBy'),
           updatedAt: quizEntityMock.get('updatedAt'),
           meta: quizEntityMock.get('meta'),
+          timeLimit: 1800,
         },
         { where: { id: quizEntityMock.get('id') } }
       );
@@ -141,7 +150,17 @@ describe('QuizRepository', () => {
 
       const result = await repo.findOne(findOneOptions);
 
-      expect(spyOnModelFindOne).toBeCalledWith(findOneOptions);
+      expect(spyOnModelFindOne).toBeCalledWith({
+        ...findOneOptions,
+        include: [
+          {
+            model: QuizQuestionModel,
+            as: 'questions',
+            required: false,
+            include: [{ model: QuizAnswerModel, as: 'answers', required: false }],
+          },
+        ],
+      });
 
       expect(result).toEqual(quizEntityMock);
     });
@@ -156,7 +175,17 @@ describe('QuizRepository', () => {
 
       const result = await repo.findOne(findOneOptions);
 
-      expect(spyOnModelFindOne).toBeCalledWith(findOneOptions);
+      expect(spyOnModelFindOne).toBeCalledWith({
+        ...findOneOptions,
+        include: [
+          {
+            model: QuizQuestionModel,
+            as: 'questions',
+            required: false,
+            include: [{ model: QuizAnswerModel, as: 'answers', required: false }],
+          },
+        ],
+      });
       expect(result).toBeNull();
     });
 
@@ -183,9 +212,17 @@ describe('QuizRepository', () => {
         where: {
           id: [quizEntityMock.get('id')],
           status: quizEntityMock.get('status'),
-          contentId: [quizEntityMock.get('contentId')],
+          postId: [quizEntityMock.get('contentId')],
         },
         attributes: ['id'],
+        include: [
+          {
+            model: QuizQuestionModel,
+            as: 'questions',
+            required: false,
+            include: [{ model: QuizAnswerModel, as: 'answers', required: false }],
+          },
+        ],
       });
       expect(result).toEqual([new QuizEntity(quizRecordMock)]);
     });
@@ -214,9 +251,17 @@ describe('QuizRepository', () => {
       where: {
         id: [quizEntityMock.get('id')],
         status: quizEntityMock.get('status'),
-        contentId: quizEntityMock.get('contentId'),
+        postId: quizEntityMock.get('contentId'),
       },
       attributes: ['id'],
+      include: [
+        {
+          model: QuizQuestionModel,
+          as: 'questions',
+          required: false,
+          include: [{ model: QuizAnswerModel, as: 'answers', required: false }],
+        },
+      ],
     });
     expect(result).toEqual([new QuizEntity(quizRecordMock)]);
   });
@@ -226,7 +271,7 @@ describe('QuizRepository', () => {
       const getPaginationQuizzesProps: GetPaginationQuizzesProps = {
         where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
         contentType: PostType.POST,
-        attributes: ['id', 'contentId', 'createdAt'],
+        attributes: ['id', 'createdAt'],
         limit: 10,
         order: OrderEnum.DESC,
       };

@@ -1,14 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
@@ -22,7 +12,6 @@ import { DeleteItemsInSeriesDto } from './dto/requests/delete-items-in-series.dt
 import { ReorderItemsDto } from './dto/requests/reorder-items.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { UserDto } from '../v2-user/application';
-import { ArticleLimitAttachedSeriesException } from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -91,16 +80,7 @@ export class SeriesController {
     @Body() addItemsInSeriesDto: AddItemsInSeriesDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    try {
-      const { itemIds } = addItemsInSeriesDto;
-      await this._seriesAppService.addItems(id, itemIds, user);
-    } catch (e) {
-      switch (e.constructor) {
-        case ArticleLimitAttachedSeriesException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const { itemIds } = addItemsInSeriesDto;
+    await this._seriesAppService.addItems(id, itemIds, user);
   }
 }

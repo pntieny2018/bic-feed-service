@@ -37,6 +37,7 @@ import {
 } from '../../../application/command/delete-comment/delete-comment.command';
 import {
   CommentNotFoundException,
+  ContentAccessDeniedException,
   ContentNoCRUDPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
@@ -164,7 +165,7 @@ describe('DeleteCommentHandler', () => {
         await handler.execute(command);
       } catch (error) {
         expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
-        expect(error).toBeInstanceOf(ContentNoCRUDPermissionException);
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
       }
     });
 

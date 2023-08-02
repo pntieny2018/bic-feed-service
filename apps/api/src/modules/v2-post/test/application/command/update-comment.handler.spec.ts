@@ -37,6 +37,7 @@ import {
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
 import {
   CommentNotFoundException,
+  ContentAccessDeniedException,
   ContentNoCRUDPermissionException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
@@ -193,7 +194,7 @@ describe('UpdateCommentHandler', () => {
         await handler.execute(command);
       } catch (error) {
         expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
-        expect(error).toBeInstanceOf(ContentNoCRUDPermissionException);
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
       }
     });
 

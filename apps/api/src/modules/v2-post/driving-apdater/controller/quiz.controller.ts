@@ -1,11 +1,8 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -23,24 +20,9 @@ import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
-import {
-  ContentAccessDeniedException,
-  ContentEmptyContentException,
-  ContentHasQuizException,
-  ContentNoCRUDPermissionAtGroupException,
-  ContentNotFoundException,
-  InvalidCursorParamsException,
-  OpenAIException,
-  QuizNotFoundException,
-  QuizOverTimeException,
-  QuizParticipantNotFinishedException,
-  QuizParticipantNotFoundException,
-} from '../../domain/exception';
-import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
 import { QuizDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception';
 import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
 import { GenerateQuizRequestDto } from '../dto/request/generate-quiz.request.dto';
 import { UpdateQuizRequestDto } from '../dto/request/update-quiz.request.dto';
@@ -82,20 +64,10 @@ export class QuizController {
     @AuthUser() user: UserDto,
     @Query() getQuizzesRequestDto: GetQuizzesRequestDto
   ): Promise<FindQuizzesDto> {
-    try {
-      const data = await this._queryBus.execute(
-        new FindQuizzesQuery({ authUser: user, ...getQuizzesRequestDto })
-      );
-      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case InvalidCursorParamsException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._queryBus.execute(
+      new FindQuizzesQuery({ authUser: user, ...getQuizzesRequestDto })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Create new quiz' })
@@ -112,27 +84,11 @@ export class QuizController {
     @AuthUser() authUser: UserDto,
     @Body() createQuizDto: CreateQuizRequestDto
   ): Promise<QuizDto> {
-    try {
-      const quiz = await this._commandBus.execute<CreateQuizCommand, QuizDto>(
-        new CreateQuizCommand({ ...createQuizDto, authUser })
-      );
+    const quiz = await this._commandBus.execute<CreateQuizCommand, QuizDto>(
+      new CreateQuizCommand({ ...createQuizDto, authUser })
+    );
 
-      return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case QuizNoCRUDPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        case ContentEmptyContentException:
-        case OpenAIException:
-        case ContentHasQuizException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Generate a quiz' })
@@ -147,27 +103,11 @@ export class QuizController {
     @AuthUser() authUser: UserDto,
     @Body() generateQuizDto: GenerateQuizRequestDto
   ): Promise<QuizDto> {
-    try {
-      const quiz = await this._commandBus.execute<GenerateQuizCommand, QuizDto>(
-        new GenerateQuizCommand({ ...generateQuizDto, quizId, authUser })
-      );
+    const quiz = await this._commandBus.execute<GenerateQuizCommand, QuizDto>(
+      new GenerateQuizCommand({ ...generateQuizDto, quizId, authUser })
+    );
 
-      return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizNotFoundException:
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case QuizNoCRUDPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        case ContentEmptyContentException:
-        case OpenAIException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Update a quiz' })
@@ -186,32 +126,15 @@ export class QuizController {
     @Body() updateQuizDto: UpdateQuizRequestDto,
     @Req() req: Request
   ): Promise<QuizDto> {
-    try {
-      const quiz = await this._commandBus.execute<UpdateQuizCommand, QuizDto>(
-        new UpdateQuizCommand({ ...updateQuizDto, quizId, authUser })
-      );
+    const quiz = await this._commandBus.execute<UpdateQuizCommand, QuizDto>(
+      new UpdateQuizCommand({ ...updateQuizDto, quizId, authUser })
+    );
 
-      if (updateQuizDto.status === QuizStatus.PUBLISHED) {
-        req.message = 'message.quiz.published_success';
-      }
-
-      return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizNotFoundException:
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case QuizNoCRUDPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        case ContentEmptyContentException:
-        case OpenAIException:
-        case DomainModelException:
-        case ContentHasQuizException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
+    if (updateQuizDto.status === QuizStatus.PUBLISHED) {
+      req.message = 'message.quiz.published_success';
     }
+
+    return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Get quiz' })
@@ -221,22 +144,8 @@ export class QuizController {
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizDto> {
-    try {
-      const data = await this._queryBus.execute(new FindQuizQuery({ authUser, quizId }));
-      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizNotFoundException:
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentEmptyContentException:
-        case OpenAIException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._queryBus.execute(new FindQuizQuery({ authUser, quizId }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Delete a quiz' })
@@ -249,24 +158,9 @@ export class QuizController {
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
-        new DeleteQuizCommand({ quizId, authUser })
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizNotFoundException:
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentAccessDeniedException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
+      new DeleteQuizCommand({ quizId, authUser })
+    );
   }
 
   @ApiOperation({ summary: 'Start a quiz' })
@@ -280,26 +174,10 @@ export class QuizController {
     @Param('id', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<string> {
-    try {
-      const quizParticipantId = await this._commandBus.execute<StartQuizCommand, string>(
-        new StartQuizCommand({ quizId, authUser })
-      );
-      return quizParticipantId;
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizNotFoundException:
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentAccessDeniedException:
-          throw new ForbiddenException(e);
-        case QuizParticipantNotFinishedException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const quizParticipantId = await this._commandBus.execute<StartQuizCommand, string>(
+      new StartQuizCommand({ quizId, authUser })
+    );
+    return quizParticipantId;
   }
 
   @ApiOperation({ summary: 'Update quiz answers' })
@@ -310,27 +188,13 @@ export class QuizController {
     @Body() updateQuizAnswersDto: UpdateQuizAnswersRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
-        new UpdateQuizAnswerCommand({
-          quizParticipantId: id,
-          answers: updateQuizAnswersDto.answers,
-          authUser,
-        })
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizParticipantNotFoundException:
-          throw new NotFoundException(e);
-        case ContentAccessDeniedException:
-          throw new ForbiddenException(e);
-        case QuizOverTimeException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
+      new UpdateQuizAnswerCommand({
+        quizParticipantId: id,
+        answers: updateQuizAnswersDto.answers,
+        authUser,
+      })
+    );
   }
 
   @ApiOperation({ summary: 'Get quiz result' })
@@ -340,20 +204,9 @@ export class QuizController {
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizParticipantDto> {
-    try {
-      const data = await this._queryBus.execute(
-        new FindQuizParticipantQuery({ authUser, quizParticipantId: id })
-      );
-      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case QuizParticipantNotFoundException:
-          throw new NotFoundException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._queryBus.execute(
+      new FindQuizParticipantQuery({ authUser, quizParticipantId: id })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

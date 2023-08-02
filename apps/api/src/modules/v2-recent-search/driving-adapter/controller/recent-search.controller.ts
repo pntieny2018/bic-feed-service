@@ -1,16 +1,6 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
 import { GetRecentSearchRequestDto } from '../dto/request/get-recent-search.request.dto';
@@ -24,7 +14,6 @@ import { DeleteRecentSearchCommand } from '../../aplication/command/delete-recen
 import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';
 import { CreateRecentSearchCommand } from '../../aplication/command/create-recent-search/create-recent-search.command';
 import { CreateRecentSearchDto } from '../../aplication/command/create-recent-search/create-recent-search.dto';
-import { RecentSearchNotFoundException } from '../../domain/exception';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')
@@ -93,16 +82,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<boolean> {
-    try {
-      await this._commandBus.execute(new DeleteRecentSearchCommand({ id }));
-    } catch (e) {
-      switch (e.constructor) {
-        case RecentSearchNotFoundException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute(new DeleteRecentSearchCommand({ id }));
     return true;
   }
 
@@ -115,16 +95,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Param() cleanRecentSearchesDto: CleanRecentSearchesDto
   ): Promise<boolean> {
-    try {
-      await this._commandBus.execute(new DeleteRecentSearchCommand(cleanRecentSearchesDto));
-    } catch (e) {
-      switch (e.constructor) {
-        case RecentSearchNotFoundException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute(new DeleteRecentSearchCommand(cleanRecentSearchesDto));
     return true;
   }
 }

@@ -1,8 +1,6 @@
 import {
-  BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -29,7 +27,6 @@ import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
-import { ArticleLimitAttachedSeriesException } from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -122,17 +119,8 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    try {
-      const result = await this._articleAppService.update(user, articleId, updateArticleDto);
-      return result;
-    } catch (e) {
-      switch (e.constructor) {
-        case ArticleLimitAttachedSeriesException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const result = await this._articleAppService.update(user, articleId, updateArticleDto);
+    return result;
   }
 
   @ApiOperation({ summary: 'Publish article' })
@@ -149,17 +137,8 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
-    try {
-      const result = await this._articleAppService.publish(user, articleId);
-      return result;
-    } catch (e) {
-      switch (e.constructor) {
-        case ArticleLimitAttachedSeriesException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    const result = await this._articleAppService.publish(user, articleId);
+    return result;
   }
 
   @ApiOperation({ summary: 'Schedule article' })
@@ -177,16 +156,7 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() scheduleArticleDto: ScheduleArticleDto
   ): Promise<ArticleResponseDto> {
-    try {
-      const result = await this._articleAppService.schedule(user, articleId, scheduleArticleDto);
-      return result;
-    } catch (e) {
-      switch (e.constructor) {
-        case ArticleLimitAttachedSeriesException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    const result = await this._articleAppService.schedule(user, articleId, scheduleArticleDto);
+    return result;
   }
 }
