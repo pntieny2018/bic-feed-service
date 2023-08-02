@@ -61,5 +61,6 @@ export interface IQuizDomainService {
   reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity>;
   generateQuestions(quizEntity: QuizEntity): Promise<void>;
   getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
+  getQuizParticipant(quizParticipantId: string, authUserId: string): Promise<QuizParticipantEntity>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';
