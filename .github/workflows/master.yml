@@ -61,7 +61,6 @@ jobs:
     - name: Update Image Version to GitOps Repository
       run: |
         HEAD=$(git rev-parse --short HEAD)
-        GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.sha }})
         git clone https://devops-bic:${{ env._BIC_CI_ARGOCD_TOKEN_GITHUB }}@github.com/${{ env.GITHUB_WORKPLACE }}/bic-kube.git
         cd bic-kube
         set -e
@@ -71,6 +70,6 @@ jobs:
         git config --global user.email "devops@evol.vn"
         git config --global user.name "devops-bic"
         git add -A
-        git commit -m "Commit: $HEAD  Build: ${{ github.run_number }}  Message: $GIT_COMMIT_MESSAGE"
+        git commit -m "Commit: $HEAD  Build: ${{ github.run_number }}"
         git pull
         git push
