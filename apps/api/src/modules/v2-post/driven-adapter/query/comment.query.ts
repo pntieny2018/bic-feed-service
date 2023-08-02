@@ -1,6 +1,6 @@
 import { concat } from 'lodash';
 import { Inject } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Includeable, Op, Sequelize, col } from 'sequelize';
 import { CommentModel } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
@@ -25,7 +25,9 @@ export class CommentQuery implements ICommentQuery {
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _factory: ICommentFactory,
     @InjectModel(CommentModel)
-    private readonly _commentModel: typeof CommentModel
+    private readonly _commentModel: typeof CommentModel,
+    @InjectConnection()
+    private readonly _sequelizeConnection: Sequelize
   ) {}
 
   public async getPagination(
@@ -50,12 +52,14 @@ export class CommentQuery implements ICommentQuery {
         postId: postId,
         parentId: parentId,
         isHidden: false,
-        [Op.and]: [
-          Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
+        ...(authUser && {
+          [Op.and]: [
+            Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
             WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
               TargetType.COMMENT
-            }')`),
-        ],
+            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser.id)})`),
+          ],
+        }),
       },
     };
 
