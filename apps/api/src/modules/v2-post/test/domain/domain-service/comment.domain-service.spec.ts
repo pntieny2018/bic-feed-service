@@ -23,7 +23,7 @@ import { CommentEntity } from '../../../domain/model/comment';
 import { v4 } from 'uuid';
 import { imageEntites, invalidImageComment } from '../../mock/media.entity.mock';
 import { cloneDeep, omit } from 'lodash';
-import { InvalidResourceImageException } from '../../../domain/exception/invalid-resource-image.exception';
+import { InvalidResourceImageException } from '../../../domain/exception/media.exception';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { CommentNotEmptyException } from '../../../domain/exception';
 

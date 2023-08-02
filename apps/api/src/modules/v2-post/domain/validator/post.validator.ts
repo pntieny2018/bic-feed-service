@@ -22,8 +22,7 @@ import {
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../../v2-user/application';
-import { ContentEmptyException } from '../exception/content-empty.exception';
-import { PostLimitAttachedSeriesException } from '../exception';
+import { ContentEmptyContentException, PostLimitAttachedSeriesException } from '../exception';
 
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
@@ -56,7 +55,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       postEntity.get('media')?.videos.length === 0 &&
       postEntity.get('media')?.images.length === 0
     ) {
-      throw new ContentEmptyException();
+      throw new ContentEmptyContentException();
     }
   }
 

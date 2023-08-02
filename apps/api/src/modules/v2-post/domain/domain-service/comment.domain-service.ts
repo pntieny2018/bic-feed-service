@@ -8,7 +8,7 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
-import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
 import { CommentNotEmptyException } from '../exception';
 

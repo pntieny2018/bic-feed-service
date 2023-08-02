@@ -7,14 +7,21 @@ import { PageDto } from '../../common/dto';
 import { Op, Transaction } from 'sequelize';
 import { GetTagDto } from './dto/requests/get-tag.dto';
 import { TagResponseDto } from './dto/responses/tag-response.dto';
-import { ArrayHelper, ExceptionHelper, StringHelper } from '../../common/helpers';
+import { ArrayHelper, StringHelper } from '../../common/helpers';
 import { CreateTagDto } from './dto/requests/create-tag.dto';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
 import { PostModel } from '../../database/models/post.model';
 import { ExternalService } from '../../app/external.service';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { UserDto } from '../v2-user/application';
+import { GroupNotFoundException } from '../v2-post/domain/exception/external.exception';
+import {
+  TagDuplicateNameException,
+  TagNoCreatePermissionException,
+  TagNoDeletePermissionException,
+  TagNotFoundException,
+  TagUsedException,
+} from '../v2-post/domain/exception';
 
 @Injectable()
 export class TagService {
@@ -95,11 +102,11 @@ export class TagService {
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
     const canCreateTag = await this._externalService.canCudTag(authUser.id, createTagDto.groupId);
     if (!canCreateTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_CREATE_PERMISSION);
+      throw new TagNoCreatePermissionException();
     }
     const group = await this._groupAppService.findOne(createTagDto.groupId);
     if (!group) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_GROUP_NOT_EXIST);
+      throw new GroupNotFoundException();
     }
     const name = createTagDto.name;
     const tag = await this._tagModel.findOne({
@@ -109,7 +116,7 @@ export class TagService {
       },
     });
     if (tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
+      throw new TagDuplicateNameException();
     }
 
     const slug = StringHelper.convertToSlug(name);
@@ -141,20 +148,20 @@ export class TagService {
     });
     const tag = tags.find((e) => e.id === tagId);
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+      throw new TagNotFoundException();
     }
 
     const canUpdateTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
     if (!canUpdateTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_UPDATE_PERMISSION);
+      throw new TagDuplicateNameException();
     }
 
     if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
+      throw new TagDuplicateNameException();
     }
 
     if (tag.totalUsed) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
+      throw new TagUsedException();
     }
 
     const slug = StringHelper.convertToSlug(name);
@@ -177,15 +184,15 @@ export class TagService {
       },
     });
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+      throw new TagNotFoundException();
     }
 
     const canDeleteTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
     if (!canDeleteTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION);
+      throw new TagNoDeletePermissionException();
     }
     if (tag.totalUsed) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
+      throw new TagUsedException();
     }
     const postTags = await this._postTagModel.findAll({ where: { tagId: tagId } });
     await this._postModel.update(

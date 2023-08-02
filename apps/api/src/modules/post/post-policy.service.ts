@@ -1,8 +1,8 @@
 import { IPost } from '../../database/models/post.model';
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PostAllow } from './post.constants';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { PostResponseDto } from './dto/responses';
+import { DomainForbiddenException } from '../../common/exceptions';
 
 @Injectable()
 export class PostPolicyService {
@@ -23,13 +23,11 @@ export class PostPolicyService {
       (post instanceof PostResponseDto && !post.setting[action]) ||
       (!(post instanceof PostResponseDto) && !post[action])
     ) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message:
-          action === PostAllow.REACT
-            ? `React of this post are not available`
-            : `Comment of this post are not available`,
-      });
+      throw new DomainForbiddenException(
+        action === PostAllow.REACT
+          ? `React of this post are not available`
+          : `Comment of this post are not available`
+      );
     }
   }
 }

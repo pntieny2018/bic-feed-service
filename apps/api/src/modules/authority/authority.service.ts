@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   IPost,
   PostModel,
@@ -6,8 +6,6 @@ import {
   PostStatus,
   PostType,
 } from '../../database/models/post.model';
-import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { Ability, subject } from '@casl/ability';
 import {
   PERMISSION_KEY,
@@ -27,7 +25,9 @@ import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
   ContentNoPinPermissionException,
+  ContentNotFoundException,
 } from '../v2-post/domain/exception';
+import { DomainForbiddenException } from '../../common/exceptions';
 
 @Injectable()
 export class AuthorityService {
@@ -41,7 +41,7 @@ export class AuthorityService {
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
     if (post.privacy === PostPrivacy.OPEN) return;
-    throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    throw new DomainForbiddenException();
   }
 
   public async checkCanReadPost(
@@ -56,7 +56,7 @@ export class AuthorityService {
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
       if (requireGroups && requireGroups.length > 0) {
-        throw new ContentRequireGroupException({ requireGroups: requireGroups });
+        throw new ContentRequireGroupException(null, { requireGroups: requireGroups });
       }
 
       switch (post.type) {
@@ -65,7 +65,7 @@ export class AuthorityService {
         case PostType.SERIES:
           throw new ContentNoCRUDPermissionException();
         default:
-          throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+          throw new DomainForbiddenException();
       }
     }
   }
@@ -85,13 +85,13 @@ export class AuthorityService {
     }
 
     if (notCreatableInGroups.length > 0 && notCreatableInGroups.length === groups.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
+      throw new DomainForbiddenException(
+        `You don't have ${permissionToCommonName(
           PERMISSION_KEY.CRUD_POST_ARTICLE
         )} permission at group ${notCreatableInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notCreatableInGroups.map((e) => e.id) },
-      });
+        null,
+        { groupsDenied: notCreatableInGroups.map((e) => e.id) }
+      );
     }
   }
 
@@ -110,13 +110,13 @@ export class AuthorityService {
     }
 
     if (notEditSettingInGroups.length > 0) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
+      throw new DomainForbiddenException(
+        `You don't have ${permissionToCommonName(
           PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
-      });
+        null,
+        { groupsDenied: notEditSettingInGroups.map((e) => e.id) }
+      );
     }
   }
 
@@ -135,13 +135,13 @@ export class AuthorityService {
     }
 
     if (notCreatableInGroups.length > 0) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
+      throw new DomainForbiddenException(
+        `You don't have ${permissionToCommonName(
           PERMISSION_KEY.CRUD_POST_ARTICLE
         )} permission at group ${notCreatableInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notCreatableInGroups.map((e) => e.id) },
-      });
+        null,
+        { groupsDenied: notCreatableInGroups.map((e) => e.id) }
+      );
     }
   }
 
@@ -164,13 +164,13 @@ export class AuthorityService {
     }
 
     if (notCreatableGroupInfos.length > 0 && notCreatableGroupInfos.length === groups.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
+      throw new DomainForbiddenException(
+        `You don't have ${permissionToCommonName(
           PERMISSION_KEY.CRUD_SERIES
         )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
-      });
+        null,
+        { groupsDenied: notCreatableGroupInfos.map((e) => e.id) }
+      );
     }
   }
 
@@ -204,23 +204,23 @@ export class AuthorityService {
     }
 
     if (notCreatableGroupInfos.length > 0) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
+      throw new DomainForbiddenException(
+        `You don't have ${permissionToCommonName(
           PERMISSION_KEY.CRUD_SERIES
         )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
-      });
+        null,
+        { groupsDenied: notCreatableGroupInfos.map((e) => e.id) }
+      );
     }
 
     if (notEditSettingInGroups.length > 0) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
+      throw new DomainForbiddenException(
+        `You don't have ${permissionToCommonName(
           PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
-      });
+        null,
+        { groupsDenied: notEditSettingInGroups.map((e) => e.id) }
+      );
     }
   }
 
@@ -233,11 +233,11 @@ export class AuthorityService {
     authUserId: string
   ): Promise<void> {
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
 
     if (post.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      throw new DomainForbiddenException();
     }
   }
 
@@ -273,7 +273,7 @@ export class AuthorityService {
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      throw new DomainForbiddenException();
     }
   }
 
@@ -291,7 +291,7 @@ export class AuthorityService {
     }
 
     if (invalidGroup.length > 0) {
-      throw new ContentNoPinPermissionException({ groupsDenied: invalidGroup });
+      throw new ContentNoPinPermissionException();
     }
   }
 

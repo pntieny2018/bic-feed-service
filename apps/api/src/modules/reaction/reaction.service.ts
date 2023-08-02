@@ -5,10 +5,8 @@ import { plainToInstance } from 'class-transformer';
 import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL as NIL_UUID } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { OrderEnum } from '../../common/dto';
-import { LogicException } from '../../common/exceptions';
-import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
+import { ObjectHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import {
   CommentReactionModel,
@@ -34,6 +32,16 @@ import { ReactionEnum } from './reaction.enum';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { isEmpty } from 'lodash';
+import { ERRORS } from '../../common/constants/errors';
+import {
+  CommentNotFoundException,
+  ContentNotFoundException,
+  ReactionDuplicateException,
+  ReactionExceedLimitException,
+  ReactionNotFoundException,
+  ReactionTargetNotExistingException,
+} from '../v2-post/domain/exception';
+import { ServerInternalException } from '../../common/exceptions';
 
 @Injectable()
 export class ReactionService {
@@ -178,7 +186,7 @@ export class ReactionService {
       case ReactionEnum.COMMENT:
         return this._createCommentReaction(userDto, newCreateReactionDto);
       default:
-        throw new LogicException(HTTP_STATUS_ID.APP_REACTION_TARGET_EXISTING);
+        throw new ReactionTargetNotExistingException();
     }
   }
 
@@ -196,7 +204,7 @@ export class ReactionService {
     attempt = 0
   ): Promise<ReactionResponseDto> {
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
-      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+      throw new ServerInternalException();
     }
 
     const { id: userId } = userDto;
@@ -244,14 +252,14 @@ export class ReactionService {
 
         return reaction;
       }
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+      throw new ServerInternalException();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
-        throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
+        throw new ReactionDuplicateException();
       }
-      if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
-        throw new LogicException(e.message);
+      if (e.message === ERRORS.REACTION_EXCEED_LIMIT) {
+        throw new ReactionExceedLimitException();
       }
       if (e.message === SERIALIZE_TRANSACTION_ERROR) {
         return this._createPostReaction(userDto, createReactionDto, attempt + 1);
@@ -275,7 +283,7 @@ export class ReactionService {
     attempt = 0
   ): Promise<ReactionResponseDto> {
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
-      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+      throw new ServerInternalException();
     }
 
     const { id: userId } = userDto;
@@ -285,7 +293,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(commentId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+      throw new CommentNotFoundException();
     }
 
     const post = await this._postService.get(comment.postId, userDto, {
@@ -294,7 +302,7 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -338,13 +346,13 @@ export class ReactionService {
 
         return reaction;
       }
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+      throw new ServerInternalException();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
-        throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
-      } else if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
-        throw new LogicException(e.message);
+        throw new ReactionDuplicateException();
+      } else if (e.message === ERRORS.REACTION_EXCEED_LIMIT) {
+        throw new ReactionExceedLimitException();
       } else if (e.message === SERIALIZE_TRANSACTION_ERROR) {
         return this._createCommentReaction(userDto, createReactionDto, attempt + 1);
       } else {
@@ -393,7 +401,7 @@ export class ReactionService {
     attempt = 0
   ): Promise<IPostReaction> {
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
-      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+      throw new ServerInternalException();
     }
 
     const post = await this._postService.get(deleteReactionDto.targetId, userDto, {
@@ -425,7 +433,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
+        throw new ReactionNotFoundException();
       }
 
       const response = existedReaction.toJSON();
@@ -488,7 +496,7 @@ export class ReactionService {
     attempt = 0
   ): Promise<ICommentReaction> {
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
-      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+      throw new ServerInternalException();
     }
     const { id: userId } = actor;
     const { targetId } = deleteReactionDto;
@@ -496,7 +504,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(targetId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+      throw new CommentNotFoundException();
     }
 
     const post = await this._postService.get(comment.postId, actor, {
@@ -504,7 +512,7 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -529,7 +537,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
+        throw new ReactionNotFoundException();
       }
 
       const response = existedReaction.toJSON();

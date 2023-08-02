@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AutoSaveArticleCommand } from './auto-save-article.command';
 import {
-  AccessDeniedException,
+  ContentAccessDeniedException,
   ArticleRequiredCoverException,
   ContentNotFoundException,
 } from '../../../domain/exception';
@@ -52,7 +52,7 @@ export class AutoSaveArticleHandler implements ICommandHandler<AutoSaveArticleCo
 
     if (articleEntity.isPublished()) return;
 
-    if (!articleEntity.isOwner(actor.id)) throw new AccessDeniedException();
+    if (!articleEntity.isOwner(actor.id)) throw new ContentAccessDeniedException();
 
     if (coverMedia && !coverMedia.id) throw new ArticleRequiredCoverException();
 

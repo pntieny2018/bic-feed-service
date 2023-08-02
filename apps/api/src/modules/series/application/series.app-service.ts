@@ -1,8 +1,6 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
-import { ExceptionHelper } from '../../../common/helpers';
 import {
   SeriesAddedItemsEvent,
   SeriesReoderItemsEvent,
@@ -16,7 +14,13 @@ import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesService } from '../series.service';
 import { UserDto } from '../../v2-user/application';
 import { RULES } from '../../v2-post/constant';
-import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import {
+  ArticleLimitAttachedSeriesException,
+  ContentEmptyGroupException,
+  SeriesNotFoundException,
+  ValidationException,
+} from '../../v2-post/domain/exception';
+import { DomainForbiddenException } from '../../../common/exceptions';
 
 @Injectable()
 export class SeriesAppService {
@@ -40,7 +44,7 @@ export class SeriesAppService {
   public async removeItems(seriesId: string, itemIds: string[], user: UserDto): Promise<void> {
     const series = await this._postService.getListWithGroupsByIds([seriesId], false);
     if (series.length === 0) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+      throw new SeriesNotFoundException();
     }
     await this._authorityService.checkPostOwner(series[0], user.id);
     await this._authorityService.checkCanUpdateSeries(
@@ -72,11 +76,11 @@ export class SeriesAppService {
     const series = await this._postService.getListWithGroupsByIds([seriesId], false);
 
     if (series.length === 0) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+      throw new SeriesNotFoundException();
     }
 
     if (series[0].groups.length === 0) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+      throw new ContentEmptyGroupException();
     }
 
     await this._authorityService.checkPostOwner(series[0], user.id);
@@ -85,10 +89,7 @@ export class SeriesAppService {
     const posts = await this._postService.getListWithGroupsByIds(itemIds, false);
 
     if (posts.length < itemIds.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
-        message: `Items parameter is invalid`,
-      });
+      throw new ValidationException('Items parameter is invalid');
     }
 
     const seriesIdsList = posts.map((post) => post.postSeries);
@@ -109,7 +110,7 @@ export class SeriesAppService {
 
     for (const post of posts) {
       if (post.groups.length === 0) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+        throw new ContentEmptyGroupException();
       }
 
       const isValid = post.groups.some((group) => seriesGroupIds.includes(group.groupId));
@@ -118,11 +119,11 @@ export class SeriesAppService {
       }
     }
     if (invalidItems.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You can not add item: ${invalidItems.map((e) => e.title).join(', ')}`,
-        errors: { seriesDenied: invalidItems.map((e) => e.id) },
-      });
+      throw new DomainForbiddenException(
+        `You can not add item: ${invalidItems.map((e) => e.title).join(', ')}`,
+        null,
+        { seriesDenied: invalidItems.map((e) => e.id) }
+      );
     }
 
     await this._seriesService.addItems(series[0], itemIds);
@@ -140,7 +141,7 @@ export class SeriesAppService {
     const series = await this._seriesService.findSeriesById(seriesId, {
       withGroups: true,
     });
-    if (!series) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    if (!series) throw new SeriesNotFoundException();
     await this._authorityService.checkPostOwner(series, user.id);
     await this._authorityService.checkCanUpdateSeries(
       user,

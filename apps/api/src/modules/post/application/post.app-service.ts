@@ -1,9 +1,7 @@
 import { uniq } from 'lodash';
-import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
-import { ExceptionHelper } from '../../../common/helpers';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../../database/models/post.model';
 import { PostHasBeenDeletedEvent } from '../../../events/post';
@@ -20,15 +18,18 @@ import {
   UserDto,
 } from '../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
-import { ContentNotFoundException } from '../../v2-post/domain/exception/content-not-found.exception';
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
-import { AudienceNoBelongContentException } from '../../v2-post/domain/exception/audience-no-belong-content.exception';
 import { InjectModel } from '@nestjs/sequelize';
-import { ContentPinNotFoundException } from '../../v2-post/domain/exception/content-pin-not-found.exception';
-import { ContentPinLackException } from '../../v2-post/domain/exception/content-pin-lack.exception';
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { RULES } from '../../v2-post/constant';
-import { PostLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import {
+  AudienceNoBelongContentException,
+  ContentNotFoundException,
+  ContentPinLackException,
+  ContentPinNotFoundException,
+  PostInvalidParameterException,
+  PostLimitAttachedSeriesException,
+} from '../../v2-post/domain/exception';
 
 @Injectable()
 export class PostAppService {
@@ -64,7 +65,7 @@ export class PostAppService {
     const posts = await this._postService.getListWithGroupsByIds([postId], false);
 
     if (posts.length === 0) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     await this._authorityService.checkPostOwner(posts[0], user.id);
 
@@ -195,11 +196,7 @@ export class PostAppService {
       }
     }
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER,
-        message: 'Invalid series, tags',
-        errors: seriesTagErrorData,
-      });
+      throw new PostInvalidParameterException();
     }
     return true;
   }
@@ -247,7 +244,7 @@ export class PostAppService {
       (groupId) => !currentGroupIds.includes(groupId)
     );
     if (groupIdsNotBelong.length) {
-      throw new AudienceNoBelongContentException({ groupsDenied: groupIdsNotBelong });
+      throw new AudienceNoBelongContentException(null, { groupsDenied: groupIdsNotBelong });
     }
     await this._authorityService.checkPinPermission(authUser, newGroupIdsPinAndUnpin);
 
@@ -276,11 +273,11 @@ export class PostAppService {
     const currentPostIds = postGroups.map((e) => e.postId);
     const postIdsNotBelong = postIds.filter((postId) => !currentPostIds.includes(postId));
     if (postIdsNotBelong.length) {
-      throw new ContentPinNotFoundException({ postsDenied: postIdsNotBelong });
+      throw new ContentPinNotFoundException(null, { postsDenied: postIdsNotBelong });
     }
     const postsIdsNotFound = currentPostIds.filter((postId) => !postIds.includes(postId));
     if (postsIdsNotFound.length) {
-      throw new ContentPinLackException({ postsLacked: postsIdsNotFound });
+      throw new ContentPinLackException(null, { postsLacked: postsIdsNotFound });
     }
 
     try {

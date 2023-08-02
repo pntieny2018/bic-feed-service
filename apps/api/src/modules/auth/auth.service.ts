@@ -6,8 +6,8 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
+import {} from '../../common/exceptions';
+import { ERRORS } from '../../common/constants';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
@@ -26,7 +26,7 @@ export class AuthService {
       withPermission: true,
     });
     if (!userInfo) {
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+      throw new UnauthorizedException(ERRORS.API_UNAUTHORIZED);
     }
     return userInfo;
   }
@@ -57,7 +57,7 @@ export class AuthService {
     const kid = decodedJwt['header']['kid'];
     const pem = pems[kid];
     if (!pem) {
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+      throw new UnauthorizedException(ERRORS.API_UNAUTHORIZED);
     }
     let payload;
 
@@ -65,13 +65,13 @@ export class AuthService {
       payload = await jwt.verify(token, pem);
     } catch (e) {
       if (e instanceof TokenExpiredError) {
-        throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
+        throw new UnauthorizedException(ERRORS.TOKEN_EXPIRED);
       }
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+      throw new UnauthorizedException(ERRORS.API_UNAUTHORIZED);
     }
 
     if (!payload) {
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+      throw new UnauthorizedException(ERRORS.API_UNAUTHORIZED);
     }
 
     return this.getUser(payload);

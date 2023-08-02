@@ -2,9 +2,10 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import * as Sentry from '@sentry/node';
 import { Response } from 'express';
 import snakecaseKeys from 'snakecase-keys';
-import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
 import { ResponseDto } from '../dto';
-import { LogicException, ValidatorException } from '../exceptions';
+import { ValidatorException } from '../exceptions';
+import { DomainException } from '@beincom/domain';
+import { ERRORS } from '../constants';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -15,7 +16,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     if (exception instanceof ValidatorException) {
       return this.handleValidatorException(exception, response);
-    } else if (exception instanceof LogicException) {
+    } else if (exception instanceof DomainException) {
       return this.handleLogicException(exception, response);
     } else if (exception instanceof HttpException) {
       return this.handleHttpException(exception, response);
@@ -56,7 +57,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   protected handleUnKnowException(exception: Error, response: Response): Response {
     return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
       new ResponseDto({
-        code: HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR,
+        code: ERRORS.API_SERVER_INTERNAL_ERROR,
         meta: {
           message: exception['message'],
           stack: this._getStack(exception),
@@ -78,7 +79,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
     return response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
-        code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
+        code: ERRORS.API_VALIDATION_ERROR,
         meta: {
           message: message,
           errors: exception.getResponse(),
@@ -93,27 +94,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleLogicException(exception: LogicException, response: Response): Response {
+  protected handleLogicException(exception: DomainException, response: Response): Response {
     let status = HttpStatus.BAD_REQUEST;
 
-    switch (exception.id) {
-      case HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED:
-      case HTTP_STATUS_ID.API_UNAUTHORIZED:
+    switch (exception.code) {
+      case ERRORS.TOKEN_EXPIRED:
+      case ERRORS.API_UNAUTHORIZED:
         status = HttpStatus.UNAUTHORIZED;
         break;
-      case HTTP_STATUS_ID.API_FORBIDDEN:
+      case ERRORS.API_FORBIDDEN:
         status = HttpStatus.FORBIDDEN;
         break;
-      case HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR:
+      case ERRORS.API_SERVER_INTERNAL_ERROR:
         status = HttpStatus.INTERNAL_SERVER_ERROR;
         break;
     }
 
     return response.status(status).json(
       new ResponseDto({
-        code: exception.id,
+        code: exception.code,
         meta: {
-          message: HTTP_MESSAGES[exception.id],
+          message: exception.message,
           stack: this._getStack(exception),
         },
       })

@@ -7,9 +7,8 @@ import {
 import { SeriesDto } from '../../dto';
 import { FindSeriesQuery } from './find-series.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ContentNotFoundException } from '../../../domain/exception';
+import { ContentAccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { AccessDeniedException } from '../../../domain/exception/access-denied.exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { SeriesEntity } from '../../../domain/model/content';
@@ -54,7 +53,7 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
     }
 
     if (!authUser && !seriesEntity.isOpen()) {
-      throw new AccessDeniedException();
+      throw new ContentAccessDeniedException();
     }
     const groups = await this._groupAppService.findAllByIds(seriesEntity.get('groupIds'));
     if (authUser) {

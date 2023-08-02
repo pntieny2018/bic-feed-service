@@ -6,7 +6,7 @@ import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/vali
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
-  AccessDeniedException,
+  ContentAccessDeniedException,
   CommentNotFoundException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
@@ -47,7 +47,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
     if (!comment) throw new CommentNotFoundException();
 
-    if (!comment.isOwner(actor.id)) throw new AccessDeniedException();
+    if (!comment.isOwner(actor.id)) throw new ContentAccessDeniedException();
 
     const post = (await this._contentRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },

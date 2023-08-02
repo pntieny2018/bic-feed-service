@@ -4,8 +4,6 @@ import { ArrayHelper } from '../../common/helpers';
 import { Transaction } from 'sequelize';
 import { UserMentionDto } from './dto';
 import { MentionableType } from '../../common/constants';
-import { LogicException } from '../../common/exceptions';
-import { MENTION_ERROR_ID } from './errors/mention.error';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IMention, MentionModel } from '../../database/models/mention.model';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
@@ -18,21 +16,6 @@ export class MentionService {
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MentionModel) private _mentionModel: typeof MentionModel
   ) {}
-
-  /**
-   * Check Valid Mentions
-   * @param groupIds
-   * @param userIds number[]
-   * @throws LogicException
-   */
-  public async checkValid(groupIds: string[], userIds: string[]): Promise<void> {
-    const users = await this._userAppService.findAllByIds(userIds, { withGroupJoined: true });
-    for (const user of users) {
-      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
-        throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
-      }
-    }
-  }
 
   /**
    * Create mentions

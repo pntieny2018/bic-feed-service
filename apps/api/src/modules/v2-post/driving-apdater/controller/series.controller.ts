@@ -27,6 +27,7 @@ import {
 } from '../../application/command/create-series/create-series.command';
 import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
 import {
+  ContentAccessDeniedException,
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
@@ -44,7 +45,6 @@ import {
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
 import { SeriesDto } from '../../application/dto';
-import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
   DeleteSeriesCommand,
@@ -96,7 +96,7 @@ export class SeriesController {
         case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
@@ -139,7 +139,7 @@ export class SeriesController {
         case InvalidResourceImageException:
         case DomainModelException:
           throw new BadRequestException(e);
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:
           throw new ForbiddenException(e);
@@ -192,7 +192,7 @@ export class SeriesController {
           throw new NotFoundException(e);
         case ContentRequireGroupException:
         case ContentNoCRUDPermissionException:
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
@@ -228,7 +228,7 @@ export class SeriesController {
           throw new NotFoundException(e);
         case DomainModelException:
           throw new BadRequestException(e);
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
         case ContentNoCRUDPermissionException:
         case ContentNoCRUDPermissionAtGroupException:
         case ContentNoEditSettingPermissionAtGroupException:

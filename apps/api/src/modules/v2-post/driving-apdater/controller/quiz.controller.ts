@@ -24,7 +24,8 @@ import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
 import {
-  AccessDeniedException,
+  ContentAccessDeniedException,
+  ContentEmptyContentException,
   ContentHasQuizException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNotFoundException,
@@ -32,6 +33,7 @@ import {
   OpenAIException,
   QuizNotFoundException,
   QuizOverTimeException,
+  QuizParticipantNotFinishedException,
   QuizParticipantNotFoundException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -39,7 +41,6 @@ import { CreateQuizCommand } from '../../application/command/create-quiz/create-
 import { QuizDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception';
-import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
 import { GenerateQuizRequestDto } from '../dto/request/generate-quiz.request.dto';
 import { UpdateQuizRequestDto } from '../dto/request/update-quiz.request.dto';
@@ -57,7 +58,6 @@ import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-a
 import { UpdateQuizAnswersRequestDto } from '../dto/request/update-quiz-answer.request.dto';
 import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
 import { QuizParticipantDto } from '../../application/dto/quiz-participant.dto';
-import { QuizParticipantNotFinishedException } from '../../domain/exception/quiz-participant-not-finished.exception';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -124,7 +124,7 @@ export class QuizController {
           throw new NotFoundException(e);
         case QuizNoCRUDPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case ContentEmptyException:
+        case ContentEmptyContentException:
         case OpenAIException:
         case ContentHasQuizException:
         case DomainModelException:
@@ -160,7 +160,7 @@ export class QuizController {
           throw new NotFoundException(e);
         case QuizNoCRUDPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case ContentEmptyException:
+        case ContentEmptyContentException:
         case OpenAIException:
         case DomainModelException:
           throw new BadRequestException(e);
@@ -203,7 +203,7 @@ export class QuizController {
           throw new NotFoundException(e);
         case QuizNoCRUDPermissionAtGroupException:
           throw new ForbiddenException(e);
-        case ContentEmptyException:
+        case ContentEmptyContentException:
         case OpenAIException:
         case DomainModelException:
         case ContentHasQuizException:
@@ -229,7 +229,7 @@ export class QuizController {
         case QuizNotFoundException:
         case ContentNotFoundException:
           throw new NotFoundException(e);
-        case ContentEmptyException:
+        case ContentEmptyContentException:
         case OpenAIException:
         case DomainModelException:
           throw new BadRequestException(e);
@@ -259,7 +259,7 @@ export class QuizController {
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case ContentNoCRUDPermissionAtGroupException:
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
@@ -291,7 +291,7 @@ export class QuizController {
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case ContentNoCRUDPermissionAtGroupException:
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case QuizParticipantNotFinishedException:
         case DomainModelException:
@@ -322,7 +322,7 @@ export class QuizController {
       switch (e.constructor) {
         case QuizParticipantNotFoundException:
           throw new NotFoundException(e);
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case QuizOverTimeException:
         case DomainModelException:

@@ -18,6 +18,8 @@ import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import {
+  ContentAccessDeniedException,
+  ContentEmptyContentException,
   ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
@@ -25,6 +27,7 @@ import {
   ContentNotFoundException,
   ContentRequireGroupException,
   PostLimitAttachedSeriesException,
+  TagSeriesInvalidException,
 } from '../../domain/exception';
 import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
@@ -34,10 +37,6 @@ import { plainToInstance } from 'class-transformer';
 import { PublishPostCommand } from '../../application/command/publish-post/publish-post.command';
 import { PostDto } from '../../application/dto';
 import { Request } from 'express';
-import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
-import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
-import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
-import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
 import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
 import { PostStatus } from '../../../../database/models/post.model';
@@ -46,6 +45,7 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transform
 import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
 import { UpdatePostRequestDto } from '../dto/request/update-post.request.dto';
+import { UserNoBelongGroupException } from '../../domain/exception/external.exception';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -130,12 +130,12 @@ export class PostController {
           throw new NotFoundException(e);
         case ContentNoEditSettingPermissionException:
         case ContentNoCRUDPermissionException:
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case PostLimitAttachedSeriesException:
         case DomainModelException:
         case UserNoBelongGroupException:
-        case ContentEmptyException:
+        case ContentEmptyContentException:
         case ContentEmptyGroupException:
         case TagSeriesInvalidException:
         case ContentNoPublishYetException:
@@ -189,12 +189,12 @@ export class PostController {
           throw new NotFoundException(e);
         case ContentNoEditSettingPermissionException:
         case ContentNoCRUDPermissionException:
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case PostLimitAttachedSeriesException:
         case DomainModelException:
         case UserNoBelongGroupException:
-        case ContentEmptyException:
+        case ContentEmptyContentException:
         case ContentEmptyGroupException:
         case TagSeriesInvalidException:
           throw new BadRequestException(e);
@@ -250,7 +250,7 @@ export class PostController {
           throw new NotFoundException(e);
         case ContentRequireGroupException:
         case ContentNoCRUDPermissionException:
-        case AccessDeniedException:
+        case ContentAccessDeniedException:
           throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);

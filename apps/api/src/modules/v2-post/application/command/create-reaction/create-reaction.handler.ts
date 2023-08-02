@@ -14,7 +14,7 @@ import {
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface/comment-reaction.repository.interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { ReactionDuplicateException } from '../../../domain/exception/reaction-duplicate.exception';
+import { ReactionDuplicateException } from '../../../domain/exception/reaction.exception';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
 import { ReactionDto } from '../../dto';
 import {

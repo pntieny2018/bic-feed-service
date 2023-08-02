@@ -13,10 +13,8 @@ import {
 } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
-import { LogicException } from '../../common/exceptions';
-import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
+import { ArrayHelper } from '../../common/helpers';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -64,6 +62,10 @@ import { isBoolean } from 'lodash';
 import {
   PostLimitAttachedSeriesException,
   ArticleLimitAttachedSeriesException,
+  ContentEmptyContentException,
+  ContentNotFoundException,
+  ContentAccessDeniedException,
+  ContentEmptyGroupException,
 } from '../v2-post/domain/exception';
 
 @Injectable()
@@ -231,7 +233,7 @@ export class PostService {
     );
 
     if (!post || (post.isHidden === true && post.createdBy !== user?.id)) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
 
     let comments = null;
@@ -553,7 +555,7 @@ export class PostService {
 
   public async getPrivacy(groupIds: string[]): Promise<PostPrivacy> {
     if (groupIds.length === 0) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+      throw new ContentEmptyGroupException();
     }
     const groups = await this.groupAppService.findAllByIds(groupIds);
     let totalPrivate = 0;
@@ -723,7 +725,7 @@ export class PostService {
     const post = await this.postModel.findOne(conditions);
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     return post.toJSON();
   }
@@ -773,10 +775,10 @@ export class PostService {
   public async markRead(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     if (post && post.createdBy === userId) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_NOT_ALLOW);
+      throw new ContentAccessDeniedException();
     }
     const readPost = await this.userMarkReadPostModel.findOne({
       where: {
@@ -943,7 +945,7 @@ export class PostService {
       },
     });
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
   }
 
@@ -985,7 +987,7 @@ export class PostService {
       media?.videos.length === 0 &&
       media?.images.length === 0
     ) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
+      throw new ContentEmptyContentException();
     }
   }
 

@@ -3,8 +3,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
-import { LogicException } from '../../common/exceptions';
 import { ArrayHelper } from '../../common/helpers';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -17,6 +15,7 @@ import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { UserDto } from '../v2-user/application';
+import { ContentNotFoundException } from '../v2-post/domain/exception';
 
 @Injectable()
 export class SeriesService {
@@ -84,7 +83,7 @@ export class SeriesService {
     );
 
     if (!series) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     let comments = null;
     if (getSeriesDto.withComment) {

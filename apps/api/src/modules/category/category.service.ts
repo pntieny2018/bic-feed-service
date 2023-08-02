@@ -4,15 +4,14 @@ import { CreateCategoryDto } from './dto/requests/create-category.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { CategoryModel } from '../../database/models/category.model';
 import { NIL as NIL_UUID } from 'uuid';
-import { ArrayHelper, ExceptionHelper, StringHelper } from '../../common/helpers';
-import { HTTP_STATUS_ID } from '../../common/constants';
+import { ArrayHelper, StringHelper } from '../../common/helpers';
 import { PageDto } from '../../common/dto';
 import { GetCategoryDto } from './dto/requests/get-category.dto';
 import { Op, Transaction } from 'sequelize';
-import { LogicException } from '../../common/exceptions';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { ClassTransformer } from 'class-transformer';
 import { UserDto } from '../v2-user/application';
+import { CategoryInvalidException, CategoryNotAllowException } from '../v2-post/domain/exception';
 
 @Injectable()
 export class CategoryService {
@@ -64,7 +63,7 @@ export class CategoryService {
     createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
     if (createCategoryDto.parentId === NIL_UUID) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_CATEGORY_NOT_ALLOW);
+      throw new CategoryNotAllowException();
     }
 
     const parent = await this._categoryModel.findOne({
@@ -72,7 +71,7 @@ export class CategoryService {
     });
 
     if (!parent) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_CATEGORY_NOT_ALLOW);
+      throw new CategoryNotAllowException();
     }
 
     const createResult = await this._categoryModel.create({
@@ -160,7 +159,7 @@ export class CategoryService {
       },
     });
     if (categoryCount < categoryIds.length) {
-      throw new LogicException(HTTP_STATUS_ID.APP_CATEGORY_INVALID_PARAMETER);
+      throw new CategoryInvalidException();
     }
   }
 

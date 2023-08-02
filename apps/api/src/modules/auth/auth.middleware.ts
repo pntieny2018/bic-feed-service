@@ -1,8 +1,7 @@
 import { Request } from 'express';
 import { AuthService } from './auth.service';
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
+import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import { ERRORS } from '../../common/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -22,7 +21,7 @@ export class AuthMiddleware implements NestMiddleware {
         req.baseUrl.indexOf('posts/') !== -1 &&
         req.baseUrl.indexOf('feeds/timeline') !== -1
       ) {
-        throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+        throw new UnauthorizedException(ERRORS.API_UNAUTHORIZED);
       }
       req.user = token ? await this._authService.login(token) : null;
     }

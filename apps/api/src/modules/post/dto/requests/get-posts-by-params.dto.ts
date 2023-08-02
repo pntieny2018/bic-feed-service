@@ -3,9 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PostStatus } from '../../../../database/models/post.model';
 import { Transform } from 'class-transformer';
 import { PostHelper } from '../../post.helper';
-import { ExceptionHelper } from '../../../../common/helpers';
-import { HTTP_STATUS_ID } from '../../../../common/constants';
 import { IsNotEmpty } from 'class-validator';
+import { PostStatusConflictedException } from '../../../v2-post/domain/exception';
 
 export class GetPostsByParamsDto extends PageOptionsDto {
   @ApiProperty({
@@ -15,7 +14,7 @@ export class GetPostsByParamsDto extends PageOptionsDto {
   @Transform(({ value }) => {
     const status = value.split(',').filter((v) => Object.values(PostStatus).includes(v));
     if (PostHelper.isConflictStatus(status)) {
-      ExceptionHelper.throwBadRequestException(HTTP_STATUS_ID.APP_POST_STATUS_CONFLICTED);
+      throw new PostStatusConflictedException();
     }
     return status;
   })

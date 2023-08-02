@@ -24,7 +24,7 @@ import { DeleteRecentSearchCommand } from '../../aplication/command/delete-recen
 import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';
 import { CreateRecentSearchCommand } from '../../aplication/command/create-recent-search/create-recent-search.command';
 import { CreateRecentSearchDto } from '../../aplication/command/create-recent-search/create-recent-search.dto';
-import { RecentSearchNotFoundException } from '../../exeption/recent-search-not-found.exception';
+import { RecentSearchNotFoundException } from '../../domain/exception';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')
