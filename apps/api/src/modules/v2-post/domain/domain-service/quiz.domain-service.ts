@@ -19,7 +19,11 @@ import { EventBus } from '@nestjs/cqrs';
 import { QuizCreatedEvent } from '../event/quiz-created.event';
 import { QuizGeneratedEvent } from '../event/quiz-generated.event';
 import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
-import { ContentHasQuizException, QuizNotFoundException } from '../exception';
+import {
+  ContentHasQuizException,
+  QuizNotFoundException,
+  QuizParticipantNotFoundException,
+} from '../exception';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
@@ -31,6 +35,7 @@ import {
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
+
   public constructor(
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
@@ -138,6 +143,9 @@ export class QuizDomainService implements IQuizDomainService {
   ): Promise<QuizParticipantEntity> {
     const quizParticipant = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
     try {
+      if (quizEntity.isRandomQuestion()) {
+        quizParticipant.shuffleQuestions();
+      }
       await this._quizParticipantRepository.create(quizParticipant);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
@@ -239,5 +247,25 @@ export class QuizDomainService implements IQuizDomainService {
     }
     await this._quizRepository.update(cloneQuizEntity);
     this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
+  }
+
+  public async getQuizParticipant(
+    quizParticipantId: string,
+    authUserId: string
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipantEntity = await this._quizParticipantRepository.findOne(quizParticipantId);
+    if (!quizParticipantEntity) {
+      throw new QuizParticipantNotFoundException();
+    }
+
+    if (!quizParticipantEntity.isOwner(authUserId)) {
+      throw new QuizParticipantNotFoundException();
+    }
+
+    if (quizParticipantEntity.isOverLimitTime() || quizParticipantEntity.isFinished()) {
+      quizParticipantEntity.hideResult();
+    }
+
+    return quizParticipantEntity;
   }
 }

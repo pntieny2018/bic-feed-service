@@ -94,7 +94,6 @@ import { MigratePublishedTimeContentCommand } from './migrate-published-time-con
     ExportUserContentDataCommand,
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
-    ExportUserContentDataCommand,
   ],
 })
 export class CommandModule {}

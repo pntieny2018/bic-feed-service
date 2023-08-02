@@ -14,7 +14,7 @@ class QuestionNotIncludeCorrectAnswerDto {
 export class QuizParticipantDto {
   public id: string;
   public quizId: string;
-  public content: {
+  public content?: {
     id: string;
     type: string;
   };
