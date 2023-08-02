@@ -236,6 +236,22 @@ export class ContentBinding implements IContentBinding {
       articleEntity.getId(),
     ]);
 
+    let quizHighestScore = null;
+    let quizDoing = null;
+    if (dataBinding?.authUser) {
+      const quizHighestScoreMapper =
+        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+          [articleEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizHighestScore = quizHighestScoreMapper.get(articleEntity.get('id')) ?? null;
+      const quizDoingMapper =
+        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+          [articleEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizDoing = quizDoingMapper.get(articleEntity.get('id')) ?? null;
+    }
     return new ArticleDto({
       id: articleEntity.get('id'),
       audience,
@@ -286,6 +302,17 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
     });
   }
 

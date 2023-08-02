@@ -6,7 +6,6 @@ import {
   IQuizParticipant,
   QuizParticipantModel,
 } from '../../../../database/models/quiz-participant.model';
-import { UserDto } from '../../../v2-user/application';
 import { Sequelize } from 'sequelize-typescript';
 import { Op } from 'sequelize';
 

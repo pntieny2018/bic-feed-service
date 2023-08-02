@@ -76,6 +76,7 @@ export class FindTimelineGroupHandler
         type,
       },
       include: {
+        mustIncludeGroup: true,
         shouldIncludeImportant: {
           userId: authUser?.id,
         },
@@ -84,7 +85,7 @@ export class FindTimelineGroupHandler
       order: OrderEnum.DESC,
       orderOptions: {
         isImportantFirst: isImportant,
-        isPublished: true,
+        isPublishedByDesc: true,
       },
       before,
       after,

@@ -1,6 +1,7 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { Question } from '../quiz';
 import { v4 } from 'uuid';
+import { RULES } from '../../../constant';
 
 export type QuizParticipantProps = {
   id: string;
@@ -41,7 +42,11 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
   }
 
   public isOverLimitTime(): boolean {
-    return this._props.startedAt.getTime() + this._props.timeLimit < new Date().getTime();
+    return (
+      this._props.startedAt.getTime() +
+        (this._props.timeLimit + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000 <
+      new Date().getTime()
+    );
   }
 
   public isFinished(): boolean {
@@ -69,8 +74,6 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
   ): void {
     const now = new Date();
     const correctAnswers = this.getCorrectAnswersFromSnapshot();
-
-    console.log('correctAnswers=', correctAnswers);
     this._props.answers = answers.map((answer) => ({
       id: answer?.id || v4(),
       questionId: answer.questionId,
@@ -84,7 +87,6 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     this._props.score = (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100;
     this._props.totalAnswers = answers.length;
     this._props.totalCorrectAnswers = totalCorrectAnswers;
-    console.log('this._props=', this._props);
   }
 
   public setFinishedAt(): void {
