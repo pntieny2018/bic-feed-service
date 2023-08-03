@@ -42,7 +42,7 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     //
   }
 
-  public isOverLimitTime(): boolean {
+  public isOverTimeLimit(): boolean {
     return (
       this._props.startedAt.getTime() +
         (this._props.timeLimit + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000 <
@@ -85,7 +85,9 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     }));
 
     const totalCorrectAnswers = this._props.answers.filter((answer) => answer.isCorrect).length;
-    this._props.score = (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100;
+    this._props.score = Math.round(
+      (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100
+    );
     this._props.totalAnswers = answers.length;
     this._props.totalCorrectAnswers = totalCorrectAnswers;
   }

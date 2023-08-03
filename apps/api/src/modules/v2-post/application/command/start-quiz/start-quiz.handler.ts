@@ -43,7 +43,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
 
     const hasQuizDoing = quizParticipantEntities.some(
       (quizParticipantEntity) =>
-        !quizParticipantEntity.isOverLimitTime() && !quizParticipantEntity.isFinished()
+        !quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()
     );
 
     if (hasQuizDoing) {
