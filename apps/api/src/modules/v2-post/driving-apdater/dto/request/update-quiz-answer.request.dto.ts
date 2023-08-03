@@ -30,7 +30,6 @@ class AnswerUser {
 export class UpdateQuizAnswersRequestDto {
   @ApiProperty({ type: Date })
   @IsOptional()
-  @IsDateString()
   @Expose({
     name: 'is_finished',
   })
