@@ -3,7 +3,6 @@ import { RULES } from '../../../constant';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { LinkPreviewEntity } from '../link-preview';
 import { TagEntity } from '../tag';
-import { PublishPostDto } from './type/content.dto';
 
 export type PostProps = ContentProps & {
   media: {
@@ -24,8 +23,9 @@ export class PostEntity extends ContentEntity<PostProps> {
     super(props);
   }
 
-  public updateAttribute(data: PublishPostDto): void {
-    const { authUser, content, seriesIds, groupIds, mentionUserIds } = data;
+  public updateAttribute(data: Partial<PostProps>, userId: string): void {
+    const { content, seriesIds, groupIds, mentionUserIds } = data;
+    const authUser = { id: userId };
     super.update({
       authUser,
       groupIds,

@@ -59,6 +59,7 @@ export class AutoSaveArticleHandler implements ICommandHandler<AutoSaveArticleCo
     await this._articleDomainService.autoSave({
       articleEntity,
       newData: command.payload,
+      actor,
     });
   }
 }

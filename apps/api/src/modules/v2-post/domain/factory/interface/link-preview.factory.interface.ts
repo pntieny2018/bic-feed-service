@@ -1,5 +1,12 @@
 import { LinkPreviewEntity, LinkPreviewProps } from '../../model/link-preview';
-import { LinkPreviewDto } from '../../../application/dto';
+
+export type LinkPreviewDto = {
+  url: string;
+  domain: string;
+  image: string;
+  title: string;
+  description: string;
+};
 
 export interface ILinkPreviewFactory {
   createLinkPreview(props: LinkPreviewDto): LinkPreviewEntity;

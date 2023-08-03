@@ -4,7 +4,6 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { isEmpty } from 'lodash';
 import { ReactionEntity } from '../reaction';
-import { UpdateCommentDto } from './type/comment.dto';
 
 export type CommentProps = {
   id: string;
@@ -45,11 +44,11 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     }
   }
 
-  public updateAttribute(data: UpdateCommentDto): void {
-    const { actor, content, mentions, giphyId } = data;
+  public updateAttribute(data: Partial<CommentProps>, userId: string): void {
+    const { content, mentions, giphyId } = data;
     this._props.updatedAt = new Date();
     this._props.edited = true;
-    this._props.updatedBy = actor.id;
+    this._props.updatedBy = userId;
     if (content !== undefined) this._props.content = content;
     if (giphyId !== undefined) this._props.giphyId = giphyId;
     if (mentions && Array.isArray(mentions)) this._props.mentions = mentions;

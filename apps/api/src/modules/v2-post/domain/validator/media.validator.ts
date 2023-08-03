@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserDto } from '../../../v2-user/application';
 import { MediaStatus } from '../../data-type';
-import { ImageDto } from '../model/media/type/media.dto';
-import { IMediaValidator } from './interface';
+import { ImageDto, IMediaValidator } from './interface';
 
 @Injectable()
 export class MediaValidator implements IMediaValidator {

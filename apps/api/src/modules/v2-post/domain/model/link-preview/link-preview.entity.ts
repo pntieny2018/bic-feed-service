@@ -1,7 +1,14 @@
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
-import { LinkPreviewDto } from './type/link-preview.dto';
+
+export type LinkPreviewDto = {
+  url: string;
+  domain: string;
+  image: string;
+  title: string;
+  description: string;
+};
 
 export type LinkPreviewProps = {
   id: string;

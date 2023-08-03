@@ -1,9 +1,30 @@
 import { PostEntity } from '../../model/content';
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
-import { PublishPostDto } from '../../model/content/type/content.dto';
 import { ContentEntity } from '../../model/content';
 import { ArticleEntity } from '../../model/content';
+
+export type PublishPostDto = {
+  id: string;
+  groupIds: string[];
+  authUser: UserDto;
+  content?: string;
+  tagIds?: string[];
+  seriesIds?: string[];
+  mentionUserIds?: string[];
+  linkPreview?: {
+    url: string;
+    domain: string;
+    image: string;
+    title: string;
+    description: string;
+  };
+  media?: {
+    filesIds: string[];
+    imagesIds: string[];
+    videosIds: string[];
+  };
+};
 
 export type PostCreateProps = {
   groups: GroupDto[];

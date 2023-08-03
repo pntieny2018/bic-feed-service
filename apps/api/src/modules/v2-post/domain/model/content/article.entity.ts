@@ -4,7 +4,6 @@ import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
 import { ContentEntity, ContentProps } from './content.entity';
-import { ArticleDto } from './type/content.dto';
 import { PostStatus } from '../../../data-type';
 
 export type ArticleProps = ContentProps & {
@@ -22,15 +21,15 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
     super(props);
   }
 
-  public updateAttribute(data: ArticleDto): void {
-    const { actor, content, series, title, summary, groupIds, wordCount } = data;
-    super.update({ authUser: actor, groupIds });
+  public updateAttribute(data: Partial<ArticleProps>, userId: string): void {
+    const { content, seriesIds, title, summary, groupIds, wordCount } = data;
+    super.update({ authUser: { id: userId }, groupIds });
 
-    if (series) {
+    if (seriesIds) {
       const currentSeries = this._props.seriesIds || [];
-      this._state.attachSeriesIds = difference(series, currentSeries);
-      this._state.detachSeriesIds = difference(currentSeries, series);
-      this._props.seriesIds = series;
+      this._state.attachSeriesIds = difference(seriesIds, currentSeries);
+      this._state.detachSeriesIds = difference(currentSeries, seriesIds);
+      this._props.seriesIds = seriesIds;
     }
 
     if (wordCount) this._props.wordCount = wordCount;

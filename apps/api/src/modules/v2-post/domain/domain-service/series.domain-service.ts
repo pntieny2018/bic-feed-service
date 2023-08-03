@@ -110,7 +110,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       }
     }
 
-    seriesEntity.updateAttribute(newData);
+    seriesEntity.updateAttribute(newData, actor.id);
 
     if (!seriesEntity.isChanged()) return;
 

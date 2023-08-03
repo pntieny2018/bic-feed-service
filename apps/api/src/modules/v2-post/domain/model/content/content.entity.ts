@@ -2,13 +2,18 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { PostSettingAttributes } from './type/content.attributes';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
-import { PostSettingDto } from './type/content.dto';
 import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
+
+export type PostSettingAttributes = {
+  isImportant: boolean;
+  importantExpiredAt?: Date;
+  canReact: boolean;
+  canComment: boolean;
+};
 
 export type ContentProps = {
   id: string;
@@ -239,7 +244,7 @@ export class ContentEntity<
     this._props.communityIds = communityIds;
   }
 
-  public setSetting(setting: PostSettingDto): void {
+  public setSetting(setting: PostSettingAttributes): void {
     let isEnableSetting = false;
     if (
       setting &&

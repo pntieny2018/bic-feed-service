@@ -44,7 +44,6 @@ export const updateCommentProps: UpdateCommentProps = {
   }),
   newData: {
     id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
-    actor: userMock,
     content: 'This is a updated comment',
     media: {
       files: [],
@@ -56,6 +55,7 @@ export const updateCommentProps: UpdateCommentProps = {
   },
   groups: [{ id: '7251dac7-5088-4a33-b900-d1b058edaf99' }].map((item) => new GroupDto(item)),
   mentionUsers: userMentions,
+  actor: userMock,
 };
 
 export const notChangedCommentProps: UpdateCommentProps = {
@@ -80,11 +80,11 @@ export const notChangedCommentProps: UpdateCommentProps = {
   }),
   newData: {
     id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
-    actor: userMock,
     content: 'This is a comment',
     mentions: ['0fa01fde-7c15-4d55-b60a-8e990123bc2e'],
     giphyId: 'EZICHGrSD5QEFCxMiC',
   },
   groups: [{ id: '7251dac7-5088-4a33-b900-d1b058edaf99' }].map((item) => new GroupDto(item)),
   mentionUsers: userMentions,
+  actor: userMock,
 };

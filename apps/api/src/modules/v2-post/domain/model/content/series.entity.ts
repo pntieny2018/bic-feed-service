@@ -1,6 +1,5 @@
 import { ImageEntity } from '../media';
 import { ContentEntity, ContentProps } from './content.entity';
-import { UpdateSeriesDto } from './type/content.dto';
 
 export type SeriesProps = ContentProps & {
   title: string;
@@ -25,10 +24,10 @@ export class SeriesEntity extends ContentEntity<SeriesProps> {
   /**
    * Note: Summary can be empty string
    */
-  public updateAttribute(data: UpdateSeriesDto): void {
-    const { actor, title, summary } = data;
+  public updateAttribute(data: Partial<SeriesProps>, userId: string): void {
+    const { title, summary } = data;
     this._props.updatedAt = new Date();
-    this._props.updatedBy = actor.id;
+    this._props.updatedBy = userId;
 
     if (title) this._props.title = title;
     if (summary !== undefined) this._props.summary = summary;

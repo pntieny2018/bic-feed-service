@@ -1,5 +1,12 @@
-import { LinkPreviewDto } from '../../../application/dto';
 import { LinkPreviewEntity } from '../../model/link-preview';
+
+export type LinkPreviewDto = {
+  url: string;
+  domain: string;
+  image: string;
+  title: string;
+  description: string;
+};
 
 export interface ILinkPreviewDomainService {
   findOrUpsert(data: LinkPreviewDto): Promise<LinkPreviewEntity>;

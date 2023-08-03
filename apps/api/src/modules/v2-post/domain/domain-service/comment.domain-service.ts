@@ -77,7 +77,7 @@ export class CommentDomainService implements ICommentDomainService {
 
   public async update(input: UpdateCommentProps): Promise<void> {
     const { commentEntity, newData, groups, mentionUsers } = input;
-    const { media } = newData;
+    const { media, ...restUpdate } = newData;
 
     if (media) {
       const images = await this._mediaDomainService.getAvailableImages(
@@ -105,7 +105,7 @@ export class CommentDomainService implements ICommentDomainService {
       });
     }
 
-    commentEntity.updateAttribute(newData);
+    commentEntity.updateAttribute(restUpdate, input.actor.id);
 
     if (commentEntity.isEmptyComment()) throw new CommentNotEmptyException();
 
