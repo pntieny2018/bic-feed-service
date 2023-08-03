@@ -2,7 +2,7 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { GetReactionPipe } from '../../../reaction/pipes';
+import { GetReactionPipe } from '../pipes/get-reaction.pipe';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
 import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';

@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { userMock } from '../../mock/user.dto.mock';
 import { FindCategoriesPaginationDto } from '../../../application/query/find-categories/find-categories-pagination.dto';
 import { FindCategoriesPaginationQuery } from '../../../application/query/find-categories/find-categories-pagination.query';
-import { GetCategoryDto } from '../../../../category/dto/requests/get-category.dto';
+import { GetCategoryDto } from '../../../driving-apdater/dto/request/get-category.dto';
 
 describe('CategoryController', () => {
   let controller: CategoryController;
