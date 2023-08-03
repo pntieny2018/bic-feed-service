@@ -1,5 +1,4 @@
-import { PostPrivacy, PostType } from '../../data-type';
-import { PostStatus } from '../../data-type/post-status.enum';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 import { PostProps } from '../../domain/model/content';
 
 export const postProps: PostProps = {

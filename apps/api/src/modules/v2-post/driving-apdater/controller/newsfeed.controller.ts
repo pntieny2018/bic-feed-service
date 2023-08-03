@@ -5,11 +5,8 @@ import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { NewsfeedRequestDto } from '../dto/request';
-import { PageDto } from '../../../../common/dto';
 import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
 import { KafkaService } from '@app/kafka';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import { PostChangedMessagePayload } from '../../application/dto/message';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')

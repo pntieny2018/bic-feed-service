@@ -1,7 +1,6 @@
 import { createUrlFromId } from '../../../giphy/giphy.util';
 import { UserDto } from '../../../v2-user/application';
-import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
-import { FileDto, ImageDto, VideoDto } from '../../application/dto';
+import { CreateCommentDto, FileDto, ImageDto, VideoDto } from '../../application/dto';
 import { CommentEntity } from '../../domain/model/comment';
 import { userMentions, userMock } from './user.dto.mock';
 

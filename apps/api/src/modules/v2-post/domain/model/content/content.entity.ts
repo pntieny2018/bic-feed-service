@@ -1,11 +1,9 @@
-import { PostLang } from '../../../data-type/post-lang.enum';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { PostStatus } from '../../../data-type/post-status.enum';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { PostSettingAttributes } from './attributes/post-setting.entity';
-import { PostPrivacy, PostType } from '../../../data-type';
+import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { PostSettingDto } from '../../../application/dto';

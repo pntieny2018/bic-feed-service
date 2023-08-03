@@ -2,7 +2,7 @@ import { NIL } from 'uuid';
 import { OrderEnum } from '../../../../common/dto';
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { GetListCommentsDto } from '../dto/request/get-list-comments.dto';
+import { GetListCommentsDto } from '../dto/request';
 
 @Injectable()
 export class GetCommentsPipe implements PipeTransform {

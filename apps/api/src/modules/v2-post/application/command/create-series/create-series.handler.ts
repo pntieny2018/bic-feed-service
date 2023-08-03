@@ -1,7 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateSeriesCommand } from './create-series.command';
-import { CreateSeriesDto } from './create-series.dto';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
@@ -21,9 +20,9 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 import { SeriesEntity } from '../../../domain/model/content';
-import { SeriesDto } from '../../dto';
+import { CreateSeriesDto, SeriesDto } from '../../dto';
 import { KafkaService, KAFKA_TOPIC } from '@app/kafka';
-import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
+import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @CommandHandler(CreateSeriesCommand)
 export class CreateSeriesHandler implements ICommandHandler<CreateSeriesCommand, CreateSeriesDto> {

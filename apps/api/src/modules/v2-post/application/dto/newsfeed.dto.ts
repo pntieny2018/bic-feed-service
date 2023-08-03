@@ -1,5 +1,7 @@
-import { IPaginatedInfo, PaginatedResponse } from '../../../../../common/dto/cusor-pagination';
-import { ArticleDto, PostDto, SeriesDto } from '../../dto';
+import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
+import { ArticleDto } from './article.dto';
+import { PostDto } from './post.dto';
+import { SeriesDto } from './series.dto';
 
 export class FindNewsfeedDto extends PaginatedResponse<ArticleDto | PostDto | SeriesDto> {
   public constructor(list: (ArticleDto | PostDto | SeriesDto)[], meta?: IPaginatedInfo) {

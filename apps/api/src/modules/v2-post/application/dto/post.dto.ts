@@ -69,3 +69,16 @@ export class PostSettingDto {
     Object.assign(this, data);
   }
 }
+
+export class CreateDraftPostDto {
+  public id: string;
+  public audience: {
+    groups: GroupDto[];
+  };
+
+  public setting: PostSettingDto;
+
+  public constructor(data: Partial<CreateDraftPostDto>) {
+    Object.assign(this, data);
+  }
+}

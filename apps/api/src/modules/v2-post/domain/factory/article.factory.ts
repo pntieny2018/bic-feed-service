@@ -3,8 +3,7 @@ import { EventPublisher } from '@nestjs/cqrs';
 import { IArticleFactory } from './interface';
 import { ArticleEntity, ArticleProps } from '../model/content/article.entity';
 import { v4 } from 'uuid';
-import { PostType } from '../../data-type';
-import { PostStatus } from '../../data-type/post-status.enum';
+import { PostStatus, PostType } from '../../data-type';
 
 export class ArticleFactory implements IArticleFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;

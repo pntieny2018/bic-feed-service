@@ -8,7 +8,6 @@ import { FindTimelineGroupQuery } from './find-timeline-group.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { PostStatus } from '../../../data-type';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { FindTimelineGroupDto } from './find-timeline-group.dto';
 import { OrderEnum } from '../../../../../common/dto';
 import {
   CONTENT_BINDING_TOKEN,
@@ -18,6 +17,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
+import { FindTimelineGroupDto } from '../../dto/timeline.dto';
 
 @QueryHandler(FindTimelineGroupQuery)
 export class FindTimelineGroupHandler

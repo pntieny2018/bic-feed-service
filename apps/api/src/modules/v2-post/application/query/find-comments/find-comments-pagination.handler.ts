@@ -2,7 +2,6 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
 import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
-import { FindCommentsPaginationDto } from './find-comments-pagination.dto';
 import {
   CONTENT_REPOSITORY_TOKEN,
   FindContentOptions,
@@ -13,6 +12,7 @@ import {
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
 import { ContentNotFoundException } from '../../../domain/exception';
+import { FindCommentsPaginationDto } from '../../dto';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler

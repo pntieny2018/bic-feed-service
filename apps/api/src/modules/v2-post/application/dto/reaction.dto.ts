@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { UserDto } from '../../../v2-user/application';
 import { REACTION_TARGET } from '../../data-type';
 import { IsUUID } from 'class-validator';
+import { IQueryResult } from '@nestjs/cqrs';
 
 export class ReactionDto {
   @ApiProperty()
@@ -48,6 +49,14 @@ export class ReactionListDto {
   public order?: string;
 
   public constructor(data: Partial<ReactionListDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class FindReactionsDto implements IQueryResult {
+  public readonly rows: ReactionDto[];
+  public readonly total: number;
+  public constructor(data: Partial<FindReactionsDto>) {
     Object.assign(this, data);
   }
 }

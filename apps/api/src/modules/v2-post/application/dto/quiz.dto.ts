@@ -1,4 +1,8 @@
 import { QuizGenStatus, QuizStatus } from '../../data-type';
+import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
+import { PostDto } from './post.dto';
+import { ArticleDto } from './article.dto';
+import { SeriesDto } from './series.dto';
 
 export class QuizDto {
   public id: string;
@@ -68,5 +72,11 @@ export class QuestionDto {
   }[];
   public constructor(data: Partial<QuestionDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class FindQuizzesDto extends PaginatedResponse<PostDto | ArticleDto | SeriesDto> {
+  public constructor(list: (PostDto | ArticleDto | SeriesDto)[], meta?: IPaginatedInfo) {
+    super(list, meta);
   }
 }
