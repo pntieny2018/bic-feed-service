@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { RecentSearchType } from '../../recent-search-type.constants';
+import { RecentSearchType } from '../../../data-type';
 
 export class CleanRecentSearchesDto {
   @ApiProperty({

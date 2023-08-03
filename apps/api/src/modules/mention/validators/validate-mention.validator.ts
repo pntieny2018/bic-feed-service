@@ -12,7 +12,6 @@ import {
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../v2-user/application';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -28,9 +27,7 @@ export interface IExtendedValidationArguments extends ValidationArguments {
 export class ValidateMentionConstraint implements ValidatorConstraintInterface {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private _groupAppService: IGroupApplicationService
+    private _userAppService: IUserApplicationService
   ) {}
 
   public async validate(mentions: string[], args?: ValidationArguments): Promise<boolean> {

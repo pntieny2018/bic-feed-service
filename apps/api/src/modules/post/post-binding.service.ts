@@ -1,6 +1,6 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
@@ -40,7 +40,6 @@ export class PostBindingService {
     protected userAppService: IUserApplicationService,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected groupAppService: IGroupApplicationService,
-    @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     protected mentionService: MentionService,
     protected linkPreviewService: LinkPreviewService,
