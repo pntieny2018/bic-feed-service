@@ -1,6 +1,6 @@
 import { ImageEntity } from '../media';
 import { ContentEntity, ContentProps } from './content.entity';
-import { UpdateSeriesCommandPayload } from '../../../application/command/update-series/update-series.command';
+import { UpdateSeriesDto } from './type/content.dto';
 
 export type SeriesProps = ContentProps & {
   title: string;
@@ -25,7 +25,7 @@ export class SeriesEntity extends ContentEntity<SeriesProps> {
   /**
    * Note: Summary can be empty string
    */
-  public updateAttribute(data: UpdateSeriesCommandPayload): void {
+  public updateAttribute(data: UpdateSeriesDto): void {
     const { actor, title, summary } = data;
     this._props.updatedAt = new Date();
     this._props.updatedBy = actor.id;

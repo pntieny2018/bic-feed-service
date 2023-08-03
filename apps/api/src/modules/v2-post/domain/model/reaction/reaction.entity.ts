@@ -1,8 +1,9 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { emoji } from 'node-emoji';
-import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
-import { REACTION_TARGET } from '../../../data-type/reaction.enum';
+import { BIC_EMOJI } from './type/reaction.constant';
+import { REACTION_TARGET } from '../../../data-type';
+
 export type ReactionProps = {
   id: string;
   target: REACTION_TARGET;

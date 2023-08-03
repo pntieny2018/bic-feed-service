@@ -3,9 +3,9 @@ import { RULES } from '../../../constant';
 import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
-import { PostStatus } from '../../../data-type';
 import { ContentEntity, ContentProps } from './content.entity';
-import { ArticlePayload } from '../../domain-service/interface';
+import { ArticleDto } from './type/content.dto';
+import { PostStatus } from '../../../data-type';
 
 export type ArticleProps = ContentProps & {
   title: string;
@@ -22,7 +22,7 @@ export class ArticleEntity extends ContentEntity<ArticleProps> {
     super(props);
   }
 
-  public updateAttribute(data: ArticlePayload): void {
+  public updateAttribute(data: ArticleDto): void {
     const { actor, content, series, title, summary, groupIds, wordCount } = data;
     super.update({ authUser: actor, groupIds });
 

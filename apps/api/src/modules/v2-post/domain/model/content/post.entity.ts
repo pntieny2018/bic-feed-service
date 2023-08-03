@@ -1,9 +1,9 @@
 import { ContentEntity, ContentProps } from './content.entity';
 import { RULES } from '../../../constant';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
 import { LinkPreviewEntity } from '../link-preview';
 import { TagEntity } from '../tag';
+import { PublishPostDto } from './type/content.dto';
 
 export type PostProps = ContentProps & {
   media: {
@@ -24,7 +24,7 @@ export class PostEntity extends ContentEntity<PostProps> {
     super(props);
   }
 
-  public updateAttribute(data: PublishPostCommandPayload): void {
+  public updateAttribute(data: PublishPostDto): void {
     const { authUser, content, seriesIds, groupIds, mentionUserIds } = data;
     super.update({
       authUser,

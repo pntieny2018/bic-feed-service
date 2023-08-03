@@ -2,9 +2,9 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { NIL, validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
 import { isEmpty } from 'lodash';
 import { ReactionEntity } from '../reaction';
+import { UpdateCommentDto } from './type/comment.dto';
 
 export type CommentProps = {
   id: string;
@@ -45,7 +45,7 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     }
   }
 
-  public updateAttribute(data: UpdateCommentCommandPayload): void {
+  public updateAttribute(data: UpdateCommentDto): void {
     const { actor, content, mentions, giphyId } = data;
     this._props.updatedAt = new Date();
     this._props.edited = true;

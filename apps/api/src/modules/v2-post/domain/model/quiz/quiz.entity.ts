@@ -2,8 +2,8 @@ import { RULES } from '../../../constant';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
-import { QuizGenStatus, QuizStatus } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
+import { QuizGenStatus, QuizStatus } from '../../../data-type';
 
 export type Question = {
   id: string;
@@ -14,6 +14,7 @@ export type Question = {
     isCorrect: boolean;
   }[];
 };
+
 export type QuizProps = {
   id: string;
   title: string;

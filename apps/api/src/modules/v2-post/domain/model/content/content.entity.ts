@@ -2,13 +2,13 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { PostSettingAttributes } from './attributes/post-setting.entity';
-import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
+import { PostSettingAttributes } from './type/content.attributes';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
-import { PostSettingDto } from '../../../application/dto';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
+import { PostSettingDto } from './type/content.dto';
+import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
 
 export type ContentProps = {
   id: string;
