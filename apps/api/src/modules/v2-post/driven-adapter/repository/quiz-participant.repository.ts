@@ -8,6 +8,7 @@ import {
 } from '../../../../database/models/quiz-participant.model';
 import { Sequelize } from 'sequelize-typescript';
 import { Op } from 'sequelize';
+import { difference } from 'lodash';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
@@ -67,21 +68,51 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       }
     );
     if (quizParticipant.get('answers') !== undefined) {
-      await this._quizParticipantAnswerModel.destroy({
+      const currentAnswers = await this._quizParticipantAnswerModel.findAll({
         where: {
           quizParticipantId: quizParticipant.get('id'),
         },
       });
-      await this._quizParticipantAnswerModel.bulkCreate(
-        quizParticipant.get('answers').map((answer) => ({
-          id: answer.id,
+      const newAnswerIds = quizParticipant.get('answers').map((answer) => answer.id);
+      const currentAnswerIds = currentAnswers.map((answer) => answer.get('id'));
+      for (const currentAnswer of currentAnswers) {
+        const findAnswer = quizParticipant
+          .get('answers')
+          .find((newAnswer) => newAnswer.id === currentAnswer.get('id'));
+        if (findAnswer && findAnswer.isCorrect !== currentAnswer.get('isCorrect')) {
+          await this._quizParticipantAnswerModel.update(
+            {
+              isCorrect: findAnswer.isCorrect,
+            },
+            {
+              where: {
+                id: findAnswer.id,
+              },
+            }
+          );
+        }
+      }
+
+      await this._quizParticipantAnswerModel.destroy({
+        where: {
           quizParticipantId: quizParticipant.get('id'),
-          questionId: answer.questionId,
-          answerId: answer.answerId,
-          isCorrect: answer.isCorrect,
-          createdAt: answer.createdAt,
-          updatedAt: answer.updatedAt,
-        }))
+          id: difference(currentAnswerIds, newAnswerIds),
+        },
+      });
+
+      await this._quizParticipantAnswerModel.bulkCreate(
+        quizParticipant
+          .get('answers')
+          .filter((answer) => !currentAnswerIds.includes(answer.id))
+          .map((answer) => ({
+            id: answer.id,
+            quizParticipantId: quizParticipant.get('id'),
+            questionId: answer.questionId,
+            answerId: answer.answerId,
+            isCorrect: answer.isCorrect,
+            createdAt: answer.createdAt,
+            updatedAt: answer.updatedAt,
+          }))
       );
     }
   }
