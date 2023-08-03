@@ -32,7 +32,7 @@ export class UpdateQuizAnswerHandler implements ICommandHandler<UpdateQuizAnswer
       throw new QuizParticipantNotFoundException();
     }
 
-    if (quizParticipantEntity.isOverLimitTime()) {
+    if (quizParticipantEntity.isOverTimeLimit()) {
       throw new QuizOverTimeException();
     }
 

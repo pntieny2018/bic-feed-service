@@ -262,7 +262,7 @@ export class QuizDomainService implements IQuizDomainService {
       throw new QuizParticipantNotFoundException();
     }
 
-    if (!quizParticipantEntity.isOverLimitTime() || !quizParticipantEntity.isFinished()) {
+    if (!quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()) {
       quizParticipantEntity.hideResult();
     }
 
