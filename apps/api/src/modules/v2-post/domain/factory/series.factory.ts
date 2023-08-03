@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { BasedSeriesAttribute, ISeriesFactory } from './interface';
-import { SeriesEntity, SeriesProps } from '../model/content/series.entity';
+import { SeriesEntity, SeriesProps } from '../model/content';
 import { v4 } from 'uuid';
 import { PostStatus, PostType } from '../../data-type';
 

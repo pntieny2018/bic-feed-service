@@ -2,8 +2,8 @@ import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { ILinkPreviewFactory } from './interface/link-preview.factory.interface';
-import { LinkPreviewDto } from '../../application/dto';
 import { LinkPreviewEntity, LinkPreviewProps } from '../model/link-preview';
+import { LinkPreviewDto } from '../model/link-preview/type/link-preview.dto';
 
 export class LinkPreviewFactory implements ILinkPreviewFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;

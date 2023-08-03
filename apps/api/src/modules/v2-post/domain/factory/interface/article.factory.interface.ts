@@ -1,5 +1,4 @@
-import { ArticleEntity, ArticleProps } from '../../model/content/article.entity';
-import { PostEntity } from '../../model/content';
+import { ArticleEntity, ArticleProps } from '../../model/content';
 
 export interface IArticleFactory {
   createArticle(props: { groupIds?: string[]; userId: string }): ArticleEntity;

@@ -1,9 +1,9 @@
 import { PostEntity } from '../../model/content';
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
-import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
-import { ContentEntity } from '../../model/content/content.entity';
-import { ArticleEntity } from '../../model/content/article.entity';
+import { PublishPostDto } from '../../model/content/type/content.dto';
+import { ContentEntity } from '../../model/content';
+import { ArticleEntity } from '../../model/content';
 
 export type PostCreateProps = {
   groups: GroupDto[];
@@ -17,7 +17,7 @@ export type ArticleCreateProps = {
 
 export type PostPublishProps = {
   postEntity: PostEntity;
-  newData: PublishPostCommandPayload & {
+  newData: PublishPostDto & {
     groups?: GroupDto[];
     mentionUsers: UserDto[];
   };

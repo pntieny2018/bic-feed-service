@@ -1,8 +1,8 @@
-import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
-import { CommentEntity } from '../../model/comment/comment.entity';
+import { CommentEntity } from '../../model/comment';
+import { UpdateCommentDto } from '../../model/comment/type/comment.dto';
 
 export interface ICommentValidator {
-  getUpdateMasks(payload: UpdateCommentCommandPayload, comment: CommentEntity): string[];
+  getUpdateMasks(payload: UpdateCommentDto, comment: CommentEntity): string[];
 }
 
 export const COMMENT_VALIDATOR_TOKEN = 'COMMENT_VALIDATOR_TOKEN';

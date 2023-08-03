@@ -3,8 +3,8 @@ import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { IQuizFactory } from './interface/quiz.factory.interface';
 import { QuizEntity, QuizProps } from '../model/quiz';
-import { QuizCreateProps } from '../domain-service/interface/quiz.domain-service.interface';
-import { QuizGenStatus, QuizStatus } from '../../data-type/quiz.enum';
+import { QuizCreateProps } from '../domain-service/interface';
+import { QuizGenStatus, QuizStatus } from '../../data-type';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 import { RULES } from '../../constant';
 

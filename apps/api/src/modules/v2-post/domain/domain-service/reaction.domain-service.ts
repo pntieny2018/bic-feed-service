@@ -1,18 +1,21 @@
-import { ReactionEntity } from '../../model/reaction';
+import { ReactionEntity } from '../model/reaction';
 import { Inject, Logger } from '@nestjs/common';
-import { IReactionDomainService, ReactionCreateProps } from './reaction.domain-service.interface';
+import {
+  IReactionDomainService,
+  ReactionCreateProps,
+} from './interface/reaction.domain-service.interface';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
-} from '../../factory/interface/reaction.factory.interface';
+} from '../factory/interface/reaction.factory.interface';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
   IPostReactionRepository,
   POST_REACTION_REPOSITORY_TOKEN,
-} from '../../repositoty-interface';
-import { DatabaseException } from '../../../../../common/exceptions/database.exception';
-import { REACTION_TARGET } from '../../../data-type/reaction.enum';
+} from '../repositoty-interface';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { REACTION_TARGET } from '../../data-type';
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
 

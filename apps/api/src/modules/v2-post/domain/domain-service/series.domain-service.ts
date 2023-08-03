@@ -4,7 +4,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
 import { CreateSeriesProps, UpdateSeriesProps, ISeriesDomainService } from './interface';
-import { SeriesEntity } from '../model/content/series.entity';
+import { SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';

@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { CommentEntity, CommentProps } from '../model/comment';
-import { BasedCommentAttribute, ICommentFactory } from './interface/comment.factory.interface';
+import { BasedCommentAttribute, ICommentFactory } from './interface';
 
 @Injectable()
 export class CommentFactory implements ICommentFactory {

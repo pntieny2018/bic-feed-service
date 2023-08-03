@@ -1,14 +1,14 @@
-import { GroupDto } from '../../../../v2-group/application/group.dto';
-import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
-import { CreateCommentProps } from '../../factory/interface/comment.factory.interface';
+import { GroupDto } from '../../../../v2-group/application';
+import { CreateCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
-import { UserDto } from '../../../../v2-user/application/user.dto';
+import { UserDto } from '../../../../v2-user/application';
+import { UpdateCommentDto } from '../../model/comment/type/comment.dto';
 
 export type UpdateCommentProps = {
   commentEntity: CommentEntity;
   groups: GroupDto[];
   mentionUsers: UserDto[];
-  newData: UpdateCommentCommandPayload;
+  newData: UpdateCommentDto;
 };
 
 export interface ICommentDomainService {

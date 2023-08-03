@@ -12,7 +12,7 @@ import { ReactionFactory } from '../domain/factory/interface/reaction.factory';
 import { REACTION_FACTORY_TOKEN } from '../domain/factory/interface/reaction.factory.interface';
 import { REACTION_QUERY_TOKEN } from '../domain/query-interface/reaction.query.interface';
 import { FindReactionsHandler } from '../application/query/find-reactions/find-reactions.handler';
-import { ReactionDomainService } from '../domain/domain-service/interface/reaction.domain-service';
+import { ReactionDomainService } from '../domain/domain-service/reaction.domain-service';
 
 export const reactionProvider = [
   {

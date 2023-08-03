@@ -1,4 +1,4 @@
-import { SeriesEntity, SeriesProps } from '../../model/content/series.entity';
+import { SeriesEntity, SeriesProps } from '../../model/content';
 
 export type BasedSeriesAttribute = {
   userId: string;

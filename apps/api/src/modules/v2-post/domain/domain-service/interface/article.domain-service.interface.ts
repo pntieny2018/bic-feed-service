@@ -1,5 +1,5 @@
 import { ArticleEntity } from '../../model/content';
-import { MediaDto } from '../../../driving-apdater/dto/request';
+import { MediaDto } from '../../model/content/type/content.dto';
 import { UserDto } from '../../../../v2-user/application/user.dto';
 
 export type ArticlePayload = {
