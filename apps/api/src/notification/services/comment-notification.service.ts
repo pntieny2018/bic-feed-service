@@ -6,7 +6,7 @@ import { CommentDissociationService } from '../dissociations';
 import { IComment } from '../../database/models/comment.model';
 import { PostService } from '../../modules/post/post.service';
 import { NotificationService } from '../notification.service';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
 import { ReportContentModel } from '../../database/models/report-content.model';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
@@ -18,9 +18,7 @@ import { CommentEntity } from '../../modules/v2-post/domain/model/comment';
 @Injectable()
 export class CommentNotificationService {
   public constructor(
-    @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
-    @Inject(forwardRef(() => CommentService))
     private readonly _commentService: CommentService,
     private readonly _notificationService: NotificationService,
     private _commentActivityService: CommentActivityService,
