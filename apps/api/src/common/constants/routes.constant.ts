@@ -110,5 +110,17 @@ export const ROUTES = {
       PATH: '/quiz-participant/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    ADD_QUIZ_QUESTION: {
+      PATH: '/quizzes/:id/questions',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    UPDATE_QUIZ_QUESTION: {
+      PATH: '/quizzes/:id/questions/:questionId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    DELETE_QUIZ_QUESTION: {
+      PATH: '/quizzes/:id/questions/questionId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
 };

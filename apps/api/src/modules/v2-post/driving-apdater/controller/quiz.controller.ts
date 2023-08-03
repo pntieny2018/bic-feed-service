@@ -269,6 +269,31 @@ export class QuizController {
     }
   }
 
+  @ApiOperation({ summary: 'Add quiz question' })
+  @Post(ROUTES.QUIZ.ADD_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.ADD_QUIZ_QUESTION.VERSIONS)
+  public async addQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizParticipantDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindQuizParticipantQuery({ authUser, quizParticipantId: id })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+        case QuizParticipantNotFoundException:
+          throw new NotFoundException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
   @ApiOperation({ summary: 'Start a quiz' })
   @ApiOkResponse({
     type: String,
