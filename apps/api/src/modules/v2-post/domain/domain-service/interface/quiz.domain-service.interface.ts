@@ -1,11 +1,20 @@
 import { QuizEntity } from '../../model/quiz';
 import { OrderEnum } from '../../../../../common/dto';
 import { UserDto } from '../../../../v2-user/application';
-import { QuestionDto } from '../../../application/dto/question.dto';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
+import { QuizStatus } from '../../../data-type';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { PostType } from '../../../data-type';
 import { QuizParticipantEntity } from '../../model/quiz-participant';
+
+type QuestionPayload = {
+  id: string;
+  content: string;
+  answers: {
+    id: string;
+    content: string;
+    isCorrect: boolean;
+  }[];
+};
 
 export type QuizCreateProps = {
   contentId: string;
@@ -31,7 +40,7 @@ export type QuizUpdateProps = {
   quizId: string;
   numberOfQuestions?: number;
   numberOfAnswers?: number;
-  questions?: QuestionDto[];
+  questions?: QuestionPayload[];
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;

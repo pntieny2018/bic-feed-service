@@ -5,7 +5,6 @@ import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { CreateCommentCommand } from './create-comment.command';
-import { CreateCommentDto } from './create-comment.dto';
 import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import { NIL } from 'uuid';
@@ -15,7 +14,7 @@ import {
   ContentNoCommentPermissionException,
 } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
-import { ImageDto, FileDto, VideoDto } from '../../dto';
+import { ImageDto, FileDto, VideoDto, CreateCommentDto } from '../../dto';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,

@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../common/helpers';
-import { TagEntity, TagProps } from '../model/tag';
+import { TagEntity, TagAttributes } from '../model/tag';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { CreateTagProps, ITagFactory } from './interface';
@@ -26,7 +26,7 @@ export class TagFactory implements ITagFactory {
     return this._eventPublisher.mergeObjectContext(tagEntity);
   }
 
-  public reconstitute(properties: TagProps): TagEntity {
+  public reconstitute(properties: TagAttributes): TagEntity {
     return new TagEntity(properties);
   }
 }

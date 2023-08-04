@@ -4,14 +4,13 @@ import {
   ICommentDomainService,
   COMMENT_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { ReplyCommentDto } from './reply-comment.dto';
 import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
-import { ImageDto, FileDto, VideoDto } from '../../dto';
+import { ImageDto, FileDto, VideoDto, ReplyCommentDto } from '../../dto';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
   ContentNotFoundException,

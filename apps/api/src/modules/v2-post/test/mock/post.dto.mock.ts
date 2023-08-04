@@ -1,7 +1,6 @@
 import { PostDto } from '../../application/dto';
 import { GroupPrivacy } from '../../../v2-group/data-type';
-import { PostStatus } from '../../data-type/post-status.enum';
-import { PostPrivacy, PostType } from '../../data-type';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 
 export const postMock: PostDto = {
   id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',

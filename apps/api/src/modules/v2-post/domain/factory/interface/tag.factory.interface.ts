@@ -1,4 +1,4 @@
-import { TagEntity, TagProps } from '../../model/tag';
+import { TagEntity, TagAttributes } from '../../model/tag';
 
 export type CreateTagProps = Readonly<{
   name: string;
@@ -8,6 +8,6 @@ export type CreateTagProps = Readonly<{
 export interface ITagFactory {
   create(props: CreateTagProps): TagEntity;
 
-  reconstitute(props: TagProps): TagEntity;
+  reconstitute(props: TagAttributes): TagEntity;
 }
 export const TAG_FACTORY_TOKEN = 'TAG_FACTORY_TOKEN';

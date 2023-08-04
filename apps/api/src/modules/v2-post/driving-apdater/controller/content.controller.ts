@@ -7,11 +7,14 @@ import { UserDto } from '../../../v2-user/application';
 import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
-import { GetDraftContentsRequestDto, ValidateSeriesTagDto } from '../dto/request';
-import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
+import {
+  GetDraftContentsRequestDto,
+  PostSettingRequestDto,
+  ValidateSeriesTagDto,
+} from '../dto/request';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
-import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
+import { FindDraftContentsDto } from '../../application/dto/content.dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')

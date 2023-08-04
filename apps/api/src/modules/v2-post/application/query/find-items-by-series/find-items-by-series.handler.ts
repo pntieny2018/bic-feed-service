@@ -4,8 +4,8 @@ import { FindItemsBySeriesQuery } from './find-items-by-series.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { UserDto } from '../../../../v2-user/application';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { FindItemsBySeriesDto } from './find-items-by-series.dto';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { FindItemsBySeriesDto } from '../../dto';
 
 @QueryHandler(FindItemsBySeriesQuery)
 export class FindItemsBySeriesHandler

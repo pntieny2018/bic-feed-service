@@ -19,7 +19,7 @@ import {
   notChangedCommentProps,
   updateCommentProps,
 } from '../../mock/comment.props.mock';
-import { CommentEntity } from '../../../domain/model/comment';
+import { CommentAttributes, CommentEntity } from '../../../domain/model/comment';
 import { v4 } from 'uuid';
 import { imageEntites, invalidImageComment } from '../../mock/media.entity.mock';
 import { cloneDeep, omit } from 'lodash';
@@ -209,7 +209,7 @@ describe('CommentDomainService', () => {
         images: imageEntites,
         videos: props.commentEntity.get('media').videos,
       });
-      commentEntityWithMedia.updateAttribute(props.newData);
+      commentEntityWithMedia.updateAttribute(props.newData as unknown as CommentAttributes, props.actor.id);
       await domainService.update(props);
 
       expect(mentionValidator.validateMentionUsers).toBeCalledWith(

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
 import {
@@ -24,8 +24,6 @@ import { DomainForbiddenException } from '../../../common/exceptions';
 
 @Injectable()
 export class SeriesAppService {
-  private _logger = new Logger(SeriesAppService.name);
-
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,

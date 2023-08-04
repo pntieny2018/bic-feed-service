@@ -1,5 +1,4 @@
-import { PostStatus } from '../../data-type/post-status.enum';
-import { PostPrivacy, PostType } from '../../data-type';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 import { IPost } from '../../../../database/models/post.model';
 
 export const postRecordMock: IPost = {

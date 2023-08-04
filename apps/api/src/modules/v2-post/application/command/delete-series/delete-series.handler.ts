@@ -6,8 +6,8 @@ import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/vali
 import { ContentAccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
 import { SeriesEntity } from '../../../domain/model/content';
 import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
-import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 import { UserDto } from '../../../../v2-user/application';
+import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @CommandHandler(DeleteSeriesCommand)
 export class DeleteSeriesHandler implements ICommandHandler<DeleteSeriesCommand, void> {

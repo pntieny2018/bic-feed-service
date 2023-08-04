@@ -3,11 +3,10 @@ import { RULES } from '../../../constant';
 import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
+import { ContentEntity, ContentAttributes } from './content.entity';
 import { PostStatus } from '../../../data-type';
-import { ContentEntity, ContentProps } from './content.entity';
-import { ArticlePayload } from '../../domain-service/interface';
 
-export type ArticleProps = ContentProps & {
+export type ArticleAttributes = ContentAttributes & {
   title: string;
   summary: string;
   content: string;
@@ -17,20 +16,20 @@ export type ArticleProps = ContentProps & {
   tags: TagEntity[];
 };
 
-export class ArticleEntity extends ContentEntity<ArticleProps> {
-  public constructor(props: ArticleProps) {
+export class ArticleEntity extends ContentEntity<ArticleAttributes> {
+  public constructor(props: ArticleAttributes) {
     super(props);
   }
 
-  public updateAttribute(data: ArticlePayload): void {
-    const { actor, content, series, title, summary, groupIds, wordCount } = data;
-    super.update({ authUser: actor, groupIds });
+  public updateAttribute(data: Partial<ArticleAttributes>, userId: string): void {
+    const { content, seriesIds, title, summary, groupIds, wordCount } = data;
+    super.update({ authUser: { id: userId }, groupIds });
 
-    if (series) {
+    if (seriesIds) {
       const currentSeries = this._props.seriesIds || [];
-      this._state.attachSeriesIds = difference(series, currentSeries);
-      this._state.detachSeriesIds = difference(currentSeries, series);
-      this._props.seriesIds = series;
+      this._state.attachSeriesIds = difference(seriesIds, currentSeries);
+      this._state.detachSeriesIds = difference(currentSeries, seriesIds);
+      this._props.seriesIds = seriesIds;
     }
 
     if (wordCount) this._props.wordCount = wordCount;

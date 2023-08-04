@@ -1,45 +1,37 @@
 import { ArticleEntity } from '../../model/content';
-import { MediaDto } from '../../../driving-apdater/dto/request';
-import { UserDto } from '../../../../v2-user/application/user.dto';
+import { UserDto } from '../../../../v2-user/application';
 
 export type ArticlePayload = {
   id: string;
-
-  actor: UserDto;
-
   title?: string;
-
   summary?: string;
-
   content?: string;
-
   categories?: string[];
-
   series?: string[];
-
   tags?: string[];
-
   groupIds?: string[];
-
-  coverMedia?: MediaDto;
-
+  coverMedia?: {
+    id: string;
+  };
   wordCount?: number;
-
   scheduledAt?: Date;
 };
 
 export type UpdateArticleProps = {
   articleEntity: ArticleEntity;
   newData: ArticlePayload;
+  actor: UserDto;
 };
 
 export type PublishArticleProps = {
   articleEntity: ArticleEntity;
   newData: ArticlePayload;
+  actor: UserDto;
 };
 
 export type ScheduleArticleProps = {
   payload: ArticlePayload;
+  actor: UserDto;
 };
 
 export interface IArticleDomainService {

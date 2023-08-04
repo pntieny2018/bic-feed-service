@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
 import { ILinkPreview, LinkPreviewModel } from '../../database/models/link-preview.model';
 import { LinkPreviewDto } from './dto/link-preview.dto';
 
@@ -29,16 +28,6 @@ export class LinkPreviewService {
     } catch (error) {
       this._logger.error(JSON.stringify(error?.stack));
       throw error;
-    }
-  }
-
-  public async bindToPosts(posts: any[]): Promise<void> {
-    const linkPreviewList = await this._linkPreviewModel.findAll({
-      where: { id: { [Op.in]: posts.map((e) => e.linkPreviewId) } },
-    });
-
-    for (const post of posts) {
-      post.linkPreview = linkPreviewList.find((e) => e.id === post.linkPreviewId);
     }
   }
 }

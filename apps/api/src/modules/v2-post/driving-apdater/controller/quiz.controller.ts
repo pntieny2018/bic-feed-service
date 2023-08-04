@@ -15,30 +15,29 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance, plainToInstance } from 'class-transformer';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
-import { CreateQuizRequestDto } from '../dto/request/create-quiz.request.dto';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
-import { QuizDto } from '../../application/dto';
+import { FindQuizzesDto, QuizDto, QuizParticipantDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
-import { GenerateQuizRequestDto } from '../dto/request/generate-quiz.request.dto';
-import { UpdateQuizRequestDto } from '../dto/request/update-quiz.request.dto';
 import { UpdateQuizCommand } from '../../application/command/update-quiz/update-quiz.command';
-import { FindQuizzesDto } from '../../application/query/find-quizzes/find-quizzes.dto';
 import { FindQuizzesQuery } from '../../application/query/find-quizzes/find-quizzes.query';
 import { KafkaService } from '@app/kafka';
 import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
 import { Request } from 'express';
 import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
-import { GetQuizzesRequestDto } from '../dto/request';
+import {
+  CreateQuizRequestDto,
+  GenerateQuizRequestDto,
+  GetQuizzesRequestDto,
+  UpdateQuizAnswersRequestDto,
+  UpdateQuizRequestDto,
+} from '../dto/request';
 import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
 import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
-import { UpdateQuizAnswersRequestDto } from '../dto/request/update-quiz-answer.request.dto';
 import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
-import { QuizParticipantDto } from '../../application/dto/quiz-participant.dto';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -71,7 +70,7 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Create new quiz' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: QuizDto,
     description: 'Create quiz successfully',
   })
   @ResponseMessages({

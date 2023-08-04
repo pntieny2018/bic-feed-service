@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, FindOptions, Includeable, Op, WhereOptions } from 'sequelize';
@@ -62,11 +62,9 @@ export class ArticleService {
     @Inject(GROUP_APPLICATION_TOKEN)
     protected groupAppService: IGroupApplicationService,
     protected mentionService: MentionService,
-    @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
     protected readonly sentryService: SentryService,
     protected readonly postBindingService: PostBindingService,
-    @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _linkPreviewService: LinkPreviewService,
     protected readonly tagService: TagService,

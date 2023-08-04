@@ -1,9 +1,8 @@
 import { MediaModule } from '../media';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MentionModule } from '../mention';
 import { CommentModule } from '../comment';
 import { AuthorityModule } from '../authority';
-import { ReactionModule } from '../reaction';
 import { ArticleService } from './article.service';
 import { PostModule } from '../post';
 import { ArticleController } from './article.controller';
@@ -30,11 +29,10 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     CategoryModule,
     TagModule,
     SearchModule,
-    forwardRef(() => ReactionModule),
     AuthorityModule,
     LinkPreviewModule,
-    forwardRef(() => CommentModule),
-    forwardRef(() => SeriesModule),
+    CommentModule,
+    SeriesModule,
   ],
   controllers: [ArticleController],
   providers: [ArticleService, ArticleAppService, CanUseCategoryConstraint, CanUseSeriesConstraint],

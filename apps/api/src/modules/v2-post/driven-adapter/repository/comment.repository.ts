@@ -4,12 +4,12 @@ import { CommentEntity } from '../../domain/model/comment';
 import { CommentModel, IComment } from '../../../../database/models/comment.model';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
-import { FindOneOptions, ICommentRepository } from '../../domain/repositoty-interface';
+import { FindOneProps, ICommentRepository } from '../../domain/repositoty-interface';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
 import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { TargetType } from '../../../report-content/contstants';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import { ReactionEntity } from '../../domain/model/reaction';
 
 @Injectable()
@@ -82,7 +82,7 @@ export class CommentRepository implements ICommentRepository {
 
   public async findOne(
     where: WhereOptions<IComment>,
-    options?: FindOneOptions
+    options?: FindOneProps
   ): Promise<CommentEntity> {
     const findOptions: FindOptions = { where };
     if (options?.excludeReportedByUserId) {

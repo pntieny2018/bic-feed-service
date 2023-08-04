@@ -83,21 +83,6 @@ describe('CommentController', () => {
       );
     });
 
-    it('should throw BadRequestException when case invalid cursor params ', async () => {
-      const listCommentDto = {
-        postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-        order: OrderEnum.DESC,
-        before: '1',
-      } as GetListCommentsDto;
-      jest
-        .spyOn(query, 'execute')
-        .mockImplementation(() => Promise.reject(new InvalidCursorParamsException()));
-
-      await expect(commentController.getList(userMock, listCommentDto)).rejects.toThrow(
-        new BadRequestException('Invalid Cursor Params Exception')
-      );
-    });
-
     it('should throw error', async () => {
       const listCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',

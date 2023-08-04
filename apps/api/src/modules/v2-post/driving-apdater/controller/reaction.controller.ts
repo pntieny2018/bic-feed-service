@@ -2,19 +2,17 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { GetReactionPipe } from '../../../reaction/pipes';
+import { GetReactionPipe } from '../pipes/get-reaction.pipe';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
 import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
 import { UserDto } from '../../../v2-user/application';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
 import {
   CreateReactionRequestDto,
   DeleteReactionRequestDto,
   GetReactionRequestDto,
 } from '../dto/request';
-import { ReactionListDto } from '../../application/dto';
-import { ReactionDto } from '../../../reaction/dto/reaction.dto';
+import { ReactionDto, ReactionListDto } from '../../application/dto';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
 
@@ -54,7 +52,7 @@ export class ReactionController {
 
   @ApiOperation({ summary: 'Create new reaction' })
   @ApiOkResponse({
-    type: ReactionResponseDto,
+    type: ReactionDto,
     description: 'Create reaction successfully',
   })
   @Post('/')

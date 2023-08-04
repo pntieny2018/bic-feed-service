@@ -15,30 +15,34 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { CreateSeriesRequestDto } from '../dto/request';
-import { CreateSeriesDto } from '../../application/command/create-series/create-series.dto';
+import {
+  CreateSeriesRequestDto,
+  GetItemsBySeriesRequestDto,
+  UpdateSeriesRequestDto,
+} from '../dto/request';
 import {
   CreateSeriesCommand,
   CreateSeriesCommandPayload,
 } from '../../application/command/create-series/create-series.command';
-import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
 
 import { instanceToInstance, plainToInstance } from 'class-transformer';
-import { UpdateSeriesRequestDto } from '../dto/request/update-series.request.dto';
 import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
-import { SeriesDto } from '../../application/dto';
+import {
+  CreateCommentDto,
+  CreateSeriesDto,
+  FindItemsBySeriesDto,
+  SeriesDto,
+} from '../../application/dto';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
   DeleteSeriesCommand,
   DeleteSeriesCommandPayload,
 } from '../../application/command/delete-series/delete-series.command';
 import { ROUTES } from '../../../../common/constants/routes.constant';
-import { GetItemsBySeriesRequestDto } from '../dto/request/get-items-by-series.request.dto';
 import { FindItemsBySeriesQuery } from '../../application/query/find-items-by-series/find-items-by-series.query';
-import { FindItemsBySeriesDto } from '../../application/query/find-items-by-series/find-items-by-series.dto';
 
 @ApiTags('Series v2')
 @ApiSecurity('authorization')

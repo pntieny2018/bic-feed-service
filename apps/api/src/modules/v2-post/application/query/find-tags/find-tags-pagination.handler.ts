@@ -7,7 +7,7 @@ import {
 } from '../../../../v2-group/application';
 import { ITagQuery, TAG_QUERY_TOKEN } from '../../../domain/query-interface';
 import { FindTagsPaginationQuery } from './find-tags-pagination.query';
-import { FindTagsPaginationDto } from './find-tags-pagination.dto';
+import { FindTagsPaginationDto } from '../../dto';
 
 @QueryHandler(FindTagsPaginationQuery)
 export class FindTagsPaginationHandler

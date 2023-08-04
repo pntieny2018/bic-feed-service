@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
@@ -36,11 +36,8 @@ export class SeriesService {
     private _postModel: typeof PostModel,
     @InjectModel(PostSeriesModel)
     private _postSeriesModel: typeof PostSeriesModel,
-    @InjectModel(PostGroupModel)
-    private _postGroupModel: typeof PostGroupModel,
     private readonly _commentService: CommentService,
     private readonly _postBinding: PostBindingService,
-    @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService
   ) {}
 
@@ -118,53 +115,6 @@ export class SeriesService {
     return result[0];
   }
 
-  public async addGroup(
-    groupIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<void> {
-    if (groupIds.length === 0) return;
-    const postGroupDataCreate = groupIds.map((groupId) => ({
-      postId: postId,
-      groupId,
-    }));
-    await this._postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
-  }
-
-  /**
-   * Delete/Insert group by post
-   */
-  public async setGroupByPost(
-    groupIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<boolean> {
-    const currentGroups = await this._postGroupModel.findAll({
-      where: { postId },
-    });
-    const currentGroupIds = currentGroups.map((i) => i.groupId);
-
-    const deleteGroupIds = ArrayHelper.arrDifferenceElements(currentGroupIds, groupIds);
-    if (deleteGroupIds.length) {
-      await this._postGroupModel.destroy({
-        where: { groupId: deleteGroupIds, postId },
-        transaction,
-      });
-    }
-
-    const addGroupIds = ArrayHelper.arrDifferenceElements(groupIds, currentGroupIds);
-    if (addGroupIds.length) {
-      await this._postGroupModel.bulkCreate(
-        addGroupIds.map((groupId) => ({
-          postId,
-          groupId,
-        })),
-        { transaction }
-      );
-    }
-    return true;
-  }
-
   /**
    * Add Article/Post to Series
    */
@@ -211,22 +161,6 @@ export class SeriesService {
       this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
-  }
-
-  /**
-   * Add post to series
-   */
-  public async addToPost(
-    seriesIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<void> {
-    if (seriesIds.length === 0) return;
-    const dataCreate = seriesIds.map((seriesId) => ({
-      postId: postId,
-      seriesId,
-    }));
-    await this._postSeriesModel.bulkCreate(dataCreate, { transaction });
   }
 
   /**

@@ -1,13 +1,15 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ILinkPreviewRepository, LINK_PREVIEW_REPOSITORY_TOKEN } from '../repositoty-interface';
-import { ILinkPreviewDomainService } from './interface/link-preview.domain-service.interface';
+import {
+  ILinkPreviewDomainService,
+  LinkPreviewProps,
+} from './interface/link-preview.domain-service.interface';
 import {
   ILinkPreviewFactory,
   LINK_PREVIEW_FACTORY_TOKEN,
 } from '../factory/interface/link-preview.factory.interface';
 import { LinkPreviewEntity } from '../model/link-preview';
-import { LinkPreviewDto } from '../../application/dto';
 
 export class LinkPreviewDomainService implements ILinkPreviewDomainService {
   private readonly _logger = new Logger(LinkPreviewDomainService.name);
@@ -19,7 +21,7 @@ export class LinkPreviewDomainService implements ILinkPreviewDomainService {
     private readonly _linkPreviewFactory: ILinkPreviewFactory
   ) {}
 
-  public async findOrUpsert(input: LinkPreviewDto): Promise<LinkPreviewEntity> {
+  public async findOrUpsert(input: LinkPreviewProps): Promise<LinkPreviewEntity> {
     if (!input?.url) return null;
     try {
       let linkPreviewEntity = await this._linkPreviewRepo.findByUrl(input.url);

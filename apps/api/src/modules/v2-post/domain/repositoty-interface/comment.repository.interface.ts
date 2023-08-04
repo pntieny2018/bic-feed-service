@@ -2,7 +2,7 @@ import { WhereOptions } from 'sequelize/types';
 import { CommentEntity } from '../model/comment';
 import { IComment } from '../../../../database/models/comment.model';
 
-export type FindOneOptions = {
+export type FindOneProps = {
   excludeReportedByUserId?: string;
   includeOwnerReactions?: string;
 };
@@ -17,7 +17,7 @@ export interface ICommentRepository {
    */
   destroyComment(id: string): Promise<void>;
 
-  findOne(where: WhereOptions<IComment>, options?: FindOneOptions): Promise<CommentEntity>;
+  findOne(where: WhereOptions<IComment>, options?: FindOneProps): Promise<CommentEntity>;
 }
 
 export const COMMENT_REPOSITORY_TOKEN = 'COMMENT_REPOSITORY_TOKEN';
