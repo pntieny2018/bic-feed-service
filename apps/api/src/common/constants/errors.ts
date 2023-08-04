@@ -13,7 +13,7 @@ export const ERRORS = {
   CURSOR_PARAMS_INVALID: 'cursor_params_invalid',
 
   // AUTH
-  TOKEN_EXPIRED: 'token.expired',
+  TOKEN_EXPIRED: 'app.auth_token.expired',
 
   // GROUP
   GROUP_NOT_EXISTING: 'group.not_existing',
@@ -30,7 +30,7 @@ export const ERRORS = {
   CONTENT_EMPTY_CONTENT: 'content.empty_content',
   CONTENT_EMPTY_GROUP: 'content.empty_group',
   CONTENT_GROUP_JOIN_REQUIRED: 'content.group_join_required',
-  CONTENT_NO_BELONG_GROUP: 'content.no_belong_group',
+  CONTENT_NO_BELONG_GROUP: 'content.audience_no_belong',
   CONTENT_NO_CRUD_PERMISSION: 'content.no_crud_permission',
   CONTENT_NO_CRUD_PERMISSION_AT_GROUP: 'content.no_crud_permission_at_group',
   CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',

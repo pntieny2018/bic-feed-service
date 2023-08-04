@@ -2,10 +2,9 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
 import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
-import { FindCommentsPaginationDto } from './find-comments-pagination.dto';
 import {
   CONTENT_REPOSITORY_TOKEN,
-  FindContentOptions,
+  FindContentProps,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import {
@@ -13,6 +12,7 @@ import {
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
 import { ContentNotFoundException } from '../../../domain/exception';
+import { FindCommentsPaginationDto } from '../../dto';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
@@ -29,7 +29,7 @@ export class FindCommentsPaginationHandler
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { postId, authUser } = query.payload;
-    const findOneOptions: FindContentOptions = {
+    const findOneOptions: FindContentProps = {
       where: {
         id: postId,
         groupArchived: false,

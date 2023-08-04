@@ -2,7 +2,6 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { FindCommentsArroundIdQuery } from './find-comments-arround-id.query';
 import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
-import { FindCommentsArroundIdDto } from './find-comments-arround-id.dto';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -17,6 +16,7 @@ import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
+import { FindCommentsArroundIdDto } from '../../dto';
 
 @QueryHandler(FindCommentsArroundIdQuery)
 export class FindCommentsArroundIdHandler

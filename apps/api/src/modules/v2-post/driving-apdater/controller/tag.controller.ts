@@ -15,7 +15,6 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { ClassTransformer } from 'class-transformer';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
@@ -23,8 +22,7 @@ import { UpdateTagCommand } from '../../application/command/update-tag/update-ta
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
-import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
-import { TagDto } from '../../application/dto';
+import { FindTagsPaginationDto, TagDto } from '../../application/dto';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 
 @ApiTags('Tags')
@@ -56,7 +54,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Create new tag' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: TagDto,
     description: 'Create tag successfully',
   })
   @ResponseMessages({
@@ -67,11 +65,11 @@ export class TagController {
   public async create(
     @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagRequestDto
-  ): Promise<CreateTagDto> {
+  ): Promise<TagDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
 
-    const tag = await this._commandBus.execute<CreateTagCommand, CreateTagDto>(
+    const tag = await this._commandBus.execute<CreateTagCommand, TagDto>(
       new CreateTagCommand({ groupId, name, userId })
     );
 

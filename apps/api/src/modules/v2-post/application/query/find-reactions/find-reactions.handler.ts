@@ -1,7 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindReactionsQuery } from './find-reactions.query';
-import { FindReactionsDto } from './find-reactions.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ObjectHelper } from '../../../../../common/helpers';
 import { ReactionEntity } from '../../../domain/model/reaction';
@@ -9,7 +8,7 @@ import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
-import { ReactionDto } from '../../dto';
+import { FindReactionsDto, ReactionDto } from '../../dto';
 
 @QueryHandler(FindReactionsQuery)
 export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, FindReactionsDto> {

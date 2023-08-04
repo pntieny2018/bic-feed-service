@@ -3,9 +3,8 @@ import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { UserDto } from '../../../v2-user/application';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { GetNewsfeedRequestDto } from '../dto/request';
+import { NewsfeedRequestDto } from '../dto/request';
 import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
-import { KafkaService } from '@app/kafka';
 import { AuthUser } from '../../../../common/decorators';
 
 @ApiTags('v2 Timeline')
@@ -15,13 +14,13 @@ import { AuthUser } from '../../../../common/decorators';
   version: VERSIONS_SUPPORTED,
 })
 export class NewsFeedController {
-  public constructor(private readonly _queryBus: QueryBus, private readonly _kafka: KafkaService) {}
+  public constructor(private readonly _queryBus: QueryBus) {}
 
   @ApiOperation({ summary: 'Get newsfeed.' })
   @Get('/')
   public async getNewsfeed(
     @AuthUser(false) authUser: UserDto,
-    @Query() dto: GetNewsfeedRequestDto
+    @Query() dto: NewsfeedRequestDto
   ): Promise<any> {
     const { type, isSaved, isMine, isImportant, limit, before, after } = dto;
     const data = await this._queryBus.execute(

@@ -1,15 +1,11 @@
-import { PostSettingDto } from './post-setting.dto';
 import { LinkPreviewDto } from './link-preview.dto';
-import { FileDto } from './file.dto';
-import { ImageDto } from './image.dto';
-import { VideoDto } from './video.dto';
 import { GroupDto } from '../../../v2-group/application';
-import { PostStatus } from '../../data-type/post-status.enum';
 import { UserDto } from '../../../v2-user/application';
-import { PostPrivacy, PostType } from '../../data-type';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
 import { TagDto } from './tag.dto';
 import { QuizDto } from './quiz.dto';
+import { FileDto, ImageDto, VideoDto } from './media.dto';
 
 export class PostDto {
   public id: string;
@@ -59,6 +55,30 @@ export class PostDto {
   };
 
   public constructor(data: Partial<PostDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class PostSettingDto {
+  public canComment: boolean;
+  public canReact: boolean;
+  public isImportant: boolean;
+  public importantExpiredAt?: Date;
+
+  public constructor(data: Partial<PostSettingDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class CreateDraftPostDto {
+  public id: string;
+  public audience: {
+    groups: GroupDto[];
+  };
+
+  public setting: PostSettingDto;
+
+  public constructor(data: Partial<CreateDraftPostDto>) {
     Object.assign(this, data);
   }
 }

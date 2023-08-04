@@ -1,5 +1,5 @@
 import { getElasticsearchConfig } from '../../config/elasticsearch';
-import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
+import { PostLang } from '../../modules/v2-post/data-type';
 
 export class ElasticsearchHelper {
   private static _prefix = getElasticsearchConfig().namespace + '_';

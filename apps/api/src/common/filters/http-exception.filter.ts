@@ -26,7 +26,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public catch(error: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    return this.handleHttpException(this.errorToHttpException(error), response);
+    return this.handleHttpException(this._errorToHttpException(error), response);
   }
 
   /**
@@ -44,7 +44,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     return response.status(status).json(
       new ResponseDto({
-        code: res['code'] || this.getCommonErrorCodeByStatus(status),
+        code: res['code'] || this._getCommonErrorCodeByStatus(status),
         meta: {
           message: exception.message,
           errors,
@@ -54,7 +54,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     );
   }
 
-  private errorToHttpException(error: Error): HttpException {
+  private _errorToHttpException(error: Error): HttpException {
     if (error instanceof HttpException) {
       return error;
     }
@@ -106,7 +106,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param status number
    * @returns string
    */
-  private getCommonErrorCodeByStatus(status: number): string {
+  private _getCommonErrorCodeByStatus(status: number): string {
     switch (status) {
       case HttpStatus.NOT_FOUND:
         return ERRORS.API_NOT_FOUND;

@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 import { userMock } from '../../mock/user.dto.mock';
 import { OrderEnum } from '../../../../../common/dto';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 
 describe('ReactionController', () => {
   let reactionController: ReactionController;

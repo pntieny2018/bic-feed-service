@@ -1,14 +1,14 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { BasedSeriesAttribute, ISeriesFactory } from './interface';
-import { SeriesEntity, SeriesProps } from '../model/content/series.entity';
+import { BasedSeriesProps, ISeriesFactory } from './interface';
+import { SeriesEntity, SeriesAttributes } from '../model/content';
 import { v4 } from 'uuid';
 import { PostStatus, PostType } from '../../data-type';
 
 export class SeriesFactory implements ISeriesFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public createSeries(props: BasedSeriesAttribute): SeriesEntity {
+  public createSeries(props: BasedSeriesProps): SeriesEntity {
     const { userId, title, summary } = props;
     const now = new Date();
     const entity = new SeriesEntity({
@@ -42,7 +42,7 @@ export class SeriesFactory implements ISeriesFactory {
     return this._eventPublisher.mergeObjectContext(entity);
   }
 
-  public reconstitute(properties: SeriesProps): SeriesEntity {
+  public reconstitute(properties: SeriesAttributes): SeriesEntity {
     return this._eventPublisher.mergeObjectContext(new SeriesEntity(properties));
   }
 }

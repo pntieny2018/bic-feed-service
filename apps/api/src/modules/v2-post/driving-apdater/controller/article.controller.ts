@@ -16,9 +16,8 @@ import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 
-import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
 import { instanceToInstance, plainToInstance } from 'class-transformer';
-import { ArticleDto } from '../../application/dto';
+import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
 import { ArticleResponseDto } from '../../../article/dto/responses';

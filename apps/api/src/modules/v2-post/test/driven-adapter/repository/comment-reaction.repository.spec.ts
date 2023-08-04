@@ -7,7 +7,7 @@ import {
   REACTION_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/reaction.factory.interface';
 import { createMock } from '@golevelup/ts-jest';
-import { ReactionFactory } from '../../../domain/factory/interface/reaction.factory';
+import { ReactionFactory } from '../../../domain/factory/reaction.factory';
 import { getModelToken } from '@nestjs/sequelize';
 import {
   FindOnePostReactionProps,

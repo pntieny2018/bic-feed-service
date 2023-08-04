@@ -1,11 +1,11 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindCategoriesPaginationDto } from './find-categories-pagination.dto';
 import { Inject } from '@nestjs/common';
 import {
   CATEGORY_QUERY_TOKEN,
   ICategoryQuery,
 } from '../../../domain/query-interface/category.query.interface';
 import { FindCategoriesPaginationQuery } from './find-categories-pagination.query';
+import { FindCategoriesPaginationDto } from '../../dto/category.dto';
 
 @QueryHandler(FindCategoriesPaginationQuery)
 export class FindCategoriesPaginationHandler

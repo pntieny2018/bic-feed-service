@@ -4,7 +4,6 @@ import { FindNewsfeedQuery } from './find-newsfeed.query';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { PostStatus } from '../../../data-type';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { FindNewsfeedDto } from './find-newsfeed.dto';
 import { OrderEnum } from '../../../../../common/dto';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -12,6 +11,7 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
+import { FindNewsfeedDto } from '../../dto/newsfeed.dto';
 
 @QueryHandler(FindNewsfeedQuery)
 export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, FindNewsfeedDto> {

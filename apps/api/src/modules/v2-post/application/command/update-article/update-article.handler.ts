@@ -72,6 +72,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
     await this._articleDomainService.update({
       articleEntity,
       newData: command.payload,
+      actor,
     });
 
     await this._sendEvent(articleEntityBefore, articleEntity, actor);

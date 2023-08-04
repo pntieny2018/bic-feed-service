@@ -1,5 +1,4 @@
 import { Inject } from '@nestjs/common';
-import { FindDraftContentsDto } from './find-draft-contents.dto';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindDraftContentsQuery } from './find-draft-contents.query';
 import {
@@ -10,6 +9,7 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
+import { FindDraftContentsDto } from '../../dto/content.dto';
 
 @QueryHandler(FindDraftContentsQuery)
 export class FindDraftContentsHandler

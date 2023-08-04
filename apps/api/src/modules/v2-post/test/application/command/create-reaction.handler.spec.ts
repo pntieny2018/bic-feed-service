@@ -13,14 +13,9 @@ import {
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
-  UserApplicationService,
 } from '../../../../v2-user/application';
-import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 import { ReactionEntity } from '../../../domain/model/reaction';
-import { createMock } from '@golevelup/ts-jest';
-import { PostReactionRepository } from '../../../driven-adapter/repository/post-reaction.repository';
-import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
 import { I18nContext } from 'nestjs-i18n';
 import { userMock } from '../../mock/user.dto.mock';
 import { ReactionDuplicateException } from '../../../domain/exception';
@@ -28,10 +23,8 @@ import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
-import { ReactionDomainService } from '../../../domain/domain-service/interface/reaction.domain-service';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
-import { ContentEntity, PostEntity } from '../../../domain/model/content';
-import { PostPrivacy, PostStatus, PostType } from '../../../data-type';
+import { PostEntity } from '../../../domain/model/content';
+import { PostPrivacy, PostStatus, PostType, REACTION_TARGET } from '../../../data-type';
 
 describe('CreateReactionHandler', () => {
   let handler: CreateReactionHandler;

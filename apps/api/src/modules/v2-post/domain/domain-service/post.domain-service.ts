@@ -101,7 +101,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async publishPost(input: PostPublishProps): Promise<void> {
     const { postEntity, newData } = input;
-    const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
+    const { authUser, tagIds, media, linkPreview, ...restUpdate } = newData;
 
     let newTagEntities = [];
     if (tagIds) {
@@ -139,9 +139,8 @@ export class PostDomainService implements IPostDomainService {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
-
-    postEntity.updateAttribute(newData);
-    postEntity.setPrivacyFromGroups(groups);
+    postEntity.updateAttribute(restUpdate, authUser.id);
+    postEntity.setPrivacyFromGroups(newData.groups);
     if (postEntity.hasVideoProcessing()) {
       postEntity.setProcessing();
     } else {
@@ -153,12 +152,12 @@ export class PostDomainService implements IPostDomainService {
       authUser,
       postEntity.get('groupIds')
     );
-    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+    await this._mentionValidator.validateMentionUsers(newData.mentionUsers, newData.groups);
 
     await this._postValidator.validateLimtedToAttachSeries(postEntity);
 
     await this._contentValidator.validateSeriesAndTags(
-      groups,
+      newData.groups,
       postEntity.get('seriesIds'),
       postEntity.get('tags')
     );
@@ -171,7 +170,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async updatePost(input: PostPublishProps): Promise<void> {
     const { postEntity, newData } = input;
-    const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
+    const { authUser, tagIds, linkPreview, media, ...restUpdate } = newData;
 
     let newTagEntities = [];
     if (tagIds) {
@@ -210,8 +209,8 @@ export class PostDomainService implements IPostDomainService {
       postEntity.setLinkPreview(linkPreviewEntity);
     }
 
-    postEntity.updateAttribute(newData);
-    postEntity.setPrivacyFromGroups(groups);
+    postEntity.updateAttribute(restUpdate, authUser.id);
+    postEntity.setPrivacyFromGroups(newData.groups);
 
     if (postEntity.hasVideoProcessing()) postEntity.setProcessing();
 
@@ -220,12 +219,12 @@ export class PostDomainService implements IPostDomainService {
       authUser,
       postEntity.get('groupIds')
     );
-    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+    await this._mentionValidator.validateMentionUsers(newData.mentionUsers, newData.groups);
 
     await this._postValidator.validateLimtedToAttachSeries(postEntity);
 
     await this._contentValidator.validateSeriesAndTags(
-      groups,
+      newData.groups,
       postEntity.get('seriesIds'),
       postEntity.get('tags')
     );
@@ -271,7 +270,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async autoSavePost(input: PostPublishProps): Promise<void> {
     const { postEntity, newData } = input;
-    const { tagIds, linkPreview, groups, media } = newData;
+    const { tagIds, linkPreview, media, ...restUpdate } = newData;
 
     let newTagEntities = [];
     if (tagIds) {
@@ -308,8 +307,8 @@ export class PostDomainService implements IPostDomainService {
       postEntity.setLinkPreview(linkPreviewEntity);
     }
 
-    postEntity.updateAttribute(newData);
-    postEntity.setPrivacyFromGroups(groups);
+    postEntity.updateAttribute(restUpdate, newData.authUser.id);
+    postEntity.setPrivacyFromGroups(newData.groups);
 
     if (!postEntity.isChanged()) return;
     await this._contentRepository.update(postEntity);

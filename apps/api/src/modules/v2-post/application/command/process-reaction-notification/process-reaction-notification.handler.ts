@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ProcessReactionNotificationCommand } from './process-reaction-notification.command';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
 import { KafkaService } from '@app/kafka';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
