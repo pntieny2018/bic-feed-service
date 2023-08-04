@@ -1,6 +1,6 @@
 import { ICommentReaction } from '../../../../database/models/comment-reaction.model';
 import { ReactionEntity } from '../../domain/model/reaction';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 
 export const commentReactionRecord: ICommentReaction = {
   id: '7b63852c-5249-499a-a32b-6bdaa2761fc1',

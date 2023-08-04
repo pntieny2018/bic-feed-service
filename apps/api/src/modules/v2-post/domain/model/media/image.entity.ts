@@ -3,7 +3,7 @@ import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { ImageResource } from '../../../data-type';
 
-export type ImageProps = {
+export type ImageAttributes = {
   id: string;
   url: string;
   src?: string;
@@ -15,8 +15,8 @@ export type ImageProps = {
   status: string;
 };
 
-export class ImageEntity extends DomainAggregateRoot<ImageProps> {
-  public constructor(props: ImageProps) {
+export class ImageEntity extends DomainAggregateRoot<ImageAttributes> {
+  public constructor(props: ImageAttributes) {
     super(props);
   }
 

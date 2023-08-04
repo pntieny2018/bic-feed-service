@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ICommentFactory, CreateCommentProps, COMMENT_FACTORY_TOKEN } from '../factory/interface';
-import { ICommentDomainService, UpdateCommentProps } from './interface';
+import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
+import { CreateCommentProps, ICommentDomainService, UpdateCommentProps } from './interface';
 import { CommentEntity } from '../model/comment';
 import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
@@ -77,7 +77,7 @@ export class CommentDomainService implements ICommentDomainService {
 
   public async update(input: UpdateCommentProps): Promise<void> {
     const { commentEntity, newData, groups, mentionUsers } = input;
-    const { media } = newData;
+    const { media, ...restUpdate } = newData;
 
     if (media) {
       const images = await this._mediaDomainService.getAvailableImages(
@@ -105,7 +105,7 @@ export class CommentDomainService implements ICommentDomainService {
       });
     }
 
-    commentEntity.updateAttribute(newData);
+    commentEntity.updateAttribute(restUpdate, input.actor.id);
 
     if (commentEntity.isEmptyComment()) throw new CommentNotEmptyException();
 

@@ -12,7 +12,7 @@ export type OrderOptions = {
   isPublishedByDesc?: boolean;
 };
 
-export type FindContentOptions = {
+export type FindContentProps = {
   where: {
     type?: PostType;
     id?: string;
@@ -53,17 +53,15 @@ export type FindContentOptions = {
   orderOptions?: OrderOptions;
 };
 
-export type GetPaginationContentsProps = FindContentOptions & CursorPaginationProps;
+export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
-  findOne(
-    findOnePostOptions: FindContentOptions
-  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
   findAll(
-    findAllPostOptions: FindContentOptions
+    findAllPostOptions: FindContentProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;

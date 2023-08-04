@@ -8,14 +8,12 @@ import { CreateReactionCommand } from '../../application/command/create-reaction
 import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
 import { UserDto } from '../../../v2-user/application';
 import { AuthUser } from '../../../auth';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
 import {
   CreateReactionRequestDto,
   DeleteReactionRequestDto,
   GetReactionRequestDto,
 } from '../dto/request';
-import { ReactionListDto } from '../../application/dto';
-import { ReactionDto } from '../../../reaction/dto/reaction.dto';
+import { ReactionDto, ReactionListDto } from '../../application/dto';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 
 @ApiTags('Reactions')
@@ -54,7 +52,7 @@ export class ReactionController {
 
   @ApiOperation({ summary: 'Create new reaction' })
   @ApiOkResponse({
-    type: ReactionResponseDto,
+    type: ReactionDto,
     description: 'Create reaction successfully',
   })
   @Post('/')

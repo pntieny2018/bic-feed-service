@@ -1,14 +1,32 @@
-import { GroupDto } from '../../../../v2-group/application/group.dto';
-import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
-import { CreateCommentProps } from '../../factory/interface/comment.factory.interface';
+import { GroupDto } from '../../../../v2-group/application';
+import { BasedCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
-import { UserDto } from '../../../../v2-user/application/user.dto';
+import { UserDto } from '../../../../v2-user/application';
+
+export type CreateCommentProps = {
+  data: BasedCommentProps;
+  groups: GroupDto[];
+  mentionUsers: UserDto[];
+};
+
+export type UpdateCommentPayload = {
+  id: string;
+  content?: string;
+  media?: {
+    files: string[];
+    images: string[];
+    videos: string[];
+  };
+  mentions?: string[];
+  giphyId?: string;
+};
 
 export type UpdateCommentProps = {
   commentEntity: CommentEntity;
   groups: GroupDto[];
   mentionUsers: UserDto[];
-  newData: UpdateCommentCommandPayload;
+  newData: UpdateCommentPayload;
+  actor: UserDto;
 };
 
 export interface ICommentDomainService {

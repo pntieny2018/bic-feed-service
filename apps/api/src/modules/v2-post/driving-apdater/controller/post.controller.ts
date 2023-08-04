@@ -26,26 +26,28 @@ import {
   ContentRequireGroupException,
   PostLimitAttachedSeriesException,
 } from '../../domain/exception';
-import { CreateDraftPostRequestDto, PublishPostRequestDto } from '../dto/request';
+import {
+  AutoSavePostRequestDto,
+  CreateDraftPostRequestDto,
+  PublishPostRequestDto,
+  UpdatePostRequestDto,
+} from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
-import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
 import { plainToInstance } from 'class-transformer';
 import { PublishPostCommand } from '../../application/command/publish-post/publish-post.command';
-import { PostDto } from '../../application/dto';
+import { CreateDraftPostDto, PostDto } from '../../application/dto';
 import { Request } from 'express';
 import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
 import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
-import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
 import { PostStatus } from '../../../../database/models/post.model';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { FindPostQuery } from '../../application/query/find-post/find-post.query';
 import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
-import { UpdatePostRequestDto } from '../dto/request/update-post.request.dto';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')

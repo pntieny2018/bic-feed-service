@@ -19,7 +19,6 @@ import { ClassTransformer } from 'class-transformer';
 import { ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { AuthUser } from '../../../auth';
-import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
@@ -35,8 +34,7 @@ import {
 } from '../../domain/exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
-import { TagDto } from '../../application/dto';
+import { FindTagsPaginationDto, TagDto } from '../../application/dto';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 
 @ApiTags('Tags')
@@ -68,7 +66,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Create new tag' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: TagDto,
     description: 'Create tag successfully',
   })
   @ResponseMessages({
@@ -79,11 +77,11 @@ export class TagController {
   public async create(
     @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagRequestDto
-  ): Promise<CreateTagDto> {
+  ): Promise<TagDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
     try {
-      const tag = await this._commandBus.execute<CreateTagCommand, CreateTagDto>(
+      const tag = await this._commandBus.execute<CreateTagCommand, TagDto>(
         new CreateTagCommand({ groupId, name, userId })
       );
 

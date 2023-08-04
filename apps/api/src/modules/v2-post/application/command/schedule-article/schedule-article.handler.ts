@@ -30,6 +30,7 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
 
     const articleEntity = await this._articleDomainService.schedule({
       payload,
+      actor,
     });
 
     return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });

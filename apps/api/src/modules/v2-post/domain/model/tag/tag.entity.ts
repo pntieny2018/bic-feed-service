@@ -4,7 +4,7 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 
-export type TagProps = {
+export type TagAttributes = {
   id: string;
   groupId: string;
   name: string;
@@ -16,8 +16,8 @@ export type TagProps = {
   updatedAt: Date;
 };
 
-export class TagEntity extends DomainAggregateRoot<TagProps> {
-  public constructor(props: TagProps) {
+export class TagEntity extends DomainAggregateRoot<TagAttributes> {
+  public constructor(props: TagAttributes) {
     super(props);
   }
 
@@ -39,7 +39,7 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
     }
   }
 
-  public update(props: Partial<TagProps>): void {
+  public update(props: Partial<TagAttributes>): void {
     const { name, updatedBy } = props;
     this._props.name = name.toUpperCase();
     this._props.updatedBy = updatedBy;

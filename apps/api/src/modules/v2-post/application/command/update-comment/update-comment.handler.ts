@@ -78,6 +78,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
       groups,
       mentionUsers,
       newData: command.payload,
+      actor,
     });
 
     this._eventEmitter.emit(

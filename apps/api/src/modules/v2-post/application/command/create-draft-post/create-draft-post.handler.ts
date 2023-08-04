@@ -5,12 +5,12 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { CreateDraftPostCommand } from './create-draft-post.command';
-import { CreateDraftPostDto } from './create-draft-post.dto';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
+import { CreateDraftPostDto } from '../../dto';
 
 @CommandHandler(CreateDraftPostCommand)
 export class CreateDraftPostHandler

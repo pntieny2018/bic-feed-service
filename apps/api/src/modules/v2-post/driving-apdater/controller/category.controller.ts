@@ -4,10 +4,10 @@ import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { QueryBus } from '@nestjs/cqrs';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
-import { GetCategoryDto } from '../dto/request/get-category.dto';
 import { PageDto } from '../../../../common/dto';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
-import { FindCategoriesPaginationDto } from '../../application/query/find-categories/find-categories-pagination.dto';
+import { GetCategoryRequestDto } from '../dto/request';
+import { FindCategoriesPaginationDto } from '../../application/dto/category.dto';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')
@@ -26,7 +26,7 @@ export class CategoryController {
   @Get('/')
   public async get(
     @AuthUser() _user: UserDto,
-    @Query() getCategoryDto: GetCategoryDto
+    @Query() getCategoryDto: GetCategoryRequestDto
   ): Promise<PageDto<FindCategoriesPaginationDto>> {
     const { name, level, isCreatedByMe, offset, limit } = getCategoryDto;
     const { rows, total } = await this._queryBus.execute(

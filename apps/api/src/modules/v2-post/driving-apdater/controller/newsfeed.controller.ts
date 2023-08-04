@@ -4,12 +4,9 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { GetNewsfeedRequestDto } from '../dto/request';
-import { PageDto } from '../../../../common/dto';
+import { NewsfeedRequestDto } from '../dto/request';
 import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
 import { KafkaService } from '@app/kafka';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import { PostChangedMessagePayload } from '../../application/dto/message';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')
@@ -24,7 +21,7 @@ export class NewsFeedController {
   @Get('/')
   public async getNewsfeed(
     @AuthUser(false) authUser: UserDto,
-    @Query() dto: GetNewsfeedRequestDto
+    @Query() dto: NewsfeedRequestDto
   ): Promise<any> {
     const { type, isSaved, isMine, isImportant, limit, before, after } = dto;
     const data = await this._queryBus.execute(

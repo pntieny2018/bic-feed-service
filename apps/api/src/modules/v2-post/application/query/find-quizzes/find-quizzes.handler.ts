@@ -1,6 +1,5 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindQuizzesDto } from './find-quizzes.dto';
 import { FindQuizzesQuery } from './find-quizzes.query';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -12,6 +11,7 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
+import { FindQuizzesDto } from '../../dto';
 
 @QueryHandler(FindQuizzesQuery)
 export class FindQuizzesHandler implements IQueryHandler<FindQuizzesQuery, FindQuizzesDto> {

@@ -5,19 +5,16 @@ import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../../binding/binding-quiz/qui
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
-  IQuizDomainService,
-  QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
-import { QuizParticipantDto } from '../../dto/quiz-participant.dto';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import { QuizParticipantNotFoundException } from '../../../domain/exception';
 import { UserDto } from '../../../../v2-user/application';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content';
+import { QuizParticipantDto } from '../../dto';
 
 @QueryHandler(FindQuizParticipantQuery)
 export class FindQuizParticipantHandler

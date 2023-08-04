@@ -1,6 +1,6 @@
 import { UserDto } from '../../../../v2-user/application';
-import { ContentEntity } from '../../model/content/content.entity';
-import { GroupDto } from '../../../../v2-group/application/group.dto';
+import { ContentEntity } from '../../model/content';
+import { GroupDto } from '../../../../v2-group/application';
 import { PostType } from '../../../data-type';
 import { TagEntity } from '../../model/tag';
 

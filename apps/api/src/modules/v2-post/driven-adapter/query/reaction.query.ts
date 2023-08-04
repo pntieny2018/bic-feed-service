@@ -9,7 +9,7 @@ import {
 } from '../../domain/factory/interface/reaction.factory.interface';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
   GetReactionProps,

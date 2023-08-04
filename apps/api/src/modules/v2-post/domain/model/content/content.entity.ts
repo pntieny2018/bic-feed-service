@@ -1,18 +1,21 @@
-import { PostLang } from '../../../data-type/post-lang.enum';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { PostStatus } from '../../../data-type/post-status.enum';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { PostSettingAttributes } from './attributes/post-setting.entity';
-import { PostPrivacy, PostType } from '../../../data-type';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
-import { PostSettingDto } from '../../../application/dto';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
+import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
 
-export type ContentProps = {
+export type PostSettingAttributes = {
+  isImportant: boolean;
+  importantExpiredAt?: Date;
+  canReact: boolean;
+  canComment: boolean;
+};
+
+export type ContentAttributes = {
   id: string;
   isReported: boolean;
   isHidden: boolean;
@@ -65,7 +68,7 @@ export type ContentState = {
   isChangeStatus?: boolean;
 };
 export class ContentEntity<
-  Props extends ContentProps = ContentProps
+  Props extends ContentAttributes = ContentAttributes
 > extends DomainAggregateRoot<Props> {
   protected _state: ContentState;
   public constructor(props: Props) {
@@ -241,7 +244,7 @@ export class ContentEntity<
     this._props.communityIds = communityIds;
   }
 
-  public setSetting(setting: PostSettingDto): void {
+  public setSetting(setting: PostSettingAttributes): void {
     let isEnableSetting = false;
     if (
       setting &&
