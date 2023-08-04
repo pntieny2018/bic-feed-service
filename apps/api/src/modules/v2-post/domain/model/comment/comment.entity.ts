@@ -5,7 +5,7 @@ import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { isEmpty } from 'lodash';
 import { ReactionEntity } from '../reaction';
 
-export type CommentProps = {
+export type CommentAttributes = {
   id: string;
   media?: {
     videos?: VideoEntity[];
@@ -28,8 +28,8 @@ export type CommentProps = {
   ownerReactions?: ReactionEntity[];
 };
 
-export class CommentEntity extends DomainAggregateRoot<CommentProps> {
-  public constructor(props: CommentProps) {
+export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
+  public constructor(props: CommentAttributes) {
     super(props);
   }
   public validate(): void {
@@ -44,7 +44,7 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     }
   }
 
-  public updateAttribute(data: Partial<CommentProps>, userId: string): void {
+  public updateAttribute(data: Partial<CommentAttributes>, userId: string): void {
     const { content, mentions, giphyId } = data;
     this._props.updatedAt = new Date();
     this._props.edited = true;

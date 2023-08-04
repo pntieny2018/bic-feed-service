@@ -1,10 +1,10 @@
-import { ContentEntity, ContentProps } from './content.entity';
+import { ContentEntity, ContentAttributes } from './content.entity';
 import { RULES } from '../../../constant';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { LinkPreviewEntity } from '../link-preview';
 import { TagEntity } from '../tag';
 
-export type PostProps = ContentProps & {
+export type PostAttributes = ContentAttributes & {
   media: {
     files: FileEntity[];
     images: ImageEntity[];
@@ -18,12 +18,12 @@ export type PostProps = ContentProps & {
   videoIdProcessing?: string;
 };
 
-export class PostEntity extends ContentEntity<PostProps> {
-  public constructor(props: PostProps) {
+export class PostEntity extends ContentEntity<PostAttributes> {
+  public constructor(props: PostAttributes) {
     super(props);
   }
 
-  public updateAttribute(data: Partial<PostProps>, userId: string): void {
+  public updateAttribute(data: Partial<PostAttributes>, userId: string): void {
     const { content, seriesIds, groupIds, mentionUserIds } = data;
     const authUser = { id: userId };
     super.update({

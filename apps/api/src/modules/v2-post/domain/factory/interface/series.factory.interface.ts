@@ -1,16 +1,14 @@
-import { SeriesEntity, SeriesProps } from '../../model/content';
+import { SeriesEntity, SeriesAttributes } from '../../model/content';
 
-export type BasedSeriesAttribute = {
+export type BasedSeriesProps = {
   userId: string;
-
   summary: string;
-
   title: string;
 };
 
 export interface ISeriesFactory {
-  createSeries(props: BasedSeriesAttribute): SeriesEntity;
-  reconstitute(props: SeriesProps): SeriesEntity;
+  createSeries(props: BasedSeriesProps): SeriesEntity;
+  reconstitute(props: SeriesAttributes): SeriesEntity;
 }
 
 export const SERIES_FACTORY_TOKEN = 'SERIES_FACTORY_TOKEN';

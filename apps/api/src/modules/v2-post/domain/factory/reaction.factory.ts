@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
-import { CreateReactionOptions, IReactionFactory } from './reaction.factory.interface';
-import { ReactionEntity, ReactionProps } from '../../model/reaction';
+import { CreateReactionProps, IReactionFactory } from './interface/reaction.factory.interface';
+import { ReactionEntity, ReactionAttributes } from '../model/reaction';
 
 export class ReactionFactory implements IReactionFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public create(options: CreateReactionOptions): ReactionEntity {
+  public create(options: CreateReactionProps): ReactionEntity {
     return this._eventPublisher.mergeObjectContext(
       new ReactionEntity({
         id: v4(),
@@ -19,7 +19,7 @@ export class ReactionFactory implements IReactionFactory {
       })
     );
   }
-  public reconstitute(properties: ReactionProps): ReactionEntity {
+  public reconstitute(properties: ReactionAttributes): ReactionEntity {
     return new ReactionEntity(properties);
   }
 }

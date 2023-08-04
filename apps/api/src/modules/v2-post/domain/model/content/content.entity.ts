@@ -15,7 +15,7 @@ export type PostSettingAttributes = {
   canComment: boolean;
 };
 
-export type ContentProps = {
+export type ContentAttributes = {
   id: string;
   isReported: boolean;
   isHidden: boolean;
@@ -68,7 +68,7 @@ export type ContentState = {
   isChangeStatus?: boolean;
 };
 export class ContentEntity<
-  Props extends ContentProps = ContentProps
+  Props extends ContentAttributes = ContentAttributes
 > extends DomainAggregateRoot<Props> {
   protected _state: ContentState;
   public constructor(props: Props) {

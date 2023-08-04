@@ -1,14 +1,14 @@
 import { v4 } from 'uuid';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { CommentEntity, CommentProps } from '../model/comment';
-import { BasedCommentAttribute, ICommentFactory } from './interface';
+import { CommentEntity, CommentAttributes } from '../model/comment';
+import { BasedCommentProps, ICommentFactory } from './interface';
 
 @Injectable()
 export class CommentFactory implements ICommentFactory {
   public constructor(@Inject(EventPublisher) private readonly _eventPublisher: EventPublisher) {}
 
-  public createComment(props: BasedCommentAttribute): CommentEntity {
+  public createComment(props: BasedCommentProps): CommentEntity {
     const { userId, parentId, postId, content, giphyId, mentions } = props;
     const now = new Date();
     const entity = new CommentEntity({
@@ -34,7 +34,7 @@ export class CommentFactory implements ICommentFactory {
     return this._eventPublisher.mergeObjectContext(entity);
   }
 
-  public reconstitute(properties: CommentProps): CommentEntity {
+  public reconstitute(properties: CommentAttributes): CommentEntity {
     return this._eventPublisher.mergeObjectContext(new CommentEntity(properties));
   }
 }

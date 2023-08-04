@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserDto } from '../../../v2-user/application';
 import { MediaStatus } from '../../data-type';
-import { ImageDto, IMediaValidator } from './interface';
+import { ImageProps, IMediaValidator } from './interface';
 
 @Injectable()
 export class MediaValidator implements IMediaValidator {
@@ -12,7 +12,7 @@ export class MediaValidator implements IMediaValidator {
    * @throws BadRequestException
    * returns void
    */
-  public validateImagesMedia(images: ImageDto[], actor: UserDto): void {
+  public validateImagesMedia(images: ImageProps[], actor: UserDto): void {
     if (images.length === 0) {
       throw new BadRequestException('Invalid image');
     }

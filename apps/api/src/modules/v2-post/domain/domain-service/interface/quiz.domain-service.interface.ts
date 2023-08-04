@@ -6,7 +6,7 @@ import { CursorPaginationResult } from '../../../../../common/types/cursor-pagin
 import { PostType } from '../../../data-type';
 import { QuizParticipantEntity } from '../../model/quiz-participant';
 
-type QuestionDto = {
+type QuestionPayload = {
   id: string;
   content: string;
   answers: {
@@ -40,7 +40,7 @@ export type QuizUpdateProps = {
   quizId: string;
   numberOfQuestions?: number;
   numberOfAnswers?: number;
-  questions?: QuestionDto[];
+  questions?: QuestionPayload[];
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;

@@ -54,7 +54,7 @@ export const BIC_EMOJI = [
   'bic_whale',
 ];
 
-export type ReactionProps = {
+export type ReactionAttributes = {
   id: string;
   target: REACTION_TARGET;
   targetId: string;
@@ -62,8 +62,8 @@ export type ReactionProps = {
   createdBy: string;
   createdAt?: Date;
 };
-export class ReactionEntity extends DomainAggregateRoot<ReactionProps> {
-  public constructor(props: ReactionProps) {
+export class ReactionEntity extends DomainAggregateRoot<ReactionAttributes> {
+  public constructor(props: ReactionAttributes) {
     super(props);
   }
 

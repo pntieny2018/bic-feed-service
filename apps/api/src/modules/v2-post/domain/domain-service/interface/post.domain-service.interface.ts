@@ -4,7 +4,7 @@ import { UserDto } from '../../../../v2-user/application';
 import { ContentEntity } from '../../model/content';
 import { ArticleEntity } from '../../model/content';
 
-export type PublishPostDto = {
+export type PublishPostPayload = {
   id: string;
   groupIds: string[];
   authUser: UserDto;
@@ -38,7 +38,7 @@ export type ArticleCreateProps = {
 
 export type PostPublishProps = {
   postEntity: PostEntity;
-  newData: PublishPostDto & {
+  newData: PublishPostPayload & {
     groups?: GroupDto[];
     mentionUsers: UserDto[];
   };

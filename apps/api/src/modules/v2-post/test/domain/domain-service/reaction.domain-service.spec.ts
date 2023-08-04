@@ -17,7 +17,7 @@ import {
 } from '../../../domain/factory/interface/reaction.factory.interface';
 import { ReactionDomainService } from '../../../domain/domain-service/reaction.domain-service';
 import { REACTION_TARGET } from '../../../data-type/reaction.enum';
-import { ReactionFactory } from '../../../domain/factory/interface/reaction.factory';
+import { ReactionFactory } from '../../../domain/factory/reaction.factory';
 import { createMock } from '@golevelup/ts-jest';
 import { v4 } from 'uuid';
 

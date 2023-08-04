@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { IPostFactory } from './interface';
-import { PostEntity, PostProps } from '../model/content';
+import { PostEntity, PostAttributes } from '../model/content';
 import { PostStatus, PostType } from '../../data-type';
 
 export class PostFactory implements IPostFactory {
@@ -48,7 +48,7 @@ export class PostFactory implements IPostFactory {
     return this._eventPublisher.mergeObjectContext(entity);
   }
 
-  public reconstitute(properties: PostProps): PostEntity {
+  public reconstitute(properties: PostAttributes): PostEntity {
     return this._eventPublisher.mergeObjectContext(new PostEntity(properties));
   }
 }

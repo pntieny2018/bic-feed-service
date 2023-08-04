@@ -1,6 +1,5 @@
 import { GroupDto } from '../../../v2-group/application';
-import { UpdateCommentProps } from '../../domain/domain-service/interface';
-import { CreateCommentProps } from '../../domain/factory/interface';
+import { CreateCommentProps, UpdateCommentProps } from '../../domain/domain-service/interface';
 import { CommentEntity } from '../../domain/model/comment';
 import { userMentions, userMock } from './user.dto.mock';
 

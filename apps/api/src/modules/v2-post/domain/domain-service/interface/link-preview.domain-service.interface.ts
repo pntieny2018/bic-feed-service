@@ -1,6 +1,6 @@
 import { LinkPreviewEntity } from '../../model/link-preview';
 
-export type LinkPreviewDto = {
+export type LinkPreviewProps = {
   url: string;
   domain: string;
   image: string;
@@ -9,6 +9,6 @@ export type LinkPreviewDto = {
 };
 
 export interface ILinkPreviewDomainService {
-  findOrUpsert(data: LinkPreviewDto): Promise<LinkPreviewEntity>;
+  findOrUpsert(data: LinkPreviewProps): Promise<LinkPreviewEntity>;
 }
 export const LINK_PREVIEW_DOMAIN_SERVICE_TOKEN = 'LINK_PREVIEW_DOMAIN_SERVICE_TOKEN';

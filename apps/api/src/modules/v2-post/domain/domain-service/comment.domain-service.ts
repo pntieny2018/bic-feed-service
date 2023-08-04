@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ICommentFactory, CreateCommentProps, COMMENT_FACTORY_TOKEN } from '../factory/interface';
-import { ICommentDomainService, UpdateCommentProps } from './interface';
+import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
+import { CreateCommentProps, ICommentDomainService, UpdateCommentProps } from './interface';
 import { CommentEntity } from '../model/comment';
 import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {

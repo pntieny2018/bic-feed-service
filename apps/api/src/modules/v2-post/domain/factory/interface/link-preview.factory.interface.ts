@@ -1,6 +1,6 @@
-import { LinkPreviewEntity, LinkPreviewProps } from '../../model/link-preview';
+import { LinkPreviewAttributes, LinkPreviewEntity } from '../../model/link-preview';
 
-export type LinkPreviewDto = {
+export type CreateLinkPreviewProps = {
   url: string;
   domain: string;
   image: string;
@@ -9,8 +9,8 @@ export type LinkPreviewDto = {
 };
 
 export interface ILinkPreviewFactory {
-  createLinkPreview(props: LinkPreviewDto): LinkPreviewEntity;
-  reconstitute(props: LinkPreviewProps): LinkPreviewEntity;
+  createLinkPreview(props: CreateLinkPreviewProps): LinkPreviewEntity;
+  reconstitute(props: LinkPreviewAttributes): LinkPreviewEntity;
 }
 
 export const LINK_PREVIEW_FACTORY_TOKEN = 'LINK_PREVIEW_FACTORY_TOKEN';

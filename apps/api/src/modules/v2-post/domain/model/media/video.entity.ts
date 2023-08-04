@@ -2,13 +2,13 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
-export interface VideoThumbnailProps {
+export interface VideoThumbnailAttributes {
   url: string;
   width: number;
   height: number;
 }
 
-export type VideoProps = {
+export type VideoAttributes = {
   id: string;
   url: string;
   name: string;
@@ -18,11 +18,11 @@ export type VideoProps = {
   width: number;
   height: number;
   status: string;
-  thumbnails: VideoThumbnailProps[];
+  thumbnails: VideoThumbnailAttributes[];
 };
 
-export class VideoEntity extends DomainAggregateRoot<VideoProps> {
-  public constructor(props: VideoProps) {
+export class VideoEntity extends DomainAggregateRoot<VideoAttributes> {
+  public constructor(props: VideoAttributes) {
     super(props);
   }
 

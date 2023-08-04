@@ -1,7 +1,7 @@
 import { CommentEntity } from '../../model/comment';
 import { UserDto } from '../../../../v2-user/application';
 
-export type UpdateCommentDto = {
+export type UpdateCommentProps = {
   id: string;
   actor: UserDto;
   content?: string;
@@ -15,7 +15,7 @@ export type UpdateCommentDto = {
 };
 
 export interface ICommentValidator {
-  getUpdateMasks(payload: UpdateCommentDto, comment: CommentEntity): string[];
+  getUpdateMasks(props: UpdateCommentProps, comment: CommentEntity): string[];
 }
 
 export const COMMENT_VALIDATOR_TOKEN = 'COMMENT_VALIDATOR_TOKEN';

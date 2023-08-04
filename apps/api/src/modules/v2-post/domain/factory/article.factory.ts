@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { IArticleFactory } from './interface';
-import { ArticleEntity, ArticleProps } from '../model/content';
+import { ArticleEntity, ArticleAttributes } from '../model/content';
 import { v4 } from 'uuid';
 import { PostStatus, PostType } from '../../data-type';
 
@@ -51,7 +51,7 @@ export class ArticleFactory implements IArticleFactory {
     return this._eventPublisher.mergeObjectContext(entity);
   }
 
-  public reconstitute(properties: ArticleProps): ArticleEntity {
+  public reconstitute(properties: ArticleAttributes): ArticleEntity {
     return this._eventPublisher.mergeObjectContext(new ArticleEntity(properties));
   }
 }

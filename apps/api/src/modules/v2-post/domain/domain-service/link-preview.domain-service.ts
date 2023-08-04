@@ -3,7 +3,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { ILinkPreviewRepository, LINK_PREVIEW_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
   ILinkPreviewDomainService,
-  LinkPreviewDto,
+  LinkPreviewProps,
 } from './interface/link-preview.domain-service.interface';
 import {
   ILinkPreviewFactory,
@@ -21,7 +21,7 @@ export class LinkPreviewDomainService implements ILinkPreviewDomainService {
     private readonly _linkPreviewFactory: ILinkPreviewFactory
   ) {}
 
-  public async findOrUpsert(input: LinkPreviewDto): Promise<LinkPreviewEntity> {
+  public async findOrUpsert(input: LinkPreviewProps): Promise<LinkPreviewEntity> {
     if (!input?.url) return null;
     try {
       let linkPreviewEntity = await this._linkPreviewRepo.findByUrl(input.url);

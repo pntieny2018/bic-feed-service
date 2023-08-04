@@ -5,7 +5,7 @@ import { validate as isUUID } from 'uuid';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
 
-export type Question = {
+export type QuestionAttributes = {
   id: string;
   content: string;
   answers: {
@@ -15,7 +15,7 @@ export type Question = {
   }[];
 };
 
-export type QuizProps = {
+export type QuizAttributes = {
   id: string;
   title: string;
   contentId: string;
@@ -29,7 +29,7 @@ export type QuizProps = {
   numberOfQuestionsDisplay?: number;
   numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  questions?: Question[];
+  questions?: QuestionAttributes[];
   meta?: any;
   error?: {
     code: string;
@@ -41,8 +41,8 @@ export type QuizProps = {
   updatedAt?: Date;
 };
 
-export class QuizEntity extends DomainAggregateRoot<QuizProps> {
-  public constructor(props: QuizProps) {
+export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
+  public constructor(props: QuizAttributes) {
     super(props);
     this.validateNumberDisplay();
   }
@@ -134,7 +134,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     this.validateNumberDisplay();
   }
 
-  public updateAttribute(data: Partial<QuizProps>): void {
+  public updateAttribute(data: Partial<QuizAttributes>): void {
     if (data.questions) {
       this._props.questions = data.questions;
     }

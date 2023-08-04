@@ -2,7 +2,7 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 
-export type LinkPreviewDto = {
+export type LinkPreviewProps = {
   url: string;
   domain: string;
   image: string;
@@ -10,7 +10,7 @@ export type LinkPreviewDto = {
   description: string;
 };
 
-export type LinkPreviewProps = {
+export type LinkPreviewAttributes = {
   id: string;
   url: string;
   domain?: string;
@@ -21,8 +21,8 @@ export type LinkPreviewProps = {
   updatedAt: Date;
 };
 
-export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewProps> {
-  public constructor(props: LinkPreviewProps) {
+export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewAttributes> {
+  public constructor(props: LinkPreviewAttributes) {
     super(props);
   }
 
@@ -32,7 +32,7 @@ export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewProps> {
     }
   }
 
-  public update(data: LinkPreviewDto): void {
+  public update(data: LinkPreviewProps): void {
     this._props = {
       ...this._props,
       ...data,

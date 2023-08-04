@@ -3,10 +3,10 @@ import { RULES } from '../../../constant';
 import { difference, isEmpty } from 'lodash';
 import { ImageEntity } from '../media';
 import { CategoryEntity } from '../category';
-import { ContentEntity, ContentProps } from './content.entity';
+import { ContentEntity, ContentAttributes } from './content.entity';
 import { PostStatus } from '../../../data-type';
 
-export type ArticleProps = ContentProps & {
+export type ArticleAttributes = ContentAttributes & {
   title: string;
   summary: string;
   content: string;
@@ -16,12 +16,12 @@ export type ArticleProps = ContentProps & {
   tags: TagEntity[];
 };
 
-export class ArticleEntity extends ContentEntity<ArticleProps> {
-  public constructor(props: ArticleProps) {
+export class ArticleEntity extends ContentEntity<ArticleAttributes> {
+  public constructor(props: ArticleAttributes) {
     super(props);
   }
 
-  public updateAttribute(data: Partial<ArticleProps>, userId: string): void {
+  public updateAttribute(data: Partial<ArticleAttributes>, userId: string): void {
     const { content, seriesIds, title, summary, groupIds, wordCount } = data;
     super.update({ authUser: { id: userId }, groupIds });
 

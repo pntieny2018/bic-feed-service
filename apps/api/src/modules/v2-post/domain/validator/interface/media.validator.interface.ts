@@ -1,7 +1,7 @@
 import { UserDto } from '../../../../v2-user/application';
 import { ImageResource } from '../../../data-type';
 
-export type ImageDto = {
+export type ImageProps = {
   id: string;
   url: string;
   source: string;
@@ -14,7 +14,7 @@ export type ImageDto = {
 };
 
 export interface IMediaValidator {
-  validateImagesMedia(images: ImageDto[], actor: UserDto): void;
+  validateImagesMedia(images: ImageProps[], actor: UserDto): void;
 }
 
 export const MEDIA_VALIDATOR_TOKEN = 'MEDIA_VALIDATOR_TOKEN';

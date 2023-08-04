@@ -4,7 +4,7 @@ import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
 import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
-  FindContentOptions,
+  FindContentProps,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import {
@@ -29,7 +29,7 @@ export class FindCommentsPaginationHandler
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { postId, authUser } = query.payload;
-    const findOneOptions: FindContentOptions = {
+    const findOneOptions: FindContentProps = {
       where: {
         id: postId,
         groupArchived: false,

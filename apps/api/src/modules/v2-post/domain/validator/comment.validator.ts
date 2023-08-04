@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ICommentValidator, UpdateCommentDto } from './interface';
+import { ICommentValidator, UpdateCommentProps } from './interface';
 import { CommentEntity } from '../model/comment';
 import { ArrayHelper } from '../../../../common/helpers';
 
 @Injectable()
 export class CommentValidator implements ICommentValidator {
-  public getUpdateMasks(payload: UpdateCommentDto, comment: CommentEntity): string[] {
+  public getUpdateMasks(payload: UpdateCommentProps, comment: CommentEntity): string[] {
     const updateMasks = [];
     const { content, media, mentions, giphyId } = payload;
 

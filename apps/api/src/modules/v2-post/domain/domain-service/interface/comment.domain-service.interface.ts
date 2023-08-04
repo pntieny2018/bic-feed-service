@@ -1,9 +1,15 @@
 import { GroupDto } from '../../../../v2-group/application';
-import { CreateCommentProps } from '../../factory/interface';
+import { BasedCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
 import { UserDto } from '../../../../v2-user/application';
 
-export type UpdateCommentDto = {
+export type CreateCommentProps = {
+  data: BasedCommentProps;
+  groups: GroupDto[];
+  mentionUsers: UserDto[];
+};
+
+export type UpdateCommentPayload = {
   id: string;
   content?: string;
   media?: {
@@ -19,7 +25,7 @@ export type UpdateCommentProps = {
   commentEntity: CommentEntity;
   groups: GroupDto[];
   mentionUsers: UserDto[];
-  newData: UpdateCommentDto;
+  newData: UpdateCommentPayload;
   actor: UserDto;
 };
 
