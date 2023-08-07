@@ -37,6 +37,9 @@ export const ERRORS = {
     GENERATE_FAIL: 'quiz.generate_fail',
     QUIZ_PROCESSING: 'quiz.quiz_processing',
   },
+  QUIZ_QUESTION: {
+    NOT_FOUND: 'quiz_question.not_found',
+  },
   QUIZ_PARTICIPANT: {
     NOT_FOUND: 'quiz_participant.not_found',
     NOT_FINISHED: 'quiz_participant.not_finished',

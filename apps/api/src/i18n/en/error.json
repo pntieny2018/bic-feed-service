@@ -85,8 +85,11 @@
     "generate_limited": "Generate quiz is limited request per minute",
     "over_time": "Quiz is overtime. "
   },
+  "quiz_question": {
+    "not_found": "Session ID not found"
+  },
   "quiz_participant": {
-    "not_fount": "Session ID not found",
+    "not_found": "Session ID not found",
     "not_finished": "You have a quiz is not finished"
   },
   "cursor_params_invalid": "Cursor params invalid"
