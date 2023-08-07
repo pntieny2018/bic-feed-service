@@ -316,6 +316,7 @@ export class QuizRepository implements IQuizRepository {
         },
       ],
     });
+    if (!question) return null;
     return new QuizQuestionEntity({
       id: question.id,
       content: question.content,
