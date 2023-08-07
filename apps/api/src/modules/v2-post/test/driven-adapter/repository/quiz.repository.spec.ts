@@ -226,7 +226,7 @@ describe('QuizRepository', () => {
       const getPaginationQuizzesProps: GetPaginationQuizzesProps = {
         where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
         contentType: PostType.POST,
-        attributes: ['id', 'contentId', 'createdAt'],
+        attributes: ['id', 'postId', 'createdAt'],
         limit: 10,
         order: OrderEnum.DESC,
       };
