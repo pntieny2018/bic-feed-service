@@ -1,5 +1,4 @@
 import { QuizGenStatus, QuizStatus } from '../../data-type';
-import { Question } from '../../domain/model/quiz';
 
 export const quizRecordMock = {
   id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
@@ -18,6 +17,7 @@ export const quizRecordMock = {
     {
       id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae9',
       content: 'question 1',
+      quizId: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
       answers: [
         {
           id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae2',
@@ -31,7 +31,7 @@ export const quizRecordMock = {
         },
       ],
     },
-  ] as Question[],
+  ],
   meta: 'meta',
   error: {
     code: '1',

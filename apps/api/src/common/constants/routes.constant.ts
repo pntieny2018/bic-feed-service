@@ -119,7 +119,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     DELETE_QUIZ_QUESTION: {
-      PATH: '/quizzes/:id/questions/questionId',
+      PATH: '/quizzes/:id/questions/:questionId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
