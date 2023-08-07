@@ -9,13 +9,19 @@ export class UpdateArticleRequestDto extends PublishPostRequestDto {
     type: String,
   })
   @IsOptional()
+  @Expose({
+    name: 'title',
+  })
   public title?: string;
 
   @ApiPropertyOptional({
     type: String,
   })
+  @Expose({
+    name: 'summary',
+  })
   @IsOptional()
-  public summary?: string = null;
+  public summary?: string;
 
   @ApiPropertyOptional({
     type: [String],

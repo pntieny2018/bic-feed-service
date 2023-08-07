@@ -7,7 +7,7 @@ export class ContentNoReactPermissionException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_NO_REACT_PERMISSION,
-      message || i18n.t(`error.content.no_react_permission`),
+      message || i18n?.t(`error.content.no_react_permission`),
       errors
     );
   }

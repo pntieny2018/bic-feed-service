@@ -7,7 +7,7 @@ export class AccessDeniedException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_ACCESS_DENIED,
-      message || i18n.t(`error.common.access_denied`),
+      message || i18n?.t(`error.common.access_denied`),
       errors
     );
   }

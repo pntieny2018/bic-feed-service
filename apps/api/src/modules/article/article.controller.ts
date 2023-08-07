@@ -244,6 +244,13 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.scheduled_success',
   })
+  @Version([
+    VERSIONS_SUPPORTED[0],
+    VERSIONS_SUPPORTED[1],
+    VERSIONS_SUPPORTED[2],
+    VERSIONS_SUPPORTED[3],
+    VERSIONS_SUPPORTED[4],
+  ])
   @Put('/:id/schedule')
   public async schedule(
     @AuthUser() user: UserDto,

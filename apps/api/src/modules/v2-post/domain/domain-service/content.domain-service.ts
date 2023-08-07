@@ -4,6 +4,7 @@ import { PostStatus } from '../../data-type';
 import {
   GetContentByIdsProps,
   GetDraftsProps,
+  GetScheduledContentProps,
   IContentDomainService,
 } from './interface/content.domain-service.interface';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
@@ -63,5 +64,22 @@ export class ContentDomainService implements IContentDomainService {
     });
 
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+  }
+
+  public async getScheduledContent(
+    input: GetScheduledContentProps
+  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
+    const { beforeDate } = input;
+
+    return this._contentRepository.getPagination({
+      ...input,
+      where: {
+        status: PostStatus.WAITING_SCHEDULE,
+        scheduledAt: beforeDate,
+      },
+      attributes: {
+        exclude: ['content'],
+      },
+    });
   }
 }

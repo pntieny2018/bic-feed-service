@@ -38,7 +38,7 @@ import { PostReactionModel } from '../../../../database/models/post-reaction.mod
 import { CategoryModel } from '../../../../database/models/category.model';
 import { isBoolean } from 'lodash';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { CursorPaginator } from '../../../../common/dto';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
 
@@ -150,6 +150,7 @@ export class ContentRepository implements IContentRepository {
       isReported: postEntity.get('isReported'),
       type: postEntity.get('type'),
       status: postEntity.get('status'),
+      errorLog: postEntity.get('errorLog'),
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
       isImportant: postEntity.get('setting')?.isImportant,
@@ -173,6 +174,8 @@ export class ContentRepository implements IContentRepository {
       linkPreview: postEntity.get('linkPreview')?.toObject() || null,
       wordCount: postEntity.get('wordCount'),
       createdAt: postEntity.get('createdAt'),
+      publishedAt: postEntity.get('publishedAt'),
+      scheduledAt: postEntity.get('scheduledAt'),
     };
   }
 
@@ -262,9 +265,8 @@ export class ContentRepository implements IContentRepository {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const findOption = this._buildFindOptions(findAllPostOptions);
     findOption.limit = findAllPostOptions.limit || this.LIMIT_DEFAULT;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
+    findOption.order = this._getOrderContent(findAllPostOptions.orderOptions);
     findOption.offset = findAllPostOptions.offset || 0;
-    findOption.order = this._getOrderContent(findAllPostOptions.order);
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToEntity(row));
   }
@@ -273,9 +275,12 @@ export class ContentRepository implements IContentRepository {
     if (!orderOptions) return undefined;
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"colImportant"'), 'desc']);
+      order.push([this._sequelizeConnection.literal('"colImportant"'), OrderEnum.DESC]);
     }
-    order.push(['createdAt', 'desc']);
+    if (orderOptions.isPublished) {
+      order.push(['publishedAt', OrderEnum.DESC]);
+    }
+    order.push(['createdAt', OrderEnum.DESC]);
     return order;
   }
 
@@ -506,6 +511,12 @@ export class ContentRepository implements IContentRepository {
         });
       }
 
+      if (options.where.scheduledAt) {
+        condition.push({
+          scheduledAt: { [Op.lte]: options.where.scheduledAt },
+        });
+      }
+
       if (options.where.excludeReportedByUserId) {
         condition.push(
           Sequelize.literal(
@@ -704,6 +715,7 @@ export class ContentRepository implements IContentRepository {
       updatedAt: post.updatedAt,
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
+      scheduledAt: post.scheduledAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
@@ -765,12 +777,14 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit, order } = getPaginationContentsProps;
+    const { after, before, limit = this.LIMIT_DEFAULT, order } = getPaginationContentsProps;
     const findOption = this._buildFindOptions(getPaginationContentsProps);
-    findOption.limit = getPaginationContentsProps.limit || this.LIMIT_DEFAULT;
+    const orderBuilder = this._getOrderContent(getPaginationContentsProps.orderOptions);
+    const cursorColumns = orderBuilder?.map((order) => order[0]);
+
     const paginator = new CursorPaginator(
       this._postModel,
-      ['createdAt'],
+      cursorColumns || ['createdAt'],
       { before, after, limit },
       order
     );

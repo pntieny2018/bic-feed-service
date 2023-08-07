@@ -7,7 +7,7 @@ export class AudienceNoBelongContentException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.AUDIENCE_NO_BELONG,
-      message || i18n.t(`error.content.audience_no_belong`),
+      message || i18n?.t(`error.content.audience_no_belong`),
       errors
     );
   }
