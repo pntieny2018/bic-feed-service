@@ -34,6 +34,8 @@ import { UpdateQuizQuestionHandler } from '../application/command/update-quiz-qu
 import { DeleteQuizQuestionHandler } from '../application/command/delete-quiz-question/delete-quiz-question.handler';
 import { FindQuizSummaryHandler } from '../application/query/find-quiz-summary/find-quiz-summary.handler';
 import { FindQuizParticipantsSummaryDetailHandler } from '../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.handler';
+import { ProcessQuizParticipantResultHandler } from '../application/command/process-quiz-participant-result/process-quiz-participant-result.handler';
+import { QuizParticipantProcessor } from '../driving-apdater/queue-processor/quiz-participant.processor';
 
 export const quizProvider = [
   {
@@ -87,4 +89,7 @@ export const quizProvider = [
   DeleteQuizQuestionHandler,
   FindQuizSummaryHandler,
   FindQuizParticipantsSummaryDetailHandler,
+  ProcessQuizParticipantResultHandler,
+  /** Processor */
+  QuizParticipantProcessor,
 ];

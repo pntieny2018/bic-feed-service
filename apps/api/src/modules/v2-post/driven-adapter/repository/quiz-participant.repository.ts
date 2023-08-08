@@ -59,6 +59,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     await this._quizParticipantModel.update(
       {
         score: quizParticipant.get('score'),
+        isHighest: quizParticipant.get('isHighest'),
         totalAnswers: quizParticipant.get('totalAnswers'),
         totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
         startedAt: quizParticipant.get('startedAt'),
@@ -137,6 +138,23 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     });
 
     return this._modelToEntity(takeQuizModel);
+  }
+
+  public async findQuizParticipantHighestScoreByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipant = await this._quizParticipantModel.findOne({
+      where: {
+        postId: contentId,
+        createdBy: userId,
+        isHighest: true,
+      },
+    });
+
+    if (!quizParticipant) return null;
+
+    return this._modelToEntity(quizParticipant);
   }
 
   public async getHighestScoreOfMember(
