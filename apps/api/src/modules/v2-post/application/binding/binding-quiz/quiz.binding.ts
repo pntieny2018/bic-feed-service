@@ -57,6 +57,7 @@ export class QuizBinding implements IQuizBinding {
       })),
       quizId: quizParticipantEntity.get('quizId'),
       score: quizParticipantEntity.get('score'),
+      isHighest: quizParticipantEntity.get('isHighest'),
       totalAnswers: quizParticipantEntity.get('totalAnswers'),
       totalCorrectAnswers: quizParticipantEntity.get('totalCorrectAnswers'),
       finishedAt: quizParticipantEntity.get('finishedAt'),

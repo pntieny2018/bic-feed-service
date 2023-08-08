@@ -1,4 +1,8 @@
+import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
+import { difference } from 'lodash';
 import { InjectModel } from '@nestjs/sequelize';
+
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
 import { QuizParticipantAnswerModel } from '../../../../database/models/quiz-participant-answers.model';
@@ -6,9 +10,10 @@ import {
   IQuizParticipant,
   QuizParticipantModel,
 } from '../../../../database/models/quiz-participant.model';
-import { Sequelize } from 'sequelize-typescript';
-import { Op } from 'sequelize';
-import { difference } from 'lodash';
+import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
+import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
@@ -54,6 +59,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     await this._quizParticipantModel.update(
       {
         score: quizParticipant.get('score'),
+        isHighest: quizParticipant.get('isHighest'),
         totalAnswers: quizParticipant.get('totalAnswers'),
         totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
         startedAt: quizParticipant.get('startedAt'),
@@ -134,6 +140,71 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     return this._modelToEntity(takeQuizModel);
   }
 
+  public async findQuizParticipantHighestScoreByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipant = await this._quizParticipantModel.findOne({
+      where: {
+        postId: contentId,
+        createdBy: userId,
+        isHighest: true,
+      },
+    });
+
+    if (!quizParticipant) return null;
+
+    return this._modelToEntity(quizParticipant);
+  }
+
+  public async getHighestScoreOfMember(
+    contentId: string
+  ): Promise<{ createdBy: string; score: number }[]> {
+    const rows = await this._quizParticipantModel.findAll({
+      attributes: ['createdBy', [Sequelize.fn('max', Sequelize.col('score')), 'score']],
+      where: {
+        postId: contentId,
+        [Op.or]: [
+          { finishedAt: { [Op.not]: null } },
+          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
+        ],
+      },
+      group: ['created_by'],
+    });
+
+    return rows.map((row) => row.toJSON());
+  }
+
+  public async getQuizParticipantHighestScoreGroupByUserId(
+    contentId: string,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<QuizParticipantEntity>> {
+    const { limit = PAGING_DEFAULT_LIMIT, before, after, order = OrderEnum.DESC } = paginationProps;
+
+    const paginator = new CursorPaginator(
+      this._quizParticipantModel,
+      ['createdAt'],
+      { before, after, limit },
+      order
+    );
+
+    const { rows, meta } = await paginator.paginate({
+      where: {
+        postId: contentId,
+        isHighest: true,
+        [Op.or]: [
+          { finishedAt: { [Op.not]: null } },
+          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
+        ],
+      },
+    });
+
+    return {
+      rows: rows.map((row) => this._modelToEntity(row)),
+      meta,
+    };
+  }
+
   public async getQuizParticipantHighestScoreGroupByContentId(
     contentIds: string[],
     userId: string
@@ -208,6 +279,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       quizId: takeQuizModel.quizId,
       quizSnapshot: takeQuizModel.quizSnapshot,
       score: takeQuizModel.score,
+      isHighest: takeQuizModel.isHighest,
       timeLimit: takeQuizModel.timeLimit,
       totalAnswers: takeQuizModel.totalAnswers,
       totalCorrectAnswers: takeQuizModel.totalCorrectAnswers,

@@ -86,6 +86,7 @@ export class QuizFactory implements IQuizFactory {
         })),
       },
       score: 0,
+      isHighest: false,
       timeLimit: quizEntity.get('timeLimit'),
       answers: [],
       totalAnswers: 0,

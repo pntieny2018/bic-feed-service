@@ -36,7 +36,7 @@ import {
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
-import { QuizDto } from '../../application/dto';
+import { QuizDto, QuizSummaryDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception';
 import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
@@ -67,6 +67,10 @@ import { AddQuizQuestionCommand } from '../../application/command/add-quiz-quest
 import { UpdateQuizQuestionCommand } from '../../application/command/update-quiz-question/update-quiz-question.command';
 import { DeleteQuizQuestionCommand } from '../../application/command/delete-quiz-question/delete-quiz-question.command';
 import { QuizQuestionDto } from '../../application/dto/quiz-question.dto';
+import { FindQuizSummaryQuery } from '../../application/query/find-quiz-summary/find-quiz-summary.query';
+import { FindQuizParticipantsSummaryDetailDto } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.dto';
+import { GetQuizParticipantsSummaryDetailRequestDto } from '../dto/request/get-quiz-participants-summary-detail.request.dto';
+import { FindQuizParticipantsSummaryDetailQuery } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.query';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -173,6 +177,63 @@ export class QuizController {
         case OpenAIException:
         case DomainModelException:
           throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get quiz summary' })
+  @ApiOkResponse({
+    type: QuizSummaryDto,
+    description: 'Get quiz summary successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_SUMMARY.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_SUMMARY.VERSIONS)
+  public async getQuizSummary(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizSummaryDto> {
+    try {
+      const data = await this._queryBus.execute(new FindQuizSummaryQuery({ authUser, contentId }));
+
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get quiz participants summary detail' })
+  @ApiOkResponse({
+    type: FindQuizParticipantsSummaryDetailDto,
+    description: 'Get quiz participants summary detail successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.VERSIONS)
+  public async getQuizParticipantsSummaryDetail(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetQuizParticipantsSummaryDetailRequestDto
+  ): Promise<FindQuizParticipantsSummaryDetailDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId: contentId, ...query })
+      );
+
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
         default:
           throw e;
       }
