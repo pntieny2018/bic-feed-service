@@ -32,6 +32,7 @@ import { FindQuizParticipantHandler } from '../application/query/find-quiz-parti
 import { AddQuizQuestionHandler } from '../application/command/add-quiz-question/add-quiz-question.handler';
 import { UpdateQuizQuestionHandler } from '../application/command/update-quiz-question/update-quiz-question.handler';
 import { DeleteQuizQuestionHandler } from '../application/command/delete-quiz-question/delete-quiz-question.handler';
+import { FindQuizSummaryHandler } from '../application/query/find-quiz-summary/find-quiz-summary.handler';
 
 export const quizProvider = [
   {
@@ -83,4 +84,5 @@ export const quizProvider = [
   AddQuizQuestionHandler,
   UpdateQuizQuestionHandler,
   DeleteQuizQuestionHandler,
+  FindQuizSummaryHandler,
 ];

@@ -134,6 +134,24 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     return this._modelToEntity(takeQuizModel);
   }
 
+  public async getHighestScoreOfMember(
+    contentId: string
+  ): Promise<{ createdBy: string; score: number }[]> {
+    const rows = await this._quizParticipantModel.findAll({
+      attributes: ['createdBy', [Sequelize.fn('max', Sequelize.col('score')), 'score']],
+      where: {
+        postId: contentId,
+        [Op.or]: [
+          { finishedAt: { [Op.not]: null } },
+          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
+        ],
+      },
+      group: ['created_by'],
+    });
+
+    return rows.map((row) => row.toJSON());
+  }
+
   public async getQuizParticipantHighestScoreGroupByContentId(
     contentIds: string[],
     userId: string

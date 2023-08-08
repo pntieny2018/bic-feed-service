@@ -24,3 +24,22 @@ export class QuizDto {
     Object.assign(this, data);
   }
 }
+
+export class QuizParticipantSummaryDto {
+  public total: number;
+  public pass: number;
+  public fail: number;
+
+  public constructor(data: Partial<QuizParticipantSummaryDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class QuizSummaryDto {
+  public contentId: string;
+  public participants: QuizParticipantSummaryDto;
+
+  public constructor(data: Partial<QuizSummaryDto>) {
+    Object.assign(this, data);
+  }
+}

@@ -5,6 +5,7 @@ export interface IQuizParticipantRepository {
   update(quizParticipant: QuizParticipantEntity): Promise<void>;
   findOne(takeId: string): Promise<QuizParticipantEntity>;
   findAllByContentId(contentId: string, userId: string): Promise<QuizParticipantEntity[]>;
+  getHighestScoreOfMember(contentId: string): Promise<{ createdBy: string; score: number }[]>;
   getQuizParticipantHighestScoreGroupByContentId(
     contentIds: string[],
     userId: string
