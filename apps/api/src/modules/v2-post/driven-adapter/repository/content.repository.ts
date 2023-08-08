@@ -606,6 +606,7 @@ export class ContentRepository implements IContentRepository {
             quizSnapshot: quizResult.quizSnapshot,
             timeLimit: quizResult.timeLimit,
             score: quizResult.score,
+            isHighest: quizResult.isHighest,
             totalAnswers: quizResult.totalAnswers,
             totalCorrectAnswers: quizResult.totalCorrectAnswers,
             startedAt: quizResult.startedAt,

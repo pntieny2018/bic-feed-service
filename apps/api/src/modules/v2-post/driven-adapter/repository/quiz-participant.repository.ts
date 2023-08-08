@@ -208,6 +208,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       quizId: takeQuizModel.quizId,
       quizSnapshot: takeQuizModel.quizSnapshot,
       score: takeQuizModel.score,
+      isHighest: takeQuizModel.isHighest,
       timeLimit: takeQuizModel.timeLimit,
       totalAnswers: takeQuizModel.totalAnswers,
       totalCorrectAnswers: takeQuizModel.totalCorrectAnswers,
