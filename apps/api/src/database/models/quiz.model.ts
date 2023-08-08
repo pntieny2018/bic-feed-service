@@ -13,7 +13,7 @@ import {
 import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { QuizGenStatus, QuizStatus } from '../../modules/v2-post/data-type/quiz-status.enum';
+import { QuizGenStatus, QuizStatus } from '../../modules/v2-post/data-type/quiz.enum';
 import { PostModel } from './post.model';
 import { IQuizQuestion, QuizQuestionModel } from './quiz-question.model';
 

@@ -55,3 +55,25 @@ export class SeriesDto {
     Object.assign(this, data);
   }
 }
+
+export class CreateSeriesDto extends SeriesDto {
+  public constructor(data: Partial<CreateSeriesDto>) {
+    super(data);
+  }
+}
+
+export class FindItemsBySeriesDto {
+  public series: {
+    id: string;
+    title: string;
+    summary: string;
+    items: {
+      id: string;
+      title: string;
+      type: PostType;
+    }[];
+  }[];
+  public constructor(data: FindItemsBySeriesDto) {
+    Object.assign(this, data);
+  }
+}

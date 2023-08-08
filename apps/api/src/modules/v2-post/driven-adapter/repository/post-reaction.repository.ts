@@ -7,7 +7,7 @@ import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
 } from '../../domain/factory/interface/reaction.factory.interface';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import {
   FindOnePostReactionProps,
   IPostReactionRepository,

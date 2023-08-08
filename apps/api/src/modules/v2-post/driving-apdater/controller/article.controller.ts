@@ -37,9 +37,8 @@ import {
   TagSeriesInvalidException,
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
 import { instanceToInstance, plainToInstance } from 'class-transformer';
-import { ArticleDto } from '../../application/dto';
+import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { FindArticleQuery } from '../../application/query/find-article/find-article.query';

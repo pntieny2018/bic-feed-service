@@ -31,6 +31,7 @@ import {
   IArticleValidator,
   ICategoryValidator,
 } from '../validator/interface';
+import { UserDto } from '../../../v2-user/application';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {
@@ -51,13 +52,12 @@ export class ArticleDomainService implements IArticleDomainService {
 
   public async publish(inputData: PublishArticleProps): Promise<void> {
     const { articleEntity, newData } = inputData;
-    const { actor } = newData;
 
-    await this._setArticleEntityAttributes(articleEntity, newData);
+    await this._setArticleEntityAttributes(articleEntity, newData, inputData.actor);
 
     articleEntity.setPublish();
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
     await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
@@ -68,7 +68,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
   public async schedule(inputData: ScheduleArticleProps): Promise<ArticleEntity> {
     const { payload } = inputData;
-    const { actor, id, scheduledAt } = payload;
+    const { id, scheduledAt } = payload;
 
     const articleEntity = await this._contentRepository.findOne({
       where: {
@@ -93,11 +93,11 @@ export class ArticleDomainService implements IArticleDomainService {
 
     if (articleEntity.isPublished()) throw new ContentHasBeenPublishedException();
 
-    await this._setArticleEntityAttributes(articleEntity, payload);
+    await this._setArticleEntityAttributes(articleEntity, payload, inputData.actor);
 
     articleEntity.setWaitingSchedule(scheduledAt);
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
     await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
@@ -110,11 +110,10 @@ export class ArticleDomainService implements IArticleDomainService {
 
   public async update(inputData: UpdateArticleProps): Promise<void> {
     const { articleEntity, newData } = inputData;
-    const { actor } = newData;
 
-    await this._setArticleEntityAttributes(articleEntity, newData);
+    await this._setArticleEntityAttributes(articleEntity, newData, inputData.actor);
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
     await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
@@ -127,11 +126,10 @@ export class ArticleDomainService implements IArticleDomainService {
 
   public async autoSave(inputData: UpdateArticleProps): Promise<void> {
     const { articleEntity, newData } = inputData;
-    const { actor } = newData;
 
-    await this._setArticleEntityAttributes(articleEntity, newData);
+    await this._setArticleEntityAttributes(articleEntity, newData, inputData.actor);
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
     if (!articleEntity.isChanged()) return;
 
@@ -140,9 +138,10 @@ export class ArticleDomainService implements IArticleDomainService {
 
   private async _setArticleEntityAttributes(
     articleEntity: ArticleEntity,
-    payload: ArticlePayload
+    payload: ArticlePayload,
+    actor: UserDto
   ): Promise<void> {
-    const { actor, categories, tags, coverMedia } = payload;
+    const { categories, tags, coverMedia, ...restUpdate } = payload;
 
     if (tags) {
       const newTags = await this._tagRepository.findAll({ ids: tags });
@@ -169,6 +168,6 @@ export class ArticleDomainService implements IArticleDomainService {
       articleEntity.setCategories(newCategories);
     }
 
-    articleEntity.updateAttribute(payload);
+    articleEntity.updateAttribute(restUpdate, actor.id);
   }
 }

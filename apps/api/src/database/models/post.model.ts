@@ -36,9 +36,9 @@ import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
-import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
 import { IQuiz, QuizModel } from './quiz.model';
 import { IQuizParticipant, QuizParticipantModel } from './quiz-participant.model';
+import { PostLang } from '../../modules/v2-post/data-type';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',

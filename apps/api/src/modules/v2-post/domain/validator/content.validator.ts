@@ -23,7 +23,7 @@ import {
   ContentRequireGroupException,
 } from '../exception';
 import { IContentValidator } from './interface';
-import { ContentEntity } from '../model/content/content.entity';
+import { ContentEntity } from '../model/content';
 import { AccessDeniedException } from '../exception/access-denied.exception';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
 import { PostType } from '../../data-type';

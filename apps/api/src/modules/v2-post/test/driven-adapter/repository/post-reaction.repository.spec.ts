@@ -10,7 +10,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { PostReactionModel } from '../../../../../database/models/post-reaction.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { REACTION_FACTORY_TOKEN } from '../../../domain/factory/interface/reaction.factory.interface';
-import { ReactionFactory } from '../../../domain/factory/interface/reaction.factory';
+import { ReactionFactory } from '../../../domain/factory/reaction.factory';
 import { getDatabaseConfig } from '../../../../../config/database';
 import { mockReactionEntity } from '../../mock/post-reaction.entity.mock';
 

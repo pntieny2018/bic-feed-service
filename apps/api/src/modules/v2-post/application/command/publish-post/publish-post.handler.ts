@@ -17,9 +17,9 @@ import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { PostChangedMessagePayload } from '../../dto/message/post-published.message-payload';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { KafkaService } from '@app/kafka';
+import { PostChangedMessagePayload } from '../../dto/message';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {

@@ -5,7 +5,7 @@ import {
 } from '../../../authority/application/authority.app-service.interface';
 import { UserDto } from '../../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { IQuizValidator } from './interface/quiz.validator.interface';
+import { IQuizValidator } from './interface';
 import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from '../domain-service/interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from './interface';
 import { AccessDeniedException } from '../exception';

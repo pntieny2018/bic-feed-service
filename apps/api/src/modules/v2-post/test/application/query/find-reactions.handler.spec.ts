@@ -4,7 +4,7 @@ import { ReactionQuery } from '../../../driven-adapter/query/reaction.query';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FindReactionsHandler } from '../../../application/query/find-reactions/find-reactions.handler';
 import { REACTION_QUERY_TOKEN } from '../../../domain/query-interface/reaction.query.interface';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import { createMock } from '@golevelup/ts-jest';
 import { v4 } from 'uuid';
 

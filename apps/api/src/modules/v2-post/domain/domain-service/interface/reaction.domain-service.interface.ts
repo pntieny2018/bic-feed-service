@@ -1,5 +1,5 @@
 import { ReactionEntity } from '../../model/reaction';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { REACTION_TARGET } from '../../../data-type';
 
 export type ReactionCreateProps = {
   reactionName: string;

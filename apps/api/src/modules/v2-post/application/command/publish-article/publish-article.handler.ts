@@ -63,6 +63,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
     await this._articleDomainService.publish({
       articleEntity,
       newData: command.payload,
+      actor,
     });
 
     await this._postDomainService.markSeen(articleEntity, actor.id);

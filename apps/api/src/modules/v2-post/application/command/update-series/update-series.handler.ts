@@ -25,10 +25,10 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 import { SeriesDto } from '../../dto';
-import { SeriesChangedMessagePayload } from '../../dto/message/series-changed.message-payload';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { cloneDeep } from 'lodash';
 import { KafkaService } from '@app/kafka';
+import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @CommandHandler(UpdateSeriesCommand)
 export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand, SeriesDto> {

@@ -1,16 +1,16 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { Question } from '../quiz';
+import { QuestionAttributes } from '../quiz';
 import { v4 } from 'uuid';
 import { RULES } from '../../../constant';
 
-export type QuizParticipantProps = {
+export type QuizParticipantAttributes = {
   id: string;
   contentId: string;
   quizId: string;
   quizSnapshot: {
     title: string;
     description: string;
-    questions: Question[];
+    questions: QuestionAttributes[];
   };
   answers: {
     id: string;
@@ -32,8 +32,8 @@ export type QuizParticipantProps = {
   updatedAt: Date;
 };
 
-export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantProps> {
-  public constructor(props: QuizParticipantProps) {
+export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantAttributes> {
+  public constructor(props: QuizParticipantAttributes) {
     super(props);
   }
 

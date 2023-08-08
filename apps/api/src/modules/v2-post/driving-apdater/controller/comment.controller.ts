@@ -16,22 +16,17 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
-import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
 import { UserDto } from '../../../v2-user/application/user.dto';
 import { CreateCommentPipe } from '../pipes/create-comment.pipe';
-import { CreateCommentRequestDto } from '../dto/request/create-comment.request.dto';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
 } from '../../application/command/create-comment/create-comment.command';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { ReplyCommentDto } from '../../application/command/reply-comment/reply-comment.dto';
-import { ReplyCommentRequestDto } from '../dto/request/reply-comment.request.dto';
 import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
 } from '../../application/command/reply-comment/reply-comment.command';
-import { UpdateCommentRequestDto } from '../dto/request/update-comment.request.dto';
 import {
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
@@ -56,12 +51,22 @@ import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { instanceToInstance } from 'class-transformer';
 import { GetCommentsPipe } from '../pipes/get-comments.pipe';
-import { GetCommentsArroundIdDto, GetListCommentsDto } from '../dto/request';
+import {
+  CreateCommentRequestDto,
+  GetCommentsArroundIdDto,
+  GetListCommentsDto,
+  ReplyCommentRequestDto,
+  UpdateCommentRequestDto,
+} from '../dto/request';
 import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
-import { FindCommentsPaginationDto } from '../../application/query/find-comments/find-comments-pagination.dto';
 import { GetCommentsArroundIdPipe } from '../pipes/get-comments-arround-id.pipe';
 import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
-import { FindCommentsArroundIdDto } from '../../application/query/find-comments-arround-id/find-comments-arround-id.dto';
+import {
+  CreateCommentDto,
+  FindCommentsArroundIdDto,
+  FindCommentsPaginationDto,
+  ReplyCommentDto,
+} from '../../application/dto';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')

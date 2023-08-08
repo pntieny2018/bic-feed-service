@@ -1,14 +1,6 @@
-import { UserDto } from '../../../../v2-user/application';
-import { GroupDto } from '../../../../v2-group/application';
-import { CommentEntity, CommentProps } from '../../model/comment';
+import { CommentEntity, CommentAttributes } from '../../model/comment';
 
-export type CreateCommentProps = {
-  data: BasedCommentAttribute;
-  groups: GroupDto[];
-  mentionUsers: UserDto[];
-};
-
-export type BasedCommentAttribute = {
+export type BasedCommentProps = {
   userId: string;
   postId: string;
   parentId?: string;
@@ -23,9 +15,9 @@ export type BasedCommentAttribute = {
 };
 
 export interface ICommentFactory {
-  createComment(props: BasedCommentAttribute): CommentEntity;
+  createComment(props: BasedCommentProps): CommentEntity;
 
-  reconstitute(props: CommentProps): CommentEntity;
+  reconstitute(props: CommentAttributes): CommentEntity;
 }
 
 export const COMMENT_FACTORY_TOKEN = 'COMMENT_FACTORY_TOKEN';
