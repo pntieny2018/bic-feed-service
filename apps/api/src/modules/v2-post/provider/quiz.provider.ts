@@ -33,6 +33,7 @@ import { AddQuizQuestionHandler } from '../application/command/add-quiz-question
 import { UpdateQuizQuestionHandler } from '../application/command/update-quiz-question/update-quiz-question.handler';
 import { DeleteQuizQuestionHandler } from '../application/command/delete-quiz-question/delete-quiz-question.handler';
 import { FindQuizSummaryHandler } from '../application/query/find-quiz-summary/find-quiz-summary.handler';
+import { FindQuizParticipantsSummaryDetailHandler } from '../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.handler';
 
 export const quizProvider = [
   {
@@ -85,4 +86,5 @@ export const quizProvider = [
   UpdateQuizQuestionHandler,
   DeleteQuizQuestionHandler,
   FindQuizSummaryHandler,
+  FindQuizParticipantsSummaryDetailHandler,
 ];

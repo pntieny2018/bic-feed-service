@@ -1,5 +1,9 @@
 import { QuestionDto } from './question.dto';
+import { PickType } from '@nestjs/swagger';
+import { QUIZ_RESULT_STATUS } from '@beincom/constants';
+import { UserDto } from '../../../v2-user/application';
 import { QuizGenStatus, QuizStatus } from '../../data-type';
+import { QuizParticipantDto } from './quiz-participant.dto';
 
 export class QuizDto {
   public id: string;
@@ -41,5 +45,19 @@ export class QuizSummaryDto {
 
   public constructor(data: Partial<QuizSummaryDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class QuizParticipantSummaryDetailDto extends PickType(QuizParticipantDto, [
+  'id',
+  'quizId',
+  'createdAt',
+  'score',
+]) {
+  public status: QUIZ_RESULT_STATUS;
+  public actor: UserDto;
+
+  public constructor(data: Partial<QuizParticipantSummaryDetailDto>) {
+    super(data);
   }
 }

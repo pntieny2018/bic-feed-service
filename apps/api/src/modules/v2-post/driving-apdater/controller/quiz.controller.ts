@@ -68,6 +68,9 @@ import { UpdateQuizQuestionCommand } from '../../application/command/update-quiz
 import { DeleteQuizQuestionCommand } from '../../application/command/delete-quiz-question/delete-quiz-question.command';
 import { QuizQuestionDto } from '../../application/dto/quiz-question.dto';
 import { FindQuizSummaryQuery } from '../../application/query/find-quiz-summary/find-quiz-summary.query';
+import { FindQuizParticipantsSummaryDetailDto } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.dto';
+import { GetQuizParticipantsSummaryDetailRequestDto } from '../dto/request/get-quiz-participants-summary-detail.request.dto';
+import { FindQuizParticipantsSummaryDetailQuery } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.query';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -193,6 +196,36 @@ export class QuizController {
   ): Promise<QuizSummaryDto> {
     try {
       const data = await this._queryBus.execute(new FindQuizSummaryQuery({ authUser, contentId }));
+
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get quiz participants summary detail' })
+  @ApiOkResponse({
+    type: FindQuizParticipantsSummaryDetailDto,
+    description: 'Get quiz participants summary detail successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.VERSIONS)
+  public async getQuizParticipantsSummaryDetail(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetQuizParticipantsSummaryDetailRequestDto
+  ): Promise<FindQuizParticipantsSummaryDetailDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId: contentId, ...query })
+      );
 
       return data;
     } catch (e) {
