@@ -6,10 +6,14 @@ import { ArrayHelper } from '../../../../../common/helpers';
 type QuestionAttribute = {
   id: string;
   content: string;
+  createdAt: Date;
+  updatedAt: Date;
   answers: {
     id: string;
     content: string;
     isCorrect: boolean;
+    createdAt: Date;
+    updatedAt: Date;
   }[];
 };
 export type QuizParticipantProps = {

@@ -1,11 +1,13 @@
 import {
   BelongsTo,
   Column,
+  CreatedAt,
   Default,
   HasMany,
   Model,
   PrimaryKey,
   Table,
+  UpdatedAt,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
@@ -17,6 +19,8 @@ export interface IQuizQuestion {
   id: string;
   quizId: string;
   content: string;
+  createdAt: Date;
+  updatedAt: Date;
   answers: IQuizAnswer[];
   quiz?: IQuiz;
 }
@@ -39,6 +43,14 @@ export class QuizQuestionModel
 
   @Column
   public content: string;
+
+  @CreatedAt
+  @Column
+  public createdAt: Date;
+
+  @UpdatedAt
+  @Column
+  public updatedAt: Date;
 
   @HasMany(() => QuizAnswerModel, {
     foreignKey: 'questionId',

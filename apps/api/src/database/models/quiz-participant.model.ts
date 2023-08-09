@@ -37,10 +37,14 @@ export interface IQuizParticipant {
     questions: {
       id: string;
       content: string;
+      updatedAt: Date;
+      createdAt: Date;
       answers: {
         id: string;
         content: string;
         isCorrect: boolean;
+        updatedAt: Date;
+        createdAt: Date;
       }[];
     }[];
   };

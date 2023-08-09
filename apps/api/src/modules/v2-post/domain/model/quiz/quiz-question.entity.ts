@@ -10,7 +10,11 @@ export type QuizQuestionAttributes = {
     id?: string;
     content: string;
     isCorrect: boolean;
+    updatedAt?: Date;
+    createdAt?: Date;
   }[];
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttributes> {
@@ -45,6 +49,7 @@ export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttribut
         id: answer.id || v4(),
         content: answer.content,
         isCorrect: answer.isCorrect,
+        updatedAt: new Date(),
       }));
     }
   }
