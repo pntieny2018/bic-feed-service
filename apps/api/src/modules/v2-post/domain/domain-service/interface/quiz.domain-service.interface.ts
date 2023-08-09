@@ -86,5 +86,7 @@ export interface IQuizDomainService {
   updateQuestion(updateQuestionProps: UpdateQuestionProps): Promise<QuizQuestionEntity>;
   addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity>;
   deleteQuestion(questionId: string, authUser: UserDto): Promise<void>;
+  calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void>;
+  createQuizParticipantResultJob(quizParticipantId: string, delay?: number): Promise<void>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

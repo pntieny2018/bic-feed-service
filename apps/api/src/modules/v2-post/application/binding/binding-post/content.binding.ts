@@ -478,6 +478,8 @@ export class ContentBinding implements IContentBinding {
             groups,
             communities,
             reactionsCount,
+            quizDoingMapper,
+            quizHighestScoreMapper,
           })
         );
       }
@@ -600,6 +602,8 @@ export class ContentBinding implements IContentBinding {
       communities: Map<string, GroupDto>;
       reactionsCount: Map<string, ReactionsCount>;
       series?: Map<string, SeriesEntity | PostEntity | ArticleEntity>;
+      quizDoingMapper: Map<string, QuizParticipantEntity>;
+      quizHighestScoreMapper: Map<string, QuizParticipantEntity>;
     }
   ): ArticleDto {
     const groups = [];
@@ -611,6 +615,9 @@ export class ContentBinding implements IContentBinding {
         rootGroupIds.push(group.rootGroupId);
       }
     });
+
+    const quizHighestScore = dataBinding.quizHighestScoreMapper.get(entity.getId()) || null;
+    const quizDoing = dataBinding.quizDoingMapper.get(entity.getId()) || null;
 
     return new ArticleDto({
       id: entity.get('id'),
@@ -665,6 +672,17 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
     });
   }
 

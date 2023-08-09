@@ -61,7 +61,7 @@ export interface IContentRepository {
   findOne(
     findOnePostOptions: FindContentOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-
+  getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
     findAllPostOptions: FindContentOptions
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;

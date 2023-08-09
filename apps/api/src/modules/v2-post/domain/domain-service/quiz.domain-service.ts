@@ -26,7 +26,6 @@ import {
   QuizParticipantNotFoundException,
 } from '../exception';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 import {
@@ -34,6 +33,10 @@ import {
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../repositoty-interface/quiz-participant.repository.interface';
 import { QuizQuestionNotFoundException } from '../exception/quiz-question-not-found.exception';
+import { QueueService } from '@app/queue';
+import { QuizParticipantResultJobDto } from '../../application/dto/queue.dto';
+import { QUEUES } from '@app/queue/queue.constant';
+import { QuizParticipantNotFinishedException } from '../exception/quiz-participant-not-finished.exception';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -47,11 +50,10 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _quizFactory: IQuizFactory,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
-    private readonly event: EventBus
+    private readonly event: EventBus,
+    private readonly _queueService: QueueService
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
@@ -318,5 +320,49 @@ export class QuizDomainService implements IQuizDomainService {
     }
 
     return quizParticipantEntity;
+  }
+
+  public async calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void> {
+    const isFinished =
+      quizParticipantEntity.isOverTimeLimit() || quizParticipantEntity.isFinished();
+    if (!isFinished) {
+      throw new QuizParticipantNotFinishedException();
+    }
+
+    const contentId = quizParticipantEntity.get('contentId');
+    const userId = quizParticipantEntity.get('createdBy');
+
+    const currentHighestScoreQuizParticipantEntity =
+      await this._quizParticipantRepository.findQuizParticipantHighestScoreByContentIdAndUserId(
+        contentId,
+        userId
+      );
+
+    const currentHighestScore = currentHighestScoreQuizParticipantEntity?.get('score') || 0;
+    const newScore = quizParticipantEntity.get('score');
+
+    if (newScore >= currentHighestScore) {
+      quizParticipantEntity.setHighest(true);
+      await this._quizParticipantRepository.update(quizParticipantEntity);
+
+      if (currentHighestScoreQuizParticipantEntity) {
+        currentHighestScoreQuizParticipantEntity.setHighest(false);
+        await this._quizParticipantRepository.update(currentHighestScoreQuizParticipantEntity);
+      }
+    }
+  }
+
+  public async createQuizParticipantResultJob(
+    quizParticipantId: string,
+    delay?: number
+  ): Promise<void> {
+    await this._queueService.addBulkJobs<QuizParticipantResultJobDto>([
+      {
+        name: QUEUES.QUIZ_PARTICIPANT_RESULT.JOBS.PROCESS_QUIZ_PARTICIPANT_RESULT,
+        data: { quizParticipantId },
+        opts: { delay },
+        queue: { name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME },
+      },
+    ]);
   }
 }
