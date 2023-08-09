@@ -10,6 +10,7 @@ import {
   ISeriesDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
   IPostDomainService,
+  DeleteSeriesProps,
 } from './interface';
 import { SeriesEntity } from '../model/content';
 import { AccessDeniedException, ContentNotFoundException } from '../exception';
@@ -21,6 +22,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { SeriesUpdatedEvent } from '../event/series-updated.event';
 import { SeriesCreatedEvent } from '../event/series-created.event';
+import { SeriesDeletedEvent } from '../event/series-deleted.event';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -178,5 +180,38 @@ export class SeriesDomainService implements ISeriesDomainService {
     this.event.publish(new SeriesUpdatedEvent(seriesEntity));
 
     return seriesEntity;
+  }
+
+  public async delete(input: DeleteSeriesProps): Promise<void> {
+    const { actor, id } = input;
+
+    const seriesEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+      },
+    });
+
+    if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!seriesEntity.isOwner(actor.id)) throw new AccessDeniedException();
+
+    this._contentValidator.checkCanReadContent(seriesEntity, actor);
+
+    await this._contentValidator.checkCanCRUDContent(
+      actor,
+      seriesEntity.get('groupIds'),
+      seriesEntity.get('type')
+    );
+
+    await this._contentRepository.delete(seriesEntity.get('id'));
+
+    this.event.publish(new SeriesDeletedEvent(seriesEntity));
   }
 }
