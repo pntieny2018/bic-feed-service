@@ -18,14 +18,13 @@ import { plainToClass } from 'class-transformer';
 import { Request } from 'express';
 import { createMock } from '@golevelup/ts-jest';
 import { PublishPostCommand } from '../../../application/command/publish-post/publish-post.command';
-import { PostDto } from '../../../application/dto';
+import { CreateDraftPostDto, PostDto } from '../../../application/dto';
 import { postMock } from '../../mock/post.dto.mock';
 import {
   ContentNoEditSettingPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { CreateDraftPostDto } from '../../../application/command/create-draft-post/create-draft-post.dto';
 
 describe('PostController', () => {
   let postController: PostController;

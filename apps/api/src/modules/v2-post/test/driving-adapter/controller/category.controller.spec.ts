@@ -2,9 +2,9 @@ import { CategoryController } from '../../../driving-apdater/controller/category
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { userMock } from '../../mock/user.dto.mock';
-import { FindCategoriesPaginationDto } from '../../../application/query/find-categories/find-categories-pagination.dto';
 import { FindCategoriesPaginationQuery } from '../../../application/query/find-categories/find-categories-pagination.query';
 import { GetCategoryDto } from '../../../driving-apdater/dto/request/get-category.dto';
+import { FindCategoriesPaginationDto } from '../../../application/dto/category.dto';
 
 describe('CategoryController', () => {
   let controller: CategoryController;

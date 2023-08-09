@@ -189,7 +189,7 @@ export class QuizDomainService implements IQuizDomainService {
     const rawContent = this._contentDomainService.getRawContent(contentEntity);
     if (!rawContent) {
       cloneQuizEntity.setFail({
-        code: ERRORS.CONTENT.CONTENT_NOT_FOUND,
+        code: ERRORS.CONTENT_NOT_FOUND,
         message: 'Content not found',
       });
       await this._quizRepository.update(cloneQuizEntity);
@@ -209,7 +209,7 @@ export class QuizDomainService implements IQuizDomainService {
         });
       if (questions?.length === 0) {
         cloneQuizEntity.setFail({
-          code: ERRORS.QUIZ.GENERATE_FAIL,
+          code: ERRORS.QUIZ_GENERATE_FAIL,
           message: 'No questions generated',
         });
         await this._quizRepository.update(cloneQuizEntity);
@@ -229,7 +229,7 @@ export class QuizDomainService implements IQuizDomainService {
       });
     } catch (e) {
       cloneQuizEntity.setFail({
-        code: ERRORS.QUIZ.GENERATE_FAIL,
+        code: ERRORS.QUIZ_GENERATE_FAIL,
         message: e.response.data?.error?.message || '',
       });
       /*await this._quizRepository.update(cloneQuizEntity);

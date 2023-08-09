@@ -16,21 +16,21 @@ import {
 } from '../../../v2-group/application';
 import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
 import {
+  ContentAccessDeniedException,
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentRequireGroupException,
+  TagSeriesInvalidException,
 } from '../exception';
 import { IContentValidator } from './interface';
-import { ContentEntity } from '../model/content';
-import { AccessDeniedException } from '../exception/access-denied.exception';
-import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
+import { ContentEntity } from '../model/content/content.entity';
 import { PostType } from '../../data-type';
 import { TagEntity } from '../model/tag';
 import { SeriesEntity } from '../model/content';
-import { TagSeriesInvalidException } from '../exception/tag-series-invalid.exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { UserNoBelongGroupException } from '../exception/external.exception';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -62,10 +62,9 @@ export class ContentValidator implements IContentValidator {
 
     if (notCreatableInGroups.length) {
       throw new ContentNoCRUDPermissionAtGroupException(
-        {
-          groupsDenied: notCreatableInGroups.map((e) => e.id),
-        },
-        notCreatableInGroups.map((e) => e.name)
+        notCreatableInGroups.map((e) => e.name),
+        null,
+        { groupsDenied: notCreatableInGroups.map((e) => e.id) }
       );
     }
   }
@@ -90,10 +89,9 @@ export class ContentValidator implements IContentValidator {
 
     if (notEditSettingInGroups.length) {
       throw new ContentNoEditSettingPermissionAtGroupException(
-        {
-          groupsDenied: notEditSettingInGroups.map((e) => e.id),
-        },
-        notEditSettingInGroups.map((e) => e.name)
+        notEditSettingInGroups.map((e) => e.name),
+        null,
+        { groupsDenied: notEditSettingInGroups.map((e) => e.id) }
       );
     }
   }
@@ -114,7 +112,7 @@ export class ContentValidator implements IContentValidator {
     userAuth: UserDto,
     groupIds: string[]
   ): Promise<void> {
-    if (!contentEntity.isOwner(userAuth.id)) throw new AccessDeniedException();
+    if (!contentEntity.isOwner(userAuth.id)) throw new ContentAccessDeniedException();
 
     if (contentEntity.get('groupIds')?.length === 0) throw new ContentEmptyGroupException();
 
@@ -148,9 +146,7 @@ export class ContentValidator implements IContentValidator {
     }
 
     if (invalidUsers.length) {
-      throw new UserNoBelongGroupException({
-        usersDenied: invalidUsers,
-      });
+      throw new UserNoBelongGroupException(null, { usersDenied: invalidUsers });
     }
   }
 
@@ -162,7 +158,7 @@ export class ContentValidator implements IContentValidator {
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
       if (groups?.length > 0) {
-        throw new ContentRequireGroupException({ requireGroups: groups });
+        throw new ContentRequireGroupException(null, { requireGroups: groups });
       }
       throw new ContentNoCRUDPermissionException();
     }
@@ -215,7 +211,7 @@ export class ContentValidator implements IContentValidator {
     }
 
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
-      throw new TagSeriesInvalidException(seriesTagErrorData);
+      throw new TagSeriesInvalidException(null, seriesTagErrorData);
     }
   }
 }

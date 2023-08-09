@@ -20,7 +20,7 @@ import {
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import {
-  ContentEmptyException,
+  ContentEmptyContentException,
   ContentHasBeenPublishedException,
   ContentNotFoundException,
   InvalidResourceImageException,
@@ -61,7 +61,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
-    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyContentException();
 
     await this._contentRepository.update(articleEntity);
   }
@@ -101,7 +101,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
-    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyContentException();
 
     await this._contentRepository.update(articleEntity);
 
@@ -117,7 +117,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
 
-    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyException();
+    if (!articleEntity.isValidArticleToPublish()) throw new ContentEmptyContentException();
 
     if (!articleEntity.isChanged()) return;
 

@@ -1,12 +1,12 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { GetTimelineRequestDto } from '../dto/request';
 import { PageDto } from '../../../../common/dto';
 import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
+import { AuthUser } from '../../../../common/decorators';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')

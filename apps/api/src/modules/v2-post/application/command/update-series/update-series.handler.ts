@@ -7,7 +7,7 @@ import {
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import {
-  AccessDeniedException,
+  ContentAccessDeniedException,
   ContentEmptyGroupException,
   ContentNotFoundException,
   SeriesRequiredCoverException,
@@ -72,7 +72,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
 
     const isImportantBefore = seriesEntity.isImportant();
 
-    if (!seriesEntity.isOwner(actor.id)) throw new AccessDeniedException();
+    if (!seriesEntity.isOwner(actor.id)) throw new ContentAccessDeniedException();
 
     if (coverMedia && !coverMedia.id) throw new SeriesRequiredCoverException();
 

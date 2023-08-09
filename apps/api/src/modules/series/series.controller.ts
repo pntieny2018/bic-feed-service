@@ -1,20 +1,9 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { ResponseMessages } from '../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { SeriesSearchResponseDto } from './dto/responses/series-search.response.dto';
-import { AuthUser } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { AddItemsInSeriesDto } from './dto/requests/add-items-in-series.dto';
@@ -22,7 +11,6 @@ import { DeleteItemsInSeriesDto } from './dto/requests/delete-items-in-series.dt
 import { ReorderItemsDto } from './dto/requests/reorder-items.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { UserDto } from '../v2-user/application';
-import { ArticleLimitAttachedSeriesException } from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -91,16 +79,7 @@ export class SeriesController {
     @Body() addItemsInSeriesDto: AddItemsInSeriesDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    try {
-      const { itemIds } = addItemsInSeriesDto;
-      await this._seriesAppService.addItems(id, itemIds, user);
-    } catch (e) {
-      switch (e.constructor) {
-        case ArticleLimitAttachedSeriesException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const { itemIds } = addItemsInSeriesDto;
+    await this._seriesAppService.addItems(id, itemIds, user);
   }
 }
