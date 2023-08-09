@@ -1,12 +1,11 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { ArrayHelper, AxiosHelper } from 'apps/api/src/common/helpers';
-import { ENDPOINT } from 'apps/api/src/common/constants/endpoint.constant';
 import { RedisService } from '@app/infra/redis';
 import { CACHE_KEYS } from 'apps/api/src/common/constants';
-import { IGroup, IGroupService } from '@app/service/group/src/interface';
-import { GROUP_AXIOS_TOKEN } from '@app/infra/http';
-import { AxiosInstance } from 'axios';
+import { IGroup, IGroupMember, IGroupService } from '@app/service/group/src/interface';
+import { GROUP_AXIOS_TOKEN, IHttpAdapter } from '@app/infra/http';
 import { IUser } from '@app/service/user/src/interfaces';
+import { GROUP_ENDPOINT } from './endpoint.constant';
 
 @Injectable()
 export class GroupService implements IGroupService {
@@ -14,20 +13,20 @@ export class GroupService implements IGroupService {
 
   public constructor(
     private _store: RedisService,
-    @Inject(GROUP_AXIOS_TOKEN) private _httpService: AxiosInstance
+    @Inject(GROUP_AXIOS_TOKEN) private _httpService: IHttpAdapter
   ) {}
 
-  public async findOne(groupId: string): Promise<IGroup> {
+  public async findById(groupId: string): Promise<IGroup> {
     let group = await this._store.get<IGroup>(`${CACHE_KEYS.SHARE_GROUP}:${groupId}`);
     if (group === null) {
-      const response = await this._httpService.get(
-        AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {
+      const response = await this._httpService.get<IGroup[]>(
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.GROUPS_PATH, {
           ids: groupId,
         })
       );
 
       if (response.status === HttpStatus.OK) {
-        group = AxiosHelper.getDataArrayResponse<IGroup>(response)[0];
+        group = response.data['data'][0];
       }
       if (!group) {
         return null;
@@ -44,30 +43,28 @@ export class GroupService implements IGroupService {
     let groups = await this._store.mget(keys);
     const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group?.id === id));
     if (notFoundGroupIds.length > 0) {
-      const response = await this._httpService.get(
-        AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {
+      const response = await this._httpService.get<IGroup[]>(
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.GROUPS_PATH, {
           ids: notFoundGroupIds.join(','),
         })
       );
       if (response.status === HttpStatus.OK) {
-        groups = groups.concat(AxiosHelper.getDataArrayResponse<IGroup>(response));
+        groups = groups.concat(response.data['data']);
       }
     }
     return groups;
   }
 
-  public async getGroupAdminIds(
+  public async getGroupMembersDividedByRole(
     actor: IUser,
     groupIds: string[],
-    offset = 0,
-    limit = 50
-  ): Promise<string[]> {
-    const response: string[][] = await Promise.all(
-      groupIds.map(async (groupId): Promise<string[]> => {
+    pagination?: { offset?: number; limit?: number }
+  ) {
+    const response = await Promise.all(
+      groupIds.map(async (groupId): Promise<IGroupMember[]> => {
         try {
-          //TODO: Need Group provide API for this
           const response = await this._httpService.get(
-            ENDPOINT.GROUP.GROUP_ADMIN_PATH.replace(':groupId', groupId),
+            GROUP_ENDPOINT.GROUP_ADMIN_PATH.replace(':groupId', groupId),
             {
               headers: {
                 user: JSON.stringify({
@@ -78,8 +75,8 @@ export class GroupService implements IGroupService {
                 }),
               },
               params: {
-                offset: offset,
-                limit: limit,
+                offset: pagination?.offset || 0,
+                limit: pagination?.limit || 50,
               },
             }
           );
@@ -88,8 +85,7 @@ export class GroupService implements IGroupService {
             return [];
           }
 
-          const admins = response.data['data']['group_admin']['data'];
-          return admins.map((admin) => admin.id);
+          return response.data['data'];
         } catch (ex) {
           return [];
         }
@@ -98,19 +94,20 @@ export class GroupService implements IGroupService {
     return [...new Set(response.flat())];
   }
 
-  public async getAdminIds(
+  public async getCommunityAdmins(
     rootGroupIds: string[],
-    offset = 0,
-    limit = 50
+    pagination?: { offset?: number; limit?: number }
   ): Promise<{
     admins: Record<string, string[]>;
     owners: Record<string, string[]>;
   }> {
     try {
+      const offset = pagination?.offset || 0;
+      const limit = pagination?.limit || 50;
       const params = `group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
 
       const response = await this._httpService.get(
-        `${ENDPOINT.GROUP.INTERNAL.COMMUNITY_ADMIN_PATH}?${params}`
+        `${GROUP_ENDPOINT.INTERNAL.COMMUNITY_ADMIN_PATH}?${params}`
       );
 
       if (response.status !== HttpStatus.OK) {

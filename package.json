@@ -27,7 +27,7 @@
     "@beincom/common": "^0.1.6",
     "@beincom/constants": "^2.1.4",
     "@beincom/domain": "^0.1.7",
-    "@beincom/dto": "^1.1.21",
+    "@beincom/dto": "^2.0.2",
     "@beincom/nest-domain-event": "^0.0.2",
     "@casl/ability": "^5.4.4",
     "@elastic/elasticsearch": "^8.4.0",

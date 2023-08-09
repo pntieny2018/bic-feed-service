@@ -1,3 +1,5 @@
+import { UserPublicInfoDto } from '@beincom/dto';
+
 export interface IBadgeCommunity {
   id: string;
   name: string;
@@ -7,7 +9,6 @@ export interface IUserBadge {
   id: string;
   name: string;
   iconUrl: string;
-  fullname: string;
   community: IBadgeCommunity;
 }
 

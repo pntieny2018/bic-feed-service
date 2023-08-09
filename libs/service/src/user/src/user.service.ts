@@ -1,13 +1,12 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { AxiosInstance } from 'axios';
 import { uniq } from 'lodash';
 import qs from 'qs';
 import { RedisService } from '@app/infra/redis';
 import { AxiosHelper } from 'apps/api/src/common/helpers';
-import { ENDPOINT } from 'apps/api/src/common/constants/endpoint.constant';
 import { CACHE_KEYS } from 'apps/api/src/common/constants';
 import { IUserService, IUser } from './interfaces';
-import { USER_AXIOS_TOKEN } from '@app/infra/http';
+import { IHttpAdapter, USER_AXIOS_TOKEN } from '@app/infra/http';
+import { USER_ENDPOINT } from './endpoint.constant';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -15,7 +14,7 @@ export class UserService implements IUserService {
 
   public constructor(
     private readonly _store: RedisService,
-    @Inject(USER_AXIOS_TOKEN) private readonly _httpService: AxiosInstance
+    @Inject(USER_AXIOS_TOKEN) private readonly _httpService: IHttpAdapter
   ) {}
 
   public async findByUserName(username: string): Promise<IUser> {
@@ -25,13 +24,13 @@ export class UserService implements IUserService {
       let user = await this._getUserFromCacheById(userProfile?.id);
       if (!user) {
         const response = await this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.GET_USER, {
+          AxiosHelper.injectParamsToStrUrl(USER_ENDPOINT.INTERNAL.GET_USER, {
             username: username,
           })
         );
 
         if (response.status !== HttpStatus.OK) return null;
-        user = AxiosHelper.getDataResponse<IUser>(response);
+        user = response.data['data'];
       }
       return user;
     } catch (ex) {
@@ -40,11 +39,11 @@ export class UserService implements IUserService {
     }
   }
 
-  public async findOne(id: string): Promise<IUser> {
+  public async findById(id: string): Promise<IUser> {
     let user = await this._getUserFromCacheById(id);
     if (!user) {
       try {
-        const response = await this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+        const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, {
           params: {
             ids: [id],
           },
@@ -52,7 +51,7 @@ export class UserService implements IUserService {
         });
 
         if (response.status !== HttpStatus.OK) return null;
-        user = AxiosHelper.getDataArrayResponse<IUser>(response)[0];
+        user = response.data['data'][0];
       } catch (e) {
         this._logger.debug(e);
       }
@@ -69,7 +68,7 @@ export class UserService implements IUserService {
     const notFoundUserIds = uniqueIds.filter((id) => !users.find((user) => user?.id === id));
     try {
       if (notFoundUserIds.length > 0) {
-        const response = await this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+        const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, {
           params: {
             ids: notFoundUserIds,
           },
@@ -77,7 +76,7 @@ export class UserService implements IUserService {
         });
 
         if (response.status === HttpStatus.OK) {
-          users = users.concat(AxiosHelper.getDataArrayResponse<IUser>(response));
+          users = users.concat(response.data['data']);
         }
       }
     } catch (e) {
@@ -89,13 +88,13 @@ export class UserService implements IUserService {
   public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
     try {
       const response = await this._httpService.get(
-        AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.CHECK_CUD_TAG, {
+        AxiosHelper.injectParamsToStrUrl(USER_ENDPOINT.INTERNAL.CHECK_CUD_TAG, {
           userId,
           rootGroupId,
         })
       );
 
-      return AxiosHelper.getDataResponse<boolean>(response);
+      return response.data['data'];
     } catch (e) {
       this._logger.debug(e);
       return false;
