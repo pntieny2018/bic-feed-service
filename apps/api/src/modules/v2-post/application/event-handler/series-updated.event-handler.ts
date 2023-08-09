@@ -25,8 +25,7 @@ export class SeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEve
 
     if (!seriesEntity.isPublished()) return;
 
-    const groupIds = seriesEntity.get('groupIds');
-    const groups = await this._groupAppService.findAllByIds(groupIds);
+    const groups = await this._groupAppService.findAllByIds(seriesEntity.get('groupIds'));
     const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
     const actor = await this._userAppService.findOne(seriesEntity.get('createdBy'));
