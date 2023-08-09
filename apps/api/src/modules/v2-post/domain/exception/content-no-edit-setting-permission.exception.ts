@@ -7,7 +7,7 @@ export class ContentNoEditSettingPermissionException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.CONTENT.CONTENT_NO_EDIT_SETTING_PERMISSION,
-      message || i18n.t(`error.content.no_edit_setting_permission`),
+      message || i18n?.t(`error.content.no_edit_setting_permission`),
       errors
     );
   }

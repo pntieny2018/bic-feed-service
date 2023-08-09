@@ -19,7 +19,6 @@ import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
 import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
-import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
@@ -102,6 +101,7 @@ export interface IPost {
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
   publishedAt?: Date;
+  scheduledAt?: Date;
   errorLog?: any;
   mediaJson?: any;
   mentions?: string[];
@@ -212,6 +212,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public publishedAt: Date;
+
+  @AllowNull(true)
+  @Column
+  public scheduledAt?: Date;
 
   @AllowNull(true)
   @Column({

@@ -19,3 +19,4 @@ export enum Language {
   en = 'en',
   vn = 'vn',
 }
+export const CRON_RUN_SCHEDULED_ARTICLE = '0,30 * * * *';

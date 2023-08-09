@@ -148,6 +148,7 @@ export class UpdateSeriesHandler implements ICommandHandler<UpdateSeriesCommand,
           },
           createdAt: entityAfter.get('createdAt'),
           updatedAt: entityAfter.get('updatedAt'),
+          publishedAt: entityAfter.get('publishedAt'),
         },
       };
 

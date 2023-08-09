@@ -7,7 +7,7 @@ export class ReactionNotHaveAuthorityException extends DomainException {
     const i18n = I18nContext.current();
     super(
       ERRORS.REACTION.REACTION_NOT_HAVE_AUTHORITY,
-      message || i18n.t('error.reaction.not_have_authority')
+      message || i18n?.t('error.reaction.not_have_authority')
     );
   }
 }

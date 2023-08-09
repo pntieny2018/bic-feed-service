@@ -8,9 +8,11 @@ import { MediaType } from '../../data-type';
 import { KafkaService } from '@app/kafka';
 
 export class MediaDomainService implements IMediaDomainService {
-  @Inject(MEDIA_REPOSITORY_TOKEN)
-  private readonly _mediaRepo: IMediaRepository;
-  private readonly _kafkaService: KafkaService;
+  public constructor(
+    @Inject(MEDIA_REPOSITORY_TOKEN)
+    private readonly _mediaRepo: IMediaRepository,
+    private readonly _kafkaService: KafkaService
+  ) {}
 
   public async getAvailableVideos(
     videoEntities: VideoEntity[],
@@ -96,7 +98,7 @@ export class MediaDomainService implements IMediaDomainService {
 
     if (!config[mediaType]) return;
     if (mediaIds.length) {
-      await this._kafkaService.emit(config[mediaType].topic, {
+      this._kafkaService.emit(config[mediaType].topic, {
         key: null,
         value: { [config[mediaType].keyIds]: mediaIds, userId },
       });
@@ -121,7 +123,7 @@ export class MediaDomainService implements IMediaDomainService {
 
     if (!config[mediaType]) return;
     if (mediaIds.length) {
-      await this._kafkaService.emit(config[mediaType].topic, {
+      this._kafkaService.emit(config[mediaType].topic, {
         key: null,
         value: { [config[mediaType].keyIds]: mediaIds, userId },
       });
