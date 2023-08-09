@@ -83,14 +83,7 @@ export class UserService implements IUserService {
     } catch (e) {
       this._logger.debug(e);
     }
-
-    const result = [];
-    for (const user of users) {
-      if (user) {
-        result.push(user);
-      }
-    }
-    return result;
+    return users;
   }
 
   public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {

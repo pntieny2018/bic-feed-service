@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { DynamicModule, Global, Module } from '@nestjs/common';
 import {
   AxiosService,
   GROUP_AXIOS_TOKEN,
@@ -13,7 +13,7 @@ import { IAxiosConfig } from 'apps/api/src/config/axios';
   imports: [ConfigModule],
 })
 export class AxiosModule {
-  static forRoot() {
+  public static forRoot(): DynamicModule {
     return {
       module: AxiosModule,
       providers: [
@@ -54,6 +54,7 @@ export class AxiosModule {
           inject: [ConfigService],
         },
       ],
+      exports: [USER_AXIOS_TOKEN, GROUP_AXIOS_TOKEN, MEDIA_AXIOS_TOKEN],
     };
   }
 }
