@@ -5,7 +5,7 @@ import { RedisService } from '@app/infra/redis';
 import { AxiosHelper } from 'apps/api/src/common/helpers';
 import { CACHE_KEYS } from 'apps/api/src/common/constants';
 import { IUserService, IUser } from './interfaces';
-import { IHttpAdapter, USER_AXIOS_TOKEN } from '@app/infra/http';
+import { IHttpAdapter, USER_HTTP_TOKEN } from '@app/infra/http';
 import { USER_ENDPOINT } from './endpoint.constant';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class UserService implements IUserService {
 
   public constructor(
     private readonly _store: RedisService,
-    @Inject(USER_AXIOS_TOKEN) private readonly _httpService: IHttpAdapter
+    @Inject(USER_HTTP_TOKEN) private readonly _httpService: IHttpAdapter
   ) {}
 
   public async findByUserName(username: string): Promise<IUser> {

@@ -1,8 +1,8 @@
 import {
-  IHTTPAdapterResponse,
+  IHttpServiceResponse,
   IHttpAdapter,
-  IHTTPAdapterRequestOptions,
-  IHTTPAdapterOptions,
+  IHttpServiceRequestOptions,
+  IHttpServiceOptions,
 } from '@app/infra/http';
 import { Injectable } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
@@ -10,8 +10,8 @@ import camelcaseKeys from 'camelcase-keys';
 import { merge } from 'lodash';
 
 @Injectable()
-export class HttpAdapter implements IHttpAdapter {
-  constructor(private readonly options: IHTTPAdapterOptions) {
+export class HttpService implements IHttpAdapter {
+  constructor(private readonly options: IHttpServiceOptions) {
     this.options.headers = this.options.headers || {};
 
     const { version } = this.options;
@@ -23,41 +23,41 @@ export class HttpAdapter implements IHttpAdapter {
   public async get<T = any>(
     path: string,
     params: object = {},
-    options: IHTTPAdapterRequestOptions = {}
-  ): Promise<IHTTPAdapterResponse<T>> {
+    options: IHttpServiceRequestOptions = {}
+  ): Promise<IHttpServiceResponse<T>> {
     return this.getResponse<T>(axios.get(path, this.getConfigs({ ...options, params })));
   }
 
   public async post<T = any>(
     path: string,
     data: object = {},
-    options: IHTTPAdapterRequestOptions = {}
-  ): Promise<IHTTPAdapterResponse<T>> {
+    options: IHttpServiceRequestOptions = {}
+  ): Promise<IHttpServiceResponse<T>> {
     return this.getResponse<T>(axios.post(path, data, this.getConfigs(options)));
   }
 
   public async put<T = any>(
     path: string,
     data: object = {},
-    options: IHTTPAdapterRequestOptions = {}
-  ): Promise<IHTTPAdapterResponse<T>> {
+    options: IHttpServiceRequestOptions = {}
+  ): Promise<IHttpServiceResponse<T>> {
     return this.getResponse<T>(axios.put(path, data, this.getConfigs(options)));
   }
 
   public async delete<T = any>(
     path: string,
-    options: IHTTPAdapterRequestOptions = {}
-  ): Promise<IHTTPAdapterResponse<T>> {
+    options: IHttpServiceRequestOptions = {}
+  ): Promise<IHttpServiceResponse<T>> {
     return this.getResponse<T>(axios.delete(path, this.getConfigs(options)));
   }
 
-  private getConfigs(options: object = {}): IHTTPAdapterRequestOptions {
+  private getConfigs(options: object = {}): IHttpServiceRequestOptions {
     const extraHeaders = {};
 
     return merge({}, this.options, extraHeaders, options);
   }
 
-  private async getResponse<T>(result: Promise<AxiosResponse>): Promise<IHTTPAdapterResponse> {
+  private async getResponse<T>(result: Promise<AxiosResponse>): Promise<IHttpServiceResponse> {
     const { status, statusText, headers, data } = await result;
 
     return {

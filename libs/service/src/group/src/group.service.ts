@@ -3,7 +3,7 @@ import { ArrayHelper, AxiosHelper } from 'apps/api/src/common/helpers';
 import { RedisService } from '@app/infra/redis';
 import { CACHE_KEYS } from 'apps/api/src/common/constants';
 import { IGroup, IGroupMember, IGroupService } from '@app/service/group/src/interface';
-import { GROUP_AXIOS_TOKEN, IHttpAdapter } from '@app/infra/http';
+import { GROUP_HTTP_TOKEN, IHttpAdapter } from '@app/infra/http';
 import { IUser } from '@app/service/user/src/interfaces';
 import { GROUP_ENDPOINT } from './endpoint.constant';
 
@@ -13,7 +13,7 @@ export class GroupService implements IGroupService {
 
   public constructor(
     private _store: RedisService,
-    @Inject(GROUP_AXIOS_TOKEN) private _httpService: IHttpAdapter
+    @Inject(GROUP_HTTP_TOKEN) private _httpService: IHttpAdapter
   ) {}
 
   public async findById(groupId: string): Promise<IGroup> {
