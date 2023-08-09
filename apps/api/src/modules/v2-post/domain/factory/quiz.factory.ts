@@ -58,10 +58,14 @@ export class QuizFactory implements IQuizFactory {
       id: v4(),
       quizId,
       content,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       answers: answers.map((answer) => ({
         id: v4(),
         content: answer.content,
         isCorrect: answer.isCorrect,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })),
     });
   }
@@ -78,10 +82,14 @@ export class QuizFactory implements IQuizFactory {
         questions: quizEntity.get('questions').map((question) => ({
           id: question.get('id'),
           content: question.get('content'),
+          createdAt: question.get('createdAt'),
+          updatedAt: question.get('updatedAt'),
           answers: question.get('answers').map((answer) => ({
             id: answer.id,
             content: answer.content,
             isCorrect: answer.isCorrect,
+            createdAt: answer.createdAt,
+            updatedAt: answer.updatedAt,
           })),
         })),
       },

@@ -18,16 +18,22 @@ export const quizRecordMock = {
       id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae9',
       content: 'question 1',
       quizId: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
+      createdAt: new Date(),
+      updatedAt: new Date(),
       answers: [
         {
           id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae2',
           content: 'answer 1',
           isCorrect: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae3',
           content: 'answer 2',
           isCorrect: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ],
     },

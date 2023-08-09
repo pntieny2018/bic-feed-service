@@ -16,10 +16,14 @@ export type GenerateQuestionResponse = {
   questions: {
     id: string;
     content: string;
+    createdAt: Date;
+    updatedAt: Date;
     answers: {
       id: string;
       content: string;
       isCorrect: boolean;
+      createdAt: Date;
+      updatedAt: Date;
     }[];
   }[];
 };

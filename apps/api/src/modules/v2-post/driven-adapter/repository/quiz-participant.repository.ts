@@ -35,10 +35,14 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
         questions: quizParticipant.get('quizSnapshot').questions.map((question) => ({
           id: question.id,
           content: question.content,
+          createdAt: question.createdAt,
+          updatedAt: question.updatedAt,
           answers: question.answers.map((answer) => ({
             id: answer.id,
             content: answer.content,
             isCorrect: answer.isCorrect,
+            createdAt: question.createdAt,
+            updatedAt: question.updatedAt,
           })),
         })),
       },
