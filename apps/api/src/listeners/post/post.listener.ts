@@ -11,7 +11,6 @@ import {
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { FeedPublisherService } from '../../modules/feed-publisher';
-import { FeedService } from '../../modules/feed/feed.service';
 import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostService } from '../../modules/post/post.service';
@@ -25,7 +24,6 @@ import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/ser
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
-import { SeriesService } from '../../modules/series/series.service';
 import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
 import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
 
@@ -41,12 +39,10 @@ export class PostListener {
     private readonly _postSearchService: SearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService,
     private readonly _postHistoryService: PostHistoryService,
     private readonly _filterUserService: FilterUserService,
     private readonly _internalEventEmitter: InternalEventEmitterService,
-    private readonly _tagService: TagService,
-    private readonly _seriesService: SeriesService
+    private readonly _tagService: TagService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
