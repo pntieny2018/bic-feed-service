@@ -236,7 +236,7 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity> {
-    const quizEntity = await this._quizRepository.findOne(quizId);
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
