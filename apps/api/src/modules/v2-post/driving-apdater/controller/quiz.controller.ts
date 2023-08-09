@@ -340,6 +340,9 @@ export class QuizController {
   }
 
   @ApiOperation({ summary: 'Add quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.created_success',
+  })
   @Post(ROUTES.QUIZ.ADD_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.ADD_QUIZ_QUESTION.VERSIONS)
   public async addQuizQuestion(
@@ -373,6 +376,9 @@ export class QuizController {
   }
 
   @ApiOperation({ summary: 'Update quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.updated_success',
+  })
   @Put(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.VERSIONS)
   public async updateQuizQuestion(
@@ -407,6 +413,9 @@ export class QuizController {
   }
 
   @ApiOperation({ summary: 'Delete quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.deleted_success',
+  })
   @Delete(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.VERSIONS)
   public async deleteQuizQuestion(
