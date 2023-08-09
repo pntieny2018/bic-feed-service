@@ -79,28 +79,26 @@ export class QuizRepository implements IQuizRepository {
       },
       { where: { id: quizEntity.get('id') } }
     );
-    // if (quizEntity.get('questions') !== undefined) {
-    //   await this._quizQuestionModel.destroy({ where: { quizId: quizEntity.get('id') } });
-    //   await this._quizQuestionModel.bulkCreate(
-    //     quizEntity.get('questions').map((quizEntity) => ({
-    //       id: quizEntity.get('id'),
-    //       quizId: quizEntity.get('quizId'),
-    //       content: quizEntity.get('content'),
-    //       createdAt: quizEntity.get('createdAt'),
-    //       updatedAt: quizEntity.get('updatedAt'),
-    //     }))
-    //   );
-    //   await this._quizAnswerModel.bulkCreate(
-    //     quizEntity.get('questions').flatMap((question) =>
-    //       question.get('answers').map((answer) => ({
-    //         id: answer.id,
-    //         questionId: question.get('id'),
-    //         content: answer.content,
-    //         isCorrect: answer.isCorrect,
-    //       }))
-    //     )
-    //   );
-    // }
+    if (quizEntity.get('questions') !== undefined) {
+      await this._quizQuestionModel.destroy({ where: { quizId: quizEntity.get('id') } });
+      await this._quizQuestionModel.bulkCreate(
+        quizEntity.get('questions').map((quizEntity) => ({
+          id: quizEntity.get('id'),
+          quizId: quizEntity.get('quizId'),
+          content: quizEntity.get('content'),
+        }))
+      );
+      await this._quizAnswerModel.bulkCreate(
+        quizEntity.get('questions').flatMap((question) =>
+          question.get('answers').map((answer) => ({
+            id: answer.id,
+            questionId: question.get('id'),
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+          }))
+        )
+      );
+    }
   }
 
   public async delete(id: string): Promise<void> {
@@ -278,7 +276,6 @@ export class QuizRepository implements IQuizRepository {
         numberOfQuestions: quizEntity.get('numberOfQuestions'),
         numberOfAnswers: quizEntity.get('numberOfAnswers'),
       });
-
     quizEntity.updateAttribute({
       meta: {
         usage,
