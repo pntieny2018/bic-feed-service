@@ -2,10 +2,10 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { Controller, Get, Query } from '@nestjs/common';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { QueryBus } from '@nestjs/cqrs';
-import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { PageDto } from '../../../../common/dto';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { AuthUser } from '../../../../common/decorators';
 import { GetCategoryRequestDto } from '../dto/request';
 import { FindCategoriesPaginationDto } from '../../application/dto/category.dto';
 

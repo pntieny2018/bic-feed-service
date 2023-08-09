@@ -6,12 +6,14 @@ import {
 } from '../../../domain/domain-service/interface';
 import { StartQuizCommand } from './start-quiz.command';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { QuizNotFoundException } from '../../../domain/exception';
+import {
+  QuizNotFoundException,
+  QuizParticipantNotFinishedException,
+} from '../../../domain/exception';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
-import { QuizParticipantNotFinishedException } from '../../../domain/exception/quiz-participant-not-finished.exception';
 
 @CommandHandler(StartQuizCommand)
 export class StartQuizHandler implements ICommandHandler<StartQuizCommand, string> {

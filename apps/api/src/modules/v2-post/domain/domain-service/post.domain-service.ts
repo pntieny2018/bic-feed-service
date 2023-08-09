@@ -31,7 +31,7 @@ import {
   ILinkPreviewDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
 } from './interface/link-preview.domain-service.interface';
-import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,

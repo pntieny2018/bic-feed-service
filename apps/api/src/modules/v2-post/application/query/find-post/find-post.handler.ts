@@ -11,7 +11,7 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-
 import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { AccessDeniedException } from '../../../domain/exception';
+import { ContentAccessDeniedException } from '../../../domain/exception';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import {
@@ -66,7 +66,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     }
 
     if (!authUser && !postEntity.isOpen()) {
-      throw new AccessDeniedException();
+      throw new ContentAccessDeniedException();
     }
     const groups = await this._groupAppService.findAllByIds(postEntity.get('groupIds'));
     if (authUser) {

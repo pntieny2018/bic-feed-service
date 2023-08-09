@@ -5,9 +5,7 @@ import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, FindOptions, Includeable, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { OrderEnum, PageDto } from '../../common/dto';
-import { LogicException } from '../../common/exceptions';
 import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
@@ -32,6 +30,7 @@ import { ArticleResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { PostBindingService } from '../post/post-binding.service';
+import { ContentNotFoundException } from '../v2-post/domain/exception';
 
 @Injectable()
 export class ArticleService {
@@ -289,7 +288,7 @@ export class ArticleService {
     );
 
     if (!article) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
 
     let comments = null;

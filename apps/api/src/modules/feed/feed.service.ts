@@ -3,9 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto, PageMetaDto } from '../../common/dto';
-import { ExceptionHelper } from '../../common/helpers';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
@@ -17,6 +15,7 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
 import { ReactionService } from '../reaction';
+import { DomainForbiddenException } from '../../common/exceptions';
 import { PostService } from '../post/post.service';
 
 @Injectable()
@@ -102,7 +101,7 @@ export class FeedService {
 
       if (privacy.every((p) => p !== GroupPrivacy.CLOSED && p !== GroupPrivacy.OPEN)) {
         if (!groupIds.some((groupId) => groupsOfUser.includes(groupId))) {
-          ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+          throw new DomainForbiddenException();
         }
       }
 

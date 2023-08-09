@@ -13,10 +13,10 @@ import {
   DeleteSeriesProps,
 } from './interface';
 import { SeriesEntity } from '../model/content';
-import { AccessDeniedException, ContentNotFoundException } from '../exception';
+import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
-import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
@@ -119,7 +119,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    if (!seriesEntity.isOwner(actor.id)) throw new AccessDeniedException();
+    if (!seriesEntity.isOwner(actor.id)) throw new ContentAccessDeniedException();
 
     const isImportantBefore = seriesEntity.isImportant();
     const isEnableSetting = seriesEntity.isEnableSetting();
@@ -200,7 +200,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    if (!seriesEntity.isOwner(actor.id)) throw new AccessDeniedException();
+    if (!seriesEntity.isOwner(actor.id)) throw new ContentAccessDeniedException();
 
     this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
