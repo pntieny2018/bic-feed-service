@@ -13,10 +13,10 @@ import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-use
 export class SeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEvent> {
   public constructor(
     private readonly _kafkaService: KafkaService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected _groupAppService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userAppService: IUserApplicationService
+    private readonly _userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService
   ) {}
 
   public async handle(event: SeriesUpdatedEvent): Promise<void> {
