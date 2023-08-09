@@ -9,7 +9,7 @@ export abstract class DomainAggregateRoot<
   Props extends EntityProperties<any> = EntityProperties<any>
 > extends AggregateRoot {
   protected _props: Props;
-  protected _snapshot: object;
+  protected _snapshot: Props;
 
   protected constructor(props: Props) {
     super();
@@ -42,5 +42,9 @@ export abstract class DomainAggregateRoot<
 
   public toObject(): Props {
     return this._props;
+  }
+
+  public getSnapshot(): Props {
+    return this._snapshot;
   }
 }

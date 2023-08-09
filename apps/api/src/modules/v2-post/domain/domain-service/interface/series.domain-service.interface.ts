@@ -9,14 +9,10 @@ export type CreateSeriesProps = {
   };
 };
 
-export type UpdateSeriesProps = {
-  seriesEntity: SeriesEntity;
-  groups: GroupDto[];
-  newData: UpdateSeriesCommandPayload;
-};
+export type UpdateSeriesProps = UpdateSeriesCommandPayload;
 
 export interface ISeriesDomainService {
   create(data: CreateSeriesProps): Promise<SeriesEntity>;
-  update(input: UpdateSeriesProps): Promise<void>;
+  update(input: UpdateSeriesProps): Promise<SeriesEntity>;
 }
 export const SERIES_DOMAIN_SERVICE_TOKEN = 'SERIES_DOMAIN_SERVICE_TOKEN';
