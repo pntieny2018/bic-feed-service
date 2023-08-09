@@ -5,8 +5,9 @@ import { QuizParticipantEntity } from '../model/quiz-participant';
 export interface IQuizParticipantRepository {
   create(quizParticipant: QuizParticipantEntity): Promise<void>;
   update(quizParticipant: QuizParticipantEntity): Promise<void>;
-  findOne(takeId: string): Promise<QuizParticipantEntity>;
+  findQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity | null>;
   findAllByContentId(contentId: string, userId: string): Promise<QuizParticipantEntity[]>;
+  getQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity>;
   findQuizParticipantHighestScoreByContentIdAndUserId(
     contentId: string,
     userId: string

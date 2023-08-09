@@ -105,8 +105,8 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     this._props.totalCorrectAnswers = totalCorrectAnswers;
   }
 
-  public setFinishedAt(): void {
-    this._props.finishedAt = new Date();
+  public setFinishedAt(time: Date = new Date()): void {
+    this._props.finishedAt = time;
   }
 
   public hideResult(): void {
