@@ -20,6 +20,7 @@ import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interfa
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { SeriesUpdatedEvent } from '../event/series-updated.event';
+import { SeriesCreatedEvent } from '../event/series-created.event';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -42,7 +43,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   ) {}
 
   public async create(input: CreateSeriesProps): Promise<SeriesEntity> {
-    const { actor, title, summary, groupIds, coverMedia, setting, groups } = input.data;
+    const { actor, title, summary, groupIds, coverMedia, setting } = input;
     const seriesEntity = this._seriesFactory.createSeries({
       userId: actor.id,
       title,
@@ -58,6 +59,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
+    const groups = await this._groupAppService.findAllByIds(groupIds);
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
@@ -73,11 +75,22 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     try {
       await this._contentRepository.create(seriesEntity);
-      return seriesEntity;
+
+      await this._postDomainService.markSeen(seriesEntity, actor.id);
+      seriesEntity.increaseTotalSeen();
+
+      if (seriesEntity.isImportant()) {
+        await this._postDomainService.markReadImportant(seriesEntity, actor.id);
+        seriesEntity.setMarkReadImportant();
+      }
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
+
+    this.event.publish(new SeriesCreatedEvent(seriesEntity));
+
+    return seriesEntity;
   }
 
   public async update(input: UpdateSeriesProps): Promise<SeriesEntity> {

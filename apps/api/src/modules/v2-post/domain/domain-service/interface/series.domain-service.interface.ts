@@ -1,13 +1,8 @@
-import { GroupDto } from '../../../../v2-group/application';
 import { CreateSeriesCommandPayload } from '../../../application/command/create-series/create-series.command';
 import { UpdateSeriesCommandPayload } from '../../../application/command/update-series/update-series.command';
 import { SeriesEntity } from '../../model/content';
 
-export type CreateSeriesProps = {
-  data: CreateSeriesCommandPayload & {
-    groups?: GroupDto[];
-  };
-};
+export type CreateSeriesProps = CreateSeriesCommandPayload;
 
 export type UpdateSeriesProps = UpdateSeriesCommandPayload;
 
