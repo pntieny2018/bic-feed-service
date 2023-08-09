@@ -1269,10 +1269,10 @@
     uuid "^9.0.0"
     validator "^13.7.0"
 
-"@beincom/constants@^2.1.0":
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/@beincom/constants/-/constants-2.1.2.tgz#ee894ad9bb4b6d3fe234fc01fd0a373f424733ad"
-  integrity sha512-64kUyORYYl7zbHK3fkxvcb1Lks6Sp7Vu4XMAI7lbQC/wsVLzftMiwBkzuSpWagYmlfAz8+55kGXJECCM3QU3hw==
+"@beincom/constants@^2.1.4":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@beincom/constants/-/constants-2.1.4.tgz#7d39847d85106650e6d8826958ea7b777fa02a62"
+  integrity sha512-UD1ojMDepX/9WF04y2L6O2HG9brPvDhc1czJ8rleNBgPjxXmPVGdd3PJYflJHPq6afCAtVUCWT3PIh1joKVdOw==
 
 "@beincom/domain@^0.1.7":
   version "0.1.7"
