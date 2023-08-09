@@ -1,9 +1,17 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { Question } from '../quiz';
 import { v4 } from 'uuid';
 import { RULES } from '../../../constant';
 import { ArrayHelper } from '../../../../../common/helpers';
 
+type QuestionAttribute = {
+  id: string;
+  content: string;
+  answers: {
+    id: string;
+    content: string;
+    isCorrect: boolean;
+  }[];
+};
 export type QuizParticipantProps = {
   id: string;
   contentId: string;
@@ -11,7 +19,7 @@ export type QuizParticipantProps = {
   quizSnapshot: {
     title: string;
     description: string;
-    questions: Question[];
+    questions: QuestionAttribute[];
   };
   answers: {
     id: string;
@@ -22,6 +30,7 @@ export type QuizParticipantProps = {
     updatedAt: Date;
   }[];
   score: number;
+  isHighest: boolean;
   timeLimit: number;
   totalAnswers: number;
   totalCorrectAnswers: number;
@@ -56,6 +65,10 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
 
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
+  }
+
+  public isHighest(): boolean {
+    return this._props.isHighest;
   }
 
   public getCorrectAnswersFromSnapshot(): Map<string, string> {
@@ -105,5 +118,9 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
 
   public shuffleQuestions(): void {
     this._props.quizSnapshot.questions = ArrayHelper.shuffle(this._props.quizSnapshot.questions);
+  }
+
+  public setHighest(isHighest: boolean): void {
+    this._props.isHighest = isHighest;
   }
 }

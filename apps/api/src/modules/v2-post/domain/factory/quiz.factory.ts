@@ -2,8 +2,11 @@ import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { IQuizFactory } from './interface/quiz.factory.interface';
-import { QuizEntity, QuizProps } from '../model/quiz';
-import { QuizCreateProps } from '../domain-service/interface/quiz.domain-service.interface';
+import { QuizEntity, QuizProps, QuizQuestionEntity } from '../model/quiz';
+import {
+  AddQuestionProps,
+  QuizCreateProps,
+} from '../domain-service/interface/quiz.domain-service.interface';
 import { QuizGenStatus, QuizStatus } from '../../data-type/quiz-status.enum';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 import { RULES } from '../../constant';
@@ -49,6 +52,20 @@ export class QuizFactory implements IQuizFactory {
     return this._eventPublisher.mergeObjectContext(quizEntity);
   }
 
+  public createQuizQuestion(addQuizQuestionProps: AddQuestionProps): QuizQuestionEntity {
+    const { quizId, content, answers } = addQuizQuestionProps;
+    return new QuizQuestionEntity({
+      id: v4(),
+      quizId,
+      content,
+      answers: answers.map((answer) => ({
+        id: v4(),
+        content: answer.content,
+        isCorrect: answer.isCorrect,
+      })),
+    });
+  }
+
   public createTakeQuiz(userId: string, quizEntity: QuizEntity): QuizParticipantEntity {
     const now = new Date();
     const quizParticipant = new QuizParticipantEntity({
@@ -58,9 +75,18 @@ export class QuizFactory implements IQuizFactory {
       quizSnapshot: {
         title: quizEntity.get('title'),
         description: quizEntity.get('description'),
-        questions: quizEntity.get('questions'),
+        questions: quizEntity.get('questions').map((question) => ({
+          id: question.get('id'),
+          content: question.get('content'),
+          answers: question.get('answers').map((answer) => ({
+            id: answer.id,
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+          })),
+        })),
       },
       score: 0,
+      isHighest: false,
       timeLimit: quizEntity.get('timeLimit'),
       answers: [],
       totalAnswers: 0,

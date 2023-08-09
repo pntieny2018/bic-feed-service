@@ -1,3 +1,5 @@
+import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 
 export interface IQuizParticipantRepository {
@@ -5,6 +7,15 @@ export interface IQuizParticipantRepository {
   update(quizParticipant: QuizParticipantEntity): Promise<void>;
   findOne(takeId: string): Promise<QuizParticipantEntity>;
   findAllByContentId(contentId: string, userId: string): Promise<QuizParticipantEntity[]>;
+  findQuizParticipantHighestScoreByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity>;
+  getHighestScoreOfMember(contentId: string): Promise<{ createdBy: string; score: number }[]>;
+  getQuizParticipantHighestScoreGroupByUserId(
+    contentId: string,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<QuizParticipantEntity>>;
   getQuizParticipantHighestScoreGroupByContentId(
     contentIds: string[],
     userId: string

@@ -2,12 +2,10 @@ import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { QuizModel } from './quiz.model';
 import { IQuizQuestion, QuizQuestionModel } from './quiz-question.model';
 
 export interface IQuizAnswer {
   id: string;
-  quizId: string;
   questionId: string;
   content: string;
   isCorrect: boolean;
@@ -25,9 +23,6 @@ export class QuizAnswerModel
   @Default(() => uuid_v4())
   @Column
   public id: string;
-
-  @Column
-  public quizId: string;
 
   @Column
   public questionId: string;

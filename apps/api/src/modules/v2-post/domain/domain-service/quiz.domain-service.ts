@@ -1,19 +1,20 @@
 import { cloneDeep } from 'lodash';
-import { QuizEntity } from '../model/quiz';
+import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
 import { Inject, Logger } from '@nestjs/common';
 import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import {
+  AddQuestionProps,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   GetQuizzesProps,
   IContentDomainService,
   IQuizDomainService,
   QuizCreateProps,
   QuizUpdateProps,
+  UpdateQuestionProps,
 } from './interface';
 import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { ERRORS } from '../../../../common/constants/errors';
 import { EventBus } from '@nestjs/cqrs';
 import { QuizCreatedEvent } from '../event/quiz-created.event';
@@ -25,13 +26,17 @@ import {
   QuizParticipantNotFoundException,
 } from '../exception';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../repositoty-interface/quiz-participant.repository.interface';
+import { QuizQuestionNotFoundException } from '../exception/quiz-question-not-found.exception';
+import { QueueService } from '@app/queue';
+import { QuizParticipantResultJobDto } from '../../application/dto/queue.dto';
+import { QUEUES } from '@app/queue/queue.constant';
+import { QuizParticipantNotFinishedException } from '../exception/quiz-participant-not-finished.exception';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -43,15 +48,12 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
     @Inject(QUIZ_FACTORY_TOKEN)
     private readonly _quizFactory: IQuizFactory,
-    @Inject(OPEN_AI_SERVICE_TOKEN)
-    private readonly _openaiService: IOpenaiService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
-    private readonly event: EventBus
+    private readonly event: EventBus,
+    private readonly _queueService: QueueService
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
@@ -81,20 +83,16 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async update(input: QuizUpdateProps): Promise<QuizEntity> {
-    const { authUser, quizId } = input;
+    const { authUser, quizId, questions, ...quizUpdateProps } = input;
 
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
-    });
+    const quizEntity = await this._quizRepository.findOne(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
 
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
-    quizEntity.updateAttribute(input);
+    quizEntity.updateAttribute(quizUpdateProps);
     try {
       await this._quizRepository.update(quizEntity);
     } catch (e) {
@@ -104,12 +102,85 @@ export class QuizDomainService implements IQuizDomainService {
     return quizEntity;
   }
 
-  public async getQuiz(quizId: string, authUser: UserDto): Promise<QuizEntity> {
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
+  public async updateQuestion(
+    updateQuestionProps: UpdateQuestionProps
+  ): Promise<QuizQuestionEntity> {
+    const { authUser, questionId, content, answers } = updateQuestionProps;
+    const quizQuestionEntity = await this._quizRepository.findQuizQuestion(questionId);
+    if (!quizQuestionEntity) {
+      throw new QuizQuestionNotFoundException();
+    }
+
+    const quizEntity = await this._quizRepository.findOne(quizQuestionEntity.get('quizId'));
+
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    quizQuestionEntity.updateAttribute({
+      content,
+      answers,
     });
+    quizQuestionEntity.validateAnswers();
+    if (quizQuestionEntity.isChanged()) {
+      try {
+        await this._quizRepository.updateQuestion(quizQuestionEntity);
+      } catch (e) {
+        this._logger.error(JSON.stringify(e?.stack));
+        throw new DatabaseException();
+      }
+    }
+
+    return quizQuestionEntity;
+  }
+
+  public async addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity> {
+    const { authUser, quizId } = addQuestionProps;
+    const quizEntity = await this._quizRepository.findOne(quizId);
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    const quizQuestionEntity = this._quizFactory.createQuizQuestion(addQuestionProps);
+    quizQuestionEntity.validateAnswers();
+    try {
+      await this._quizRepository.addQuestion(quizQuestionEntity);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+
+    return quizQuestionEntity;
+  }
+
+  public async deleteQuestion(id: string, authUser: UserDto): Promise<void> {
+    const quizQuestionEntity = await this._quizRepository.findQuizQuestion(id);
+
+    if (!quizQuestionEntity) {
+      throw new QuizNotFoundException();
+    }
+
+    const quizEntity = await this._quizRepository.findOne(quizQuestionEntity.get('quizId'));
+
+    if (!quizEntity) {
+      throw new QuizNotFoundException();
+    }
+
+    await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
+    try {
+      await this._quizRepository.deleteQuestion(id);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
+
+  public async getQuiz(quizId: string, authUser: UserDto): Promise<QuizEntity> {
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -119,11 +190,7 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async delete(quizId: string, authUser: UserDto): Promise<void> {
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
-    });
+    const quizEntity = await this._quizRepository.findOne(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -169,7 +236,7 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity> {
-    const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
+    const quizEntity = await this._quizRepository.findOne(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -209,13 +276,8 @@ export class QuizDomainService implements IQuizDomainService {
       cloneQuizEntity.setProcessing();
       await this._quizRepository.update(cloneQuizEntity);
 
-      const { questions, usage, model, maxTokens, completion } =
-        await this._openaiService.generateQuestion({
-          content: rawContent,
-          numberOfQuestions: cloneQuizEntity.get('numberOfQuestions'),
-          numberOfAnswers: cloneQuizEntity.get('numberOfAnswers'),
-        });
-      if (questions?.length === 0) {
+      await this._quizRepository.genQuestions(cloneQuizEntity, rawContent);
+      if (cloneQuizEntity.get('questions')?.length === 0) {
         cloneQuizEntity.setFail({
           code: ERRORS.QUIZ.GENERATE_FAIL,
           message: 'No questions generated',
@@ -226,15 +288,6 @@ export class QuizDomainService implements IQuizDomainService {
       }
 
       cloneQuizEntity.setProcessed();
-      cloneQuizEntity.updateAttribute({
-        questions,
-        meta: {
-          usage,
-          model,
-          maxTokens,
-          completion,
-        },
-      });
     } catch (e) {
       cloneQuizEntity.setFail({
         code: ERRORS.QUIZ.GENERATE_FAIL,
@@ -267,5 +320,49 @@ export class QuizDomainService implements IQuizDomainService {
     }
 
     return quizParticipantEntity;
+  }
+
+  public async calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void> {
+    const isFinished =
+      quizParticipantEntity.isOverTimeLimit() || quizParticipantEntity.isFinished();
+    if (!isFinished) {
+      throw new QuizParticipantNotFinishedException();
+    }
+
+    const contentId = quizParticipantEntity.get('contentId');
+    const userId = quizParticipantEntity.get('createdBy');
+
+    const currentHighestScoreQuizParticipantEntity =
+      await this._quizParticipantRepository.findQuizParticipantHighestScoreByContentIdAndUserId(
+        contentId,
+        userId
+      );
+
+    const currentHighestScore = currentHighestScoreQuizParticipantEntity?.get('score') || 0;
+    const newScore = quizParticipantEntity.get('score');
+
+    if (newScore >= currentHighestScore) {
+      quizParticipantEntity.setHighest(true);
+      await this._quizParticipantRepository.update(quizParticipantEntity);
+
+      if (currentHighestScoreQuizParticipantEntity) {
+        currentHighestScoreQuizParticipantEntity.setHighest(false);
+        await this._quizParticipantRepository.update(currentHighestScoreQuizParticipantEntity);
+      }
+    }
+  }
+
+  public async createQuizParticipantResultJob(
+    quizParticipantId: string,
+    delay?: number
+  ): Promise<void> {
+    await this._queueService.addBulkJobs<QuizParticipantResultJobDto>([
+      {
+        name: QUEUES.QUIZ_PARTICIPANT_RESULT.JOBS.PROCESS_QUIZ_PARTICIPANT_RESULT,
+        data: { quizParticipantId },
+        opts: { delay },
+        queue: { name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME },
+      },
+    ]);
   }
 }

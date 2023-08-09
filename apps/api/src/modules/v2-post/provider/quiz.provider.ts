@@ -29,6 +29,13 @@ import { QUIZ_PARTICIPANT_REPOSITORY_TOKEN } from '../domain/repositoty-interfac
 import { QuizParticipantRepository } from '../driven-adapter/repository/quiz-participant.repository';
 import { UpdateQuizAnswerHandler } from '../application/command/update-quiz-answer/update-quiz-answer.handler';
 import { FindQuizParticipantHandler } from '../application/query/find-quiz-participant/find-quiz-participant.handler';
+import { AddQuizQuestionHandler } from '../application/command/add-quiz-question/add-quiz-question.handler';
+import { UpdateQuizQuestionHandler } from '../application/command/update-quiz-question/update-quiz-question.handler';
+import { DeleteQuizQuestionHandler } from '../application/command/delete-quiz-question/delete-quiz-question.handler';
+import { FindQuizSummaryHandler } from '../application/query/find-quiz-summary/find-quiz-summary.handler';
+import { FindQuizParticipantsSummaryDetailHandler } from '../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.handler';
+import { ProcessQuizParticipantResultHandler } from '../application/command/process-quiz-participant-result/process-quiz-participant-result.handler';
+import { QuizParticipantProcessor } from '../driving-apdater/queue-processor/quiz-participant.processor';
 
 export const quizProvider = [
   {
@@ -77,4 +84,12 @@ export const quizProvider = [
   StartQuizHandler,
   UpdateQuizAnswerHandler,
   FindQuizParticipantHandler,
+  AddQuizQuestionHandler,
+  UpdateQuizQuestionHandler,
+  DeleteQuizQuestionHandler,
+  FindQuizSummaryHandler,
+  FindQuizParticipantsSummaryDetailHandler,
+  ProcessQuizParticipantResultHandler,
+  /** Processor */
+  QuizParticipantProcessor,
 ];

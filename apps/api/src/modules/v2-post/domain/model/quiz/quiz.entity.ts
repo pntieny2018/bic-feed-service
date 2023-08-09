@@ -4,16 +4,8 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
+import { QuizQuestionEntity } from './quiz-question.entity';
 
-export type Question = {
-  id: string;
-  content: string;
-  answers: {
-    id: string;
-    content: string;
-    isCorrect: boolean;
-  }[];
-};
 export type QuizProps = {
   id: string;
   title: string;
@@ -28,7 +20,7 @@ export type QuizProps = {
   numberOfQuestionsDisplay?: number;
   numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  questions?: Question[];
+  questions?: QuizQuestionEntity[];
   meta?: any;
   error?: {
     code: string;
@@ -116,14 +108,16 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
 
     if (
-      this._props.questions.some((question) => !question.answers || question.answers.length === 0)
+      this._props.questions.some(
+        (question) => !question.get('answers') || question.get('answers').length === 0
+      )
     ) {
       throw new DomainModelException(`Question must have at least one answer`);
     }
 
     if (
       this._props.questions.some((question) =>
-        question.answers.every((answer) => {
+        question.get('answers').every((answer) => {
           return answer.isCorrect === false;
         })
       )

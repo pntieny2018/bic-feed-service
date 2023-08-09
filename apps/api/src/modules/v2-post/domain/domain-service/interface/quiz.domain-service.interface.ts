@@ -1,4 +1,4 @@
-import { QuizEntity } from '../../model/quiz';
+import { QuizEntity, QuizQuestionEntity } from '../../model/quiz';
 import { OrderEnum } from '../../../../../common/dto';
 import { UserDto } from '../../../../v2-user/application';
 import { QuestionDto } from '../../../application/dto/question.dto';
@@ -52,6 +52,27 @@ export type GetQuizzesProps = {
   after?: string;
 };
 
+export type AddQuestionProps = {
+  quizId: string;
+  content: string;
+  answers: {
+    id?: string;
+    content: string;
+    isCorrect: boolean;
+  }[];
+  authUser: UserDto;
+};
+
+export type UpdateQuestionProps = {
+  questionId: string;
+  content: string;
+  answers: {
+    id?: string;
+    content: string;
+    isCorrect: boolean;
+  }[];
+  authUser: UserDto;
+};
 export interface IQuizDomainService {
   create(data: QuizCreateProps): Promise<QuizEntity>;
   update(data: QuizUpdateProps): Promise<QuizEntity>;
@@ -62,5 +83,10 @@ export interface IQuizDomainService {
   generateQuestions(quizEntity: QuizEntity): Promise<void>;
   getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
   getQuizParticipant(quizParticipantId: string, authUserId: string): Promise<QuizParticipantEntity>;
+  updateQuestion(updateQuestionProps: UpdateQuestionProps): Promise<QuizQuestionEntity>;
+  addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity>;
+  deleteQuestion(questionId: string, authUser: UserDto): Promise<void>;
+  calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void>;
+  createQuizParticipantResultJob(quizParticipantId: string, delay?: number): Promise<void>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

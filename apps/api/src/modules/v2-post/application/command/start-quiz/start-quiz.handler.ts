@@ -12,6 +12,7 @@ import {
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
 import { QuizParticipantNotFinishedException } from '../../../domain/exception/quiz-participant-not-finished.exception';
+import { RULES } from '../../../constant';
 
 @CommandHandler(StartQuizCommand)
 export class StartQuizHandler implements ICommandHandler<StartQuizCommand, string> {
@@ -26,11 +27,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
   public async execute(command: StartQuizCommand): Promise<string> {
     const { authUser, quizId } = command.payload;
 
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
-    });
+    const quizEntity = await this._quizRepository.findOne(quizId);
 
     if (!quizEntity || !quizEntity.isPublished()) {
       throw new QuizNotFoundException();
@@ -50,6 +47,10 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
       throw new QuizParticipantNotFinishedException();
     }
     const takeQuiz = await this._quizDomainService.startQuiz(quizEntity, authUser);
+
+    const quizParticipantId = takeQuiz.get('id');
+    const delayJobAmount = (takeQuiz.get('timeLimit') + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000;
+    await this._quizDomainService.createQuizParticipantResultJob(quizParticipantId, delayJobAmount);
 
     return takeQuiz.get('id');
   }

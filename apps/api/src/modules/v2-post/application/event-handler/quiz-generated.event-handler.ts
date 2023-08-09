@@ -22,7 +22,7 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
   public async handle(event: QuizGeneratedEvent): Promise<void> {
     this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
     const { quizId } = event;
-    const quizEntity = await this._quizRepository.findOne({ where: { id: quizId } });
+    const quizEntity = await this._quizRepository.findOne(quizId);
     if (!quizEntity) return;
 
     const contentEntity = await this._contentRepository.findOne({

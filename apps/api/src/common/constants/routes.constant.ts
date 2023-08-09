@@ -85,6 +85,14 @@ export const ROUTES = {
       PATH: '/quizzes/:id/generate',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    GET_QUIZ_SUMMARY: {
+      PATH: '/quizzes/:contentId/summary',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_QUIZ_PARTICIPANTS: {
+      PATH: '/quizzes/:contentId/participants',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
     UPDATE: {
       PATH: '/quizzes/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
@@ -119,7 +127,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     DELETE_QUIZ_QUESTION: {
-      PATH: '/quizzes/:id/questions/questionId',
+      PATH: '/quizzes/:id/questions/:questionId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
