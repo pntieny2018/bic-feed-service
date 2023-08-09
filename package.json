@@ -190,7 +190,8 @@
       "^@app/queue(|/.*)$": "<rootDir>/libs/queue/src/$1",
       "^@libs/service(|/.*)$": "<rootDir>/libs/service/src/$1",
       "^@libs/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
-      "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1"
+      "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1",
+      "^@libs/database(|/.*)$": "<rootDir>/libs/database/src/$1"
     }
   },
   "husky": {

@@ -63,6 +63,12 @@
       "@libs/infra/*": [
         "libs/infra/src/*"
       ],
+      "@libs/database": [
+        "libs/database/src"
+      ],
+      "@libs/database/*": [
+        "libs/database/src/*"
+      ],
       "@libs/common": [
         "libs/common/src"
       ],
