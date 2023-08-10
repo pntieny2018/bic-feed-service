@@ -144,27 +144,21 @@ export class ContentBinding implements IContentBinding {
       authUser: UserDto;
     }
   ): Promise<ArticleDto> {
-    const userIdsNeedToFind = [];
-    if (!dataBinding?.actor) {
-      userIdsNeedToFind.push(articleEntity.get('createdBy'));
+    let actor = dataBinding?.actor;
+
+    if (!actor) {
+      actor = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+        [articleEntity.get('createdBy')],
+        dataBinding.authUser.id
+      )[0];
     }
-
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
-
-    if (dataBinding?.actor) {
-      users.push(dataBinding.actor);
-    }
-
-    const actor = users.find((user) => user.id === articleEntity.get('createdBy'));
 
     const groups =
       dataBinding?.groups ||
       (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
