@@ -631,11 +631,10 @@ export class ContentBinding implements IContentBinding {
         itemIds.push(...contentEntity.get('itemIds'));
       }
     });
-    const users = await this._userApplicationService.findAllByIds(
-      ArrayHelper.arrayUnique(userIdsNeedToFind),
-      {
-        withGroupJoined: false,
-      }
+
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      authUser.id
     );
 
     const usersMapper = new Map<string, UserDto>(
