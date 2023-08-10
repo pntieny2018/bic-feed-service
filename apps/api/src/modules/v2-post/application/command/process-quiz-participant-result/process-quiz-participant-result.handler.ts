@@ -9,7 +9,6 @@ import {
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
 import { ProcessQuizParticipantResultCommand } from './process-quiz-participant-result.command';
-import { RULES } from '../../../constant';
 
 @CommandHandler(ProcessQuizParticipantResultCommand)
 export class ProcessQuizParticipantResultHandler
@@ -25,20 +24,24 @@ export class ProcessQuizParticipantResultHandler
   public async execute(command: ProcessQuizParticipantResultCommand): Promise<void> {
     const { quizParticipantId } = command.payload;
 
-    const quizParticipantEntity = await this._quizParticipantRepository.findOne(quizParticipantId);
+    const quizParticipantEntity = await this._quizParticipantRepository.findQuizParticipantById(
+      quizParticipantId
+    );
     if (!quizParticipantEntity) return;
 
-    const isFinished =
-      quizParticipantEntity.isOverTimeLimit() || quizParticipantEntity.isFinished();
-    if (!isFinished) {
-      const delayJobAmount =
-        (quizParticipantEntity.get('timeLimit') + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000;
-      await this._quizDomainService.createQuizParticipantResultJob(
-        quizParticipantId,
-        delayJobAmount
-      );
-    } else {
-      await this._quizDomainService.calculateHighestScore(quizParticipantEntity);
+    const isOverTime = quizParticipantEntity.isOverTimeLimit();
+    const isFinished = quizParticipantEntity.isFinished();
+
+    if (isOverTime && !isFinished) {
+      const startedAt = quizParticipantEntity.get('startedAt');
+      const timeLimit = quizParticipantEntity.get('timeLimit');
+
+      const finishedAt = new Date(startedAt.getTime() + timeLimit * 1000);
+
+      quizParticipantEntity.setFinishedAt(finishedAt);
+      await this._quizParticipantRepository.update(quizParticipantEntity);
     }
+
+    await this._quizDomainService.calculateHighestScore(quizParticipantEntity);
   }
 }
