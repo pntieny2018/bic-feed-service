@@ -51,7 +51,7 @@ export class FindCommentsPaginationHandler
 
     if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
 
-    const instances = await this._commentBinding.commentBinding(rows);
+    const instances = await this._commentBinding.commentBinding(rows, authUser);
 
     return new FindCommentsPaginationDto(instances, meta);
   }
