@@ -64,12 +64,6 @@ export class UpdateQuizRequestDto {
   @IsOptional()
   public isRandom?: boolean;
 
-  @ApiProperty()
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => QuizQuestionRequestDto)
-  public questions?: QuizQuestionRequestDto[];
-
   @ApiProperty({ enum: QuizStatus, required: false })
   @IsOptional()
   @IsEnum(QuizStatus)

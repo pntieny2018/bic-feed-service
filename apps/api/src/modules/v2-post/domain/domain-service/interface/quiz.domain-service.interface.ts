@@ -31,7 +31,6 @@ export type QuizUpdateProps = {
   quizId: string;
   numberOfQuestions?: number;
   numberOfAnswers?: number;
-  questions?: QuestionDto[];
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;
