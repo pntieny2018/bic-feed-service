@@ -20,9 +20,7 @@ import { InvalidResourceImageException } from '../exception/media.exception';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { SeriesUpdatedEvent } from '../event/series-updated.event';
-import { SeriesCreatedEvent } from '../event/series-created.event';
-import { SeriesDeletedEvent } from '../event/series-deleted.event';
+import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event/series.event';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {

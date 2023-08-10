@@ -47,9 +47,11 @@ import { FindSeriesHandler } from '../application/query/find-series/find-series.
 import { ProcessSeriesDeletedHandler } from '../application/command/process-series-deleted/process-series-deleted.handler';
 import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
 import { ProcessSeriesUpdatedHandler } from '../application/command/process-series-updated/process-series-updated.handler';
-import { SeriesCreatedEventHandler } from '../application/event-handler/series-created.event-handler';
-import { SeriesUpdatedEventHandler } from '../application/event-handler/series-updated.event-handler';
-import { SeriesDeletedEventHandler } from '../application/event-handler/series-deleted.event-handler';
+import {
+  SeriesCreatedEventHandler,
+  SeriesUpdatedEventHandler,
+  SeriesDeletedEventHandler,
+} from '../application/event-handler/series';
 import { FindItemsBySeriesHandler } from '../application/query/find-items-by-series/find-items-by-series.handler';
 import { ProcessReactionNotificationHandler } from '../application/command/process-reaction-notification/process-reaction-notification.handler';
 import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';

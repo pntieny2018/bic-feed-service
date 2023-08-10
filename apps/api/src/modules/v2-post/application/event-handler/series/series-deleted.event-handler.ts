@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
 import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '../../../../common/constants';
+import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { SeriesChangedMessagePayload } from '../dto/message';
-import { SeriesDeletedEvent } from '../../domain/event/series-deleted.event';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
+import { SeriesChangedMessagePayload } from '../../dto/message';
+import { SeriesDeletedEvent } from '../../../domain/event/series.event';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @EventsHandler(SeriesDeletedEvent)
 export class SeriesDeletedEventHandler implements IEventHandler<SeriesDeletedEvent> {
