@@ -150,9 +150,11 @@ export class ContentBinding implements IContentBinding {
     let actor = dataBinding?.actor;
 
     if (!actor) {
-      actor = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
-        [articleEntity.get('createdBy')],
-        dataBinding.authUser.id
+      actor = (
+        await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+          [articleEntity.get('createdBy')],
+          dataBinding.authUser.id
+        )
       )[0];
     }
 
