@@ -1,4 +1,4 @@
-import { IOpenAIConfig, getOpenAIConfig } from '@app/service/openai';
+import { IOpenAIConfig, getOpenAIConfig } from '@libs/service/openai';
 
 interface IConfiguration {
   openai: IOpenAIConfig;

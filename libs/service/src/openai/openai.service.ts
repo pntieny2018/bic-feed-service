@@ -1,6 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { Configuration, OpenAIApi } from 'openai';
-import { ConfigService } from '@nestjs/config';
 import {
   GenerateQuestionProps,
   GenerateQuestionResponse,
@@ -11,7 +8,10 @@ import {
   MAX_TOKEN,
   TOKEN_IN_CONTEXT,
   TOKEN_PER_QUESTION_OR_ANSWER,
-} from '@app/service/openai';
+} from '@libs/service/openai';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Configuration, OpenAIApi } from 'openai';
 import { v4 } from 'uuid';
 
 @Injectable()
@@ -166,11 +166,15 @@ export class OpenaiService implements IOpenaiService {
     let currentQuestion = null;
 
     for (const line of lines) {
-      if (line.trim() === '') continue;
+      if (line.trim() === '') {
+        continue;
+      }
       const questionMatch = line.match(/\[(\d+)\] (.+)$/);
 
       if (questionMatch) {
-        if (currentQuestion !== null) questions.push(currentQuestion);
+        if (currentQuestion !== null) {
+          questions.push(currentQuestion);
+        }
 
         const questionText = questionMatch[2];
         currentQuestion = { id: v4(), content: questionText, answers: [] };
@@ -188,7 +192,9 @@ export class OpenaiService implements IOpenaiService {
         }
       }
     }
-    if (currentQuestion !== null) questions.push(currentQuestion);
+    if (currentQuestion !== null) {
+      questions.push(currentQuestion);
+    }
 
     return questions;
   }

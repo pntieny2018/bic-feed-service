@@ -1,4 +1,4 @@
-import { IQueueConfig, getQueueConfig } from '@app/infra/queue';
+import { IQueueConfig, getQueueConfig } from '@libs/infra/queue';
 
 interface IConfiguration {
   queue: IQueueConfig;

@@ -1,4 +1,4 @@
-import { IQueueConfig } from '@app/infra/queue';
+import { IQueueConfig } from '@libs/infra/queue';
 
 export const getQueueConfig = (): IQueueConfig => ({
   host: process.env.REDIS_HOST,

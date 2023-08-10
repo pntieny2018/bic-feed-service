@@ -1,9 +1,9 @@
+import { KAFKA_TOKEN, IKafkaConfig, IKafkaService } from '@libs/infra/kafka';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ClientKafka } from '@nestjs/microservices';
 import { ClsService } from 'nestjs-cls';
-import { ConfigService } from '@nestjs/config';
 import { v4 } from 'uuid';
-import { KAFKA_TOKEN, IKafkaConfig, IKafkaService } from '@app/infra/kafka';
 
 @Injectable()
 export class KafkaService implements IKafkaService {

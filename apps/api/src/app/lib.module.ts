@@ -1,24 +1,27 @@
-import * as Sentry from '@sentry/node';
-import { Global, Module } from '@nestjs/common';
+import { OpenaiModule } from '@app/openai';
 import { RedisModule } from '@app/redis/redis.module';
-import { HttpModule } from '@nestjs/axios';
 import { SentryModule } from '@app/sentry';
-import { IAxiosConfig } from '../config/axios';
-import { IRedisConfig } from '../config/redis';
-import { ISentryConfig } from '../config/sentry';
-import { configs } from '../config/configuration';
-import { RewriteFrames } from '@sentry/integrations';
+import { DomainEventModule } from '@beincom/nest-domain-event';
+import { HttpModule as LibHttpModule } from '@libs/infra/http';
+import { LogModule } from '@libs/infra/log';
+import { HttpModule } from '@nestjs/axios';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
-import { IElasticsearchConfig } from '../config/elasticsearch';
-import { InternalEventEmitterModule } from './custom/event-emitter';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
-import { IKafkaConfig } from '../config/kafka';
+import { RewriteFrames } from '@sentry/integrations';
+import * as Sentry from '@sentry/node';
+
 import { KAFKA_PRODUCER } from '../common/constants';
+import { IAxiosConfig } from '../config/axios';
+import { configs } from '../config/configuration';
+import { IElasticsearchConfig } from '../config/elasticsearch';
+import { IKafkaConfig } from '../config/kafka';
+import { IRedisConfig } from '../config/redis';
+import { ISentryConfig } from '../config/sentry';
+
+import { InternalEventEmitterModule } from './custom/event-emitter';
 import { ExternalService } from './external.service';
-import { DomainEventModule } from '@beincom/nest-domain-event';
-import { OpenaiModule } from '@app/openai';
-import { HttpModule as LibHttpModule } from '@app/infra/http';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -135,6 +138,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     DomainEventModule,
     OpenaiModule,
     LibHttpModule.forRoot(),
+    LogModule,
   ],
   providers: [ExternalService],
   exports: [ElasticsearchModule, ClientsModule, ExternalService],

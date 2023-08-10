@@ -1,5 +1,5 @@
-import { IGroup, IGroupMember } from '@app/service/group/src/interface';
-import { IUser } from '@app/service/user/src/interfaces';
+import { IGroup, IGroupMember } from '@libs/service/group/src/interface';
+import { IUser } from '@libs/service/user/src/interfaces';
 
 export interface IGroupService {
   findById(groupId: string): Promise<IGroup>;

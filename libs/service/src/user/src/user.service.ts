@@ -1,12 +1,13 @@
+import { CACHE_KEYS } from '@libs/common/constants';
+import { AxiosHelper } from '@libs/common/helpers';
+import { IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
+import { RedisService } from '@libs/infra/redis';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 import qs from 'qs';
-import { RedisService } from '@app/infra/redis';
-import { AxiosHelper } from '@app/common/helpers';
-import { CACHE_KEYS } from '@app/common/constants';
-import { IUserService, IUser } from './interfaces';
-import { IHttpService, USER_HTTP_TOKEN } from '@app/infra/http';
+
 import { USER_ENDPOINT } from './endpoint.constant';
+import { IUserService, IUser } from './interfaces';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -18,7 +19,9 @@ export class UserService implements IUserService {
   ) {}
 
   public async findByUserName(username: string): Promise<IUser> {
-    if (!username) return null;
+    if (!username) {
+      return null;
+    }
     try {
       const userProfile = await this._getUserProfileFromCache(username);
       let user = await this._getUserFromCacheById(userProfile?.id);
@@ -29,7 +32,9 @@ export class UserService implements IUserService {
           })
         );
 
-        if (response.status !== HttpStatus.OK) return null;
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
         user = response.data['data'];
       }
       return user;
@@ -50,7 +55,9 @@ export class UserService implements IUserService {
           paramsSerializer: (params) => qs.stringify(params),
         });
 
-        if (response.status !== HttpStatus.OK) return null;
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
         user = response.data['data'][0];
       } catch (e) {
         this._logger.debug(e);
@@ -60,7 +67,9 @@ export class UserService implements IUserService {
   }
 
   public async findAllByIds(ids: string[]): Promise<IUser[]> {
-    if (!ids || !ids.length) return [];
+    if (!ids || !ids.length) {
+      return [];
+    }
 
     const uniqueIds = uniq(ids);
     let users = await this._getUsersFromCacheByIds(uniqueIds);
@@ -107,7 +116,9 @@ export class UserService implements IUserService {
   }
 
   private async _getUserFromCacheById(id: string): Promise<IUser> {
-    if (!id) return null;
+    if (!id) {
+      return null;
+    }
     let user = null;
     const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${id}`;
     const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${id}`;

@@ -1,4 +1,4 @@
-import { IKafkaConfig, getKafkaConfig } from '@app/infra/kafka';
+import { IKafkaConfig, getKafkaConfig } from '@libs/infra/kafka';
 
 interface IConfiguration {
   kafka: IKafkaConfig;

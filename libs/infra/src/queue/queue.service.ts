@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { QUEUES_NAME, Job, IQueueService } from '@libs/infra/queue';
 import { InjectQueue } from '@nestjs/bull';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobId, Queue } from 'bull';
-import { QUEUES_NAME, Job, IQueueService } from '@app/infra/queue';
 
 @Injectable()
 export class QueueService implements IQueueService {

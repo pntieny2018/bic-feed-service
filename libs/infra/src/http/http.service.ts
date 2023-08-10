@@ -3,7 +3,7 @@ import {
   IHttpService,
   IHttpServiceRequestOptions,
   IHttpServiceOptions,
-} from '@app/infra/http';
+} from '@libs/infra/http';
 import { Injectable } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
 import camelcaseKeys from 'camelcase-keys';
@@ -11,7 +11,7 @@ import { merge } from 'lodash';
 
 @Injectable()
 export class HttpService implements IHttpService {
-  constructor(private readonly options: IHttpServiceOptions) {
+  public constructor(private readonly options: IHttpServiceOptions) {
     this.options.headers = this.options.headers || {};
 
     const { version } = this.options;

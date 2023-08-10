@@ -1,7 +1,7 @@
+import { IKafkaConfig } from '@libs/infra/kafka';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
-import { IKafkaConfig } from '@app/infra/kafka';
 
 export class KafkaGateway {
   /**

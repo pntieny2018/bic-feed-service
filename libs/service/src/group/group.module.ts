@@ -1,5 +1,5 @@
+import { GroupService } from '@libs/service/group/src/group.service';
 import { Module } from '@nestjs/common';
-import { GroupService } from '@app/service/group/src/group.service';
 
 @Module({
   imports: [],

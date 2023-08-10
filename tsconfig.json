@@ -51,22 +51,22 @@
       "@app/queue/*": [
         "libs/queue/src/*"
       ],
-      "@app/service": [
+      "@libs/service": [
         "libs/service/src"
       ],
-      "@app/service/*": [
+      "@libs/service/*": [
         "libs/service/src/*"
       ],
-      "@app/infra": [
+      "@libs/infra": [
         "libs/infra/src"
       ],
-      "@app/infra/*": [
+      "@libs/infra/*": [
         "libs/infra/src/*"
       ],
-      "@app/common": [
+      "@libs/common": [
         "libs/common/src"
       ],
-      "@app/common/*": [
+      "@libs/common/*": [
         "libs/common/src/*"
       ]
     }
