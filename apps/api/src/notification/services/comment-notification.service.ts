@@ -189,7 +189,11 @@ export class CommentNotificationService {
         actor: commentResponse.actor,
         event: event,
         data: commentActivity,
-        ...recipientObj,
+        meta: {
+          comment: {
+            ...recipientObj,
+          },
+        },
       },
     });
   }

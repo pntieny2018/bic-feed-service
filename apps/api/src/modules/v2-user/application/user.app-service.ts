@@ -52,6 +52,15 @@ export class UserApplicationService implements IUserApplicationService {
     return rows.map((row) => this._toDto(row, excluded));
   }
 
+  public async findAllAndFilterByPersonalVisibility(
+    userIds: string[],
+    authUserId: string
+  ): Promise<UserDto[]> {
+    if (!userIds || userIds?.length === 0) return [];
+    const rows = await this._repo.findAllFromInternalByIds(userIds, authUserId);
+    return rows.map((row) => this._toDto(row));
+  }
+
   public async canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean> {
     return this._repo.canCudTagInCommunityByUserId(userId, communityId);
   }
