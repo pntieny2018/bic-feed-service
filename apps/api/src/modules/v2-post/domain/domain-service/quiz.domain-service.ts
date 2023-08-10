@@ -233,12 +233,13 @@ export class QuizDomainService implements IQuizDomainService {
     answers: AnswerUserDto[],
     isFinished: boolean
   ): Promise<void> {
-    if (quizParticipantEntity.isOverTimeLimit()) {
+    if (quizParticipantEntity.isFinishedOrOverTimeLimit()) {
       throw new QuizOverTimeException();
     }
 
     quizParticipantEntity.updateAnswers(answers);
     if (isFinished) quizParticipantEntity.setFinishedAt();
+
     try {
       await this._quizParticipantRepository.update(quizParticipantEntity);
 
@@ -358,9 +359,7 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void> {
-    const isFinished =
-      quizParticipantEntity.isOverTimeLimit() || quizParticipantEntity.isFinished();
-    if (!isFinished) {
+    if (!quizParticipantEntity.isFinishedOrOverTimeLimit()) {
       throw new QuizParticipantNotFinishedException();
     }
 
