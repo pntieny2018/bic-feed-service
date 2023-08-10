@@ -83,9 +83,9 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async update(input: QuizUpdateProps): Promise<QuizEntity> {
-    const { authUser, quizId, questions, ...quizUpdateProps } = input;
+    const { authUser, quizId, ...quizUpdateProps } = input;
 
-    const quizEntity = await this._quizRepository.findOne(quizId);
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
