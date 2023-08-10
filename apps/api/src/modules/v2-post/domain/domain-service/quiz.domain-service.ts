@@ -208,10 +208,10 @@ export class QuizDomainService implements IQuizDomainService {
     authUser: UserDto
   ): Promise<QuizParticipantEntity> {
     const quizParticipant = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
+    if (quizEntity.isRandomQuestion()) {
+      quizParticipant.shuffleQuestions();
+    }
     try {
-      if (quizEntity.isRandomQuestion()) {
-        quizParticipant.shuffleQuestions();
-      }
       await this._quizParticipantRepository.create(quizParticipant);
       this.event.publish(
         new QuizParticipantStartedEvent({
@@ -233,14 +233,13 @@ export class QuizDomainService implements IQuizDomainService {
     answers: AnswerUserDto[],
     isFinished: boolean
   ): Promise<void> {
+    if (quizParticipantEntity.isOverTimeLimit()) {
+      throw new QuizOverTimeException();
+    }
+
+    quizParticipantEntity.updateAnswers(answers);
+    if (isFinished) quizParticipantEntity.setFinishedAt();
     try {
-      if (quizParticipantEntity.isOverTimeLimit()) {
-        throw new QuizOverTimeException();
-      }
-
-      quizParticipantEntity.updateAnswers(answers);
-      if (isFinished) quizParticipantEntity.setFinishedAt();
-
       await this._quizParticipantRepository.update(quizParticipantEntity);
 
       this.event.publish(
