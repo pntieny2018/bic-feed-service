@@ -46,7 +46,7 @@ export class FindQuizParticipantHandler
       quizParticipantEntity,
     ]);
 
-    if (quizParticipantEntity.isOverTimeLimit() || quizParticipantEntity.isFinished()) {
+    if (quizParticipantEntity.isFinishedOrOverTimeLimit()) {
       const quizParticipantEntities = await this._quizParticipantRepository.findAllByContentId(
         quizParticipantEntity.get('contentId'),
         authUser.id

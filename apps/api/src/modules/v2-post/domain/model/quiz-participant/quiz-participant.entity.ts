@@ -67,6 +67,10 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     return !!this._props.finishedAt;
   }
 
+  public isFinishedOrOverTimeLimit(): boolean {
+    return this.isFinished() || this.isOverTimeLimit();
+  }
+
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
   }
