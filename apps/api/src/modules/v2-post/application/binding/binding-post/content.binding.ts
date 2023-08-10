@@ -234,10 +234,10 @@ export class ContentBinding implements IContentBinding {
 
   public async seriesBinding(
     seriesEntity: SeriesEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<SeriesDto> {
     const groups =
