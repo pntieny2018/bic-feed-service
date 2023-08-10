@@ -11,10 +11,6 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal('gen_random_uuid()'),
         },
-        quiz_id: {
-          type: Sequelize.UUID,
-          allowNull: false,
-        },
         question_id: {
           type: Sequelize.UUID,
           allowNull: false,
@@ -30,19 +26,6 @@ module.exports = {
       },
       {
         schema: schemaName,
-      }
-    );
-
-    await queryInterface.addConstraint(
-      { tableName, schema: schemaName },
-      {
-        fields: ['quiz_id'],
-        type: 'foreign key',
-        references: {
-          table: 'quizzes',
-          field: 'id',
-        },
-        onDelete: 'CASCADE',
       }
     );
 

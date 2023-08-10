@@ -26,11 +26,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
   public async execute(command: StartQuizCommand): Promise<string> {
     const { authUser, quizId } = command.payload;
 
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
-    });
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
 
     if (!quizEntity || !quizEntity.isPublished()) {
       throw new QuizNotFoundException();
@@ -41,13 +37,17 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
       authUser.id
     );
 
-    const hasQuizDoing = quizParticipantEntities.some(
+    const hasQuizDoing = quizParticipantEntities.filter(
       (quizParticipantEntity) =>
         !quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()
     );
 
-    if (hasQuizDoing) {
-      throw new QuizParticipantNotFinishedException();
+    if (hasQuizDoing.length) {
+      throw new QuizParticipantNotFinishedException({
+        quizDoing: {
+          id: hasQuizDoing[0].get('id'),
+        },
+      });
     }
     const takeQuiz = await this._quizDomainService.startQuiz(quizEntity, authUser);
 

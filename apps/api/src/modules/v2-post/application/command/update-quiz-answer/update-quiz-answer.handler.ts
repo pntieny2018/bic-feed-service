@@ -5,7 +5,7 @@ import {
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { UpdateQuizAnswerCommand } from './update-quiz-answer.command';
-import { QuizOverTimeException, QuizParticipantNotFoundException } from '../../../domain/exception';
+import { QuizParticipantNotFoundException } from '../../../domain/exception';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
@@ -22,22 +22,14 @@ export class UpdateQuizAnswerHandler implements ICommandHandler<UpdateQuizAnswer
   public async execute(command: UpdateQuizAnswerCommand): Promise<void> {
     const { quizParticipantId, authUser, answers, isFinished } = command.payload;
 
-    const quizParticipantEntity = await this._quizParticipantRepository.findOne(quizParticipantId);
-
-    if (!quizParticipantEntity) {
-      throw new QuizParticipantNotFoundException();
-    }
+    const quizParticipantEntity = await this._quizParticipantRepository.getQuizParticipantById(
+      quizParticipantId
+    );
 
     if (!quizParticipantEntity.isOwner(authUser.id)) {
       throw new QuizParticipantNotFoundException();
     }
 
-    if (quizParticipantEntity.isOverTimeLimit()) {
-      throw new QuizOverTimeException();
-    }
-
-    quizParticipantEntity.updateAnswers(answers);
-    if (isFinished) quizParticipantEntity.setFinishedAt();
-    await this._quizParticipantRepository.update(quizParticipantEntity);
+    await this._quizDomainService.updateQuizAnswers(quizParticipantEntity, answers, isFinished);
   }
 }

@@ -135,7 +135,14 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quiz:
         postEntity.get('quiz') && postEntity.get('quiz').isVisible(dataBinding.authUser.id)
-          ? new QuizDto(postEntity.get('quiz').toObject())
+          ? new QuizDto({
+              id: postEntity.get('quiz').get('id'),
+              title: postEntity.get('quiz').get('title'),
+              description: postEntity.get('quiz').get('description'),
+              status: postEntity.get('quiz').get('status'),
+              genStatus: postEntity.get('quiz').get('genStatus'),
+              error: postEntity.get('quiz').get('error'),
+            })
           : undefined,
       communities,
       media: {
@@ -277,7 +284,14 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quiz:
         articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(dataBinding.authUser.id)
-          ? new QuizDto(articleEntity.get('quiz').toObject())
+          ? new QuizDto({
+              id: articleEntity.get('quiz').get('id'),
+              title: articleEntity.get('quiz').get('title'),
+              description: articleEntity.get('quiz').get('description'),
+              status: articleEntity.get('quiz').get('status'),
+              genStatus: articleEntity.get('quiz').get('genStatus'),
+              error: articleEntity.get('quiz').get('error'),
+            })
           : undefined,
       communities,
       actor,
@@ -524,7 +538,14 @@ export class ContentBinding implements IContentBinding {
       })),
       quiz:
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
-          ? new QuizDto(entity.get('quiz').toObject())
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
           : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
@@ -619,7 +640,14 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quiz:
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
-          ? new QuizDto(entity.get('quiz').toObject())
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
           : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
@@ -699,7 +727,14 @@ export class ContentBinding implements IContentBinding {
       ),
       quiz:
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
-          ? new QuizDto(entity.get('quiz').toObject())
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
           : undefined,
       items: items.map((item) => {
         if (item instanceof PostEntity) {

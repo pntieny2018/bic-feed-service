@@ -1,9 +1,21 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { Question } from '../quiz';
 import { v4 } from 'uuid';
 import { RULES } from '../../../constant';
 import { ArrayHelper } from '../../../../../common/helpers';
 
+type QuestionAttribute = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  answers: {
+    id: string;
+    content: string;
+    isCorrect: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
+};
 export type QuizParticipantProps = {
   id: string;
   contentId: string;
@@ -11,7 +23,7 @@ export type QuizParticipantProps = {
   quizSnapshot: {
     title: string;
     description: string;
-    questions: Question[];
+    questions: QuestionAttribute[];
   };
   answers: {
     id: string;
@@ -22,6 +34,7 @@ export type QuizParticipantProps = {
     updatedAt: Date;
   }[];
   score: number;
+  isHighest: boolean;
   timeLimit: number;
   totalAnswers: number;
   totalCorrectAnswers: number;
@@ -58,6 +71,10 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     return this._props.createdBy === userId;
   }
 
+  public isHighest(): boolean {
+    return this._props.isHighest;
+  }
+
   public getCorrectAnswersFromSnapshot(): Map<string, string> {
     const correctAnswers = new Map<string, string>();
     this._props.quizSnapshot.questions.forEach((question) => {
@@ -92,8 +109,8 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     this._props.totalCorrectAnswers = totalCorrectAnswers;
   }
 
-  public setFinishedAt(): void {
-    this._props.finishedAt = new Date();
+  public setFinishedAt(time: Date = new Date()): void {
+    this._props.finishedAt = time;
   }
 
   public hideResult(): void {
@@ -105,5 +122,9 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
 
   public shuffleQuestions(): void {
     this._props.quizSnapshot.questions = ArrayHelper.shuffle(this._props.quizSnapshot.questions);
+  }
+
+  public setHighest(isHighest: boolean): void {
+    this._props.isHighest = isHighest;
   }
 }
