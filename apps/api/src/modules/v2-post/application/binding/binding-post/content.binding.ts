@@ -275,9 +275,10 @@ export class ContentBinding implements IContentBinding {
         ...userIdsNeedToFind,
       ]);
     }
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
