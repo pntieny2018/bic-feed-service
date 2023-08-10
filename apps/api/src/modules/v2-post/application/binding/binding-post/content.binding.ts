@@ -138,10 +138,10 @@ export class ContentBinding implements IContentBinding {
 
   public async articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto> {
     const userIdsNeedToFind = [];

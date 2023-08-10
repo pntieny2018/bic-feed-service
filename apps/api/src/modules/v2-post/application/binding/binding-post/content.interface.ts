@@ -28,12 +28,10 @@ export interface IContentBinding {
 
   articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      series?: SeriesEntity[];
-      authUser?: UserDto;
-      reactionsCount?: ReactionsCount;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto>;
 
