@@ -62,6 +62,12 @@
       ],
       "@app/infra/*": [
         "libs/infra/src/*"
+      ],
+      "@app/common": [
+        "libs/common/src"
+      ],
+      "@app/common/*": [
+        "libs/common/src/*"
       ]
     }
   },

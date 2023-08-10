@@ -1,14 +1,14 @@
-export const QUEUES = {
-  QUIZ_PENDING: {
-    QUEUE_NAME: 'QuizPending',
-    JOBS: {
-      PROCESS_QUIZ_PENDING: 'ProcessQuizPending',
-    },
+export const QUEUES_NAME = {
+  QUIZ_PENDING: 'QuizPending',
+  QUIZ_PARTICIPANT_RESULT: 'QuizParticipantResult',
+};
+
+export const defaultJobOptions = {
+  attempts: 3,
+  backoff: {
+    type: 'exponential',
+    delay: 3000,
   },
-  QUIZ_PARTICIPANT_RESULT: {
-    QUEUE_NAME: 'QuizParticipantResult',
-    JOBS: {
-      PROCESS_QUIZ_PARTICIPANT_RESULT: 'ProcessQuizParticipantResult',
-    },
-  },
+  removeOnComplete: true,
+  removeOnFail: false,
 };

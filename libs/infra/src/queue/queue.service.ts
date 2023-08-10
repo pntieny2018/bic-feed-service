@@ -1,21 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { JobId, Queue } from 'bull';
-import { QUEUES, Job } from '@app/infra/queue';
+import { QUEUES_NAME, Job, IQueueService } from '@app/infra/queue';
 
 @Injectable()
-export class QueueService {
+export class QueueService implements IQueueService {
   private queues: Record<string, Queue>;
   private logger = new Logger(QueueService.name);
   public constructor(
-    @InjectQueue(QUEUES.QUIZ_PENDING.QUEUE_NAME)
+    @InjectQueue(QUEUES_NAME.QUIZ_PENDING)
     private readonly _quizPendingQueue: Queue,
-    @InjectQueue(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)
+    @InjectQueue(QUEUES_NAME.QUIZ_PARTICIPANT_RESULT)
     private readonly _quizParticipantQueue: Queue
   ) {
     this.queues = {
-      [QUEUES.QUIZ_PENDING.QUEUE_NAME]: _quizPendingQueue,
-      [QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME]: _quizParticipantQueue,
+      [QUEUES_NAME.QUIZ_PENDING]: _quizPendingQueue,
+      [QUEUES_NAME.QUIZ_PARTICIPANT_RESULT]: _quizParticipantQueue,
     };
 
     Object.values(this.queues).forEach((queue) => {
@@ -71,10 +71,5 @@ export class QueueService {
   public async killJob(queueName: string, jobId: JobId): Promise<void> {
     await this.queues[queueName].removeRepeatableByKey(jobId.toString());
     this.logger.log(`Killed job in queue ${queueName}, jobId: ${jobId}`);
-  }
-
-  public async addQuizJob(data: unknown): Promise<void> {
-    const jobName: string = QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING;
-    await this._quizPendingQueue.add(jobName, data);
   }
 }

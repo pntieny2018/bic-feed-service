@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { IQueueConfig, configs, QUEUES, QueueService } from '@app/infra/queue';
+import {
+  IQueueConfig,
+  configs,
+  QueueService,
+  QUEUES_NAME,
+  defaultJobOptions,
+} from '@app/infra/queue';
 import { SentryModule } from '@app/sentry';
 
 @Module({
@@ -35,30 +41,16 @@ import { SentryModule } from '@app/sentry';
       inject: [ConfigService],
     }),
     BullModule.registerQueue({
-      name: QUEUES.QUIZ_PENDING.QUEUE_NAME,
+      name: QUEUES_NAME.QUIZ_PENDING,
       limiter: {
         max: 3,
         duration: 1000,
       },
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 3000,
-        },
-      },
+      defaultJobOptions,
     }),
     BullModule.registerQueue({
-      name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 3000,
-        },
-        removeOnComplete: true,
-        removeOnFail: false,
-      },
+      name: QUEUES_NAME.QUIZ_PARTICIPANT_RESULT,
+      defaultJobOptions,
     }),
   ],
   providers: [QueueService],

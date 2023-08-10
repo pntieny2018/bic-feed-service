@@ -17,7 +17,7 @@ export interface IHttpServiceResponse<T = any> {
   data: T;
 }
 
-export interface IHttpAdapter {
+export interface IHttpService {
   get<T = any>(
     path: string,
     params?: object,

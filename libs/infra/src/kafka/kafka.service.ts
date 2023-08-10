@@ -3,10 +3,10 @@ import { ClientKafka } from '@nestjs/microservices';
 import { ClsService } from 'nestjs-cls';
 import { ConfigService } from '@nestjs/config';
 import { v4 } from 'uuid';
-import { KAFKA_TOKEN, IKafkaConfig } from '@app/infra/kafka';
+import { KAFKA_TOKEN, IKafkaConfig, IKafkaService } from '@app/infra/kafka';
 
 @Injectable()
-export class KafkaService {
+export class KafkaService implements IKafkaService {
   private readonly _logger = new Logger(KafkaService.name);
   public constructor(
     @Inject(KAFKA_TOKEN) private readonly _kafkaClient: ClientKafka,

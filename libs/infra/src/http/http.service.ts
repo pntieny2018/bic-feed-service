@@ -1,6 +1,6 @@
 import {
   IHttpServiceResponse,
-  IHttpAdapter,
+  IHttpService,
   IHttpServiceRequestOptions,
   IHttpServiceOptions,
 } from '@app/infra/http';
@@ -10,7 +10,7 @@ import camelcaseKeys from 'camelcase-keys';
 import { merge } from 'lodash';
 
 @Injectable()
-export class HttpService implements IHttpAdapter {
+export class HttpService implements IHttpService {
   constructor(private readonly options: IHttpServiceOptions) {
     this.options.headers = this.options.headers || {};
 

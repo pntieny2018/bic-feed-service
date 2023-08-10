@@ -1,9 +1,9 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { ArrayHelper, AxiosHelper } from 'apps/api/src/common/helpers';
+import { ArrayHelper, AxiosHelper } from '@app/common/helpers';
 import { RedisService } from '@app/infra/redis';
-import { CACHE_KEYS } from 'apps/api/src/common/constants';
+import { CACHE_KEYS } from '@app/common/constants';
 import { IGroup, IGroupMember, IGroupService } from '@app/service/group/src/interface';
-import { GROUP_HTTP_TOKEN, IHttpAdapter } from '@app/infra/http';
+import { GROUP_HTTP_TOKEN, IHttpService } from '@app/infra/http';
 import { IUser } from '@app/service/user/src/interfaces';
 import { GROUP_ENDPOINT } from './endpoint.constant';
 
@@ -12,15 +12,15 @@ export class GroupService implements IGroupService {
   private readonly _logger = new Logger(GroupService.name);
 
   public constructor(
-    private _store: RedisService,
-    @Inject(GROUP_HTTP_TOKEN) private _httpService: IHttpAdapter
+    private readonly _store: RedisService,
+    @Inject(GROUP_HTTP_TOKEN) private _httpService: IHttpService
   ) {}
 
   public async findById(groupId: string): Promise<IGroup> {
     let group = await this._store.get<IGroup>(`${CACHE_KEYS.SHARE_GROUP}:${groupId}`);
     if (group === null) {
       const response = await this._httpService.get<IGroup[]>(
-        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.GROUPS_PATH, {
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.SHARED_GROUPS, {
           ids: groupId,
         })
       );
@@ -44,7 +44,7 @@ export class GroupService implements IGroupService {
     const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group?.id === id));
     if (notFoundGroupIds.length > 0) {
       const response = await this._httpService.get<IGroup[]>(
-        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.GROUPS_PATH, {
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.SHARED_GROUPS, {
           ids: notFoundGroupIds.join(','),
         })
       );
@@ -59,12 +59,12 @@ export class GroupService implements IGroupService {
     actor: IUser,
     groupIds: string[],
     pagination?: { offset?: number; limit?: number }
-  ) {
+  ): Promise<IGroupMember[]> {
     const response = await Promise.all(
       groupIds.map(async (groupId): Promise<IGroupMember[]> => {
         try {
           const response = await this._httpService.get(
-            GROUP_ENDPOINT.GROUP_ADMIN_PATH.replace(':groupId', groupId),
+            GROUP_ENDPOINT.GROUP_MEMBERS.replace(':groupId', groupId),
             {
               headers: {
                 user: JSON.stringify({
@@ -107,7 +107,7 @@ export class GroupService implements IGroupService {
       const params = `group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
 
       const response = await this._httpService.get(
-        `${GROUP_ENDPOINT.INTERNAL.COMMUNITY_ADMIN_PATH}?${params}`
+        `${GROUP_ENDPOINT.INTERNAL.COMMUNITY_ADMINS}?${params}`
       );
 
       if (response.status !== HttpStatus.OK) {
