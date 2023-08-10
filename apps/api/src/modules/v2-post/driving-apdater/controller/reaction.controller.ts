@@ -39,12 +39,20 @@ export class ReactionController {
     type: ReactionListDto,
   })
   public async get(
-    @AuthUser() _user: UserDto,
+    @AuthUser() authUser: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionRequestDto
   ): Promise<ReactionListDto> {
     const { reactionName, target, targetId, latestId, order, limit } = getReactionDto;
     const { rows, total } = await this._queryBus.execute(
-      new FindReactionsQuery({ reactionName, target, targetId, latestId, order, limit })
+      new FindReactionsQuery({
+        authUser,
+        reactionName,
+        target,
+        targetId,
+        latestId,
+        order,
+        limit,
+      })
     );
     return new ReactionListDto({
       list: rows,
