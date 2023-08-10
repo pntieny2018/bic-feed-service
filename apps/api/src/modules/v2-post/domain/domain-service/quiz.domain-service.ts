@@ -243,11 +243,13 @@ export class QuizDomainService implements IQuizDomainService {
 
       await this._quizParticipantRepository.update(quizParticipantEntity);
 
-      this.event.publish(
-        new QuizParticipantFinishedEvent({
-          quizParticipantId: quizParticipantEntity.get('id'),
-        })
-      );
+      if (isFinished) {
+        this.event.publish(
+          new QuizParticipantFinishedEvent({
+            quizParticipantId: quizParticipantEntity.get('id'),
+          })
+        );
+      }
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
