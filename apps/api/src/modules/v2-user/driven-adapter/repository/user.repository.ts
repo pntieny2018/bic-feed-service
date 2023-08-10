@@ -48,7 +48,7 @@ export class UserRepository implements IUserRepository {
   public async findOne(id: string): Promise<UserEntity> {
     let user = await this._getUserFromCacheById(id);
     if (!user) {
-      user = await this._getUsersFromIntenalByIds([id])[0];
+      user = (await this._getUsersFromIntenalByIds([id]))[0];
     }
     return new UserEntity(user);
   }
