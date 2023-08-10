@@ -14,6 +14,7 @@ import { CursorPaginationProps } from '../../../../common/types/cursor-paginatio
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
 import { CursorPaginator, OrderEnum } from '../../../../common/dto';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { QuizParticipantNotFoundException } from '../../domain/exception';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
@@ -127,21 +128,34 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     }
   }
 
-  public async findOne(takeId: string): Promise<QuizParticipantEntity> {
-    const takeQuizModel = await this._quizParticipantModel.findOne({
+  public async findQuizParticipantById(
+    quizParticipantId: string
+  ): Promise<QuizParticipantEntity | null> {
+    const quizParticipant = await this._quizParticipantModel.findByPk(quizParticipantId, {
       include: [
         {
-          model: QuizParticipantAnswerModel,
+          model: this._quizParticipantAnswerModel,
           as: 'answers',
           required: false,
         },
       ],
-      where: {
-        id: takeId,
-      },
     });
 
-    return this._modelToEntity(takeQuizModel);
+    if (!quizParticipant) {
+      return null;
+    }
+
+    return this._modelToEntity(quizParticipant);
+  }
+
+  public async getQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity> {
+    const quizParticipantEntity = await this.findQuizParticipantById(quizParticipantId);
+
+    if (!quizParticipantEntity) {
+      throw new QuizParticipantNotFoundException();
+    }
+
+    return quizParticipantEntity;
   }
 
   public async findQuizParticipantHighestScoreByContentIdAndUserId(

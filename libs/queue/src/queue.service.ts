@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { QUEUES } from '@app/queue/queue.constant';
 import { InjectQueue } from '@nestjs/bull';
-import { JobId, JobStatus, Queue } from 'bull';
+import { JobId, Queue } from 'bull';
 import { Job } from './interfaces';
 
 @Injectable()
@@ -63,16 +63,10 @@ export class QueueService {
     );
   }
 
-  public async getJobs(queueName: string, types: JobStatus[]): Promise<Job<any>[]> {
-    const jobs = await this.queues[queueName].getJobs(types);
-    this.logger.log(`Get ${jobs.length} jobs from queue ${queueName}`);
-    return jobs.map((job) => ({
-      id: job.id,
-      name: job.name,
-      data: job.data,
-      opts: job.opts,
-      queue: job.queue,
-    }));
+  public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
+    const job = await this.queues[queueName].getJob(jobId);
+    this.logger.log(`Get job in queue ${queueName}, jobId: ${jobId}, job: ${JSON.stringify(job)}`);
+    return job;
   }
 
   public async killJob(queueName: string, jobId: JobId): Promise<void> {

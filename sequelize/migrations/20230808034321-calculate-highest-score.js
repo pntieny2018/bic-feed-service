@@ -9,7 +9,7 @@ module.exports = {
       SET is_highest = true
       WHERE id IN (
         SELECT id FROM (
-          SELECT id, ROW_NUMBER() OVER (PARTITION BY created_by ORDER BY score DESC, created_at DESC) AS row_number
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY created_by, post_id ORDER BY score DESC, created_at DESC) AS row_number
           FROM ${schemaName}.quiz_participants
           WHERE finished_at IS NOT NULL OR started_at + time_limit * INTERVAL '1 second' <= NOW()
         ) AS t

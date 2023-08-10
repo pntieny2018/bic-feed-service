@@ -1,4 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { QuestionDto } from './question.dto';
+import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { Expose } from 'class-transformer';
 
 class QuestionNotIncludeCorrectAnswerDto {
   public id: string;
@@ -35,6 +38,29 @@ export class QuizParticipantDto {
   public finishedAt?: Date;
   public totalTimes?: number;
   public constructor(data: Partial<QuizParticipantDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class AnswerUserDto {
+  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsOptional()
+  public id?: string;
+
+  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsNotEmpty()
+  @Expose({ name: 'question_id' })
+  public questionId: string;
+
+  @ApiProperty({ type: String })
+  @IsUUID()
+  @IsNotEmpty()
+  @Expose({ name: 'answer_id' })
+  public answerId: string;
+
+  public constructor(data: AnswerUserDto) {
     Object.assign(this, data);
   }
 }

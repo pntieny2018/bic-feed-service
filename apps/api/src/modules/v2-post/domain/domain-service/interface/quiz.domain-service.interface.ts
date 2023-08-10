@@ -6,6 +6,7 @@ import { QuizStatus } from '../../../data-type/quiz-status.enum';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { PostType } from '../../../data-type';
 import { QuizParticipantEntity } from '../../model/quiz-participant';
+import { AnswerUserDto } from '../../../application/dto/quiz-participant.dto';
 
 export type QuizCreateProps = {
   contentId: string;
@@ -78,6 +79,11 @@ export interface IQuizDomainService {
   getQuiz(quizId: string, authUser: UserDto): Promise<QuizEntity>;
   delete(quizId: string, authUser: UserDto): Promise<void>;
   startQuiz(quizEntity: QuizEntity, authUser: UserDto): Promise<QuizParticipantEntity>;
+  updateQuizAnswers(
+    quizParticipantEntity: QuizParticipantEntity,
+    answers: AnswerUserDto[],
+    isFinished: boolean
+  ): Promise<void>;
   reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity>;
   generateQuestions(quizEntity: QuizEntity): Promise<void>;
   getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
@@ -86,6 +92,5 @@ export interface IQuizDomainService {
   addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity>;
   deleteQuestion(questionId: string, authUser: UserDto): Promise<void>;
   calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void>;
-  createQuizParticipantResultJob(quizParticipantId: string, delay?: number): Promise<void>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

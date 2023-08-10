@@ -23,6 +23,7 @@ import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
 import {
   ContentHasQuizException,
   QuizNotFoundException,
+  QuizOverTimeException,
   QuizParticipantNotFoundException,
 } from '../exception';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
@@ -33,10 +34,9 @@ import {
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../repositoty-interface/quiz-participant.repository.interface';
 import { QuizQuestionNotFoundException } from '../exception/quiz-question-not-found.exception';
-import { QueueService } from '@app/queue';
-import { QuizParticipantResultJobDto } from '../../application/dto/queue.dto';
-import { QUEUES } from '@app/queue/queue.constant';
 import { QuizParticipantNotFinishedException } from '../exception/quiz-participant-not-finished.exception';
+import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../event';
+import { AnswerUserDto } from '../../application/dto/quiz-participant.dto';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -52,8 +52,7 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
-    private readonly event: EventBus,
-    private readonly _queueService: QueueService
+    private readonly event: EventBus
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
@@ -214,12 +213,45 @@ export class QuizDomainService implements IQuizDomainService {
         quizParticipant.shuffleQuestions();
       }
       await this._quizParticipantRepository.create(quizParticipant);
+      this.event.publish(
+        new QuizParticipantStartedEvent({
+          quizParticipantId: quizParticipant.get('id'),
+          startedAt: quizParticipant.get('startedAt'),
+          timeLimit: quizParticipant.get('timeLimit'),
+        })
+      );
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
 
     return quizParticipant;
+  }
+
+  public async updateQuizAnswers(
+    quizParticipantEntity: QuizParticipantEntity,
+    answers: AnswerUserDto[],
+    isFinished: boolean
+  ): Promise<void> {
+    try {
+      if (quizParticipantEntity.isOverTimeLimit()) {
+        throw new QuizOverTimeException();
+      }
+
+      quizParticipantEntity.updateAnswers(answers);
+      if (isFinished) quizParticipantEntity.setFinishedAt();
+
+      await this._quizParticipantRepository.update(quizParticipantEntity);
+
+      this.event.publish(
+        new QuizParticipantFinishedEvent({
+          quizParticipantId: quizParticipantEntity.get('id'),
+        })
+      );
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
   }
 
   public async getQuizzes(input: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>> {
@@ -306,7 +338,9 @@ export class QuizDomainService implements IQuizDomainService {
     quizParticipantId: string,
     authUserId: string
   ): Promise<QuizParticipantEntity> {
-    const quizParticipantEntity = await this._quizParticipantRepository.findOne(quizParticipantId);
+    const quizParticipantEntity = await this._quizParticipantRepository.findQuizParticipantById(
+      quizParticipantId
+    );
     if (!quizParticipantEntity) {
       throw new QuizParticipantNotFoundException();
     }
@@ -350,19 +384,5 @@ export class QuizDomainService implements IQuizDomainService {
         await this._quizParticipantRepository.update(currentHighestScoreQuizParticipantEntity);
       }
     }
-  }
-
-  public async createQuizParticipantResultJob(
-    quizParticipantId: string,
-    delay?: number
-  ): Promise<void> {
-    await this._queueService.addBulkJobs<QuizParticipantResultJobDto>([
-      {
-        name: QUEUES.QUIZ_PARTICIPANT_RESULT.JOBS.PROCESS_QUIZ_PARTICIPANT_RESULT,
-        data: { quizParticipantId },
-        opts: { delay },
-        queue: { name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME },
-      },
-    ]);
   }
 }

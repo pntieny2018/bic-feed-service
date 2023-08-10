@@ -1,32 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsDateString,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
+import { AnswerUserDto } from '../../../application/dto/quiz-participant.dto';
 
-class AnswerUser {
-  @ApiProperty({ type: String })
-  @IsUUID()
-  @IsOptional()
-  public id?: string;
-
-  @ApiProperty({ type: String })
-  @IsUUID()
-  @IsNotEmpty()
-  @Expose({ name: 'question_id' })
-  public questionId: string;
-
-  @ApiProperty({ type: String })
-  @IsUUID()
-  @IsNotEmpty()
-  @Expose({ name: 'answer_id' })
-  public answerId: string;
-}
 export class UpdateQuizAnswersRequestDto {
   @ApiProperty({ type: Date })
   @IsOptional()
@@ -39,8 +15,8 @@ export class UpdateQuizAnswersRequestDto {
   @ApiProperty({ type: String })
   @ValidateNested({ each: true })
   @IsNotEmpty()
-  @Type(() => AnswerUser)
-  public answers: AnswerUser[];
+  @Type(() => AnswerUserDto)
+  public answers: AnswerUserDto[];
 
   public constructor(data: UpdateQuizAnswersRequestDto) {
     Object.assign(this, data);

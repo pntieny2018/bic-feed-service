@@ -1,13 +1,10 @@
 import { ICommand } from '@nestjs/cqrs';
 import { UserDto } from '../../../../v2-user/application';
+import { AnswerUserDto } from '../../dto/quiz-participant.dto';
 
 export type UpdateQuizAnswerCommandPayload = {
   quizParticipantId: string;
-  answers: {
-    id?: string;
-    questionId: string;
-    answerId: string;
-  }[];
+  answers: AnswerUserDto[];
   authUser: UserDto;
   isFinished?: boolean;
 };
