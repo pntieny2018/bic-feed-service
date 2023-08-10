@@ -21,6 +21,8 @@ export interface IUserApplicationService {
 
   findAllByIds(userIds: string[], options?: FindUsersOption): Promise<UserDto[]>;
 
+  findAllAndFilterByPersonalVisibility(userIds: string[], authUserId: string): Promise<UserDto[]>;
+
   canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean>;
 }
 
