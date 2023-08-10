@@ -55,9 +55,10 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     if (dataBinding?.mentionUsers?.length) {
       users.push(...dataBinding?.mentionUsers);
@@ -65,7 +66,9 @@ export class ContentBinding implements IContentBinding {
     if (dataBinding?.actor) {
       users.push(dataBinding.actor);
     }
+
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+
     if (postEntity.get('mentionUserIds') && users.length) {
       mentionUsers = this.mapMentionWithUserInfo(
         users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
