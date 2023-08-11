@@ -15,7 +15,7 @@ export class QuizParticipantProcessor {
 
   @Process(QUEUES.QUIZ_PARTICIPANT_RESULT.JOBS.PROCESS_QUIZ_PARTICIPANT_RESULT)
   public async handleQuizParticipantResult(job: Job<QuizParticipantResultJobDto>): Promise<void> {
-    this._logger.log(`JobProcessor: ${JSON.stringify(job)}`);
+    this._logger.debug(`JobProcessor: ${JSON.stringify(job)}`);
     const { quizParticipantId } = job.data;
     await this._commandBus.execute<ProcessQuizParticipantResultCommand, void>(
       new ProcessQuizParticipantResultCommand({ quizParticipantId })
