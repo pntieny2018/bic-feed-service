@@ -9,6 +9,7 @@ import qs from 'qs';
 import { USER_ENDPOINT } from './endpoint.constant';
 import { IUserService, IUser } from './interfaces';
 
+
 @Injectable()
 export class UserService implements IUserService {
   private readonly _logger = new Logger(UserService.name);

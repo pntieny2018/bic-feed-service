@@ -1,5 +1,4 @@
 import { MEDIA_PROCESS_STATUS, MEDIA_TYPE } from '@beincom/constants';
-import { ThumbnailDto } from 'apps/api/src/modules/post/dto/responses/process-video-response.dto';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
@@ -22,6 +21,12 @@ import { PostModel } from './post.model';
 export enum MediaMarkAction {
   USED,
   DELETE,
+}
+
+export interface IThumbnail {
+  width: number;
+  height: number;
+  url: string;
 }
 
 export type MediaAttributes = InferAttributes<MediaModel>;
@@ -49,18 +54,18 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
   public createdBy: string;
 
   @CreatedAt
-  public createdAt: Date;
+  public createdAt?: Date;
 
   @HasMany(() => PostMediaModel)
-  public posts: PostModel[];
+  public posts?: PostModel[];
 
   @HasMany(() => CommentMediaModel)
-  public comments: CommentModel[];
+  public comments?: CommentModel[];
 
   @HasMany(() => PostModel, {
     foreignKey: 'cover',
   })
-  public postCovers: PostModel[];
+  public postCovers?: PostModel[];
 
   @Column
   public name: string;
@@ -92,5 +97,5 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
   @Column({
     type: DataTypes.JSONB,
   })
-  public thumbnails: ThumbnailDto[];
+  public thumbnails?: IThumbnail[];
 }

@@ -11,9 +11,12 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { ReportTo } from '../../../../../apps/api/src/modules/report-content/contstants';
-
 import { ReportContentModel } from './report-content.model';
+
+export enum ReportTo {
+  GROUP = 'GROUP',
+  COMMUNITY = 'COMMUNITY',
+}
 
 export type ReportContentDetailAttribute = InferAttributes<ReportContentDetailModel>;
 @Table({

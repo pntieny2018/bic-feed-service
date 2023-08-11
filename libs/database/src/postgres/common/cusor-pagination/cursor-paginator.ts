@@ -1,21 +1,8 @@
 import { CursorPaginationResult, CursorParam, PaginatedArgs } from '@app/database/postgres/common';
 import { ORDER } from '@beincom/constants';
-import { DomainException } from '@beincom/domain';
-import { ERRORS } from 'apps/api/src/common/constants';
-import { I18nContext } from 'nestjs-i18n';
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
 
 import { createCursor, parseCursor } from './utils';
-
-class InvalidCursorParamsException extends DomainException {
-  public static code = ERRORS.CURSOR_PARAMS_INVALID;
-
-  public constructor(message: string = null, error: any = null) {
-    const i18n = I18nContext.current();
-    message = message || i18n?.t(`error.cursor_params_invalid`) || '';
-    super(InvalidCursorParamsException.code, message, error);
-  }
-}
 
 export class CursorPaginator<T extends Model> {
   public modelClass: ModelStatic<T>;
@@ -100,7 +87,7 @@ export class CursorPaginator<T extends Model> {
     }
 
     if (cursors && !this._isValidCursor(cursors)) {
-      throw new InvalidCursorParamsException();
+      throw new Error('Invalid cursor');
     }
 
     const operator = this._getOperator();

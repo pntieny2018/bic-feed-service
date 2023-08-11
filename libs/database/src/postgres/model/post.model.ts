@@ -20,7 +20,7 @@ import {
 import { v4 as uuid_v4 } from 'uuid';
 
 import { CategoryModel } from './category.model';
-import { CommentModel } from './comment.model';
+import { CommentModel, IMediaJson } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
 import { LinkPreviewModel } from './link-preview.model';
 import { MediaModel } from './media.model';
@@ -31,7 +31,7 @@ import { PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostTagModel } from './post-tag.model';
 import { QuizParticipantModel } from './quiz-participant.model';
-import { QuizAttributes, QuizModel } from './quiz.model';
+import { QuizModel } from './quiz.model';
 import { TagAttributes, TagModel } from './tag.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
 import { UserSavePostModel } from './user-save-post.model';
@@ -159,7 +159,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @Column({
     type: DataTypes.JSONB,
   })
-  public mediaJson: any;
+  public mediaJson: IMediaJson;
 
   @CreatedAt
   @Column
@@ -206,7 +206,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @HasOne(() => QuizModel, {
     foreignKey: 'postId',
   })
-  public quiz?: QuizAttributes;
+  public quiz?: QuizModel;
 
   @HasMany(() => QuizParticipantModel, 'postId')
   public quizResults: QuizParticipantModel[];
@@ -235,7 +235,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
     as: 'ownerReactions',
     foreignKey: 'postId',
   })
-  public postReactions: PostReactionModel[];
+  public postReactions!: PostReactionModel[];
 
   public reactionsCount: string;
 

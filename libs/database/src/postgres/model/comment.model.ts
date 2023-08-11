@@ -1,4 +1,5 @@
 import { IUser } from '@app/service/user/src/interfaces';
+import { IMAGE_RESOURCE } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes, Sequelize } from 'sequelize';
 import {
@@ -25,6 +26,52 @@ import { PostModel } from './post.model';
 export enum ActionEnum {
   INCREMENT = 'increment',
   DECREMENT = 'decrement',
+}
+
+export interface IFile {
+  id: string;
+  url: string;
+  name: string;
+  createdBy: string;
+  mimeType: string;
+  size: number;
+}
+
+export interface IImage {
+  id: string;
+  url: string;
+  src?: string;
+  createdBy: string;
+  mimeType: string;
+  resource: IMAGE_RESOURCE;
+  width: number;
+  height: number;
+  status: string;
+}
+
+export interface IVideoThumbnail {
+  url: string;
+  width: number;
+  height: number;
+}
+
+export interface IVideo {
+  id: string;
+  url: string;
+  name: string;
+  mimeType: string;
+  createdBy: string;
+  size: number;
+  width: number;
+  height: number;
+  status: string;
+  thumbnails: IVideoThumbnail[];
+}
+
+export interface IMediaJson {
+  files: IFile[];
+  images: IImage[];
+  videos: IVideo[];
 }
 
 export type CommentAttributes = InferAttributes<CommentModel>;
@@ -88,7 +135,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   @Column({
     type: DataTypes.JSONB,
   })
-  public mediaJson: any;
+  public mediaJson: IMediaJson;
 
   @AllowNull(true)
   @Column({
