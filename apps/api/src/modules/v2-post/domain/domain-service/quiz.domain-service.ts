@@ -137,7 +137,7 @@ export class QuizDomainService implements IQuizDomainService {
 
   public async addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity> {
     const { authUser, quizId } = addQuestionProps;
-    const quizEntity = await this._quizRepository.findOne(quizId);
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
