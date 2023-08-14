@@ -377,18 +377,31 @@ export class QuizDomainService implements IQuizDomainService {
         userId
       );
 
+    const currentHighestScoreQuizParticipantId =
+      currentHighestScoreQuizParticipantEntity?.get('id') || '';
     const currentHighestScore = currentHighestScoreQuizParticipantEntity?.get('score') || 0;
+
+    const quizParticipantId = quizParticipantEntity.get('id');
     const newScore = quizParticipantEntity.get('score');
 
-    if (newScore >= currentHighestScore) {
+    if (
+      quizParticipantId !== currentHighestScoreQuizParticipantId &&
+      newScore >= currentHighestScore
+    ) {
       quizParticipantEntity.setHighest(true);
       await this._quizParticipantRepository.updateIsHighest(quizParticipantEntity.get('id'), true);
+      this._logger.debug(
+        `New highest score: ${quizParticipantId} - ${newScore} for contentId: ${contentId} and userId: ${userId}`
+      );
 
       if (currentHighestScoreQuizParticipantEntity) {
         currentHighestScoreQuizParticipantEntity.setHighest(false);
         await this._quizParticipantRepository.updateIsHighest(
           currentHighestScoreQuizParticipantEntity.get('id'),
           false
+        );
+        this._logger.debug(
+          `Remove highest score: ${currentHighestScoreQuizParticipantId} - ${currentHighestScore} for contentId: ${contentId} and userId: ${userId}`
         );
       }
     }
