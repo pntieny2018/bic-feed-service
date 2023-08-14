@@ -1,4 +1,4 @@
-import { CursorParam } from '@app/database/postgres/common';
+import { CursorParam } from '@libs/database/postgres/common';
 
 export function parseCursor(cursor: string): CursorParam {
   return JSON.parse(Buffer.from(cursor, 'base64').toString('utf8'));

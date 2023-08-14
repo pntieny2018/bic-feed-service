@@ -1,12 +1,12 @@
-import { getDatabaseConfig } from '@app/database/postgres/common';
+import { getDatabaseConfig } from '@libs/database/postgres/common';
 import {
   PostReactionAttributes,
   PostReactionModel,
-} from '@app/database/postgres/model/post-reaction.model';
+} from '@libs/database/postgres/model/post-reaction.model';
 import {
   FindOnePostReactionProps,
   ILibPostReactionRepository,
-} from '@app/database/postgres/repository/interface';
+} from '@libs/database/postgres/repository/interface';
 import { Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';

@@ -1,6 +1,6 @@
-import { createCursor, CursorPaginator } from '@app/database/postgres/common';
-import { IUser } from '@app/service/user/src/interfaces';
 import { CONTENT_TARGET } from '@beincom/constants';
+import { createCursor, CursorPaginator } from '@libs/database/postgres/common';
+import { IUser } from '@libs/service/user/src/interfaces';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CursorPaginationResult } from 'libs/database/src/postgres/common/type';
 import { concat } from 'lodash';

@@ -1,12 +1,12 @@
-import { getDatabaseConfig } from '@app/database/postgres/common';
-import { PostTagModel } from '@app/database/postgres/model/post-tag.model';
-import { PostModel } from '@app/database/postgres/model/post.model';
-import { TagAttributes, TagModel } from '@app/database/postgres/model/tag.model';
+import { getDatabaseConfig } from '@libs/database/postgres/common';
+import { PostTagModel } from '@libs/database/postgres/model/post-tag.model';
+import { PostModel } from '@libs/database/postgres/model/post.model';
+import { TagAttributes, TagModel } from '@libs/database/postgres/model/tag.model';
 import {
   FindAllTagsProps,
   FindOneTagProps,
   ILibTagRepository,
-} from '@app/database/postgres/repository/interface';
+} from '@libs/database/postgres/repository/interface';
 import { Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';

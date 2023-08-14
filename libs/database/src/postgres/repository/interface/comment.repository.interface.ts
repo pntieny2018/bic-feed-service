@@ -1,4 +1,4 @@
-import { CommentAttributes, CommentModel } from '@app/database/postgres/model/comment.model';
+import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
 import { WhereOptions } from 'sequelize/types';
 
 export type FindOneOptions = {

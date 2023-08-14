@@ -1,7 +1,7 @@
-import { CommentReactionModel } from '@app/database/postgres/model/comment-reaction.model';
-import { CommentAttributes, CommentModel } from '@app/database/postgres/model/comment.model';
-import { ReportContentDetailModel } from '@app/database/postgres/model/report-content-detail.model';
 import { CONTENT_TARGET } from '@beincom/constants';
+import { CommentReactionModel } from '@libs/database/postgres/model/comment-reaction.model';
+import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
+import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';

@@ -1,4 +1,4 @@
-import { PaginationProps, PaginationResult } from '@app/database/postgres/common';
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
 
 import { CategoryModel } from '../../model/category.model';
 

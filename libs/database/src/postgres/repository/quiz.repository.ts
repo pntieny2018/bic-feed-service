@@ -1,14 +1,14 @@
-import { CursorPaginationResult, CursorPaginator } from '@app/database/postgres/common';
-import { PostModel } from '@app/database/postgres/model/post.model';
-import { QuizAnswerModel } from '@app/database/postgres/model/quiz-answer.model';
-import { QuizQuestionModel } from '@app/database/postgres/model/quiz-question.model';
-import { QuizAttributes, QuizModel } from '@app/database/postgres/model/quiz.model';
+import { CursorPaginationResult, CursorPaginator } from '@libs/database/postgres/common';
+import { PostModel } from '@libs/database/postgres/model/post.model';
+import { QuizAnswerModel } from '@libs/database/postgres/model/quiz-answer.model';
+import { QuizQuestionModel } from '@libs/database/postgres/model/quiz-question.model';
+import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
 import {
   FindAllQuizProps,
   FindOneQuizProps,
   GetPaginationQuizzesProps,
   ILibQuizRepository,
-} from '@app/database/postgres/repository/interface';
+} from '@libs/database/postgres/repository/interface';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, WhereOptions } from 'sequelize';
 

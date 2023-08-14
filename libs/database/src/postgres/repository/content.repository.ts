@@ -3,39 +3,42 @@ import {
   CursorPaginator,
   getDatabaseConfig,
   PAGING_DEFAULT_LIMIT,
-} from '@app/database/postgres/common';
-import { CategoryModel } from '@app/database/postgres/model/category.model';
-import { LinkPreviewModel } from '@app/database/postgres/model/link-preview.model';
+} from '@libs/database/postgres/common';
+import { CategoryModel } from '@libs/database/postgres/model/category.model';
+import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
 import {
   PostCategoryAttributes,
   PostCategoryModel,
-} from '@app/database/postgres/model/post-category.model';
-import { PostGroupAttributes, PostGroupModel } from '@app/database/postgres/model/post-group.model';
-import { PostReactionModel } from '@app/database/postgres/model/post-reaction.model';
+} from '@libs/database/postgres/model/post-category.model';
+import {
+  PostGroupAttributes,
+  PostGroupModel,
+} from '@libs/database/postgres/model/post-group.model';
+import { PostReactionModel } from '@libs/database/postgres/model/post-reaction.model';
 import {
   PostSeriesAttributes,
   PostSeriesModel,
-} from '@app/database/postgres/model/post-series.model';
-import { PostTagAttributes, PostTagModel } from '@app/database/postgres/model/post-tag.model';
-import { PostAttributes, PostModel } from '@app/database/postgres/model/post.model';
-import { QuizModel } from '@app/database/postgres/model/quiz.model';
-import { ReportContentDetailModel } from '@app/database/postgres/model/report-content-detail.model';
+} from '@libs/database/postgres/model/post-series.model';
+import { PostTagAttributes, PostTagModel } from '@libs/database/postgres/model/post-tag.model';
+import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import { QuizModel } from '@libs/database/postgres/model/quiz.model';
+import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import {
   UserMarkedImportantPostAttributes,
   UserMarkReadPostModel,
-} from '@app/database/postgres/model/user-mark-read-post.model';
-import { UserNewsFeedModel } from '@app/database/postgres/model/user-newsfeed.model';
-import { UserSavePostModel } from '@app/database/postgres/model/user-save-post.model';
+} from '@libs/database/postgres/model/user-mark-read-post.model';
+import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.model';
+import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
 import {
   UserSeenPostAttributes,
   UserSeenPostModel,
-} from '@app/database/postgres/model/user-seen-post.model';
+} from '@libs/database/postgres/model/user-seen-post.model';
 import {
   FindContentProps,
   GetPaginationContentsProps,
   OrderOptions,
   ILibContentRepository,
-} from '@app/database/postgres/repository/interface';
+} from '@libs/database/postgres/repository/interface';
 import { ORDER } from '@beincom/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';

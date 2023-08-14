@@ -1,5 +1,5 @@
-import { PaginationResult } from '@app/database/postgres/common';
-import { CategoryAttributes, CategoryModel } from '@app/database/postgres/model/category.model';
+import { PaginationResult } from '@libs/database/postgres/common';
+import { CategoryAttributes, CategoryModel } from '@libs/database/postgres/model/category.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 

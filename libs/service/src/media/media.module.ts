@@ -1,5 +1,5 @@
+import { MediaService } from '@libs/service/media/src/media.service';
 import { Module } from '@nestjs/common';
-import { MediaService } from '@app/service/media/src/media.service';
 
 @Module({
   imports: [],

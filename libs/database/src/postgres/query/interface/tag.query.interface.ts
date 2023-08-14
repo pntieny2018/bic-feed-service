@@ -1,5 +1,5 @@
-import { PaginationProps, PaginationResult } from '@app/database/postgres/common';
-import { TagModel } from '@app/database/postgres/model/tag.model';
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
+import { TagModel } from '@libs/database/postgres/model/tag.model';
 
 export type GetPaginationTagProps = PaginationProps & {
   groupIds: string[];

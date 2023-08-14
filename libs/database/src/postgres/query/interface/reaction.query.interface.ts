@@ -1,5 +1,5 @@
-import { PaginationResult } from '@app/database/postgres/common';
-import { CommentReactionModel } from '@app/database/postgres/model/comment-reaction.model';
+import { PaginationResult } from '@libs/database/postgres/common';
+import { CommentReactionModel } from '@libs/database/postgres/model/comment-reaction.model';
 
 import { PostReactionModel } from '../../model/post-reaction.model';
 

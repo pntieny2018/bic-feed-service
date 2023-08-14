@@ -1,11 +1,11 @@
-import { CursorPaginationProps, CursorPaginationResult } from '@app/database/postgres/common';
-import { PostCategoryAttributes } from '@app/database/postgres/model/post-category.model';
-import { PostGroupAttributes } from '@app/database/postgres/model/post-group.model';
-import { PostSeriesAttributes } from '@app/database/postgres/model/post-series.model';
-import { PostTagAttributes } from '@app/database/postgres/model/post-tag.model';
-import { PostAttributes, PostModel } from '@app/database/postgres/model/post.model';
-import { UserMarkedImportantPostAttributes } from '@app/database/postgres/model/user-mark-read-post.model';
-import { UserSeenPostAttributes } from '@app/database/postgres/model/user-seen-post.model';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { PostCategoryAttributes } from '@libs/database/postgres/model/post-category.model';
+import { PostGroupAttributes } from '@libs/database/postgres/model/post-group.model';
+import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.model';
+import { PostTagAttributes } from '@libs/database/postgres/model/post-tag.model';
+import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model/user-mark-read-post.model';
+import { UserSeenPostAttributes } from '@libs/database/postgres/model/user-seen-post.model';
 import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { BulkCreateOptions, CreateOptions, Transaction, WhereOptions } from 'sequelize';
 

@@ -1,6 +1,6 @@
-import { CursorPaginationProps, CursorPaginationResult } from '@app/database/postgres/common';
-import { IUser } from '@app/service/user/src/interfaces';
 import { ORDER } from '@beincom/constants';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { IUser } from '@libs/service/user/src/interfaces';
 
 import { CommentAttributes, CommentModel } from '../../model/comment.model';
 

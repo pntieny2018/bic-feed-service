@@ -1,8 +1,8 @@
 import {
   LinkPreviewAttributes,
   LinkPreviewModel,
-} from '@app/database/postgres/model/link-preview.model';
-import { ILibLinkPreviewRepository } from '@app/database/postgres/repository/interface';
+} from '@libs/database/postgres/model/link-preview.model';
+import { ILibLinkPreviewRepository } from '@libs/database/postgres/repository/interface';
 import { InjectModel } from '@nestjs/sequelize';
 
 export class LibLinkPreviewRepository implements ILibLinkPreviewRepository {

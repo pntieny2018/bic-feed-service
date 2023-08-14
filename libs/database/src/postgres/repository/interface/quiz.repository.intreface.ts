@@ -1,6 +1,6 @@
-import { CursorPaginationProps, CursorPaginationResult } from '@app/database/postgres/common';
-import { QuizAttributes, QuizModel } from '@app/database/postgres/model/quiz.model';
 import { CONTENT_TYPE, QUIZ_STATUS } from '@beincom/constants';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
 
 export type FindOneQuizProps = {
   where: {

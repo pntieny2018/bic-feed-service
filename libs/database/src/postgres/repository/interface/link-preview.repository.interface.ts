@@ -1,7 +1,7 @@
 import {
   LinkPreviewAttributes,
   LinkPreviewModel,
-} from '@app/database/postgres/model/link-preview.model';
+} from '@libs/database/postgres/model/link-preview.model';
 
 export interface ILibLinkPreviewRepository {
   create(data: LinkPreviewAttributes): Promise<void>;

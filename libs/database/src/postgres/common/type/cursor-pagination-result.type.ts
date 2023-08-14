@@ -1,4 +1,4 @@
-import { IPaginatedInfo } from '@app/database/postgres/common';
+import { IPaginatedInfo } from '@libs/database/postgres/common';
 
 export type CursorPaginationResult<T> = {
   rows: T[];

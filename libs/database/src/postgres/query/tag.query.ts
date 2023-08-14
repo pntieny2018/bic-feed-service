@@ -1,6 +1,6 @@
-import { getDatabaseConfig, PaginationResult } from '@app/database/postgres/common';
-import { PostTagModel } from '@app/database/postgres/model/post-tag.model';
-import { PostModel } from '@app/database/postgres/model/post.model';
+import { getDatabaseConfig, PaginationResult } from '@libs/database/postgres/common';
+import { PostTagModel } from '@libs/database/postgres/model/post-tag.model';
+import { PostModel } from '@libs/database/postgres/model/post.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';

@@ -1,4 +1,4 @@
-import { IFile, IImage, IVideo } from '@app/database/postgres/model/comment.model';
+import { IFile, IImage, IVideo } from '@libs/database/postgres/model/comment.model';
 
 export interface IMediaService {
   findImagesByIds(ids: string[]): Promise<IImage[]>;

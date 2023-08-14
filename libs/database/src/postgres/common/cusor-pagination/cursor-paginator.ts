@@ -1,4 +1,4 @@
-import { CursorPaginationResult, CursorParam, PaginatedArgs } from '@app/database/postgres/common';
+import { CursorPaginationResult, CursorParam, PaginatedArgs } from '@libs/database/postgres/common';
 import { ORDER } from '@beincom/constants';
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
 

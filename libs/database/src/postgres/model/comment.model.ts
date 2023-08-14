@@ -1,5 +1,5 @@
-import { IUser } from '@app/service/user/src/interfaces';
 import { IMAGE_RESOURCE } from '@beincom/constants';
+import { IUser } from '@libs/service/user/src/interfaces';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes, Sequelize } from 'sequelize';
 import {

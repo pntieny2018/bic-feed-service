@@ -1,4 +1,4 @@
-import { TagAttributes, TagModel } from '@app/database/postgres/model/tag.model';
+import { TagAttributes, TagModel } from '@libs/database/postgres/model/tag.model';
 
 export type FindOneTagProps = {
   name?: string;

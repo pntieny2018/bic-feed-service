@@ -1,7 +1,7 @@
 import {
   PostReactionAttributes,
   PostReactionModel,
-} from '@app/database/postgres/model/post-reaction.model';
+} from '@libs/database/postgres/model/post-reaction.model';
 
 export type FindOnePostReactionProps = {
   reactionName?: string;

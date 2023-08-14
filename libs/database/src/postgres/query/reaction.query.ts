@@ -1,4 +1,4 @@
-import { getDatabaseConfig, PaginationResult } from '@app/database/postgres/common';
+import { getDatabaseConfig, PaginationResult } from '@libs/database/postgres/common';
 import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize } from 'sequelize';

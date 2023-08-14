@@ -1,7 +1,7 @@
 import {
   QuizParticipantAttributes,
   QuizParticipantModel,
-} from '@app/database/postgres/model/quiz-participant.model';
+} from '@libs/database/postgres/model/quiz-participant.model';
 
 export interface ILibQuizParticipantRepository {
   create(quizParticipant: QuizParticipantAttributes): Promise<void>;

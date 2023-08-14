@@ -1,4 +1,4 @@
-import { IPaginationArgs } from '@app/database/postgres/common';
+import { IPaginationArgs } from '@libs/database/postgres/common';
 
 export const PAGING_DEFAULT_LIMIT = 10;
 

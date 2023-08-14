@@ -1,7 +1,7 @@
 import {
   CommentReactionAttributes,
   CommentReactionModel,
-} from '@app/database/postgres/model/comment-reaction.model';
+} from '@libs/database/postgres/model/comment-reaction.model';
 
 export type FindOneCommentReactionProps = {
   reactionName?: string;

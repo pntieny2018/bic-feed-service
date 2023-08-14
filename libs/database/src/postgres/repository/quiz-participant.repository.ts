@@ -1,9 +1,9 @@
-import { QuizParticipantAnswerModel } from '@app/database/postgres/model/quiz-participant-answers.model';
+import { QuizParticipantAnswerModel } from '@libs/database/postgres/model/quiz-participant-answers.model';
 import {
   QuizParticipantAttributes,
   QuizParticipantModel,
-} from '@app/database/postgres/model/quiz-participant.model';
-import { ILibQuizParticipantRepository } from '@app/database/postgres/repository/interface';
+} from '@libs/database/postgres/model/quiz-participant.model';
+import { ILibQuizParticipantRepository } from '@libs/database/postgres/repository/interface';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
