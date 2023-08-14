@@ -50,6 +50,24 @@
       ],
       "@app/queue/*": [
         "libs/queue/src/*"
+      ],
+      "@libs/service": [
+        "libs/service/src"
+      ],
+      "@libs/service/*": [
+        "libs/service/src/*"
+      ],
+      "@libs/infra": [
+        "libs/infra/src"
+      ],
+      "@libs/infra/*": [
+        "libs/infra/src/*"
+      ],
+      "@libs/common": [
+        "libs/common/src"
+      ],
+      "@libs/common/*": [
+        "libs/common/src/*"
       ]
     }
   },

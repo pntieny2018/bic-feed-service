@@ -25,8 +25,9 @@
     "@aws-sdk/client-s3": "^3.54.0",
     "@aws-sdk/s3-request-presigner": "^3.54.0",
     "@beincom/common": "^0.1.6",
+    "@beincom/constants": "^2.1.4",
     "@beincom/domain": "^0.1.7",
-    "@beincom/dto": "^1.1.21",
+    "@beincom/dto": "^2.0.2",
     "@beincom/nest-domain-event": "^0.0.2",
     "@casl/ability": "^5.4.4",
     "@elastic/elasticsearch": "^8.4.0",
@@ -69,10 +70,12 @@
     "nest-winston": "^1.6.2",
     "nestjs-cls": "^3.3.1",
     "nestjs-i18n": "^10.2.1",
+    "nestjs-pino": "^3.3.0",
     "node-emoji": "^1.11.0",
     "openai": "^3.3.0",
     "pg": "^8.7.1",
     "pg-native": "^3.0.0",
+    "pino-http": "^8.4.0",
     "qs": "^6.11.2",
     "reflect-metadata": "^0.1.13",
     "remove-markdown": "^0.5.0",
@@ -116,6 +119,7 @@
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.28.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-spellcheck": "^0.0.19",
     "eslint-plugin-unused-imports": "^2.0.0",
@@ -183,7 +187,10 @@
       "^@app/sentry(|/.*)$": "<rootDir>/libs/sentry/src/$1",
       "^@app/kafka(|/.*)$": "<rootDir>/libs/kafka/src/$1",
       "^@app/openai(|/.*)$": "<rootDir>/libs/openai/src/$1",
-      "^@app/queue(|/.*)$": "<rootDir>/libs/queue/src/$1"
+      "^@app/queue(|/.*)$": "<rootDir>/libs/queue/src/$1",
+      "^@libs/service(|/.*)$": "<rootDir>/libs/service/src/$1",
+      "^@libs/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
+      "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1"
     }
   },
   "husky": {
