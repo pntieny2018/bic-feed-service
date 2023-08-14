@@ -121,7 +121,10 @@ export class FeedService {
         },
       });
 
-      const users = await this._userService.findAllByIds(usersSeenPost.map((usp) => usp.userId));
+      const users = await this._userService.findAllAndFilterByPersonalVisibility(
+        usersSeenPost.map((usp) => usp.userId),
+        user.id
+      );
 
       return new PageDto<UserDto>(
         users,
