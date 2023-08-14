@@ -1,10 +1,10 @@
-import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SentryModule } from '@app/sentry';
+import { KafkaService, configs, KAFKA_TOKEN, IKafkaConfig } from '@libs/infra/kafka';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { ClsModule } from 'nestjs-cls';
 import { v4 } from 'uuid';
-import { KafkaService, configs, KAFKA_TOKEN, IKafkaConfig } from '@app/infra/kafka';
 
 @Module({
   imports: [

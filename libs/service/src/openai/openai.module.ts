@@ -1,7 +1,8 @@
+import { configs } from '@libs/service/openai';
 import { Module } from '@nestjs/common';
-import { OpenaiService } from './openai.service';
 import { ConfigModule } from '@nestjs/config';
-import { configs } from '@app/service/openai';
+
+import { OpenaiService } from './openai.service';
 
 @Module({
   imports: [

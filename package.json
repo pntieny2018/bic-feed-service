@@ -70,10 +70,12 @@
     "nest-winston": "^1.6.2",
     "nestjs-cls": "^3.3.1",
     "nestjs-i18n": "^10.2.1",
+    "nestjs-pino": "^3.3.0",
     "node-emoji": "^1.11.0",
     "openai": "^3.3.0",
     "pg": "^8.7.1",
     "pg-native": "^3.0.0",
+    "pino-http": "^8.4.0",
     "qs": "^6.11.2",
     "reflect-metadata": "^0.1.13",
     "remove-markdown": "^0.5.0",
@@ -186,9 +188,9 @@
       "^@app/kafka(|/.*)$": "<rootDir>/libs/kafka/src/$1",
       "^@app/openai(|/.*)$": "<rootDir>/libs/openai/src/$1",
       "^@app/queue(|/.*)$": "<rootDir>/libs/queue/src/$1",
-      "^@app/service(|/.*)$": "<rootDir>/libs/service/src/$1",
-      "^@app/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
-      "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1"
+      "^@libs/service(|/.*)$": "<rootDir>/libs/service/src/$1",
+      "^@libs/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
+      "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1"
     }
   },
   "husky": {

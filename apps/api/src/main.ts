@@ -1,19 +1,17 @@
+import { KafkaGateway } from '@app/kafka/kafka-gateway';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+
 import { AppModule } from './app/app.module';
 import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
-import { KafkaGateway } from '@app/kafka/kafka-gateway';
-import { LoggerBootstrap } from './bootstrap/logger.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import './common/extension';
 import { KafkaHealthBootstrap } from './modules/health/kafka-health.bootstrap';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, {
-    ...LoggerBootstrap.init(),
-  });
+  const app = await NestFactory.create(AppModule);
 
   const configService = app.get<ConfigService>(ConfigService);
 

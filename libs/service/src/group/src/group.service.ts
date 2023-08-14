@@ -1,10 +1,11 @@
+import { CACHE_KEYS } from '@libs/common/constants';
+import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
+import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
+import { RedisService } from '@libs/infra/redis';
+import { IGroup, IGroupMember, IGroupService } from '@libs/service/group/src/interface';
+import { IUser } from '@libs/service/user/src/interfaces';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { ArrayHelper, AxiosHelper } from '@app/common/helpers';
-import { RedisService } from '@app/infra/redis';
-import { CACHE_KEYS } from '@app/common/constants';
-import { IGroup, IGroupMember, IGroupService } from '@app/service/group/src/interface';
-import { GROUP_HTTP_TOKEN, IHttpService } from '@app/infra/http';
-import { IUser } from '@app/service/user/src/interfaces';
+
 import { GROUP_ENDPOINT } from './endpoint.constant';
 
 @Injectable()
@@ -36,7 +37,9 @@ export class GroupService implements IGroupService {
   }
 
   public async findAllByIds(groupIds: string[]): Promise<IGroup[]> {
-    if (!groupIds || groupIds?.length === 0) return [];
+    if (!groupIds || groupIds?.length === 0) {
+      return [];
+    }
     const keys = [...new Set(ArrayHelper.arrayUnique(groupIds.map((id) => id)))].map(
       (groupId) => `${CACHE_KEYS.SHARE_GROUP}:${groupId}`
     );

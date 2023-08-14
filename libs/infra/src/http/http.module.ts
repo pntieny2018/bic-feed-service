@@ -1,11 +1,11 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
 import {
   GROUP_HTTP_TOKEN,
   MEDIA_HTTP_TOKEN,
   USER_HTTP_TOKEN,
   HttpService,
   IAxiosConfig,
-} from '@app/infra/http';
+} from '@libs/infra/http';
+import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()

@@ -1,14 +1,14 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SentryModule } from '@app/sentry';
 import {
   IQueueConfig,
   configs,
   QueueService,
   QUEUES_NAME,
   defaultJobOptions,
-} from '@app/infra/queue';
-import { SentryModule } from '@app/sentry';
+} from '@libs/infra/queue';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
