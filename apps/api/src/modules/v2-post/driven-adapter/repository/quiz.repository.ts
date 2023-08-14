@@ -47,6 +47,7 @@ export class QuizRepository implements IQuizRepository {
       numberOfAnswers: quizEntity.get('numberOfAnswers'),
       numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
       numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
+      timeLimit: quizEntity.get('timeLimit'),
       status: quizEntity.get('status'),
       genStatus: quizEntity.get('genStatus'),
       error: quizEntity.get('error'),
