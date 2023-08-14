@@ -6,6 +6,11 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.query(`
       UPDATE ${schemaName}.quiz_participants
+      SET is_highest = false
+    `);
+
+    await queryInterface.sequelize.query(`
+      UPDATE ${schemaName}.quiz_participants
       SET is_highest = true
       WHERE id IN (
         SELECT id FROM (

@@ -93,16 +93,11 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   }
 
   public validateQuestions(): void {
-    if (this._props.questions.length === 0) {
+    if (this._props.questions?.length === 0) {
       throw new DomainModelException(`Quiz must have at least one question`);
     }
-
-    if (this._props.questions.length === 0) {
-      throw new DomainModelException(`Quiz must have at least one question`);
-    }
-
     if (
-      this._props.questions.some(
+      this._props.questions?.some(
         (question) => !question.get('answers') || question.get('answers').length === 0
       )
     ) {
@@ -110,7 +105,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
 
     if (
-      this._props.questions.some((question) =>
+      this._props.questions?.some((question) =>
         question.get('answers').every((answer) => {
           return answer.isCorrect === false;
         })

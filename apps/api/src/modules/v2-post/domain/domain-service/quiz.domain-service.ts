@@ -37,6 +37,8 @@ import { QuizQuestionNotFoundException } from '../exception/quiz-question-not-fo
 import { QuizParticipantNotFinishedException } from '../exception/quiz-participant-not-finished.exception';
 import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../event';
 import { AnswerUserDto } from '../../application/dto/quiz-participant.dto';
+import { RULES } from '../../constant';
+import { QuizQuestionLimitExceededException } from '../exception/quiz-question-limit-exceeded.exception';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -137,14 +139,16 @@ export class QuizDomainService implements IQuizDomainService {
 
   public async addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity> {
     const { authUser, quizId } = addQuestionProps;
-    const quizEntity = await this._quizRepository.findOne(quizId);
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
-
-    quizEntity.validateQuestions();
+    if (quizEntity.get('questions')?.length >= RULES.QUIZ_MAX_QUESTION) {
+      throw new QuizQuestionLimitExceededException();
+    }
     const quizQuestionEntity = this._quizFactory.createQuizQuestion(addQuestionProps);
+
     quizQuestionEntity.validateAnswers();
     try {
       await this._quizRepository.addQuestion(quizQuestionEntity);
