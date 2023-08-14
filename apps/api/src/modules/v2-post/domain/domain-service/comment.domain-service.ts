@@ -1,3 +1,4 @@
+import { NIL } from 'uuid';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
@@ -9,7 +10,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
 import { InvalidResourceImageException } from '../exception/media.exception';
-import { CommentNotEmptyException } from '../exception';
+import { CommentNotEmptyException, CommentReplyNotExistException } from '../exception';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
 
 @Injectable()
@@ -28,9 +29,18 @@ export class CommentDomainService implements ICommentDomainService {
   ) {}
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {
+    const { media, parentId } = input;
+
+    if (parentId !== NIL) {
+      const parentComment = await this._commentRepository.findOne({
+        id: parentId,
+        parentId: NIL,
+      });
+      if (!parentComment) throw new CommentReplyNotExistException();
+    }
+
     const commentEntity = this._commentFactory.createComment(input);
 
-    const { media } = input;
     if (media) {
       const images = await this._mediaDomainService.getAvailableImages(
         commentEntity.get('media').images,
