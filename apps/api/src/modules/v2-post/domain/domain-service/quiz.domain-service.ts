@@ -143,6 +143,7 @@ export class QuizDomainService implements IQuizDomainService {
     }
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
+    quizEntity.validateQuestions();
     const quizQuestionEntity = this._quizFactory.createQuizQuestion(addQuestionProps);
     quizQuestionEntity.validateAnswers();
     try {
@@ -377,11 +378,14 @@ export class QuizDomainService implements IQuizDomainService {
 
     if (newScore >= currentHighestScore) {
       quizParticipantEntity.setHighest(true);
-      await this._quizParticipantRepository.update(quizParticipantEntity);
+      await this._quizParticipantRepository.updateIsHighest(quizParticipantEntity.get('id'), true);
 
       if (currentHighestScoreQuizParticipantEntity) {
         currentHighestScoreQuizParticipantEntity.setHighest(false);
-        await this._quizParticipantRepository.update(currentHighestScoreQuizParticipantEntity);
+        await this._quizParticipantRepository.updateIsHighest(
+          currentHighestScoreQuizParticipantEntity.get('id'),
+          false
+        );
       }
     }
   }

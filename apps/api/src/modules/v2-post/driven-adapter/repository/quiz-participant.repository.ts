@@ -64,7 +64,6 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     await this._quizParticipantModel.update(
       {
         score: quizParticipant.get('score'),
-        isHighest: quizParticipant.get('isHighest'),
         totalAnswers: quizParticipant.get('totalAnswers'),
         totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
         startedAt: quizParticipant.get('startedAt'),
@@ -126,6 +125,10 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
           }))
       );
     }
+  }
+
+  public async updateIsHighest(quizParticipantId: string, isHighest: boolean): Promise<void> {
+    await this._quizParticipantModel.update({ isHighest }, { where: { id: quizParticipantId } });
   }
 
   public async findQuizParticipantById(

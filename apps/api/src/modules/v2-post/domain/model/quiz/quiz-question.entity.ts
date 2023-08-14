@@ -41,7 +41,7 @@ export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttribut
     }
 
     if (this._props.answers?.length > RULES.QUIZ_MAX_ANSWER) {
-      throw new DomainModelException(`Quiz question must have <= ${RULES.QUIZ_MAX_ANSWER} answers`);
+      throw new DomainModelException(`Quiz answers must have <= ${RULES.QUIZ_MAX_ANSWER} answers`);
     }
   }
   public updateAttribute(data: Partial<QuizQuestionAttributes>): void {
