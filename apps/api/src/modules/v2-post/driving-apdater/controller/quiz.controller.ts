@@ -71,6 +71,7 @@ import { FindQuizSummaryQuery } from '../../application/query/find-quiz-summary/
 import { FindQuizParticipantsSummaryDetailDto } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.dto';
 import { GetQuizParticipantsSummaryDetailRequestDto } from '../dto/request/get-quiz-participants-summary-detail.request.dto';
 import { FindQuizParticipantsSummaryDetailQuery } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.query';
+import { QuizQuestionLimitExceededException } from '../../domain/exception/quiz-question-limit-exceeded.exception';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -368,6 +369,7 @@ export class QuizController {
         case ContentNoCRUDPermissionAtGroupException:
           throw new ForbiddenException(e);
         case DomainModelException:
+        case QuizQuestionLimitExceededException:
           throw new BadRequestException(e);
         default:
           throw e;
