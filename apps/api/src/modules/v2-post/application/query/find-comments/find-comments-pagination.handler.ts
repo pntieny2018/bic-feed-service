@@ -33,7 +33,7 @@ export class FindCommentsPaginationHandler
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { postId, authUser } = query.payload;
 
-    const post = await this._contentDomainService.getVisibleContent(postId);
+    const post = await this._contentDomainService.getVisibleContent(postId, authUser.id);
 
     this._contentValidator.checkCanReadContent(post, authUser);
 
