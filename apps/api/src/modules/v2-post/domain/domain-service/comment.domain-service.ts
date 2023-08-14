@@ -15,7 +15,6 @@ import {
   CommentNotFoundException,
   CommentReplyNotExistException,
 } from '../exception';
-import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
@@ -24,8 +23,6 @@ export class CommentDomainService implements ICommentDomainService {
   public constructor(
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _commentFactory: ICommentFactory,
-    @Inject(MENTION_VALIDATOR_TOKEN)
-    private readonly _mentionValidator: IMentionValidator,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
@@ -122,5 +119,9 @@ export class CommentDomainService implements ICommentDomainService {
     if (!commentEntity.isChanged()) return;
 
     await this._commentRepository.update(commentEntity);
+  }
+
+  public async delete(id: string): Promise<void> {
+    return this._commentRepository.destroyComment(id);
   }
 }

@@ -11,5 +11,7 @@ export interface ICommentDomainService {
   create(data: CreateCommentProps): Promise<CommentEntity>;
 
   update(input: UpdateCommentProps): Promise<void>;
+
+  delete(id: string): Promise<void>;
 }
 export const COMMENT_DOMAIN_SERVICE_TOKEN = 'COMMENT_DOMAIN_SERVICE_TOKEN';
