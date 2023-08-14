@@ -72,8 +72,9 @@ export class QueueService {
   }
 
   public async killJob(queueName: string, jobId: JobId): Promise<void> {
-    await this.queues[queueName].removeRepeatableByKey(jobId.toString());
-    this.logger.debug(`Killed job in queue ${queueName}, jobId: ${jobId}`);
+    this.logger.debug(`Start kill job in queue ${queueName}, jobId: ${jobId}, time: ${new Date()}`);
+    await this.queues[queueName].removeJobs(jobId.toString());
+    this.logger.debug(`Ended kill job in queue ${queueName}, jobId: ${jobId}, time: ${new Date()}`);
   }
 
   public async addQuizJob(data: unknown): Promise<void> {
