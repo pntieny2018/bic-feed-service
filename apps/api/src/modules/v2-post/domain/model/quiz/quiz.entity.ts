@@ -1,9 +1,10 @@
-import { RULES } from '../../../constant';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { v4, validate as isUUID } from 'uuid';
+
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
-import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
+import { DomainModelException } from '../../../../../common/exceptions';
+import { RULES } from '../../../constant';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
 
 export type QuestionAttributes = {
   id: string;
@@ -45,6 +46,41 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   public constructor(props: QuizAttributes) {
     super(props);
     this.validateNumberDisplay();
+  }
+
+  public static create(options: Partial<QuizAttributes>, userId: string): QuizEntity {
+    const {
+      title,
+      description,
+      contentId,
+      isRandom,
+      numberOfAnswers,
+      numberOfQuestions,
+      numberOfAnswersDisplay,
+      numberOfQuestionsDisplay,
+      meta,
+    } = options;
+    const now = new Date();
+    return new QuizEntity({
+      id: v4(),
+      contentId,
+      title: title || null,
+      description: description || null,
+      numberOfQuestions,
+      numberOfQuestionsDisplay: numberOfQuestionsDisplay || numberOfQuestions,
+      numberOfAnswers,
+      numberOfAnswersDisplay: numberOfAnswersDisplay || numberOfAnswers,
+      isRandom: isRandom || true,
+      timeLimit: RULES.QUIZ_TIME_LIMIT_DEFAULT,
+      questions: [],
+      meta,
+      status: QuizStatus.DRAFT,
+      genStatus: QuizGenStatus.PENDING,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public validate(): void {
@@ -102,7 +138,9 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   }
 
   public validatePublishing(): void {
-    if (this._props.status !== QuizStatus.PUBLISHED) return;
+    if (this._props.status !== QuizStatus.PUBLISHED) {
+      return;
+    }
 
     if (!this._props.title) {
       throw new DomainModelException(`Quiz title is required`);

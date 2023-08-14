@@ -1,7 +1,8 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { QuestionAttributes } from '../quiz';
 import { v4 } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { RULES } from '../../../constant';
+import { QuestionAttributes, QuizEntity } from '../quiz';
 
 export type QuizParticipantAttributes = {
   id: string;
@@ -35,6 +36,31 @@ export type QuizParticipantAttributes = {
 export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantAttributes> {
   public constructor(props: QuizParticipantAttributes) {
     super(props);
+  }
+
+  public static create(userId: string, quizEntity: QuizEntity): QuizParticipantEntity {
+    const now = new Date();
+    return new QuizParticipantEntity({
+      id: v4(),
+      quizId: quizEntity.get('id'),
+      contentId: quizEntity.get('contentId'),
+      quizSnapshot: {
+        title: quizEntity.get('title'),
+        description: quizEntity.get('description'),
+        questions: quizEntity.get('questions'),
+      },
+      score: 0,
+      timeLimit: quizEntity.get('timeLimit'),
+      answers: [],
+      totalAnswers: 0,
+      totalCorrectAnswers: 0,
+      startedAt: now,
+      finishedAt: null,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public validate(): void {
