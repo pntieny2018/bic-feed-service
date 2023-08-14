@@ -3,11 +3,7 @@ import { BasedCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
 import { UserDto } from '../../../../v2-user/application';
 
-export type CreateCommentProps = {
-  data: BasedCommentProps;
-  groups: GroupDto[];
-  mentionUsers: UserDto[];
-};
+export type CreateCommentProps = BasedCommentProps;
 
 export type UpdateCommentPayload = {
   id: string;

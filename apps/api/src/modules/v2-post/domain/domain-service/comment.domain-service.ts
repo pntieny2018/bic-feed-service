@@ -9,8 +9,8 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
 import { InvalidResourceImageException } from '../exception/media.exception';
-import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
 import { CommentNotEmptyException } from '../exception';
+import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
@@ -19,48 +19,38 @@ export class CommentDomainService implements ICommentDomainService {
   public constructor(
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _commentFactory: ICommentFactory,
+    @Inject(MENTION_VALIDATOR_TOKEN)
+    private readonly _mentionValidator: IMentionValidator,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(MENTION_VALIDATOR_TOKEN)
-    private readonly _mentionValidator: IMentionValidator
+    private readonly _mediaDomainService: IMediaDomainService
   ) {}
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {
-    const { data, groups, mentionUsers } = input;
-    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+    const commentEntity = this._commentFactory.createComment(input);
 
-    const { userId, parentId, postId, content, media, mentions, giphyId } = data;
-    const commentEntityInput = this._commentFactory.createComment({
-      userId,
-      parentId,
-      postId,
-      content,
-      giphyId,
-      mentions,
-    });
-
+    const { media } = input;
     if (media) {
       const images = await this._mediaDomainService.getAvailableImages(
-        commentEntityInput.get('media').images,
+        commentEntity.get('media').images,
         media?.images,
-        commentEntityInput.get('createdBy')
+        commentEntity.get('createdBy')
       );
       if (images.some((image) => !image.isCommentContentResource())) {
         throw new InvalidResourceImageException();
       }
       const files = await this._mediaDomainService.getAvailableFiles(
-        commentEntityInput.get('media').files,
+        commentEntity.get('media').files,
         media?.files,
-        commentEntityInput.get('createdBy')
+        commentEntity.get('createdBy')
       );
       const videos = await this._mediaDomainService.getAvailableVideos(
-        commentEntityInput.get('media').videos,
+        commentEntity.get('media').videos,
         media?.videos,
-        commentEntityInput.get('createdBy')
+        commentEntity.get('createdBy')
       );
-      commentEntityInput.setMedia({
+      commentEntity.setMedia({
         files,
         images,
         videos,
@@ -68,7 +58,7 @@ export class CommentDomainService implements ICommentDomainService {
     }
 
     try {
-      return this._commentRepository.createComment(commentEntityInput);
+      return this._commentRepository.createComment(commentEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
