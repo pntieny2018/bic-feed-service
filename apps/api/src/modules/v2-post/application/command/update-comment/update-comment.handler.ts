@@ -1,25 +1,23 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateCommentCommand } from './update-comment.command';
-import { IContentRepository, CONTENT_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
-import { ContentEntity } from '../../../domain/model/content/content.entity';
+import {
+  IContentValidator,
+  CONTENT_VALIDATOR_TOKEN,
+  MENTION_VALIDATOR_TOKEN,
+  IMentionValidator,
+} from '../../../domain/validator/interface';
 import {
   ContentAccessDeniedException,
-  CommentNotFoundException,
   ContentNoCommentPermissionException,
-  ContentNotFoundException,
 } from '../../../domain/exception';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
+  IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
@@ -27,14 +25,14 @@ import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(COMMENT_REPOSITORY_TOKEN)
-    private readonly _commentRepository: ICommentRepository,
+    @Inject(MENTION_VALIDATOR_TOKEN)
+    private readonly _mentionValidator: IMentionValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    protected readonly _contentDomainService: IContentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
     private readonly _eventEmitter: InternalEventEmitterService
@@ -43,49 +41,35 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
   public async execute(command: UpdateCommentCommand): Promise<void> {
     const { actor, id, mentions } = command.payload;
 
-    const comment = await this._commentRepository.findOne({ id });
-
-    if (!comment) throw new CommentNotFoundException();
+    const comment = await this._commentDomainService.getVisibleComment(id);
 
     if (!comment.isOwner(actor.id)) throw new ContentAccessDeniedException();
 
-    const post = (await this._contentRepository.findOne({
-      where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
-      include: {
-        mustIncludeGroup: true,
-      },
-    })) as ContentEntity;
-
-    if (!post) throw new ContentNotFoundException();
+    const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
     this._contentValidator.checkCanReadContent(post, actor);
 
     if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
-    const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
-
-    let mentionUsers: UserDto[] = [];
-
-    if (mentions) {
-      mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
+    if (mentions && mentions.length) {
+      const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
+      const mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
         withGroupJoined: true,
       });
+      await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
-    const oldMentions = comment.get('mentions');
 
     await this._commentDomainService.update({
-      commentEntity: comment,
-      groups,
-      mentionUsers,
-      newData: command.payload,
-      actor,
+      ...command.payload,
+      userId: actor.id,
+      postId: comment.get('postId'),
     });
 
     this._eventEmitter.emit(
       new CommentHasBeenUpdatedEvent({
         actor,
-        oldMentions,
-        commentId: comment.get('id'),
+        oldMentions: comment.get('mentions'),
+        commentId: id,
       })
     );
   }

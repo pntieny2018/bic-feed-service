@@ -1,31 +1,13 @@
-import { GroupDto } from '../../../../v2-group/application';
 import { BasedCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
-import { UserDto } from '../../../../v2-user/application';
 
 export type CreateCommentProps = BasedCommentProps;
 
-export type UpdateCommentPayload = {
-  id: string;
-  content?: string;
-  media?: {
-    files: string[];
-    images: string[];
-    videos: string[];
-  };
-  mentions?: string[];
-  giphyId?: string;
-};
-
-export type UpdateCommentProps = {
-  commentEntity: CommentEntity;
-  groups: GroupDto[];
-  mentionUsers: UserDto[];
-  newData: UpdateCommentPayload;
-  actor: UserDto;
-};
+export type UpdateCommentProps = BasedCommentProps & { id: string };
 
 export interface ICommentDomainService {
+  getVisibleComment(id: string): Promise<CommentEntity>;
+
   create(data: CreateCommentProps): Promise<CommentEntity>;
 
   update(input: UpdateCommentProps): Promise<void>;

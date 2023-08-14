@@ -10,7 +10,11 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
 import { InvalidResourceImageException } from '../exception/media.exception';
-import { CommentNotEmptyException, CommentReplyNotExistException } from '../exception';
+import {
+  CommentNotEmptyException,
+  CommentNotFoundException,
+  CommentReplyNotExistException,
+} from '../exception';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
 
 @Injectable()
@@ -27,6 +31,12 @@ export class CommentDomainService implements ICommentDomainService {
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService
   ) {}
+
+  public async getVisibleComment(id: string): Promise<CommentEntity> {
+    const entity = await this._commentRepository.findOne({ id });
+    if (!entity) throw new CommentNotFoundException();
+    return entity;
+  }
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {
     const { media, parentId } = input;
@@ -76,8 +86,8 @@ export class CommentDomainService implements ICommentDomainService {
   }
 
   public async update(input: UpdateCommentProps): Promise<void> {
-    const { commentEntity, newData, groups, mentionUsers } = input;
-    const { media, ...restUpdate } = newData;
+    const { id, userId, content, giphyId, mentions, media } = input;
+    const commentEntity = await this._commentRepository.findOne({ id });
 
     if (media) {
       const images = await this._mediaDomainService.getAvailableImages(
@@ -105,11 +115,10 @@ export class CommentDomainService implements ICommentDomainService {
       });
     }
 
-    commentEntity.updateAttribute(restUpdate, input.actor.id);
+    commentEntity.updateAttribute({ content, giphyId, mentions }, userId);
 
     if (commentEntity.isEmptyComment()) throw new CommentNotEmptyException();
 
-    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     if (!commentEntity.isChanged()) return;
 
     await this._commentRepository.update(commentEntity);
