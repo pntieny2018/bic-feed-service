@@ -234,18 +234,16 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       where: {
         postId: contentIds,
         createdBy: userId,
-        [Op.and]: Sequelize.literal(
-          `finished_at is NOT null OR started_at + time_limit * interval '1 second' <= now()`
-        ),
+        isHighest: true,
+        finishedAt: {
+          [Op.ne]: null,
+        },
       },
     });
     const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
     rows.forEach((row) => {
       const contentId = row.postId;
-      if (
-        !contentIdsMapHighestScore.has(contentId) ||
-        contentIdsMapHighestScore.get(contentId).get('score') < row.score
-      ) {
+      if (!contentIdsMapHighestScore.has(contentId)) {
         contentIdsMapHighestScore.set(contentId, this._modelToEntity(row));
       }
     });
