@@ -1,29 +1,30 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
+import { GroupDto } from '../../../../v2-group/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
   ICommentDomainService,
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
+import { ContentNoCommentPermissionException } from '../../../domain/exception';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
   IMentionValidator,
   MENTION_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
-import { ReplyCommentCommand } from './reply-comment.command';
-import { NIL } from 'uuid';
-import { ReplyCommentDto } from '../../dto';
-import { ContentNoCommentPermissionException } from '../../../domain/exception';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { GroupDto } from '../../../../v2-group/application';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
+import { ReplyCommentDto } from '../../dto';
+
+import { ReplyCommentCommand } from './reply-comment.command';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -50,7 +51,9 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    if (!post.allowComment()) throw new ContentNoCommentPermissionException();
+    if (!post.allowComment()) {
+      throw new ContentNoCommentPermissionException();
+    }
 
     if (mentions && mentions.length) {
       const groups = post.get('groupIds').map((id) => new GroupDto({ id }));

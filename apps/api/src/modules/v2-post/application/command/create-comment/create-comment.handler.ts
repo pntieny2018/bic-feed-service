@@ -1,29 +1,31 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { NIL } from 'uuid';
+
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
+import { GroupDto } from '../../../../v2-group/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
   ICommentDomainService,
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import { CreateCommentCommand } from './create-comment.command';
+import { ContentNoCommentPermissionException } from '../../../domain/exception';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
   IMentionValidator,
   MENTION_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
-import { NIL } from 'uuid';
-import { ContentNoCommentPermissionException } from '../../../domain/exception';
-import { CreateCommentDto } from '../../dto';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { GroupDto } from '../../../../v2-group/application';
+import { CreateCommentDto } from '../../dto';
+
+import { CreateCommentCommand } from './create-comment.command';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -52,7 +54,9 @@ export class CreateCommentHandler
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    if (!post.allowComment()) throw new ContentNoCommentPermissionException();
+    if (!post.allowComment()) {
+      throw new ContentNoCommentPermissionException();
+    }
 
     if (mentions && mentions.length) {
       const groups = post.get('groupIds').map((id) => new GroupDto({ id }));

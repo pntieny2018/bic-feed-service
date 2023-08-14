@@ -1,26 +1,28 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UpdateCommentCommand } from './update-comment.command';
-import {
-  IContentValidator,
-  CONTENT_VALIDATOR_TOKEN,
-  MENTION_VALIDATOR_TOKEN,
-  IMentionValidator,
-} from '../../../domain/validator/interface';
-import {
-  ContentAccessDeniedException,
-  ContentNoCommentPermissionException,
-} from '../../../domain/exception';
+
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
+import { GroupDto } from '../../../../v2-group/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { GroupDto } from '../../../../v2-group/application';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
+import {
+  ContentAccessDeniedException,
+  ContentNoCommentPermissionException,
+} from '../../../domain/exception';
+import {
+  IContentValidator,
+  CONTENT_VALIDATOR_TOKEN,
+  MENTION_VALIDATOR_TOKEN,
+  IMentionValidator,
+} from '../../../domain/validator/interface';
+
+import { UpdateCommentCommand } from './update-comment.command';
 
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
@@ -43,13 +45,17 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
     const comment = await this._commentDomainService.getVisibleComment(id);
 
-    if (!comment.isOwner(actor.id)) throw new ContentAccessDeniedException();
+    if (!comment.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
 
     const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    if (!post.allowComment()) throw new ContentNoCommentPermissionException();
+    if (!post.allowComment()) {
+      throw new ContentNoCommentPermissionException();
+    }
 
     if (mentions && mentions.length) {
       const groups = post.get('groupIds').map((id) => new GroupDto({ id }));

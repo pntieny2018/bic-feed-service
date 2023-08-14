@@ -1,20 +1,22 @@
-import { NIL } from 'uuid';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { NIL } from 'uuid';
+
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
-import { CreateCommentProps, ICommentDomainService, UpdateCommentProps } from './interface';
-import { CommentEntity } from '../model/comment';
-import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
-import {
-  IMediaDomainService,
-  MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
-import { InvalidResourceImageException } from '../exception/media.exception';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
   CommentReplyNotExistException,
 } from '../exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
+import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
+import { CommentEntity } from '../model/comment';
+import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
+
+import { CreateCommentProps, ICommentDomainService, UpdateCommentProps } from './interface';
+import {
+  IMediaDomainService,
+  MEDIA_DOMAIN_SERVICE_TOKEN,
+} from './interface/media.domain-service.interface';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
@@ -31,7 +33,9 @@ export class CommentDomainService implements ICommentDomainService {
 
   public async getVisibleComment(id: string): Promise<CommentEntity> {
     const entity = await this._commentRepository.findOne({ id });
-    if (!entity) throw new CommentNotFoundException();
+    if (!entity) {
+      throw new CommentNotFoundException();
+    }
     return entity;
   }
 
@@ -43,7 +47,9 @@ export class CommentDomainService implements ICommentDomainService {
         id: parentId,
         parentId: NIL,
       });
-      if (!parentComment) throw new CommentReplyNotExistException();
+      if (!parentComment) {
+        throw new CommentReplyNotExistException();
+      }
     }
 
     const commentEntity = this._commentFactory.createComment(input);
@@ -114,9 +120,13 @@ export class CommentDomainService implements ICommentDomainService {
 
     commentEntity.updateAttribute({ content, giphyId, mentions }, userId);
 
-    if (commentEntity.isEmptyComment()) throw new CommentNotEmptyException();
+    if (commentEntity.isEmptyComment()) {
+      throw new CommentNotEmptyException();
+    }
 
-    if (!commentEntity.isChanged()) return;
+    if (!commentEntity.isChanged()) {
+      return;
+    }
 
     await this._commentRepository.update(commentEntity);
   }
