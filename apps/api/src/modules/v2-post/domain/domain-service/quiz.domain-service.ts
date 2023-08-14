@@ -143,6 +143,7 @@ export class QuizDomainService implements IQuizDomainService {
     }
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
+    quizEntity.validateQuestions();
     const quizQuestionEntity = this._quizFactory.createQuizQuestion(addQuestionProps);
     quizQuestionEntity.validateAnswers();
     try {

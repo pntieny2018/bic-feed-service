@@ -92,13 +92,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     }
   }
 
-  public validatePublishing(): void {
-    if (this._props.status !== QuizStatus.PUBLISHED) return;
-
-    if (!this._props.title) {
-      throw new DomainModelException(`Quiz title is required`);
-    }
-
+  public validateQuestions(): void {
     if (this._props.questions.length === 0) {
       throw new DomainModelException(`Quiz must have at least one question`);
     }
@@ -124,6 +118,20 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     ) {
       throw new DomainModelException(`Dont have correct answer`);
     }
+    if (this._props.questions?.length > RULES.QUIZ_MAX_QUESTION) {
+      throw new DomainModelException(
+        `Quiz question must have <= ${RULES.QUIZ_MAX_QUESTION} questions`
+      );
+    }
+  }
+
+  public validatePublishing(): void {
+    if (this._props.status !== QuizStatus.PUBLISHED) return;
+
+    if (!this._props.title) {
+      throw new DomainModelException(`Quiz title is required`);
+    }
+    this.validateQuestions();
     this.validateNumberDisplay();
   }
 

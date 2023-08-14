@@ -1,6 +1,7 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { v4 } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { RULES } from '../../../constant';
 
 export type QuizQuestionAttributes = {
   id: string;
@@ -37,6 +38,10 @@ export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttribut
 
     if (this._props.answers.filter((answer) => answer.isCorrect).length > 1) {
       throw new DomainModelException('Quiz question must have only one correct answer');
+    }
+
+    if (this._props.answers?.length > RULES.QUIZ_MAX_ANSWER) {
+      throw new DomainModelException(`Quiz answers must have <= ${RULES.QUIZ_MAX_ANSWER} answers`);
     }
   }
   public updateAttribute(data: Partial<QuizQuestionAttributes>): void {
