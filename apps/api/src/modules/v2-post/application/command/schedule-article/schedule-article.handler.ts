@@ -1,14 +1,15 @@
 import { Inject } from '@nestjs/common';
-import { ArticleDto } from '../../dto';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../domain/domain-service/interface';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ScheduleArticleCommand } from './schedule-article.command';
-import { ArticleInvalidScheduledTimeException } from '../../../domain/exception';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
+import { ArticleDto } from '../../dto';
+
+import { ScheduleArticleCommand } from './schedule-article.command';
 
 @CommandHandler(ScheduleArticleCommand)
 export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCommand, ArticleDto> {
@@ -21,12 +22,7 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
 
   public async execute(command: ScheduleArticleCommand): Promise<ArticleDto> {
     const payload = command.payload;
-    const { actor, scheduledAt } = payload;
-    const scheduledDate = new Date(scheduledAt);
-
-    if (!scheduledDate.getTime() || scheduledDate.getTime() <= Date.now()) {
-      throw new ArticleInvalidScheduledTimeException();
-    }
+    const { actor } = payload;
 
     const articleEntity = await this._articleDomainService.schedule({
       payload,
