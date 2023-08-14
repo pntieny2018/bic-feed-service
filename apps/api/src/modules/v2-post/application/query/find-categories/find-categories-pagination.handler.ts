@@ -1,22 +1,25 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
 import {
-  CATEGORY_QUERY_TOKEN,
-  ICategoryQuery,
-} from '../../../domain/query-interface/category.query.interface';
-import { FindCategoriesPaginationQuery } from './find-categories-pagination.query';
+  CATEGORY_DOMAIN_SERVICE_TOKEN,
+  ICategoryDomainService,
+} from '../../../domain/domain-service/interface';
 import { FindCategoriesPaginationDto } from '../../dto/category.dto';
+
+import { FindCategoriesPaginationQuery } from './find-categories-pagination.query';
 
 @QueryHandler(FindCategoriesPaginationQuery)
 export class FindCategoriesPaginationHandler
   implements IQueryHandler<FindCategoriesPaginationQuery, FindCategoriesPaginationDto>
 {
   public constructor(
-    @Inject(CATEGORY_QUERY_TOKEN) private readonly _categoryQuery: ICategoryQuery
+    @Inject(CATEGORY_DOMAIN_SERVICE_TOKEN)
+    private readonly _categoryDomainService: ICategoryDomainService
   ) {}
 
   public async execute(query: FindCategoriesPaginationQuery): Promise<FindCategoriesPaginationDto> {
-    const { rows, total } = await this._categoryQuery.getPagination(query.payload);
+    const { rows, total } = await this._categoryDomainService.getPagination(query.payload);
 
     return {
       rows: rows.map((row) => ({
