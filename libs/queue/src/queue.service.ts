@@ -21,7 +21,7 @@ export class QueueService {
 
     Object.values(this.queues).forEach((queue) => {
       queue.on('completed', (job) =>
-        this.logger.log(
+        this.logger.debug(
           `Job ${job.id} of type ${job.name} with data ${JSON.stringify(job.data)} is successful.`
         )
       );
@@ -58,20 +58,22 @@ export class QueueService {
 
   private async _addBulk<T>(queueName: string, jobs: Job<T>[]): Promise<void> {
     await this.queues[queueName].addBulk(jobs);
-    this.logger.log(
+    this.logger.debug(
       `Added ${jobs.length} jobs to queue ${queueName}: ${jobs.map((job) => job.name).join(', ')}`
     );
   }
 
   public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
     const job = await this.queues[queueName].getJob(jobId);
-    this.logger.log(`Get job in queue ${queueName}, jobId: ${jobId}, job: ${JSON.stringify(job)}`);
+    this.logger.debug(
+      `Get job in queue ${queueName}, jobId: ${jobId}, job: ${JSON.stringify(job)}`
+    );
     return job;
   }
 
   public async killJob(queueName: string, jobId: JobId): Promise<void> {
     await this.queues[queueName].removeRepeatableByKey(jobId.toString());
-    this.logger.log(`Killed job in queue ${queueName}, jobId: ${jobId}`);
+    this.logger.debug(`Killed job in queue ${queueName}, jobId: ${jobId}`);
   }
 
   public async addQuizJob(data: unknown): Promise<void> {

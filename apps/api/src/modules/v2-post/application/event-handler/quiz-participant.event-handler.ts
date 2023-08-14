@@ -22,7 +22,7 @@ export class QuizParticipantStartedEventHandler
   public constructor(private readonly _queueService: QueueService) {}
 
   public async handle(event: QuizParticipantStartedEvent): Promise<void> {
-    this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
+    this._logger.debug(`EventHandler: ${JSON.stringify(event)}`);
 
     const { quizParticipantId, timeLimit } = event.payload;
     const delay = (timeLimit + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000;
@@ -52,7 +52,7 @@ export class QuizParticipantFinishedEventHandler
   ) {}
 
   public async handle(event: QuizParticipantFinishedEvent): Promise<void> {
-    this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
+    this._logger.debug(`EventHandler: ${JSON.stringify(event)}`);
 
     const { quizParticipantId } = event.payload;
 
