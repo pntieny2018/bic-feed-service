@@ -1,4 +1,3 @@
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Body,
   Controller,
@@ -10,14 +9,22 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { instanceToInstance } from 'class-transformer';
+
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application/user.dto';
-import { CreateCommentPipe } from '../pipes/create-comment.pipe';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
 } from '../../application/command/create-comment/create-comment.command';
+import {
+  DeleteCommentCommand,
+  DeleteCommentCommandPayload,
+} from '../../application/command/delete-comment/delete-comment.command';
 import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
@@ -26,15 +33,13 @@ import {
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
 } from '../../application/command/update-comment/update-comment.command';
-
 import {
-  DeleteCommentCommand,
-  DeleteCommentCommandPayload,
-} from '../../application/command/delete-comment/delete-comment.command';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
-import { instanceToInstance } from 'class-transformer';
-import { GetCommentsPipe } from '../pipes/get-comments.pipe';
+  CommentDto,
+  FindCommentsArroundIdDto,
+  FindCommentsPaginationDto,
+} from '../../application/dto';
+import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
+import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
 import {
   CreateCommentRequestDto,
   GetCommentsArroundIdDto,
@@ -42,15 +47,9 @@ import {
   ReplyCommentRequestDto,
   UpdateCommentRequestDto,
 } from '../dto/request';
-import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
+import { CreateCommentPipe } from '../pipes/create-comment.pipe';
 import { GetCommentsArroundIdPipe } from '../pipes/get-comments-arround-id.pipe';
-import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
-import {
-  CreateCommentDto,
-  FindCommentsArroundIdDto,
-  FindCommentsPaginationDto,
-  ReplyCommentDto,
-} from '../../application/dto';
+import { GetCommentsPipe } from '../pipes/get-comments.pipe';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -100,7 +99,7 @@ export class CommentController {
 
   @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({
-    type: CreateCommentDto,
+    type: CommentDto,
     description: 'Create comment successfully',
   })
   @ResponseMessages({
@@ -110,8 +109,8 @@ export class CommentController {
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentRequestDto
-  ): Promise<CreateCommentDto> {
-    const data = await this._commandBus.execute<CreateCommentCommand, CreateCommentDto>(
+  ): Promise<CommentDto> {
+    const data = await this._commandBus.execute<CreateCommentCommand, CommentDto>(
       new CreateCommentCommand({
         ...createCommentDto,
         actor: user,
@@ -129,7 +128,7 @@ export class CommentController {
 
   @ApiOperation({ summary: 'Reply comment' })
   @ApiOkResponse({
-    type: ReplyCommentDto,
+    type: CommentDto,
     description: 'Create reply comment successfully',
   })
   @ResponseMessages({
@@ -140,8 +139,8 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) replyCommentRequestDto: ReplyCommentRequestDto
-  ): Promise<ReplyCommentDto> {
-    const data = await this._commandBus.execute<ReplyCommentCommand, ReplyCommentDto>(
+  ): Promise<CommentDto> {
+    const data = await this._commandBus.execute<ReplyCommentCommand, CommentDto>(
       new ReplyCommentCommand({
         ...replyCommentRequestDto,
         parentId: commentId,

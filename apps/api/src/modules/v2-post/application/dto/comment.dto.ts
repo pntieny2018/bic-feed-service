@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+
+import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
 import { UserMentionDto } from '../../../mention/dto';
 import { UserDto } from '../../../v2-user/application';
-import { FileDto, ImageDto, VideoDto } from './media.dto';
-import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
 import { CommentResponseDto } from '../../driving-apdater/dto/response';
+
+import { FileDto, ImageDto, VideoDto } from './media.dto';
 
 export class CommentDto {
   @ApiProperty()
@@ -91,18 +93,6 @@ export class CommentDto {
 
   public constructor(data: Partial<CommentDto>) {
     Object.assign(this, data);
-  }
-}
-
-export class CreateCommentDto extends CommentDto {
-  public constructor(data: Partial<CreateCommentDto>) {
-    super(data);
-  }
-}
-
-export class ReplyCommentDto extends CommentDto {
-  public constructor(data: Partial<ReplyCommentDto>) {
-    super(data);
   }
 }
 

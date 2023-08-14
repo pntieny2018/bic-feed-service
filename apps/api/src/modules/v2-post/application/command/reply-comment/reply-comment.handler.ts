@@ -22,12 +22,12 @@ import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
-import { ReplyCommentDto } from '../../dto';
+import { CommentDto } from '../../dto';
 
 import { ReplyCommentCommand } from './reply-comment.command';
 
 @CommandHandler(ReplyCommentCommand)
-export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
+export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, CommentDto> {
   public constructor(
     private readonly _eventEmitter: InternalEventEmitterService,
     @Inject(COMMENT_BINDING_TOKEN)
@@ -44,7 +44,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _userApplicationService: IUserApplicationService
   ) {}
 
-  public async execute(command: ReplyCommentCommand): Promise<ReplyCommentDto> {
+  public async execute(command: ReplyCommentCommand): Promise<CommentDto> {
     const { actor, postId, mentions, parentId } = command.payload;
 
     const post = await this._contentDomainService.getVisibleContent(postId);
