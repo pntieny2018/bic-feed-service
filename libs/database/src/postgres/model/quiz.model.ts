@@ -96,5 +96,5 @@ export class QuizModel extends Model<QuizAttributes, InferCreationAttributes<Qui
   @HasMany(() => QuizQuestionModel, {
     foreignKey: 'quizId',
   })
-  public questions: QuizQuestionModel[];
+  public questions?: QuizQuestionModel[];
 }

@@ -1,8 +1,9 @@
-import { StringHelper } from '../../../../../common/helpers';
-import { RULES } from '../../../constant';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { StringHelper } from '@libs/common/helpers';
+import { v4, validate as isUUID } from 'uuid';
+
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
+import { DomainModelException } from '../../../../../common/exceptions';
+import { RULES } from '../../../constant';
 
 export type TagAttributes = {
   id: string;
@@ -19,6 +20,22 @@ export type TagAttributes = {
 export class TagEntity extends DomainAggregateRoot<TagAttributes> {
   public constructor(props: TagAttributes) {
     super(props);
+  }
+
+  public static create(options: Partial<TagAttributes>, userId: string): TagEntity {
+    const { name, groupId } = options;
+    const now = new Date();
+    return new TagEntity({
+      id: v4(),
+      groupId: groupId,
+      name: name,
+      slug: StringHelper.convertToSlug(name),
+      totalUsed: 0,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public validate(): void {

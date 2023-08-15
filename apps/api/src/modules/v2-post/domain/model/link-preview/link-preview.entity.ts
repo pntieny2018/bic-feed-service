@@ -1,6 +1,7 @@
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { validate as isUUID, v4 } from 'uuid';
+
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
 export type LinkPreviewProps = {
   url: string;
@@ -24,6 +25,21 @@ export type LinkPreviewAttributes = {
 export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewAttributes> {
   public constructor(props: LinkPreviewAttributes) {
     super(props);
+  }
+
+  public static create(options: Partial<LinkPreviewAttributes>): LinkPreviewEntity {
+    const { title, description, domain, url, image } = options;
+    const now = new Date();
+    return new LinkPreviewEntity({
+      id: v4(),
+      title,
+      description,
+      domain,
+      image,
+      url,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public validate(): void {

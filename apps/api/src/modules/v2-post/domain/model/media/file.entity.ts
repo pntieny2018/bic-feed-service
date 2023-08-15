@@ -1,5 +1,7 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
 export type FileAttributes = {
@@ -9,6 +11,7 @@ export type FileAttributes = {
   createdBy: string;
   mimeType: string;
   size: number;
+  status?: MEDIA_PROCESS_STATUS;
 };
 
 export class FileEntity extends DomainAggregateRoot<FileAttributes> {

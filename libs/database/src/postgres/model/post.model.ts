@@ -147,19 +147,19 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @Column({
     type: DataTypes.JSONB,
   })
-  public errorLog: any;
+  public errorLog?: any;
 
   @AllowNull(true)
   @Column({
     type: DataTypes.JSONB,
   })
-  public coverJson: any;
+  public coverJson?: any;
 
   @AllowNull(true)
   @Column({
     type: DataTypes.JSONB,
   })
-  public mediaJson: IMediaJson;
+  public mediaJson?: IMediaJson;
 
   @CreatedAt
   @Column
@@ -167,7 +167,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
 
   @UpdatedAt
   @Column
-  public updatedAt: Date;
+  public updatedAt?: Date;
 
   @DeletedAt
   @Column
@@ -209,19 +209,19 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public quiz?: QuizModel;
 
   @HasMany(() => QuizParticipantModel, 'postId')
-  public quizResults: QuizParticipantModel[];
+  public quizResults?: QuizParticipantModel[];
 
   @HasMany(() => PostGroupModel)
-  public groups: PostGroupModel[];
+  public groups?: PostGroupModel[];
 
   @HasMany(() => UserNewsFeedModel)
-  public userNewsfeeds: UserNewsFeedModel[];
+  public userNewsfeeds?: UserNewsFeedModel[];
 
   @HasMany(() => PostReactionModel)
-  public reactions: PostReactionModel[];
+  public reactions?: PostReactionModel[];
 
   @HasMany(() => UserNewsFeedModel)
-  public userNewsFeeds: UserNewsFeedModel[];
+  public userNewsFeeds?: UserNewsFeedModel[];
 
   @HasMany(() => UserSavePostModel)
   public userSavePosts?: UserSavePostModel[];
@@ -229,15 +229,15 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @BelongsTo(() => LinkPreviewModel, {
     foreignKey: 'linkPreviewId',
   })
-  public linkPreview: LinkPreviewModel;
+  public linkPreview?: LinkPreviewModel;
 
   @HasMany(() => PostReactionModel, {
     as: 'ownerReactions',
     foreignKey: 'postId',
   })
-  public postReactions!: PostReactionModel[];
+  public postReactions?: PostReactionModel[];
 
-  public reactionsCount: string;
+  public reactionsCount?: string;
 
   public markedReadPost?: boolean;
 
@@ -246,7 +246,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @BelongsTo(() => MediaModel, {
     foreignKey: 'cover',
   })
-  public coverMedia: MediaModel;
+  public coverMedia?: MediaModel;
 
   @HasMany(() => FailedProcessPostModel, {
     as: 'failedPostReasons',

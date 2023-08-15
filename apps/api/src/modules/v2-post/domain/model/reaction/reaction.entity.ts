@@ -1,6 +1,7 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
 import { emoji } from 'node-emoji';
+import { v4, validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { REACTION_TARGET } from '../../../data-type';
 
 export const BIC_EMOJI = [
@@ -65,6 +66,17 @@ export type ReactionAttributes = {
 export class ReactionEntity extends DomainAggregateRoot<ReactionAttributes> {
   public constructor(props: ReactionAttributes) {
     super(props);
+  }
+
+  public static create(options: Partial<ReactionAttributes>): ReactionEntity {
+    return new ReactionEntity({
+      id: v4(),
+      createdAt: new Date(),
+      target: options.target,
+      targetId: options.targetId,
+      reactionName: options.reactionName,
+      createdBy: options.createdBy,
+    });
   }
 
   public validate(): void {

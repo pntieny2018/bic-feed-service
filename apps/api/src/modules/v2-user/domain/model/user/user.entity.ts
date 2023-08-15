@@ -1,5 +1,6 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
 export type UserPermission = {
@@ -15,7 +16,6 @@ export type BadgeCommunity = {
 export type UserBadge = {
   id: string;
   name: string;
-  fullname: string;
   iconUrl: string;
   community: BadgeCommunity;
 };
