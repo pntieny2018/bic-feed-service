@@ -1,19 +1,22 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { uniq } from 'lodash';
+
+import { PaginatedResponse } from '../../../../../common/dto';
+import { createUrlFromId } from '../../../../giphy/giphy.util';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../../../v2-user/application';
-import { Inject, Injectable } from '@nestjs/common';
-import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
+import { CommentEntity } from '../../../domain/model/comment';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
 } from '../../../domain/query-interface/reaction.query.interface';
-import { ICommentBinding } from './comment.interface';
-import { CommentEntity } from '../../../domain/model/comment';
-import { uniq } from 'lodash';
 import { CommentResponseDto } from '../../../driving-apdater/dto/response';
-import { createUrlFromId } from 'apps/api/src/modules/giphy/giphy.util';
+import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
+
+import { ICommentBinding } from './comment.interface';
 
 @Injectable()
 export class CommentBinding implements ICommentBinding {
@@ -43,7 +46,8 @@ export class CommentBinding implements ICommentBinding {
     const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
     );
-    return rows.map((row) => {
+
+    const result = rows.map(async (row) => {
       return new CommentResponseDto({
         id: row.get('id'),
         edited: row.get('edited'),
@@ -62,6 +66,12 @@ export class CommentBinding implements ICommentBinding {
           images: row.get('media').images.map((item) => new ImageDto(item.toObject())),
           videos: row.get('media').videos.map((item) => new VideoDto(item.toObject())),
         },
+        child: row.get('childs')
+          ? new PaginatedResponse(
+              await this.commentsBinding(row.get('childs').rows),
+              row.get('childs').meta
+            )
+          : undefined,
         ownerReactions: row.get('ownerReactions').map(
           (item) =>
             new ReactionDto({
@@ -82,6 +92,8 @@ export class CommentBinding implements ICommentBinding {
           }, {}),
       });
     });
+
+    return Promise.all(result);
   }
 
   public async commentBinding(
@@ -92,7 +104,9 @@ export class CommentBinding implements ICommentBinding {
   ): Promise<CommentDto> {
     const userIdsNeedToFind = commentEntity.get('mentions');
 
-    if (!dataBinding?.actor) userIdsNeedToFind.push(commentEntity.get('createdBy'));
+    if (!dataBinding?.actor) {
+      userIdsNeedToFind.push(commentEntity.get('createdBy'));
+    }
 
     const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
       withGroupJoined: false,

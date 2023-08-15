@@ -37,7 +37,10 @@ export class FindCommentsPaginationHandler
 
     this._contentValidator.checkCanReadContent(post, authUser);
 
-    const { rows, meta } = await this._commentQuery.getPagination(query.payload);
+    const { rows, meta } = await this._commentQuery.getPagination({
+      ...query.payload,
+      authUser: authUser.id,
+    });
 
     if (!rows || rows.length === 0) {
       return new FindCommentsPaginationDto([], meta);

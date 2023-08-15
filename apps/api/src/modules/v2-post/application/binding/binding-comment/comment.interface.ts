@@ -1,7 +1,7 @@
 import { UserDto } from '../../../../v2-user/application';
-import { CommentDto } from '../../dto';
 import { CommentEntity } from '../../../domain/model/comment';
 import { CommentResponseDto } from '../../../driving-apdater/dto/response';
+import { CommentDto } from '../../dto';
 
 export interface ICommentBinding {
   commentsBinding(commentEntities: CommentEntity[]): Promise<CommentResponseDto[]>;
