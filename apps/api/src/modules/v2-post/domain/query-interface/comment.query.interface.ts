@@ -9,7 +9,7 @@ export type GetPaginationCommentProps = CursorPaginationProps & {
   parentId?: string;
 };
 
-export type GetArroundCommentProps = {
+export type GetAroundCommentProps = {
   authUser?: string;
   limit: number;
   order: OrderEnum;
@@ -18,9 +18,9 @@ export type GetArroundCommentProps = {
 export interface ICommentQuery {
   getPagination(input: GetPaginationCommentProps): Promise<CursorPaginationResult<CommentEntity>>;
 
-  getArroundComment(
+  getAroundComment(
     comment: CommentEntity,
-    props: GetArroundCommentProps
+    props: GetAroundCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>>;
 }
 

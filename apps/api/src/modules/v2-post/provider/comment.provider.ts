@@ -4,8 +4,8 @@ import { CreateCommentHandler } from '../application/command/create-comment/crea
 import { DeleteCommentHandler } from '../application/command/delete-comment/delete-comment.handler';
 import { ReplyCommentHandler } from '../application/command/reply-comment/reply-comment.handler';
 import { UpdateCommentHandler } from '../application/command/update-comment/update-comment.handler';
-import { FindCommentsArroundIdHandler } from '../application/query/find-comments-arround-id/find-comments-arround-id.handler';
 import { FindCommentsPaginationHandler } from '../application/query/find-comments/find-comments-pagination.handler';
+import { FindCommentsAroundIdHandler } from '../application/query/find-comments-around-id/find-comments-around-id.handler';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';
 import { COMMENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { CommentFactory } from '../domain/factory/comment.factory';
@@ -48,5 +48,5 @@ export const commentProvider = [
   UpdateCommentHandler,
   DeleteCommentHandler,
   FindCommentsPaginationHandler,
-  FindCommentsArroundIdHandler,
+  FindCommentsAroundIdHandler,
 ];

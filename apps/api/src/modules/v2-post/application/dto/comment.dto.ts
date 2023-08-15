@@ -102,7 +102,7 @@ export class FindCommentsPaginationDto extends PaginatedResponse<CommentResponse
   }
 }
 
-export class FindCommentsArroundIdDto extends PaginatedResponse<CommentResponseDto> {
+export class FindCommentsAroundIdDto extends PaginatedResponse<CommentResponseDto> {
   public constructor(list: CommentResponseDto[], meta?: IPaginatedInfo) {
     super(list, meta);
   }

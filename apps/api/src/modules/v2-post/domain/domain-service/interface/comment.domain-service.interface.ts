@@ -6,7 +6,7 @@ export type CreateCommentProps = BasedCommentProps;
 
 export type UpdateCommentProps = BasedCommentProps & { id: string };
 
-export type GetCommentsArroundIdProps = {
+export type GetCommentsAroundIdProps = {
   userId?: string;
   isChild: boolean;
   limit: number;
@@ -16,9 +16,9 @@ export type GetCommentsArroundIdProps = {
 export interface ICommentDomainService {
   getVisibleComment(id: string, excludeReportedByUserId?: string): Promise<CommentEntity>;
 
-  getCommentsArroundId(
+  getCommentsAroundId(
     id: string,
-    props: GetCommentsArroundIdProps
+    props: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>>;
 
   create(data: CreateCommentProps): Promise<CommentEntity>;

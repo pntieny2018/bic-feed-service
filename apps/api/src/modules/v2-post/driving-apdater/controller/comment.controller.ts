@@ -35,20 +35,20 @@ import {
 } from '../../application/command/update-comment/update-comment.command';
 import {
   CommentDto,
-  FindCommentsArroundIdDto,
+  FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
 } from '../../application/dto';
 import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
-import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
+import { FindCommentsAroundIdQuery } from '../../application/query/find-comments-around-id/find-comments-around-id.query';
 import {
   CreateCommentRequestDto,
-  GetCommentsArroundIdDto,
+  GetCommentsAroundIdDto,
   GetListCommentsDto,
   ReplyCommentRequestDto,
   UpdateCommentRequestDto,
 } from '../dto/request';
 import { CreateCommentPipe } from '../pipes/create-comment.pipe';
-import { GetCommentsArroundIdPipe } from '../pipes/get-comments-arround-id.pipe';
+import { GetCommentsAroundIdPipe } from '../pipes/get-comments-around-id.pipe';
 import { GetCommentsPipe } from '../pipes/get-comments.pipe';
 
 @ApiTags('Comment v2')
@@ -81,18 +81,18 @@ export class CommentController {
     return data;
   }
 
-  @ApiOperation({ summary: 'Get comments arround a comment' })
+  @ApiOperation({ summary: 'Get comments around a comment' })
   @ResponseMessages({
-    success: 'Get comments arround a comment successfully',
+    success: 'Get comments around a comment successfully',
   })
   @Get('/:commentId')
-  public async getCommentsArroundId(
+  public async getCommentsAroundId(
     @AuthUser(false) user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
-    @Query(GetCommentsArroundIdPipe) getCommentsArroundIdDto: GetCommentsArroundIdDto
-  ): Promise<FindCommentsArroundIdDto> {
+    @Query(GetCommentsAroundIdPipe) getCommentsAroundIdDto: GetCommentsAroundIdDto
+  ): Promise<FindCommentsAroundIdDto> {
     const data = await this._queryBus.execute(
-      new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
+      new FindCommentsAroundIdQuery({ authUser: user, commentId, ...getCommentsAroundIdDto })
     );
     return data;
   }

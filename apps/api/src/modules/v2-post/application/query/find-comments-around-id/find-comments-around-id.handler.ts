@@ -12,13 +12,13 @@ import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
-import { FindCommentsArroundIdDto } from '../../dto';
+import { FindCommentsAroundIdDto } from '../../dto';
 
-import { FindCommentsArroundIdQuery } from './find-comments-arround-id.query';
+import { FindCommentsAroundIdQuery } from './find-comments-around-id.query';
 
-@QueryHandler(FindCommentsArroundIdQuery)
-export class FindCommentsArroundIdHandler
-  implements IQueryHandler<FindCommentsArroundIdQuery, FindCommentsArroundIdDto>
+@QueryHandler(FindCommentsAroundIdQuery)
+export class FindCommentsAroundIdHandler
+  implements IQueryHandler<FindCommentsAroundIdQuery, FindCommentsAroundIdDto>
 {
   public constructor(
     @Inject(COMMENT_BINDING_TOKEN)
@@ -31,7 +31,7 @@ export class FindCommentsArroundIdHandler
     protected readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(query: FindCommentsArroundIdQuery): Promise<FindCommentsArroundIdDto> {
+  public async execute(query: FindCommentsAroundIdQuery): Promise<FindCommentsAroundIdDto> {
     const { authUser, commentId, limit, targetChildLimit } = query.payload;
 
     const comment = await this._commentDomainService.getVisibleComment(commentId, authUser.id);
@@ -42,7 +42,7 @@ export class FindCommentsArroundIdHandler
 
     const isChild = comment.isChildComment();
 
-    const arroundCommentPagination = await this._commentDomainService.getCommentsArroundId(
+    const aroundCommentPagination = await this._commentDomainService.getCommentsAroundId(
       commentId,
       {
         userId: authUser.id,
@@ -53,9 +53,9 @@ export class FindCommentsArroundIdHandler
     );
 
     const bindingInstances = await this._commentBinding.commentsBinding(
-      arroundCommentPagination.rows
+      aroundCommentPagination.rows
     );
 
-    return new FindCommentsArroundIdDto(bindingInstances, arroundCommentPagination.meta);
+    return new FindCommentsAroundIdDto(bindingInstances, aroundCommentPagination.meta);
   }
 }

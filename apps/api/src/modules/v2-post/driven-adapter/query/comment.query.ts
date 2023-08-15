@@ -15,7 +15,7 @@ import { CommentEntity } from '../../domain/model/comment';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
-  GetArroundCommentProps,
+  GetAroundCommentProps,
   GetPaginationCommentProps,
   ICommentQuery,
 } from '../../domain/query-interface';
@@ -110,9 +110,9 @@ export class CommentQuery implements ICommentQuery {
     };
   }
 
-  public async getArroundComment(
+  public async getAroundComment(
     comment: CommentEntity,
-    props: GetArroundCommentProps
+    props: GetAroundCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { limit } = props;
     const limitExcludeTarget = limit - 1;

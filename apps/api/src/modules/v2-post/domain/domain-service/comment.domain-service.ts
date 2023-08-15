@@ -17,7 +17,7 @@ import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-inte
 
 import {
   CreateCommentProps,
-  GetCommentsArroundIdProps,
+  GetCommentsAroundIdProps,
   ICommentDomainService,
   UpdateCommentProps,
 } from './interface';
@@ -57,46 +57,46 @@ export class CommentDomainService implements ICommentDomainService {
     return entity;
   }
 
-  public async getCommentsArroundId(
+  public async getCommentsAroundId(
     id: string,
-    props: GetCommentsArroundIdProps
+    props: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { isChild } = props;
 
     if (isChild) {
-      return this._getCommentsArroundChild(id, props);
+      return this._getCommentsAroundChild(id, props);
     }
-    return this._getCommentsArroundParent(id, props);
+    return this._getCommentsAroundParent(id, props);
   }
 
-  private async _getCommentsArroundChild(
+  private async _getCommentsAroundChild(
     id: string,
-    pagination: GetCommentsArroundIdProps
+    pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { userId, targetChildLimit, limit } = pagination;
     const comment = await this._commentRepository.findOne({ id });
 
-    const arroundChildPagination = await this._commentQuery.getArroundComment(comment, {
+    const aroundChildPagination = await this._commentQuery.getAroundComment(comment, {
       limit: targetChildLimit,
       order: OrderEnum.DESC,
       authUser: userId,
     });
 
     const parent = await this.getVisibleComment(comment.get('parentId'), userId);
-    parent.setChilds(arroundChildPagination);
+    parent.setChilds(aroundChildPagination);
 
-    const arroundParentPagination = await this._commentQuery.getArroundComment(parent, {
+    const aroundParentPagination = await this._commentQuery.getAroundComment(parent, {
       limit,
       order: OrderEnum.DESC,
       authUser: userId,
     });
 
-    return arroundParentPagination;
+    return aroundParentPagination;
   }
 
-  private async _getCommentsArroundParent(
+  private async _getCommentsAroundParent(
     id: string,
-    pagination: GetCommentsArroundIdProps
+    pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { userId, targetChildLimit, limit } = pagination;
     const comment = await this._commentRepository.findOne({ id });
@@ -112,13 +112,13 @@ export class CommentDomainService implements ICommentDomainService {
       comment.setChilds(childsPagination);
     }
 
-    const arroundParentPagination = await this._commentQuery.getArroundComment(comment, {
+    const aroundParentPagination = await this._commentQuery.getAroundComment(comment, {
       limit,
       order: OrderEnum.DESC,
       authUser: userId,
     });
 
-    return arroundParentPagination;
+    return aroundParentPagination;
   }
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {

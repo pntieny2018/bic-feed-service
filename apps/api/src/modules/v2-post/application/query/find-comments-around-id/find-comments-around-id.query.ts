@@ -9,6 +9,6 @@ type Props = {
   targetChildLimit?: number;
 };
 
-export class FindCommentsArroundIdQuery implements IQuery {
+export class FindCommentsAroundIdQuery implements IQuery {
   public constructor(public readonly payload: Props) {}
 }
