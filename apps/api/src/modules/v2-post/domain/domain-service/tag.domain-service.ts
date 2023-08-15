@@ -1,8 +1,10 @@
 import { Inject, Logger } from '@nestjs/common';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+
+import { DatabaseException } from '../../../../common/exceptions';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory/interface';
 import { TagEntity } from '../model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
+
 import { ITagDomainService, TagCreateProps, TagUpdateProps } from './interface';
 
 export class TagDomainService implements ITagDomainService {
@@ -12,6 +14,20 @@ export class TagDomainService implements ITagDomainService {
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_FACTORY_TOKEN)
   private readonly _tagFactory: ITagFactory;
+
+  public async findByIds(ids: string[]): Promise<TagEntity[]> {
+    if (!ids?.length) {
+      return [];
+    }
+    try {
+      return await this._tagRepository.findAll({
+        ids,
+      });
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
 
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;
