@@ -1,17 +1,16 @@
 import { OrderEnum } from '../../../../common/dto';
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { UserDto } from '../../../v2-user/application';
 import { CommentEntity } from '../model/comment';
 
 export type GetPaginationCommentProps = CursorPaginationProps & {
-  authUser?: UserDto;
+  authUser?: string;
   postId: string;
   parentId?: string;
 };
 
 export type GetArroundCommentProps = {
-  authUser?: UserDto;
+  authUser?: string;
   limit: number;
   order: OrderEnum;
 };

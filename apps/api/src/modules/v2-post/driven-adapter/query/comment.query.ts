@@ -42,7 +42,7 @@ export class CommentQuery implements ICommentQuery {
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUser.id,
+                  created_by: authUser,
                 },
               },
             }
@@ -57,7 +57,7 @@ export class CommentQuery implements ICommentQuery {
             Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
             WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
               TargetType.COMMENT
-            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser.id)})`),
+            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser)})`),
           ],
         }),
       },
