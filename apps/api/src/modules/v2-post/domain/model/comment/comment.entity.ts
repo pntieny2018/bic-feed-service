@@ -1,8 +1,10 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { NIL, validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { isEmpty } from 'lodash';
+import { NIL, validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { ReactionEntity } from '../reaction';
 
 export type CommentAttributes = {
@@ -23,7 +25,7 @@ export type CommentAttributes = {
   createdAt?: Date;
   updatedAt?: Date;
   totalReply?: number;
-  childs?: CommentEntity[];
+  childs?: CursorPaginationResult<CommentEntity>;
   mentions?: string[];
   ownerReactions?: ReactionEntity[];
 };
@@ -49,9 +51,15 @@ export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
     this._props.updatedAt = new Date();
     this._props.edited = true;
     this._props.updatedBy = userId;
-    if (content !== undefined) this._props.content = content;
-    if (giphyId !== undefined) this._props.giphyId = giphyId;
-    if (mentions && Array.isArray(mentions)) this._props.mentions = mentions;
+    if (content !== undefined) {
+      this._props.content = content;
+    }
+    if (giphyId !== undefined) {
+      this._props.giphyId = giphyId;
+    }
+    if (mentions && Array.isArray(mentions)) {
+      this._props.mentions = mentions;
+    }
   }
 
   public setMedia(media: {
@@ -82,5 +90,9 @@ export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
 
   public isChildComment(): boolean {
     return this._props.parentId !== NIL;
+  }
+
+  public setChilds(childs: CursorPaginationResult<CommentEntity>): void {
+    this._props.childs = childs;
   }
 }
