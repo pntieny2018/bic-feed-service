@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { QuizDto } from '../../dto';
-import { QuizEntity } from '../../../domain/model/quiz';
+
+import { QuizEntity, QuizQuestionEntity } from '../../../domain/model/quiz';
+import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
+import { QuestionDto, QuizDto, QuizParticipantDto } from '../../dto';
+
 import { IQuizBinding } from './quiz.interface';
 
 @Injectable()
@@ -20,9 +23,9 @@ export class QuizBinding implements IQuizBinding {
       isRandom: entity.get('isRandom'),
       error: entity.get('error'),
       questions: entity.get('questions').map((question) => ({
-        id: question.id,
-        content: question.content,
-        answers: question.answers.map((answer) => ({
+        id: question.get('id'),
+        content: question.get('content'),
+        answers: question.get('answers').map((answer) => ({
           id: answer.id,
           content: answer.content,
           isCorrect: answer.isCorrect,
@@ -30,6 +33,50 @@ export class QuizBinding implements IQuizBinding {
       })),
       createdAt: entity.get('createdAt'),
       updatedAt: entity.get('updatedAt'),
+    });
+  }
+
+  public async bindQuizParticipants(
+    quizParticipantEntities: QuizParticipantEntity[]
+  ): Promise<QuizParticipantDto[]> {
+    return quizParticipantEntities.map((quizParticipantEntity) => ({
+      id: quizParticipantEntity.get('id'),
+      title: quizParticipantEntity.get('quizSnapshot').title,
+      description: quizParticipantEntity.get('quizSnapshot').description,
+      questions: quizParticipantEntity.get('quizSnapshot').questions.map((question) => ({
+        id: question.id,
+        content: question.content,
+        answers: question.answers.map((answer) => ({
+          id: answer.id,
+          content: answer.content,
+        })),
+      })),
+      userAnswers: quizParticipantEntity.get('answers').map((answer) => ({
+        questionId: answer.questionId,
+        answerId: answer.answerId,
+      })),
+      quizId: quizParticipantEntity.get('quizId'),
+      score: quizParticipantEntity.get('score'),
+      isHighest: quizParticipantEntity.get('isHighest'),
+      totalAnswers: quizParticipantEntity.get('totalAnswers'),
+      totalCorrectAnswers: quizParticipantEntity.get('totalCorrectAnswers'),
+      finishedAt: quizParticipantEntity.get('finishedAt'),
+      timeLimit: quizParticipantEntity.get('timeLimit'),
+      startedAt: quizParticipantEntity.get('startedAt'),
+      createdAt: quizParticipantEntity.get('createdAt'),
+      updatedAt: quizParticipantEntity.get('updatedAt'),
+    }));
+  }
+
+  public async bindQuizQuestion(question: QuizQuestionEntity): Promise<QuestionDto> {
+    return new QuestionDto({
+      id: question.get('id'),
+      content: question.get('content'),
+      answers: question.get('answers').map((answer) => ({
+        id: answer.id,
+        content: answer.content,
+        isCorrect: answer.isCorrect,
+      })),
     });
   }
 }

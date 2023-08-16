@@ -1,5 +1,6 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
+
 import { ERRORS } from '../../../../common/constants/errors';
 import { DomainForbiddenException, DomainNotFoundException } from '../../../../common/exceptions';
 
@@ -54,5 +55,22 @@ export class QuizParticipantNotFinishedException extends DomainException {
     const i18n = I18nContext.current();
     message = message || i18n?.t(`error.quiz_participant.not_finished`) || '';
     super(QuizParticipantNotFinishedException.code, message, error);
+  }
+}
+
+export class QuizQuestionLimitExceededException extends DomainException {
+  public constructor(message?: string) {
+    const i18n = I18nContext.current();
+    super(
+      ERRORS.QUIZ_QUESTION_LIMIT_EXCEEDED,
+      message || i18n?.t(`error.quiz.quiz_question_limit_exceeded`)
+    );
+  }
+}
+
+export class QuizQuestionNotFoundException extends DomainException {
+  public constructor(message?: string) {
+    const i18n = I18nContext.current();
+    super(ERRORS.QUIZ_QUESTION_NOT_FOUND, message || i18n?.t(`error.quiz_question.not_found`));
   }
 }

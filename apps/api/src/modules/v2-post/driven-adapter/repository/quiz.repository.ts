@@ -18,6 +18,8 @@ import { CursorPaginator } from '../../../../common/dto';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
 import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
+import { QuizQuestionEntity } from '../../domain/model/quiz/quiz-question.entity';
+import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
@@ -27,12 +29,12 @@ export class QuizRepository implements IQuizRepository {
     private readonly _factory: IQuizFactory,
     @InjectModel(QuizModel)
     private readonly _quizModel: typeof QuizModel,
-
     @InjectModel(QuizQuestionModel)
     private readonly _quizQuestionModel: typeof QuizQuestionModel,
-
     @InjectModel(QuizAnswerModel)
-    private readonly _quizAnswerModel: typeof QuizAnswerModel
+    private readonly _quizAnswerModel: typeof QuizAnswerModel,
+    @Inject(OPEN_AI_SERVICE_TOKEN)
+    private readonly _openaiService: IOpenaiService
   ) {}
 
   public async create(quizEntity: QuizEntity): Promise<void> {
@@ -45,6 +47,7 @@ export class QuizRepository implements IQuizRepository {
       numberOfAnswers: quizEntity.get('numberOfAnswers'),
       numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
       numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
+      timeLimit: quizEntity.get('timeLimit'),
       status: quizEntity.get('status'),
       genStatus: quizEntity.get('genStatus'),
       error: quizEntity.get('error'),
@@ -80,18 +83,17 @@ export class QuizRepository implements IQuizRepository {
     if (quizEntity.get('questions') !== undefined) {
       await this._quizQuestionModel.destroy({ where: { quizId: quizEntity.get('id') } });
       await this._quizQuestionModel.bulkCreate(
-        quizEntity.get('questions').map((question) => ({
-          id: question.id,
-          quizId: quizEntity.get('id'),
-          content: question.content,
+        quizEntity.get('questions').map((quizEntity) => ({
+          id: quizEntity.get('id'),
+          quizId: quizEntity.get('quizId'),
+          content: quizEntity.get('content'),
         }))
       );
       await this._quizAnswerModel.bulkCreate(
         quizEntity.get('questions').flatMap((question) =>
-          question.answers.map((answer) => ({
+          question.get('answers').map((answer) => ({
             id: answer.id,
-            quizId: quizEntity.get('id'),
-            questionId: question.id,
+            questionId: question.get('id'),
             content: answer.content,
             isCorrect: answer.isCorrect,
           }))
@@ -104,11 +106,30 @@ export class QuizRepository implements IQuizRepository {
     await this._quizModel.destroy({ where: { id: id } });
   }
 
-  public async findOne(input: FindOneQuizProps): Promise<QuizEntity> {
-    const findOptions: FindOptions<IQuiz> = this._buildFindOptions(input);
-    const entity = await this._quizModel.findOne(findOptions);
-    if (input.attributes) findOptions.attributes = input.attributes as (keyof IQuiz)[];
+  public async findOne(id: string): Promise<QuizEntity> {
+    const entity = await this._quizModel.findByPk(id);
     return this._modelToEntity(entity);
+  }
+
+  public async findQuizWithQuestions(id: string): Promise<QuizEntity> {
+    const quiz = await this._quizModel.findByPk(id);
+    if (!quiz) return null;
+
+    quiz.questions = await this._quizQuestionModel.findAll({
+      where: { quizId: id },
+      order: [['createdAt', 'ASC']],
+    });
+
+    const questionIds = quiz.questions.map((question) => question.id);
+    const answers = await this._quizAnswerModel.findAll({
+      where: { questionId: questionIds },
+      order: [['createdAt', 'ASC']],
+    });
+
+    quiz.questions.forEach((question) => {
+      question.answers = answers.filter((answer) => answer.questionId === question.id);
+    });
+    return this._modelToEntity(quiz);
   }
 
   private _buildFindOptions(
@@ -176,15 +197,25 @@ export class QuizRepository implements IQuizRepository {
       numberOfAnswersDisplay: quiz.numberOfAnswersDisplay,
       timeLimit: quiz.timeLimit,
       isRandom: quiz.isRandom,
-      questions: (quiz.questions || []).map((question) => ({
-        id: question.id,
-        content: question.content,
-        answers: question.answers.map((answer) => ({
-          id: answer.id,
-          content: answer.content,
-          isCorrect: answer.isCorrect,
-        })),
-      })),
+      questions: quiz.questions
+        ? quiz.questions.map(
+            (question) =>
+              new QuizQuestionEntity({
+                id: question.id,
+                quizId: question.quizId,
+                content: question.content,
+                createdAt: question.createdAt,
+                updatedAt: question.updatedAt,
+                answers: question.answers.map((answer) => ({
+                  id: answer.id,
+                  content: answer.content,
+                  isCorrect: answer.isCorrect,
+                  createdAt: answer.createdAt,
+                  updatedAt: answer.updatedAt,
+                })),
+              })
+          )
+        : undefined,
       meta: quiz.meta,
       createdBy: quiz.createdBy,
       updatedBy: quiz.updatedBy,
@@ -237,5 +268,94 @@ export class QuizRepository implements IQuizRepository {
       rows: rows.map((row) => this._modelToEntity(row)),
       meta,
     };
+  }
+
+  public async genQuestions(quizEntity: QuizEntity, rawContent: string): Promise<void> {
+    const { questions, usage, model, maxTokens, completion } =
+      await this._openaiService.generateQuestion({
+        content: rawContent,
+        numberOfQuestions: quizEntity.get('numberOfQuestions'),
+        numberOfAnswers: quizEntity.get('numberOfAnswers'),
+      });
+    quizEntity.updateAttribute({
+      meta: {
+        usage,
+        model,
+        maxTokens,
+        completion,
+      },
+      questions: questions.map(
+        (question) =>
+          new QuizQuestionEntity({
+            ...question,
+            quizId: quizEntity.get('id'),
+          })
+      ),
+    });
+  }
+
+  public async findQuizQuestion(id: string): Promise<QuizQuestionEntity> {
+    const question = await this._quizQuestionModel.findByPk(id, {
+      include: [
+        {
+          model: QuizAnswerModel,
+          as: 'answers',
+          required: false,
+        },
+      ],
+    });
+    if (!question) return null;
+    return new QuizQuestionEntity({
+      id: question.id,
+      content: question.content,
+      quizId: question.quizId,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
+      answers: question.answers.map((answer) => ({
+        id: answer.id,
+        content: answer.content,
+        isCorrect: answer.isCorrect,
+        createdAt: question.createdAt,
+        updatedAt: question.updatedAt,
+      })),
+    });
+  }
+
+  public async addQuestion(question: QuizQuestionEntity): Promise<void> {
+    await this._quizQuestionModel.create({
+      id: question.get('id'),
+      quizId: question.get('quizId'),
+      content: question.get('content'),
+    });
+    await this._quizAnswerModel.bulkCreate(
+      question.get('answers').map((answer) => ({
+        id: answer.id,
+        questionId: question.get('id'),
+        content: answer.content,
+        isCorrect: answer.isCorrect,
+      }))
+    );
+  }
+
+  public async deleteQuestion(questionId: string): Promise<void> {
+    await this._quizQuestionModel.destroy({ where: { id: questionId } });
+  }
+
+  public async updateQuestion(question: QuizQuestionEntity): Promise<void> {
+    await this._quizQuestionModel.update(
+      {
+        content: question.get('content'),
+      },
+      { where: { id: question.get('id') } }
+    );
+    await this._quizAnswerModel.destroy({ where: { questionId: question.get('id') } });
+    await this._quizAnswerModel.bulkCreate(
+      question.get('answers').map((answer) => ({
+        id: answer.id,
+        questionId: question.get('id'),
+        content: answer.content,
+        isCorrect: answer.isCorrect,
+      }))
+    );
   }
 }

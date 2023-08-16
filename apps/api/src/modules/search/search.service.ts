@@ -382,14 +382,13 @@ export class SearchService {
       quizEntities.map((quiz) => {
         return [
           quiz.get('contentId'),
-          pick(new QuizDto(quiz.toObject()), [
-            'id',
-            'title',
-            'description',
-            'status',
-            'createdAt',
-            'updatedAt',
-          ]),
+          new QuizDto({
+            id: quiz.get('id'),
+            title: quiz.get('title'),
+            description: quiz.get('description'),
+            status: quiz.get('status'),
+            genStatus: quiz.get('genStatus'),
+          }),
         ];
       })
     );

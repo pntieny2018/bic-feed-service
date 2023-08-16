@@ -1,17 +1,18 @@
 import { v4 } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { ArrayHelper } from '../../../../../common/helpers';
 import { RULES } from '../../../constant';
-import { QuestionAttributes, QuizEntity } from '../quiz';
+import { QuizQuestionAttributes } from '../quiz/quiz-question.entity';
 
-export type QuizParticipantAttributes = {
+export type QuizParticipantProps = {
   id: string;
   contentId: string;
   quizId: string;
   quizSnapshot: {
     title: string;
     description: string;
-    questions: QuestionAttributes[];
+    questions: QuizQuestionAttributes[];
   };
   answers: {
     id: string;
@@ -22,6 +23,7 @@ export type QuizParticipantAttributes = {
     updatedAt: Date;
   }[];
   score: number;
+  isHighest: boolean;
   timeLimit: number;
   totalAnswers: number;
   totalCorrectAnswers: number;
@@ -33,41 +35,16 @@ export type QuizParticipantAttributes = {
   updatedAt: Date;
 };
 
-export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantAttributes> {
-  public constructor(props: QuizParticipantAttributes) {
+export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantProps> {
+  public constructor(props: QuizParticipantProps) {
     super(props);
-  }
-
-  public static create(userId: string, quizEntity: QuizEntity): QuizParticipantEntity {
-    const now = new Date();
-    return new QuizParticipantEntity({
-      id: v4(),
-      quizId: quizEntity.get('id'),
-      contentId: quizEntity.get('contentId'),
-      quizSnapshot: {
-        title: quizEntity.get('title'),
-        description: quizEntity.get('description'),
-        questions: quizEntity.get('questions'),
-      },
-      score: 0,
-      timeLimit: quizEntity.get('timeLimit'),
-      answers: [],
-      totalAnswers: 0,
-      totalCorrectAnswers: 0,
-      startedAt: now,
-      finishedAt: null,
-      createdBy: userId,
-      updatedBy: userId,
-      createdAt: now,
-      updatedAt: now,
-    });
   }
 
   public validate(): void {
     //
   }
 
-  public isOverLimitTime(): boolean {
+  public isOverTimeLimit(): boolean {
     return (
       this._props.startedAt.getTime() +
         (this._props.timeLimit + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000 <
@@ -79,8 +56,16 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantAt
     return !!this._props.finishedAt;
   }
 
+  public isFinishedOrOverTimeLimit(): boolean {
+    return this.isFinished() || this.isOverTimeLimit();
+  }
+
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
+  }
+
+  public isHighest(): boolean {
+    return this._props.isHighest;
   }
 
   public getCorrectAnswersFromSnapshot(): Map<string, string> {
@@ -110,12 +95,29 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantAt
     }));
 
     const totalCorrectAnswers = this._props.answers.filter((answer) => answer.isCorrect).length;
-    this._props.score = (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100;
+    this._props.score = Math.round(
+      (totalCorrectAnswers / this._props.quizSnapshot.questions.length) * 100
+    );
     this._props.totalAnswers = answers.length;
     this._props.totalCorrectAnswers = totalCorrectAnswers;
   }
 
-  public setFinishedAt(): void {
-    this._props.finishedAt = new Date();
+  public setFinishedAt(time: Date = new Date()): void {
+    this._props.finishedAt = time;
+  }
+
+  public hideResult(): void {
+    this._props.score = undefined;
+    this._props.totalAnswers = undefined;
+    this._props.totalCorrectAnswers = undefined;
+    this._props.finishedAt = undefined;
+  }
+
+  public shuffleQuestions(): void {
+    this._props.quizSnapshot.questions = ArrayHelper.shuffle(this._props.quizSnapshot.questions);
+  }
+
+  public setHighest(isHighest: boolean): void {
+    this._props.isHighest = isHighest;
   }
 }

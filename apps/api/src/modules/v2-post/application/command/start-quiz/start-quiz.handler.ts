@@ -1,19 +1,21 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
 import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { StartQuizCommand } from './start-quiz.command';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import {
   QuizNotFoundException,
   QuizParticipantNotFinishedException,
 } from '../../../domain/exception';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
+
+import { StartQuizCommand } from './start-quiz.command';
 
 @CommandHandler(StartQuizCommand)
 export class StartQuizHandler implements ICommandHandler<StartQuizCommand, string> {
@@ -28,11 +30,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
   public async execute(command: StartQuizCommand): Promise<string> {
     const { authUser, quizId } = command.payload;
 
-    const quizEntity = await this._quizRepository.findOne({
-      where: {
-        id: quizId,
-      },
-    });
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
 
     if (!quizEntity || !quizEntity.isPublished()) {
       throw new QuizNotFoundException();
@@ -43,13 +41,17 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
       authUser.id
     );
 
-    const hasQuizDoing = quizParticipantEntities.some(
+    const hasQuizDoing = quizParticipantEntities.filter(
       (quizParticipantEntity) =>
-        !quizParticipantEntity.isOverLimitTime() && !quizParticipantEntity.isFinished()
+        !quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()
     );
 
-    if (hasQuizDoing) {
-      throw new QuizParticipantNotFinishedException();
+    if (hasQuizDoing.length) {
+      throw new QuizParticipantNotFinishedException(null, {
+        quizDoing: {
+          id: hasQuizDoing[0].get('id'),
+        },
+      });
     }
     const takeQuiz = await this._quizDomainService.startQuiz(quizEntity, authUser);
 

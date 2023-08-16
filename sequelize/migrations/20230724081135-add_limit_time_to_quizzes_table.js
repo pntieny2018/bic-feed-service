@@ -6,7 +6,7 @@ module.exports = {
       type: Sequelize.INTEGER,
       allowNull: false,
       defaultValue: 1800,
-      before: 'content_id',
+      before: 'post_id',
     });
   },
 

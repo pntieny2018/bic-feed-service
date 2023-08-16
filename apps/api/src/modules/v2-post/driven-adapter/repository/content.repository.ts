@@ -41,6 +41,7 @@ import { QuizModel } from '../../../../database/models/quiz.model';
 import { QuizEntity } from '../../domain/model/quiz';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
+import { ContentNotFoundException } from '../../domain/exception';
 
 export class ContentRepository implements IContentRepository {
   public constructor(
@@ -267,6 +268,17 @@ export class ContentRepository implements IContentRepository {
     const findOption = this.buildFindOptions(findOnePostOptions);
     const entity = await this._postModel.findOne(findOption);
     return this._modelToEntity(entity);
+  }
+
+  public async getContentById(
+    contentId: string
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const content = await this._postModel.findByPk(contentId);
+    if (!content) {
+      throw new ContentNotFoundException();
+    }
+
+    return this._modelToEntity(content);
   }
 
   public async findAll(
@@ -606,6 +618,7 @@ export class ContentRepository implements IContentRepository {
             quizSnapshot: quizResult.quizSnapshot,
             timeLimit: quizResult.timeLimit,
             score: quizResult.score,
+            isHighest: quizResult.isHighest,
             totalAnswers: quizResult.totalAnswers,
             totalCorrectAnswers: quizResult.totalCorrectAnswers,
             startedAt: quizResult.startedAt,

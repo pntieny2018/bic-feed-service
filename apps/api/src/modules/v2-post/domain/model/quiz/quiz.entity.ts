@@ -1,10 +1,12 @@
-import { v4, validate as isUUID } from 'uuid';
+import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { DomainModelException } from '../../../../../common/exceptions';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { RULES } from '../../../constant';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
+
+import { QuizQuestionEntity } from './quiz-question.entity';
 
 export type QuestionAttributes = {
   id: string;
@@ -30,7 +32,7 @@ export type QuizAttributes = {
   numberOfQuestionsDisplay?: number;
   numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  questions?: QuestionAttributes[];
+  questions?: QuizQuestionEntity[];
   meta?: any;
   error?: {
     code: string;
@@ -46,41 +48,6 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   public constructor(props: QuizAttributes) {
     super(props);
     this.validateNumberDisplay();
-  }
-
-  public static create(options: Partial<QuizAttributes>, userId: string): QuizEntity {
-    const {
-      title,
-      description,
-      contentId,
-      isRandom,
-      numberOfAnswers,
-      numberOfQuestions,
-      numberOfAnswersDisplay,
-      numberOfQuestionsDisplay,
-      meta,
-    } = options;
-    const now = new Date();
-    return new QuizEntity({
-      id: v4(),
-      contentId,
-      title: title || null,
-      description: description || null,
-      numberOfQuestions,
-      numberOfQuestionsDisplay: numberOfQuestionsDisplay || numberOfQuestions,
-      numberOfAnswers,
-      numberOfAnswersDisplay: numberOfAnswersDisplay || numberOfAnswers,
-      isRandom: isRandom || true,
-      timeLimit: RULES.QUIZ_TIME_LIMIT_DEFAULT,
-      questions: [],
-      meta,
-      status: QuizStatus.DRAFT,
-      genStatus: QuizGenStatus.PENDING,
-      createdBy: userId,
-      updatedBy: userId,
-      createdAt: now,
-      updatedAt: now,
-    });
   }
 
   public validate(): void {
@@ -137,6 +104,34 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
     }
   }
 
+  public validateQuestions(): void {
+    if (this._props.questions?.length === 0) {
+      throw new DomainModelException(`Quiz must have at least one question`);
+    }
+    if (
+      this._props.questions?.some(
+        (question) => !question.get('answers') || question.get('answers').length === 0
+      )
+    ) {
+      throw new DomainModelException(`Question must have at least one answer`);
+    }
+
+    if (
+      this._props.questions?.some((question) =>
+        question.get('answers').every((answer) => {
+          return answer.isCorrect === false;
+        })
+      )
+    ) {
+      throw new DomainModelException(`Dont have correct answer`);
+    }
+    if (this._props.questions?.length > RULES.QUIZ_MAX_QUESTION) {
+      throw new DomainModelException(
+        `Quiz question must have <= ${RULES.QUIZ_MAX_QUESTION} questions`
+      );
+    }
+  }
+
   public validatePublishing(): void {
     if (this._props.status !== QuizStatus.PUBLISHED) {
       return;
@@ -145,30 +140,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
     if (!this._props.title) {
       throw new DomainModelException(`Quiz title is required`);
     }
-
-    if (this._props.questions.length === 0) {
-      throw new DomainModelException(`Quiz must have at least one question`);
-    }
-
-    if (this._props.questions.length === 0) {
-      throw new DomainModelException(`Quiz must have at least one question`);
-    }
-
-    if (
-      this._props.questions.some((question) => !question.answers || question.answers.length === 0)
-    ) {
-      throw new DomainModelException(`Question must have at least one answer`);
-    }
-
-    if (
-      this._props.questions.some((question) =>
-        question.answers.every((answer) => {
-          return answer.isCorrect === false;
-        })
-      )
-    ) {
-      throw new DomainModelException(`Dont have correct answer`);
-    }
+    this.validateQuestions();
     this.validateNumberDisplay();
   }
 
@@ -255,6 +227,10 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
 
   public isPublished(): boolean {
     return this._props.status === QuizStatus.PUBLISHED;
+  }
+
+  public isRandomQuestion(): boolean {
+    return this._props.isRandom;
   }
 
   public isGenerateFailed(): boolean {
