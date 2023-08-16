@@ -18,14 +18,15 @@ export class ArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedE
   ) {}
 
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
-    const { articleEntityBefore, articleEntityAfter, actor } = event;
-    if (!articleEntityAfter.isPublished()) {
+    const { articleEntity, actor } = event;
+    const articleEntityBefore = new ArticleEntity(articleEntity.getSnapshot());
+    if (!articleEntity.isPublished()) {
       return;
     }
 
     const contentWithArchivedGroups = (await this._contentRepository.findOne({
       where: {
-        id: articleEntityAfter.getId(),
+        id: articleEntity.getId(),
         groupArchived: true,
       },
       include: {
@@ -34,7 +35,7 @@ export class ArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedE
     })) as ArticleEntity;
 
     const seriesIds = uniq([
-      ...articleEntityAfter.getSeriesIds(),
+      ...articleEntity.getSeriesIds(),
       ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
     ]);
 
@@ -59,37 +60,37 @@ export class ArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedE
         publishedAt: articleEntityBefore.get('publishedAt'),
       },
       after: {
-        id: articleEntityAfter.get('id'),
+        id: articleEntity.get('id'),
         actor,
-        type: articleEntityAfter.get('type'),
-        setting: articleEntityAfter.get('setting'),
-        groupIds: articleEntityAfter.get('groupIds'),
-        communityIds: articleEntityAfter.get('communityIds'),
+        type: articleEntity.get('type'),
+        setting: articleEntity.get('setting'),
+        groupIds: articleEntity.get('groupIds'),
+        communityIds: articleEntity.get('communityIds'),
         seriesIds,
-        tags: (articleEntityAfter.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
-        title: articleEntityAfter.get('title'),
-        summary: articleEntityAfter.get('summary'),
-        content: articleEntityAfter.get('content'),
-        lang: articleEntityAfter.get('lang'),
+        tags: (articleEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
+        title: articleEntity.get('title'),
+        summary: articleEntity.get('summary'),
+        content: articleEntity.get('content'),
+        lang: articleEntity.get('lang'),
         state: {
-          attachGroupIds: articleEntityAfter.getState().attachGroupIds,
-          detachGroupIds: articleEntityAfter.getState().detachGroupIds,
-          attachTagIds: articleEntityAfter.getState().attachTagIds,
-          detachTagIds: articleEntityAfter.getState().detachTagIds,
-          attachSeriesIds: articleEntityAfter.getState().attachSeriesIds,
-          detachSeriesIds: articleEntityAfter.getState().detachSeriesIds,
+          attachGroupIds: articleEntity.getState().attachGroupIds,
+          detachGroupIds: articleEntity.getState().detachGroupIds,
+          attachTagIds: articleEntity.getState().attachTagIds,
+          detachTagIds: articleEntity.getState().detachTagIds,
+          attachSeriesIds: articleEntity.getState().attachSeriesIds,
+          detachSeriesIds: articleEntity.getState().detachSeriesIds,
         },
-        isHidden: articleEntityAfter.get('isHidden'),
-        coverMedia: new ImageDto(articleEntityAfter.get('cover').toObject()),
-        status: articleEntityAfter.get('status'),
-        createdAt: articleEntityAfter.get('createdAt'),
-        updatedAt: articleEntityAfter.get('updatedAt'),
-        publishedAt: articleEntityAfter.get('publishedAt'),
+        isHidden: articleEntity.get('isHidden'),
+        coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
+        status: articleEntity.get('status'),
+        createdAt: articleEntity.get('createdAt'),
+        updatedAt: articleEntity.get('updatedAt'),
+        publishedAt: articleEntity.get('publishedAt'),
       },
     };
 
     this._kafkaService.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
-      key: articleEntityAfter.getId(),
+      key: articleEntity.getId(),
       value: new ArticleChangedMessagePayload(payload),
     });
   }

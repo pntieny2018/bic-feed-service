@@ -10,8 +10,7 @@ export class ArticleDeletedEvent {
 
 export class ArticleUpdatedEvent {
   public constructor(
-    public readonly articleEntityBefore: ArticleEntity,
-    public readonly articleEntityAfter: ArticleEntity,
+    public readonly articleEntity: ArticleEntity,
     public readonly actor: UserDto
   ) {}
 }

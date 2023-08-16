@@ -5,6 +5,7 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../domain/domain-service/interface';
+import { ArticleInvalidScheduledTimeException } from '../../../domain/exception';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ArticleDto } from '../../dto';
@@ -22,7 +23,13 @@ export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCo
 
   public async execute(command: ScheduleArticleCommand): Promise<ArticleDto> {
     const payload = command.payload;
-    const { actor } = payload;
+    const { actor, scheduledAt } = payload;
+
+    const scheduledDate = new Date(scheduledAt);
+
+    if (!scheduledDate.getTime() || scheduledDate.getTime() <= Date.now()) {
+      throw new ArticleInvalidScheduledTimeException();
+    }
 
     const articleEntity = await this._articleDomainService.schedule({
       payload,

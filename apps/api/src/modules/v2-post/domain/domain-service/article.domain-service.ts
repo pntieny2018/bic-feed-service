@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { cloneDeep } from 'lodash';
 
 import { UserDto } from '../../../v2-user/application';
 import {
@@ -9,7 +8,6 @@ import {
   ArticleUpdatedEvent,
 } from '../event/article.event';
 import {
-  ArticleInvalidScheduledTimeException,
   ArticleRequiredCoverException,
   ContentAccessDeniedException,
   ContentEmptyContentException,
@@ -195,12 +193,6 @@ export class ArticleDomainService implements IArticleDomainService {
     const { payload } = inputData;
     const { id, scheduledAt } = payload;
 
-    const scheduledDate = new Date(scheduledAt);
-
-    if (!scheduledDate.getTime() || scheduledDate.getTime() <= Date.now()) {
-      throw new ArticleInvalidScheduledTimeException();
-    }
-
     const articleEntity = await this._contentRepository.findOne({
       where: {
         id,
@@ -276,8 +268,6 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    const articleEntityBefore = cloneDeep(articleEntity);
-
     await this._setArticleEntityAttributes(articleEntity, inputData, actor);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
@@ -293,7 +283,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticleUpdatedEvent(articleEntityBefore, articleEntity, actor));
+    this.event.publish(new ArticleUpdatedEvent(articleEntity, actor));
 
     return articleEntity;
   }
