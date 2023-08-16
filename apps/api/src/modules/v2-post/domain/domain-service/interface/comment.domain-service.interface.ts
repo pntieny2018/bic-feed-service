@@ -8,7 +8,6 @@ export type UpdateCommentProps = BasedCommentProps & { id: string };
 
 export type GetCommentsAroundIdProps = {
   userId?: string;
-  isChild: boolean;
   limit: number;
   targetChildLimit: number;
 };

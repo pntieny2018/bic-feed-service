@@ -61,20 +61,20 @@ export class CommentDomainService implements ICommentDomainService {
     id: string,
     props: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const { isChild } = props;
+    const comment = await this.getVisibleComment(id);
+    const isChild = comment.isChildComment();
 
     if (isChild) {
-      return this._getCommentsAroundChild(id, props);
+      return this._getCommentsAroundChild(comment, props);
     }
-    return this._getCommentsAroundParent(id, props);
+    return this._getCommentsAroundParent(comment, props);
   }
 
   private async _getCommentsAroundChild(
-    id: string,
+    comment: CommentEntity,
     pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { userId, targetChildLimit, limit } = pagination;
-    const comment = await this._commentRepository.findOne({ id });
 
     const aroundChildPagination = await this._commentQuery.getAroundComment(comment, {
       limit: targetChildLimit,
@@ -95,11 +95,10 @@ export class CommentDomainService implements ICommentDomainService {
   }
 
   private async _getCommentsAroundParent(
-    id: string,
+    comment: CommentEntity,
     pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { userId, targetChildLimit, limit } = pagination;
-    const comment = await this._commentRepository.findOne({ id });
 
     const childsPagination = await this._commentQuery.getPagination({
       authUser: userId,

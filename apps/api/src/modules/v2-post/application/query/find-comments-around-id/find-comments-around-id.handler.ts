@@ -40,15 +40,12 @@ export class FindCommentsAroundIdHandler
 
     this._contentValidator.checkCanReadContent(post, authUser);
 
-    const isChild = comment.isChildComment();
-
     const aroundCommentPagination = await this._commentDomainService.getCommentsAroundId(
       commentId,
       {
         userId: authUser.id,
         limit,
         targetChildLimit,
-        isChild,
       }
     );
 
