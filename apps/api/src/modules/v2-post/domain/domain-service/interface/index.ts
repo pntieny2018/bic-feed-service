@@ -5,3 +5,4 @@ export * from './series.domain-service.interface';
 export * from './article.domain-service.interface';
 export * from './content.domain-service.interface';
 export * from './quiz.domain-service.interface';
+export * from './category.domain-service.interface';

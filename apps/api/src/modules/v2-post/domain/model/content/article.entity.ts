@@ -1,10 +1,13 @@
-import { TagEntity } from '../tag';
-import { RULES } from '../../../constant';
 import { difference, isEmpty } from 'lodash';
-import { ImageEntity } from '../media';
+import { v4 } from 'uuid';
+
+import { RULES } from '../../../constant';
+import { PostStatus, PostType } from '../../../data-type';
 import { CategoryEntity } from '../category';
+import { ImageEntity } from '../media';
+import { TagEntity } from '../tag';
+
 import { ContentEntity, ContentAttributes } from './content.entity';
-import { PostStatus } from '../../../data-type';
 
 export type ArticleAttributes = ContentAttributes & {
   title: string;
@@ -21,6 +24,47 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     super(props);
   }
 
+  public static create({
+    groupIds,
+    userId,
+  }: {
+    groupIds: string[];
+    userId: string;
+  }): ArticleEntity {
+    const now = new Date();
+    return new ArticleEntity({
+      id: v4(),
+      groupIds,
+      content: null,
+      title: null,
+      summary: null,
+      createdBy: userId,
+      updatedBy: userId,
+      aggregation: {
+        commentsCount: 0,
+        totalUsersSeen: 0,
+      },
+      type: PostType.ARTICLE,
+      status: PostStatus.DRAFT,
+      isHidden: false,
+      isReported: false,
+      privacy: null,
+      setting: {
+        canComment: true,
+        canReact: true,
+        importantExpiredAt: null,
+        isImportant: false,
+      },
+      createdAt: now,
+      updatedAt: now,
+      seriesIds: [],
+      tags: [],
+      categories: [],
+      wordCount: 0,
+      cover: null,
+    });
+  }
+
   public updateAttribute(data: Partial<ArticleAttributes>, userId: string): void {
     const { content, seriesIds, title, summary, groupIds, wordCount } = data;
     super.update({ authUser: { id: userId }, groupIds });
@@ -32,14 +76,24 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
       this._props.seriesIds = seriesIds;
     }
 
-    if (wordCount) this._props.wordCount = wordCount;
-    if (content) this._props.content = content;
-    if (title) this._props.title = title;
-    if (summary !== undefined) this._props.summary = summary;
+    if (wordCount) {
+      this._props.wordCount = wordCount;
+    }
+    if (content) {
+      this._props.content = content;
+    }
+    if (title) {
+      this._props.title = title;
+    }
+    if (summary !== undefined) {
+      this._props.summary = summary;
+    }
   }
 
   public setWaitingSchedule(scheduledAt: Date): void {
-    if (this.isPublished()) return;
+    if (this.isPublished()) {
+      return;
+    }
     this._state.isChangeStatus = true;
     this._props.scheduledAt = scheduledAt;
     this._props.status = PostStatus.WAITING_SCHEDULE;

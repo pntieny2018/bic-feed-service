@@ -1,8 +1,12 @@
-import { ContentEntity, ContentAttributes } from './content.entity';
+import { v4 } from 'uuid';
+
 import { RULES } from '../../../constant';
-import { FileEntity, ImageEntity, VideoEntity } from '../media';
+import { PostStatus, PostType } from '../../../data-type';
 import { LinkPreviewEntity } from '../link-preview';
+import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { TagEntity } from '../tag';
+
+import { ContentEntity, ContentAttributes } from './content.entity';
 
 export type PostAttributes = ContentAttributes & {
   media: {
@@ -23,6 +27,44 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     super(props);
   }
 
+  public static create({ groupIds, userId }: { groupIds: string[]; userId: string }): PostEntity {
+    const now = new Date();
+    return new PostEntity({
+      id: v4(),
+      groupIds,
+      content: null,
+      createdBy: userId,
+      updatedBy: userId,
+      aggregation: {
+        commentsCount: 0,
+        totalUsersSeen: 0,
+      },
+      type: PostType.POST,
+      status: PostStatus.DRAFT,
+      media: {
+        files: [],
+        images: [],
+        videos: [],
+      },
+      isHidden: false,
+      isReported: false,
+      privacy: null,
+      setting: {
+        canComment: true,
+        canReact: true,
+        importantExpiredAt: null,
+        isImportant: false,
+      },
+      createdAt: now,
+      updatedAt: now,
+      mentionUserIds: [],
+      linkPreview: null,
+      seriesIds: [],
+      tags: [],
+      wordCount: 0,
+    });
+  }
+
   public updateAttribute(data: Partial<PostAttributes>, userId: string): void {
     const { content, seriesIds, groupIds, mentionUserIds } = data;
     const authUser = { id: userId };
@@ -31,8 +73,12 @@ export class PostEntity extends ContentEntity<PostAttributes> {
       groupIds,
     });
 
-    if (content) this._props.content = content;
-    if (mentionUserIds) this._props.mentionUserIds = mentionUserIds;
+    if (content) {
+      this._props.content = content;
+    }
+    if (mentionUserIds) {
+      this._props.mentionUserIds = mentionUserIds;
+    }
     if (seriesIds) {
       this._state.attachSeriesIds = seriesIds.filter(
         (seriesId) => !this._props.seriesIds?.includes(seriesId)
@@ -57,7 +103,9 @@ export class PostEntity extends ContentEntity<PostAttributes> {
   }
 
   public setTags(newTags: TagEntity[]): void {
-    if (!newTags) return;
+    if (!newTags) {
+      return;
+    }
     const entityTagIds = this._props.tags?.map((tag) => tag.get('id')) || [];
     for (const tag of newTags) {
       if (!entityTagIds.includes(tag.get('id'))) {

@@ -1,8 +1,8 @@
 import { isEmpty } from 'lodash';
-import { NIL, validate as isUUID } from 'uuid';
+import { NIL, validate as isUUID, v4 } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { DomainModelException } from '../../../../../common/exceptions';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { ReactionEntity } from '../reaction';
@@ -34,6 +34,31 @@ export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
   public constructor(props: CommentAttributes) {
     super(props);
   }
+
+  public static create(props: Partial<CommentAttributes>, userId: string): CommentEntity {
+    const { parentId, postId, content, giphyId, mentions } = props;
+    const now = new Date();
+    return new CommentEntity({
+      id: v4(),
+      parentId,
+      postId,
+      content,
+      createdBy: userId,
+      updatedBy: userId,
+      media: {
+        files: [],
+        images: [],
+        videos: [],
+      },
+      mentions: mentions,
+      isHidden: false,
+      edited: false,
+      createdAt: now,
+      updatedAt: now,
+      giphyId,
+    });
+  }
+
   public validate(): void {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Comment ID is not UUID`);

@@ -1,26 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { FindCategoriesPaginationHandler } from '../../../application/query/find-categories/find-categories-pagination.handler';
-import { CATEGORY_QUERY_TOKEN } from '../../../domain/query-interface/category.query.interface';
-import { CategoryQuery } from '../../../driven-adapter/query';
 import { createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
+
+import { FindCategoriesPaginationHandler } from '../../../application/query/find-categories/find-categories-pagination.handler';
+import { CategoryDomainService } from '../../../domain/domain-service/category.domain-service';
+import { CATEGORY_DOMAIN_SERVICE_TOKEN } from '../../../domain/domain-service/interface';
 import { CategoryEntity } from '../../../domain/model/category';
 
 describe('FindCategoriesPaginationHandler', () => {
-  let categoryQuery, handler;
+  let categoryDomainService, handler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FindCategoriesPaginationHandler,
         {
-          provide: CATEGORY_QUERY_TOKEN,
-          useValue: createMock<CategoryQuery>(),
+          provide: CATEGORY_DOMAIN_SERVICE_TOKEN,
+          useValue: createMock<CategoryDomainService>(),
         },
       ],
     }).compile();
     handler = module.get<FindCategoriesPaginationHandler>(FindCategoriesPaginationHandler);
-    categoryQuery = module.get(CATEGORY_QUERY_TOKEN);
+    categoryDomainService = module.get(CATEGORY_DOMAIN_SERVICE_TOKEN);
   });
 
   afterEach(() => {
@@ -63,7 +64,7 @@ describe('FindCategoriesPaginationHandler', () => {
   describe('execute', () => {
     it('should find categories success', async () => {
       jest
-        .spyOn(categoryQuery, 'getPagination')
+        .spyOn(categoryDomainService, 'getPagination')
         .mockResolvedValue({ rows: categoryEntities, total: 2 });
       const result = await handler.execute({ page: 0, limit: 10 });
       expect(result).toEqual({ rows: categoryRecords, total: 2 });
