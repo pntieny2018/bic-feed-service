@@ -1,11 +1,13 @@
 import { Inject, Logger } from '@nestjs/common';
+import { cloneDeep } from 'lodash';
+
 import { DatabaseException } from '../../../../common/exceptions';
 import { TagDuplicateNameException, TagUsedException } from '../exception';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory/interface';
 import { TagEntity } from '../model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
+
 import { ITagDomainService, TagCreateProps, TagUpdateProps } from './interface';
-import { cloneDeep } from 'lodash';
 
 export class TagDomainService implements ITagDomainService {
   private readonly _logger = new Logger(TagDomainService.name);
