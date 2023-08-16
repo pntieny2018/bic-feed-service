@@ -1,11 +1,32 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
+
+import { ArrayHelper } from '../../../../../common/helpers';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
+import { GroupPrivacy } from '../../../../v2-group/data-type';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../../../v2-user/application';
-import { Inject, Injectable } from '@nestjs/common';
+import { PostStatus } from '../../../data-type';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
+import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+  ReactionsCount,
+} from '../../../domain/query-interface/reaction.query.interface';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import {
+  IQuizParticipantRepository,
+  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
 import {
   FileDto,
   ImageDto,
@@ -15,28 +36,9 @@ import {
   UserMentionDto,
   VideoDto,
 } from '../../dto';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
-import { IContentBinding } from './content.interface';
-import { ArrayHelper } from '../../../../../common/helpers';
-import { GroupPrivacy } from '../../../../v2-group/data-type';
-import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-  ReactionsCount,
-} from '../../../domain/query-interface/reaction.query.interface';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { ArticleDto } from '../../dto/article.dto';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { PostStatus } from '../../../data-type';
-import {
-  IQuizParticipantRepository,
-  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
-import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
+
+import { IContentBinding } from './content.interface';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -664,7 +666,9 @@ export class ContentBinding implements IContentBinding {
     const items = [];
     entity.get('itemIds').forEach((itemId) => {
       const itemEntity = dataBinding.items.get(itemId);
-      if (itemEntity) items.push(itemEntity);
+      if (itemEntity) {
+        items.push(itemEntity);
+      }
     });
     return new SeriesDto({
       id: entity.get('id'),
@@ -852,7 +856,9 @@ export class ContentBinding implements IContentBinding {
   }
 
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
-    if (!users || !users?.length) return {};
+    if (!users || !users?.length) {
+      return {};
+    }
     return users
       .filter((user) => user)
       .reduce((returnValue, current) => {

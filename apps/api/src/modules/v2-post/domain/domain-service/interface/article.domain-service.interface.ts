@@ -1,5 +1,9 @@
-import { ArticleEntity } from '../../model/content';
 import { UserDto } from '../../../../v2-user/application';
+import { AutoSaveArticleCommandPayload } from '../../../application/command/auto-save-article/auto-save-article.command';
+import { DeleteArticleCommandPayload } from '../../../application/command/delete-article/delete-article.command';
+import { PublishArticleCommandPayload } from '../../../application/command/publish-article/publish-article.command';
+import { UpdateArticleCommandPayload } from '../../../application/command/update-article/update-article.command';
+import { ArticleEntity } from '../../model/content';
 
 export type ArticlePayload = {
   id: string;
@@ -17,27 +21,25 @@ export type ArticlePayload = {
   scheduledAt?: Date;
 };
 
-export type UpdateArticleProps = {
-  articleEntity: ArticleEntity;
-  newData: ArticlePayload;
-  actor: UserDto;
-};
+export type UpdateArticleProps = UpdateArticleCommandPayload;
 
-export type PublishArticleProps = {
-  articleEntity: ArticleEntity;
-  newData: ArticlePayload;
-  actor: UserDto;
-};
+export type PublishArticleProps = PublishArticleCommandPayload;
 
 export type ScheduleArticleProps = {
   payload: ArticlePayload;
   actor: UserDto;
 };
 
+export type AutoSaveArticleProps = AutoSaveArticleCommandPayload;
+
+export type DeleteArticleProps = DeleteArticleCommandPayload;
+
 export interface IArticleDomainService {
-  update(input: UpdateArticleProps): Promise<void>;
-  publish(input: PublishArticleProps): Promise<void>;
+  getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
+  deleteArticle(props: DeleteArticleProps): Promise<void>;
+  update(input: UpdateArticleProps): Promise<ArticleEntity>;
+  publish(input: PublishArticleProps): Promise<ArticleEntity>;
   schedule(input: ScheduleArticleProps): Promise<ArticleEntity>;
-  autoSave(inputData: UpdateArticleProps): Promise<void>;
+  autoSave(inputData: AutoSaveArticleProps): Promise<void>;
 }
 export const ARTICLE_DOMAIN_SERVICE_TOKEN = 'ARTICLE_DOMAIN_SERVICE_TOKEN';

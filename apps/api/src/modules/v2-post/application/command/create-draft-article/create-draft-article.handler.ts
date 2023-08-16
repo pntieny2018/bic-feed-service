@@ -1,13 +1,15 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { CreateDraftArticleCommand } from './create-draft-article.command';
-import { ArticleDto } from '../../dto';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
+import { ArticleDto } from '../../dto';
+
+import { CreateDraftArticleCommand } from './create-draft-article.command';
 
 @CommandHandler(CreateDraftArticleCommand)
 export class CreateDraftArticleHandler
@@ -25,10 +27,10 @@ export class CreateDraftArticleHandler
       userId: authUser.id,
       groups: [],
     });
-    const data = this._contentBinding.articleBinding(articleEntity, {
+
+    return this._contentBinding.articleBinding(articleEntity, {
       actor: authUser,
       authUser,
     });
-    return data;
   }
 }
