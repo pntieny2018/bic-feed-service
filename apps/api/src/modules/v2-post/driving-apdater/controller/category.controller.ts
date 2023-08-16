@@ -1,13 +1,14 @@
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { QueryBus } from '@nestjs/cqrs';
-import { UserDto } from '../../../v2-user/application';
-import { PageDto } from '../../../../common/dto';
-import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
-import { GetCategoryRequestDto } from '../dto/request';
+import { PageDto } from '../../../../common/dto';
+import { UserDto } from '../../../v2-user/application';
 import { FindCategoriesPaginationDto } from '../../application/dto/category.dto';
+import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { GetCategoryRequestDto } from '../dto/request';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')
