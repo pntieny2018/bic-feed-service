@@ -4,8 +4,6 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagDuplicateNameException } from '../../../domain/exception';
 import { CreateTagCommand } from './create-tag.command';
 import { TagNoCreatePermissionException } from '../../../domain/exception';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
@@ -13,8 +11,6 @@ import { TagDto } from '../../dto';
 
 @CommandHandler(CreateTagCommand)
 export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagDto> {
-  @Inject(TAG_REPOSITORY_TOKEN)
-  private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
   @Inject(USER_APPLICATION_TOKEN)
@@ -26,14 +22,6 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagDt
     const canCreateTag = await this._userAppService.canCudTagInCommunityByUserId(userId, groupId);
     if (!canCreateTag) {
       throw new TagNoCreatePermissionException();
-    }
-
-    const findTagNameInGroup = await this._tagRepository.findOne({
-      groupId,
-      name,
-    });
-    if (findTagNameInGroup) {
-      throw new TagDuplicateNameException();
     }
 
     const tagEntity = await this._tagDomainService.createTag({

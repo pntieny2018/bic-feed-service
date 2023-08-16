@@ -92,12 +92,11 @@ export class TagRepository implements ITagRepository {
     if (name) {
       condition.name = name.trim().toLowerCase();
     }
-    const enties = await this._tagModel.findAll({
+    const entities = await this._tagModel.findAll({
       where: condition,
     });
-    const rows = enties.map((entity) => this._modelToEntity(entity));
 
-    return rows;
+    return entities.map((entity) => this._modelToEntity(entity));
   }
 
   private _modelToEntity(tag: TagModel): TagEntity {
