@@ -1,7 +1,8 @@
 import { IQuery } from '@nestjs/cqrs';
-import { PostType } from '../../../data-type';
+
 import { OrderEnum } from '../../../../../common/dto';
 import { UserDto } from '../../../../v2-user/application';
+import { PostType } from '../../../data-type';
 
 type Props = {
   authUser: UserDto;

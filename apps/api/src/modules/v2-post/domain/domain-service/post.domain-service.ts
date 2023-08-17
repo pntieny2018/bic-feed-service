@@ -1,18 +1,18 @@
 import { Inject, Logger } from '@nestjs/common';
+
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { UserDto } from '../../../v2-user/application';
+import { ContentNotFoundException } from '../exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
 import {
   ARTICLE_FACTORY_TOKEN,
   IArticleFactory,
   IPostFactory,
   POST_FACTORY_TOKEN,
 } from '../factory/interface';
-import {
-  ArticleCreateProps,
-  IPostDomainService,
-  PostCreateProps,
-  PostPublishProps,
-} from './interface';
 import { PostEntity } from '../model/content';
+import { ArticleEntity } from '../model/content/article.entity';
+import { ContentEntity } from '../model/content/content.entity';
 import {
   IContentRepository,
   ITagRepository,
@@ -27,18 +27,21 @@ import {
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../validator/interface';
+
+import {
+  ArticleCreateProps,
+  IPostDomainService,
+  PostCreateProps,
+  PostPublishProps,
+} from './interface';
 import {
   ILinkPreviewDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
 } from './interface/link-preview.domain-service.interface';
-import { InvalidResourceImageException } from '../exception/media.exception';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
-import { ContentEntity } from '../model/content/content.entity';
-import { ArticleEntity } from '../model/content/article.entity';
-import { UserDto } from '../../../v2-user/application';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -162,7 +165,9 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('tags')
     );
 
-    if (!postEntity.isChanged()) return;
+    if (!postEntity.isChanged()) {
+      return;
+    }
     await this._contentRepository.update(postEntity);
 
     postEntity.commit();
@@ -212,7 +217,9 @@ export class PostDomainService implements IPostDomainService {
     postEntity.updateAttribute(restUpdate, authUser.id);
     postEntity.setPrivacyFromGroups(newData.groups);
 
-    if (postEntity.hasVideoProcessing()) postEntity.setProcessing();
+    if (postEntity.hasVideoProcessing()) {
+      postEntity.setProcessing();
+    }
 
     await this._postValidator.validatePublishContent(
       postEntity,
@@ -229,43 +236,74 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('tags')
     );
 
-    if (!postEntity.isChanged()) return;
+    if (!postEntity.isChanged()) {
+      return;
+    }
     await this._contentRepository.update(postEntity);
 
     postEntity.commit();
   }
 
   public async updateSetting(input: {
-    entity: ContentEntity;
+    contentId: string;
     authUser: UserDto;
     canComment: boolean;
     canReact: boolean;
     isImportant: boolean;
     importantExpiredAt: Date;
   }): Promise<void> {
-    const { entity, authUser, canReact, canComment, isImportant, importantExpiredAt } = input;
-    await this._postValidator.checkCanEditContentSetting(authUser, entity.get('groupIds'));
-    entity.setSetting({
+    const { contentId, authUser, canReact, canComment, isImportant, importantExpiredAt } = input;
+
+    const contentEntity: ContentEntity = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+      },
+    });
+    if (!contentEntity || contentEntity.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    await this._postValidator.checkCanEditContentSetting(authUser, contentEntity.get('groupIds'));
+    contentEntity.setSetting({
       canComment,
       canReact,
       isImportant,
       importantExpiredAt,
     });
-    await this._contentRepository.update(entity);
+    await this._contentRepository.update(contentEntity);
 
     if (isImportant) {
-      await this.markReadImportant(entity, authUser.id);
+      await this._contentRepository.markReadImportant(contentId, authUser.id);
     }
 
-    entity.commit();
+    contentEntity.commit();
   }
 
-  public async markSeen(contentEntity: ContentEntity, userId: string): Promise<void> {
-    await this._contentRepository.markSeen(contentEntity.getId(), userId);
+  public async markSeen(contentId: string, userId: string): Promise<void> {
+    await this._contentRepository.markSeen(contentId, userId);
   }
 
-  public async markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void> {
-    await this._contentRepository.markReadImportant(contentEntity.getId(), userId);
+  public async markReadImportant(contentId: string, userId: string): Promise<void> {
+    const contentEntity = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+      },
+    });
+    if (!contentEntity || contentEntity.isHidden()) {
+      return;
+    }
+    if (contentEntity.isDraft()) {
+      return;
+    }
+    if (!contentEntity.isImportant()) {
+      return;
+    }
+
+    return this._contentRepository.markReadImportant(contentId, userId);
   }
 
   public async autoSavePost(input: PostPublishProps): Promise<void> {
@@ -310,7 +348,9 @@ export class PostDomainService implements IPostDomainService {
     postEntity.updateAttribute(restUpdate, newData.authUser.id);
     postEntity.setPrivacyFromGroups(newData.groups);
 
-    if (!postEntity.isChanged()) return;
+    if (!postEntity.isChanged()) {
+      return;
+    }
     await this._contentRepository.update(postEntity);
     postEntity.commit();
   }

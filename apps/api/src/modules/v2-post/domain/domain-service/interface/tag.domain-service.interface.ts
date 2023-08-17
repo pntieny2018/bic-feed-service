@@ -12,6 +12,8 @@ export type TagUpdateProps = {
 };
 
 export interface ITagDomainService {
+  findByIds(ids: string[]): Promise<TagEntity[]>;
+
   createTag(data: TagCreateProps): Promise<TagEntity>;
 
   updateTag(tag: TagEntity, data: TagUpdateProps): Promise<TagEntity>;

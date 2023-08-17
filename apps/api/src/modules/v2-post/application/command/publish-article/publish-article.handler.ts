@@ -28,11 +28,11 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
     const { actor } = command.payload;
     const articleEntity = await this._articleDomainService.publish(command.payload);
 
-    await this._postDomainService.markSeen(articleEntity, actor.id);
+    await this._postDomainService.markSeen(articleEntity.get('id'), actor.id);
     articleEntity.increaseTotalSeen();
 
     if (articleEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(articleEntity, actor.id);
+      await this._postDomainService.markReadImportant(articleEntity.get('id'), actor.id);
       articleEntity.setMarkReadImportant();
     }
 

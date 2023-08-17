@@ -17,6 +17,20 @@ export class TagDomainService implements ITagDomainService {
   @Inject(TAG_FACTORY_TOKEN)
   private readonly _tagFactory: ITagFactory;
 
+  public async findByIds(ids: string[]): Promise<TagEntity[]> {
+    if (!ids?.length) {
+      return [];
+    }
+    try {
+      return await this._tagRepository.findAll({
+        ids,
+      });
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
+
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;
     const findTagNameInGroup = await this._tagRepository.findOne({

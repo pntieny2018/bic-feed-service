@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindDraftContentsQuery } from './find-draft-contents.query';
+
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -10,6 +10,8 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 import { FindDraftContentsDto } from '../../dto/content.dto';
+
+import { FindDraftContentsQuery } from './find-draft-contents.query';
 
 @QueryHandler(FindDraftContentsQuery)
 export class FindDraftContentsHandler
@@ -27,10 +29,11 @@ export class FindDraftContentsHandler
 
     const { rows, meta } = await this._contentDomainService.getDraftsPagination(query.payload);
 
-    if (!rows || rows.length === 0) return new FindDraftContentsDto([], meta);
+    if (!rows || rows.length === 0) {
+      return new FindDraftContentsDto([], meta);
+    }
 
     const contentIds = rows.map((row) => row.getId());
-
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids: contentIds,
       authUser,
