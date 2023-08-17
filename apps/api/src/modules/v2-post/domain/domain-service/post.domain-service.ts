@@ -30,8 +30,6 @@ import {
 
 import {
   ArticleCreateProps,
-  CONTENT_DOMAIN_SERVICE_TOKEN,
-  IContentDomainService,
   IPostDomainService,
   PostCreateProps,
   PostPublishProps,
@@ -66,9 +64,7 @@ export class PostDomainService implements IPostDomainService {
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepo: ITagRepository,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService
+    private readonly _mediaDomainService: IMediaDomainService
   ) {}
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
@@ -281,7 +277,7 @@ export class PostDomainService implements IPostDomainService {
     await this._contentRepository.update(contentEntity);
 
     if (isImportant) {
-      await this.markReadImportant(contentId, authUser.id);
+      await this._contentRepository.markReadImportant(contentId, authUser.id);
     }
 
     contentEntity.commit();
@@ -292,7 +288,21 @@ export class PostDomainService implements IPostDomainService {
   }
 
   public async markReadImportant(contentId: string, userId: string): Promise<void> {
-    await this._contentDomainService.getImportantContent(contentId);
+    const contentEntity = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+      },
+    });
+    if (!contentEntity || contentEntity.isHidden()) {
+      return;
+    }
+    if (contentEntity.isDraft()) {
+      return;
+    }
+    if (!contentEntity.isImportant()) {
+      return;
+    }
+
     return this._contentRepository.markReadImportant(contentId, userId);
   }
 

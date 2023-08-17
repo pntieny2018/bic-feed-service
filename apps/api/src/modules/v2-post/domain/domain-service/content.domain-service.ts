@@ -44,24 +44,6 @@ export class ContentDomainService implements IContentDomainService {
     return entity;
   }
 
-  public async getImportantContent(id: string): Promise<ContentEntity> {
-    const contentEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-      },
-    });
-    if (!contentEntity || contentEntity.isHidden()) {
-      return;
-    }
-    if (contentEntity.isDraft()) {
-      return;
-    }
-    if (!contentEntity.isImportant()) {
-      return;
-    }
-    return contentEntity;
-  }
-
   public getRawContent(contentEntity: ContentEntity): string {
     if (contentEntity instanceof PostEntity) {
       return StringHelper.removeMarkdownCharacter(contentEntity.get('content'));
