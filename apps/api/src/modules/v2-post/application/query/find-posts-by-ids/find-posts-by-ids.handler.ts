@@ -1,13 +1,15 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { ArticleDto, PostDto, SeriesDto } from '../../dto';
-import { FindPostsByIdsQuery } from './find-posts-by-ids.query';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { ContentBinding } from '../../binding/binding-post/content.binding';
+
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
+import { ContentBinding } from '../../binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
+import { ArticleDto, PostDto, SeriesDto } from '../../dto';
+
+import { FindPostsByIdsQuery } from './find-posts-by-ids.query';
 
 @QueryHandler(FindPostsByIdsQuery)
 export class FindPostsByIdsHandler
@@ -22,7 +24,10 @@ export class FindPostsByIdsHandler
 
   public async execute(query: FindPostsByIdsQuery): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
     const { authUser } = query.payload;
-    const contentEntities = await this._contentDomainService.getContentByIds(query.payload);
+    const contentEntities = await this._contentDomainService.getContentByIds({
+      ...query.payload,
+      authUserId: authUser.id,
+    });
     const result = await this._contentBinding.contentsBinding(contentEntities, authUser);
     return result;
   }

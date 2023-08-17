@@ -51,6 +51,18 @@ import { configs } from '@app/queue/config/configuration';
         },
       },
     }),
+    BullModule.registerQueue({
+      name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 3000,
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    }),
   ],
   providers: [QueueService],
   exports: [QueueService],

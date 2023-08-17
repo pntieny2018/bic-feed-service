@@ -3,7 +3,6 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { userMock } from '../../mock/user.dto.mock';
 import { FindCategoriesPaginationQuery } from '../../../application/query/find-categories/find-categories-pagination.query';
-import { GetCategoryDto } from '../../../driving-apdater/dto/request/get-category.dto';
 import { FindCategoriesPaginationDto } from '../../../application/dto/category.dto';
 
 describe('CategoryController', () => {
@@ -50,7 +49,7 @@ describe('CategoryController', () => {
 
   describe('Get', () => {
     it('Should get categories successfully', async () => {
-      const getCategoryDto: GetCategoryDto = {
+      const getCategoryDto = {
         name: 'Outdoors',
         level: 1,
         isCreatedByMe: true,

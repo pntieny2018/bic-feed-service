@@ -1,8 +1,10 @@
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { IPaginationArgs } from './paginated.interface';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
+
 import { PAGING_DEFAULT_LIMIT } from '../../constants';
+
+import { IPaginationArgs } from './paginated.interface';
 
 export class PaginatedArgs implements IPaginationArgs {
   @ApiProperty({

@@ -27,7 +27,10 @@ export class FindDraftContentsHandler
   public async execute(query: FindDraftContentsQuery): Promise<FindDraftContentsDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._contentDomainService.getDraftsPagination(query.payload);
+    const { rows, meta } = await this._contentDomainService.getDraftsPagination({
+      ...query.payload,
+      authUserId: authUser.id,
+    });
 
     if (!rows || rows.length === 0) {
       return new FindDraftContentsDto([], meta);
@@ -36,7 +39,7 @@ export class FindDraftContentsHandler
     const contentIds = rows.map((row) => row.getId());
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids: contentIds,
-      authUser,
+      authUserId: authUser.id,
     });
 
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);

@@ -76,6 +76,8 @@ export const ERRORS = {
   QUIZ_NO_CRUD_PERMISSION_AT_GROUP: 'quiz.no_crud_permission_at_group',
   QUIZ_PARTICIPANT_NOT_FOUND: 'quiz_participant.not_found',
   QUIZ_PARTICIPANT_NOT_FINISHED: 'quiz_participant.not_finished',
+  QUIZ_QUESTION_LIMIT_EXCEEDED: 'quiz_question.limit_exceeded',
+  QUIZ_QUESTION_NOT_FOUND: 'quiz_question.not_found',
 
   // REACTION
   REACTION_NOT_FOUND: 'reaction.not_found',

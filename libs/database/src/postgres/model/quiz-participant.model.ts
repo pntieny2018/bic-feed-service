@@ -42,6 +42,10 @@ export class QuizParticipantModel extends Model<
   @Column
   public score: number;
 
+  @Default(false)
+  @Column
+  public isHighest: boolean;
+
   @Column
   public timeLimit: number;
 

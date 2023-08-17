@@ -51,5 +51,10 @@
     "updated_success": "Updated quiz successfully",
     "deleted_success": "Deleted quiz successfully",
     "published_success": "Published quiz successfully"
+  },
+  "quiz_question": {
+    "created_success": "Created question successfully",
+    "updated_success": "Updated question successfully",
+    "deleted_success": "Deleted question successfully"
   }
 }

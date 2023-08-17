@@ -1,11 +1,11 @@
-import { PostEntity } from '../model/content';
-import { PostStatus, PostType } from '../../data-type';
-import { IPost } from '../../../../database/models/post.model';
-import { ArticleEntity } from '../model/content/article.entity';
-import { SeriesEntity } from '../model/content/series.entity';
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { IPost } from '../../../../database/models/post.model';
+import { PostStatus, PostType } from '../../data-type';
+import { PostEntity } from '../model/content';
+import { ArticleEntity } from '../model/content/article.entity';
 import { ContentEntity } from '../model/content/content.entity';
+import { SeriesEntity } from '../model/content/series.entity';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
@@ -59,7 +59,7 @@ export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-
+  getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
     findAllPostOptions: FindContentProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
