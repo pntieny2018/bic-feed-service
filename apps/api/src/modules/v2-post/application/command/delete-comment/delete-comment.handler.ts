@@ -1,29 +1,26 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { DeleteCommentCommand } from './delete-comment.command';
-import {
-  IContentRepository,
-  CONTENT_REPOSITORY_TOKEN,
-  COMMENT_REPOSITORY_TOKEN,
-  ICommentRepository,
-} from '../../../domain/repositoty-interface';
-import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { ContentEntity } from '../../../domain/model/content/content.entity';
-import {
-  ContentAccessDeniedException,
-  CommentNotFoundException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
+
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { CommentHasBeenDeletedEvent } from '../../../../../events/comment/comment-has-been-deleted.event';
+import {
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface';
+import { ContentAccessDeniedException } from '../../../domain/exception';
+import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
+
+import { DeleteCommentCommand } from './delete-comment.command';
 
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(COMMENT_REPOSITORY_TOKEN)
-    private readonly _commentRepository: ICommentRepository,
+    @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _commentDomainService: ICommentDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    protected readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     private readonly _eventEmitter: InternalEventEmitterService
@@ -32,24 +29,17 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
   public async execute(command: DeleteCommentCommand): Promise<void> {
     const { actor, id } = command.payload;
 
-    const comment = await this._commentRepository.findOne({ id });
+    const comment = await this._commentDomainService.getVisibleComment(id);
 
-    if (!comment) throw new CommentNotFoundException();
+    if (!comment.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
 
-    if (!comment.isOwner(actor.id)) throw new ContentAccessDeniedException();
-
-    const post = (await this._contentRepository.findOne({
-      where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
-      include: {
-        mustIncludeGroup: true,
-      },
-    })) as ContentEntity;
-
-    if (!post) throw new ContentNotFoundException();
+    const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    await this._commentRepository.destroyComment(id);
+    await this._commentDomainService.delete(id);
 
     this._eventEmitter.emit(
       new CommentHasBeenDeletedEvent({

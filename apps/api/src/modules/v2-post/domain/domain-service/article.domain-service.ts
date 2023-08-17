@@ -177,7 +177,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
-    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();
@@ -224,7 +224,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
-    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();
@@ -272,7 +272,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
-    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();

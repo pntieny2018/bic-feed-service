@@ -129,8 +129,8 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     postEntity.setMedia(mediaEntity);
   }
 
-  public async validateLimtedToAttachSeries(postEntity: PostEntity): Promise<void> {
-    if (postEntity.isOverLimtedToAttachSeries()) {
+  public async validateLimitedToAttachSeries(postEntity: PostEntity): Promise<void> {
+    if (postEntity.isOverLimitedToAttachSeries()) {
       throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 

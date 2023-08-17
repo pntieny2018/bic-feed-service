@@ -30,12 +30,7 @@ import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/update-series/update-series.command';
-import {
-  CreateCommentDto,
-  CreateSeriesDto,
-  FindItemsBySeriesDto,
-  SeriesDto,
-} from '../../application/dto';
+import { CreateSeriesDto, FindItemsBySeriesDto, SeriesDto } from '../../application/dto';
 import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
 import {
   DeleteSeriesCommand,
@@ -66,8 +61,8 @@ export class SeriesController {
   public async create(
     @AuthUser() user: UserDto,
     @Body() createSeriesRequestDto: CreateSeriesRequestDto
-  ): Promise<CreateCommentDto> {
-    const data = await this._commandBus.execute<CreateSeriesCommand, CreateCommentDto>(
+  ): Promise<CreateSeriesDto> {
+    const data = await this._commandBus.execute<CreateSeriesCommand, CreateSeriesDto>(
       new CreateSeriesCommand({
         ...createSeriesRequestDto,
         actor: user,

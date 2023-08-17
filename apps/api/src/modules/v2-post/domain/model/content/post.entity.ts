@@ -203,7 +203,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     };
   }
 
-  public isOverLimtedToAttachSeries(): boolean {
+  public isOverLimitedToAttachSeries(): boolean {
     return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
   }
 }

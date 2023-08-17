@@ -161,7 +161,7 @@ export class PostDomainService implements IPostDomainService {
     );
     await this._mentionValidator.validateMentionUsers(newData.mentionUsers, newData.groups);
 
-    await this._postValidator.validateLimtedToAttachSeries(postEntity);
+    await this._postValidator.validateLimitedToAttachSeries(postEntity);
 
     await this._contentValidator.validateSeriesAndTags(
       newData.groups,
@@ -232,7 +232,7 @@ export class PostDomainService implements IPostDomainService {
     );
     await this._mentionValidator.validateMentionUsers(newData.mentionUsers, newData.groups);
 
-    await this._postValidator.validateLimtedToAttachSeries(postEntity);
+    await this._postValidator.validateLimitedToAttachSeries(postEntity);
 
     await this._contentValidator.validateSeriesAndTags(
       newData.groups,

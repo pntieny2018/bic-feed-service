@@ -22,10 +22,16 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async getVisibleContent(id: string): Promise<ContentEntity> {
+  public async getVisibleContent(
+    id: string,
+    excludeReportedByUserId?: string
+  ): Promise<ContentEntity> {
     const entity = await this._contentRepository.findOne({
       include: {
         mustIncludeGroup: true,
+        ...(excludeReportedByUserId && {
+          excludeReportedByUserId,
+        }),
       },
       where: {
         id,

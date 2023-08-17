@@ -10,12 +10,14 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
-import { MediaRequestDto } from './media.request.dto';
-import { UserMentionDto } from '../../../application/dto';
+import { NIL } from 'uuid';
+
 import { PAGING_DEFAULT_LIMIT } from '../../../../../common/constants';
 import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
-import { NIL } from 'uuid';
+import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
+import { UserMentionDto } from '../../../application/dto';
+
+import { MediaRequestDto } from './media.request.dto';
 
 export class CreateCommentRequestDto {
   @ApiProperty({
@@ -82,7 +84,9 @@ export class CreateCommentRequestDto {
     if (typeof value === 'object') {
       const mentionUserIds = [];
       for (const property in value) {
-        if (value[property]?.id) mentionUserIds.push(value[property].id);
+        if (value[property]?.id) {
+          mentionUserIds.push(value[property].id);
+        }
       }
       return mentionUserIds;
     }
@@ -115,14 +119,16 @@ export class CreateCommentRequestDto {
   )
   @Transform(({ value }) => {
     if (typeof value === 'object') {
-      if (value?.id) return value.id;
+      if (value?.id) {
+        return value.id;
+      }
     }
     return '';
   })
   public giphyId?: string;
 }
 
-export class GetCommentsArroundIdDto {
+export class GetCommentsAroundIdDto {
   @ApiPropertyOptional({
     required: false,
     default: 10,
@@ -221,7 +227,9 @@ export class UpdateCommentRequestDto {
     if (typeof value === 'object') {
       const mentionUserIds = [];
       for (const property in value) {
-        if (value[property]?.id) mentionUserIds.push(value[property].id);
+        if (value[property]?.id) {
+          mentionUserIds.push(value[property].id);
+        }
       }
       return mentionUserIds;
     }
@@ -246,7 +254,9 @@ export class UpdateCommentRequestDto {
   })
   @Transform(({ value }) => {
     if (typeof value === 'object') {
-      if (value?.id) return value.id;
+      if (value?.id) {
+        return value.id;
+      }
     }
     return '';
   })
