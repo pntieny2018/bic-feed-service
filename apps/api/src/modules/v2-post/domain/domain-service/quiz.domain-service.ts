@@ -1,3 +1,4 @@
+import { EVENT_SERVICE_TOKEN, IEventService } from '@libs/infra/event';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { cloneDeep } from 'lodash';
@@ -56,7 +57,9 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
-    private readonly event: EventBus
+    private readonly event: EventBus,
+    @Inject(EVENT_SERVICE_TOKEN)
+    private readonly _eventService: IEventService
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
@@ -220,7 +223,7 @@ export class QuizDomainService implements IQuizDomainService {
     }
     try {
       await this._quizParticipantRepository.create(quizParticipant);
-      this.event.publish(
+      this._eventService.publish(
         new QuizParticipantStartedEvent({
           quizParticipantId: quizParticipant.get('id'),
           startedAt: quizParticipant.get('startedAt'),

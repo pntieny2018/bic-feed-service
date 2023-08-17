@@ -1,13 +1,17 @@
-import { Controller } from '@nestjs/common';
+import { TracingInterceptor } from '@libs/infra/log';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+
 import { KAFKA_TOPIC } from '../../common/constants';
-import { SearchService } from './search.service';
 import {
   PostChangedMessagePayload,
   SeriesChangedMessagePayload,
   ArticleChangedMessagePayload,
 } from '../v2-post/application/dto/message';
 
+import { SearchService } from './search.service';
+
+@UseInterceptors(TracingInterceptor)
 @Controller()
 export class SearchConsumer {
   public constructor(private readonly _postSearchService: SearchService) {}

@@ -1,17 +1,22 @@
-import { Controller, Logger } from '@nestjs/common';
-import { PostService } from './post.service';
+import { TracingInterceptor } from '@libs/infra/log';
+import { Controller, Logger, UseInterceptors } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { KAFKA_TOPIC } from '../../common/constants';
-import { UpdatePrivacyDto } from './dto/requests/update-privacy.dto';
-import { PostPrivacy } from '../../database/models/post.model';
-import { VideoProcessStatus } from '.';
-import { VideoProcessingEndDto } from './dto/responses/process-video-response.dto';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
+import { KAFKA_TOPIC } from '../../common/constants';
+import { PostPrivacy } from '../../database/models/post.model';
+import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 
+import { UpdatePrivacyDto } from './dto/requests/update-privacy.dto';
+import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
+import { VideoProcessingEndDto } from './dto/responses/process-video-response.dto';
+import { PostService } from './post.service';
+
+import { VideoProcessStatus } from '.';
+
+@UseInterceptors(TracingInterceptor)
 @Controller()
 export class PostConsumerController {
   private _logger = new Logger(PostConsumerController.name);

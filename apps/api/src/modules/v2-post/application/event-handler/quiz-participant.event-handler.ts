@@ -1,29 +1,28 @@
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { Inject, Logger } from '@nestjs/common';
-import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../../domain/event';
+import { QueueService } from '@app/queue';
+import { QUEUES } from '@app/queue/queue.constant';
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { Inject } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
+
 import { RULES } from '../../constant';
 import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../domain/domain-service/interface';
-import { QueueService } from '@app/queue';
-import { QUEUES } from '@app/queue/queue.constant';
+import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../../domain/event';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
 import { QuizParticipantResultJobDto } from '../dto/queue.dto';
 
-@EventsHandler(QuizParticipantStartedEvent)
+@EventsHandlerAndLog(QuizParticipantStartedEvent)
 export class QuizParticipantStartedEventHandler
   implements IEventHandler<QuizParticipantStartedEvent>
 {
-  private readonly _logger = new Logger(QuizParticipantStartedEventHandler.name);
   public constructor(private readonly _queueService: QueueService) {}
 
   public async handle(event: QuizParticipantStartedEvent): Promise<void> {
-    this._logger.debug(`EventHandler: ${JSON.stringify(event)}`);
-
     const { quizParticipantId, timeLimit } = event.payload;
     const delay = (timeLimit + RULES.QUIZ_TIME_LIMIT_BUFFER) * 1000;
 
@@ -38,11 +37,10 @@ export class QuizParticipantStartedEventHandler
   }
 }
 
-@EventsHandler(QuizParticipantFinishedEvent)
+@EventsHandlerAndLog(QuizParticipantFinishedEvent)
 export class QuizParticipantFinishedEventHandler
   implements IEventHandler<QuizParticipantFinishedEvent>
 {
-  private readonly _logger = new Logger(QuizParticipantFinishedEventHandler.name);
   public constructor(
     @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
     private readonly _quizDomainService: IQuizDomainService,
@@ -52,8 +50,6 @@ export class QuizParticipantFinishedEventHandler
   ) {}
 
   public async handle(event: QuizParticipantFinishedEvent): Promise<void> {
-    this._logger.debug(`EventHandler: ${JSON.stringify(event)}`);
-
     const { quizParticipantId } = event.payload;
 
     const quizParticipantEntity = await this._quizParticipantRepository.findQuizParticipantById(

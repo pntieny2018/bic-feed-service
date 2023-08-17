@@ -1,11 +1,14 @@
-import { Controller } from '@nestjs/common';
+import { TracingInterceptor } from '@libs/infra/log';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
+
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ProcessPostPublishedCommand } from '../../application/command/process-post-published/process-post-published.command';
 import { ProcessPostUpdatedCommand } from '../../application/command/process-post-updated/process-post-updated.command';
 import { PostChangedMessagePayload } from '../../application/dto/message';
 
+@UseInterceptors(TracingInterceptor)
 @Controller()
 export class PostConsumer {
   public constructor(

@@ -1,4 +1,5 @@
 export const HEADER_REQ_ID = 'x-request-id';
+export const HEADER_VERSION_KEY = 'x-version-id';
 
 export const ENV = {
   PRODUCTION: 'production',

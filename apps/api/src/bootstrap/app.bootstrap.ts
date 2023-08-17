@@ -1,4 +1,5 @@
 import { IS_LOCAL } from '@libs/common/constants';
+import { TracingInterceptor } from '@libs/infra/log';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json } from 'express';
@@ -26,7 +27,7 @@ export class AppBootstrap {
       type: VersioningType.HEADER,
       header: VERSION_HEADER_KEY,
     });
-    app.useGlobalInterceptors(new HandleResponseInterceptor());
+    app.useGlobalInterceptors(new HandleResponseInterceptor(), new TracingInterceptor());
     app.useGlobalFilters(new HttpExceptionFilter(appConfig.env, '/'));
 
     if (!IS_LOCAL) {
