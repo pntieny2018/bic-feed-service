@@ -1762,11 +1762,11 @@ export class PostService {
     return result;
   }
 
-  public async validateLimtedToAttachSeries(id: string): Promise<void> {
+  public async validateLimitedToAttachSeries(id: string): Promise<void> {
     const post = (await this.getPostsWithSeries([id]))[0];
-    const isOverLimtedToAttachSeries = post.postSeries.length > RULES.LIMIT_ATTACHED_SERIES;
+    const isOverLimitedToAttachSeries = post.postSeries.length > RULES.LIMIT_ATTACHED_SERIES;
 
-    if (isOverLimtedToAttachSeries) {
+    if (isOverLimitedToAttachSeries) {
       if (post.type === PostType.POST)
         throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
       else {

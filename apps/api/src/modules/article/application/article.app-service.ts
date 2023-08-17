@@ -211,7 +211,7 @@ export class ArticleAppService {
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
 
-    await this._postService.validateLimtedToAttachSeries(article.id);
+    await this._postService.validateLimitedToAttachSeries(article.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
@@ -357,10 +357,10 @@ export class ArticleAppService {
 
     const article = (await this._postService.getPostsWithSeries([articleId], true))[0];
     const seriesIds = article.postSeries.map((item) => item.seriesId);
-    const isOverLimtedToAttachSeries =
+    const isOverLimitedToAttachSeries =
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
-    if (isOverLimtedToAttachSeries) {
+    if (isOverLimitedToAttachSeries) {
       throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }

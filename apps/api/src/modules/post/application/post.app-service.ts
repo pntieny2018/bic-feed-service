@@ -294,10 +294,10 @@ export class PostAppService {
 
     const post = (await this._postService.getPostsWithSeries([postId], true))[0];
     const seriesIds = post.postSeries.map((item) => item.seriesId);
-    const isOverLimtedToAttachSeries =
+    const isOverLimitedToAttachSeries =
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
-    if (isOverLimtedToAttachSeries) {
+    if (isOverLimitedToAttachSeries) {
       throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
