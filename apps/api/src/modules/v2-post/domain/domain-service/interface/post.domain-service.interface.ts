@@ -1,8 +1,6 @@
-import { PostEntity } from '../../model/content';
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
-import { ContentEntity } from '../../model/content';
-import { ArticleEntity } from '../../model/content';
+import { PostEntity, ArticleEntity } from '../../model/content';
 
 export type PublishPostPayload = {
   id: string;
@@ -49,7 +47,7 @@ export interface IPostDomainService {
   publishPost(input: PostPublishProps): Promise<void>;
   updatePost(input: PostPublishProps): Promise<void>;
   updateSetting(input: {
-    entity: ContentEntity;
+    contentId: string;
     authUser: UserDto;
     canComment: boolean;
     canReact: boolean;
@@ -57,8 +55,8 @@ export interface IPostDomainService {
     importantExpiredAt: Date;
   }): Promise<void>;
   autoSavePost(input: PostPublishProps): Promise<void>;
-  markSeen(contentEntity: ContentEntity, userId: string): Promise<void>;
-  markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void>;
+  markSeen(contentId: string, userId: string): Promise<void>;
+  markReadImportant(contentId: string, userId: string): Promise<void>;
   delete(id: string): Promise<void>;
 }
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';

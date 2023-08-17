@@ -1,20 +1,21 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { instanceToInstance } from 'class-transformer';
-import { UserDto } from '../../../v2-user/application';
+
 import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
+import { UserDto } from '../../../v2-user/application';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
+import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
+import { FindDraftContentsDto } from '../../application/dto/content.dto';
+import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import {
   GetDraftContentsRequestDto,
   PostSettingRequestDto,
   ValidateSeriesTagDto,
 } from '../dto/request';
-import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
-import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
-import { FindDraftContentsDto } from '../../application/dto/content.dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')

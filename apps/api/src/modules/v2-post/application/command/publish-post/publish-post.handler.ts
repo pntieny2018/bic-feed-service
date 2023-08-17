@@ -1,25 +1,27 @@
+import { KafkaService } from '@app/kafka';
+import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { Inject } from '@nestjs/common';
-import { cloneDeep, uniq } from 'lodash';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import {
-  IPostDomainService,
-  POST_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { PublishPostCommand } from './publish-post.command';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { cloneDeep, uniq } from 'lodash';
+
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import {
+  IPostDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
-import { PostDto } from '../../dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
-import { KafkaService } from '@app/kafka';
+import { PostDto } from '../../dto';
 import { PostChangedMessagePayload } from '../../dto/message';
+
+import { PublishPostCommand } from './publish-post.command';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -79,11 +81,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     });
 
     if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
-      await this._postDomainService.markSeen(postEntity, authUser.id);
+      await this._postDomainService.markSeen(postEntity.get('id'), authUser.id);
       postEntity.increaseTotalSeen();
     }
     if (postEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(postEntity, authUser.id);
+      await this._postDomainService.markReadImportant(postEntity.get('id'), authUser.id);
       postEntity.setMarkReadImportant();
     }
 
@@ -103,7 +105,9 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     postEntityAfter: PostEntity,
     result: PostDto
   ): Promise<void> {
-    if (!postEntityAfter.isChanged()) return;
+    if (!postEntityAfter.isChanged()) {
+      return;
+    }
     if (postEntityAfter.isPublished()) {
       const contentWithArchivedGroups = (await this._contentRepository.findOne({
         where: {

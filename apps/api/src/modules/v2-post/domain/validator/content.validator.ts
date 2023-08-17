@@ -1,20 +1,22 @@
-import { Inject, Injectable } from '@nestjs/common';
 import { subject } from '@casl/ability';
+import { Inject, Injectable } from '@nestjs/common';
+
+import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
 import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../v2-user/application';
-import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
   IGroupApplicationService,
 } from '../../../v2-group/application';
-import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../v2-user/application';
+import { PostType } from '../../data-type';
 import {
   ContentAccessDeniedException,
   ContentEmptyGroupException,
@@ -24,13 +26,12 @@ import {
   ContentRequireGroupException,
   TagSeriesInvalidException,
 } from '../exception';
-import { IContentValidator } from './interface';
-import { ContentEntity } from '../model/content/content.entity';
-import { PostType } from '../../data-type';
-import { TagEntity } from '../model/tag';
-import { SeriesEntity } from '../model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { UserNoBelongGroupException } from '../exception/external.exception';
+import { SeriesEntity, ContentEntity } from '../model/content';
+import { TagEntity } from '../model/tag';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+
+import { IContentValidator } from './interface';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -112,9 +113,13 @@ export class ContentValidator implements IContentValidator {
     userAuth: UserDto,
     groupIds: string[]
   ): Promise<void> {
-    if (!contentEntity.isOwner(userAuth.id)) throw new ContentAccessDeniedException();
+    if (!contentEntity.isOwner(userAuth.id)) {
+      throw new ContentAccessDeniedException();
+    }
 
-    if (contentEntity.get('groupIds')?.length === 0) throw new ContentEmptyGroupException();
+    if (contentEntity.get('groupIds')?.length === 0) {
+      throw new ContentEmptyGroupException();
+    }
 
     const postType = contentEntity.get('type');
     const state = contentEntity.getState();
@@ -123,7 +128,9 @@ export class ContentValidator implements IContentValidator {
 
     await this.checkCanCRUDContent(userAuth, groupIds, postType);
 
-    if (detachGroupIds?.length) await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
+    if (detachGroupIds?.length) {
+      await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
+    }
 
     if (
       isEnableSetting &&
@@ -134,7 +141,9 @@ export class ContentValidator implements IContentValidator {
   }
 
   public async validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void> {
-    if (!userIds?.length || !groupIds?.length) return;
+    if (!userIds?.length || !groupIds?.length) {
+      return;
+    }
     const users = await this._userApplicationService.findAllByIds(userIds, {
       withGroupJoined: true,
     });
@@ -151,8 +160,12 @@ export class ContentValidator implements IContentValidator {
   }
 
   public checkCanReadContent(post: ContentEntity, user: UserDto, groups?: GroupDto[]): void {
-    if (!post.isPublished() && post.isOwner(user.id)) return;
-    if (post.isOpen() || post.isClosed()) return;
+    if (!post.isPublished() && post.isOwner(user.id)) {
+      return;
+    }
+    if (post.isOpen() || post.isClosed()) {
+      return;
+    }
     const groupAudienceIds = post.get('groupIds') ?? [];
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));

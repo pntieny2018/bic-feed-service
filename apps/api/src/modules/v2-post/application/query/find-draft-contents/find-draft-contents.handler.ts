@@ -37,7 +37,6 @@ export class FindDraftContentsHandler
     }
 
     const contentIds = rows.map((row) => row.getId());
-
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids: contentIds,
       authUserId: authUser.id,
