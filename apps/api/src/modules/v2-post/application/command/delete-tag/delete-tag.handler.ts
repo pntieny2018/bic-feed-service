@@ -29,10 +29,6 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
       throw new TagNotFoundException();
     }
 
-    if (tag.get('totalUsed') > 0) {
-      throw new TagUsedException();
-    }
-
     const canDeleteTag = await this._userAppService.canCudTagInCommunityByUserId(
       userId,
       tag.get('groupId')
@@ -41,6 +37,6 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
       throw new TagNoDeletePermissionException();
     }
 
-    await this._tagDomainService.deleteTag(id);
+    await this._tagDomainService.deleteTag(tag);
   }
 }
