@@ -1,17 +1,19 @@
 import { Inject } from '@nestjs/common';
-import { ArticleDto } from '../../dto';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'class-validator';
+
+import { IPaginatedInfo, OrderEnum } from '../../../../../common/dto';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   GetScheduledContentProps,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import { IPaginatedInfo, OrderEnum } from '../../../../../common/dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PublishArticleCommand } from '../publish-article/publish-article.command';
-import { ProcessArticleScheduledCommand } from './process-article-scheduled.command';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { ArticleDto } from '../../dto';
+import { PublishArticleCommand } from '../publish-article/publish-article.command';
+
+import { ProcessArticleScheduledCommand } from './process-article-scheduled.command';
 
 @CommandHandler(ProcessArticleScheduledCommand)
 export class ProcessArticleScheduledHandler
@@ -45,13 +47,17 @@ export class ProcessArticleScheduledHandler
   ): Promise<void> {
     const { hasNextPage, endCursor } = metadata || {};
 
-    if (isBoolean(hasNextPage) && hasNextPage === false) return;
+    if (isBoolean(hasNextPage) && hasNextPage === false) {
+      return;
+    }
 
     const { rows, meta } = await this._contentDomainService.getScheduledContent({
       ...payload,
       after: endCursor,
     });
-    if (!rows || rows.length === 0) return;
+    if (!rows || rows.length === 0) {
+      return;
+    }
 
     for (const row of rows) {
       try {
