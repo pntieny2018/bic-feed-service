@@ -70,6 +70,58 @@ export class CommentDomainService implements ICommentDomainService {
     return this._getCommentsAroundParent(comment, props);
   }
 
+  public async create(input: CreateCommentProps): Promise<CommentEntity> {
+    const { media, parentId } = input;
+
+    if (parentId !== NIL) {
+      const parentComment = await this._commentRepository.findOne({
+        id: parentId,
+        parentId: NIL,
+      });
+      if (!parentComment) {
+        throw new CommentReplyNotExistException();
+      }
+    }
+
+    const commentEntity = this._commentFactory.createComment(input);
+
+    if (media) {
+      await this._setCommentMedia(commentEntity, media);
+    }
+
+    try {
+      return this._commentRepository.createComment(commentEntity);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
+
+  public async update(input: UpdateCommentProps): Promise<void> {
+    const { id, userId, content, giphyId, mentions, media } = input;
+    const commentEntity = await this._commentRepository.findOne({ id });
+
+    if (media) {
+      await this._setCommentMedia(commentEntity, media);
+    }
+
+    commentEntity.updateAttribute({ content, giphyId, mentions }, userId);
+
+    if (commentEntity.isEmptyComment()) {
+      throw new CommentNotEmptyException();
+    }
+
+    if (!commentEntity.isChanged()) {
+      return;
+    }
+
+    await this._commentRepository.update(commentEntity);
+  }
+
+  public async delete(id: string): Promise<void> {
+    return this._commentRepository.destroyComment(id);
+  }
+
   private async _getCommentsAroundChild(
     comment: CommentEntity,
     pagination: GetCommentsAroundIdProps
@@ -120,99 +172,36 @@ export class CommentDomainService implements ICommentDomainService {
     return aroundParentPagination;
   }
 
-  public async create(input: CreateCommentProps): Promise<CommentEntity> {
-    const { media, parentId } = input;
-
-    if (parentId !== NIL) {
-      const parentComment = await this._commentRepository.findOne({
-        id: parentId,
-        parentId: NIL,
-      });
-      if (!parentComment) {
-        throw new CommentReplyNotExistException();
-      }
+  private async _setCommentMedia(
+    commentEntity: CommentEntity,
+    media: {
+      files: string[];
+      images: string[];
+      videos: string[];
     }
-
-    const commentEntity = this._commentFactory.createComment(input);
-
-    if (media) {
-      const images = await this._mediaDomainService.getAvailableImages(
-        commentEntity.get('media').images,
-        media?.images,
-        commentEntity.get('createdBy')
-      );
-      if (images.some((image) => !image.isCommentContentResource())) {
-        throw new InvalidResourceImageException();
-      }
-      const files = await this._mediaDomainService.getAvailableFiles(
-        commentEntity.get('media').files,
-        media?.files,
-        commentEntity.get('createdBy')
-      );
-      const videos = await this._mediaDomainService.getAvailableVideos(
-        commentEntity.get('media').videos,
-        media?.videos,
-        commentEntity.get('createdBy')
-      );
-      commentEntity.setMedia({
-        files,
-        images,
-        videos,
-      });
+  ): Promise<void> {
+    const images = await this._mediaDomainService.getAvailableImages(
+      commentEntity.get('media').images,
+      media?.images,
+      commentEntity.get('createdBy')
+    );
+    if (images.some((image) => !image.isCommentContentResource())) {
+      throw new InvalidResourceImageException();
     }
-
-    try {
-      return this._commentRepository.createComment(commentEntity);
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
-  }
-
-  public async update(input: UpdateCommentProps): Promise<void> {
-    const { id, userId, content, giphyId, mentions, media } = input;
-    const commentEntity = await this._commentRepository.findOne({ id });
-
-    if (media) {
-      const images = await this._mediaDomainService.getAvailableImages(
-        commentEntity.get('media').images,
-        media?.images,
-        commentEntity.get('createdBy')
-      );
-      if (images.some((image) => !image.isCommentContentResource())) {
-        throw new InvalidResourceImageException();
-      }
-      const files = await this._mediaDomainService.getAvailableFiles(
-        commentEntity.get('media').files,
-        media?.files,
-        commentEntity.get('createdBy')
-      );
-      const videos = await this._mediaDomainService.getAvailableVideos(
-        commentEntity.get('media').videos,
-        media?.videos,
-        commentEntity.get('createdBy')
-      );
-      commentEntity.setMedia({
-        files,
-        images,
-        videos,
-      });
-    }
-
-    commentEntity.updateAttribute({ content, giphyId, mentions }, userId);
-
-    if (commentEntity.isEmptyComment()) {
-      throw new CommentNotEmptyException();
-    }
-
-    if (!commentEntity.isChanged()) {
-      return;
-    }
-
-    await this._commentRepository.update(commentEntity);
-  }
-
-  public async delete(id: string): Promise<void> {
-    return this._commentRepository.destroyComment(id);
+    const files = await this._mediaDomainService.getAvailableFiles(
+      commentEntity.get('media').files,
+      media?.files,
+      commentEntity.get('createdBy')
+    );
+    const videos = await this._mediaDomainService.getAvailableVideos(
+      commentEntity.get('media').videos,
+      media?.videos,
+      commentEntity.get('createdBy')
+    );
+    commentEntity.setMedia({
+      files,
+      images,
+      videos,
+    });
   }
 }
