@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindQuizzesQuery } from './find-quizzes.query';
+
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -12,6 +12,8 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 import { FindQuizzesDto } from '../../dto';
+
+import { FindQuizzesQuery } from './find-quizzes.query';
 
 @QueryHandler(FindQuizzesQuery)
 export class FindQuizzesHandler implements IQueryHandler<FindQuizzesQuery, FindQuizzesDto> {
@@ -29,13 +31,15 @@ export class FindQuizzesHandler implements IQueryHandler<FindQuizzesQuery, FindQ
 
     const { rows, meta } = await this._quizDomainService.getQuizzes(query.payload);
 
-    if (!rows || rows.length === 0) return new FindQuizzesDto([], meta);
+    if (!rows || rows.length === 0) {
+      return new FindQuizzesDto([], meta);
+    }
 
     const contentIds = rows.map((row) => row.get('contentId'));
 
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids: contentIds,
-      authUser,
+      authUserId: authUser.id,
     });
 
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);

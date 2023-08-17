@@ -1,6 +1,7 @@
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
+import { OrderEnum } from '../../../../common/dto';
 import { StringHelper } from '../../../../common/helpers';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostStatus } from '../../data-type';
@@ -10,6 +11,7 @@ import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-inte
 
 import {
   GetContentByIdsProps,
+  GetContentIdsInNewsFeedProps,
   GetDraftsProps,
   GetScheduledContentProps,
   IContentDomainService,
@@ -56,11 +58,11 @@ export class ContentDomainService implements IContentDomainService {
   public async getDraftsPagination(
     input: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
-    const { authUser, isProcessing, type } = input;
+    const { authUserId, isProcessing, type } = input;
     return this._contentRepository.getPagination({
       ...input,
       where: {
-        createdBy: authUser.id,
+        createdBy: authUserId,
         status: PostStatus.DRAFT,
         ...(isProcessing && {
           status: PostStatus.PROCESSING,
@@ -78,7 +80,7 @@ export class ContentDomainService implements IContentDomainService {
   public async getContentByIds(
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const { ids, authUser } = input;
+    const { ids, authUserId } = input;
     const contentEntities = await this._contentRepository.findAll({
       where: {
         ids,
@@ -89,18 +91,68 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
         shouldIncludeSaved: {
-          userId: authUser?.id,
+          userId: authUserId,
         },
         shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
+          userId: authUserId,
         },
         shouldIncludeReaction: {
-          userId: authUser?.id,
+          userId: authUserId,
         },
       },
     });
 
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+  }
+
+  public async getContentIdsInNewsFeed(
+    props: GetContentIdsInNewsFeedProps
+  ): Promise<CursorPaginationResult<string>> {
+    const {
+      isMine,
+      type,
+      isSaved,
+      limit,
+      isImportant,
+      after,
+      before,
+      authUserId,
+      order = OrderEnum.DESC,
+    } = props;
+    const { rows, meta } = await this._contentRepository.getPagination({
+      attributes: {
+        exclude: ['content'],
+      },
+      where: {
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+        inNewsfeedUserId: authUserId,
+        groupArchived: false,
+        excludeReportedByUserId: authUserId,
+        isImportant,
+        createdBy: isMine ? authUserId : undefined,
+        savedByUserId: isSaved ? authUserId : undefined,
+        type,
+      },
+      include: {
+        shouldIncludeImportant: {
+          userId: authUserId,
+        },
+      },
+      limit,
+      order,
+      orderOptions: {
+        isImportantFirst: isImportant,
+        isPublishedByDesc: true,
+      },
+      before,
+      after,
+    });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 
   public async getScheduledContent(
