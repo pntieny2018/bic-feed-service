@@ -1,5 +1,7 @@
-import { ReactionEntity } from '../../model/reaction';
+import { OrderEnum } from '../../../../../common/dto';
+import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { REACTION_TARGET } from '../../../data-type';
+import { ReactionEntity } from '../../model/reaction';
 
 export type ReactionCreateProps = {
   reactionName: string;
@@ -8,10 +10,29 @@ export type ReactionCreateProps = {
   target: REACTION_TARGET;
 };
 
+export type GetReactionsProps = {
+  reactionName: string;
+  targetId: string;
+  target: string;
+  latestId: string;
+  order: OrderEnum;
+  limit: number;
+};
+
+export type DeleteReactionProps = {
+  userId: string;
+  targetId: string;
+  target: REACTION_TARGET;
+  reactionId?: string;
+  reactionName: string;
+};
+
 export interface IReactionDomainService {
+  getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>>;
+
   createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
 
-  deleteReaction(target: REACTION_TARGET, id: string): Promise<void>;
+  deleteReaction(props: DeleteReactionProps): Promise<void>;
 }
 
 export const REACTION_DOMAIN_SERVICE_TOKEN = 'REACTION_DOMAIN_SERVICE_TOKEN';

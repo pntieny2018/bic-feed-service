@@ -14,7 +14,6 @@ import { ProcessArticleScheduledHandler } from '../application/command/process-a
 import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
 import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
 import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
-import { ProcessReactionNotificationHandler } from '../application/command/process-reaction-notification/process-reaction-notification.handler';
 import { ProcessSeriesDeletedHandler } from '../application/command/process-series-deleted/process-series-deleted.handler';
 import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
 import { ProcessSeriesUpdatedHandler } from '../application/command/process-series-updated/process-series-updated.handler';
@@ -154,7 +153,6 @@ export const postProvider = [
   FindNewsfeedHandler,
   FindSeriesHandler,
   FindItemsBySeriesHandler,
-  ProcessReactionNotificationHandler,
   AutoSaveArticleHandler,
   PublishArticleHandler,
   UpdateArticleHandler,

@@ -1,24 +1,27 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FindReactionsQuery } from './find-reactions.query';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+
 import { ObjectHelper } from '../../../../../common/helpers';
-import { ReactionEntity } from '../../../domain/model/reaction';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
+  IReactionDomainService,
+  REACTION_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { ReactionEntity } from '../../../domain/model/reaction';
 import { FindReactionsDto, ReactionDto } from '../../dto';
+
+import { FindReactionsQuery } from './find-reactions.query';
 
 @QueryHandler(FindReactionsQuery)
 export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, FindReactionsDto> {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService,
-    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
+    @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
+    private readonly _reactionDomainService: IReactionDomainService
   ) {}
 
   public async execute(query: FindReactionsQuery): Promise<FindReactionsDto> {
-    const { rows, total } = await this._reactionQuery.getPagination(query.payload);
+    const { rows, total } = await this._reactionDomainService.getReactions(query.payload);
 
     const actorIds = rows.map((r) => r.get('createdBy'));
     const actors = await this._userAppService.findAllByIds(actorIds);

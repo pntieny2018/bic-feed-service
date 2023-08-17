@@ -1,31 +1,29 @@
 import { Inject } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CreateReactionCommand } from './create-reaction.command';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { REACTION_TARGET } from '../../../data-type';
 import {
-  IPostReactionRepository,
-  POST_REACTION_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post-reaction.repository.interface';
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface';
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { ReactionDuplicateException } from '../../../domain/exception';
+import { ReactionEntity } from '../../../domain/model/reaction';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
-} from '../../../domain/repositoty-interface/comment-reaction.repository.interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { ReactionDuplicateException } from '../../../domain/exception/reaction.exception';
-import { REACTION_TARGET } from '../../../data-type/reaction.enum';
-import { ReactionDto } from '../../dto';
-import {
-  COMMENT_REPOSITORY_TOKEN,
-  CONTENT_REPOSITORY_TOKEN,
-  ICommentRepository,
-  IContentRepository,
+  IPostReactionRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { ContentEntity } from '../../../domain/model/content/content.entity';
-import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
-import { ProcessReactionNotificationCommand } from '../process-reaction-notification/process-reaction-notification.command';
+import { ReactionDto } from '../../dto';
+
+import { CreateReactionCommand } from './create-reaction.command';
 
 @CommandHandler(CreateReactionCommand)
 export class CreateReactionHandler implements ICommandHandler<CreateReactionCommand, ReactionDto> {
@@ -38,17 +36,14 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     private readonly _reactionDomainService: IReactionDomainService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userAppService: IUserApplicationService,
-    @Inject(COMMENT_REPOSITORY_TOKEN)
-    private readonly _commentRepository: ICommentRepository,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    private readonly _commandBus: CommandBus
+    @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _commentDomainService: ICommentDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService
   ) {}
 
   public async execute(command: CreateReactionCommand): Promise<ReactionDto> {
-    const newCreateReactionDto = CreateReactionHandler.transformReactionNameNodeEmoji(
-      command.payload
-    );
+    const newCreateReactionDto = this.transformReactionNameNodeEmoji(command.payload);
     await this._validate(command);
 
     const newReactionEntity = await this._reactionDomainService.createReaction(
@@ -57,7 +52,7 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
 
     const actor = await this._userAppService.findOne(newReactionEntity.get('createdBy'));
 
-    const reaction = new ReactionDto({
+    return new ReactionDto({
       id: newReactionEntity.get('id'),
       target: newReactionEntity.get('target'),
       targetId: newReactionEntity.get('targetId'),
@@ -65,17 +60,9 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
       createdAt: newReactionEntity.get('createdAt'),
       actor,
     });
-
-    this._commandBus.execute(
-      new ProcessReactionNotificationCommand({
-        reaction,
-        action: 'create',
-      })
-    );
-    return reaction;
   }
 
-  public static transformReactionNameNodeEmoji<T>(doActionReactionDto: T): T {
+  private transformReactionNameNodeEmoji<T>(doActionReactionDto: T): T {
     const copy = { ...doActionReactionDto };
     if (copy['reactionName'] === '+1') {
       copy['reactionName'] = 'thumbsup';
@@ -87,32 +74,17 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
   }
 
   private async _validate(command: CreateReactionCommand): Promise<void> {
-    let reactionEntity;
-    const newCreateReactionDto = CreateReactionHandler.transformReactionNameNodeEmoji(
-      command.payload
-    );
+    let reactionEntity: ReactionEntity;
+    const newCreateReactionDto = this.transformReactionNameNodeEmoji(command.payload);
     if (command.payload.target === REACTION_TARGET.COMMENT) {
-      const commentEntity = await this._commentRepository.findOne({
-        id: newCreateReactionDto.targetId,
-      });
-      if (!commentEntity) {
-        throw new CommentNotFoundException();
-      }
+      await this._commentDomainService.getVisibleComment(newCreateReactionDto.targetId);
       reactionEntity = await this._commentReactionRepository.findOne({
         commentId: newCreateReactionDto.targetId,
         createdBy: newCreateReactionDto.createdBy,
         reactionName: newCreateReactionDto.reactionName,
       });
     } else {
-      const contentEntity = (await this._contentRepository.findOne({
-        where: { id: newCreateReactionDto.targetId },
-        include: {
-          mustIncludeGroup: true,
-        },
-      })) as ContentEntity;
-      if (!contentEntity) {
-        throw new ContentNotFoundException();
-      }
+      await this._contentDomainService.getVisibleContent(newCreateReactionDto.targetId);
       reactionEntity = await this._postReactionRepository.findOne({
         postId: newCreateReactionDto.targetId,
         createdBy: newCreateReactionDto.createdBy,
