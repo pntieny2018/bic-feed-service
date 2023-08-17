@@ -34,7 +34,6 @@ export class CommentMapper {
         createdAt: model.createdAt,
         updatedAt: model.updatedAt,
         content: model.content,
-        childs: model.child?.map((item) => this.toDomain(item)) || [],
         mentions: model.mentions,
         media: {
           images: model.mediaJson?.images.map(
