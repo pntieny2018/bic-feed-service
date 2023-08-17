@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
-import { PageOptionsDto, PaginatedArgs } from '../../../../../common/dto';
+import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+
+import { PaginatedArgs } from '../../../../../common/dto';
 import { PostType } from '../../../data-type';
 
 export class GetTimelineRequestDto extends PaginatedArgs {
@@ -12,8 +13,12 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isImportant?: boolean;
@@ -25,8 +30,12 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isMine?: boolean;
@@ -38,8 +47,12 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isSaved?: boolean;

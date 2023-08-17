@@ -26,6 +26,15 @@ export type GetContentIdsInNewsFeedProps = {
   type?: PostType;
 } & CursorPaginationProps;
 
+export type GetContentIdsInTimelineProps = {
+  authUserId: string;
+  groupIds: string[];
+  isImportant?: boolean;
+  isMine?: boolean;
+  isSaved?: boolean;
+  type?: PostType;
+} & CursorPaginationProps;
+
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
@@ -34,6 +43,9 @@ export interface IContentDomainService {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   getContentIdsInNewsFeed(
     query: GetContentIdsInNewsFeedProps
+  ): Promise<CursorPaginationResult<string>>;
+  getContentIdsInTimeline(
+    query: GetContentIdsInTimelineProps
   ): Promise<CursorPaginationResult<string>>;
   getDraftsPagination(
     data: GetDraftsProps
