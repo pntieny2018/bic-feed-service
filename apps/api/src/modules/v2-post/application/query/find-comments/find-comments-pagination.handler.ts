@@ -1,18 +1,19 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
-import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
 import {
-  CONTENT_REPOSITORY_TOKEN,
-  FindContentProps,
-  IContentRepository,
-} from '../../../domain/repositoty-interface';
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface';
+import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../binding/binding-comment/comment.interface';
-import { ContentNotFoundException } from '../../../domain/exception';
 import { FindCommentsPaginationDto } from '../../dto';
+
+import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
 
 @QueryHandler(FindCommentsPaginationQuery)
 export class FindCommentsPaginationHandler
@@ -23,35 +24,29 @@ export class FindCommentsPaginationHandler
     private readonly _commentQuery: ICommentQuery,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    protected readonly _contentDomainService: IContentDomainService
   ) {}
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { postId, authUser } = query.payload;
-    const findOneOptions: FindContentProps = {
-      where: {
-        id: postId,
-        groupArchived: false,
-      },
-    };
 
-    if (authUser) findOneOptions.where.excludeReportedByUserId = authUser.id;
+    const post = await this._contentDomainService.getVisibleContent(postId, authUser.id);
 
-    const postEntity = await this._contentRepository.findOne(findOneOptions);
+    this._contentValidator.checkCanReadContent(post, authUser);
 
-    if (
-      !postEntity ||
-      (!postEntity.isOpen() && !authUser) ||
-      (postEntity.isHidden() && !postEntity.isOwner(authUser?.id))
-    )
-      throw new ContentNotFoundException();
+    const { rows, meta } = await this._commentQuery.getPagination({
+      ...query.payload,
+      authUser: authUser.id,
+    });
 
-    const { rows, meta } = await this._commentQuery.getPagination(query.payload);
+    if (!rows || rows.length === 0) {
+      return new FindCommentsPaginationDto([], meta);
+    }
 
-    if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
-
-    const instances = await this._commentBinding.commentBinding(rows);
+    const instances = await this._commentBinding.commentsBinding(rows);
 
     return new FindCommentsPaginationDto(instances, meta);
   }

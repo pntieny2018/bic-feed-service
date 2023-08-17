@@ -28,7 +28,7 @@ export type GetScheduledContentProps = {
 };
 
 export interface IContentDomainService {
-  getVisibleContent(id: string): Promise<ContentEntity>;
+  getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
   getContentByIds(
     data: GetContentByIdsProps

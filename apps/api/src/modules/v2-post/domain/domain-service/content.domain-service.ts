@@ -1,17 +1,19 @@
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
+
+import { StringHelper } from '../../../../common/helpers';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostStatus } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
-import { StringHelper } from '../../../../common/helpers';
+import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+
 import {
   GetContentByIdsProps,
   GetDraftsProps,
   GetScheduledContentProps,
   IContentDomainService,
 } from './interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -20,10 +22,16 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async getVisibleContent(id: string): Promise<ContentEntity> {
+  public async getVisibleContent(
+    id: string,
+    excludeReportedByUserId?: string
+  ): Promise<ContentEntity> {
     const entity = await this._contentRepository.findOne({
       include: {
         mustIncludeGroup: true,
+        ...(excludeReportedByUserId && {
+          excludeReportedByUserId,
+        }),
       },
       where: {
         id,

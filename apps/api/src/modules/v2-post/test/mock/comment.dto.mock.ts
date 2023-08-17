@@ -1,11 +1,12 @@
 import { createUrlFromId } from '../../../giphy/giphy.util';
 import { UserDto } from '../../../v2-user/application';
-import { CreateCommentDto, FileDto, ImageDto, VideoDto } from '../../application/dto';
+import { CommentDto, FileDto, ImageDto, VideoDto } from '../../application/dto';
 import { CommentEntity } from '../../domain/model/comment';
+
 import { userMentions, userMock } from './user.dto.mock';
 
-export const createCommentDto = (commentEntity: CommentEntity): CreateCommentDto => {
-  return new CreateCommentDto({
+export const createCommentDto = (commentEntity: CommentEntity): CommentDto => {
+  return new CommentDto({
     id: commentEntity.get('id'),
     edited: commentEntity.get('edited'),
     parentId: commentEntity.get('parentId'),
