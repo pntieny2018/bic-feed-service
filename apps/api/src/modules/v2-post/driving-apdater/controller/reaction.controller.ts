@@ -1,20 +1,20 @@
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
-
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { GetReactionPipe } from '../pipes/get-reaction.pipe';
-import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { AuthUser } from '../../../../common/decorators';
+import { UserDto } from '../../../v2-user/application';
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
 import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
-import { UserDto } from '../../../v2-user/application';
+import { ReactionDto, ReactionListDto } from '../../application/dto';
+import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import {
   CreateReactionRequestDto,
   DeleteReactionRequestDto,
   GetReactionRequestDto,
 } from '../dto/request';
-import { ReactionDto, ReactionListDto } from '../../application/dto';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { AuthUser } from '../../../../common/decorators';
+import { GetReactionPipe } from '../pipes/get-reaction.pipe';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -61,10 +61,9 @@ export class ReactionController {
     @Body() createReactionDto: CreateReactionRequestDto
   ): Promise<ReactionDto> {
     const { target, targetId, reactionName } = createReactionDto;
-    const reaction = await this._commandBus.execute(
+    return this._commandBus.execute(
       new CreateReactionCommand({ target, targetId, reactionName, createdBy: user.id })
     );
-    return reaction;
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })

@@ -1,8 +1,9 @@
+import { IQueryResult } from '@nestjs/cqrs';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
+
 import { UserDto } from '../../../v2-user/application';
 import { REACTION_TARGET } from '../../data-type';
-import { IsUUID } from 'class-validator';
-import { IQueryResult } from '@nestjs/cqrs';
 
 export class ReactionDto {
   @ApiProperty()

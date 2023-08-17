@@ -1,15 +1,18 @@
-import { ReactionEntity } from '../../../domain/model/reaction';
-import { USER_APPLICATION_TOKEN, UserApplicationService } from '../../../../v2-user/application';
-import { ReactionQuery } from '../../../driven-adapter/query/reaction.query';
-import { Test, TestingModule } from '@nestjs/testing';
-import { FindReactionsHandler } from '../../../application/query/find-reactions/find-reactions.handler';
-import { REACTION_QUERY_TOKEN } from '../../../domain/query-interface/reaction.query.interface';
-import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import { createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
+import { USER_APPLICATION_TOKEN, UserApplicationService } from '../../../../v2-user/application';
+import { FindReactionsHandler } from '../../../application/query/find-reactions/find-reactions.handler';
+import { REACTION_TARGET } from '../../../data-type';
+import {
+  IReactionDomainService,
+  REACTION_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { ReactionEntity } from '../../../domain/model/reaction';
+
 describe('FindReactionsPaginationHandler', () => {
-  let userAppService, reactionQuery, handler;
+  let userAppService, reactionDomainService, handler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,14 +23,14 @@ describe('FindReactionsPaginationHandler', () => {
           useValue: createMock<UserApplicationService>(),
         },
         {
-          provide: REACTION_QUERY_TOKEN,
-          useValue: createMock<ReactionQuery>(),
+          provide: REACTION_DOMAIN_SERVICE_TOKEN,
+          useValue: createMock<IReactionDomainService>(),
         },
       ],
     }).compile();
     handler = module.get<FindReactionsHandler>(FindReactionsHandler);
     userAppService = module.get(USER_APPLICATION_TOKEN);
-    reactionQuery = module.get(REACTION_QUERY_TOKEN);
+    reactionDomainService = module.get(REACTION_DOMAIN_SERVICE_TOKEN);
   });
 
   afterEach(() => {
@@ -62,7 +65,7 @@ describe('FindReactionsPaginationHandler', () => {
       ];
       const reactionEntities = reactions.map((reaction) => new ReactionEntity(reaction));
       jest
-        .spyOn(reactionQuery, 'getPagination')
+        .spyOn(reactionDomainService, 'getReactions')
         .mockResolvedValue({ rows: reactionEntities, total: 2 });
       jest
         .spyOn(userAppService, 'findAllByIds')

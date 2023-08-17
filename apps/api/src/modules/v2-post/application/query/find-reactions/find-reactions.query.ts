@@ -1,4 +1,5 @@
 import { IQuery } from '@nestjs/cqrs';
+
 import { OrderEnum } from '../../../../../common/dto';
 
 type Props = {

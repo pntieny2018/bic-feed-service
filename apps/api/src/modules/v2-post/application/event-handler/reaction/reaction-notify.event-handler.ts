@@ -1,13 +1,28 @@
+import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ProcessReactionNotificationCommand } from './process-reaction-notification.command';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { REACTION_TARGET } from '../../../data-type/reaction.enum';
-import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
-import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { v4 } from 'uuid';
+
 import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
+import { TypeActivity, VerbActivity } from '../../../../../notification';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../../v2-user/application';
+import { REACTION_TARGET } from '../../../data-type';
+import { ReactionNotifyEvent } from '../../../domain/event/reaction.event';
 import { CommentEntity } from '../../../domain/model/comment';
+import { ArticleEntity, ContentEntity, PostEntity } from '../../../domain/model/content';
+import { ReactionEntity } from '../../../domain/model/reaction';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+} from '../../../domain/query-interface/reaction.query.interface';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -15,31 +30,16 @@ import {
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
-import { ContentEntity } from '../../../domain/model/content/content.entity';
-import { PostEntity } from '../../../domain/model/content';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
-import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
-import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
-import { v4 } from 'uuid';
-import { TypeActivity, VerbActivity } from '../../../../../notification';
+import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
 
-@CommandHandler(ProcessReactionNotificationCommand)
-export class ProcessReactionNotificationHandler
-  implements ICommandHandler<ProcessReactionNotificationCommand, void>
-{
+@EventsHandler(ReactionNotifyEvent)
+export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyEvent> {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userAppService: IUserApplicationService,
-    private readonly _kafkaService: KafkaService,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -49,33 +49,52 @@ export class ProcessReactionNotificationHandler
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
     @Inject(REACTION_QUERY_TOKEN)
-    private readonly _reactionQuery: IReactionQuery
+    private readonly _reactionQuery: IReactionQuery,
+    private readonly _kafkaService: KafkaService
   ) {}
 
-  public async execute(command: ProcessReactionNotificationCommand): Promise<void> {
-    const { reaction, action } = command.payload;
+  public async handle(event: ReactionNotifyEvent): Promise<void> {
+    const { reactionEntity, action } = event;
 
-    if (reaction.target === REACTION_TARGET.COMMENT) {
-      await this._sendReactCommentNotification(reaction, reaction.targetId, action);
+    const actor = await this._userAppService.findOne(reactionEntity.get('createdBy'));
+
+    if (reactionEntity.get('target') === REACTION_TARGET.COMMENT) {
+      await this._sendReactCommentNotification(
+        reactionEntity,
+        reactionEntity.get('targetId'),
+        action,
+        actor
+      );
     }
 
-    if (reaction.target === REACTION_TARGET.POST || reaction.target === REACTION_TARGET.ARTICLE) {
-      await this._sendReactContentNotification(reaction, reaction.targetId, action);
+    if (
+      reactionEntity.get('target') === REACTION_TARGET.POST ||
+      reactionEntity.get('target') === REACTION_TARGET.ARTICLE
+    ) {
+      await this._sendReactContentNotification(
+        reactionEntity,
+        reactionEntity.get('targetId'),
+        action,
+        actor
+      );
     }
   }
 
   private async _sendReactCommentNotification(
-    reaction: ReactionDto,
+    reaction: ReactionEntity,
     commentId: string,
-    action: 'create' | 'delete'
+    action: 'create' | 'delete',
+    actor: UserDto
   ): Promise<void> {
     const commentEntity = await this._commentRepository.findOne(
       { id: commentId },
       {
-        includeOwnerReactions: reaction.actor.id,
+        includeOwnerReactions: actor.id,
       }
     );
-    if (!commentEntity) return;
+    if (!commentEntity) {
+      return;
+    }
 
     const contentEntity = (await this._contentRepository.findOne({
       where: { id: commentEntity.get('postId') },
@@ -83,7 +102,9 @@ export class ProcessReactionNotificationHandler
         mustIncludeGroup: true,
       },
     })) as ContentEntity;
-    if (!contentEntity) return;
+    if (!contentEntity) {
+      return;
+    }
 
     const userIds = [contentEntity.get('createdBy')];
     if (contentEntity instanceof PostEntity) {
@@ -137,7 +158,7 @@ export class ProcessReactionNotificationHandler
     this._kafkaService.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: contentEntity.getId(),
       value: {
-        actor: reaction.actor,
+        actor: actor,
         event: action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved,
         data: {
           id: v4(),
@@ -147,17 +168,17 @@ export class ProcessReactionNotificationHandler
             ? TypeActivity.CHILD_COMMENT
             : TypeActivity.COMMENT,
           ignore: [],
-          createdAt: reaction.createdAt,
-          updatedAt: reaction.createdAt,
+          createdAt: reaction.get('createdAt'),
+          updatedAt: reaction.get('createdAt'),
         },
       },
     });
   }
 
   private async _getCommentPayload(
-    reaction: ReactionDto,
+    reaction: ReactionEntity,
     commentEntity: CommentEntity
-  ): Promise<void> {
+  ): Promise<any> {
     const userIds = [commentEntity.get('createdBy')];
     if (commentEntity.get('mentions')?.length) {
       userIds.push(...commentEntity.get('mentions'));
@@ -175,9 +196,9 @@ export class ProcessReactionNotificationHandler
       );
     }
 
-    let comment;
+    let comment: any;
 
-    let parentCommentEntity = null;
+    let parentCommentEntity: CommentEntity = null;
     if (commentEntity.isChildComment()) {
       parentCommentEntity = await this._commentRepository.findOne({
         id: commentEntity.get('parentId'),
@@ -259,20 +280,23 @@ export class ProcessReactionNotificationHandler
   }
 
   private async _sendReactContentNotification(
-    reaction: ReactionDto,
+    reaction: ReactionEntity,
     contentId: string,
-    action: 'create' | 'delete'
+    action: 'create' | 'delete',
+    actor: UserDto
   ): Promise<void> {
     const contentEntity = (await this._contentRepository.findOne({
       where: { id: contentId },
       include: {
         mustIncludeGroup: true,
         shouldIncludeReaction: {
-          userId: reaction.actor.id,
+          userId: actor.id,
         },
       },
     })) as ContentEntity;
-    if (!contentEntity || contentEntity.isHidden()) return;
+    if (!contentEntity || contentEntity.isHidden()) {
+      return;
+    }
 
     const userIds = [contentEntity.get('createdBy')];
     if (contentEntity instanceof PostEntity) {
@@ -335,7 +359,7 @@ export class ProcessReactionNotificationHandler
     this._kafkaService.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: contentEntity.getId(),
       value: {
-        actor: reaction.actor,
+        actor: actor,
         event: action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved,
         data: {
           id: v4(),
@@ -343,8 +367,8 @@ export class ProcessReactionNotificationHandler
           verb: VerbActivity.REACT,
           target: TypeActivity.POST,
           ignore: [],
-          createdAt: reaction.createdAt,
-          updatedAt: reaction.createdAt,
+          createdAt: reaction.get('createdAt'),
+          updatedAt: reaction.get('createdAt'),
         },
       },
     });
