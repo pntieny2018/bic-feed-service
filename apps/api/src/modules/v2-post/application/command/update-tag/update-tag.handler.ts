@@ -32,10 +32,6 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, TagDt
       throw new TagNotFoundException();
     }
 
-    if (tag.get('totalUsed') > 0) {
-      throw new TagUsedException();
-    }
-
     const canUpdateTag = await this._userAppService.canCudTagInCommunityByUserId(
       userId,
       tag.get('groupId')
@@ -44,26 +40,17 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, TagDt
       throw new TagNoUpdatePermissionException();
     }
 
-    const findTagNameInGroup = await this._tagRepository.findOne({
-      groupId: tag.get('groupId'),
-      name,
-    });
-    if (findTagNameInGroup && findTagNameInGroup.get('id') !== id) {
-      throw new TagDuplicateNameException();
-    }
-
-    await this._tagDomainService.updateTag(tag, {
-      id: tag.get('id'),
+    const tagEntityUpdated = await this._tagDomainService.updateTag(tag, {
       name,
       userId,
     });
 
     return new TagDto({
-      id: tag.get('id'),
-      name: tag.get('name'),
-      groupId: tag.get('groupId'),
-      slug: tag.get('slug'),
-      totalUsed: tag.get('totalUsed'),
+      id: tagEntityUpdated.get('id'),
+      name: tagEntityUpdated.get('name'),
+      groupId: tagEntityUpdated.get('groupId'),
+      slug: tagEntityUpdated.get('slug'),
+      totalUsed: tagEntityUpdated.get('totalUsed'),
     });
   }
 }
