@@ -1,16 +1,25 @@
-import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  Default,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { QuizModel } from './quiz.model';
 import { IQuizQuestion, QuizQuestionModel } from './quiz-question.model';
 
 export interface IQuizAnswer {
   id: string;
-  quizId: string;
   questionId: string;
   content: string;
   isCorrect: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 @Table({
   tableName: 'quiz_answers',
@@ -27,9 +36,6 @@ export class QuizAnswerModel
   public id: string;
 
   @Column
-  public quizId: string;
-
-  @Column
   public questionId: string;
 
   @Column
@@ -37,6 +43,14 @@ export class QuizAnswerModel
 
   @Column
   public isCorrect: boolean;
+
+  @CreatedAt
+  @Column
+  public createdAt: Date;
+
+  @UpdatedAt
+  @Column
+  public updatedAt: Date;
 
   @BelongsTo(() => QuizQuestionModel, {
     foreignKey: 'questionId',

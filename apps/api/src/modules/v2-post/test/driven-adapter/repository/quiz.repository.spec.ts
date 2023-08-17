@@ -1,29 +1,30 @@
+import { createMock } from '@golevelup/ts-jest';
+import { getModelToken } from '@nestjs/sequelize';
+import { Test, TestingModule } from '@nestjs/testing';
+import { FindOptions, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+
+import { CursorPaginator, OrderEnum } from '../../../../../common/dto';
+import { PostModel } from '../../../../../database/models/post.model';
+import { QuizAnswerModel } from '../../../../../database/models/quiz-answer.model';
+import { QuizQuestionModel } from '../../../../../database/models/quiz-question.model';
+import { IQuiz, QuizModel } from '../../../../../database/models/quiz.model';
+import { PostType } from '../../../data-type';
+import {
+  IQuizFactory,
+  QUIZ_FACTORY_TOKEN,
+} from '../../../domain/factory/interface/quiz.factory.interface';
+import { QuizFactory } from '../../../domain/factory/quiz.factory';
+import { QuizEntity } from '../../../domain/model/quiz';
 import {
   FindAllQuizProps,
   FindOneQuizProps,
   GetPaginationQuizzesProps,
   IQuizRepository,
 } from '../../../domain/repositoty-interface';
-import { Test, TestingModule } from '@nestjs/testing';
 import { QuizRepository } from '../../../driven-adapter/repository/quiz.repository';
-import { Sequelize } from 'sequelize-typescript';
-import { createMock } from '@golevelup/ts-jest';
-import { FindOptions, Transaction } from 'sequelize';
-import { getModelToken } from '@nestjs/sequelize';
-import { IQuiz, QuizModel } from '../../../../../database/models/quiz.model';
-import {
-  IQuizFactory,
-  QUIZ_FACTORY_TOKEN,
-} from '../../../domain/factory/interface/quiz.factory.interface';
-import { QuizFactory } from '../../../domain/factory/quiz.factory';
 import { quizEntityMock } from '../../mock/quiz.entity.mock';
 import { quizRecordMock } from '../../mock/quiz.model.mock';
-import { QuizEntity } from '../../../domain/model/quiz';
-import { PostType } from '../../../data-type';
-import { CursorPaginator, OrderEnum } from '../../../../../common/dto';
-import { PostModel } from '../../../../../database/models/post.model';
-import { QuizQuestionModel } from '../../../../../database/models/quiz-question.model';
-import { QuizAnswerModel } from '../../../../../database/models/quiz-answer.model';
 
 const transaction = createMock<Transaction>();
 

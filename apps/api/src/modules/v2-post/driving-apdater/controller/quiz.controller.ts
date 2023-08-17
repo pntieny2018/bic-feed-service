@@ -14,30 +14,45 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance, plainToInstance } from 'class-transformer';
+import { Request } from 'express';
+
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
-import { ROUTES } from '../../../../common/constants/routes.constant';
+import { AddQuizQuestionCommand } from '../../application/command/add-quiz-question/add-quiz-question.command';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
-import { FindQuizzesDto, QuizDto, QuizParticipantDto } from '../../application/dto';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
-import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
-import { UpdateQuizCommand } from '../../application/command/update-quiz/update-quiz.command';
-import { FindQuizzesQuery } from '../../application/query/find-quizzes/find-quizzes.query';
-import { KafkaService } from '@app/kafka';
-import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
-import { Request } from 'express';
-import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
+import { DeleteQuizQuestionCommand } from '../../application/command/delete-quiz-question/delete-quiz-question.command';
+import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
+import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
+import { UpdateQuizCommand } from '../../application/command/update-quiz/update-quiz.command';
+import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
+import { UpdateQuizQuestionCommand } from '../../application/command/update-quiz-question/update-quiz-question.command';
 import {
+  FindQuizzesDto,
+  QuestionDto,
+  QuizDto,
+  QuizParticipantDto,
+  QuizSummaryDto,
+} from '../../application/dto';
+import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
+import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
+import { FindQuizParticipantsSummaryDetailDto } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.dto';
+import { FindQuizParticipantsSummaryDetailQuery } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.query';
+import { FindQuizSummaryQuery } from '../../application/query/find-quiz-summary/find-quiz-summary.query';
+import { FindQuizzesQuery } from '../../application/query/find-quizzes/find-quizzes.query';
+import { QuizStatus } from '../../data-type';
+import {
+  AddQuizQuestionRequestDto,
   CreateQuizRequestDto,
   GenerateQuizRequestDto,
+  GetQuizParticipantsSummaryDetailRequestDto,
   GetQuizzesRequestDto,
   UpdateQuizAnswersRequestDto,
+  UpdateQuizQuestionRequestDto,
   UpdateQuizRequestDto,
 } from '../dto/request';
-import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
-import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
-import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -45,8 +60,7 @@ import { FindQuizParticipantQuery } from '../../application/query/find-quiz-part
 export class QuizController {
   public constructor(
     private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus,
-    private readonly _kafkaService: KafkaService
+    private readonly _queryBus: QueryBus
   ) {}
 
   @ApiOperation({ summary: 'Get quizzes' })
@@ -108,6 +122,39 @@ export class QuizController {
     return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
+  @ApiOperation({ summary: 'Get quiz summary' })
+  @ApiOkResponse({
+    type: QuizSummaryDto,
+    description: 'Get quiz summary successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_SUMMARY.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_SUMMARY.VERSIONS)
+  public async getQuizSummary(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizSummaryDto> {
+    const data = await this._queryBus.execute(new FindQuizSummaryQuery({ authUser, contentId }));
+    return data;
+  }
+
+  @ApiOperation({ summary: 'Get quiz participants summary detail' })
+  @ApiOkResponse({
+    type: FindQuizParticipantsSummaryDetailDto,
+    description: 'Get quiz participants summary detail successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.VERSIONS)
+  public async getQuizParticipantsSummaryDetail(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetQuizParticipantsSummaryDetailRequestDto
+  ): Promise<FindQuizParticipantsSummaryDetailDto> {
+    const data = await this._queryBus.execute(
+      new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId: contentId, ...query })
+    );
+    return data;
+  }
+
   @ApiOperation({ summary: 'Update a quiz' })
   @ApiOkResponse({
     type: QuizDto,
@@ -158,6 +205,70 @@ export class QuizController {
   ): Promise<void> {
     await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
       new DeleteQuizCommand({ quizId, authUser })
+    );
+  }
+
+  @ApiOperation({ summary: 'Add quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.created_success',
+  })
+  @Post(ROUTES.QUIZ.ADD_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.ADD_QUIZ_QUESTION.VERSIONS)
+  public async addQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() addQuestionDto: AddQuizQuestionRequestDto,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuestionDto> {
+    const data = await this._commandBus.execute<AddQuizQuestionCommand, QuestionDto>(
+      new AddQuizQuestionCommand({
+        quizId: id,
+        content: addQuestionDto.content,
+        answers: addQuestionDto.answers,
+        authUser,
+      })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Update quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.updated_success',
+  })
+  @Put(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.VERSIONS)
+  public async updateQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('questionId', ParseUUIDPipe) questionId: string,
+    @Body() updateQuestionDto: UpdateQuizQuestionRequestDto,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuestionDto> {
+    const data = await this._commandBus.execute<UpdateQuizQuestionCommand, QuestionDto>(
+      new UpdateQuizQuestionCommand({
+        questionId,
+        content: updateQuestionDto.content,
+        answers: updateQuestionDto.answers,
+        authUser,
+      })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Delete quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.deleted_success',
+  })
+  @Delete(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.VERSIONS)
+  public async deleteQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('questionId', ParseUUIDPipe) questionId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    await this._commandBus.execute<DeleteQuizQuestionCommand, string>(
+      new DeleteQuizQuestionCommand({
+        questionId,
+        authUser,
+      })
     );
   }
 

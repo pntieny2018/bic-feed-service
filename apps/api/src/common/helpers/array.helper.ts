@@ -73,4 +73,10 @@ export class ArrayHelper {
   public static convertObjectKeysToCamelCase(arr: any[]): any {
     return arr.map((obj) => ObjectHelper.convertKeysToCamelCase(obj));
   }
+
+  public static shuffle(arr: any[]): any[] {
+    return arr.sort(function () {
+      return Math.random() - 0.5;
+    });
+  }
 }

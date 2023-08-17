@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -13,9 +14,9 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
-import { PostType, QuizStatus } from '../../../data-type';
+
 import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
+import { PostType, QuizStatus } from '../../../data-type';
 
 export class CreateQuizRequestDto {
   @ApiProperty({ type: String })
@@ -307,4 +308,85 @@ export class GetQuizzesRequestDto extends PaginatedArgs {
   @IsEnum(PostType)
   @ValidateIf((i) => i.type !== '')
   public type?: PostType;
+}
+
+class AddQuizAnswerRequestDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @MaxLength(255)
+  public content: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @Type(() => Boolean)
+  @Expose({
+    name: 'is_correct',
+  })
+  public isCorrect: boolean;
+  public constructor(data: AddQuizAnswerRequestDto) {
+    Object.assign(this, data);
+  }
+}
+export class AddQuizQuestionRequestDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @MaxLength(255)
+  public content: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddQuizAnswerRequestDto)
+  public answers: AddQuizAnswerRequestDto[];
+
+  public constructor(data: AddQuizQuestionRequestDto) {
+    Object.assign(this, data);
+  }
+}
+
+export class GetQuizParticipantsSummaryDetailRequestDto extends PaginatedArgs {
+  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
+  @IsEnum(OrderEnum)
+  public order: OrderEnum = OrderEnum.DESC;
+}
+
+class UpdateQuizAnswerRequestDto {
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
+  public id?: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @MaxLength(255)
+  public content: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @Type(() => Boolean)
+  @Expose({
+    name: 'is_correct',
+  })
+  public isCorrect: boolean;
+  public constructor(data: UpdateQuizAnswerRequestDto) {
+    Object.assign(this, data);
+  }
+}
+export class UpdateQuizQuestionRequestDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @MaxLength(255)
+  public content: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateQuizAnswerRequestDto)
+  public answers: UpdateQuizAnswerRequestDto[];
+
+  public constructor(data: UpdateQuizQuestionRequestDto) {
+    Object.assign(this, data);
+  }
 }

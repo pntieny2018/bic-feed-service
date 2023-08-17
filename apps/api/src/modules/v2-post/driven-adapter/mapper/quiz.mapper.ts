@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 
 import { QuizGenStatus, QuizStatus } from '../../data-type';
-import { QuizEntity } from '../../domain/model/quiz';
+import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 
 @Injectable()
 export class QuizMapper {
@@ -28,15 +28,23 @@ export class QuizMapper {
         numberOfAnswersDisplay: model.numberOfAnswersDisplay,
         timeLimit: model.timeLimit,
         isRandom: model.isRandom,
-        questions: (model.questions || []).map((question) => ({
-          id: question.id,
-          content: question.content,
-          answers: question.answers.map((answer) => ({
-            id: answer.id,
-            content: answer.content,
-            isCorrect: answer.isCorrect,
-          })),
-        })),
+        questions: (model.questions || []).map(
+          (question) =>
+            new QuizQuestionEntity({
+              id: question.id,
+              quizId: model.id,
+              content: question.content,
+              answers: question.answers.map((answer) => ({
+                id: answer.id,
+                content: answer.content,
+                isCorrect: answer.isCorrect,
+                createdAt: answer.createdAt,
+                updatedAt: answer.updatedAt,
+              })),
+              createdAt: question.createdAt,
+              updatedAt: question.updatedAt,
+            })
+        ),
         meta: model.meta,
         createdBy: model.createdBy,
         updatedBy: model.updatedBy,
