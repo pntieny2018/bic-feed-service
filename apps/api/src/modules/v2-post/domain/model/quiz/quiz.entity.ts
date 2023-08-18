@@ -18,7 +18,6 @@ export type QuizProps = {
   numberOfQuestions?: number;
   numberOfAnswers?: number;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
   questions?: QuizQuestionEntity[];
   meta?: any;

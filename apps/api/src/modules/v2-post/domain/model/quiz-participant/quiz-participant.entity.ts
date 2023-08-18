@@ -87,6 +87,7 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
     });
     return correctAnswers;
   }
+
   public updateAnswers(
     answers: {
       id?: string;
@@ -126,6 +127,15 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
 
   public shuffleQuestions(): void {
     this._props.quizSnapshot.questions = ArrayHelper.shuffle(this._props.quizSnapshot.questions);
+  }
+
+  public filterQuestionDisplay(questionDisplay: number): void {
+    if (questionDisplay) {
+      this._props.quizSnapshot.questions = this._props.quizSnapshot.questions.slice(
+        0,
+        questionDisplay
+      );
+    }
   }
 
   public setHighest(isHighest: boolean): void {

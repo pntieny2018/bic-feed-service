@@ -216,6 +216,7 @@ export class QuizDomainService implements IQuizDomainService {
     if (quizEntity.isRandomQuestion()) {
       quizParticipant.shuffleQuestions();
     }
+    quizParticipant.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
     try {
       await this._quizParticipantRepository.create(quizParticipant);
       this.event.publish(
