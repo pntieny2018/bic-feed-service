@@ -6,7 +6,6 @@ import {
   IQuizRepository,
   QUIZ_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { QuizNotFoundException } from '../../../domain/exception';
 import { UpdateQuizCommand } from './update-quiz.command';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { QuizDto } from '../../dto';
@@ -16,14 +15,13 @@ import {
 } from '../../../../v2-group/application';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
-  IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
-import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
-} from '../../../domain/domain-service/interface/content.domain-service.interface';
+  IQuizDomainService,
+} from '../../../domain/domain-service/interface';
+import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
+
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../../binding/binding-quiz/quiz.interface';
 
 @CommandHandler(UpdateQuizCommand)

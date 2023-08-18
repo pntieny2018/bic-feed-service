@@ -46,16 +46,6 @@ export class UpdateQuizRequestDto {
   })
   public numberOfQuestionsDisplay?: number;
 
-  @ApiProperty({ type: Number })
-  @Type(() => Number)
-  @Min(1)
-  @Max(6)
-  @IsOptional()
-  @Expose({
-    name: 'number_of_answers_display',
-  })
-  public numberOfAnswersDisplay?: number;
-
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
   @Expose({
