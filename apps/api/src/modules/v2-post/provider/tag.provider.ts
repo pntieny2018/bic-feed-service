@@ -1,5 +1,5 @@
 import { CreateTagHandler, DeleteTagHandler, UpdateTagHandler } from '../application/command/tag';
-import { FindTagsPaginationHandler } from '../application/query/find-tags/find-tags-pagination.handler';
+import { FindTagsPaginationHandler } from '../application/query/tag';
 import { TagDomainService } from '../domain/domain-service';
 import { TAG_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { TagFactory } from '../domain/factory';

@@ -12,7 +12,7 @@ import {
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
 import { FindDraftContentsDto } from '../../application/dto/content.dto';
-import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
+import { FindDraftContentsQuery } from '../../application/query/content';
 import {
   GetDraftContentsRequestDto,
   PostSettingRequestDto,

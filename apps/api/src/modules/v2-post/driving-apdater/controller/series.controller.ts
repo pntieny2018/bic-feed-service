@@ -27,8 +27,7 @@ import {
   UpdateSeriesCommandPayload,
 } from '../../application/command/series';
 import { CreateSeriesDto, FindItemsBySeriesDto, SeriesDto } from '../../application/dto';
-import { FindItemsBySeriesQuery } from '../../application/query/find-items-by-series/find-items-by-series.query';
-import { FindSeriesQuery } from '../../application/query/find-series/find-series.query';
+import { FindItemsBySeriesQuery, FindSeriesQuery } from '../../application/query/series';
 import {
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,

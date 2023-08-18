@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
 import { USER_APPLICATION_TOKEN, UserApplicationService } from '../../../../v2-user/application';
-import { FindReactionsHandler } from '../../../application/query/find-reactions/find-reactions.handler';
+import { FindReactionsHandler } from '../../../application/query/reaction';
 import { REACTION_TARGET } from '../../../data-type';
 import {
   IReactionDomainService,

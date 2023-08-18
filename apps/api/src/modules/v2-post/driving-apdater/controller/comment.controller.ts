@@ -32,8 +32,10 @@ import {
   FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
 } from '../../application/dto';
-import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
-import { FindCommentsAroundIdQuery } from '../../application/query/find-comments-around-id/find-comments-around-id.query';
+import {
+  FindCommentsAroundIdQuery,
+  FindCommentsPaginationQuery,
+} from '../../application/query/comment';
 import {
   CreateCommentRequestDto,
   GetCommentsAroundIdDto,

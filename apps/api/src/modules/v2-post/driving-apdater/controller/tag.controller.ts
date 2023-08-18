@@ -24,7 +24,7 @@ import {
   UpdateTagCommand,
 } from '../../application/command/tag';
 import { FindTagsPaginationDto, TagDto } from '../../application/dto';
-import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
+import { FindTagsPaginationQuery } from '../../application/query/tag';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
 
 @ApiTags('Tags')

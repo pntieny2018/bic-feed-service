@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 
 import { CreateTagCommand, UpdateTagCommand } from '../../../application/command/tag';
-import { FindTagsPaginationQuery } from '../../../application/query/find-tags/find-tags-pagination.query';
+import { FindTagsPaginationQuery } from '../../../application/query/tag';
 import {
   TagDuplicateNameException,
   TagNotFoundException,

@@ -38,12 +38,14 @@ import {
   QuizParticipantDto,
   QuizSummaryDto,
 } from '../../application/dto';
-import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query';
-import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
-import { FindQuizParticipantsSummaryDetailDto } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.dto';
-import { FindQuizParticipantsSummaryDetailQuery } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.query';
-import { FindQuizSummaryQuery } from '../../application/query/find-quiz-summary/find-quiz-summary.query';
-import { FindQuizzesQuery } from '../../application/query/find-quizzes/find-quizzes.query';
+import {
+  FindQuizParticipantQuery,
+  FindQuizParticipantsSummaryDetailDto,
+  FindQuizParticipantsSummaryDetailQuery,
+  FindQuizQuery,
+  FindQuizSummaryQuery,
+  FindQuizzesQuery,
+} from '../../application/query/quiz';
 import { QuizStatus } from '../../data-type';
 import {
   AddQuizQuestionRequestDto,

@@ -1,6 +1,6 @@
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
 import { ReactionNotifyEventHandler } from '../application/event-handler/reaction';
-import { FindReactionsHandler } from '../application/query/find-reactions/find-reactions.handler';
+import { FindReactionsHandler } from '../application/query/reaction';
 import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/reaction.domain-service.interface';
 import { ReactionDomainService } from '../domain/domain-service/reaction.domain-service';
 import { REACTION_FACTORY_TOKEN } from '../domain/factory/interface/reaction.factory.interface';

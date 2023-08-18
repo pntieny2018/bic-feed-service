@@ -43,14 +43,14 @@ import {
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
 } from '../application/event-handler/series';
-import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
-import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
-import { FindItemsBySeriesHandler } from '../application/query/find-items-by-series/find-items-by-series.handler';
-import { FindNewsfeedHandler } from '../application/query/find-newsfeed/find-newsfeed.handler';
-import { FindPostHandler } from '../application/query/find-post/find-post.handler';
-import { FindPostsByIdsHandler } from '../application/query/find-posts-by-ids/find-posts-by-ids.handler';
-import { FindSeriesHandler } from '../application/query/find-series/find-series.handler';
-import { FindTimelineGroupHandler } from '../application/query/find-timeline-group/find-timeline-group.handler';
+import { FindArticleHandler } from '../application/query/article';
+import {
+  FindDraftContentsHandler,
+  FindNewsfeedHandler,
+  FindTimelineGroupHandler,
+} from '../application/query/content';
+import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
+import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {

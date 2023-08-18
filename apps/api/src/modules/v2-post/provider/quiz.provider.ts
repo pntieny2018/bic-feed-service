@@ -23,11 +23,13 @@ import {
   QuizParticipantStartedEventHandler,
   QuizRegenerateEventHandler,
 } from '../application/event-handler/quiz';
-import { FindQuizHandler } from '../application/query/find-quiz/find-quiz.handler';
-import { FindQuizParticipantHandler } from '../application/query/find-quiz-participant/find-quiz-participant.handler';
-import { FindQuizParticipantsSummaryDetailHandler } from '../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.handler';
-import { FindQuizSummaryHandler } from '../application/query/find-quiz-summary/find-quiz-summary.handler';
-import { FindQuizzesHandler } from '../application/query/find-quizzes/find-quizzes.handler';
+import {
+  FindQuizHandler,
+  FindQuizParticipantHandler,
+  FindQuizParticipantsSummaryDetailHandler,
+  FindQuizSummaryHandler,
+  FindQuizzesHandler,
+} from '../application/query/quiz';
 import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
 import { QUIZ_FACTORY_TOKEN } from '../domain/factory/interface/quiz.factory.interface';

@@ -30,7 +30,7 @@ import {
   UpdateArticleCommand,
 } from '../../application/command/article';
 import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
-import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
+import { FindArticleQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,

@@ -7,7 +7,7 @@ import { AuthUser } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 import { CreateReactionCommand, DeleteReactionCommand } from '../../application/command/reaction';
 import { ReactionDto, ReactionListDto } from '../../application/dto';
-import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
+import { FindReactionsQuery } from '../../application/query/reaction';
 import {
   CreateReactionRequestDto,
   DeleteReactionRequestDto,

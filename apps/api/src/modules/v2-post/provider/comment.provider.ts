@@ -6,8 +6,10 @@ import {
   ReplyCommentHandler,
   UpdateCommentHandler,
 } from '../application/command/comment';
-import { FindCommentsPaginationHandler } from '../application/query/find-comments/find-comments-pagination.handler';
-import { FindCommentsAroundIdHandler } from '../application/query/find-comments-around-id/find-comments-around-id.handler';
+import {
+  FindCommentsAroundIdHandler,
+  FindCommentsPaginationHandler,
+} from '../application/query/comment';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';
 import { COMMENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { CommentFactory } from '../domain/factory/comment.factory';

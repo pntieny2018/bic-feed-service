@@ -16,7 +16,7 @@ import {
   UpdatePostCommand,
 } from '../../application/command/post';
 import { CreateDraftPostDto, PostDto } from '../../application/dto';
-import { FindPostQuery } from '../../application/query/find-post/find-post.query';
+import { FindPostQuery } from '../../application/query/post';
 import {
   AutoSavePostRequestDto,
   CreateDraftPostRequestDto,

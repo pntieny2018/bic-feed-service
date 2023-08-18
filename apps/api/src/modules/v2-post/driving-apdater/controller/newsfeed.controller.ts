@@ -5,7 +5,7 @@ import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
-import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
+import { FindNewsfeedQuery } from '../../application/query/content';
 import { NewsfeedRequestDto } from '../dto/request';
 
 @ApiTags('v2 Timeline')
