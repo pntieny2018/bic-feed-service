@@ -4,13 +4,13 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
-} from '../../../../../v2-group/application';
+} from '../../../../v2-group/application';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
-import { CreateDraftPostDto } from '../../../dto';
+} from '../../../domain/domain-service/interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
+import { CreateDraftPostDto } from '../../dto';
 
 import { CreateDraftPostCommand } from './create-draft-post.command';
 
@@ -35,13 +35,13 @@ export class CreateDraftPostHandler
       userId: authUser.id,
       groups,
     });
-    const data = new CreateDraftPostDto({
+
+    return new CreateDraftPostDto({
       id: postEntity.get('id'),
       audience: {
         groups,
       },
       setting: postEntity.get('setting'),
     });
-    return data;
   }
 }

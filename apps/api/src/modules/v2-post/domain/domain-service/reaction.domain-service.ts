@@ -43,6 +43,12 @@ export class ReactionDomainService implements IReactionDomainService {
     return this._reactionQuery.getPagination(props);
   }
 
+  public async getAndCountReactionByContentIds(
+    contentIds: string[]
+  ): Promise<Map<string, Record<string, number>[]>> {
+    return this._reactionQuery.getAndCountReactionByContents(contentIds);
+  }
+
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, createdBy, target, targetId } = input;
     const reactionEntity = this._reactionFactory.create({
