@@ -159,6 +159,7 @@ export class SeriesService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           coverJson: coverMedia,
+          publishedAt: new Date(),
         },
         { transaction }
       );

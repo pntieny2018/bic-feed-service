@@ -40,6 +40,8 @@ import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-cont
 import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-important-post.command';
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
 import { ExportUserContentDataCommand } from './export-user-content-data.command';
+import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
+import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
 
 @Module({
   imports: [
@@ -90,6 +92,8 @@ import { ExportUserContentDataCommand } from './export-user-content-data.command
     MigrateMarkReadImportantPostCommand,
     FixContentPrivacyCommand,
     ExportUserContentDataCommand,
+    MigrateScheduledTimeArticlesCommand,
+    MigratePublishedTimeContentCommand,
   ],
 })
 export class CommandModule {}

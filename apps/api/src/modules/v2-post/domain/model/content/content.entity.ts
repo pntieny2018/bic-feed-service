@@ -32,6 +32,7 @@ export type ContentProps = {
   ownerReactions?: { id: string; reactionName: string }[];
   errorLog?: any;
   publishedAt?: Date;
+  scheduledAt?: Date;
   lang?: PostLang;
   groupIds?: string[];
   communityIds?: string[];
@@ -184,7 +185,7 @@ export class ContentEntity<
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
-      this._props.createdAt = new Date();
+      this._props.publishedAt = new Date();
     }
     this._props.status = PostStatus.PUBLISHED;
   }
@@ -195,6 +196,14 @@ export class ContentEntity<
 
   public setProcessing(): void {
     this._props.status = PostStatus.PROCESSING;
+  }
+
+  public setScheduleFailed(): void {
+    this._props.status = PostStatus.SCHEDULE_FAILED;
+  }
+
+  public setErrorLog(errorLog: unknown): void {
+    this._props.errorLog = errorLog;
   }
 
   public increaseTotalSeen(): void {

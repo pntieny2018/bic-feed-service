@@ -5,6 +5,6 @@ import { ERRORS } from '../../../../common/constants/errors';
 export class ContentEmptyException extends DomainException {
   public constructor(message?: string) {
     const i18n = I18nContext.current();
-    super(ERRORS.CONTENT.EMPTY, message || i18n.t(`error.content.empty`));
+    super(ERRORS.CONTENT.EMPTY, message || i18n?.t(`error.content.empty`));
   }
 }
