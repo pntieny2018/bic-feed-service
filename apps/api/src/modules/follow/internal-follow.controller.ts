@@ -1,13 +1,9 @@
-import { TracingInterceptor } from '@libs/infra/log';
-import { Controller, Logger, UseInterceptors } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
-
 import { KAFKA_TOPIC } from '../../common/constants';
-
 import { FollowDto } from './dto/requests';
 import { FollowService } from './follow.service';
 
-@UseInterceptors(TracingInterceptor)
 @Controller()
 export class InternalFollowController {
   private _logger = new Logger(InternalFollowController.name);

@@ -1,15 +1,12 @@
-import { TracingInterceptor } from '@libs/infra/log';
-import { Controller, UseInterceptors } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
-
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ProcessSeriesDeletedCommand } from '../../application/command/process-series-deleted/process-series-deleted.command';
 import { ProcessSeriesPublishedCommand } from '../../application/command/process-series-published/process-series-published.command';
 import { ProcessSeriesUpdatedCommand } from '../../application/command/process-series-updated/process-series-updated.command';
 import { SeriesChangedMessagePayload } from '../../application/dto/message';
 
-@UseInterceptors(TracingInterceptor)
 @Controller()
 export class SeriesConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}

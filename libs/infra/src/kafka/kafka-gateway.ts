@@ -17,10 +17,13 @@ export class KafkaGateway {
     configService: ConfigService
   ): Promise<INestApplication> {
     const defaultConfig = configService.get<IKafkaConfig>('kafka');
-    app.connectMicroservice<KafkaOptions>({
-      transport: Transport.KAFKA,
-      options: defaultConfig,
-    });
+    app.connectMicroservice<KafkaOptions>(
+      {
+        transport: Transport.KAFKA,
+        options: defaultConfig,
+      },
+      { inheritAppConfig: true }
+    );
     return app.startAllMicroservices();
   }
 }
