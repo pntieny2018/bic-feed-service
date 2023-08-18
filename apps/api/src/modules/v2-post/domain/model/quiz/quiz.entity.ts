@@ -80,7 +80,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public validateNumberDisplay(): void {
     if (
       this._props.numberOfQuestionsDisplay !== null &&
-      this._props.numberOfQuestions < this._props.numberOfQuestionsDisplay
+      this._props.numberOfQuestions < this._props.questions?.length
     ) {
       throw new DomainModelException(
         `Number of questions display cannot exceed ${this._props.numberOfQuestions}`
