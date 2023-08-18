@@ -1,6 +1,6 @@
-import { QUEUES } from '@app/queue/queue.constant';
+import { QUEUES } from '@libs/common/constants';
 import { ProcessorAndLog } from '@libs/infra/log';
-import { Job } from '@libs/infra/queue';
+import { JobWithContext } from '@libs/infra/queue';
 import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
 
@@ -12,8 +12,10 @@ export class QuizParticipantProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   @Process(QUEUES.QUIZ_PARTICIPANT_RESULT.JOBS.PROCESS_QUIZ_PARTICIPANT_RESULT)
-  public async handleQuizParticipantResult(job: Job<QuizParticipantResultJobDto>): Promise<void> {
-    const { quizParticipantId } = job.data;
+  public async handleQuizParticipantResult(
+    job: JobWithContext<QuizParticipantResultJobDto>
+  ): Promise<void> {
+    const { quizParticipantId } = job.data.data;
     await this._commandBus.execute<ProcessQuizParticipantResultCommand, void>(
       new ProcessQuizParticipantResultCommand({ quizParticipantId })
     );

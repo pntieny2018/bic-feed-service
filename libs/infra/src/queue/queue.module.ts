@@ -1,14 +1,12 @@
 import { SentryModule } from '@app/sentry';
-import {
-  IQueueConfig,
-  configs,
-  QueueService,
-  QUEUES_NAME,
-  defaultJobOptions,
-} from '@libs/infra/queue';
+import { QUEUES } from '@libs/common/constants';
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { IQueueConfig, configs } from './config';
+import { QUEUE_SERVICE_TOKEN } from './interfaces';
+import { QueueService } from './queue.service';
 
 @Module({
   imports: [
@@ -41,19 +39,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
     BullModule.registerQueue({
-      name: QUEUES_NAME.QUIZ_PENDING,
+      name: QUEUES.QUIZ_PENDING.QUEUE_NAME,
       limiter: {
         max: 3,
         duration: 1000,
       },
-      defaultJobOptions,
+      defaultJobOptions: configs().defaultJobOptions,
     }),
     BullModule.registerQueue({
-      name: QUEUES_NAME.QUIZ_PARTICIPANT_RESULT,
-      defaultJobOptions,
+      name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME,
+      defaultJobOptions: configs().defaultJobOptions,
     }),
   ],
-  providers: [QueueService],
-  exports: [QueueService],
+  providers: [{ provide: QUEUE_SERVICE_TOKEN, useClass: QueueService }],
+  exports: [QUEUE_SERVICE_TOKEN],
 })
 export class QueueModule {}

@@ -3,11 +3,12 @@ import { BULL_MODULE_QUEUE_PROCESS } from '@nestjs/bull/dist/bull.constants';
 import { Logger } from '@nestjs/common';
 import { EventsHandler, IEvent } from '@nestjs/cqrs';
 import * as Sentry from '@sentry/node';
+import { CLS_ID, CLS_REQ, ClsServiceManager } from 'nestjs-cls';
 
 import { IEventPayload } from '../event';
-import { Job } from '../queue';
+import { Job, JobWithContext } from '../queue';
 
-import { getContext, getDebugContext } from './log.context';
+import { CONTEXT, getContext, getDebugContext } from './log.context';
 
 export function EventsHandlerAndLog(...events: IEvent[]) {
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -72,17 +73,52 @@ export function ProcessorAndLog(queueName: string) {
 
         const originalMethod = originalDescriptor.value;
 
-        function logAndExecute(job: Job<unknown>): void {
+        function logAndExecute(job: JobWithContext<unknown>): void {
+          const jobContext = job.data.context;
+
+          const cls = ClsServiceManager.getClsService();
+          cls.enter();
+          cls.set(CLS_ID, jobContext.requestId);
+          cls.set(CLS_REQ, { user: jobContext.actor });
+          cls.set(CONTEXT, jobContext);
+
           const context = getContext();
           const debugContext = getDebugContext(context, methodName);
+          const debugJob = getDebugJob();
 
-          logger.debug(`JobProcessor start: ${JSON.stringify({ job, debugContext })}`);
+          logger.debug(
+            `JobProcessor start: ${JSON.stringify({
+              job: debugJob,
+              debugContext,
+            })}`
+          );
+
+          function getDebugJob(): Job<unknown> {
+            return {
+              id: job.id,
+              name: job.name,
+              data: job.data.data,
+              opts: job.opts,
+              queue: { name: job.queue.name },
+            };
+          }
 
           function logDone(): void {
-            logger.debug(`JobProcessor done: ${JSON.stringify({ job, debugContext })}`);
+            logger.debug(
+              `JobProcessor done: ${JSON.stringify({
+                job: debugJob,
+                debugContext,
+              })}`
+            );
           }
           function logError(error: any): void {
-            logger.error(`JobProcessor error: ${JSON.stringify({ job, debugContext, error })}`);
+            logger.error(
+              `JobProcessor error: ${JSON.stringify({
+                job: debugJob,
+                debugContext,
+                error,
+              })}`
+            );
             Sentry.captureException(error);
           }
 

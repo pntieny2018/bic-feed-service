@@ -19,7 +19,6 @@ import { Logger, LoggerModule } from 'nestjs-pino';
             serializers: {
               req: (req: Request): any => {
                 reqId = req.headers[HEADER_REQ_ID] ?? cls?.getId();
-                console.log('-req.body-', req.body);
                 return {
                   method: req.method,
                   url: req.url,

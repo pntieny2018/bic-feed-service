@@ -1,6 +1,6 @@
 import { KafkaModule } from '@app/kafka';
-import { QueueModule } from '@app/queue';
 import { EventModule } from '@libs/infra/event';
+import { QueueModule } from '@libs/infra/queue';
 import { HttpModule } from '@nestjs/axios';
 import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
