@@ -211,11 +211,13 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     return this._props.isRandom;
   }
 
-  public isGenerateFailed(): boolean {
-    return this._props.genStatus === QuizGenStatus.FAILED;
-  }
+  public deleteQuestion(idQuestion: string): void {
+    this._props.questions = this._props.questions.filter(
+      (question) => question.get('id') !== idQuestion
+    );
 
-  public isGenerateProcessed(): boolean {
-    return this._props.genStatus === QuizGenStatus.PROCESSED;
+    if (this._props.numberOfQuestionsDisplay > this._props.questions.length) {
+      this._props.numberOfQuestionsDisplay = this._props.questions.length;
+    }
   }
 }
