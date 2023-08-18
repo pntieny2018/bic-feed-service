@@ -1,7 +1,8 @@
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { QuizCreatedEvent } from '../../domain/event/quiz-created.event';
-import { Logger } from '@nestjs/common';
 import { QueueService } from '@app/queue';
+import { Logger } from '@nestjs/common';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+
+import { QuizCreatedEvent } from '../../../domain/event/quiz-created.event';
 
 @EventsHandler(QuizCreatedEvent)
 export class QuizCreatedEventHandler implements IEventHandler<QuizCreatedEvent> {

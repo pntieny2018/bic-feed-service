@@ -1,8 +1,10 @@
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { QuizRegenerateEvent } from '../../domain/event/quiz-regenerate.event';
-import { Logger } from '@nestjs/common';
-import { QuizGeneratedEventHandler } from './quiz-generated.event-handler';
 import { QueueService } from '@app/queue';
+import { Logger } from '@nestjs/common';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+
+import { QuizRegenerateEvent } from '../../../domain/event/quiz-regenerate.event';
+
+import { QuizGeneratedEventHandler } from './quiz-generated.event-handler';
 
 @EventsHandler(QuizRegenerateEvent)
 export class QuizRegenerateEventHandler implements IEventHandler<QuizRegenerateEvent> {

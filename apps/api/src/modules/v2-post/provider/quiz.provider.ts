@@ -19,12 +19,10 @@ import { ProcessGenerationQuizHandler } from '../application/command/quiz/proces
 import {
   QuizCreatedEventHandler,
   QuizGeneratedEventHandler,
-  QuizRegenerateEventHandler,
-} from '../application/event-handler';
-import {
   QuizParticipantFinishedEventHandler,
   QuizParticipantStartedEventHandler,
-} from '../application/event-handler/quiz-participant.event-handler';
+  QuizRegenerateEventHandler,
+} from '../application/event-handler/quiz';
 import { FindQuizHandler } from '../application/query/find-quiz/find-quiz.handler';
 import { FindQuizParticipantHandler } from '../application/query/find-quiz-participant/find-quiz-participant.handler';
 import { FindQuizParticipantsSummaryDetailHandler } from '../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.handler';

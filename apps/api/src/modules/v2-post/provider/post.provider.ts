@@ -33,9 +33,11 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
-import { ArticleDeletedEventHandler } from '../application/event-handler/article/article-deleted.event-handler';
-import { ArticlePublishedEventHandler } from '../application/event-handler/article/article-publish.event-handler';
-import { ArticleUpdatedEventHandler } from '../application/event-handler/article/article-updated.event-handler';
+import {
+  ArticleDeletedEventHandler,
+  ArticlePublishedEventHandler,
+  ArticleUpdatedEventHandler,
+} from '../application/event-handler/article';
 import {
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,

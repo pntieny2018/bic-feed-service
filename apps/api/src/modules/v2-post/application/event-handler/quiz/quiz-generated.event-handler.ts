@@ -1,14 +1,15 @@
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { QuizGeneratedEvent } from '../../domain/event/quiz-generated.event';
+import { KafkaService } from '@app/kafka';
 import { Inject, Logger } from '@nestjs/common';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+
+import { KAFKA_TOPIC } from '../../../../../common/constants';
+import { QuizGeneratedEvent } from '../../../domain/event/quiz-generated.event';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
   IQuizRepository,
   QUIZ_REPOSITORY_TOKEN,
-} from '../../domain/repositoty-interface';
-import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '../../../../common/constants';
+} from '../../../domain/repositoty-interface';
 
 @EventsHandler(QuizGeneratedEvent)
 export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEvent> {
@@ -23,13 +24,17 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
     this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
     const { quizId } = event;
     const quizEntity = await this._quizRepository.findOne(quizId);
-    if (!quizEntity) return;
+    if (!quizEntity) {
+      return;
+    }
 
     const contentEntity = await this._contentRepository.findOne({
       where: { id: quizEntity.get('contentId') },
     });
 
-    if (!contentEntity) return;
+    if (!contentEntity) {
+      return;
+    }
 
     this._kafkaService.emit(KAFKA_TOPIC.CONTENT.QUIZ_PROCESSED, {
       contentId: quizEntity.get('contentId'),
