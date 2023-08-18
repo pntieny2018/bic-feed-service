@@ -1,5 +1,4 @@
-import { CreateReactionHandler } from '../application/command/create-reaction/create-reaction.handler';
-import { DeleteReactionHandler } from '../application/command/delete-reaction/delete-reaction.handler';
+import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
 import { ReactionNotifyEventHandler } from '../application/event-handler/reaction/reaction-notify.event-handler';
 import { FindReactionsHandler } from '../application/query/find-reactions/find-reactions.handler';
 import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/reaction.domain-service.interface';

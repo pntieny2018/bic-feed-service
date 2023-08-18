@@ -1,11 +1,11 @@
-import { CommandBus } from '@nestjs/cqrs';
-import { Process, Processor } from '@nestjs/bull';
-import { QUEUES } from '@app/queue/queue.constant';
-
 import { Job } from '@app/queue/interfaces';
-import { QuizParticipantResultJobDto } from '../../application/dto/queue.dto';
-import { ProcessQuizParticipantResultCommand } from '../../application/command/process-quiz-participant-result/process-quiz-participant-result.command';
+import { QUEUES } from '@app/queue/queue.constant';
+import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+
+import { ProcessQuizParticipantResultCommand } from '../../application/command/quiz';
+import { QuizParticipantResultJobDto } from '../../application/dto/queue.dto';
 
 @Processor(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)
 export class QuizParticipantProcessor {

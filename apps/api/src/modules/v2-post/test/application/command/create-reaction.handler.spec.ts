@@ -4,7 +4,7 @@ import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
 
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { CreateReactionHandler } from '../../../application/command/create-reaction/create-reaction.handler';
+import { CreateReactionHandler } from '../../../application/command/reaction';
 import { PostPrivacy, PostStatus, PostType, REACTION_TARGET } from '../../../data-type';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,

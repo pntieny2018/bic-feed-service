@@ -1,49 +1,48 @@
+import { createMock } from '@golevelup/ts-jest';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
-import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import {
-  COMMENT_DOMAIN_SERVICE_TOKEN,
-  ICommentDomainService,
-} from '../../../domain/domain-service/interface';
-import { createMock } from '@golevelup/ts-jest';
-import { ContentValidator } from '../../../domain/validator/content.validator';
-import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
+import { v4 } from 'uuid';
+
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserApplicationService,
 } from '../../../../v2-user/application';
-import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import { ContentBinding } from '../../../application/binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
+import {
+  UpdateCommentCommand,
+  UpdateCommentCommandPayload,
+  UpdateCommentHandler,
+} from '../../../application/command/comment';
+import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
+import {
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+} from '../../../domain/domain-service/interface';
+import {
+  CommentNotFoundException,
+  ContentAccessDeniedException,
+  ContentNoCommentPermissionException,
+  ContentNotFoundException,
+} from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
-import { postProps } from '../../mock/post.props.mock';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment';
-import { userMentions, userMock } from '../../mock/user.dto.mock';
-import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
-import { commentEntityMock } from '../../mock/comment.entity.mock';
-import { UpdateCommentHandler } from '../../../application/command/update-comment/update-comment.handler';
-import {
-  UpdateCommentCommand,
-  UpdateCommentCommandPayload,
-} from '../../../application/command/update-comment/update-comment.command';
+import { ContentValidator } from '../../../domain/validator/content.validator';
+import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
-import {
-  CommentNotFoundException,
-  ContentAccessDeniedException,
-  ContentNoCRUDPermissionException,
-  ContentNoCommentPermissionException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
-import { v4 } from 'uuid';
-import { GroupDto } from '../../../../../modules/v2-group/application';
+import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
+import { commentEntityMock } from '../../mock/comment.entity.mock';
+import { postProps } from '../../mock/post.props.mock';
+import { userMentions, userMock } from '../../mock/user.dto.mock';
 
 describe('UpdateCommentHandler', () => {
   let handler: UpdateCommentHandler;

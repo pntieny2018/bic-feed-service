@@ -1,8 +1,9 @@
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { Process, Processor } from '@nestjs/bull';
 import { QUEUES } from '@app/queue/queue.constant';
+import { Process, Processor } from '@nestjs/bull';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Job } from 'bull';
-import { ProcessGenerationQuizCommand } from '../../application/command/process-generation-quiz/process-generation-quiz.command';
+
+import { ProcessGenerationQuizCommand } from '../../application/command/quiz/process-generation-quiz';
 
 @Processor(QUEUES.QUIZ_PENDING.QUEUE_NAME)
 export class QuizProcessor {

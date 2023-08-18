@@ -13,17 +13,19 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ClassTransformer } from 'class-transformer';
+
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
-import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
-import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
-import { UpdateTagCommand } from '../../application/command/update-tag/update-tag.command';
-import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
-
-import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
+import {
+  CreateTagCommand,
+  DeleteTagCommand,
+  UpdateTagCommand,
+} from '../../application/command/tag';
 import { FindTagsPaginationDto, TagDto } from '../../application/dto';
-import { ROUTES } from '../../../../common/constants/routes.constant';
+import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
+import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')

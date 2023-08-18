@@ -3,8 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
 
-import { DeleteReactionCommand } from '../../../application/command/delete-reaction/delete-reaction.command';
-import { DeleteReactionHandler } from '../../../application/command/delete-reaction/delete-reaction.handler';
+import {
+  DeleteReactionCommand,
+  DeleteReactionHandler,
+} from '../../../application/command/reaction';
 import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import {
   IReactionDomainService,

@@ -20,19 +20,13 @@ import { UserDto } from '../../../v2-user/application/user.dto';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
-} from '../../application/command/create-comment/create-comment.command';
-import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
-} from '../../application/command/delete-comment/delete-comment.command';
-import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
-} from '../../application/command/reply-comment/reply-comment.command';
-import {
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
-} from '../../application/command/update-comment/update-comment.command';
+} from '../../application/command/comment';
 import {
   CommentDto,
   FindCommentsAroundIdDto,

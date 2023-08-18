@@ -1,9 +1,11 @@
 import { CommentBinding } from '../application/binding/binding-comment/comment.binding';
 import { COMMENT_BINDING_TOKEN } from '../application/binding/binding-comment/comment.interface';
-import { CreateCommentHandler } from '../application/command/create-comment/create-comment.handler';
-import { DeleteCommentHandler } from '../application/command/delete-comment/delete-comment.handler';
-import { ReplyCommentHandler } from '../application/command/reply-comment/reply-comment.handler';
-import { UpdateCommentHandler } from '../application/command/update-comment/update-comment.handler';
+import {
+  CreateCommentHandler,
+  DeleteCommentHandler,
+  ReplyCommentHandler,
+  UpdateCommentHandler,
+} from '../application/command/comment';
 import { FindCommentsPaginationHandler } from '../application/query/find-comments/find-comments-pagination.handler';
 import { FindCommentsAroundIdHandler } from '../application/query/find-comments-around-id/find-comments-around-id.handler';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';

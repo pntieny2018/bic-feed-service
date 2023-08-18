@@ -6,9 +6,11 @@ import { instanceToInstance } from 'class-transformer';
 import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
-import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
-import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
-import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
+import {
+  MarkReadImportantContentCommand,
+  UpdateContentSettingCommand,
+} from '../../application/command/content';
+import { ValidateSeriesTagsCommand } from '../../application/command/tag';
 import { FindDraftContentsDto } from '../../application/dto/content.dto';
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import {

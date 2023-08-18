@@ -20,15 +20,17 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
-import { AddQuizQuestionCommand } from '../../application/command/add-quiz-question/add-quiz-question.command';
-import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
-import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
-import { DeleteQuizQuestionCommand } from '../../application/command/delete-quiz-question/delete-quiz-question.command';
-import { GenerateQuizCommand } from '../../application/command/generate-quiz/generate-quiz.command';
-import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
-import { UpdateQuizCommand } from '../../application/command/update-quiz/update-quiz.command';
-import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
-import { UpdateQuizQuestionCommand } from '../../application/command/update-quiz-question/update-quiz-question.command';
+import {
+  AddQuizQuestionCommand,
+  CreateQuizCommand,
+  DeleteQuizCommand,
+  DeleteQuizQuestionCommand,
+  GenerateQuizCommand,
+  StartQuizCommand,
+  UpdateQuizAnswerCommand,
+  UpdateQuizCommand,
+  UpdateQuizQuestionCommand,
+} from '../../application/command/quiz';
 import {
   FindQuizzesDto,
   QuestionDto,
