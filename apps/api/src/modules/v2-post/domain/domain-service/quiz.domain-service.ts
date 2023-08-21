@@ -300,7 +300,12 @@ export class QuizDomainService implements IQuizDomainService {
     return quizEntity;
   }
 
-  public async generateQuestions(quizEntity: QuizEntity): Promise<void> {
+  public async generateQuestions(quizId: string): Promise<void> {
+    const quizEntity = await this._quizRepository.findOne(quizId);
+    if (!quizEntity) {
+      return;
+    }
+
     const cloneQuizEntity = cloneDeep(quizEntity);
     if (cloneQuizEntity.isProcessing()) {
       return;

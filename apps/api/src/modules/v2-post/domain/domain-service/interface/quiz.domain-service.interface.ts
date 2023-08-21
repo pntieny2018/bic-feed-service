@@ -83,7 +83,7 @@ export interface IQuizDomainService {
     isFinished: boolean
   ): Promise<void>;
   reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity>;
-  generateQuestions(quizEntity: QuizEntity): Promise<void>;
+  generateQuestions(id: string): Promise<void>;
   getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
   getQuizParticipant(quizParticipantId: string, authUserId: string): Promise<QuizParticipantEntity>;
   updateQuestion(updateQuestionProps: UpdateQuestionProps): Promise<QuizQuestionEntity>;
