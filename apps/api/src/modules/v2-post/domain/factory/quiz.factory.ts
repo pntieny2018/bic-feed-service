@@ -23,7 +23,6 @@ export class QuizFactory implements IQuizFactory {
       isRandom,
       numberOfAnswers,
       numberOfQuestions,
-      numberOfAnswersDisplay,
       numberOfQuestionsDisplay,
       meta,
     } = options;
@@ -34,9 +33,8 @@ export class QuizFactory implements IQuizFactory {
       title: title || null,
       description: description || null,
       numberOfQuestions,
-      numberOfQuestionsDisplay: numberOfQuestionsDisplay || numberOfQuestions,
+      numberOfQuestionsDisplay: numberOfQuestionsDisplay || null,
       numberOfAnswers,
-      numberOfAnswersDisplay: numberOfAnswersDisplay || numberOfAnswers,
       isRandom: isRandom || true,
       timeLimit: RULES.QUIZ_TIME_LIMIT_DEFAULT,
       questions: [],

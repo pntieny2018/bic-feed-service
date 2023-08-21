@@ -14,7 +14,6 @@ export class QuizDto {
   public title: string;
   public description?: string;
   public numberOfQuestionsDisplay?: number;
-  public numberOfAnswersDisplay?: number;
   public questions?: QuestionDto[];
   public createdAt: Date;
   public updatedAt: Date;

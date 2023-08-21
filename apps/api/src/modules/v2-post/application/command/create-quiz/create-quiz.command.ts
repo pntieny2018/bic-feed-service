@@ -9,7 +9,6 @@ export type CreateQuizCommandPayload = {
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
 };
 export class CreateQuizCommand implements ICommand {
