@@ -7,7 +7,7 @@ import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
 import { FindCategoriesPaginationDto } from '../../application/dto/category.dto';
-import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { FindCategoriesPaginationQuery } from '../../application/query/category';
 import { GetCategoryRequestDto } from '../dto/request';
 
 @ApiTags('Category')

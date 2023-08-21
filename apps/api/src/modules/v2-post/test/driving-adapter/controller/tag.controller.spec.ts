@@ -2,17 +2,17 @@ import { BadRequestException, INestApplication, NotFoundException } from '@nestj
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
-import { TagController } from '../../../driving-apdater/controller/tag.controller';
+
+import { CreateTagCommand, UpdateTagCommand } from '../../../application/command/tag';
+import { FindTagsPaginationQuery } from '../../../application/query/tag';
 import {
   TagDuplicateNameException,
   TagNotFoundException,
   TagUsedException,
 } from '../../../domain/exception';
-import { userMock } from '../../mock/user.dto.mock';
-import { CreateTagCommand } from '../../../application/command/create-tag/create-tag.command';
+import { TagController } from '../../../driving-apdater/controller/tag.controller';
 import { CreateTagRequestDto, UpdateTagRequestDto } from '../../../driving-apdater/dto/request';
-import { FindTagsPaginationQuery } from '../../../application/query/find-tags/find-tags-pagination.query';
-import { UpdateTagCommand } from '../../../application/command/update-tag/update-tag.command';
+import { userMock } from '../../mock/user.dto.mock';
 
 describe('TagController', () => {
   let tagController: TagController;

@@ -1,11 +1,12 @@
-import moment from 'moment';
-import { Cron } from '@nestjs/schedule';
-import { CommandBus } from '@nestjs/cqrs';
 import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { Cron } from '@nestjs/schedule';
+import moment from 'moment';
+
 import { CACHE_KEYS, CRON_RUN_SCHEDULED_ARTICLE } from '../../../../common/constants';
-import { ProcessArticleScheduledCommand } from '../../application/command/process-article-scheduled/process-article-scheduled.command';
+import { ProcessArticleScheduledCommand } from '../../application/command/article';
 
 @Injectable()
 export class ArticleCron {

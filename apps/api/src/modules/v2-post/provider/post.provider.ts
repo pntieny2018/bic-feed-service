@@ -1,46 +1,56 @@
 import { ContentBinding } from '../application/binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
-import { AutoSaveArticleHandler } from '../application/command/auto-save-article/auto-save-article.handler';
-import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
-import { CreateDraftArticleHandler } from '../application/command/create-draft-article/create-draft-article.handler';
-import { CreateDraftPostHandler } from '../application/command/create-draft-post/create-draft-post.handler';
-import { CreateSeriesHandler } from '../application/command/create-series/create-series.handler';
-import { DeleteArticleHandler } from '../application/command/delete-article/delete-article.handler';
-import { DeleteSeriesHandler } from '../application/command/delete-series/delete-series.handler';
-import { MarkReadImportantContentHandler } from '../application/command/mark-read-important-content/mark-read-important-content.handler';
-import { ProcessArticleDeletedHandler } from '../application/command/process-article-deleted/process-article-deleted.handler';
-import { ProcessArticlePublishedHandler } from '../application/command/process-article-published/process-article-published.handler';
-import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
-import { ProcessArticleUpdatedHandler } from '../application/command/process-article-updated/process-article-updated.handler';
-import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
-import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
-import { ProcessSeriesDeletedHandler } from '../application/command/process-series-deleted/process-series-deleted.handler';
-import { ProcessSeriesPublishedHandler } from '../application/command/process-series-published/process-series-published.handler';
-import { ProcessSeriesUpdatedHandler } from '../application/command/process-series-updated/process-series-updated.handler';
-import { PublishArticleHandler } from '../application/command/publish-article/publish-article.handler';
-import { PublishPostHandler } from '../application/command/publish-post/publish-post.handler';
-import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
-import { UpdateArticleHandler } from '../application/command/update-article/update-article.handler';
-import { UpdateContentSettingHandler } from '../application/command/update-content-setting/update-content-setting.handler';
-import { UpdatePostHandler } from '../application/command/update-post/update-post.handler';
-import { UpdateSeriesHandler } from '../application/command/update-series/update-series.handler';
-import { ValidateSeriesTagsHandler } from '../application/command/validate-series-tags/validate-series-tags.handler';
-import { ArticleDeletedEventHandler } from '../application/event-handler/article/article-deleted.event-handler';
-import { ArticlePublishedEventHandler } from '../application/event-handler/article/article-publish.event-handler';
-import { ArticleUpdatedEventHandler } from '../application/event-handler/article/article-updated.event-handler';
+import {
+  AutoSaveArticleHandler,
+  CreateDraftArticleHandler,
+  DeleteArticleHandler,
+  ProcessArticleDeletedHandler,
+  ProcessArticlePublishedHandler,
+  ProcessArticleScheduledHandler,
+  ProcessArticleUpdatedHandler,
+  PublishArticleHandler,
+  ScheduleArticleHandler,
+  UpdateArticleHandler,
+} from '../application/command/article';
+import {
+  MarkReadImportantContentHandler,
+  UpdateContentSettingHandler,
+} from '../application/command/content';
+import {
+  AutoSavePostHandler,
+  CreateDraftPostHandler,
+  ProcessPostPublishedHandler,
+  ProcessPostUpdatedHandler,
+  PublishPostHandler,
+  UpdatePostHandler,
+} from '../application/command/post';
+import {
+  CreateSeriesHandler,
+  DeleteSeriesHandler,
+  ProcessSeriesDeletedHandler,
+  ProcessSeriesPublishedHandler,
+  ProcessSeriesUpdatedHandler,
+  UpdateSeriesHandler,
+} from '../application/command/series';
+import { ValidateSeriesTagsHandler } from '../application/command/tag';
+import {
+  ArticleDeletedEventHandler,
+  ArticlePublishedEventHandler,
+  ArticleUpdatedEventHandler,
+} from '../application/event-handler/article';
 import {
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
 } from '../application/event-handler/series';
-import { FindArticleHandler } from '../application/query/find-article/find-article.handler';
-import { FindDraftContentsHandler } from '../application/query/find-draft-contents/find-draft-contents.handler';
-import { FindItemsBySeriesHandler } from '../application/query/find-items-by-series/find-items-by-series.handler';
-import { FindNewsfeedHandler } from '../application/query/find-newsfeed/find-newsfeed.handler';
-import { FindPostHandler } from '../application/query/find-post/find-post.handler';
-import { FindPostsByIdsHandler } from '../application/query/find-posts-by-ids/find-posts-by-ids.handler';
-import { FindSeriesHandler } from '../application/query/find-series/find-series.handler';
-import { FindTimelineGroupHandler } from '../application/query/find-timeline-group/find-timeline-group.handler';
+import { FindArticleHandler } from '../application/query/article';
+import {
+  FindDraftContentsHandler,
+  FindNewsfeedHandler,
+  FindTimelineGroupHandler,
+} from '../application/query/content';
+import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
+import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {

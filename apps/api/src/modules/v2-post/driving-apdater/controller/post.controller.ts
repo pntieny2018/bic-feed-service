@@ -1,26 +1,28 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { UserDto } from '../../../v2-user/application';
+import { plainToInstance } from 'class-transformer';
+import { Request } from 'express';
 
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
+import { PostStatus } from '../../../../database/models/post.model';
+import { UserDto } from '../../../v2-user/application';
+import {
+  AutoSavePostCommand,
+  CreateDraftPostCommand,
+  PublishPostCommand,
+  UpdatePostCommand,
+} from '../../application/command/post';
+import { CreateDraftPostDto, PostDto } from '../../application/dto';
+import { FindPostQuery } from '../../application/query/post';
 import {
   AutoSavePostRequestDto,
   CreateDraftPostRequestDto,
   PublishPostRequestDto,
   UpdatePostRequestDto,
 } from '../dto/request';
-import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
-import { plainToInstance } from 'class-transformer';
-import { PublishPostCommand } from '../../application/command/publish-post/publish-post.command';
-import { CreateDraftPostDto, PostDto } from '../../application/dto';
-import { Request } from 'express';
-import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
-import { PostStatus } from '../../../../database/models/post.model';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
-import { FindPostQuery } from '../../application/query/find-post/find-post.query';
-import { UpdatePostCommand } from '../../application/command/update-post/update-post.command';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')

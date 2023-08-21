@@ -1,8 +1,10 @@
 import { UserDto } from '../../../../v2-user/application';
-import { AutoSaveArticleCommandPayload } from '../../../application/command/auto-save-article/auto-save-article.command';
-import { DeleteArticleCommandPayload } from '../../../application/command/delete-article/delete-article.command';
-import { PublishArticleCommandPayload } from '../../../application/command/publish-article/publish-article.command';
-import { UpdateArticleCommandPayload } from '../../../application/command/update-article/update-article.command';
+import {
+  AutoSaveArticleCommandPayload,
+  DeleteArticleCommandPayload,
+  PublishArticleCommandPayload,
+  UpdateArticleCommandPayload,
+} from '../../../application/command/article';
 import { ArticleEntity } from '../../model/content';
 
 export type ArticlePayload = {

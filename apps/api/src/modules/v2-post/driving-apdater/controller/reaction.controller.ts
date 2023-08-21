@@ -5,10 +5,9 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
-import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
-import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
+import { CreateReactionCommand, DeleteReactionCommand } from '../../application/command/reaction';
 import { ReactionDto, ReactionListDto } from '../../application/dto';
-import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
+import { FindReactionsQuery } from '../../application/query/reaction';
 import {
   CreateReactionRequestDto,
   DeleteReactionRequestDto,

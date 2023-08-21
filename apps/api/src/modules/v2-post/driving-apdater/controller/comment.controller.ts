@@ -20,26 +20,22 @@ import { UserDto } from '../../../v2-user/application/user.dto';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
-} from '../../application/command/create-comment/create-comment.command';
-import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
-} from '../../application/command/delete-comment/delete-comment.command';
-import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
-} from '../../application/command/reply-comment/reply-comment.command';
-import {
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
-} from '../../application/command/update-comment/update-comment.command';
+} from '../../application/command/comment';
 import {
   CommentDto,
   FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
 } from '../../application/dto';
-import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
-import { FindCommentsAroundIdQuery } from '../../application/query/find-comments-around-id/find-comments-around-id.query';
+import {
+  FindCommentsAroundIdQuery,
+  FindCommentsPaginationQuery,
+} from '../../application/query/comment';
 import {
   CreateCommentRequestDto,
   GetCommentsAroundIdDto,

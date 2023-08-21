@@ -1,11 +1,12 @@
-import { TagQuery } from '../../../driven-adapter/query';
-import { TAG_QUERY_TOKEN } from '../../../domain/query-interface';
 import { createMock } from '@golevelup/ts-jest';
-import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../../../../v2-group/application';
-import { FindTagsPaginationHandler } from '../../../application/query/find-tags/find-tags-pagination.handler';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
+
+import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../../../../v2-group/application';
+import { FindTagsPaginationHandler } from '../../../application/query/tag';
 import { TagEntity } from '../../../domain/model/tag';
+import { TAG_QUERY_TOKEN } from '../../../domain/query-interface';
+import { TagQuery } from '../../../driven-adapter/query';
 
 describe('FindTagsPaginationHandler', () => {
   let groupAppService, tagQuery, handler;
