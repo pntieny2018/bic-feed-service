@@ -8,10 +8,13 @@ import { CursorPaginationResult } from '../../../../common/types/cursor-paginati
 import { UserDto } from '../../../v2-user/application';
 import { AnswerUserDto } from '../../application/dto';
 import { RULES } from '../../constant';
-import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../event';
-import { QuizCreatedEvent } from '../event/quiz-created.event';
-import { QuizGeneratedEvent } from '../event/quiz-generated.event';
-import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
+import {
+  QuizParticipantFinishedEvent,
+  QuizParticipantStartedEvent,
+  QuizCreatedEvent,
+  QuizGeneratedEvent,
+  QuizRegenerateEvent,
+} from '../event';
 import {
   ContentHasQuizException,
   QuizNotFoundException,

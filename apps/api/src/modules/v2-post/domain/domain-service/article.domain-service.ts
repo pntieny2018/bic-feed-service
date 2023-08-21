@@ -2,11 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { UserDto } from '../../../v2-user/application';
-import {
-  ArticleDeletedEvent,
-  ArticlePublishedEvent,
-  ArticleUpdatedEvent,
-} from '../event/article.event';
+import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
   ArticleRequiredCoverException,
   ContentAccessDeniedException,

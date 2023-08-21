@@ -1,7 +1,7 @@
 import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
-import { ArticleDeletedEvent } from '../../../domain/event/article.event';
+import { ArticleDeletedEvent } from '../../../domain/event';
 import { TagDto } from '../../dto';
 import { ArticleChangedMessagePayload } from '../../dto/message';
 
