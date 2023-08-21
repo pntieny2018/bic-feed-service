@@ -5,7 +5,6 @@ import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../../../../domain/repositoty-interface';
 
 import { DeleteQuizQuestionCommand } from './delete-quiz-question.command';
 
@@ -13,9 +12,7 @@ import { DeleteQuizQuestionCommand } from './delete-quiz-question.command';
 export class DeleteQuizQuestionHandler implements ICommandHandler<DeleteQuizQuestionCommand, void> {
   public constructor(
     @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
-    private readonly _quizDomainService: IQuizDomainService,
-    @Inject(QUIZ_REPOSITORY_TOKEN)
-    private readonly _quizRepository: IQuizRepository
+    private readonly _quizDomainService: IQuizDomainService
   ) {}
   public async execute(command: DeleteQuizQuestionCommand): Promise<void> {
     const { authUser, questionId } = command.payload;
