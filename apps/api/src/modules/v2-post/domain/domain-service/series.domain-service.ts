@@ -1,9 +1,16 @@
-import { EventBus } from '@nestjs/cqrs';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  IMediaDomainService,
-  MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
+import { EventBus } from '@nestjs/cqrs';
+
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
+import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event';
+import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
+import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
+import { SeriesEntity } from '../model/content';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
+
 import {
   CreateSeriesProps,
   UpdateSeriesProps,
@@ -12,15 +19,10 @@ import {
   IPostDomainService,
   DeleteSeriesProps,
 } from './interface';
-import { SeriesEntity } from '../model/content';
-import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
-import { InvalidResourceImageException } from '../exception/media.exception';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event/series.event';
+import {
+  IMediaDomainService,
+  MEDIA_DOMAIN_SERVICE_TOKEN,
+} from './interface/media.domain-service.interface';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -76,11 +78,11 @@ export class SeriesDomainService implements ISeriesDomainService {
     try {
       await this._contentRepository.create(seriesEntity);
 
-      await this._postDomainService.markSeen(seriesEntity, actor.id);
+      await this._postDomainService.markSeen(seriesEntity.get('id'), actor.id);
       seriesEntity.increaseTotalSeen();
 
       if (seriesEntity.isImportant()) {
-        await this._postDomainService.markReadImportant(seriesEntity, actor.id);
+        await this._postDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
         seriesEntity.setMarkReadImportant();
       }
     } catch (e) {
@@ -117,7 +119,9 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    if (!seriesEntity.isOwner(actor.id)) throw new ContentAccessDeniedException();
+    if (!seriesEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
 
     const isImportantBefore = seriesEntity.isImportant();
     const isEnableSetting = seriesEntity.isEnableSetting();
@@ -166,12 +170,14 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     seriesEntity.updateAttribute(input, actor.id);
 
-    if (!seriesEntity.isChanged()) return seriesEntity;
+    if (!seriesEntity.isChanged()) {
+      return seriesEntity;
+    }
 
     await this._contentRepository.update(seriesEntity);
 
     if (!isImportantBefore && seriesEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(seriesEntity, actor.id);
+      await this._postDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
       seriesEntity.setMarkReadImportant();
     }
 
@@ -198,7 +204,9 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    if (!seriesEntity.isOwner(actor.id)) throw new ContentAccessDeniedException();
+    if (!seriesEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
 
     this._contentValidator.checkCanReadContent(seriesEntity, actor);
 

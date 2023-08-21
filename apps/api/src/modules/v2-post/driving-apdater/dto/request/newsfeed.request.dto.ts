@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+
 import { PaginatedArgs } from '../../../../../common/dto';
 import { PostType } from '../../../data-type';
 
@@ -12,8 +13,12 @@ export class NewsfeedRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isImportant?: boolean;
@@ -25,8 +30,12 @@ export class NewsfeedRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isMine?: boolean;
@@ -38,8 +47,12 @@ export class NewsfeedRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isSaved?: boolean;

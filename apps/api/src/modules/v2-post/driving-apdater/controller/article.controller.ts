@@ -20,17 +20,17 @@ import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import { UserDto } from '../../../v2-user/application';
-import { AutoSaveArticleCommand } from '../../application/command/auto-save-article/auto-save-article.command';
-import { CreateDraftArticleCommand } from '../../application/command/create-draft-article/create-draft-article.command';
 import {
+  AutoSaveArticleCommand,
+  CreateDraftArticleCommand,
   DeleteArticleCommand,
   DeleteArticleCommandPayload,
-} from '../../application/command/delete-article/delete-article.command';
-import { PublishArticleCommand } from '../../application/command/publish-article/publish-article.command';
-import { ScheduleArticleCommand } from '../../application/command/schedule-article/schedule-article.command';
-import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
+  PublishArticleCommand,
+  ScheduleArticleCommand,
+  UpdateArticleCommand,
+} from '../../application/command/article';
 import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
-import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
+import { FindArticleQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,

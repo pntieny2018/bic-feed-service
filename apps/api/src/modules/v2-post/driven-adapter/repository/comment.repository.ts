@@ -1,16 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CommentEntity } from '../../domain/model/comment';
-import { CommentModel, IComment } from '../../../../database/models/comment.model';
-import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
-import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
-import { FindOneProps, ICommentRepository } from '../../domain/repositoty-interface';
-import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
 import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';
-import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
+
+import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
+import { CommentModel, IComment } from '../../../../database/models/comment.model';
+import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
 import { TargetType } from '../../../report-content/contstants';
 import { REACTION_TARGET } from '../../data-type/reaction.enum';
+import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
+import { CommentEntity } from '../../domain/model/comment';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { ReactionEntity } from '../../domain/model/reaction';
+import { FindOneProps, ICommentRepository } from '../../domain/repositoty-interface';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -45,7 +46,9 @@ export class CommentRepository implements ICommentRepository {
   }
 
   private _modelToEntity(comment: CommentModel): CommentEntity {
-    if (comment === null) return null;
+    if (comment === null) {
+      return null;
+    }
     return this._commentFactory.reconstitute({
       id: comment.id,
       postId: comment.postId,
@@ -59,7 +62,6 @@ export class CommentRepository implements ICommentRepository {
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
       content: comment.content,
-      childs: comment.child?.map((item) => this._modelToEntity(item)) || [],
       mentions: comment.mentions,
       media: {
         images: comment.mediaJson?.images.map((image) => new ImageEntity(image)),

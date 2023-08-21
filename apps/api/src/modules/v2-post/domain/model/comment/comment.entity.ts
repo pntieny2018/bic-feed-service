@@ -3,6 +3,7 @@ import { NIL, validate as isUUID, v4 } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
+import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { ReactionEntity } from '../reaction';
 
@@ -24,7 +25,7 @@ export type CommentAttributes = {
   createdAt?: Date;
   updatedAt?: Date;
   totalReply?: number;
-  childs?: CommentEntity[];
+  childs?: CursorPaginationResult<CommentEntity>;
   mentions?: string[];
   ownerReactions?: ReactionEntity[];
 };
@@ -114,5 +115,9 @@ export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
 
   public isChildComment(): boolean {
     return this._props.parentId !== NIL;
+  }
+
+  public setChilds(childs: CursorPaginationResult<CommentEntity>): void {
+    this._props.childs = childs;
   }
 }

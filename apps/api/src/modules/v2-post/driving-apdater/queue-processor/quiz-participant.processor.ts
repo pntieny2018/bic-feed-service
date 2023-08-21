@@ -4,7 +4,7 @@ import { JobWithContext } from '@libs/infra/queue';
 import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
 
-import { ProcessQuizParticipantResultCommand } from '../../application/command/process-quiz-participant-result/process-quiz-participant-result.command';
+import { ProcessQuizParticipantResultCommand } from '../../application/command/quiz';
 import { QuizParticipantResultJobDto } from '../../application/dto/queue.dto';
 
 @ProcessorAndLog(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)

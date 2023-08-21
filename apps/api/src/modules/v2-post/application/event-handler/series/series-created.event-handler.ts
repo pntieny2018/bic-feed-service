@@ -1,16 +1,17 @@
-import { uniq } from 'lodash';
-import { ImageDto } from '../../dto';
-import { Inject } from '@nestjs/common';
 import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '../../../../../common/constants';
+import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { SeriesChangedMessagePayload } from '../../dto/message';
-import { SeriesCreatedEvent } from '../../../domain/event/series.event';
+import { uniq } from 'lodash';
+
+import { KAFKA_TOPIC } from '../../../../../common/constants';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { SeriesCreatedEvent } from '../../../domain/event';
+import { ImageDto } from '../../dto';
+import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @EventsHandler(SeriesCreatedEvent)
 export class SeriesCreatedEventHandler implements IEventHandler<SeriesCreatedEvent> {
@@ -25,7 +26,9 @@ export class SeriesCreatedEventHandler implements IEventHandler<SeriesCreatedEve
   public async handle(event: SeriesCreatedEvent): Promise<void> {
     const { seriesEntity } = event;
 
-    if (!seriesEntity.isPublished()) return;
+    if (!seriesEntity.isPublished()) {
+      return;
+    }
 
     const groups = await this._groupAppService.findAllByIds(seriesEntity.get('groupIds'));
     const communityIds = uniq(groups.map((group) => group.rootGroupId));

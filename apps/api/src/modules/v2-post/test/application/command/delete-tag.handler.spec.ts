@@ -1,29 +1,29 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
+
 import { StringHelper } from '../../../../../common/helpers';
-import {
-  ITagDomainService,
-  TAG_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { TagEntity } from '../../../domain/model/tag';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagRepository } from '../../../driven-adapter/repository';
-import { userMock } from '../../mock/user.dto.mock';
-import { DeleteTagHandler } from '../../../application/command/delete-tag/delete-tag.handler';
-import { DeleteTagCommand } from '../../../application/command/delete-tag/delete-tag.command';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserApplicationService,
 } from '../../../../v2-user/application';
+import { DeleteTagCommand, DeleteTagHandler } from '../../../application/command/tag';
+import { TagDomainService } from '../../../domain/domain-service';
+import {
+  ITagDomainService,
+  TAG_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import {
   TagNoDeletePermissionException,
   TagNotFoundException,
   TagUsedException,
 } from '../../../domain/exception';
-import { I18nContext } from 'nestjs-i18n';
-import { TagDomainService } from '../../../domain/domain-service';
+import { TagEntity } from '../../../domain/model/tag';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { TagRepository } from '../../../driven-adapter/repository';
+import { userMock } from '../../mock/user.dto.mock';
 
 describe('DeleteTagHandler', () => {
   let handler: DeleteTagHandler;

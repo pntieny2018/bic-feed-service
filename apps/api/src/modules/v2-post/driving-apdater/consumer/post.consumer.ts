@@ -1,9 +1,12 @@
 import { Controller } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
+
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { ProcessPostPublishedCommand } from '../../application/command/process-post-published/process-post-published.command';
-import { ProcessPostUpdatedCommand } from '../../application/command/process-post-updated/process-post-updated.command';
+import {
+  ProcessPostPublishedCommand,
+  ProcessPostUpdatedCommand,
+} from '../../application/command/post';
 import { PostChangedMessagePayload } from '../../application/dto/message';
 
 @Controller()

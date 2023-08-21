@@ -1,0 +1,23 @@
+import { ICommand } from '@nestjs/cqrs';
+
+import { UserDto } from '../../../../../v2-user/application';
+import { MediaDto } from '../../../../driving-apdater/dto/request';
+
+export type ScheduleArticleCommandPayload = {
+  id: string;
+  actor: UserDto;
+  title?: string;
+  summary?: string;
+  content?: string;
+  categories?: string[];
+  series?: string[];
+  tags?: string[];
+  groupIds?: string[];
+  coverMedia?: MediaDto;
+  wordCount?: number;
+  scheduledAt: Date;
+};
+
+export class ScheduleArticleCommand implements ICommand {
+  public constructor(public readonly payload: ScheduleArticleCommandPayload) {}
+}

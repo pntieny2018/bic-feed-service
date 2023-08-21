@@ -1,38 +1,52 @@
-import { PostType } from '../../../data-type';
-import { OrderEnum } from '../../../../../common/dto';
-import { UserDto } from '../../../../v2-user/application';
-import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
+import { CursorPaginationProps } from '../../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { PostType } from '../../../data-type';
+import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
-  authUser: UserDto;
-  limit: number;
-  order: OrderEnum;
+  authUserId: string;
   isProcessing?: boolean;
   type?: PostType;
-  before?: string;
-  after?: string;
-};
+} & CursorPaginationProps;
 
 export type GetContentByIdsProps = {
-  authUser?: UserDto;
+  authUserId: string;
   ids: string[];
 };
 
 export type GetScheduledContentProps = {
-  limit: number;
-  order: OrderEnum;
-  before?: string;
-  after?: string;
   beforeDate: Date;
-};
+} & CursorPaginationProps;
+
+export type GetContentIdsInNewsFeedProps = {
+  authUserId: string;
+  isImportant?: boolean;
+  isMine?: boolean;
+  isSaved?: boolean;
+  type?: PostType;
+} & CursorPaginationProps;
+
+export type GetContentIdsInTimelineProps = {
+  authUserId: string;
+  groupIds: string[];
+  isImportant?: boolean;
+  isMine?: boolean;
+  isSaved?: boolean;
+  type?: PostType;
+} & CursorPaginationProps;
 
 export interface IContentDomainService {
-  getVisibleContent(id: string): Promise<ContentEntity>;
+  getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
   getContentByIds(
     data: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+  getContentIdsInNewsFeed(
+    query: GetContentIdsInNewsFeedProps
+  ): Promise<CursorPaginationResult<string>>;
+  getContentIdsInTimeline(
+    query: GetContentIdsInTimelineProps
+  ): Promise<CursorPaginationResult<string>>;
   getDraftsPagination(
     data: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;

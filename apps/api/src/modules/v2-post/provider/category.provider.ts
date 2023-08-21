@@ -1,4 +1,4 @@
-import { FindCategoriesPaginationHandler } from '../application/query/find-categories/find-categories-pagination.handler';
+import { FindCategoriesPaginationHandler } from '../application/query/category';
 import { CategoryDomainService } from '../domain/domain-service/category.domain-service';
 import { CATEGORY_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { CategoryFactory } from '../domain/factory';

@@ -2,11 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { UserDto } from '../../../v2-user/application';
-import {
-  ArticleDeletedEvent,
-  ArticlePublishedEvent,
-  ArticleUpdatedEvent,
-} from '../event/article.event';
+import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
   ArticleRequiredCoverException,
   ContentAccessDeniedException,
@@ -177,7 +173,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
-    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();
@@ -224,7 +220,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
-    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();
@@ -272,7 +268,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
-    await this._articleValidator.validateLimtedToAttachSeries(articleEntity);
+    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
 
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();
