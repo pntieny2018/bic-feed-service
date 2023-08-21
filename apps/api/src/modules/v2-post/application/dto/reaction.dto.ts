@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { IQueryResult } from '@nestjs/cqrs';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
@@ -16,7 +17,7 @@ export class ReactionDto {
   public targetId: string;
 
   @ApiProperty()
-  public target: REACTION_TARGET;
+  public target: REACTION_TARGET | CONTENT_TARGET;
 
   @ApiProperty()
   public actor: UserDto;

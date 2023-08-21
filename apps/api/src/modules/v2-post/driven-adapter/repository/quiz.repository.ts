@@ -1,25 +1,27 @@
+import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, WhereOptions } from 'sequelize';
+
+import { CursorPaginator } from '../../../../common/dto';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { PostModel } from '../../../../database/models/post.model';
+import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
+import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
+import { IQuiz, QuizModel } from '../../../../database/models/quiz.model';
+import { QuizGenStatus, QuizStatus } from '../../data-type';
+import {
+  IQuizFactory,
+  QUIZ_FACTORY_TOKEN,
+} from '../../domain/factory/interface/quiz.factory.interface';
+import { QuizEntity } from '../../domain/model/quiz';
+import { QuizQuestionEntity } from '../../domain/model/quiz/quiz-question.entity';
 import {
   FindAllQuizProps,
   FindOneQuizProps,
   GetPaginationQuizzesProps,
   IQuizRepository,
 } from '../../domain/repositoty-interface';
-import { QuizEntity } from '../../domain/model/quiz';
-import { IQuiz, QuizModel } from '../../../../database/models/quiz.model';
-import { PostModel } from '../../../../database/models/post.model';
-import {
-  IQuizFactory,
-  QUIZ_FACTORY_TOKEN,
-} from '../../domain/factory/interface/quiz.factory.interface';
-import { CursorPaginator } from '../../../../common/dto';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
-import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
-import { QuizQuestionEntity } from '../../domain/model/quiz/quiz-question.entity';
-import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
@@ -48,8 +50,8 @@ export class QuizRepository implements IQuizRepository {
       numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
       numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
       timeLimit: quizEntity.get('timeLimit'),
-      status: quizEntity.get('status'),
-      genStatus: quizEntity.get('genStatus'),
+      status: quizEntity.get('status') as QuizStatus,
+      genStatus: quizEntity.get('genStatus') as QuizGenStatus,
       error: quizEntity.get('error'),
       isRandom: quizEntity.get('isRandom'),
       createdBy: quizEntity.get('createdBy'),
@@ -69,10 +71,10 @@ export class QuizRepository implements IQuizRepository {
         numberOfAnswers: quizEntity.get('numberOfAnswers'),
         numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
         numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
-        status: quizEntity.get('status'),
+        status: quizEntity.get('status') as QuizStatus,
         error: quizEntity.get('error'),
         timeLimit: quizEntity.get('timeLimit'),
-        genStatus: quizEntity.get('genStatus'),
+        genStatus: quizEntity.get('genStatus') as QuizGenStatus,
         isRandom: quizEntity.get('isRandom'),
         updatedBy: quizEntity.get('updatedBy'),
         updatedAt: quizEntity.get('updatedAt'),
@@ -113,7 +115,9 @@ export class QuizRepository implements IQuizRepository {
 
   public async findQuizWithQuestions(id: string): Promise<QuizEntity> {
     const quiz = await this._quizModel.findByPk(id);
-    if (!quiz) return null;
+    if (!quiz) {
+      return null;
+    }
 
     quiz.questions = await this._quizQuestionModel.findAll({
       where: { quizId: id },
@@ -151,7 +155,9 @@ export class QuizRepository implements IQuizRepository {
         ],
       },
     ];
-    if (options.attributes) findOption.attributes = options.attributes as (keyof IQuiz)[];
+    if (options.attributes) {
+      findOption.attributes = options.attributes as (keyof IQuiz)[];
+    }
     return findOption;
   }
 
@@ -161,17 +167,29 @@ export class QuizRepository implements IQuizRepository {
     const { createdBy, status, id, ids, contentId, contentIds } = options.where;
     const where: WhereOptions<IQuiz> = {};
 
-    if (createdBy) where['createdBy'] = createdBy;
+    if (createdBy) {
+      where['createdBy'] = createdBy;
+    }
 
-    if (id) where['id'] = id;
+    if (id) {
+      where['id'] = id;
+    }
 
-    if (ids) where['id'] = ids;
+    if (ids) {
+      where['id'] = ids;
+    }
 
-    if (contentId) where['postId'] = contentId;
+    if (contentId) {
+      where['postId'] = contentId;
+    }
 
-    if (contentIds) where['postId'] = contentIds;
+    if (contentIds) {
+      where['postId'] = contentIds;
+    }
 
-    if (status) where['status'] = status;
+    if (status) {
+      where['status'] = status;
+    }
 
     return where;
   }
@@ -183,7 +201,9 @@ export class QuizRepository implements IQuizRepository {
   }
 
   private _modelToEntity(quiz: QuizModel): QuizEntity {
-    if (quiz === null) return null;
+    if (quiz === null) {
+      return null;
+    }
     return this._factory.reconstitute({
       id: quiz.id,
       title: quiz.title,
@@ -254,7 +274,9 @@ export class QuizRepository implements IQuizRepository {
       ];
     }
 
-    if (attributes) findOption.attributes = attributes as (keyof IQuiz)[];
+    if (attributes) {
+      findOption.attributes = attributes as (keyof IQuiz)[];
+    }
 
     const paginator = new CursorPaginator(
       this._quizModel,
@@ -304,7 +326,9 @@ export class QuizRepository implements IQuizRepository {
         },
       ],
     });
-    if (!question) return null;
+    if (!question) {
+      return null;
+    }
     return new QuizQuestionEntity({
       id: question.id,
       content: question.content,

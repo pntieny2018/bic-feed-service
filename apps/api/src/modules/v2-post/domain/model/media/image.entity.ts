@@ -1,6 +1,8 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { IMAGE_RESOURCE } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions';
 import { ImageResource } from '../../../data-type';
 
 export type ImageAttributes = {
@@ -9,7 +11,7 @@ export type ImageAttributes = {
   src?: string;
   createdBy: string;
   mimeType: string;
-  resource: ImageResource;
+  resource: ImageResource | IMAGE_RESOURCE;
   width: number;
   height: number;
   status: string;

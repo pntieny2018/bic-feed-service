@@ -14,8 +14,7 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { PostStatus } from '../../../data-type';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import {
   IReactionQuery,
@@ -35,8 +34,8 @@ import {
   SeriesDto,
   UserMentionDto,
   VideoDto,
+  ArticleDto,
 } from '../../dto';
-import { ArticleDto } from '../../dto/article.dto';
 
 import { IContentBinding } from './content.interface';
 

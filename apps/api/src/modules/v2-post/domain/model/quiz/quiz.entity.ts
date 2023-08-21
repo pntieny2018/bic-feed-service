@@ -1,3 +1,4 @@
+import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
@@ -22,8 +23,8 @@ export type QuizAttributes = {
   id: string;
   title: string;
   contentId: string;
-  status: QuizStatus;
-  genStatus: QuizGenStatus;
+  status: QuizStatus | QUIZ_STATUS;
+  genStatus: QuizGenStatus | QUIZ_PROCESS_STATUS;
   description: string;
   timeLimit: number;
   content?: PostEntity | SeriesEntity | ArticleEntity;

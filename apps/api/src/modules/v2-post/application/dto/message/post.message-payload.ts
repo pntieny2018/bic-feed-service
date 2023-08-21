@@ -3,12 +3,13 @@ import { TagDto } from '../tag.dto';
 import { UserDto } from '../../../../v2-user/application';
 import { PostSettingDto } from '../post.dto';
 import { FileDto, ImageDto, VideoDto } from '../media.dto';
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 
 export class PostMessagePayload {
   public id: string;
   public actor: UserDto;
   public setting: PostSettingDto;
-  public type: PostType;
+  public type: PostType | CONTENT_TYPE;
   public groupIds: string[];
   public communityIds: string[];
   public tags: TagDto[];
@@ -25,7 +26,7 @@ export class PostMessagePayload {
   public publishedAt?: Date;
   public lang: string;
   public isHidden: boolean;
-  public status: PostStatus;
+  public status: PostStatus | CONTENT_STATUS;
 
   public constructor(data: Partial<PostMessagePayload>) {
     Object.assign(this, data);

@@ -1,10 +1,8 @@
-import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE } from '@beincom/constants';
 import { IImage } from '@libs/database/postgres/model/comment.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import { Inject, Injectable } from '@nestjs/common';
-import { EventPublisher } from '@nestjs/cqrs';
+import { Injectable } from '@nestjs/common';
 
-import { PostPrivacy, PostStatus, PostType, QuizGenStatus, QuizStatus } from '../../data-type';
 import { CategoryEntity } from '../../domain/model/category';
 import {
   ArticleEntity,
@@ -24,8 +22,6 @@ import { TagEntity } from '../../domain/model/tag';
 
 @Injectable()
 export class ContentMapper {
-  public constructor(@Inject(EventPublisher) private readonly _eventPublisher: EventPublisher) {}
-
   public toDomain(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) {
       return null;
@@ -64,10 +60,12 @@ export class ContentMapper {
       mentions: postEntity.get('mentionUserIds' as keyof ContentAttributes) || [],
       type: postEntity.get('type') as unknown as CONTENT_TYPE,
       summary: postEntity.get('summary' as keyof ContentAttributes),
-      lang: postEntity.get('lang'),
+      lang: postEntity.get('lang') as LANGUAGE,
       privacy: postEntity.get('privacy' as keyof ContentAttributes),
       tagsJson:
-        postEntity.get('tags' as keyof ContentAttributes)?.map((tag) => tag.toObject()) || [],
+        postEntity
+          .get('tags' as keyof ContentAttributes)
+          ?.map((tag: TagEntity) => tag.toObject()) || [],
       createdBy: postEntity.get('createdBy'),
       updatedBy: postEntity.get('updatedBy'),
       linkPreviewId: postEntity.get('linkPreview' as keyof ContentAttributes)
@@ -96,193 +94,187 @@ export class ContentMapper {
     if (post === null) {
       return null;
     }
-    return this._eventPublisher.mergeObjectContext(
-      new PostEntity({
-        id: post.id,
-        isReported: post.isReported,
-        isHidden: post.isHidden,
-        createdBy: post.createdBy,
-        updatedBy: post.updatedBy,
-        privacy: post.privacy as unknown as PostPrivacy,
-        status: post.status as unknown as PostStatus,
-        type: post.type as unknown as PostType,
-        lang: post.lang,
-        setting: {
-          isImportant: post.isImportant,
-          importantExpiredAt: post.importantExpiredAt,
-          canComment: post.canComment,
-          canReact: post.canReact,
-        },
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        errorLog: post.errorLog,
-        publishedAt: post.publishedAt,
-        content: post.content,
-        mentionUserIds: post.mentions || [],
-        groupIds: post.groups?.map((group) => group.groupId),
-        seriesIds: post.postSeries?.map((series) => series.seriesId),
-        quiz: post.quiz
-          ? new QuizEntity({
-              id: post.quiz.id,
-              contentId: post.quiz.postId,
-              title: post.quiz.title,
-              description: post.quiz.description,
-              status: post.quiz.status as unknown as QuizStatus,
-              genStatus: post.quiz.genStatus as unknown as QuizGenStatus,
-              timeLimit: post.quiz.timeLimit,
-              createdAt: post.quiz.createdAt,
-              createdBy: post.quiz.createdBy,
-            })
-          : undefined,
-        quizResults: (post.quizResults || []).map(
-          (quizResult) =>
-            new QuizParticipantEntity({
-              id: quizResult.id,
-              quizId: quizResult.quizId,
-              contentId: quizResult.postId,
-              quizSnapshot: quizResult.quizSnapshot,
-              timeLimit: quizResult.timeLimit,
-              score: quizResult.score,
-              isHighest: quizResult.isHighest,
-              totalAnswers: quizResult.totalAnswers,
-              totalCorrectAnswers: quizResult.totalCorrectAnswers,
-              startedAt: quizResult.startedAt,
-              finishedAt: quizResult.finishedAt,
-              answers: [],
-              updatedBy: quizResult.updatedBy,
-              updatedAt: quizResult.updatedAt,
-              createdAt: quizResult.createdAt,
-              createdBy: quizResult.createdBy,
-            })
+    new PostEntity({
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      lang: post.lang,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      errorLog: post.errorLog,
+      publishedAt: post.publishedAt,
+      content: post.content,
+      mentionUserIds: post.mentions || [],
+      groupIds: post.groups?.map((group) => group.groupId),
+      seriesIds: post.postSeries?.map((series) => series.seriesId),
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
+          })
+        : undefined,
+      quizResults: (post.quizResults || []).map(
+        (quizResult) =>
+          new QuizParticipantEntity({
+            id: quizResult.id,
+            quizId: quizResult.quizId,
+            contentId: quizResult.postId,
+            quizSnapshot: quizResult.quizSnapshot,
+            timeLimit: quizResult.timeLimit,
+            score: quizResult.score,
+            isHighest: quizResult.isHighest,
+            totalAnswers: quizResult.totalAnswers,
+            totalCorrectAnswers: quizResult.totalCorrectAnswers,
+            startedAt: quizResult.startedAt,
+            finishedAt: quizResult.finishedAt,
+            answers: [],
+            updatedBy: quizResult.updatedBy,
+            updatedAt: quizResult.updatedAt,
+            createdAt: quizResult.createdAt,
+            createdBy: quizResult.createdBy,
+          })
+      ),
+      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
+      media: {
+        images: post.mediaJson?.images.map(
+          (image) => new ImageEntity(image as unknown as ImageAttributes)
         ),
-        tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
-        media: {
-          images: post.mediaJson?.images.map(
-            (image) => new ImageEntity(image as unknown as ImageAttributes)
-          ),
-          files: post.mediaJson?.files.map((file) => new FileEntity(file)),
-          videos: post.mediaJson?.videos.map((video) => new VideoEntity(video)),
-        },
-        aggregation: {
-          commentsCount: post.commentsCount,
-          totalUsersSeen: post.totalUsersSeen,
-        },
-        linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
-        videoIdProcessing: post.videoIdProcessing,
-        markedReadImportant: post.markedReadPost,
-        isSaved: post.isSaved || false,
-        ownerReactions: post.postReactions
-          ? post.postReactions.map((item) => ({
-              id: item.id,
-              reactionName: item.reactionName,
-            }))
-          : undefined,
-      })
-    );
+        files: post.mediaJson?.files.map((file) => new FileEntity(file)),
+        videos: post.mediaJson?.videos.map((video) => new VideoEntity(video)),
+      },
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+      },
+      linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
+      videoIdProcessing: post.videoIdProcessing,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: post.postReactions
+        ? post.postReactions.map((item) => ({
+            id: item.id,
+            reactionName: item.reactionName,
+          }))
+        : undefined,
+    });
   }
 
   private _modelToArticleEntity(post: PostAttributes): ArticleEntity {
     if (post === null) {
       return null;
     }
-    return this._eventPublisher.mergeObjectContext(
-      new ArticleEntity({
-        id: post.id,
-        content: post.content,
-        isReported: post.isReported,
-        isHidden: post.isHidden,
-        createdBy: post.createdBy,
-        updatedBy: post.updatedBy,
-        privacy: post.privacy as unknown as PostPrivacy,
-        status: post.status as unknown as PostStatus,
-        type: post.type as unknown as PostType,
-        title: post.title,
-        summary: post.summary,
-        lang: post.lang,
-        setting: {
-          isImportant: post.isImportant,
-          importantExpiredAt: post.importantExpiredAt,
-          canComment: post.canComment,
-          canReact: post.canReact,
-        },
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        errorLog: post.errorLog,
-        publishedAt: post.publishedAt,
-        scheduledAt: post.scheduledAt,
-        categories: post.categories?.map((category) => new CategoryEntity(category)),
-        groupIds: post.groups?.map((group) => group.groupId),
-        seriesIds: post.postSeries?.map((series) => series.seriesId),
-        quiz: post.quiz
-          ? new QuizEntity({
-              id: post.quiz.id,
-              contentId: post.quiz.postId,
-              title: post.quiz.title,
-              description: post.quiz.description,
-              status: post.quiz.status as unknown as QuizStatus,
-              genStatus: post.quiz.genStatus as unknown as QuizGenStatus,
-              timeLimit: post.quiz.timeLimit,
-              createdAt: post.quiz.createdAt,
-              createdBy: post.quiz.createdBy,
-            })
-          : undefined,
-        tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
-        aggregation: {
-          commentsCount: post.commentsCount,
-          totalUsersSeen: post.totalUsersSeen,
-        },
-        cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
-        wordCount: post.wordCount,
-        markedReadImportant: post.markedReadPost,
-        isSaved: post.isSaved || false,
-        ownerReactions: post.postReactions
-          ? post.postReactions.map((item) => ({
-              id: item.id,
-              reactionName: item.reactionName,
-            }))
-          : undefined,
-      })
-    );
+    return new ArticleEntity({
+      id: post.id,
+      content: post.content,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      title: post.title,
+      summary: post.summary,
+      lang: post.lang,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      errorLog: post.errorLog,
+      publishedAt: post.publishedAt,
+      scheduledAt: post.scheduledAt,
+      categories: post.categories?.map((category) => new CategoryEntity(category)),
+      groupIds: post.groups?.map((group) => group.groupId),
+      seriesIds: post.postSeries?.map((series) => series.seriesId),
+      quiz: post.quiz
+        ? new QuizEntity({
+            id: post.quiz.id,
+            contentId: post.quiz.postId,
+            title: post.quiz.title,
+            description: post.quiz.description,
+            status: post.quiz.status,
+            genStatus: post.quiz.genStatus,
+            timeLimit: post.quiz.timeLimit,
+            createdAt: post.quiz.createdAt,
+            createdBy: post.quiz.createdBy,
+          })
+        : undefined,
+      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+      },
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
+      wordCount: post.wordCount,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: post.postReactions
+        ? post.postReactions.map((item) => ({
+            id: item.id,
+            reactionName: item.reactionName,
+          }))
+        : undefined,
+    });
   }
 
   private _modelToSeriesEntity(post: PostAttributes): SeriesEntity {
     if (post === null) {
       return null;
     }
-    return this._eventPublisher.mergeObjectContext(
-      new SeriesEntity({
-        id: post.id,
-        isReported: post.isReported,
-        isHidden: post.isHidden,
-        createdBy: post.createdBy,
-        updatedBy: post.updatedBy,
-        privacy: post.privacy as unknown as PostPrivacy,
-        status: post.status as unknown as PostStatus,
-        type: post.type as unknown as PostType,
-        title: post.title,
-        summary: post.summary,
-        lang: post.lang,
-        setting: {
-          isImportant: post.isImportant,
-          importantExpiredAt: post.importantExpiredAt,
-          canComment: post.canComment,
-          canReact: post.canReact,
-        },
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        errorLog: post.errorLog,
-        publishedAt: post.publishedAt,
-        groupIds: post.groups?.map((group) => group.groupId),
-        cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
-        markedReadImportant: post.markedReadPost,
-        isSaved: post.isSaved || false,
-        itemIds:
-          post.itemIds
-            ?.sort((a, b) => {
-              return a.zindex - b.zindex;
-            })
-            .map((item) => item.postId) || [],
-      })
-    );
+    return new SeriesEntity({
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      title: post.title,
+      summary: post.summary,
+      lang: post.lang,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      errorLog: post.errorLog,
+      publishedAt: post.publishedAt,
+      groupIds: post.groups?.map((group) => group.groupId),
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      itemIds:
+        post.itemIds
+          ?.sort((a, b) => {
+            return a.zindex - b.zindex;
+          })
+          .map((item) => item.postId) || [],
+    });
   }
 }

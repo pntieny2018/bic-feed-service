@@ -1,12 +1,14 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { FileEntity, ImageEntity, VideoEntity } from '../media';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
+import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
+import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
-import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
 
 export type PostSettingAttributes = {
   isImportant: boolean;
@@ -21,9 +23,9 @@ export type ContentAttributes = {
   isHidden: boolean;
   createdBy: string;
   updatedBy: string;
-  privacy: PostPrivacy;
-  status: PostStatus;
-  type: PostType;
+  privacy: PostPrivacy | PRIVACY;
+  status: PostStatus | CONTENT_STATUS;
+  type: PostType | CONTENT_TYPE;
   setting: PostSettingAttributes;
   media?: {
     files: FileEntity[];
@@ -38,7 +40,7 @@ export type ContentAttributes = {
   errorLog?: any;
   publishedAt?: Date;
   scheduledAt?: Date;
-  lang?: PostLang;
+  lang?: PostLang | LANGUAGE;
   groupIds?: string[];
   communityIds?: string[];
   quiz?: QuizEntity;
@@ -124,14 +126,24 @@ export class ContentEntity<
         this._props.privacy = PostPrivacy.OPEN;
         return;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalClosed++;
-      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+      if (group.privacy === GroupPrivacy.CLOSED) {
+        totalClosed++;
+      }
+      if (group.privacy === GroupPrivacy.PRIVATE) {
+        totalPrivate++;
+      }
     }
 
-    if (totalClosed > 0) this._props.privacy = PostPrivacy.CLOSED;
-    if (totalPrivate > 0) this._props.privacy = PostPrivacy.PRIVATE;
+    if (totalClosed > 0) {
+      this._props.privacy = PostPrivacy.CLOSED;
+    }
+    if (totalPrivate > 0) {
+      this._props.privacy = PostPrivacy.PRIVATE;
+    }
 
-    if (totalClosed === 0 && totalPrivate === 0) this._props.privacy = PostPrivacy.SECRET;
+    if (totalClosed === 0 && totalPrivate === 0) {
+      this._props.privacy = PostPrivacy.SECRET;
+    }
   }
 
   public getId(): string {
@@ -146,7 +158,7 @@ export class ContentEntity<
     return this._props.aggregation.totalUsersSeen === 0;
   }
 
-  public getType(): PostType {
+  public getType(): PostType | CONTENT_TYPE {
     return this._props.type;
   }
 
@@ -263,7 +275,9 @@ export class ContentEntity<
 
   public update(data: { authUser: { id: string }; groupIds?: string[] }): void {
     const { authUser, groupIds } = data;
-    if (groupIds) this.setGroups(groupIds);
+    if (groupIds) {
+      this.setGroups(groupIds);
+    }
     this._props.updatedAt = new Date();
     this._props.updatedBy = authUser.id;
   }
