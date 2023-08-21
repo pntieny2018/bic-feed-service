@@ -46,7 +46,6 @@ export class QuizRepository implements IQuizRepository {
       numberOfQuestions: quizEntity.get('numberOfQuestions'),
       numberOfAnswers: quizEntity.get('numberOfAnswers'),
       numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
-      numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
       timeLimit: quizEntity.get('timeLimit'),
       status: quizEntity.get('status'),
       genStatus: quizEntity.get('genStatus'),
@@ -68,7 +67,6 @@ export class QuizRepository implements IQuizRepository {
         numberOfQuestions: quizEntity.get('numberOfQuestions'),
         numberOfAnswers: quizEntity.get('numberOfAnswers'),
         numberOfQuestionsDisplay: quizEntity.get('numberOfQuestionsDisplay'),
-        numberOfAnswersDisplay: quizEntity.get('numberOfAnswersDisplay'),
         status: quizEntity.get('status'),
         error: quizEntity.get('error'),
         timeLimit: quizEntity.get('timeLimit'),
@@ -194,7 +192,6 @@ export class QuizRepository implements IQuizRepository {
       numberOfQuestions: quiz.numberOfQuestions,
       numberOfAnswers: quiz.numberOfAnswers,
       numberOfQuestionsDisplay: quiz.numberOfQuestionsDisplay,
-      numberOfAnswersDisplay: quiz.numberOfAnswersDisplay,
       timeLimit: quiz.timeLimit,
       isRandom: quiz.isRandom,
       questions: quiz.questions

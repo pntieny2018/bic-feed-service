@@ -10,7 +10,6 @@ export type UpdateQuizCommandPayload = {
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
   status?: QuizStatus;
   authUser: UserDto;

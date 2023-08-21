@@ -19,7 +19,6 @@ export class QuizBinding implements IQuizBinding {
       numberOfQuestions: entity.get('numberOfQuestions'),
       numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
       numberOfAnswers: entity.get('numberOfAnswers'),
-      numberOfAnswersDisplay: entity.get('numberOfAnswersDisplay'),
       isRandom: entity.get('isRandom'),
       error: entity.get('error'),
       questions: entity.get('questions').map((question) => ({

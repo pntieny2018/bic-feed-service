@@ -30,7 +30,6 @@ export type QuizAttributes = {
   numberOfQuestions?: number;
   numberOfAnswers?: number;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
   questions?: QuizQuestionEntity[];
   meta?: any;
@@ -91,15 +90,12 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   }
 
   public validateNumberDisplay(): void {
-    if (this._props.numberOfQuestions < this._props.numberOfQuestionsDisplay) {
+    if (
+      this._props.numberOfQuestionsDisplay !== null &&
+      this._props.numberOfQuestionsDisplay > this._props.questions?.length
+    ) {
       throw new DomainModelException(
-        `Number of questions display cannot exceed ${this._props.numberOfQuestions}`
-      );
-    }
-
-    if (this._props.numberOfAnswers < this._props.numberOfAnswersDisplay) {
-      throw new DomainModelException(
-        `Number of answers display cannot exceed ${this._props.numberOfQuestions}`
+        `Number of questions display cannot exceed ${this._props.questions?.length}`
       );
     }
   }
@@ -165,12 +161,8 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
       this._props.numberOfAnswers = data.numberOfAnswers;
     }
 
-    if (data.numberOfQuestionsDisplay) {
+    if (data.numberOfQuestionsDisplay !== undefined) {
       this._props.numberOfQuestionsDisplay = data.numberOfQuestionsDisplay;
-    }
-
-    if (data.numberOfAnswersDisplay) {
-      this._props.numberOfAnswersDisplay = data.numberOfAnswersDisplay;
     }
 
     if (data.isRandom) {
@@ -233,11 +225,13 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
     return this._props.isRandom;
   }
 
-  public isGenerateFailed(): boolean {
-    return this._props.genStatus === QuizGenStatus.FAILED;
-  }
+  public deleteQuestion(idQuestion: string): void {
+    this._props.questions = this._props.questions.filter(
+      (question) => question.get('id') !== idQuestion
+    );
 
-  public isGenerateProcessed(): boolean {
-    return this._props.genStatus === QuizGenStatus.PROCESSED;
+    if (this._props.numberOfQuestionsDisplay > this._props.questions.length) {
+      this._props.numberOfQuestionsDisplay = this._props.questions.length;
+    }
   }
 }
