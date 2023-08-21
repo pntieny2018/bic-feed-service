@@ -44,6 +44,21 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
+  public async findSeriesByIds(seriesId: string[]): Promise<SeriesEntity[]> {
+    return (await this._contentRepository.findAll({
+      attributes: {
+        exclude: ['content'],
+      },
+      where: {
+        groupArchived: false,
+        ids: seriesId,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
+    })) as SeriesEntity[];
+  }
+
   public async create(input: CreateSeriesProps): Promise<SeriesEntity> {
     const { actor, title, summary, groupIds, coverMedia, setting } = input;
     const seriesEntity = this._seriesFactory.createSeries({
