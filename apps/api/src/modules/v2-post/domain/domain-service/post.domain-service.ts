@@ -1,18 +1,25 @@
 import { Inject, Logger } from '@nestjs/common';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { UserDto } from '../../../v2-user/application';
-import { ContentNotFoundException } from '../exception';
-import { InvalidResourceImageException } from '../exception/media.exception';
+import { DatabaseException } from '../../../../common/exceptions';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../v2-user/application';
+import {
+  ContentAccessDeniedException,
+  ContentNoPublishYetException,
+  ContentNotFoundException,
+  InvalidResourceImageException,
+} from '../exception';
 import {
   ARTICLE_FACTORY_TOKEN,
   IArticleFactory,
   IPostFactory,
   POST_FACTORY_TOKEN,
 } from '../factory/interface';
-import { PostEntity } from '../model/content';
-import { ArticleEntity } from '../model/content/article.entity';
-import { ContentEntity } from '../model/content/content.entity';
+import { PostEntity, ArticleEntity, ContentEntity } from '../model/content';
 import {
   IContentRepository,
   ITagRepository,
@@ -32,7 +39,7 @@ import {
   ArticleCreateProps,
   IPostDomainService,
   PostCreateProps,
-  PostPublishProps,
+  UpdatePostProps,
 } from './interface';
 import {
   ILinkPreviewDomainService,
@@ -64,8 +71,53 @@ export class PostDomainService implements IPostDomainService {
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepo: ITagRepository,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService
+    private readonly _mediaDomainService: IMediaDomainService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupApplicationService: IGroupApplicationService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService
   ) {}
+
+  public async getPostById(postId: string, authUserId: string): Promise<PostEntity> {
+    const postEntity = await this._contentRepository.findOne({
+      where: {
+        id: postId,
+        groupArchived: false,
+        excludeReportedByUserId: authUserId,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
+        shouldIncludeSaved: {
+          userId: authUserId,
+        },
+        shouldIncludeMarkReadImportant: {
+          userId: authUserId,
+        },
+        shouldIncludeReaction: {
+          userId: authUserId,
+        },
+      },
+    });
+
+    if (
+      !postEntity ||
+      !(postEntity instanceof PostEntity) ||
+      (postEntity.isDraft() && !postEntity.isOwner(authUserId)) ||
+      (postEntity.isHidden() && !postEntity.isOwner(authUserId)) ||
+      postEntity.isInArchivedGroups()
+    ) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!authUserId && !postEntity.isOpen()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    return postEntity;
+  }
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
@@ -102,9 +154,41 @@ export class PostDomainService implements IPostDomainService {
     return articleEntity;
   }
 
-  public async publishPost(input: PostPublishProps): Promise<void> {
-    const { postEntity, newData } = input;
-    const { authUser, tagIds, media, linkPreview, ...restUpdate } = newData;
+  public async publishPost(props: UpdatePostProps): Promise<PostEntity> {
+    const { authUser, id, groupIds, mentionUserIds } = props;
+    const postEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+      },
+    });
+    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isPublished()) {
+      return postEntity;
+    }
+
+    const groups = await this._groupApplicationService.findAllByIds(
+      groupIds || postEntity.get('groupIds')
+    );
+    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+      withGroupJoined: true,
+    });
+
+    const newData = {
+      ...props,
+      mentionUsers,
+      groups,
+    };
+
+    const { tagIds, media, linkPreview, ...restUpdate } = newData;
 
     let newTagEntities = [];
     if (tagIds) {
@@ -169,13 +253,55 @@ export class PostDomainService implements IPostDomainService {
       return;
     }
     await this._contentRepository.update(postEntity);
-
-    postEntity.commit();
+    return postEntity;
   }
 
-  public async updatePost(input: PostPublishProps): Promise<void> {
-    const { postEntity, newData } = input;
-    const { authUser, tagIds, linkPreview, media, ...restUpdate } = newData;
+  public async updatePost(props: UpdatePostProps): Promise<PostEntity> {
+    const { authUser, id, groupIds, mentionUserIds } = props;
+
+    const postEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
+      },
+    });
+
+    if (
+      !postEntity ||
+      postEntity.isHidden() ||
+      !(postEntity instanceof PostEntity) ||
+      postEntity.isInArchivedGroups()
+    ) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!postEntity.isPublished()) {
+      throw new ContentNoPublishYetException();
+    }
+
+    const groups = await this._groupApplicationService.findAllByIds(
+      groupIds || postEntity.get('groupIds')
+    );
+    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+      withGroupJoined: true,
+    });
+
+    const newData = {
+      ...props,
+      mentionUsers,
+      groups,
+    };
+
+    const { tagIds, linkPreview, media, ...restUpdate } = newData;
 
     let newTagEntities = [];
     if (tagIds) {
@@ -184,6 +310,7 @@ export class PostDomainService implements IPostDomainService {
       });
       postEntity.setTags(newTagEntities);
     }
+
     if (media) {
       const images = await this._mediaDomainService.getAvailableImages(
         postEntity.get('media').images,
@@ -240,8 +367,7 @@ export class PostDomainService implements IPostDomainService {
       return;
     }
     await this._contentRepository.update(postEntity);
-
-    postEntity.commit();
+    return postEntity;
   }
 
   public async updateSetting(input: {
@@ -306,8 +432,42 @@ export class PostDomainService implements IPostDomainService {
     return this._contentRepository.markReadImportant(contentId, userId);
   }
 
-  public async autoSavePost(input: PostPublishProps): Promise<void> {
-    const { postEntity, newData } = input;
+  public async autoSavePost(props: UpdatePostProps): Promise<void> {
+    const { id, groupIds, mentionUserIds } = props;
+    const postEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+      },
+    });
+    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) {
+      return;
+    }
+
+    if (postEntity.isPublished()) {
+      return;
+    }
+
+    let groups = undefined;
+    if (groupIds || postEntity.get('groupIds')) {
+      groups = await this._groupApplicationService.findAllByIds(
+        groupIds || postEntity.get('groupIds')
+      );
+    }
+    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+      withGroupJoined: true,
+    });
+
+    const newData = {
+      ...props,
+      mentionUsers,
+      groups,
+    };
     const { tagIds, linkPreview, media, ...restUpdate } = newData;
 
     let newTagEntities = [];

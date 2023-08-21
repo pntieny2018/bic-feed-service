@@ -1,23 +1,25 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
-} from '../../../../../v2-group/application';
+} from 'apps/api/src/modules/v2-group/application';
+
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
 } from '../../../../../v2-user/application';
 import {
-  ContentNotFoundException,
-  ContentAccessDeniedException,
-} from '../../../../domain/exception';
-import { PostEntity, SeriesEntity } from '../../../../domain/model/content';
+  IPostDomainService,
+  ISeriesDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+} from '../../../../domain/domain-service/interface';
 import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../../domain/query-interface/reaction.query.interface';
+  IReactionDomainService,
+  REACTION_DOMAIN_SERVICE_TOKEN,
+} from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { SeriesEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -37,73 +39,32 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
+    @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
+    private readonly _reactionDomainService: IReactionDomainService,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN) private _postDomainService: IPostDomainService,
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN) private _seriesDomainService: ISeriesDomainService
   ) {}
 
   public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;
-    const postEntity = await this._contentRepo.findOne({
-      where: {
-        id: postId,
-        groupArchived: false,
-        excludeReportedByUserId: authUser.id,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId: authUser?.id,
-        },
-        shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
-        },
-        shouldIncludeReaction: {
-          userId: authUser?.id,
-        },
-      },
-    });
+    const postEntity = await this._postDomainService.getPostById(postId, authUser.id);
 
-    if (
-      !postEntity ||
-      !(postEntity instanceof PostEntity) ||
-      (postEntity.isDraft() && !postEntity.isOwner(authUser.id)) ||
-      (postEntity.isHidden() && !postEntity.isOwner(authUser.id)) ||
-      postEntity.isInArchivedGroups()
-    ) {
-      throw new ContentNotFoundException();
-    }
-
-    if (!authUser && !postEntity.isOpen()) {
-      throw new ContentAccessDeniedException();
-    }
     const groups = await this._groupAppService.findAllByIds(postEntity.get('groupIds'));
     if (authUser) {
-      await this._postValidator.checkCanReadContent(postEntity, authUser, groups);
+      this._postValidator.checkCanReadContent(postEntity, authUser, groups);
     }
 
     const mentionUsers = await this._userAppService.findAllByIds(postEntity.get('mentionUserIds'));
 
-    let series;
+    let series: SeriesEntity[];
     if (postEntity.get('seriesIds')?.length) {
-      series = await this._contentRepo.findAll({
-        attributes: {
-          exclude: ['content'],
-        },
-        where: {
-          groupArchived: false,
-          ids: postEntity.get('seriesIds'),
-        },
-        include: {
-          mustIncludeGroup: true,
-        },
-      });
+      series = await this._seriesDomainService.findSeriesById(postEntity.get('seriesIds'));
     }
 
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
+    const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([
       postEntity.getId(),
     ]);
+
     return this._contentBinding.postBinding(postEntity, {
       groups,
       mentionUsers,
