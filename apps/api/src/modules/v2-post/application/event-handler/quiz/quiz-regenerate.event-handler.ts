@@ -2,7 +2,7 @@ import { QueueService } from '@app/queue';
 import { Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
-import { QuizRegenerateEvent } from '../../../domain/event/quiz-regenerate.event';
+import { QuizRegenerateEvent } from '../../../domain/event';
 
 import { QuizGeneratedEventHandler } from './quiz-generated.event-handler';
 

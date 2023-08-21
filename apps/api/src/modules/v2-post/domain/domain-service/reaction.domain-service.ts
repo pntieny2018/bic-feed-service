@@ -4,7 +4,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { DatabaseException } from '../../../../common/exceptions';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { REACTION_TARGET } from '../../data-type';
-import { ReactionNotifyEvent } from '../event/reaction.event';
+import { ReactionNotifyEvent } from '../event';
 import { ReactionNotFoundException, ReactionNotHaveAuthorityException } from '../exception';
 import {
   IReactionFactory,

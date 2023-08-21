@@ -15,7 +15,7 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { REACTION_TARGET } from '../../../data-type';
-import { ReactionNotifyEvent } from '../../../domain/event/reaction.event';
+import { ReactionNotifyEvent } from '../../../domain/event';
 import { CommentEntity } from '../../../domain/model/comment';
 import { ArticleEntity, ContentEntity, PostEntity } from '../../../domain/model/content';
 import { ReactionEntity } from '../../../domain/model/reaction';

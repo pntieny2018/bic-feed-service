@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { ArticlePublishedEvent } from '../../../domain/event/article.event';
+import { ArticlePublishedEvent } from '../../../domain/event';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ImageDto, TagDto } from '../../dto';

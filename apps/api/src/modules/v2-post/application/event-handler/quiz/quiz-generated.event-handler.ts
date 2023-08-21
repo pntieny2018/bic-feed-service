@@ -3,7 +3,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
 import { KAFKA_TOPIC } from '../../../../../common/constants';
-import { QuizGeneratedEvent } from '../../../domain/event/quiz-generated.event';
+import { QuizGeneratedEvent } from '../../../domain/event';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,

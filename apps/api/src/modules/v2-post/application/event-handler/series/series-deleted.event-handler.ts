@@ -1,10 +1,11 @@
-import { Inject } from '@nestjs/common';
 import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '../../../../../common/constants';
+import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { SeriesChangedMessagePayload } from '../../dto/message';
-import { SeriesDeletedEvent } from '../../../domain/event/series.event';
+
+import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { SeriesDeletedEvent } from '../../../domain/event';
+import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @EventsHandler(SeriesDeletedEvent)
 export class SeriesDeletedEventHandler implements IEventHandler<SeriesDeletedEvent> {
@@ -17,7 +18,9 @@ export class SeriesDeletedEventHandler implements IEventHandler<SeriesDeletedEve
   public async handle(event: SeriesDeletedEvent): Promise<void> {
     const { seriesEntity } = event;
 
-    if (!seriesEntity.isPublished()) return;
+    if (!seriesEntity.isPublished()) {
+      return;
+    }
 
     const actor = await this._userAppService.findOne(seriesEntity.get('createdBy'));
 

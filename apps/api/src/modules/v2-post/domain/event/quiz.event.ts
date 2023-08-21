@@ -30,3 +30,15 @@ export class QuizParticipantFinishedEvent implements IEventPayload {
     this.payload = data;
   }
 }
+
+export class QuizCreatedEvent {
+  public constructor(public readonly quizId: string) {}
+}
+
+export class QuizGeneratedEvent {
+  public constructor(public readonly quizId: string) {}
+}
+
+export class QuizRegenerateEvent {
+  public constructor(public readonly quizId: string) {}
+}

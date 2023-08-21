@@ -3,7 +3,7 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event/series.event';
+import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event';
 import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
 import { InvalidResourceImageException } from '../exception/media.exception';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
