@@ -12,7 +12,6 @@ export const quizRecordMock = {
   numberOfQuestions: 4,
   numberOfAnswers: 4,
   numberOfQuestionsDisplay: 3,
-  numberOfAnswersDisplay: 3,
   isRandom: false,
   timeLimit: 1800,
   questions: [

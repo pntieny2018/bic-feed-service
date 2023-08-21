@@ -21,7 +21,6 @@ export type QuizCreateProps = {
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
   meta?: any;
 };
@@ -33,7 +32,6 @@ export type QuizUpdateProps = {
   title?: string;
   description?: string;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
   meta?: any;
   status?: QuizStatus;
