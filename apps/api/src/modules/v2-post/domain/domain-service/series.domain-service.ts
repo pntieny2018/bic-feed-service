@@ -44,7 +44,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async findSeriesById(seriesId: string[]): Promise<SeriesEntity[]> {
+  public async findSeriesByIds(seriesId: string[]): Promise<SeriesEntity[]> {
     return (await this._contentRepository.findAll({
       attributes: {
         exclude: ['content'],

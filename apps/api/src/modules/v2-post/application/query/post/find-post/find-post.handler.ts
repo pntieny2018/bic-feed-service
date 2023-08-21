@@ -1,27 +1,33 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
-} from '../../../../v2-group/application';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+} from 'apps/api/src/modules/v2-group/application';
+
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+} from '../../../../../v2-user/application';
 import {
   IPostDomainService,
   ISeriesDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
+} from '../../../../domain/domain-service/interface';
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/reaction.domain-service.interface';
-import { SeriesEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { PostDto } from '../../dto';
+} from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { SeriesEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
+import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
+import { ContentBinding } from '../../../binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { PostDto } from '../../../dto';
 
 import { FindPostQuery } from './find-post.query';
 

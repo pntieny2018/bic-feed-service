@@ -12,17 +12,20 @@ import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
 } from '../../../../../v2-user/application';
-import { PostStatus } from '../../../data-type';
+import { PostStatus } from '../../../../data-type';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { PostEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { PostDto } from '../../dto';
-import { PostChangedMessagePayload } from '../../dto/message';
+} from '../../../../domain/domain-service/interface';
+import { PostEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
+import { ContentBinding } from '../../../binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { PostDto } from '../../../dto';
+import { PostChangedMessagePayload } from '../../../dto/message';
 
 import { PublishPostCommand } from './publish-post.command';
 

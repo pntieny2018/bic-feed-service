@@ -7,18 +7,24 @@ import { uniq } from 'lodash';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
-} from '../../../../v2-group/application';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+} from '../../../../../v2-group/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+} from '../../../../../v2-user/application';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
-import { PostEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
-import { PostDto } from '../../dto';
-import { PostChangedMessagePayload } from '../../dto/message';
+} from '../../../../domain/domain-service/interface';
+import { PostEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
+import { ContentBinding } from '../../../binding/binding-post/content.binding';
+import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { PostDto } from '../../../dto';
+import { PostChangedMessagePayload } from '../../../dto/message';
 
 import { UpdatePostCommand } from './update-post.command';
 

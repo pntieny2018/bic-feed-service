@@ -4,7 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
+} from '../../../../domain/domain-service/interface';
 
 import { AutoSavePostCommand } from './auto-save-post.command';
 

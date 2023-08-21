@@ -1,6 +1,6 @@
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
-import { UpdatePostCommandPayload } from '../../../application/command/update-post/update-post.command';
+import { UpdatePostCommandPayload } from '../../../application/command/post';
 import { PostEntity, ArticleEntity } from '../../model/content';
 
 export type PublishPostPayload = {
