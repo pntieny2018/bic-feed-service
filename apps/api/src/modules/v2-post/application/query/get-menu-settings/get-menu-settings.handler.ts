@@ -34,10 +34,7 @@ export class GetMenuSettingsHandler
   public async execute(query: GetMenuSettingsQuery): Promise<MenuSettingsDto> {
     const { id, authUser } = query.payload;
 
-    const contentEnity = await this._contentDomainService.getContentToBuildMenuSettings(
-      id,
-      authUser.id
-    );
+    const contentEnity = await this._contentDomainService.getContentToBuildMenuSettings(id);
 
     if (!contentEnity) {
       throw new ContentNotFoundException();
