@@ -45,11 +45,11 @@ export class GetMenuSettingsHandler
     ]);
 
     const groupdIds = contentEnity.getGroupIds();
-    const contentIds = contentEnity.getId();
+    const contentId = contentEnity.getId();
     const specificNotifications =
       await this._contentNotificationService.getSpecificNotificationSettings(
         authUser.id,
-        contentIds
+        contentId
       );
 
     this._authorityAppService.buildAbility(authUser);
@@ -60,7 +60,7 @@ export class GetMenuSettingsHandler
       editSetting: this._authorityAppService.canEditSetting(groupdIds),
       saveOrUnsave: true,
       copyLink: true,
-      viewReactions: (reactionsCount.get(contentIds) || []).length > 0,
+      viewReactions: (reactionsCount.get(contentId) || []).length > 0,
       viewSeries: contentEnity.getType() !== PostType.SERIES,
       pinContent: this._authorityAppService.canPinContent(groupdIds),
       createQuiz:
