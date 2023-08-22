@@ -3,7 +3,7 @@ import { UserDto } from '../../../../v2-user/application';
 import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
 import { GroupDto } from '../../../../v2-group/application';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
-import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
+import { ReactionsCount } from '../../../../../common/types/reaction-count.type';
 export interface IContentBinding {
   postBinding(
     postEntity: PostEntity,
