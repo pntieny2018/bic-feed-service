@@ -50,6 +50,10 @@ import { QueueService } from './queue.service';
       name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME,
       defaultJobOptions: configs().defaultJobOptions,
     }),
+    BullModule.registerQueue({
+      name: QUEUES.CONTENT.QUEUE_NAME,
+      defaultJobOptions: configs().defaultJobOptions,
+    }),
   ],
   providers: [{ provide: QUEUE_SERVICE_TOKEN, useClass: QueueService }],
   exports: [QUEUE_SERVICE_TOKEN],

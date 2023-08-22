@@ -1,23 +1,15 @@
 import { Inject } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'class-validator';
 
 import { IPaginatedInfo, OrderEnum } from '../../../../../../common/dto';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   GetScheduledContentProps,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_REPOSITORY_TOKEN,
-  IContentRepository,
-} from '../../../../domain/repositoty-interface';
-import { ArticleDto } from '../../../dto';
-import { PublishArticleCommand } from '../publish-article';
+import { IQueueAdapter, QUEUE_ADAPTER } from '../../../../domain/infra-adapter-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface ';
 
 import { ProcessArticleScheduledCommand } from './process-article-scheduled.command';
 
@@ -28,13 +20,12 @@ export class ProcessArticleScheduledHandler
   private readonly LIMIT_DEFAULT = 100;
 
   public constructor(
-    private readonly _commandBus: CommandBus,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
+    @Inject(QUEUE_ADAPTER)
+    private readonly _queueAdapter: IQueueAdapter
   ) {}
 
   public async execute(command: ProcessArticleScheduledCommand): Promise<void> {
@@ -61,32 +52,23 @@ export class ProcessArticleScheduledHandler
       ...payload,
       after: endCursor,
     });
+
     if (!rows || rows.length === 0) {
       return;
     }
 
-    for (const row of rows) {
-      try {
-        const actor = await this._userApplicationService.findOne(row.getCreatedBy(), {
-          withPermission: true,
-          withGroupJoined: true,
-        });
-        await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
-          new PublishArticleCommand({
-            id: row.getId(),
-            actor,
-          })
-        );
-      } catch (e) {
-        row.setScheduleFailed();
-        row.setErrorLog({
-          message: e?.message,
-          code: e?.code,
-          stack: JSON.stringify(e?.stack),
-        });
-        await this._contentRepository.update(row);
-      }
-    }
+    const contentOwnerIds = rows.map((row) => row.getCreatedBy());
+    const contentOwners = await this._userAdapter.getUsersByIds(contentOwnerIds, {
+      withPermission: true,
+      withGroupJoined: true,
+    });
+
+    const contentScheduledJobPayloads = rows.map((row) => ({
+      contentId: row.getId(),
+      contentOwner: contentOwners.find((owner) => owner.id === row.getCreatedBy()),
+    }));
+
+    await this._queueAdapter.addContentScheduledJob(contentScheduledJobPayloads);
 
     await this._recursivelyHandleScheduledContent(payload, meta);
   }

@@ -80,6 +80,7 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { PostValidator } from '../domain/validator/post.validator';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { ArticleCron } from '../driving-apdater/cron/article.cron';
+import { ContentProcessor } from '../driving-apdater/queue-processor/content.processor';
 
 export const postProvider = [
   {
@@ -179,4 +180,7 @@ export const postProvider = [
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
+
+  /** Processor */
+  ContentProcessor,
 ];
