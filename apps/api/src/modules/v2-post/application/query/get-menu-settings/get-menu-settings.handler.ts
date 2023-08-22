@@ -14,6 +14,8 @@ import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { ContentNotificationService } from '../../../../../notification/services';
+import { isBoolean } from 'lodash';
 
 @QueryHandler(GetMenuSettingsQuery)
 export class GetMenuSettingsHandler
@@ -25,7 +27,8 @@ export class GetMenuSettingsHandler
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService,
     @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
-    private readonly _reactionDomainService: IReactionDomainService
+    private readonly _reactionDomainService: IReactionDomainService,
+    private readonly _contentNotificationService: ContentNotificationService
   ) {}
 
   public async execute(query: GetMenuSettingsQuery): Promise<MenuSettingsDto> {
@@ -44,20 +47,25 @@ export class GetMenuSettingsHandler
       contentEnity.getId(),
     ]);
 
+    const groupdIds = contentEnity.getGroupIds();
+    const contentIds = contentEnity.getId();
+    const specificNotifications =
+      await this._contentNotificationService.getSpecificNotificationSettings(
+        authUser.id,
+        contentIds
+      );
+
     this._authorityAppService.buildAbility(authUser);
-    const canCRUDPostArticle = this._authorityAppService.canCRUDPostArticle(
-      contentEnity.getGroupIds()
-    );
+    const canCRUDPostArticle = this._authorityAppService.canCRUDPostArticle(groupdIds);
 
     const menuSetting: MenuSettingsDto = {
       edit: contentEnity.isOwner(authUser.id) && canCRUDPostArticle,
-      editSetting: this._authorityAppService.canEditSetting(contentEnity.getGroupIds()),
-      save: !contentEnity.isSaved(),
-      unSave: contentEnity.isSaved(),
+      editSetting: this._authorityAppService.canEditSetting(groupdIds),
+      saveOrUnsave: true,
       copyLink: true,
-      viewReactions: (reactionsCount.get(contentEnity.getId()) || []).length > 0,
+      viewReactions: (reactionsCount.get(contentIds) || []).length > 0,
       viewSeries: contentEnity.getType() !== PostType.SERIES,
-      pinContent: this._authorityAppService.canPinContent(contentEnity.getGroupIds()),
+      pinContent: this._authorityAppService.canPinContent(groupdIds),
       createQuiz:
         contentEnity.getType() !== PostType.SERIES &&
         contentEnity.isOwner(authUser.id) &&
@@ -78,6 +86,9 @@ export class GetMenuSettingsHandler
       reportContent:
         contentEnity.getType() !== PostType.SERIES && !contentEnity.isOwner(authUser.id),
       reportMember: !contentEnity.isOwner(authUser.id),
+      enableSpecificNotifications: isBoolean(specificNotifications?.enable)
+        ? specificNotifications.enable
+        : true,
     };
 
     return new MenuSettingsDto(menuSetting);
