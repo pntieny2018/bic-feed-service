@@ -9,6 +9,7 @@
     "no_delete_permission": "Failed to delete tag: you don't have permission"
   },
   "content": {
+    "has_quiz": "Content already has quiz",
     "not_found": "Content not found",
     "no_crud_permission": "You don't have CRUD permission",
     "no_edit_setting_permission": "You don't have edit setting permission",
@@ -77,6 +78,20 @@
     "not_have_authority": "You don't have authority to do this action",
     "no_delete_permission": "Failed to delete reaction: you don't have permission",
     "duplicate": "You have already reacted to this content"
+  },
+  "quiz": {
+    "not_found": "Quiz not found",
+    "no_crud_permission_at_group": "You don't have CUD permission at group {groups}",
+    "generate_limited": "Generate quiz is limited request per minute",
+    "over_time": "Quiz is overtime.",
+    "quiz_question_limit_exceeded": "Quiz question limit exceeded"
+  },
+  "quiz_question": {
+    "not_found": "Session ID not found"
+  },
+  "quiz_participant": {
+    "not_found": "Session ID not found",
+    "not_finished": "You have a quiz is not finished"
   },
   "cursor_params_invalid": "Cursor params invalid"
 }

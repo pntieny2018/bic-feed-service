@@ -1,4 +1,5 @@
 import { UserDto } from '.';
+import { GroupDto } from '../../v2-group/application';
 
 export type FindByUsernameOption = {
   withPermission?: boolean;

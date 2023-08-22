@@ -11,4 +11,5 @@ export * from './reaction-list.dto';
 export * from './series.dto';
 export * from './comment.dto';
 export * from './article.dto';
+export * from './quiz.dto';
 export * from './menu-settings.dto';

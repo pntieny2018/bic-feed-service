@@ -33,6 +33,9 @@ export class AppBootstrap {
     );
     await app.listen(appConfig.port).catch((ex) => Logger.error(ex));
 
-    Logger.debug(`${appConfig.name} API run in ${appConfig.url}`, 'NestApplication');
+    Logger.debug(
+      `${appConfig.name} API run in ${appConfig.url}:${appConfig.port}`,
+      'NestApplication'
+    );
   }
 }

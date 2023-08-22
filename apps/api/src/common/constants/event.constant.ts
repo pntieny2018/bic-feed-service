@@ -48,3 +48,7 @@ export const ReportContentHasBeenApproved = 'report.has.been.approved';
 // ws
 export const OnWebSocketConnect = 'on.websocket.connect';
 export const OnWebSocketDisconnect = 'on.websocket.disconnect';
+
+// quiz
+export const QuizParticipantStarted = 'quiz.participant.started';
+export const QuizParticipantFinished = 'quiz.participant.finished';

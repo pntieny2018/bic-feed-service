@@ -4,6 +4,7 @@ export const PERMISSION_KEY = {
   EDIT_OWN_CONTENT_SETTING: 'edit_own_content_setting',
   MANAGE: 'manage',
   PIN_CONTENT: 'pin_content',
+  CUD_QUIZ: 'cud_quiz',
 };
 
 export const SUBJECT = {

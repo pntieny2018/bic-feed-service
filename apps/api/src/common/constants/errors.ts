@@ -9,6 +9,7 @@ export const ERRORS = {
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
   },
   CONTENT: {
+    HAS_QUIZ: 'content.has_quiz',
     EMPTY: 'content.empty',
     EMPTY_GROUP: 'content.empty_group',
     AUDIENCE_NO_BELONG: 'content.audience_no_belong',
@@ -26,6 +27,23 @@ export const ERRORS = {
     CONTENT_NO_REACT_PERMISSION: 'content.no_react_permission',
     CONTENT_NO_PUBLISH_YET: 'content.no_publish_yet',
     CONTENT_HAS_BEEN_PUBLISHED: 'content.has_been_published',
+  },
+  QUIZ: {
+    GENERATE_LIMITED: 'quiz.generate_limited',
+    QUIZ_NOT_FOUND: 'quiz.not_found',
+    QUIZ_OVER_TIME: 'quiz.over_time',
+    QUIZ_NO_CRUD_PERMISSION_AT_GROUP: 'quiz.no_crud_permission_at_group',
+    OPENAI_EXCEPTION: 'quiz.openai_exception',
+    GENERATE_FAIL: 'quiz.generate_fail',
+    QUIZ_PROCESSING: 'quiz.quiz_processing',
+    QUIZ_QUESTION_LIMIT_EXCEEDED: 'quiz.quiz_question_limit_exceeded',
+  },
+  QUIZ_QUESTION: {
+    NOT_FOUND: 'quiz_question.not_found',
+  },
+  QUIZ_PARTICIPANT: {
+    NOT_FOUND: 'quiz_participant.not_found',
+    NOT_FINISHED: 'quiz_participant.not_finished',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
