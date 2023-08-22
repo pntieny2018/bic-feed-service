@@ -13,15 +13,24 @@ import {
 } from '../../repositoty-interface';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import {
+  IReactionQuery,
+  REACTION_QUERY_TOKEN,
+} from '../../query-interface/reaction.query.interface';
+import { ReactionsCount } from '../../../../../common/types/reaction-count.type';
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
 
-  @Inject(POST_REACTION_REPOSITORY_TOKEN)
-  private readonly _postReactionRepository: IPostReactionRepository;
-  @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
-  private readonly _commentReactionRepository: ICommentReactionRepository;
-  @Inject(REACTION_FACTORY_TOKEN)
-  private readonly _reactionFactory: IReactionFactory;
+  public constructor(
+    @Inject(REACTION_QUERY_TOKEN)
+    private readonly _reactionQuery: IReactionQuery,
+    @Inject(REACTION_FACTORY_TOKEN)
+    private readonly _reactionFactory: IReactionFactory,
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepository: IPostReactionRepository,
+    @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
+    private readonly _commentReactionRepository: ICommentReactionRepository
+  ) {}
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, createdBy, target, targetId } = input;
@@ -73,5 +82,11 @@ export class ReactionDomainService implements IReactionDomainService {
       this._logger.error(e.message);
       throw new DatabaseException();
     }
+  }
+
+  public async getAndCountReactionByContents(
+    contentIds: string[]
+  ): Promise<Map<string, ReactionsCount>> {
+    return this._reactionQuery.getAndCountReactionByContents(contentIds);
   }
 }
