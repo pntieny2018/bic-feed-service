@@ -11,7 +11,7 @@ export class AuthorityAppService {
 
   public constructor(private _sentryService: SentryService) {}
 
-  public async setAbilities(user: UserDto): Promise<void> {
+  public async buildAbility(user: UserDto): Promise<void> {
     try {
       const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {
