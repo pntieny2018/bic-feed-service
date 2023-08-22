@@ -94,7 +94,6 @@ export class ContentController {
       return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
     } catch (e) {
       switch (e.constructor) {
-        case InvalidCursorParamsException:
         case DomainModelException:
           throw new BadRequestException(e);
         default:
