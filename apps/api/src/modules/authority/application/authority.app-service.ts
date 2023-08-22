@@ -1,23 +1,24 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Ability } from '@casl/ability';
+import { Ability, subject } from '@casl/ability';
 import { SentryService } from '@app/sentry';
-import { SUBJECT } from '../../../common/constants/casl.constant';
+import { PERMISSION_KEY, SUBJECT } from '../../../common/constants/casl.constant';
 import { UserPermission } from '../../v2-user/domain/model/user';
 import { UserDto } from '../../v2-user/application';
 
 @Injectable()
 export class AuthorityAppService {
+  private _abilities: Ability;
+
   public constructor(private _sentryService: SentryService) {}
 
-  public async buildAbility(user: UserDto): Promise<Ability> {
+  public async setAbilities(user: UserDto): Promise<void> {
     try {
       const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {
-        return new Ability();
+        return;
       }
-      const abilities = AuthorityAppService.extractAbilitiesFromPermission(cachedPermissions);
-
-      return new Ability(abilities);
+      const permissions = AuthorityAppService.extractAbilitiesFromPermission(cachedPermissions);
+      this._abilities = new Ability(permissions);
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new InternalServerErrorException(ex);
@@ -49,5 +50,29 @@ export class AuthorityAppService {
     }
 
     return abilities;
+  }
+
+  public canCRUDPostArticle(groupIds: string[]): boolean {
+    return groupIds.every((groupId) =>
+      this._abilities.can(PERMISSION_KEY.CRUD_POST_ARTICLE, subject(SUBJECT.GROUP, { id: groupId }))
+    );
+  }
+
+  public canEditSetting(groupIds: string[]): boolean {
+    return groupIds.every(
+      (groupId) =>
+        this._abilities.can(
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
+          subject(SUBJECT.GROUP, { id: groupId })
+        ) && this._abilities.can(PERMISSION_KEY.MANAGE, subject(SUBJECT.GROUP, { id: groupId }))
+    );
+  }
+
+  public canPinContent(groupIds: string[]): boolean {
+    return groupIds.every(
+      (groupId) =>
+        this._abilities.can(PERMISSION_KEY.PIN_CONTENT, subject(SUBJECT.GROUP, { id: groupId })) &&
+        this._abilities.can(PERMISSION_KEY.MANAGE, subject(SUBJECT.GROUP, { id: groupId }))
+    );
   }
 }
