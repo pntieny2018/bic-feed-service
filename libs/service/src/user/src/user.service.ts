@@ -1,13 +1,15 @@
+import { RedisService } from '@app/redis';
+import { SharedUserDto } from '@beincom/dto';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { AxiosHelper } from '@libs/common/helpers';
 import { IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
-import { RedisService } from '@libs/infra/redis';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 import qs from 'qs';
 
 import { USER_ENDPOINT } from './endpoint.constant';
-import { IUserService, IUser } from './interfaces';
+import { UserDto } from './user.dto';
+import { IUserService } from './user.service.interface';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -18,12 +20,12 @@ export class UserService implements IUserService {
     @Inject(USER_HTTP_TOKEN) private readonly _httpService: IHttpService
   ) {}
 
-  public async findByUserName(username: string): Promise<IUser> {
+  public async findByUserName(username: string): Promise<UserDto> {
     if (!username) {
       return null;
     }
     try {
-      const userProfile = await this._getUserProfileFromCache(username);
+      const userProfile = await this._getUserProfileFromCacheByUsername(username);
       let user = await this._getUserFromCacheById(userProfile?.id);
       if (!user) {
         const response = await this._httpService.get(
@@ -44,7 +46,7 @@ export class UserService implements IUserService {
     }
   }
 
-  public async findById(id: string): Promise<IUser> {
+  public async findById(id: string): Promise<UserDto> {
     let user = await this._getUserFromCacheById(id);
     if (!user) {
       try {
@@ -66,7 +68,7 @@ export class UserService implements IUserService {
     return user;
   }
 
-  public async findAllByIds(ids: string[]): Promise<IUser[]> {
+  public async findAllByIds(ids: string[]): Promise<UserDto[]> {
     if (!ids || !ids.length) {
       return [];
     }
@@ -91,7 +93,14 @@ export class UserService implements IUserService {
     } catch (e) {
       this._logger.debug(e);
     }
-    return users;
+
+    return users.map((user) => {
+      const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
+        ...badge,
+        community: badge.community || null,
+      }));
+      return { ...user, showingBadges: showingBadgesWithCommunity };
+    });
   }
 
   public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
@@ -110,12 +119,12 @@ export class UserService implements IUserService {
     }
   }
 
-  private async _getUserProfileFromCache(username: string): Promise<IUser> {
+  private async _getUserProfileFromCacheByUsername(username: string): Promise<SharedUserDto> {
     const profileCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
-    return this._store.get<IUser>(profileCacheKey);
+    return this._store.get<SharedUserDto>(profileCacheKey);
   }
 
-  private async _getUserFromCacheById(id: string): Promise<IUser> {
+  private async _getUserFromCacheById(id: string): Promise<UserDto> {
     if (!id) {
       return null;
     }
@@ -133,7 +142,7 @@ export class UserService implements IUserService {
     return user;
   }
 
-  private async _getUsersFromCacheByIds(ids: string[]): Promise<IUser[]> {
+  private async _getUsersFromCacheByIds(ids: string[]): Promise<SharedUserDto[]> {
     const userCacheKeys = ids.map((id) => `${CACHE_KEYS.SHARE_USER}:${id}`);
     return this._store.mget(userCacheKeys);
   }

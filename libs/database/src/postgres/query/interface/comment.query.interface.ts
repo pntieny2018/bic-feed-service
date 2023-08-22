@@ -1,17 +1,17 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
-import { IUser } from '@libs/service/user/src/interfaces';
+import { UserDto } from '@libs/service/user';
 
 import { CommentAttributes, CommentModel } from '../../model/comment.model';
 
 export type GetPaginationCommentProps = CursorPaginationProps & {
-  authUser?: IUser;
+  authUser?: UserDto;
   postId: string;
   parentId?: string;
 };
 
 export type GetAroundCommentProps = {
-  authUser?: IUser;
+  authUser?: UserDto;
   limit: number;
   order: ORDER;
 };
@@ -24,7 +24,7 @@ export interface ILibCommentQuery {
     props: GetAroundCommentProps
   ): Promise<CursorPaginationResult<CommentModel>>;
 
-  findComment(id: string, authUser: IUser): Promise<CommentModel>;
+  findComment(id: string, authUser: UserDto): Promise<CommentModel>;
 }
 
 export const LIB_COMMENT_QUERY_TOKEN = 'LIB_COMMENT_QUERY_TOKEN';

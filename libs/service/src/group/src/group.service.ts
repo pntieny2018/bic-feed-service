@@ -3,7 +3,7 @@ import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { IGroup, IGroupMember, IGroupService } from '@libs/service/group/src/interface';
-import { IUser } from '@libs/service/user/src/interfaces';
+import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
@@ -59,7 +59,7 @@ export class GroupService implements IGroupService {
   }
 
   public async getGroupMembersDividedByRole(
-    actor: IUser,
+    actor: UserDto,
     groupIds: string[],
     pagination?: { offset?: number; limit?: number }
   ): Promise<IGroupMember[]> {

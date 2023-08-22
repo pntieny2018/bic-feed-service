@@ -1,6 +1,7 @@
 import { KafkaModule } from '@app/kafka';
 import { EventModule } from '@libs/infra/event';
 import { QueueModule } from '@libs/infra/queue';
+import { UserModule } from '@libs/service/user/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { Module, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -37,6 +38,7 @@ import {
   postProvider,
   mediaProvider,
   reactionProvider,
+  adapterProvider,
 } from './provider';
 import { quizProvider } from './provider/quiz.provider';
 
@@ -54,6 +56,7 @@ import { quizProvider } from './provider/quiz.provider';
     NotificationModule,
     QueueModule,
     EventModule,
+    UserModule,
   ],
   controllers: [
     TagController,
@@ -72,6 +75,7 @@ import { quizProvider } from './provider/quiz.provider';
     QuizController,
   ],
   providers: [
+    ...adapterProvider,
     ...tagProvider,
     ...categoryProvider,
     ...postProvider,

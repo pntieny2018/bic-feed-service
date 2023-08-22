@@ -1,10 +1,10 @@
-import { IUser } from '@libs/service/user/src/interfaces';
+import { UserDto } from '@libs/service/user';
 import { CLS_REQ, ClsServiceManager } from 'nestjs-cls';
 import { v4 as uuid } from 'uuid';
 
 export interface IContext {
   requestId: string;
-  actor: IUser;
+  actor: UserDto;
   event: string;
 }
 
@@ -26,14 +26,14 @@ export function getContext(where?: string): IContext {
 export function initTracingContext(where: string): void {
   const cls = ClsServiceManager.getClsService();
   cls.enter();
-  const systemActor: Partial<IUser> = {
+  const systemActor: Partial<UserDto> = {
     id: uuid(),
     fullname: SYSTEM,
     username: SYSTEM,
   };
   const context: IContext = {
     requestId: cls.getId() ?? uuid(),
-    actor: systemActor as IUser,
+    actor: systemActor as UserDto,
     event: where,
   };
 

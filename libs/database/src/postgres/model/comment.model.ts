@@ -1,5 +1,5 @@
 import { IMAGE_RESOURCE } from '@beincom/constants';
-import { IUser } from '@libs/service/user/src/interfaces';
+import { UserDto } from '@libs/service/user';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes, Sequelize } from 'sequelize';
 import {
@@ -86,7 +86,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   @Column
   public id: string;
 
-  public actor: IUser;
+  public actor: UserDto;
 
   @AllowNull(false)
   @ForeignKey(() => CommentModel)
