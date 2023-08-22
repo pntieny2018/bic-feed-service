@@ -123,7 +123,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       include: {
         shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
+        shouldIncludeQuiz: true,
         shouldIncludeSaved: {
           userId,
         },

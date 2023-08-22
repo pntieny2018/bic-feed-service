@@ -63,6 +63,7 @@ import { FindDraftContentsHandler } from '../application/query/find-draft-conten
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
 import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
+import { GetMenuSettingsHandler } from '../application/query/get-menu-settings/get-menu-settings.handler';
 
 export const postProvider = [
   {
@@ -155,4 +156,5 @@ export const postProvider = [
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
+  GetMenuSettingsHandler,
 ];

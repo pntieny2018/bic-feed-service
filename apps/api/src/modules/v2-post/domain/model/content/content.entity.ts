@@ -151,6 +151,14 @@ export class ContentEntity<
     return this._props.groupIds;
   }
 
+  public hasQuiz(): boolean {
+    return Boolean(this._props.quiz);
+  }
+
+  public getQuiz(): QuizEntity {
+    return this._props.quiz;
+  }
+
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
   }
@@ -185,6 +193,10 @@ export class ContentEntity<
 
   public isClosed(): boolean {
     return this._props.privacy === PostPrivacy.CLOSED;
+  }
+
+  public isSaved(): boolean {
+    return Boolean(this._props.isSaved);
   }
 
   /**

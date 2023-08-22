@@ -35,6 +35,8 @@ import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
+import { GetMenuSettingsQuery } from '../../application/query/get-menu-settings/get-menu-settings.query';
+import { MenuSettingsDto } from '../../application/dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -65,6 +67,31 @@ export class ContentController {
         new FindDraftContentsQuery({ authUser: user, ...getListCommentsDto })
       );
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get menu settings' })
+  @ApiOkResponse({
+    type: MenuSettingsDto,
+  })
+  @ResponseMessages({
+    success: 'Get menu settings successfully',
+  })
+  @Get('/:id/menu-settings')
+  public async getMenuSettings(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<MenuSettingsDto> {
+    try {
+      return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
     } catch (e) {
       switch (e.constructor) {
         case InvalidCursorParamsException:

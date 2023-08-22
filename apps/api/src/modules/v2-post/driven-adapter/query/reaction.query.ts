@@ -14,10 +14,10 @@ import { ReactionEntity } from '../../domain/model/reaction';
 import {
   GetReactionProps,
   IReactionQuery,
-  ReactionsCount,
 } from '../../domain/query-interface/reaction.query.interface';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { OrderEnum } from '../../../../common/dto';
+import { ReactionsCount } from '../../../../common/types/reaction-count.type';
 
 export class ReactionQuery implements IReactionQuery {
   public constructor(
