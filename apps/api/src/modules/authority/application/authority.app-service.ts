@@ -58,6 +58,12 @@ export class AuthorityAppService {
     );
   }
 
+  public canCRUDSeries(groupIds: string[]): boolean {
+    return groupIds.every((groupId) =>
+      this._abilities.can(PERMISSION_KEY.CRUD_SERIES, subject(SUBJECT.GROUP, { id: groupId }))
+    );
+  }
+
   public canEditSetting(groupIds: string[]): boolean {
     return groupIds.every(
       (groupId) =>
