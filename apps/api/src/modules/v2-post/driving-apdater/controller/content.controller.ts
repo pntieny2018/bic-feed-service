@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -85,6 +86,7 @@ export class ContentController {
   @ResponseMessages({
     success: 'Get menu settings successfully',
   })
+  @Version([VERSIONS_SUPPORTED[3]])
   @Get('/:id/menu-settings')
   public async getMenuSettings(
     @AuthUser() user: UserDto,
