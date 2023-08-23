@@ -25,7 +25,6 @@ export class QuizMapper {
         numberOfQuestions: model.numberOfQuestions,
         numberOfAnswers: model.numberOfAnswers,
         numberOfQuestionsDisplay: model.numberOfQuestionsDisplay,
-        numberOfAnswersDisplay: model.numberOfAnswersDisplay,
         timeLimit: model.timeLimit,
         isRandom: model.isRandom,
         questions: (model.questions || []).map(
@@ -63,7 +62,6 @@ export class QuizMapper {
       isRandom: entity.get('isRandom'),
       meta: entity.get('meta'),
       numberOfAnswers: entity.get('numberOfAnswers'),
-      numberOfAnswersDisplay: entity.get('numberOfAnswersDisplay'),
       numberOfQuestions: entity.get('numberOfQuestions'),
       numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
       postId: entity.get('contentId'),
