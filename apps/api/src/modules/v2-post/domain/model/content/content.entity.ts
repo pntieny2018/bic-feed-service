@@ -195,6 +195,10 @@ export class ContentEntity<
     return this._props.privacy === PostPrivacy.CLOSED;
   }
 
+  public isSaved(): boolean {
+    return Boolean(this._props.isSaved);
+  }
+
   /**
    * Note: Need to override createdAt when publishing
    */
