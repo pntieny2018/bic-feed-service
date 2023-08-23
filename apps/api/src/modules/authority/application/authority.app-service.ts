@@ -82,4 +82,8 @@ export class AuthorityAppService implements IAuthorityAppService {
         this._abilities.can(PERMISSION_KEY.MANAGE, subject(SUBJECT.GROUP, { id: groupId }))
     );
   }
+
+  public canDoActionOnGroup(permissionKey: string, groupId: string): boolean {
+    return this._abilities.can(permissionKey, subject(SUBJECT.GROUP, { id: groupId }));
+  }
 }
