@@ -58,19 +58,19 @@ export class GetMenuSettingsHandler
     );
 
     const menuSetting: MenuSettingsDto = {
-      edit: canCRUDContent,
-      editSetting: this._authorityAppService.canEditSetting(groupdIds),
-      saveOrUnsave: true,
-      copyLink: true,
-      viewReactions: canViewReaction,
-      viewSeries: contentEntity.getType() !== PostType.SERIES,
-      pinContent: this._authorityAppService.canPinContent(groupdIds),
-      createQuiz: canCreateQuiz,
-      deleteQuiz: canDeleteQuiz,
-      editQuiz: canEditQuiz,
-      delete: canCRUDContent,
-      reportContent: canReportContent,
-      reportMember: !contentEntity.isOwner(userId),
+      canEdit: canCRUDContent,
+      canEditSetting: this._authorityAppService.canEditSetting(groupdIds),
+      canSaveOrUnsave: true,
+      canCopyLink: true,
+      canViewReactions: canViewReaction,
+      canViewSeries: contentEntity.getType() !== PostType.SERIES,
+      canPinContent: this._authorityAppService.canPinContent(groupdIds),
+      canCreateQuiz,
+      canDeleteQuiz,
+      canEditQuiz,
+      canDelete: canCRUDContent,
+      canReportContent,
+      canReportMember: !contentEntity.isOwner(userId),
       enableSpecificNotifications: isEnableSpecificNotifications,
     };
 

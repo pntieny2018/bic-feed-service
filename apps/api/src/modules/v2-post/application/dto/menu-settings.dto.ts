@@ -1,17 +1,17 @@
 export class MenuSettingsDto {
-  public edit = false;
-  public editSetting = false;
-  public saveOrUnsave = false;
-  public copyLink = true;
-  public viewReactions = false;
-  public viewSeries = false;
-  public pinContent = false;
-  public createQuiz = false;
-  public deleteQuiz = false;
-  public editQuiz = false;
-  public delete = false;
-  public reportContent = false;
-  public reportMember = false;
+  public canEdit = false;
+  public canEditSetting = false;
+  public canSaveOrUnsave = false;
+  public canCopyLink = true;
+  public canViewReactions = false;
+  public canViewSeries = false;
+  public canPinContent = false;
+  public canCreateQuiz = false;
+  public canDeleteQuiz = false;
+  public canEditQuiz = false;
+  public canDelete = false;
+  public canReportContent = false;
+  public canReportMember = false;
   public enableSpecificNotifications = false;
 
   public constructor(data: Partial<MenuSettingsDto>) {
