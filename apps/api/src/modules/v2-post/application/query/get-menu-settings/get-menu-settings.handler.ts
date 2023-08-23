@@ -34,8 +34,12 @@ export class GetMenuSettingsHandler
 
   public async execute(query: GetMenuSettingsQuery): Promise<MenuSettingsDto> {
     const { id, authUser } = query.payload;
+    const userId = authUser.id;
 
-    const contentEntity = await this._contentDomainService.getContentToBuildMenuSettings(id);
+    const contentEntity = await this._contentDomainService.getContentToBuildMenuSettings(
+      id,
+      userId
+    );
 
     if (!contentEntity) {
       throw new ContentNotFoundException();
@@ -43,7 +47,6 @@ export class GetMenuSettingsHandler
 
     await this._authorityAppService.buildAbility(authUser);
 
-    const userId = authUser.id;
     const groupIds = contentEntity.getGroupIds();
     const canCRUDContent = this._canCURDContent(contentEntity, userId);
     const canReportContent = this._canReportContent(contentEntity, userId);
@@ -60,7 +63,8 @@ export class GetMenuSettingsHandler
     const menuSetting: MenuSettingsDto = {
       canEdit: canCRUDContent,
       canEditSetting: this._authorityAppService.canEditSetting(groupIds),
-      canSaveOrUnsave: true,
+      canSave: !contentEntity.isSaved(),
+      canUnsave: contentEntity.isSaved(),
       canCopyLink: true,
       canViewReactions: canViewReaction,
       canViewSeries: contentEntity.getType() !== PostType.SERIES,

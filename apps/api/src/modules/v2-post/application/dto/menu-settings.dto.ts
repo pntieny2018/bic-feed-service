@@ -1,7 +1,8 @@
 export class MenuSettingsDto {
   public canEdit = false;
   public canEditSetting = false;
-  public canSaveOrUnsave = false;
+  public canSave = false;
+  public canUnsave = false;
   public canCopyLink = true;
   public canViewReactions = false;
   public canViewSeries = false;

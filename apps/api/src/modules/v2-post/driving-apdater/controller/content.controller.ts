@@ -18,7 +18,11 @@ import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { instanceToInstance } from 'class-transformer';
 import { UserDto } from '../../../v2-user/application';
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import {
+  TRANSFORMER_VISIBLE_ONLY,
+  VERSIONS_SUPPORTED,
+  VERSION_1_9_0,
+} from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
 import { GetDraftContentsRequestDto, ValidateSeriesTagDto } from '../dto/request';
@@ -38,6 +42,7 @@ import { FindDraftContentsQuery } from '../../application/query/find-draft-conte
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
 import { GetMenuSettingsQuery } from '../../application/query/get-menu-settings/get-menu-settings.query';
 import { MenuSettingsDto } from '../../application/dto';
+import { AppHelper } from '../../../../common/helpers/app.helper';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -86,7 +91,7 @@ export class ContentController {
   @ResponseMessages({
     success: 'Get menu settings successfully',
   })
-  @Version([VERSIONS_SUPPORTED[3]])
+  @Version(AppHelper.getVersionsSupportedFrom(VERSION_1_9_0))
   @Get('/:id/menu-settings')
   public async getMenuSettings(
     @AuthUser() user: UserDto,
