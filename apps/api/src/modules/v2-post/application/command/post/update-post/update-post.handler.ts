@@ -1,10 +1,8 @@
-import { KafkaService } from '@app/kafka';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { cloneDeep, uniq } from 'lodash';
 
-import { MediaService } from '../../../../../media';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
@@ -21,12 +19,12 @@ import {
   ContentNoPublishYetException,
   ContentNotFoundException,
 } from '../../../../domain/exception';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
 import { PostEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
 import { PostDto } from '../../../dto';
@@ -37,16 +35,18 @@ import { UpdatePostCommand } from './update-post.command';
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, PostDto> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
-    @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    private readonly _kafkaService: KafkaService,
-    private readonly _mediaService: MediaService
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: ContentBinding,
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async execute(command: UpdatePostCommand): Promise<PostDto> {
@@ -188,14 +188,14 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
         },
       };
 
-      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
+      this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
         key: postEntityAfter.getId(),
         value: new PostChangedMessagePayload(payload),
       });
     }
 
     if (postEntityAfter.isProcessing() && postEntityAfter.getVideoIdProcessing()) {
-      this._kafkaService.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+      this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: { videoIds: [postEntityAfter.getVideoIdProcessing()] },
       });

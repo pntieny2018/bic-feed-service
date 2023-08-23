@@ -1,4 +1,3 @@
-import { KafkaService } from '@app/kafka';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -17,6 +16,7 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { ContentNotFoundException } from '../../../../domain/exception';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
 import { PostEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -42,7 +42,8 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: ContentBinding,
-    private readonly _kafkaService: KafkaService
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {
@@ -180,14 +181,14 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
           publishedAt: postEntityAfter.get('publishedAt'),
         },
       };
-      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
+      this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
         key: postEntityAfter.getId(),
         value: new PostChangedMessagePayload(payload),
       });
     }
 
     if (postEntityAfter.isProcessing() && postEntityAfter.getVideoIdProcessing()) {
-      this._kafkaService.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+      this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: { videoIds: [postEntityAfter.getVideoIdProcessing()] },
       });

@@ -1,4 +1,4 @@
-import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
+import { KAFKA_TOPIC } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
@@ -16,6 +16,7 @@ import {
 } from '../../../../v2-user/application';
 import { REACTION_TARGET } from '../../../data-type';
 import { ReactionNotifyEvent } from '../../../domain/event';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { CommentEntity } from '../../../domain/model/comment';
 import { ArticleEntity, ContentEntity, PostEntity } from '../../../domain/model/content';
 import { ReactionEntity } from '../../../domain/model/reaction';
@@ -50,7 +51,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     private readonly _contentBinding: IContentBinding,
     @Inject(REACTION_QUERY_TOKEN)
     private readonly _reactionQuery: IReactionQuery,
-    private readonly _kafkaService: KafkaService
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async handle(event: ReactionNotifyEvent): Promise<void> {
@@ -155,7 +157,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
       createdAt: contentEntity.get('createdAt'),
       updatedAt: contentEntity.get('updatedAt'),
     };
-    this._kafkaService.emit(KAFKA_TOPIC.STREAM.REACTION, {
+    this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: contentEntity.getId(),
       value: {
         actor: actor,
@@ -356,7 +358,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
       createdAt: contentEntity.get('createdAt'),
       updatedAt: contentEntity.get('updatedAt'),
     };
-    this._kafkaService.emit(KAFKA_TOPIC.STREAM.REACTION, {
+    this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: contentEntity.getId(),
       value: {
         actor: actor,

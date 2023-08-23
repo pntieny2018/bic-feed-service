@@ -1,24 +1,28 @@
-import { KAFKA_TOKEN, IKafkaConfig, IKafkaService } from '@libs/infra/kafka';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ClientKafka } from '@nestjs/microservices';
+import { Producer } from '@nestjs/microservices/external/kafka.interface';
 import { ClsService } from 'nestjs-cls';
+import { Observable, from } from 'rxjs';
 import { v4 } from 'uuid';
+
+import { KAFKA_TOKEN } from './kafka.constant';
+import { IKafkaService } from './kafka.service.interface';
 
 @Injectable()
 export class KafkaService implements IKafkaService {
   private readonly _logger = new Logger(KafkaService.name);
+  public _producerOb: Observable<Producer>;
+
   public constructor(
     @Inject(KAFKA_TOKEN) private readonly _kafkaClient: ClientKafka,
-    private readonly _clsService: ClsService,
-    private readonly _configService: ConfigService
-  ) {}
+    private readonly _clsService: ClsService
+  ) {
+    this._producerOb = from(this._kafkaClient.connect());
+  }
 
   public emit<TInput>(topic: string, payload: TInput): void {
-    const kafkaConfig = this._configService.get<IKafkaConfig>('kafka');
     const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
 
-    //const topicName = `${kafkaConfig.env}.${topic}`;
     const topicName = `${topic}`;
     const headers = {
       requestId: this._clsService.getId() ?? v4(),
@@ -33,7 +37,19 @@ export class KafkaService implements IKafkaService {
           value: JSON.stringify(payload),
           headers,
         };
-    this._logger.debug(`Sent event[${topicName}]--- ${JSON.stringify(message)}`);
-    this._kafkaClient.emit(topicName, message);
+
+    const record = {
+      topic: topicName,
+      messages: [message],
+    };
+
+    const sub = this._producerOb.subscribe({
+      next: (producer) => producer.send(record),
+      error: (e) => this._logger.error(`Producing msg to ${topicName} failed: ${e.message}`),
+      complete: () => {
+        this._logger.log(`Produced msg to ${topicName}: ${JSON.stringify(message)}`);
+        sub.unsubscribe();
+      },
+    });
   }
 }
