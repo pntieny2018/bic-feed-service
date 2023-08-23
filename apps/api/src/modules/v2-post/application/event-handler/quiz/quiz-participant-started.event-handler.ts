@@ -1,6 +1,6 @@
-import { QueueService } from '@app/queue';
-import { QUEUES } from '@app/queue/queue.constant';
-import { Logger } from '@nestjs/common';
+import { QUEUES } from '@libs/common/constants';
+import { IQueueService, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
+import { Inject, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
 import { RULES } from '../../../constant';
@@ -12,7 +12,10 @@ export class QuizParticipantStartedEventHandler
   implements IEventHandler<QuizParticipantStartedEvent>
 {
   private readonly _logger = new Logger(QuizParticipantStartedEventHandler.name);
-  public constructor(private readonly _queueService: QueueService) {}
+  public constructor(
+    @Inject(QUEUE_SERVICE_TOKEN)
+    private readonly _queueService: IQueueService
+  ) {}
 
   public async handle(event: QuizParticipantStartedEvent): Promise<void> {
     this._logger.debug(`EventHandler: ${JSON.stringify(event)}`);

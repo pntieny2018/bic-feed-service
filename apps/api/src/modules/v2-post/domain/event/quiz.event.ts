@@ -1,4 +1,5 @@
-import { IEventPayload } from '../../../../app/custom/event-emitter/internal-event.interface';
+import { IEventPayload } from '@libs/infra/event';
+
 import { QuizParticipantStarted } from '../../../../common/constants';
 
 interface QuizParticipantStartedEventPayload {

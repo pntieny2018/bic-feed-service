@@ -1,26 +1,28 @@
-import { QUEUES_NAME, Job, IQueueService } from '@libs/infra/queue';
+import { QUEUES } from '@libs/common/constants';
 import { InjectQueue } from '@nestjs/bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { JobId, Queue } from 'bull';
+
+import { IQueueService, Job, JobWithContext } from './interfaces';
 
 @Injectable()
 export class QueueService implements IQueueService {
   private queues: Record<string, Queue>;
   private logger = new Logger(QueueService.name);
   public constructor(
-    @InjectQueue(QUEUES_NAME.QUIZ_PENDING)
+    @InjectQueue(QUEUES.QUIZ_PENDING.QUEUE_NAME)
     private readonly _quizPendingQueue: Queue,
-    @InjectQueue(QUEUES_NAME.QUIZ_PARTICIPANT_RESULT)
+    @InjectQueue(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)
     private readonly _quizParticipantQueue: Queue
   ) {
     this.queues = {
-      [QUEUES_NAME.QUIZ_PENDING]: _quizPendingQueue,
-      [QUEUES_NAME.QUIZ_PARTICIPANT_RESULT]: _quizParticipantQueue,
+      [QUEUES.QUIZ_PENDING.QUEUE_NAME]: _quizPendingQueue,
+      [QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME]: _quizParticipantQueue,
     };
 
     Object.values(this.queues).forEach((queue) => {
       queue.on('completed', (job) =>
-        this.logger.log(
+        this.logger.debug(
           `Job ${job.id} of type ${job.name} with data ${JSON.stringify(job.data)} is successful.`
         )
       );
@@ -41,7 +43,8 @@ export class QueueService implements IQueueService {
       return;
     }
 
-    const queueJobMap: Record<string, Job<T>[]> = jobs.reduce((map, job) => {
+    const jobsWithContext = jobs.map((job) => new JobWithContext(job));
+    const queueJobMap: Record<string, JobWithContext<T>[]> = jobsWithContext.reduce((map, job) => {
       const queueName = job.queue.name;
       if (!map[queueName]) {
         map[queueName] = [];
@@ -55,21 +58,30 @@ export class QueueService implements IQueueService {
     );
   }
 
-  private async _addBulk<T>(queueName: string, jobs: Job<T>[]): Promise<void> {
+  private async _addBulk<T>(queueName: string, jobs: JobWithContext<T>[]): Promise<void> {
     await this.queues[queueName].addBulk(jobs);
-    this.logger.log(
+    this.logger.debug(
       `Added ${jobs.length} jobs to queue ${queueName}: ${jobs.map((job) => job.name).join(', ')}`
     );
   }
 
   public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
     const job = await this.queues[queueName].getJob(jobId);
-    this.logger.log(`Get job in queue ${queueName}, jobId: ${jobId}, job: ${JSON.stringify(job)}`);
+    this.logger.debug(
+      `Get job in queue ${queueName}, jobId: ${jobId}, job: ${JSON.stringify(job)}`
+    );
     return job;
   }
 
   public async killJob(queueName: string, jobId: JobId): Promise<void> {
-    await this.queues[queueName].removeRepeatableByKey(jobId.toString());
-    this.logger.log(`Killed job in queue ${queueName}, jobId: ${jobId}`);
+    this.logger.debug(`Start kill job in queue ${queueName}, jobId: ${jobId}, time: ${new Date()}`);
+    await this.queues[queueName].removeJobs(jobId.toString());
+    this.logger.debug(`Ended kill job in queue ${queueName}, jobId: ${jobId}, time: ${new Date()}`);
+  }
+
+  // TODO: remove this method
+  public async addQuizJob(data: unknown): Promise<void> {
+    const jobName: string = QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING;
+    await this._quizPendingQueue.add(jobName, data);
   }
 }

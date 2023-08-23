@@ -1,13 +1,15 @@
-import { Module } from '@nestjs/common';
-import { KafkaService } from './kafka.service';
-import { SentryModule } from '@app/sentry';
-import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { KAFKA_TOKEN } from '@app/kafka/kafka.constant';
-import { IKafkaConfig } from '@app/kafka/config/kafka-config.interface';
 import { configs } from '@app/kafka/config/configuration';
+import { IKafkaConfig } from '@app/kafka/config/kafka-config.interface';
+import { KAFKA_TOKEN } from '@app/kafka/kafka.constant';
+import { SentryModule } from '@app/sentry';
+import { HEADER_REQ_ID } from '@libs/common/constants';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { ClsModule } from 'nestjs-cls';
 import { v4 } from 'uuid';
+
+import { KafkaService } from './kafka.service';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { v4 } from 'uuid';
         saveReq: true,
         generateId: true,
         idGenerator: (req: Request) => {
-          return (req.headers['x-ray-id'] || req.headers['x-request-id']) ?? v4();
+          return req.headers[HEADER_REQ_ID] ?? v4();
         },
       },
     }),

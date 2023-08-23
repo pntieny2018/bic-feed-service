@@ -234,9 +234,8 @@ class AnswerUser {
 }
 
 export class UpdateQuizAnswersRequestDto {
-  @ApiProperty({ type: Date })
+  @ApiProperty({ type: Boolean })
   @IsOptional()
-  @IsDateString()
   @Expose({
     name: 'is_finished',
   })
