@@ -31,7 +31,6 @@ export class ExportReactionCountDataCommand implements CommandRunner {
           total: data.total,
         });
       });
-
       const contents: any = await this._postReactionModel.findAll({
         attributes: ['reactionName', [Sequelize.literal(`COUNT("post_id")`), 'total']],
         group: ['reactionName'],
@@ -40,14 +39,14 @@ export class ExportReactionCountDataCommand implements CommandRunner {
 
       contents.forEach((content) => {
         const data = content.toJSON();
-        if (result.findIndex((item) => item.reactionName === data.reactionName) === -1) {
+        const index = result.findIndex((item) => item.reactionName === data.reactionName);
+        if (index === -1) {
           result.push({
             reactionName: data.reactionName,
             total: data.total,
           });
         } else {
-          result[result.findIndex((item) => item.reactionName === data.reactionName)].total +=
-            data.total;
+          result[index].total = parseInt(result[index].total) + parseInt(data.total);
         }
       });
       const dataSorted = result.sort((a, b) => b.total - a.total);
