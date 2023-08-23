@@ -4,9 +4,10 @@ import { SentryService } from '@app/sentry';
 import { PERMISSION_KEY, SUBJECT } from '../../../common/constants/casl.constant';
 import { UserPermission } from '../../v2-user/domain/model/user';
 import { UserDto } from '../../v2-user/application';
+import { IAuthorityAppService } from './authority.app-service.interface';
 
 @Injectable()
-export class AuthorityAppService {
+export class AuthorityAppService implements IAuthorityAppService {
   private _abilities: Ability;
 
   public constructor(private _sentryService: SentryService) {}
