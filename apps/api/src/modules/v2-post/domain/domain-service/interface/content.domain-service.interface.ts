@@ -1,7 +1,7 @@
 import { PostType } from '../../../data-type';
 import { OrderEnum } from '../../../../../common/dto';
 import { UserDto } from '../../../../v2-user/application';
-import { ArticleEntity, PostEntity, SeriesEntity } from '../../model/content';
+import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 
 export type GetDraftsProps = {
@@ -28,6 +28,8 @@ export type GetScheduledContentProps = {
 };
 
 export interface IContentDomainService {
+  getVisibleContent(id: string): Promise<ContentEntity>;
+  getRawContent(contentEntity: ContentEntity): string;
   getContentByIds(
     data: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;

@@ -6,10 +6,14 @@ import {
   ForeignKey,
   Model,
   PrimaryKey,
+  Sequelize,
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
 import { PostModel } from './post.model';
+import { Literal } from 'sequelize/types/utils';
+import { PostGroupModel } from './post-group.model';
+import { getDatabaseConfig } from '../../config/database';
 
 export interface IPostSeries {
   postId: string;
@@ -43,6 +47,7 @@ export class PostSeriesModel extends Model implements IPostSeries {
 
   @BelongsTo(() => PostModel, 'seriesId')
   public series?: PostModel;
+
   @CreatedAt
   @Column
   public createdAt?: Date;
@@ -50,4 +55,15 @@ export class PostSeriesModel extends Model implements IPostSeries {
   @UpdatedAt
   @Column
   public updatedAt?: Date;
+
+  public static filterInGroupArchivedCondition(groupArchived: boolean): Literal {
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+    return Sequelize.literal(
+      `EXISTS (
+        SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
+          WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${groupArchived}
+        )`
+    );
+  }
 }

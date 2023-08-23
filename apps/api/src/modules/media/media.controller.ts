@@ -13,12 +13,9 @@ import { UploadDto, UploadType } from '../upload/dto/requests/upload.dto';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { MediaService } from './media.service';
 import { AuthUser } from '../auth';
-import { MediaHelper } from './media.helper';
-import { MediaStatus } from '../../database/models/media.model';
 import { ValidatorException } from '../../common/exceptions';
 import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
 import { UserDto } from '../v2-user/application';
-import { ObjectHelper } from '../../common/helpers';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
