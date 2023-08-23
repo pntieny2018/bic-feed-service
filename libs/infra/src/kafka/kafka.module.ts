@@ -1,4 +1,5 @@
 import { SentryModule } from '@app/sentry';
+import { HEADER_REQ_ID } from '@libs/common/constants';
 import { KafkaService, configs, KAFKA_TOKEN, IKafkaConfig } from '@libs/infra/kafka';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -20,7 +21,7 @@ import { v4 } from 'uuid';
         saveReq: true,
         generateId: true,
         idGenerator: (req: Request) => {
-          return (req.headers['x-ray-id'] || req.headers['x-request-id']) ?? v4();
+          return req.headers[HEADER_REQ_ID] ?? v4();
         },
       },
     }),

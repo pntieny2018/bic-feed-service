@@ -187,7 +187,6 @@
       "^@app/sentry(|/.*)$": "<rootDir>/libs/sentry/src/$1",
       "^@app/kafka(|/.*)$": "<rootDir>/libs/kafka/src/$1",
       "^@app/openai(|/.*)$": "<rootDir>/libs/openai/src/$1",
-      "^@app/queue(|/.*)$": "<rootDir>/libs/queue/src/$1",
       "^@libs/service(|/.*)$": "<rootDir>/libs/service/src/$1",
       "^@libs/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
       "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1",

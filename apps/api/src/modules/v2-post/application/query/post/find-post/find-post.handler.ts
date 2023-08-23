@@ -58,7 +58,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
 
     let series: SeriesEntity[];
     if (postEntity.get('seriesIds')?.length) {
-      series = await this._seriesDomainService.findSeriesById(postEntity.get('seriesIds'));
+      series = await this._seriesDomainService.findSeriesByIds(postEntity.get('seriesIds'));
     }
 
     const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([

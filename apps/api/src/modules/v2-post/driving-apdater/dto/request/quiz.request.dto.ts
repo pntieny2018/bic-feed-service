@@ -3,7 +3,6 @@ import { Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -66,16 +65,6 @@ export class CreateQuizRequestDto {
     name: 'number_of_questions_display',
   })
   public numberOfQuestionsDisplay?: number;
-
-  @ApiProperty({ type: Number })
-  @Type(() => Number)
-  @Min(1)
-  @Max(6)
-  @IsOptional()
-  @Expose({
-    name: 'number_of_answers_display',
-  })
-  public numberOfAnswersDisplay?: number;
 
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
@@ -175,16 +164,6 @@ export class UpdateQuizRequestDto {
   })
   public numberOfQuestionsDisplay?: number;
 
-  @ApiProperty({ type: Number })
-  @Type(() => Number)
-  @Min(1)
-  @Max(6)
-  @IsOptional()
-  @Expose({
-    name: 'number_of_answers_display',
-  })
-  public numberOfAnswersDisplay?: number;
-
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
   @Expose({
@@ -234,9 +213,8 @@ class AnswerUser {
 }
 
 export class UpdateQuizAnswersRequestDto {
-  @ApiProperty({ type: Date })
+  @ApiProperty({ type: Boolean })
   @IsOptional()
-  @IsDateString()
   @Expose({
     name: 'is_finished',
   })

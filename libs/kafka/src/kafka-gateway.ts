@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
+
 import { IKafkaConfig } from '../../../apps/api/src/config/kafka';
 
 export class KafkaGateway {
@@ -17,10 +18,13 @@ export class KafkaGateway {
     configService: ConfigService
   ): Promise<INestApplication> {
     const defaultConfig = configService.get<IKafkaConfig>('kafka');
-    app.connectMicroservice<KafkaOptions>({
-      transport: Transport.KAFKA,
-      options: defaultConfig,
-    });
+    app.connectMicroservice<KafkaOptions>(
+      {
+        transport: Transport.KAFKA,
+        options: defaultConfig,
+      },
+      { inheritAppConfig: true }
+    );
     return app.startAllMicroservices();
   }
 }

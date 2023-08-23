@@ -1,7 +1,8 @@
-import { QueueService } from '@app/queue';
-import { QUEUES } from '@app/queue/queue.constant';
-import { Inject, Logger } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { QUEUES } from '@libs/common/constants';
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { IQueueService, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
+import { Inject } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
 
 import {
   IQuizDomainService,
@@ -13,22 +14,20 @@ import {
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
 
-@EventsHandler(QuizParticipantFinishedEvent)
+@EventsHandlerAndLog(QuizParticipantFinishedEvent)
 export class QuizParticipantFinishedEventHandler
   implements IEventHandler<QuizParticipantFinishedEvent>
 {
-  private readonly _logger = new Logger(QuizParticipantFinishedEventHandler.name);
   public constructor(
     @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
     private readonly _quizDomainService: IQuizDomainService,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
-    private readonly _queueService: QueueService
+    @Inject(QUEUE_SERVICE_TOKEN)
+    private readonly _queueService: IQueueService
   ) {}
 
   public async handle(event: QuizParticipantFinishedEvent): Promise<void> {
-    this._logger.debug(`EventHandler: ${JSON.stringify(event)}`);
-
     const { quizParticipantId } = event.payload;
 
     const quizParticipantEntity = await this._quizParticipantRepository.findQuizParticipantById(
