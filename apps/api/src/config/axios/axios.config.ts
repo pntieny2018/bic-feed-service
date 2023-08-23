@@ -16,4 +16,9 @@ export const getAxiosConfig = (): IAxiosConfig => ({
     maxRedirects: 5,
     timeout: 10000,
   },
+  lambda: {
+    baseUrl: process.env.PRIVATE_API_GATEWAY,
+    maxRedirects: 5,
+    timeout: 15000,
+  },
 });
