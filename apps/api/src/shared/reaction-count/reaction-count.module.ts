@@ -1,5 +1,6 @@
+import { RedisModule } from '@libs/infra/redis';
 import { Module } from '@nestjs/common';
-import { RedisModule } from '@app/redis';
+
 import { ReactionCountService } from './reaction-count.service';
 
 @Module({

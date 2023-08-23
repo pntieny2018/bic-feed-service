@@ -1,9 +1,40 @@
-import { Op, QueryTypes } from 'sequelize';
-import { CommentService } from '../comment';
+import { RedisService } from '@libs/infra/redis';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostService } from '../post/post.service';
-import { ReportStatus, TargetType } from './contstants';
+import { plainToInstance } from 'class-transformer';
+import { Op, QueryTypes } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { CACHE_KEYS } from '../../common/constants/casl.constant';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { ValidatorException } from '../../common/exceptions';
+import { getDatabaseConfig } from '../../config/database';
+import {
+  IReportContentDetailAttribute,
+  ReportContentDetailModel,
+} from '../../database/models/report-content-detail.model';
+import {
+  IReportContentAttribute,
+  ReportContentModel,
+} from '../../database/models/report-content.model';
+import { ApproveReportEvent } from '../../events/report/approve-report.event';
+import { CreateReportEvent } from '../../events/report/create-report.event';
+import { ArticleService } from '../article/article.service';
+import { CommentService } from '../comment';
+import { CommentResponseDto } from '../comment/dto/response';
+import { FeedService } from '../feed/feed.service';
+import { PostResponseDto } from '../post/dto/responses';
+import { PostService } from '../post/post.service';
+import { ReactionService } from '../reaction';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+
+import { ReportStatus, TargetType } from './contstants';
 import {
   CreateReportDto,
   GetBlockedContentOfMeDto,
@@ -14,36 +45,7 @@ import {
   StatisticsReportResponsesDto,
   UpdateStatusReportDto,
 } from './dto';
-import { Inject, Injectable } from '@nestjs/common';
-import {
-  IReportContentAttribute,
-  ReportContentModel,
-} from '../../database/models/report-content.model';
-import { getDatabaseConfig } from '../../config/database';
-import { plainToInstance } from 'class-transformer';
-import {
-  IReportContentDetailAttribute,
-  ReportContentDetailModel,
-} from '../../database/models/report-content-detail.model';
-import { CreateReportEvent } from '../../events/report/create-report.event';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { ApproveReportEvent } from '../../events/report/approve-report.event';
-import { FeedService } from '../feed/feed.service';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
-import { ArticleService } from '../article/article.service';
-import { Sequelize } from 'sequelize-typescript';
-import { CommentResponseDto } from '../comment/dto/response';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
-import { RedisService } from '@app/redis';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../v2-group/application';
-import { CACHE_KEYS } from '../../common/constants/casl.constant';
-import { ReactionService } from '../reaction';
 
 @Injectable()
 export class ReportContentService {

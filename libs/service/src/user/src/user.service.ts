@@ -1,8 +1,8 @@
-import { RedisService } from '@app/redis';
 import { SharedUserDto } from '@beincom/dto';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { AxiosHelper } from '@libs/common/helpers';
 import { IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
+import { RedisService } from '@libs/infra/redis';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 import qs from 'qs';

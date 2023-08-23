@@ -21,12 +21,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@app/redis": [
-        "libs/redis/src"
-      ],
-      "@app/redis/*": [
-        "libs/redis/src/*"
-      ],
       "@app/sentry": [
         "libs/sentry/src"
       ],

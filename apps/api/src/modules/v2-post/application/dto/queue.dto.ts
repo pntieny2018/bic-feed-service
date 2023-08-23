@@ -12,7 +12,7 @@ export class ContentScheduledJobDto {
   public contentId: string;
   public contentOwner: UserDto;
 
-  public constructor(data: Partial<QuizParticipantResultJobDto>) {
+  public constructor(data: Partial<ContentScheduledJobDto>) {
     Object.assign(this, data);
   }
 }

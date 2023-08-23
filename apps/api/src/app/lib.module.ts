@@ -1,9 +1,9 @@
 import { OpenaiModule } from '@app/openai';
-import { RedisModule } from '@app/redis/redis.module';
 import { SentryModule } from '@app/sentry';
 import { DomainEventModule } from '@beincom/nest-domain-event';
 import { HttpModule as LibHttpModule } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
+import { RedisModule } from '@libs/infra/redis';
 import { HttpModule } from '@nestjs/axios';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
