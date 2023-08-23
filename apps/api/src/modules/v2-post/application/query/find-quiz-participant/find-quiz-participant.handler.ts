@@ -3,17 +3,16 @@ import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
 import { FindQuizParticipantQuery } from './find-quiz-participant.query';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../../binding/binding-quiz/quiz.interface';
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
+import { QuizParticipantDto } from '../../dto/quiz-participant.dto';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
-import { QuizParticipantDto } from '../../dto/quiz-participant.dto';
-import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
-import { QuizParticipantNotFoundException } from '../../../domain/exception';
-import { UserDto } from '../../../../v2-user/application';
 
 @QueryHandler(FindQuizParticipantQuery)
 export class FindQuizParticipantHandler
@@ -21,6 +20,8 @@ export class FindQuizParticipantHandler
 {
   public constructor(
     private readonly _queryBus: QueryBus,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
     private readonly _quizDomainService: IQuizDomainService,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
@@ -32,55 +33,31 @@ export class FindQuizParticipantHandler
   public async execute(query: FindQuizParticipantQuery): Promise<QuizParticipantDto> {
     const { authUser, quizParticipantId } = query.payload;
 
-    const quizParticipantEntity = await this._quizParticipantRepository.findOne(quizParticipantId);
-    if (!quizParticipantEntity) {
-      throw new QuizParticipantNotFoundException();
-    }
+    const quizParticipantEntity = await this._quizDomainService.getQuizParticipant(
+      quizParticipantId,
+      authUser.id
+    );
 
-    if (!quizParticipantEntity.isOwner(authUser.id)) {
-      throw new QuizParticipantNotFoundException();
-    }
+    const contentEntity = await this._contentDomainService.getVisibleContent(
+      quizParticipantEntity.get('contentId')
+    );
 
-    return this._entityToDto(quizParticipantEntity, authUser);
-  }
+    const quizParticipantsDto = await this._quizBinding.bindQuizParticipants([
+      quizParticipantEntity,
+    ]);
 
-  private async _entityToDto(
-    quizParticipantEntity: QuizParticipantEntity,
-    authUser: UserDto
-  ): Promise<QuizParticipantDto> {
-    const attributes: QuizParticipantDto = {
-      id: quizParticipantEntity.get('id'),
-      questions: quizParticipantEntity.get('quizSnapshot').questions.map((question) => ({
-        id: question.id,
-        content: question.content,
-        answers: question.answers.map((answer) => ({
-          id: answer.id,
-          content: answer.content,
-        })),
-      })),
-      userAnswers: quizParticipantEntity.get('answers').map((answer) => ({
-        questionId: answer.questionId,
-        answerId: answer.answerId,
-      })),
-      quizId: quizParticipantEntity.get('quizId'),
-      contentId: quizParticipantEntity.get('contentId'),
-      timeLimit: quizParticipantEntity.get('timeLimit'),
-      startedAt: quizParticipantEntity.get('startedAt'),
-      createdAt: quizParticipantEntity.get('createdAt'),
-      updatedAt: quizParticipantEntity.get('updatedAt'),
-    };
-
-    if (quizParticipantEntity.isOverLimitTime() || quizParticipantEntity.isFinished()) {
+    if (quizParticipantEntity.isFinishedOrOverTimeLimit()) {
       const quizParticipantEntities = await this._quizParticipantRepository.findAllByContentId(
         quizParticipantEntity.get('contentId'),
         authUser.id
       );
-      attributes.totalTimes = quizParticipantEntities.length;
-      attributes.score = quizParticipantEntity.get('score');
-      attributes.totalAnswers = quizParticipantEntity.get('totalAnswers');
-      attributes.totalCorrectAnswers = quizParticipantEntity.get('totalCorrectAnswers');
-      attributes.finishedAt = quizParticipantEntity.get('finishedAt');
+      quizParticipantsDto[0].totalTimes = quizParticipantEntities.length;
+      quizParticipantsDto[0].content = {
+        id: contentEntity.get('id'),
+        type: contentEntity.get('type'),
+      };
     }
-    return new QuizParticipantDto(attributes);
+
+    return quizParticipantsDto[0];
   }
 }

@@ -37,6 +37,10 @@ export const ERRORS = {
     GENERATE_FAIL: 'quiz.generate_fail',
     QUIZ_PROCESSING: 'quiz.quiz_processing',
     COUNT_TOKENS_FAILED: 'quiz.count_tokens_failed',
+    QUIZ_QUESTION_LIMIT_EXCEEDED: 'quiz.quiz_question_limit_exceeded',
+  },
+  QUIZ_QUESTION: {
+    NOT_FOUND: 'quiz_question.not_found',
   },
   QUIZ_PARTICIPANT: {
     NOT_FOUND: 'quiz_participant.not_found',

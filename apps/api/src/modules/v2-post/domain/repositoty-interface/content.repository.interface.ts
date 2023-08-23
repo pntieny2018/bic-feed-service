@@ -9,59 +9,16 @@ import { ContentEntity } from '../model/content/content.entity';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
-  isPublished?: boolean;
-};
-export type FindOnePostOptions = {
-  where: {
-    id: string;
-    groupArchived?: boolean;
-    isHidden?: boolean;
-    excludeReportedByUserId?: string;
-    groupId?: string;
-    groupIds?: string[];
-    createdBy?: string;
-    isImportant?: string;
-    scheduledAt?: Date;
-    savedByUserId?: string;
-    type?: PostType;
-    status?: PostStatus;
-    importantWithUserId?: string;
-    notImportantWithUserId?: string;
-    inNewsfeedUserId?: string;
-  };
-  include?: {
-    mustIncludeGroup?: boolean;
-    shouldIncludeGroup?: boolean;
-    shouldIncludeSeries?: boolean;
-    shouldIncludeCategory?: boolean;
-    shouldIncludeQuiz?: boolean;
-    shouldIncludeQuizResult?: boolean;
-    shouldIncludeLinkPreview?: boolean;
-    shouldIncludeItems?: boolean;
-    shouldIncludeReaction?: {
-      userId?: string;
-    };
-    shouldIncludeSaved?: {
-      userId?: string;
-    };
-    shouldIncludeMarkReadImportant?: {
-      userId: string;
-    };
-    shouldIncludeImportant?: {
-      userId: string;
-    };
-  };
-  attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
-  orderOptions?: OrderOptions;
+  isPublishedByDesc?: boolean;
 };
 
-export type FindAllPostOptions = {
+export type FindContentOptions = {
   where: {
     type?: PostType;
+    id?: string;
     ids?: string[];
     groupArchived?: boolean;
     excludeReportedByUserId?: string;
-    groupId?: string;
     groupIds?: string[];
     createdBy?: string;
     isImportant?: boolean;
@@ -69,8 +26,6 @@ export type FindAllPostOptions = {
     isHidden?: boolean;
     savedByUserId?: string;
     status?: PostStatus;
-    importantWithUserId?: string;
-    notImportantWithUserId?: string;
     inNewsfeedUserId?: string;
   };
   include?: {
@@ -80,7 +35,6 @@ export type FindAllPostOptions = {
     shouldIncludeItems?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludeQuiz?: boolean;
-    shouldIncludeQuizResult?: boolean;
     shouldIncludeLinkPreview?: boolean;
     shouldIncludeReaction?: {
       userId?: string;
@@ -95,24 +49,21 @@ export type FindAllPostOptions = {
       userId: string;
     };
   };
-  attributes?: { exclude?: (keyof IPost)[]; include?: (keyof IPost)[] };
-  limit?: number;
-  offset?: number;
-  after?: string;
+  attributes?: { exclude?: (keyof IPost)[] };
   orderOptions?: OrderOptions;
 };
 
-export type GetPaginationContentsProps = FindAllPostOptions & CursorPaginationProps;
+export type GetPaginationContentsProps = FindContentOptions & CursorPaginationProps;
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
   findOne(
-    findOnePostOptions: FindOnePostOptions
+    findOnePostOptions: FindContentOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-
+  getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
-    findAllPostOptions: FindAllPostOptions
+    findAllPostOptions: FindContentOptions
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;

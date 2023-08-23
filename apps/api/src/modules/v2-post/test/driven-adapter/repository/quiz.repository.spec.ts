@@ -74,7 +74,6 @@ describe('QuizRepository', () => {
         numberOfQuestions: quizEntityMock.get('numberOfQuestions'),
         numberOfAnswers: quizEntityMock.get('numberOfAnswers'),
         numberOfQuestionsDisplay: quizEntityMock.get('numberOfQuestionsDisplay'),
-        numberOfAnswersDisplay: quizEntityMock.get('numberOfAnswersDisplay'),
         status: quizEntityMock.get('status'),
         genStatus: quizEntityMock.get('genStatus'),
         error: quizEntityMock.get('error'),
@@ -102,7 +101,6 @@ describe('QuizRepository', () => {
           numberOfQuestions: quizEntityMock.get('numberOfQuestions'),
           numberOfAnswers: quizEntityMock.get('numberOfAnswers'),
           numberOfQuestionsDisplay: quizEntityMock.get('numberOfQuestionsDisplay'),
-          numberOfAnswersDisplay: quizEntityMock.get('numberOfAnswersDisplay'),
           status: quizEntityMock.get('status'),
           error: quizEntityMock.get('error'),
           genStatus: quizEntityMock.get('genStatus'),
@@ -226,7 +224,7 @@ describe('QuizRepository', () => {
       const getPaginationQuizzesProps: GetPaginationQuizzesProps = {
         where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
         contentType: PostType.POST,
-        attributes: ['id', 'contentId', 'createdAt'],
+        attributes: ['id', 'postId', 'createdAt'],
         limit: 10,
         order: OrderEnum.DESC,
       };

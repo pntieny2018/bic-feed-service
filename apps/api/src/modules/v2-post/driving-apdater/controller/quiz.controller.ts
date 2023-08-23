@@ -36,7 +36,7 @@ import {
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateQuizCommand } from '../../application/command/create-quiz/create-quiz.command';
-import { QuizDto } from '../../application/dto';
+import { QuizDto, QuizSummaryDto } from '../../application/dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { QuizNoCRUDPermissionAtGroupException } from '../../domain/exception';
 import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
@@ -51,13 +51,27 @@ import { FindQuizQuery } from '../../application/query/find-quiz/find-quiz.query
 import { Request } from 'express';
 import { QuizStatus } from '../../data-type';
 import { DeleteQuizCommand } from '../../application/command/delete-quiz/delete-quiz.command';
-import { GetQuizzesRequestDto } from '../dto/request';
+import {
+  AddQuizQuestionRequestDto,
+  GetQuizzesRequestDto,
+  UpdateQuizQuestionRequestDto,
+} from '../dto/request';
 import { StartQuizCommand } from '../../application/command/start-quiz/start-quiz.command';
 import { UpdateQuizAnswerCommand } from '../../application/command/update-quiz-answer/update-quiz-answer.command';
 import { UpdateQuizAnswersRequestDto } from '../dto/request/update-quiz-answer.request.dto';
 import { FindQuizParticipantQuery } from '../../application/query/find-quiz-participant/find-quiz-participant.query';
 import { QuizParticipantDto } from '../../application/dto/quiz-participant.dto';
 import { QuizParticipantNotFinishedException } from '../../domain/exception/quiz-participant-not-finished.exception';
+import { QuizQuestionNotFoundException } from '../../domain/exception/quiz-question-not-found.exception';
+import { AddQuizQuestionCommand } from '../../application/command/add-quiz-question/add-quiz-question.command';
+import { UpdateQuizQuestionCommand } from '../../application/command/update-quiz-question/update-quiz-question.command';
+import { DeleteQuizQuestionCommand } from '../../application/command/delete-quiz-question/delete-quiz-question.command';
+import { QuizQuestionDto } from '../../application/dto/quiz-question.dto';
+import { FindQuizSummaryQuery } from '../../application/query/find-quiz-summary/find-quiz-summary.query';
+import { FindQuizParticipantsSummaryDetailDto } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.dto';
+import { GetQuizParticipantsSummaryDetailRequestDto } from '../dto/request/get-quiz-participants-summary-detail.request.dto';
+import { FindQuizParticipantsSummaryDetailQuery } from '../../application/query/find-quiz-participants-summary-detail/find-quiz-participants-summary-detail.query';
+import { QuizQuestionLimitExceededException } from '../../domain/exception/quiz-question-limit-exceeded.exception';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -170,6 +184,63 @@ export class QuizController {
     }
   }
 
+  @ApiOperation({ summary: 'Get quiz summary' })
+  @ApiOkResponse({
+    type: QuizSummaryDto,
+    description: 'Get quiz summary successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_SUMMARY.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_SUMMARY.VERSIONS)
+  public async getQuizSummary(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizSummaryDto> {
+    try {
+      const data = await this._queryBus.execute(new FindQuizSummaryQuery({ authUser, contentId }));
+
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get quiz participants summary detail' })
+  @ApiOkResponse({
+    type: FindQuizParticipantsSummaryDetailDto,
+    description: 'Get quiz participants summary detail successfully',
+  })
+  @Get(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.PATH)
+  @Version(ROUTES.QUIZ.GET_QUIZ_PARTICIPANTS.VERSIONS)
+  public async getQuizParticipantsSummaryDetail(
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetQuizParticipantsSummaryDetailRequestDto
+  ): Promise<FindQuizParticipantsSummaryDetailDto> {
+    try {
+      const data = await this._queryBus.execute(
+        new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId: contentId, ...query })
+      );
+
+      return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case AccessDeniedException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
   @ApiOperation({ summary: 'Update a quiz' })
   @ApiOkResponse({
     type: QuizDto,
@@ -269,6 +340,113 @@ export class QuizController {
     }
   }
 
+  @ApiOperation({ summary: 'Add quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.created_success',
+  })
+  @Post(ROUTES.QUIZ.ADD_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.ADD_QUIZ_QUESTION.VERSIONS)
+  public async addQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() addQuestionDto: AddQuizQuestionRequestDto,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizQuestionDto> {
+    try {
+      const data = await this._commandBus.execute<AddQuizQuestionCommand, QuizQuestionDto>(
+        new AddQuizQuestionCommand({
+          quizId: id,
+          content: addQuestionDto.content,
+          answers: addQuestionDto.answers,
+          authUser,
+        })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizQuestionNotFoundException:
+        case QuizNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+        case QuizQuestionLimitExceededException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Update quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.updated_success',
+  })
+  @Put(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.VERSIONS)
+  public async updateQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('questionId', ParseUUIDPipe) questionId: string,
+    @Body() updateQuestionDto: UpdateQuizQuestionRequestDto,
+    @AuthUser() authUser: UserDto
+  ): Promise<QuizQuestionDto> {
+    try {
+      const data = await this._commandBus.execute<UpdateQuizQuestionCommand, QuizQuestionDto>(
+        new UpdateQuizQuestionCommand({
+          questionId,
+          content: updateQuestionDto.content,
+          answers: updateQuestionDto.answers,
+          authUser,
+        })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizQuestionNotFoundException:
+        case QuizNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Delete quiz question' })
+  @ResponseMessages({
+    success: 'message.quiz_question.deleted_success',
+  })
+  @Delete(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.PATH)
+  @Version(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.VERSIONS)
+  public async deleteQuizQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('questionId', ParseUUIDPipe) questionId: string,
+    @AuthUser() authUser: UserDto
+  ): Promise<void> {
+    try {
+      await this._commandBus.execute<DeleteQuizQuestionCommand, string>(
+        new DeleteQuizQuestionCommand({
+          questionId,
+          authUser,
+        })
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case QuizQuestionNotFoundException:
+        case QuizNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCRUDPermissionAtGroupException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
   @ApiOperation({ summary: 'Start a quiz' })
   @ApiOkResponse({
     type: String,
@@ -314,6 +492,7 @@ export class QuizController {
       await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
         new UpdateQuizAnswerCommand({
           quizParticipantId: id,
+          isFinished: updateQuizAnswersDto.isFinished,
           answers: updateQuizAnswersDto.answers,
           authUser,
         })
@@ -347,6 +526,7 @@ export class QuizController {
       return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
         case QuizParticipantNotFoundException:
           throw new NotFoundException(e);
         case DomainModelException:

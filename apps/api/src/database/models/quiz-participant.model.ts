@@ -26,6 +26,7 @@ export interface IQuizParticipant {
   postId: string;
   timeLimit: number;
   score: number;
+  isHighest: boolean;
   totalAnswers: number;
   totalCorrectAnswers: number;
   startedAt: Date;
@@ -36,10 +37,14 @@ export interface IQuizParticipant {
     questions: {
       id: string;
       content: string;
+      updatedAt: Date;
+      createdAt: Date;
       answers: {
         id: string;
         content: string;
         isCorrect: boolean;
+        updatedAt: Date;
+        createdAt: Date;
       }[];
     }[];
   };
@@ -73,6 +78,10 @@ export class QuizParticipantModel
 
   @Column
   public score: number;
+
+  @Default(false)
+  @Column
+  public isHighest: boolean;
 
   @Column
   public timeLimit: number;

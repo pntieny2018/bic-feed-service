@@ -4,16 +4,8 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
+import { QuizQuestionEntity } from './quiz-question.entity';
 
-export type Question = {
-  id: string;
-  content: string;
-  answers: {
-    id: string;
-    content: string;
-    isCorrect: boolean;
-  }[];
-};
 export type QuizProps = {
   id: string;
   title: string;
@@ -26,9 +18,8 @@ export type QuizProps = {
   numberOfQuestions?: number;
   numberOfAnswers?: number;
   numberOfQuestionsDisplay?: number;
-  numberOfAnswersDisplay?: number;
   isRandom?: boolean;
-  questions?: Question[];
+  questions?: QuizQuestionEntity[];
   meta?: any;
   error?: {
     code: string;
@@ -87,15 +78,40 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   }
 
   public validateNumberDisplay(): void {
-    if (this._props.numberOfQuestions < this._props.numberOfQuestionsDisplay) {
+    if (
+      this._props.numberOfQuestionsDisplay !== null &&
+      this._props.numberOfQuestionsDisplay > this._props.questions?.length
+    ) {
       throw new DomainModelException(
-        `Number of questions display cannot exceed ${this._props.numberOfQuestions}`
+        `Number of questions display cannot exceed ${this._props.questions?.length}`
       );
     }
+  }
 
-    if (this._props.numberOfAnswers < this._props.numberOfAnswersDisplay) {
+  public validateQuestions(): void {
+    if (this._props.questions?.length === 0) {
+      throw new DomainModelException(`Quiz must have at least one question`);
+    }
+    if (
+      this._props.questions?.some(
+        (question) => !question.get('answers') || question.get('answers').length === 0
+      )
+    ) {
+      throw new DomainModelException(`Question must have at least one answer`);
+    }
+
+    if (
+      this._props.questions?.some((question) =>
+        question.get('answers').every((answer) => {
+          return answer.isCorrect === false;
+        })
+      )
+    ) {
+      throw new DomainModelException(`Dont have correct answer`);
+    }
+    if (this._props.questions?.length > RULES.QUIZ_MAX_QUESTION) {
       throw new DomainModelException(
-        `Number of answers display cannot exceed ${this._props.numberOfQuestions}`
+        `Quiz question must have <= ${RULES.QUIZ_MAX_QUESTION} questions`
       );
     }
   }
@@ -106,30 +122,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     if (!this._props.title) {
       throw new DomainModelException(`Quiz title is required`);
     }
-
-    if (this._props.questions.length === 0) {
-      throw new DomainModelException(`Quiz must have at least one question`);
-    }
-
-    if (this._props.questions.length === 0) {
-      throw new DomainModelException(`Quiz must have at least one question`);
-    }
-
-    if (
-      this._props.questions.some((question) => !question.answers || question.answers.length === 0)
-    ) {
-      throw new DomainModelException(`Question must have at least one answer`);
-    }
-
-    if (
-      this._props.questions.some((question) =>
-        question.answers.every((answer) => {
-          return answer.isCorrect === false;
-        })
-      )
-    ) {
-      throw new DomainModelException(`Dont have correct answer`);
-    }
+    this.validateQuestions();
     this.validateNumberDisplay();
   }
 
@@ -154,12 +147,8 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
       this._props.numberOfAnswers = data.numberOfAnswers;
     }
 
-    if (data.numberOfQuestionsDisplay) {
+    if (data.numberOfQuestionsDisplay !== undefined) {
       this._props.numberOfQuestionsDisplay = data.numberOfQuestionsDisplay;
-    }
-
-    if (data.numberOfAnswersDisplay) {
-      this._props.numberOfAnswersDisplay = data.numberOfAnswersDisplay;
     }
 
     if (data.isRandom) {
@@ -218,11 +207,17 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     return this._props.status === QuizStatus.PUBLISHED;
   }
 
-  public isGenerateFailed(): boolean {
-    return this._props.genStatus === QuizGenStatus.FAILED;
+  public isRandomQuestion(): boolean {
+    return this._props.isRandom;
   }
 
-  public isGenerateProcessed(): boolean {
-    return this._props.genStatus === QuizGenStatus.PROCESSED;
+  public deleteQuestion(idQuestion: string): void {
+    this._props.questions = this._props.questions.filter(
+      (question) => question.get('id') !== idQuestion
+    );
+
+    if (this._props.numberOfQuestionsDisplay > this._props.questions.length) {
+      this._props.numberOfQuestionsDisplay = this._props.questions.length;
+    }
   }
 }

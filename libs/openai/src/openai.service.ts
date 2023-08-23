@@ -181,10 +181,14 @@ export class OpenaiService implements IOpenaiService {
   private _getQuestionFromText(text: string): {
     id: string;
     content: string;
+    createdAt: Date;
+    updatedAt: Date;
     answers: {
       id: string;
       content: string;
       isCorrect: boolean;
+      createdAt: Date;
+      updatedAt: Date;
     }[];
   }[] {
     const lines = text.split('\n');
@@ -199,12 +203,24 @@ export class OpenaiService implements IOpenaiService {
         if (currentQuestion !== null) questions.push(currentQuestion);
 
         const questionText = questionMatch[2];
-        currentQuestion = { id: v4(), content: questionText, answers: [] };
+        currentQuestion = {
+          id: v4(),
+          content: questionText,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          answers: [],
+        };
       }
       const answerMatch = line.match(/([A-Za-z])\) (.+)$/);
       if (answerMatch && currentQuestion !== null) {
         const answerText = answerMatch[2] ?? '';
-        currentQuestion.answers.push({ id: v4(), content: answerText, isCorrect: false });
+        currentQuestion.answers.push({
+          id: v4(),
+          content: answerText,
+          isCorrect: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
       }
       if (line.includes(CORRECT_ANSWER_KEY) && currentQuestion !== null) {
         const answerCorrect = line.trim().slice(CORRECT_ANSWER_KEY.length).trim();

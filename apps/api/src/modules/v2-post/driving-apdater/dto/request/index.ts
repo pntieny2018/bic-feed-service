@@ -22,3 +22,5 @@ export * from './update-artice.request.dto';
 export * from './schedule-artice.request.dto';
 export * from './get-quizzes.request.dto';
 export * from './update-quiz-answer.request.dto';
+export * from './add-quiz-question.request.dto';
+export * from './update-quiz-question.request.dto';

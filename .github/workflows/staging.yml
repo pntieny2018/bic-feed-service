@@ -19,9 +19,10 @@ jobs:
       AWS_SM_SECRET_ID: /bic/ci
       AWS_IAM_ROLE: arn:aws:iam::210668178631:role/bic-all-github-action-iam-role
       BITBUCKET_WORKPLACE: beincomm
+      GITHUB_WORKPLACE: beincom
       ENVIRONMENT: stg
       SERVICE: feed
-      IMAGE_NAME: beingroup/bic-stg-feed-service
+      IMAGE_NAME: beingroup/stg-bic-feed-service
 
     steps:
     - name: Checkout code
@@ -59,16 +60,15 @@ jobs:
     - name: Update Image Version to GitOps Repository
       run: |
         HEAD=$(git rev-parse --short HEAD)
-        GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.sha }})
-        git clone https://cicd-bic:${{ env._BIC_CI_ARGOCD_TOKEN }}@bitbucket.org/${{ env.BITBUCKET_WORKPLACE }}/bic-kube.git
+        git clone https://devops-bic:${{ env._BIC_CI_ARGOCD_TOKEN_GITHUB }}@github.com/${{ env.GITHUB_WORKPLACE }}/bic-kube.git
         cd bic-kube
         set -e
         export COMMIT_SHA1=${{ github.sha }}
         envsubst <bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.patch.yaml >bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.yaml.out
         mv bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.yaml.out bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/version.yaml
-        git config --global user.email "cicd@evol.vn"
-        git config --global user.name "CICD"
+        git config --global user.email "devops@evol.vn"
+        git config --global user.name "devops-bic"
         git add -A
-        git commit -m "Commit: $HEAD  Build: ${{ github.run_number }}  Message: $GIT_COMMIT_MESSAGE"
+        git commit -m "Commit: $HEAD  Build: ${{ github.run_number }}"
         git pull
         git push

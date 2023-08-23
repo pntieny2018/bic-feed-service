@@ -135,7 +135,14 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quiz:
         postEntity.get('quiz') && postEntity.get('quiz').isVisible(dataBinding.authUser.id)
-          ? new QuizDto(postEntity.get('quiz').toObject())
+          ? new QuizDto({
+              id: postEntity.get('quiz').get('id'),
+              title: postEntity.get('quiz').get('title'),
+              description: postEntity.get('quiz').get('description'),
+              status: postEntity.get('quiz').get('status'),
+              genStatus: postEntity.get('quiz').get('genStatus'),
+              error: postEntity.get('quiz').get('error'),
+            })
           : undefined,
       communities,
       media: {
@@ -236,6 +243,22 @@ export class ContentBinding implements IContentBinding {
       articleEntity.getId(),
     ]);
 
+    let quizHighestScore = null;
+    let quizDoing = null;
+    if (dataBinding?.authUser) {
+      const quizHighestScoreMapper =
+        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+          [articleEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizHighestScore = quizHighestScoreMapper.get(articleEntity.get('id')) ?? null;
+      const quizDoingMapper =
+        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+          [articleEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizDoing = quizDoingMapper.get(articleEntity.get('id')) ?? null;
+    }
     return new ArticleDto({
       id: articleEntity.get('id'),
       audience,
@@ -261,7 +284,14 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quiz:
         articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(dataBinding.authUser.id)
-          ? new QuizDto(articleEntity.get('quiz').toObject())
+          ? new QuizDto({
+              id: articleEntity.get('quiz').get('id'),
+              title: articleEntity.get('quiz').get('title'),
+              description: articleEntity.get('quiz').get('description'),
+              status: articleEntity.get('quiz').get('status'),
+              genStatus: articleEntity.get('quiz').get('genStatus'),
+              error: articleEntity.get('quiz').get('error'),
+            })
           : undefined,
       communities,
       actor,
@@ -286,6 +316,17 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
     });
   }
 
@@ -437,6 +478,8 @@ export class ContentBinding implements IContentBinding {
             groups,
             communities,
             reactionsCount,
+            quizDoingMapper,
+            quizHighestScoreMapper,
           })
         );
       }
@@ -495,7 +538,14 @@ export class ContentBinding implements IContentBinding {
       })),
       quiz:
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
-          ? new QuizDto(entity.get('quiz').toObject())
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
           : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
@@ -552,6 +602,8 @@ export class ContentBinding implements IContentBinding {
       communities: Map<string, GroupDto>;
       reactionsCount: Map<string, ReactionsCount>;
       series?: Map<string, SeriesEntity | PostEntity | ArticleEntity>;
+      quizDoingMapper: Map<string, QuizParticipantEntity>;
+      quizHighestScoreMapper: Map<string, QuizParticipantEntity>;
     }
   ): ArticleDto {
     const groups = [];
@@ -563,6 +615,9 @@ export class ContentBinding implements IContentBinding {
         rootGroupIds.push(group.rootGroupId);
       }
     });
+
+    const quizHighestScore = dataBinding.quizHighestScoreMapper.get(entity.getId()) || null;
+    const quizDoing = dataBinding.quizDoingMapper.get(entity.getId()) || null;
 
     return new ArticleDto({
       id: entity.get('id'),
@@ -585,7 +640,14 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quiz:
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
-          ? new QuizDto(entity.get('quiz').toObject())
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
           : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
@@ -610,6 +672,17 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
     });
   }
 
@@ -654,7 +727,14 @@ export class ContentBinding implements IContentBinding {
       ),
       quiz:
         entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
-          ? new QuizDto(entity.get('quiz').toObject())
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
           : undefined,
       items: items.map((item) => {
         if (item instanceof PostEntity) {

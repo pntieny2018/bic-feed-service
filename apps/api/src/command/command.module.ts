@@ -39,8 +39,10 @@ import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-important-post.command';
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
+import { ExportUserContentDataCommand } from './export-user-content-data.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
+import { ExportReactionCountDataCommand } from './export-reaction-count.command';
 
 @Module({
   imports: [
@@ -90,8 +92,10 @@ import { MigratePublishedTimeContentCommand } from './migrate-published-time-con
     MigrateArticlesContainErrorImageCommand,
     MigrateMarkReadImportantPostCommand,
     FixContentPrivacyCommand,
+    ExportUserContentDataCommand,
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
+    ExportReactionCountDataCommand,
   ],
 })
 export class CommandModule {}

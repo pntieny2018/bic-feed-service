@@ -1,5 +1,9 @@
 import { QuestionDto } from './question.dto';
+import { PickType } from '@nestjs/swagger';
+import { QUIZ_RESULT_STATUS } from '@beincom/constants';
+import { UserDto } from '../../../v2-user/application';
 import { QuizGenStatus, QuizStatus } from '../../data-type';
+import { QuizParticipantDto } from './quiz-participant.dto';
 
 export class QuizDto {
   public id: string;
@@ -10,7 +14,6 @@ export class QuizDto {
   public title: string;
   public description?: string;
   public numberOfQuestionsDisplay?: number;
-  public numberOfAnswersDisplay?: number;
   public questions?: QuestionDto[];
   public createdAt: Date;
   public updatedAt: Date;
@@ -22,5 +25,38 @@ export class QuizDto {
   };
   public constructor(data: Partial<QuizDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class QuizParticipantSummaryDto {
+  public total: number;
+  public pass: number;
+  public fail: number;
+
+  public constructor(data: Partial<QuizParticipantSummaryDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class QuizSummaryDto {
+  public contentId: string;
+  public participants: QuizParticipantSummaryDto;
+
+  public constructor(data: Partial<QuizSummaryDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class QuizParticipantSummaryDetailDto extends PickType(QuizParticipantDto, [
+  'id',
+  'quizId',
+  'createdAt',
+  'score',
+]) {
+  public status: QUIZ_RESULT_STATUS;
+  public actor: UserDto;
+
+  public constructor(data: Partial<QuizParticipantSummaryDetailDto>) {
+    super(data);
   }
 }

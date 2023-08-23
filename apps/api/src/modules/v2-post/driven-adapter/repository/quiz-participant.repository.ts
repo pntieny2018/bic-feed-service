@@ -1,4 +1,8 @@
+import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
+import { difference } from 'lodash';
 import { InjectModel } from '@nestjs/sequelize';
+
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
 import { QuizParticipantAnswerModel } from '../../../../database/models/quiz-participant-answers.model';
@@ -6,9 +10,11 @@ import {
   IQuizParticipant,
   QuizParticipantModel,
 } from '../../../../database/models/quiz-participant.model';
-import { UserDto } from '../../../v2-user/application';
-import { Sequelize } from 'sequelize-typescript';
-import { Op } from 'sequelize';
+import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
+import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
+import { CursorPaginator, OrderEnum } from '../../../../common/dto';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { QuizParticipantNotFoundException } from '../../domain/exception';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
@@ -30,10 +36,14 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
         questions: quizParticipant.get('quizSnapshot').questions.map((question) => ({
           id: question.id,
           content: question.content,
+          createdAt: question.createdAt,
+          updatedAt: question.updatedAt,
           answers: question.answers.map((answer) => ({
             id: answer.id,
             content: answer.content,
             isCorrect: answer.isCorrect,
+            createdAt: question.createdAt,
+            updatedAt: question.updatedAt,
           })),
         })),
       },
@@ -68,40 +78,152 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       }
     );
     if (quizParticipant.get('answers') !== undefined) {
-      await this._quizParticipantAnswerModel.destroy({
+      const currentAnswers = await this._quizParticipantAnswerModel.findAll({
         where: {
           quizParticipantId: quizParticipant.get('id'),
         },
       });
-      await this._quizParticipantAnswerModel.bulkCreate(
-        quizParticipant.get('answers').map((answer) => ({
-          id: answer.id,
+      const newAnswerIds = quizParticipant.get('answers').map((answer) => answer.id);
+      const currentAnswerIds = currentAnswers.map((answer) => answer.get('id'));
+      for (const currentAnswer of currentAnswers) {
+        const findAnswer = quizParticipant
+          .get('answers')
+          .find((newAnswer) => newAnswer.id === currentAnswer.get('id'));
+        if (findAnswer && findAnswer.isCorrect !== currentAnswer.get('isCorrect')) {
+          await this._quizParticipantAnswerModel.update(
+            {
+              isCorrect: findAnswer.isCorrect,
+            },
+            {
+              where: {
+                id: findAnswer.id,
+              },
+            }
+          );
+        }
+      }
+
+      await this._quizParticipantAnswerModel.destroy({
+        where: {
           quizParticipantId: quizParticipant.get('id'),
-          questionId: answer.questionId,
-          answerId: answer.answerId,
-          isCorrect: answer.isCorrect,
-          createdAt: answer.createdAt,
-          updatedAt: answer.updatedAt,
-        }))
+          id: difference(currentAnswerIds, newAnswerIds),
+        },
+      });
+
+      await this._quizParticipantAnswerModel.bulkCreate(
+        quizParticipant
+          .get('answers')
+          .filter((answer) => !currentAnswerIds.includes(answer.id))
+          .map((answer) => ({
+            id: answer.id,
+            quizParticipantId: quizParticipant.get('id'),
+            questionId: answer.questionId,
+            answerId: answer.answerId,
+            isCorrect: answer.isCorrect,
+            createdAt: answer.createdAt,
+            updatedAt: answer.updatedAt,
+          }))
       );
     }
   }
 
-  public async findOne(takeId: string): Promise<QuizParticipantEntity> {
-    const takeQuizModel = await this._quizParticipantModel.findOne({
+  public async updateIsHighest(quizParticipantId: string, isHighest: boolean): Promise<void> {
+    await this._quizParticipantModel.update({ isHighest }, { where: { id: quizParticipantId } });
+  }
+
+  public async findQuizParticipantById(
+    quizParticipantId: string
+  ): Promise<QuizParticipantEntity | null> {
+    const quizParticipant = await this._quizParticipantModel.findByPk(quizParticipantId, {
       include: [
         {
-          model: QuizParticipantAnswerModel,
+          model: this._quizParticipantAnswerModel,
           as: 'answers',
           required: false,
         },
       ],
+    });
+
+    if (!quizParticipant) {
+      return null;
+    }
+
+    return this._modelToEntity(quizParticipant);
+  }
+
+  public async getQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity> {
+    const quizParticipantEntity = await this.findQuizParticipantById(quizParticipantId);
+
+    if (!quizParticipantEntity) {
+      throw new QuizParticipantNotFoundException();
+    }
+
+    return quizParticipantEntity;
+  }
+
+  public async findQuizParticipantHighestScoreByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipant = await this._quizParticipantModel.findOne({
       where: {
-        id: takeId,
+        postId: contentId,
+        createdBy: userId,
+        isHighest: true,
       },
     });
 
-    return this._modelToEntity(takeQuizModel);
+    if (!quizParticipant) return null;
+
+    return this._modelToEntity(quizParticipant);
+  }
+
+  public async getHighestScoreOfMember(
+    contentId: string
+  ): Promise<{ createdBy: string; score: number }[]> {
+    const rows = await this._quizParticipantModel.findAll({
+      attributes: ['createdBy', [Sequelize.fn('max', Sequelize.col('score')), 'score']],
+      where: {
+        postId: contentId,
+        [Op.or]: [
+          { finishedAt: { [Op.not]: null } },
+          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
+        ],
+      },
+      group: ['created_by'],
+    });
+
+    return rows.map((row) => row.toJSON());
+  }
+
+  public async getQuizParticipantHighestScoreGroupByUserId(
+    contentId: string,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<QuizParticipantEntity>> {
+    const { limit = PAGING_DEFAULT_LIMIT, before, after, order = OrderEnum.DESC } = paginationProps;
+
+    const paginator = new CursorPaginator(
+      this._quizParticipantModel,
+      ['createdAt'],
+      { before, after, limit },
+      order
+    );
+
+    const { rows, meta } = await paginator.paginate({
+      where: {
+        postId: contentId,
+        isHighest: true,
+        [Op.or]: [
+          { finishedAt: { [Op.not]: null } },
+          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
+        ],
+      },
+    });
+
+    return {
+      rows: rows.map((row) => this._modelToEntity(row)),
+      meta,
+    };
   }
 
   public async getQuizParticipantHighestScoreGroupByContentId(
@@ -112,18 +234,16 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       where: {
         postId: contentIds,
         createdBy: userId,
-        [Op.and]: Sequelize.literal(
-          `finished_at is NOT null OR started_at + time_limit * interval '1 second' <= now()`
-        ),
+        isHighest: true,
+        finishedAt: {
+          [Op.ne]: null,
+        },
       },
     });
     const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
     rows.forEach((row) => {
       const contentId = row.postId;
-      if (
-        !contentIdsMapHighestScore.has(contentId) ||
-        contentIdsMapHighestScore.get(contentId).get('score') < row.score
-      ) {
+      if (!contentIdsMapHighestScore.has(contentId)) {
         contentIdsMapHighestScore.set(contentId, this._modelToEntity(row));
       }
     });
@@ -178,6 +298,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       quizId: takeQuizModel.quizId,
       quizSnapshot: takeQuizModel.quizSnapshot,
       score: takeQuizModel.score,
+      isHighest: takeQuizModel.isHighest,
       timeLimit: takeQuizModel.timeLimit,
       totalAnswers: takeQuizModel.totalAnswers,
       totalCorrectAnswers: takeQuizModel.totalCorrectAnswers,
