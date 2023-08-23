@@ -86,7 +86,7 @@ export class ContentController {
   @ResponseMessages({
     success: 'Get menu settings successfully',
   })
-  @Version([VERSIONS_SUPPORTED[3]])
+  @Version([VERSIONS_SUPPORTED[4]])
   @Get('/:id/menu-settings')
   public async getMenuSettings(
     @AuthUser() user: UserDto,
