@@ -1,8 +1,8 @@
-import { KAFKA_TOPIC } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
+import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ArticlePublishedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { ArticleEntity } from '../../../domain/model/content';

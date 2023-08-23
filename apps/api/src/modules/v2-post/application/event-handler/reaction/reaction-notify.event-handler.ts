@@ -1,8 +1,8 @@
-import { KAFKA_TOPIC } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
 
+import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
 import { TypeActivity, VerbActivity } from '../../../../../notification';
 import {

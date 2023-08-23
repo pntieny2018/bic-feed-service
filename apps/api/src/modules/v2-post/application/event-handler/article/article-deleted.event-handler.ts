@@ -1,7 +1,7 @@
-import { KAFKA_TOPIC } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
+import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ArticleDeletedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { TagDto } from '../../dto';

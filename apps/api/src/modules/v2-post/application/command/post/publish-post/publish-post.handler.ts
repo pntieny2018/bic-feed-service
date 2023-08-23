@@ -1,8 +1,8 @@
-import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { cloneDeep, uniq } from 'lodash';
 
+import { KAFKA_TOPIC } from '../../../../../../../src/common/constants';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
