@@ -42,6 +42,7 @@ import { FixContentPrivacyCommand } from './fix-content-privacy.command';
 import { ExportUserContentDataCommand } from './export-user-content-data.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
+import { ExportReactionCountDataCommand } from './export-reaction-count.command';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { MigratePublishedTimeContentCommand } from './migrate-published-time-con
     ExportUserContentDataCommand,
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
+    ExportReactionCountDataCommand,
   ],
 })
 export class CommandModule {}
