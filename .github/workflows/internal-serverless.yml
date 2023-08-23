@@ -1,0 +1,61 @@
+name: internal serverless
+run-name: ${{ github.ref_name }}
+on:
+  pull_request:
+    paths:
+      - 'serverless/**'
+    types:
+      - closed
+    branches: ["internal"]
+
+permissions:
+  contents: read    # This is required for actions/checkout
+  id-token: write   # This is required for requesting the JWT
+
+jobs:
+  build-and-deploy-serverless-stack:
+    runs-on: ubuntu-22.04
+    environment: internal
+    defaults:
+      run:
+        working-directory: ./serverless
+    env:
+      AWS_IAM_ROLE: arn:aws:iam::296763675441:role/bic-dev-github-action-cdk-iam-role
+      AWS_REGION: ap-southeast-1
+      STACK_ENVIRONMENT: itn
+
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout source code
+
+      - uses: actions/setup-node@v3
+        name: Setup CDK CLI
+        with:
+          node-version: "16"
+
+      - uses: actions/setup-python@v4
+        name: Setup python
+        with:
+          python-version: '3.10'
+
+      - name: Install CDK and its dependencies
+        run: |
+          set -e
+          npm install -g aws-cdk
+          pip install -r requirements.txt
+
+      - name: Configure AWS Credentials with IAM Role
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_IAM_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build and deploy the serverless stack
+        run: |
+          set -e
+          cdk synth -c config=${{ env.STACK_ENVIRONMENT }}
+          # If there are any differences, deploy
+          # otherwise, do nothing
+          if ! cdk diff --app cdk.out -c config=${{ env.STACK_ENVIRONMENT }} --fail; then
+            cdk deploy --app cdk.out -c config=${{ env.STACK_ENVIRONMENT }}
+          fi

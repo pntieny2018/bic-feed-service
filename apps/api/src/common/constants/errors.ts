@@ -36,6 +36,7 @@ export const ERRORS = {
     OPENAI_EXCEPTION: 'quiz.openai_exception',
     GENERATE_FAIL: 'quiz.generate_fail',
     QUIZ_PROCESSING: 'quiz.quiz_processing',
+    COUNT_TOKENS_FAILED: 'quiz.count_tokens_failed',
     QUIZ_QUESTION_LIMIT_EXCEEDED: 'quiz.quiz_question_limit_exceeded',
   },
   QUIZ_QUESTION: {
