@@ -41,10 +41,10 @@ export class GetMenuSettingsHandler
       throw new ContentNotFoundException();
     }
 
-    this._authorityAppService.buildAbility(authUser);
+    await this._authorityAppService.buildAbility(authUser);
 
     const userId = authUser.id;
-    const groupdIds = contentEntity.getGroupIds();
+    const groupIds = contentEntity.getGroupIds();
     const canCRUDContent = this._canCURDContent(contentEntity, userId);
     const canReportContent = this._canReportContent(contentEntity, userId);
     const { canCreateQuiz, canDeleteQuiz, canEditQuiz } = this._canCURDQuiz(
@@ -59,12 +59,12 @@ export class GetMenuSettingsHandler
 
     const menuSetting: MenuSettingsDto = {
       canEdit: canCRUDContent,
-      canEditSetting: this._authorityAppService.canEditSetting(groupdIds),
+      canEditSetting: this._authorityAppService.canEditSetting(groupIds),
       canSaveOrUnsave: true,
       canCopyLink: true,
       canViewReactions: canViewReaction,
       canViewSeries: contentEntity.getType() !== PostType.SERIES,
-      canPinContent: this._authorityAppService.canPinContent(groupdIds),
+      canPinContent: this._authorityAppService.canPinContent(groupIds),
       canCreateQuiz,
       canDeleteQuiz,
       canEditQuiz,
