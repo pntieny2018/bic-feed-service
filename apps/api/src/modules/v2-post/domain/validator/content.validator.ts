@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { subject } from '@casl/ability';
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
@@ -14,7 +13,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../../../v2-group/application';
-import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
+import { PERMISSION_KEY } from '../../../../common/constants';
 import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionAtGroupException,
@@ -52,12 +51,11 @@ export class ContentValidator implements IContentValidator {
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
-    const ability = await this._authorityAppService.buildAbility(user);
-    const permissionKey = this.postTypeToPermissionKey(postType);
+    await this._authorityAppService.buildAbility(user);
+    const permissionKey = this._postTypeToPermissionKey(postType);
     for (const group of groups) {
-      if (!ability.can(PERMISSION_KEY[permissionKey], subject(SUBJECT.GROUP, { id: group.id }))) {
+      if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id))
         notCreatableInGroups.push(group);
-      }
     }
 
     if (notCreatableInGroups.length) {
@@ -76,12 +74,12 @@ export class ContentValidator implements IContentValidator {
   ): Promise<void> {
     const notEditSettingInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
-    const ability = await this._authorityAppService.buildAbility(user);
+    await this._authorityAppService.buildAbility(user);
     for (const group of groups) {
       if (
-        !ability.can(
+        !this._authorityAppService.canDoActionOnGroup(
           PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id })
+          group.id
         )
       ) {
         notEditSettingInGroups.push(group);
@@ -98,14 +96,14 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public postTypeToPermissionKey(postType: PostType): string {
+  private _postTypeToPermissionKey(postType: PostType): string {
     switch (postType) {
       case PostType.SERIES:
-        return 'CRUD_SERIES';
+        return PERMISSION_KEY.CRUD_SERIES;
       case PostType.ARTICLE:
       case PostType.POST:
       default:
-        return 'CRUD_POST_ARTICLE';
+        return PERMISSION_KEY.CRUD_POST_ARTICLE;
     }
   }
 

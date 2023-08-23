@@ -24,4 +24,9 @@ export const ENDPOINT = {
       GET_IMAGES: '/internal/images/ids',
     },
   },
+  NOTIFICATION: {
+    INTERNAL: {
+      SPECIFIC_NOTIFICATION_SETTINGS: '/internal/settings/specific/:userId/:targetId',
+    },
+  },
 };

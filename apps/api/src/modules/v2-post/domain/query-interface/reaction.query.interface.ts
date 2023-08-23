@@ -1,5 +1,6 @@
 import { ReactionEntity } from '../model/reaction';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
+import { ReactionsCount } from '../../../../common/types/reaction-count.type';
 
 export type GetReactionProps = {
   reactionName: string;
@@ -10,7 +11,6 @@ export type GetReactionProps = {
   limit: number;
 };
 
-export type ReactionsCount = Record<string, number>[];
 export interface IReactionQuery {
   getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>>;
 

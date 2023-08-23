@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -35,6 +36,8 @@ import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
+import { GetMenuSettingsQuery } from '../../application/query/get-menu-settings/get-menu-settings.query';
+import { MenuSettingsDto } from '../../application/dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -68,6 +71,31 @@ export class ContentController {
     } catch (e) {
       switch (e.constructor) {
         case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get menu settings' })
+  @ApiOkResponse({
+    type: MenuSettingsDto,
+  })
+  @ResponseMessages({
+    success: 'Get menu settings successfully',
+  })
+  @Version([VERSIONS_SUPPORTED[3]])
+  @Get('/:id/menu-settings')
+  public async getMenuSettings(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<MenuSettingsDto> {
+    try {
+      return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
+    } catch (e) {
+      switch (e.constructor) {
         case DomainModelException:
           throw new BadRequestException(e);
         default:
