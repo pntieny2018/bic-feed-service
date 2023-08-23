@@ -1,8 +1,10 @@
 import tiktoken
+import json
 
 def lambda_handler(event, context):
     encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
-    encoded_text = encoding.encode(event["body"]["content"])
+    body = json.loads(event['body'])
+    encoded_text = encoding.encode(body['content'])
 
     # Count the tokens
     token_count = len(encoded_text)
