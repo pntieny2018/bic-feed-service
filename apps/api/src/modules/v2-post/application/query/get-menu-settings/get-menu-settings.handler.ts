@@ -35,25 +35,25 @@ export class GetMenuSettingsHandler
   public async execute(query: GetMenuSettingsQuery): Promise<MenuSettingsDto> {
     const { id, authUser } = query.payload;
 
-    const contentEnity = await this._contentDomainService.getContentToBuildMenuSettings(id);
+    const contentEntity = await this._contentDomainService.getContentToBuildMenuSettings(id);
 
-    if (!contentEnity) {
+    if (!contentEntity) {
       throw new ContentNotFoundException();
     }
 
     this._authorityAppService.buildAbility(authUser);
 
     const userId = authUser.id;
-    const groupdIds = contentEnity.getGroupIds();
-    const canCRUDContent = this._canCURDContent(contentEnity, userId);
-    const canReportContent = this._canReportContent(contentEnity, userId);
+    const groupdIds = contentEntity.getGroupIds();
+    const canCRUDContent = this._canCURDContent(contentEntity, userId);
+    const canReportContent = this._canReportContent(contentEntity, userId);
     const { canCreateQuiz, canDeleteQuiz, canEditQuiz } = this._canCURDQuiz(
-      contentEnity,
+      contentEntity,
       canCRUDContent
     );
-    const canViewReaction = await this._canViewReaction(contentEnity);
+    const canViewReaction = await this._canViewReaction(contentEntity);
     const isEnableSpecificNotifications = await this._isEnableSpecificNotifications(
-      contentEnity,
+      contentEntity,
       userId
     );
 
@@ -63,14 +63,14 @@ export class GetMenuSettingsHandler
       saveOrUnsave: true,
       copyLink: true,
       viewReactions: canViewReaction,
-      viewSeries: contentEnity.getType() !== PostType.SERIES,
+      viewSeries: contentEntity.getType() !== PostType.SERIES,
       pinContent: this._authorityAppService.canPinContent(groupdIds),
       createQuiz: canCreateQuiz,
       deleteQuiz: canDeleteQuiz,
       editQuiz: canEditQuiz,
       delete: canCRUDContent,
       reportContent: canReportContent,
-      reportMember: !contentEnity.isOwner(userId),
+      reportMember: !contentEntity.isOwner(userId),
       enableSpecificNotifications: isEnableSpecificNotifications,
     };
 
@@ -78,54 +78,54 @@ export class GetMenuSettingsHandler
   }
 
   private _canCURDQuiz(
-    contentEnity: ContentEntity,
+    contentEntity: ContentEntity,
     canCRUDContent: boolean
   ): { canCreateQuiz: boolean; canDeleteQuiz: boolean; canEditQuiz: boolean } {
     return {
       canCreateQuiz:
-        contentEnity.getType() !== PostType.SERIES && canCRUDContent && !contentEnity.hasQuiz(),
+        contentEntity.getType() !== PostType.SERIES && canCRUDContent && !contentEntity.hasQuiz(),
       canDeleteQuiz:
-        contentEnity.getType() !== PostType.SERIES && canCRUDContent && contentEnity.hasQuiz(),
+        contentEntity.getType() !== PostType.SERIES && canCRUDContent && contentEntity.hasQuiz(),
       canEditQuiz:
-        contentEnity.getType() !== PostType.SERIES &&
+        contentEntity.getType() !== PostType.SERIES &&
         canCRUDContent &&
-        contentEnity.hasQuiz() &&
-        contentEnity.getQuiz().get('status') === QuizStatus.PUBLISHED,
+        contentEntity.hasQuiz() &&
+        contentEntity.getQuiz().get('status') === QuizStatus.PUBLISHED,
     };
   }
 
-  private _canCURDContent(contentEnity: ContentEntity, userId: string): boolean {
-    const groupIds = contentEnity.getGroupIds();
-    if (contentEnity.getType() === PostType.SERIES) {
+  private _canCURDContent(contentEntity: ContentEntity, userId: string): boolean {
+    const groupIds = contentEntity.getGroupIds();
+    if (contentEntity.getType() === PostType.SERIES) {
       const canCRUDSeries = this._authorityAppService.canCRUDSeries(groupIds);
-      return contentEnity.isOwner(userId) && canCRUDSeries;
+      return contentEntity.isOwner(userId) && canCRUDSeries;
     }
     const canCRUDPostArticle = this._authorityAppService.canCRUDPostArticle(groupIds);
-    return contentEnity.isOwner(userId) && canCRUDPostArticle;
+    return contentEntity.isOwner(userId) && canCRUDPostArticle;
   }
 
-  private _canReportContent(contentEnity: ContentEntity, userId: string): boolean {
-    return contentEnity.getType() !== PostType.SERIES && !contentEnity.isOwner(userId);
+  private _canReportContent(contentEntity: ContentEntity, userId: string): boolean {
+    return contentEntity.getType() !== PostType.SERIES && !contentEntity.isOwner(userId);
   }
 
   private async _isEnableSpecificNotifications(
-    contentEnity: ContentEntity,
+    contentEntity: ContentEntity,
     userId: string
   ): Promise<boolean> {
     const specificNotifications =
       await this._contentNotificationService.getSpecificNotificationSettings(
         userId,
-        contentEnity.getId()
+        contentEntity.getId()
       );
 
     return isBoolean(specificNotifications?.enable) ? specificNotifications.enable : true;
   }
 
-  private async _canViewReaction(contentEnity: ContentEntity): Promise<boolean> {
+  private async _canViewReaction(contentEntity: ContentEntity): Promise<boolean> {
     const reactionsCount = await this._reactionDomainService.getAndCountReactionByContents([
-      contentEnity.getId(),
+      contentEntity.getId(),
     ]);
 
-    return (reactionsCount.get(contentEnity.getId()) || []).length > 0;
+    return (reactionsCount.get(contentEntity.getId()) || []).length > 0;
   }
 }
