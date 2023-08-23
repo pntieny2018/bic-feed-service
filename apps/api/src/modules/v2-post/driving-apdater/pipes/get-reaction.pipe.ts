@@ -1,11 +1,11 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { OrderEnum } from '../../../common/dto';
-import { GetReactionDto } from '../dto/request';
+import { GetReactionRequestDto } from '../dto/request';
+import { OrderEnum } from '../../../../common/dto';
 import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class GetReactionPipe implements PipeTransform {
-  public transform(getReactionDto: GetReactionDto): GetReactionDto {
+  public transform(getReactionDto: GetReactionRequestDto): GetReactionRequestDto {
     if (!getReactionDto.latestId) {
       getReactionDto.latestId = NIL_UUID;
     }

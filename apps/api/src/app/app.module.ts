@@ -9,7 +9,6 @@ import { AppController } from './app.controller';
 import { CommentModule } from '../modules/comment';
 import { MentionModule } from '../modules/mention';
 import { NotificationModule } from '../notification';
-import { ReactionModule } from '../modules/reaction';
 import { AuthorityModule } from '../modules/authority';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
@@ -47,7 +46,6 @@ import { ApiVersioningMiddleware } from '../modules/auth/api-versioning.middlewa
     UploadModule,
     MediaModule,
     MentionModule,
-    // ReactionModule,
     ListenerModule,
     AuthorityModule,
     NotificationModule,
@@ -57,7 +55,6 @@ import { ApiVersioningMiddleware } from '../modules/auth/api-versioning.middlewa
     ArticleModule,
     SeriesModule,
     CategoryModule,
-    //TagModule,
     ScheduleModule.forRoot(),
     HealthModule,
     SeriesModule,
