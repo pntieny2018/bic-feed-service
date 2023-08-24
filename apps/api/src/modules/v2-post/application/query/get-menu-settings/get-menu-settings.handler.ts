@@ -64,7 +64,6 @@ export class GetMenuSettingsHandler
       canEdit: canCRUDContent,
       canEditSetting: this._authorityAppService.canEditSetting(groupIds),
       canSave: !contentEntity.isSaved(),
-      canUnsave: contentEntity.isSaved(),
       canCopyLink: true,
       canViewReactions: canViewReaction,
       canViewSeries: contentEntity.getType() !== PostType.SERIES,
