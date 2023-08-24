@@ -51,7 +51,7 @@ import { QueueService } from './queue.service';
       defaultJobOptions: configs().defaultJobOptions,
     }),
     BullModule.registerQueue({
-      name: QUEUES.CONTENT.QUEUE_NAME,
+      name: QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME,
       defaultJobOptions: configs().defaultJobOptions,
     }),
   ],

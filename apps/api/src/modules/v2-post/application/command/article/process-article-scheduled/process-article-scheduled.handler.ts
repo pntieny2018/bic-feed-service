@@ -64,11 +64,11 @@ export class ProcessArticleScheduledHandler
     });
 
     const contentScheduledJobPayloads = rows.map((row) => ({
-      contentId: row.getId(),
-      contentOwner: contentOwners.find((owner) => owner.id === row.getCreatedBy()),
+      articleId: row.getId(),
+      articleOwner: contentOwners.find((owner) => owner.id === row.getCreatedBy()),
     }));
 
-    await this._queueAdapter.addContentScheduledJob(contentScheduledJobPayloads);
+    await this._queueAdapter.addArticleScheduledJob(contentScheduledJobPayloads);
 
     await this._recursivelyHandleScheduledContent(payload, meta);
   }

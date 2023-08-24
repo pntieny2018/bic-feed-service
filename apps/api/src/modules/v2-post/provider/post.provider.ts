@@ -12,6 +12,7 @@ import {
   ScheduleArticleHandler,
   UpdateArticleHandler,
 } from '../application/command/article';
+import { ProcessScheduledArticlePublishingHandler } from '../application/command/article/process-scheduled-article-publishing';
 import {
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
@@ -80,7 +81,7 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { PostValidator } from '../domain/validator/post.validator';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { ArticleCron } from '../driving-apdater/cron/article.cron';
-import { ContentProcessor } from '../driving-apdater/queue-processor/content.processor';
+import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
   {
@@ -170,6 +171,7 @@ export const postProvider = [
   DeleteArticleHandler,
   ScheduleArticleHandler,
   ProcessArticleScheduledHandler,
+  ProcessScheduledArticlePublishingHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,
@@ -182,5 +184,5 @@ export const postProvider = [
   ArticleUpdatedEventHandler,
 
   /** Processor */
-  ContentProcessor,
+  ArticleProcessor,
 ];
