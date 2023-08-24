@@ -69,7 +69,7 @@ export class ArticleDomainService implements IArticleDomainService {
       where: {
         id: articleId,
         groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+        excludeReportedByUserId: authUser?.id,
       },
       include: {
         shouldIncludeGroup: true,

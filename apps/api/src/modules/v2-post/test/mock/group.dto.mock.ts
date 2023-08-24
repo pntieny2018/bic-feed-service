@@ -1,4 +1,4 @@
-import { GroupDto } from '../../../v2-group/application';
+import { GroupDto } from '@libs/service/group';
 
 export const groupDtoMock: GroupDto = {
   child: undefined,
