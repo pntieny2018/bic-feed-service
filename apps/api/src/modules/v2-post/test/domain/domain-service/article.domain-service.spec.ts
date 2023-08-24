@@ -1,12 +1,14 @@
 import { createMock } from '@golevelup/ts-jest';
 import { EventBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
+import { v4 } from 'uuid';
 
 import { ArticleDomainService } from '../../../domain/domain-service/article.domain-service';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/media.domain-service.interface';
+import { ArticleDeletedEvent } from '../../../domain/event';
 import { ContentAccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
 import {
   CATEGORY_REPOSITORY_TOKEN,
@@ -104,6 +106,48 @@ describe('Article domain service', () => {
       jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
       try {
         await domainService.getArticleById('articleId', undefined);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
+      }
+    });
+  });
+
+  describe('deleteArticle', () => {
+    const id = v4();
+    it('should delete article', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(contentRepository, 'delete').mockResolvedValueOnce(undefined);
+
+      await domainService.deleteArticle({
+        id,
+        actor: userMock,
+      });
+
+      expect(eventBus$.publish).toBeCalledWith(
+        new ArticleDeletedEvent(articleEntityMock, userMock)
+      );
+    });
+
+    it('should throw error when article not found', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(undefined);
+      try {
+        await domainService.deleteArticle({
+          id,
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should throw error when authUser not found', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      try {
+        await domainService.deleteArticle({
+          id,
+          actor: { ...userMock, id: 'anotherUserId' },
+        });
       } catch (error) {
         expect(error).toBeInstanceOf(ContentAccessDeniedException);
       }

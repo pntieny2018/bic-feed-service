@@ -8,7 +8,7 @@ export const contentAttributesMock: ContentAttributes = {
   aggregation: { commentsCount: 0, totalUsersSeen: 0 },
   communityIds: [],
   createdAt: undefined,
-  createdBy: '',
+  createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
   errorLog: undefined,
   groupIds: [],
   isHidden: false,
