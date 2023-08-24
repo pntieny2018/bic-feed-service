@@ -1,18 +1,15 @@
 import { CategoryAttributes, CategoryModel } from '@libs/database/postgres/model/category.model';
-import { Inject, Injectable } from '@nestjs/common';
-import { EventPublisher } from '@nestjs/cqrs';
+import { Injectable } from '@nestjs/common';
 
 import { CategoryEntity } from '../../domain/model/category';
 
 @Injectable()
 export class CategoryMapper {
-  public constructor(@Inject(EventPublisher) private readonly _eventPublisher: EventPublisher) {}
-
   public toDomain(model: CategoryModel): CategoryEntity {
     if (model === null) {
       return null;
     }
-    return this._eventPublisher.mergeObjectContext(new CategoryEntity(model.toJSON()));
+    return new CategoryEntity(model.toJSON());
   }
 
   public toPersistence(entity: CategoryEntity): CategoryAttributes {

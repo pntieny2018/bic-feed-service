@@ -1,5 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
-import { PostLang } from 'apps/api/src/modules/v2-post/data-type';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
@@ -101,7 +100,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
 
   @AllowNull(true)
   @Column
-  public lang: PostLang;
+  public lang: LANGUAGE;
 
   @Column
   public privacy: PRIVACY;

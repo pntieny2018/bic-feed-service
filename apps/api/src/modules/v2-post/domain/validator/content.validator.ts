@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { subject } from '@casl/ability';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -49,7 +50,7 @@ export class ContentValidator implements IContentValidator {
   public async checkCanCRUDContent(
     user: UserDto,
     groupAudienceIds: string[],
-    postType?: PostType
+    postType?: PostType | CONTENT_TYPE
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
@@ -97,7 +98,7 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public postTypeToPermissionKey(postType: PostType): string {
+  public postTypeToPermissionKey(postType: PostType | CONTENT_TYPE): string {
     switch (postType) {
       case PostType.SERIES:
         return 'CRUD_SERIES';

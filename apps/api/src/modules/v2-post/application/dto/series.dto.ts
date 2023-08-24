@@ -1,6 +1,9 @@
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
-import { UserDto } from '../../../v2-user/application';
 import { GroupDto } from '../../../v2-group/application';
+import { UserDto } from '../../../v2-user/application';
+
 import { ArticleDto, ImageDto, PostDto, PostSettingDto, QuizDto } from '.';
 
 export class SeriesDto {
@@ -28,11 +31,11 @@ export class SeriesDto {
 
   public actor: UserDto;
 
-  public status: PostStatus;
+  public status: PostStatus | CONTENT_STATUS;
 
-  public privacy: PostPrivacy;
+  public privacy: PostPrivacy | PRIVACY;
 
-  public type: PostType;
+  public type: PostType | CONTENT_TYPE;
 
   public markedReadPost?: boolean;
 

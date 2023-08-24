@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { emoji } from 'node-emoji';
 import { v4, validate as isUUID } from 'uuid';
 
@@ -57,7 +58,7 @@ export const BIC_EMOJI = [
 
 export type ReactionAttributes = {
   id: string;
-  target: REACTION_TARGET;
+  target: REACTION_TARGET | CONTENT_TARGET;
   targetId: string;
   reactionName: string;
   createdBy: string;
