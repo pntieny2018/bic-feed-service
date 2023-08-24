@@ -87,15 +87,28 @@ export class ProcessArticlePublishedHandler
   }
 
   private async _processNotification(articlePayload: ArticleMessagePayload): Promise<void> {
-    const { id, seriesActors, setting, type, groupIds, title, content, createdAt, actor } =
-      articlePayload;
+    const {
+      id,
+      seriesActors,
+      setting,
+      type,
+      groupIds,
+      title,
+      summary,
+      coverMedia,
+      content,
+      createdAt,
+      actor,
+    } = articlePayload;
 
     const groups = await this._groupApplicationService.findAllByIds(groupIds);
     const activity = this._postActivityService.createPayload({
       id,
       actor,
       title,
+      summary,
       content,
+      cover: coverMedia.url,
       contentType: type,
       setting: {
         canComment: setting.canComment,
