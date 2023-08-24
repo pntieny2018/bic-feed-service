@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
 import { ArticleDomainService } from '../../../domain/domain-service/article.domain-service';
+import { IArticleDomainService } from '../../../domain/domain-service/interface';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
@@ -30,9 +31,10 @@ import { articleEntityMock } from '../../mock/article.entity.mock';
 import { userMock } from '../../mock/user.dto.mock';
 
 describe('Article domain service', () => {
-  let domainService: ArticleDomainService;
+  let domainService: IArticleDomainService;
   let eventBus$: EventBus;
   let contentRepository: IContentRepository;
+  let articleValidator: IArticleValidator;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -73,8 +75,9 @@ describe('Article domain service', () => {
       ],
     }).compile();
     eventBus$ = module.get<EventBus>(EventBus);
-    domainService = module.get<ArticleDomainService>(ArticleDomainService);
+    domainService = module.get<IArticleDomainService>(ArticleDomainService);
     contentRepository = module.get<IContentRepository>(CONTENT_REPOSITORY_TOKEN);
+    articleValidator = module.get<IArticleValidator>(ARTICLE_VALIDATOR_TOKEN);
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     eventBus$.publish = jest.fn(() => {});
@@ -149,6 +152,64 @@ describe('Article domain service', () => {
           actor: { ...userMock, id: 'anotherUserId' },
         });
       } catch (error) {
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
+      }
+    });
+  });
+
+  describe('autoSave', () => {
+    it('should auto save article', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(false);
+      jest.spyOn(domainService as any, '_setArticleEntityAttributes').mockImplementation(jest.fn());
+      jest.spyOn(articleValidator, 'validateArticle').mockImplementation(jest.fn());
+      jest.spyOn(articleEntityMock, 'isChanged').mockReturnValueOnce(true);
+
+      await domainService.autoSave({
+        id: 'id',
+        actor: userMock,
+      });
+      expect(contentRepository.update).toBeCalledWith(articleEntityMock);
+    });
+
+    it('should not auto save article when article not found', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(undefined);
+      try {
+        await domainService.autoSave({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not auto save article when article is published', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(true);
+      try {
+        await domainService.autoSave({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
+      }
+    });
+
+    it('should not auto save article when article is not changed', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isChanged').mockReturnValueOnce(false);
+      try {
+        await domainService.autoSave({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
         expect(error).toBeInstanceOf(ContentAccessDeniedException);
       }
     });
