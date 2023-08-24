@@ -1,18 +1,14 @@
 import { KafkaService } from '@app/kafka';
 import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
+import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
 import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
-import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
 } from '../../../../../v2-user/application';
-import { PostStatus } from '../../../../data-type';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
@@ -22,6 +18,10 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../../../../domain/service-adapter-interface /group-adapter.interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
 import { PostDto } from '../../../dto';
@@ -39,8 +39,8 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: ContentBinding,
     private readonly _kafkaService: KafkaService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupApplicationService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService
   ) {}
@@ -48,7 +48,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
   public async execute(command: PublishPostCommand): Promise<PostDto> {
     const postEntity = await this._postDomainService.publishPost(command.payload);
 
-    if (postEntity.getSnapshot().status === PostStatus.PUBLISHED) {
+    if (postEntity.getSnapshot().status === CONTENT_STATUS.PUBLISHED) {
       return this._contentBinding.postBinding(postEntity, {
         actor: command.payload.authUser,
         authUser: command.payload.authUser,
@@ -67,7 +67,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       postEntity.setMarkReadImportant();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(
+    const groups = await this._groupAdapter.getGroupByIds(
       command.payload?.groupIds || postEntity.get('groupIds')
     );
     const mentionUsers = await this._userApplicationService.findAllByIds(

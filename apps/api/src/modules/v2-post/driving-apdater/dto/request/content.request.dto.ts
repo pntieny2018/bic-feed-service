@@ -1,8 +1,9 @@
-import { Expose, Transform } from 'class-transformer';
-import { PostType } from '../../../data-type';
+import { CONTENT_TYPE } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
+import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+
+import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
 
 export class GetDraftContentsRequestDto extends PaginatedArgs {
   @ApiProperty({
@@ -22,8 +23,12 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
   @IsBoolean()
   @Expose({ name: 'is_processing' })
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return null;
   })
   public isProcessing?: boolean;
@@ -32,11 +37,11 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
     description: 'Content type',
     required: false,
     default: '',
-    enum: PostType,
+    enum: CONTENT_TYPE,
   })
   @Expose()
   @IsOptional()
-  @IsEnum(PostType)
+  @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
-  public type?: PostType;
+  public type?: CONTENT_TYPE;
 }

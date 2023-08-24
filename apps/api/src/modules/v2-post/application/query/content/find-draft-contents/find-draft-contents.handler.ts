@@ -9,7 +9,7 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../../binding/binding-post/content.interface';
-import { FindDraftContentsDto } from '../../../dto/content.dto';
+import { FindDraftContentsDto } from '../../../dto';
 
 import { FindDraftContentsQuery } from './find-draft-contents.query';
 

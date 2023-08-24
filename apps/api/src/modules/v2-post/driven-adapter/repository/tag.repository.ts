@@ -1,6 +1,11 @@
+import {
+  ILibTagRepository,
+  LIB_TAG_REPOSITORY_TOKEN,
+} from '@libs/database/postgres/repository/interface';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
+
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { TagModel } from '../../../../database/models/tag.model';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
@@ -10,16 +15,21 @@ import {
   FindOneTagProps,
   ITagRepository,
 } from '../../domain/repositoty-interface';
+import { TagMapper } from '../mapper/tag.mapper';
 
 export class TagRepository implements ITagRepository {
-  @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;
   private _logger = new Logger(TagRepository.name);
-  @InjectModel(TagModel)
-  private readonly _tagModel: typeof TagModel;
-  @InjectModel(PostTagModel)
-  private readonly _postTagModel: typeof PostTagModel;
 
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
+  public constructor(
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize,
+    @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory,
+    @InjectModel(TagModel)
+    private readonly _tagModel: typeof TagModel,
+    @InjectModel(PostTagModel)
+    private readonly _postTagModel: typeof PostTagModel,
+    @Inject(LIB_TAG_REPOSITORY_TOKEN) private readonly _libTagRepository: ILibTagRepository,
+    private readonly _tagMapper: TagMapper
+  ) {}
 
   public async create(data: TagEntity): Promise<void> {
     await this._tagModel.create({
@@ -81,22 +91,8 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
-    const { groupIds, name, ids } = input;
-    const condition: any = {};
-    if (ids) {
-      condition.id = ids;
-    }
-    if (groupIds) {
-      condition.groupId = groupIds;
-    }
-    if (name) {
-      condition.name = name.trim().toLowerCase();
-    }
-    const entities = await this._tagModel.findAll({
-      where: condition,
-    });
-
-    return entities.map((entity) => this._modelToEntity(entity));
+    const tags = await this._libTagRepository.findAll(input);
+    return tags.map((tag) => this._tagMapper.toDomain(tag));
   }
 
   private _modelToEntity(tag: TagModel): TagEntity {

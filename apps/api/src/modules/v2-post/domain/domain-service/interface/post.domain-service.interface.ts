@@ -1,5 +1,6 @@
-import { GroupDto } from '../../../../v2-group/application';
-import { UserDto } from '../../../../v2-user/application';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
+
 import { UpdatePostCommandPayload } from '../../../application/command/post';
 import { PostEntity, ArticleEntity } from '../../model/content';
 

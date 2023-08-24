@@ -1,11 +1,9 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+import { PostAttributes } from '@libs/database/postgres/model/post.model';
+
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { IPost } from '../../../../database/models/post.model';
-import { PostStatus, PostType } from '../../data-type';
-import { PostEntity } from '../model/content';
-import { ArticleEntity } from '../model/content/article.entity';
-import { ContentEntity } from '../model/content/content.entity';
-import { SeriesEntity } from '../model/content/series.entity';
+import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
@@ -14,7 +12,7 @@ export type OrderOptions = {
 
 export type FindContentProps = {
   where: {
-    type?: PostType;
+    type?: CONTENT_TYPE;
     id?: string;
     ids?: string[];
     groupArchived?: boolean;
@@ -25,7 +23,7 @@ export type FindContentProps = {
     scheduledAt?: Date;
     isHidden?: boolean;
     savedByUserId?: string;
-    status?: PostStatus;
+    status?: CONTENT_STATUS;
     inNewsfeedUserId?: string;
   };
   include?: {
@@ -49,7 +47,7 @@ export type FindContentProps = {
       userId: string;
     };
   };
-  attributes?: { exclude?: (keyof IPost)[] };
+  attributes?: { exclude?: (keyof PostAttributes)[] };
   orderOptions?: OrderOptions;
 };
 

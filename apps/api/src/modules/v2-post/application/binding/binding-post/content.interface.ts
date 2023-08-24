@@ -1,9 +1,9 @@
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { UserDto } from '../../../../v2-user/application';
-import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
-import { GroupDto } from '../../../../v2-group/application';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
+
+import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
 import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
+import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
 export interface IContentBinding {
   postBinding(
     postEntity: PostEntity,

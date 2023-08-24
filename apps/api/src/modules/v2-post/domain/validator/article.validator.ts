@@ -1,18 +1,23 @@
-import { uniq } from 'lodash';
-import { RULES } from '../../constant';
 import { Inject, Injectable } from '@nestjs/common';
-import { ArticleEntity } from '../model/content';
+import { uniq } from 'lodash';
+
 import { UserDto } from '../../../v2-user/application';
+import { RULES } from '../../constant';
 import { ArticleLimitAttachedSeriesException } from '../exception';
-import { CONTENT_VALIDATOR_TOKEN, IArticleValidator, IContentValidator } from './interface';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
+import { ArticleEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../service-adapter-interface /group-adapter.interface';
+
+import { CONTENT_VALIDATOR_TOKEN, IArticleValidator, IContentValidator } from './interface';
 
 @Injectable()
 export class ArticleValidator implements IArticleValidator {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    protected _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -21,7 +26,7 @@ export class ArticleValidator implements IArticleValidator {
 
   public async validateArticle(articleEntity: ArticleEntity, actor: UserDto): Promise<void> {
     const groupIds = articleEntity.get('groupIds');
-    const groups = await this._groupAppService.findAllByIds(groupIds);
+    const groups = await this._groupAdapter.getGroupByIds(groupIds);
     const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
     articleEntity.setCommunity(communityIds);
@@ -53,7 +58,9 @@ export class ArticleValidator implements IArticleValidator {
       },
     })) as ArticleEntity;
 
-    if (!contentWithArchivedGroups) return;
+    if (!contentWithArchivedGroups) {
+      return;
+    }
 
     const series = uniq([
       ...articleEntity.getSeriesIds(),

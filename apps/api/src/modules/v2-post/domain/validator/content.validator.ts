@@ -1,5 +1,7 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { subject } from '@casl/ability';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants';
@@ -7,16 +9,7 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../../../v2-group/application';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
 import { PostType } from '../../data-type';
 import {
   ContentAccessDeniedException,
@@ -31,14 +24,18 @@ import { UserNoBelongGroupException } from '../exception/external.exception';
 import { SeriesEntity, ContentEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../service-adapter-interface /group-adapter.interface';
 
 import { IContentValidator } from './interface';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected readonly _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    protected readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_APPLICATION_TOKEN)
     protected readonly _userApplicationService: IUserApplicationService,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
@@ -53,7 +50,7 @@ export class ContentValidator implements IContentValidator {
     postType?: PostType | CONTENT_TYPE
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
-    const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
+    const groups = await this._groupAdapter.getGroupByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
     const permissionKey = this.postTypeToPermissionKey(postType);
     for (const group of groups) {
@@ -76,7 +73,7 @@ export class ContentValidator implements IContentValidator {
     groupAudienceIds: string[]
   ): Promise<void> {
     const notEditSettingInGroups: GroupDto[] = [];
-    const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
+    const groups = await this._groupAdapter.getGroupByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
     for (const group of groups) {
       if (
@@ -200,7 +197,7 @@ export class ContentValidator implements IContentValidator {
         },
         where: {
           ids: seriesIds,
-          type: PostType.SERIES,
+          type: CONTENT_TYPE.SERIES,
           groupArchived: false,
         },
       });

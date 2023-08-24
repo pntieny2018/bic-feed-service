@@ -323,7 +323,7 @@ export class ArticleDomainService implements IArticleDomainService {
       return;
     }
 
-    await this._contentRepository.update(articleEntity);
+    return this._contentRepository.update(articleEntity);
   }
 
   private async _setArticleEntityAttributes(

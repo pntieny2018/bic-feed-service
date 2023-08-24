@@ -1,18 +1,24 @@
-import { Op, WhereOptions } from 'sequelize';
+import {
+  ILibCategoryQuery,
+  LIB_CATEGORY_QUERY_TOKEN,
+} from '@libs/database/postgres/query/interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op, WhereOptions } from 'sequelize';
+
 import { CategoryModel, ICategory } from '../../../../database/models/category.model';
-import { FindCategoryProps, ICategoryRepository } from '../../domain/repositoty-interface';
 import { CategoryEntity } from '../../domain/model/category';
-import { CATEGORY_FACTORY_TOKEN, ICategoryFactory } from '../../domain/factory/interface';
+import { FindCategoryProps, ICategoryRepository } from '../../domain/repositoty-interface';
+import { CategoryMapper } from '../mapper/category.mapper';
 
 @Injectable()
 export class CategoryRepository implements ICategoryRepository {
   public constructor(
     @InjectModel(CategoryModel)
     private readonly _categoryModel: typeof CategoryModel,
-    @Inject(CATEGORY_FACTORY_TOKEN)
-    private readonly _categoryFactory: ICategoryFactory
+    @Inject(LIB_CATEGORY_QUERY_TOKEN)
+    private readonly _libCategoryQuery: ILibCategoryQuery,
+    private readonly _categoryMapper: CategoryMapper
   ) {}
 
   public async count(options: FindCategoryProps): Promise<number> {
@@ -21,9 +27,8 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   public async findAll(options: FindCategoryProps): Promise<CategoryEntity[]> {
-    const where = this._getCondition(options);
-    const rows = await this._categoryModel.findAll({ where });
-    return rows.map((row) => this._categoryFactory.reconstitute(row));
+    const categories = await this._libCategoryQuery.findAll(options);
+    return categories.map((category) => this._categoryMapper.toDomain(category));
   }
 
   private _getCondition(options: FindCategoryProps): WhereOptions<ICategory> {

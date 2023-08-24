@@ -1,11 +1,10 @@
 import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
 import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { GroupDto } from '../../../../v2-group/application';
-import { GroupPrivacy } from '../../../../v2-group/data-type';
-import { PostLang, PostPrivacy, PostStatus, PostType } from '../../../data-type';
+import { PostType } from '../../../data-type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
@@ -23,9 +22,9 @@ export type ContentAttributes = {
   isHidden: boolean;
   createdBy: string;
   updatedBy: string;
-  privacy: PostPrivacy | PRIVACY;
-  status: PostStatus | CONTENT_STATUS;
-  type: PostType | CONTENT_TYPE;
+  privacy: PRIVACY;
+  status: CONTENT_STATUS;
+  type: CONTENT_TYPE;
   setting: PostSettingAttributes;
   media?: {
     files: FileEntity[];
@@ -40,7 +39,7 @@ export type ContentAttributes = {
   errorLog?: any;
   publishedAt?: Date;
   scheduledAt?: Date;
-  lang?: PostLang | LANGUAGE;
+  lang?: LANGUAGE;
   groupIds?: string[];
   communityIds?: string[];
   quiz?: QuizEntity;
@@ -122,27 +121,27 @@ export class ContentEntity<
     let totalPrivate = 0;
     let totalClosed = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.OPEN) {
-        this._props.privacy = PostPrivacy.OPEN;
+      if (group.privacy === PRIVACY.OPEN) {
+        this._props.privacy = PRIVACY.OPEN;
         return;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) {
+      if (group.privacy === PRIVACY.CLOSED) {
         totalClosed++;
       }
-      if (group.privacy === GroupPrivacy.PRIVATE) {
+      if (group.privacy === PRIVACY.PRIVATE) {
         totalPrivate++;
       }
     }
 
     if (totalClosed > 0) {
-      this._props.privacy = PostPrivacy.CLOSED;
+      this._props.privacy = PRIVACY.CLOSED;
     }
     if (totalPrivate > 0) {
-      this._props.privacy = PostPrivacy.PRIVATE;
+      this._props.privacy = PRIVACY.PRIVATE;
     }
 
     if (totalClosed === 0 && totalPrivate === 0) {
-      this._props.privacy = PostPrivacy.SECRET;
+      this._props.privacy = PRIVACY.SECRET;
     }
   }
 
@@ -175,15 +174,15 @@ export class ContentEntity<
   }
 
   public isPublished(): boolean {
-    return this._props.status === PostStatus.PUBLISHED;
+    return this._props.status === CONTENT_STATUS.PUBLISHED;
   }
 
   public isWaitingSchedule(): boolean {
-    return this._props.status === PostStatus.WAITING_SCHEDULE;
+    return this._props.status === CONTENT_STATUS.WAITING_SCHEDULE;
   }
 
   public isProcessing(): boolean {
-    return this._props.status === PostStatus.PROCESSING;
+    return this._props.status === CONTENT_STATUS.PROCESSING;
   }
 
   public isVisible(): boolean {
@@ -195,11 +194,11 @@ export class ContentEntity<
   }
 
   public isOpen(): boolean {
-    return this._props.privacy === PostPrivacy.OPEN;
+    return this._props.privacy === PRIVACY.OPEN;
   }
 
   public isClosed(): boolean {
-    return this._props.privacy === PostPrivacy.CLOSED;
+    return this._props.privacy === PRIVACY.CLOSED;
   }
 
   /**
@@ -210,19 +209,19 @@ export class ContentEntity<
       this._state.isChangeStatus = true;
       this._props.publishedAt = new Date();
     }
-    this._props.status = PostStatus.PUBLISHED;
+    this._props.status = CONTENT_STATUS.PUBLISHED;
   }
 
   public isDraft(): boolean {
-    return this._props.status === PostStatus.DRAFT;
+    return this._props.status === CONTENT_STATUS.DRAFT;
   }
 
   public setProcessing(): void {
-    this._props.status = PostStatus.PROCESSING;
+    this._props.status = CONTENT_STATUS.PROCESSING;
   }
 
   public setScheduleFailed(): void {
-    this._props.status = PostStatus.SCHEDULE_FAILED;
+    this._props.status = CONTENT_STATUS.SCHEDULE_FAILED;
   }
 
   public setErrorLog(errorLog: unknown): void {
@@ -238,7 +237,7 @@ export class ContentEntity<
   }
 
   public setDraft(): void {
-    this._props.status = PostStatus.DRAFT;
+    this._props.status = CONTENT_STATUS.DRAFT;
   }
 
   public setGroups(groupIds: string[]): void {
