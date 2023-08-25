@@ -78,6 +78,7 @@ export const ERRORS = {
   QUIZ_PARTICIPANT_NOT_FINISHED: 'quiz_participant.not_finished',
   QUIZ_QUESTION_LIMIT_EXCEEDED: 'quiz_question.limit_exceeded',
   QUIZ_QUESTION_NOT_FOUND: 'quiz_question.not_found',
+  QUIZ_COUNT_TOKENS_FAILED: 'quiz.count_tokens_failed',
 
   // REACTION
   REACTION_NOT_FOUND: 'reaction.not_found',
