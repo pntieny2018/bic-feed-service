@@ -1,18 +1,15 @@
 import { TagAttributes, TagModel } from '@libs/database/postgres/model/tag.model';
-import { Inject, Injectable } from '@nestjs/common';
-import { EventPublisher } from '@nestjs/cqrs';
+import { Injectable } from '@nestjs/common';
 
 import { TagEntity } from '../../domain/model/tag';
 
 @Injectable()
 export class TagMapper {
-  public constructor(@Inject(EventPublisher) private readonly _eventPublisher: EventPublisher) {}
-
   public toDomain(model: TagModel): TagEntity {
     if (model === null) {
       return null;
     }
-    return this._eventPublisher.mergeObjectContext(new TagEntity(model.toJSON()));
+    return new TagEntity(model.toJSON());
   }
 
   public toPersistence(entity: TagEntity): TagAttributes {

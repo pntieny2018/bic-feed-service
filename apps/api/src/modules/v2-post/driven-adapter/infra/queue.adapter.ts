@@ -2,8 +2,8 @@ import { QUEUES } from '@libs/common/constants';
 import { IQueueService, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
 import { Inject } from '@nestjs/common';
 
-import { ContentScheduledJobDto, QuizParticipantResultJobDto } from '../../application/dto';
-import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
+import { ArticleScheduledJobDto, QuizParticipantResultJobDto } from '../../application/dto';
+import { ArticleScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
@@ -25,13 +25,13 @@ export class QueueAdapter implements IQueueAdapter {
     ]);
   }
 
-  public async addContentScheduledJob(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._queueService.addBulkJobs<ContentScheduledJobDto>(
-      payloads.map(({ contentId, contentOwner }) => ({
-        name: QUEUES.CONTENT.JOBS.PROCESS_CONTENT_SCHEDULED,
-        data: { contentId, contentOwner },
-        opts: { jobId: contentId },
-        queue: { name: QUEUES.CONTENT.QUEUE_NAME },
+  public async addArticleScheduledJob(payloads: ArticleScheduledJobPayload[]): Promise<void> {
+    await this._queueService.addBulkJobs<ArticleScheduledJobDto>(
+      payloads.map(({ articleId, articleOwner }) => ({
+        name: QUEUES.ARTICLE_SCHEDULED.JOBS.PROCESS_ARTICLE_SCHEDULED,
+        data: { articleId, articleOwner },
+        opts: { jobId: articleId },
+        queue: { name: QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME },
       }))
     );
   }

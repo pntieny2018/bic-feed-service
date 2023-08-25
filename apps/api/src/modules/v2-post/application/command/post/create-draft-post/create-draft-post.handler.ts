@@ -35,13 +35,13 @@ export class CreateDraftPostHandler
       userId: authUser.id,
       groups,
     });
-    const data = new CreateDraftPostDto({
+
+    return new CreateDraftPostDto({
       id: postEntity.get('id'),
       audience: {
         groups,
       },
       setting: postEntity.get('setting'),
     });
-    return data;
   }
 }

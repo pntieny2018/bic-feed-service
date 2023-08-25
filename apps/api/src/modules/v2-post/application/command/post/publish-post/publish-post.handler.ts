@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { cloneDeep, uniq } from 'lodash';
+import { uniq } from 'lodash';
 
 import { KAFKA_TOPIC } from '../../../../../../../src/common/constants';
 import {
@@ -11,11 +11,11 @@ import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
 } from '../../../../../v2-user/application';
+import { PostStatus } from '../../../../data-type';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { ContentNotFoundException } from '../../../../domain/exception';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
 import { PostEntity } from '../../../../domain/model/content';
 import {
@@ -36,82 +36,61 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: ContentBinding,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {
-    const { authUser, id, groupIds, mentionUserIds } = command.payload;
-    const postEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        mustIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-      },
-    });
-    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) {
-      throw new ContentNotFoundException();
-    }
+    const postEntity = await this._postDomainService.publishPost(command.payload);
 
-    if (postEntity.isPublished()) {
+    if (postEntity.getSnapshot().status === PostStatus.PUBLISHED) {
       return this._contentBinding.postBinding(postEntity, {
-        actor: authUser,
-        authUser,
+        actor: command.payload.authUser,
+        authUser: command.payload.authUser,
       });
     }
 
-    const postEntityBefore = cloneDeep(postEntity);
-    const groups = await this._groupApplicationService.findAllByIds(
-      groupIds || postEntity.get('groupIds')
-    );
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
-      withGroupJoined: true,
-    });
-
-    await this._postDomainService.publishPost({
-      postEntity: postEntity as PostEntity,
-      newData: {
-        ...command.payload,
-        mentionUsers,
-        groups,
-      },
-    });
-
     if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
-      await this._postDomainService.markSeen(postEntity.get('id'), authUser.id);
+      await this._postDomainService.markSeen(postEntity.get('id'), command.payload.authUser.id);
       postEntity.increaseTotalSeen();
     }
     if (postEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(postEntity.get('id'), authUser.id);
+      await this._postDomainService.markReadImportant(
+        postEntity.get('id'),
+        command.payload.authUser.id
+      );
       postEntity.setMarkReadImportant();
     }
 
+    const groups = await this._groupApplicationService.findAllByIds(
+      command.payload?.groupIds || postEntity.get('groupIds')
+    );
+    const mentionUsers = await this._userApplicationService.findAllByIds(
+      command.payload.mentionUserIds,
+      {
+        withGroupJoined: true,
+      }
+    );
+
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
-      actor: authUser,
-      authUser,
+      actor: command.payload.authUser,
+      authUser: command.payload.authUser,
       mentionUsers,
     });
-    await this._sendEvent(postEntityBefore, postEntity, result);
+    await this._sendEvent(postEntity, result);
 
     return result;
   }
 
-  private async _sendEvent(
-    postEntityBefore: PostEntity,
-    postEntityAfter: PostEntity,
-    result: PostDto
-  ): Promise<void> {
+  private async _sendEvent(postEntityAfter: PostEntity, result: PostDto): Promise<void> {
+    const postBefore = postEntityAfter.getSnapshot();
     if (!postEntityAfter.isChanged()) {
       return;
     }
@@ -134,18 +113,18 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       const payload: PostChangedMessagePayload = {
         state: postEntityAfter.getState().isChangeStatus ? 'publish' : 'update',
         before: {
-          id: postEntityBefore.getId(),
+          id: postBefore.id,
           actor: result.actor,
-          setting: postEntityBefore.get('setting'),
-          type: postEntityBefore.get('type'),
-          groupIds: postEntityBefore.get('groupIds'),
-          content: postEntityBefore.get('content'),
-          mentionUserIds: postEntityBefore.get('mentionUserIds'),
-          createdAt: postEntityBefore.get('createdAt'),
-          updatedAt: postEntityBefore.get('updatedAt'),
-          lang: postEntityBefore.get('lang'),
-          isHidden: postEntityBefore.get('isHidden'),
-          status: postEntityBefore.get('status'),
+          setting: postBefore.setting,
+          type: postBefore.type,
+          groupIds: postBefore.groupIds,
+          content: postBefore.content,
+          mentionUserIds: postBefore.mentionUserIds,
+          createdAt: postBefore.createdAt,
+          updatedAt: postBefore.updatedAt,
+          lang: postBefore.lang,
+          isHidden: postBefore.isHidden,
+          status: postBefore.status,
         },
         after: {
           id: postEntityAfter.get('id'),

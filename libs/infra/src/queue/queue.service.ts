@@ -14,13 +14,13 @@ export class QueueService implements IQueueService {
     private readonly _quizPendingQueue: Queue,
     @InjectQueue(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)
     private readonly _quizParticipantQueue: Queue,
-    @InjectQueue(QUEUES.CONTENT.QUEUE_NAME)
+    @InjectQueue(QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME)
     private readonly _contentQueue: Queue
   ) {
     this.queues = {
       [QUEUES.QUIZ_PENDING.QUEUE_NAME]: _quizPendingQueue,
       [QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME]: _quizParticipantQueue,
-      [QUEUES.CONTENT.QUEUE_NAME]: _contentQueue,
+      [QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME]: _contentQueue,
     };
 
     Object.values(this.queues).forEach((queue) => {
@@ -30,7 +30,6 @@ export class QueueService implements IQueueService {
         )
       );
       queue.on('failed', (job, error) => {
-        console.log(error);
         if (job.attemptsMade === job.opts.attempts) {
           this.logger.error(
             `Job ${job.id} of type ${job.name} with data ${JSON.stringify(job.data)} failed. ${

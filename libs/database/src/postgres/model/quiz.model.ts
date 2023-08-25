@@ -56,9 +56,6 @@ export class QuizModel extends Model<QuizAttributes, InferCreationAttributes<Qui
   public numberOfQuestionsDisplay: number;
 
   @Column
-  public numberOfAnswersDisplay: number;
-
-  @Column
   public isRandom: boolean;
 
   @Column({

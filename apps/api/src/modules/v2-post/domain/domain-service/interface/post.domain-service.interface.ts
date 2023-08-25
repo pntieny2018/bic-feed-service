@@ -1,5 +1,6 @@
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
+import { UpdatePostCommandPayload } from '../../../application/command/post';
 import { PostEntity, ArticleEntity } from '../../model/content';
 
 export type PublishPostPayload = {
@@ -41,11 +42,21 @@ export type PostPublishProps = {
     mentionUsers: UserDto[];
   };
 };
+
+export type UpdatePostProps = UpdatePostCommandPayload;
+
+export type UpdatePostResult = {
+  postEntity: PostEntity;
+  groups?: GroupDto[];
+  mentionUsers?: UserDto[];
+};
+
 export interface IPostDomainService {
+  getPostById(postId: string, authUserId: string): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
-  publishPost(input: PostPublishProps): Promise<void>;
-  updatePost(input: PostPublishProps): Promise<void>;
+  publishPost(input: UpdatePostProps): Promise<PostEntity>;
+  updatePost(props: UpdatePostProps): Promise<PostEntity>;
   updateSetting(input: {
     contentId: string;
     authUser: UserDto;
@@ -54,7 +65,7 @@ export interface IPostDomainService {
     isImportant: boolean;
     importantExpiredAt: Date;
   }): Promise<void>;
-  autoSavePost(input: PostPublishProps): Promise<void>;
+  autoSavePost(input: UpdatePostProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
   delete(id: string): Promise<void>;

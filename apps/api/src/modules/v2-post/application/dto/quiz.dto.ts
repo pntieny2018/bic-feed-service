@@ -1,4 +1,4 @@
-import { QUIZ_RESULT_STATUS } from '@beincom/constants';
+import { QUIZ_PROCESS_STATUS, QUIZ_RESULT_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
@@ -20,12 +20,11 @@ export class QuizDto {
   public title: string;
   public description?: string;
   public numberOfQuestionsDisplay?: number;
-  public numberOfAnswersDisplay?: number;
   public questions?: QuestionDto[];
   public createdAt: Date;
   public updatedAt: Date;
-  public status: QuizStatus;
-  public genStatus: QuizGenStatus;
+  public status: QuizStatus | QUIZ_STATUS;
+  public genStatus: QuizGenStatus | QUIZ_PROCESS_STATUS;
   public error?: {
     code: string;
     message: string;

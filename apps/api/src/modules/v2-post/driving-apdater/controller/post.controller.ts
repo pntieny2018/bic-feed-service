@@ -4,8 +4,7 @@ import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PostStatus } from '../../../../database/models/post.model';
 import { UserDto } from '../../../v2-user/application';
