@@ -107,7 +107,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
         })
       )
     ) {
-      throw new DomainModelException(`Dont have correct answer`);
+      throw new DomainModelException(`Don't have correct answer`);
     }
     if (this._props.questions?.length > RULES.QUIZ_MAX_QUESTION) {
       throw new DomainModelException(
@@ -182,6 +182,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   public isVisible(userId: string): boolean {
     return this._props.status === QuizStatus.PUBLISHED || this.isOwner(userId);
   }
+
   public setFail(error: { code: string; message: string }): void {
     this._props.error = error;
     this._props.genStatus = QuizGenStatus.FAILED;
@@ -218,6 +219,9 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
 
     if (this._props.numberOfQuestionsDisplay > this._props.questions.length) {
       this._props.numberOfQuestionsDisplay = this._props.questions.length;
+    }
+    if (this._props.questions.length === 0) {
+      throw new DomainModelException(`Quiz must have at least one question`);
     }
   }
 }
