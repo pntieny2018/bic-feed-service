@@ -2,10 +2,6 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
-import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
@@ -21,9 +17,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: ContentBinding,
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
-    private readonly _articleDomainService: IArticleDomainService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected _groupAppService: IGroupApplicationService
+    private readonly _articleDomainService: IArticleDomainService
   ) {}
 
   public async execute(command: UpdateArticleCommand): Promise<ArticleDto> {

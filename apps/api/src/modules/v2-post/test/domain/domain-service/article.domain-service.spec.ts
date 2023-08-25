@@ -9,7 +9,7 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/media.domain-service.interface';
-import { ArticleDeletedEvent } from '../../../domain/event';
+import { ArticleDeletedEvent, ArticleUpdatedEvent } from '../../../domain/event';
 import { ContentAccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
 import {
   CATEGORY_REPOSITORY_TOKEN,
@@ -205,6 +205,68 @@ describe('Article domain service', () => {
       jest.spyOn(articleEntityMock, 'isChanged').mockReturnValueOnce(false);
       try {
         await domainService.autoSave({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
+      }
+    });
+  });
+
+  describe('update', () => {
+    it('should update article successfully', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(false);
+      jest.spyOn(domainService as any, '_setArticleEntityAttributes').mockImplementation(jest.fn());
+      jest.spyOn(articleValidator, 'validateArticle').mockImplementation(jest.fn());
+      jest.spyOn(articleValidator, 'validateLimitedToAttachSeries').mockImplementation(jest.fn());
+      jest.spyOn(articleEntityMock, 'isChanged').mockReturnValueOnce(true);
+
+      await domainService.update({
+        id: 'id',
+        actor: userMock,
+      });
+      expect(contentRepository.update).toBeCalledWith(articleEntityMock);
+      expect(eventBus$.publish).toBeCalledWith(
+        new ArticleUpdatedEvent(articleEntityMock, userMock)
+      );
+    });
+
+    it('should not update article when article not found', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(undefined);
+      try {
+        await domainService.update({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not update article when article is hidden', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(true);
+      try {
+        await domainService.update({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not update article when article is not changed', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isChanged').mockReturnValueOnce(false);
+      try {
+        await domainService.update({
           id: 'id',
           actor: userMock,
         });
