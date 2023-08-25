@@ -18,10 +18,7 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../../../../domain/service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
 import { PostDto } from '../../../dto';

@@ -5,10 +5,7 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../../../../domain/service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
 
 import { ValidateSeriesTagsCommand } from './validate-series-tag.command';

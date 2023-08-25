@@ -5,7 +5,7 @@ import {
 } from '@libs/service/group/src/group.service.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { IGroupAdapter } from '../../domain/service-adapter-interface /group-adapter.interface';
+import { IGroupAdapter } from '../../domain/service-adapter-interface';
 
 @Injectable()
 export class GroupAdapter implements IGroupAdapter {

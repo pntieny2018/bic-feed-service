@@ -16,10 +16,7 @@ import {
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
 import { SeriesEntity } from '../../../../domain/model/content';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../../../../domain/service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';

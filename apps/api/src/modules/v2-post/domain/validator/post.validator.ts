@@ -19,10 +19,7 @@ import {
   IMediaRepository,
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
 import { ContentValidator } from './content.validator';
 import { IPostValidator } from './interface';

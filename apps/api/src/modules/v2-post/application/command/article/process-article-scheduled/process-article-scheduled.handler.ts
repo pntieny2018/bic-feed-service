@@ -9,7 +9,7 @@ import {
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { IQueueAdapter, QUEUE_ADAPTER } from '../../../../domain/infra-adapter-interface';
-import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface ';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 
 import { ProcessArticleScheduledCommand } from './process-article-scheduled.command';
 

@@ -8,10 +8,7 @@ import {
 } from '../../../authority/application/authority.app-service.interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
 import { UserNoBelongGroupException } from '../exception';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
 import { IMentionValidator } from './interface';
 

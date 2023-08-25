@@ -17,11 +17,12 @@ import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
-import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface ';
 import {
+  IUserAdapter,
+  USER_ADAPTER,
   GROUP_ADAPTER,
   IGroupAdapter,
-} from '../../../domain/service-adapter-interface /group-adapter.interface';
+} from '../../../domain/service-adapter-interface';
 import {
   FileDto,
   ImageDto,

@@ -6,10 +6,7 @@ import { RULES } from '../../constant';
 import { ArticleLimitAttachedSeriesException } from '../exception';
 import { ArticleEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
 import { CONTENT_VALIDATOR_TOKEN, IArticleValidator, IContentValidator } from './interface';
 

@@ -19,10 +19,7 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
