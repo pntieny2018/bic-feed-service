@@ -1,14 +1,16 @@
-import { PostStatus, PostType } from '../../../data-type';
-import { TagDto } from '../tag.dto';
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+
 import { UserDto } from '../../../../v2-user/application';
-import { PostSettingDto } from '../post.dto';
+import { PostStatus, PostType } from '../../../data-type';
 import { FileDto, ImageDto, VideoDto } from '../media.dto';
+import { PostSettingDto } from '../post.dto';
+import { TagDto } from '../tag.dto';
 
 export class ArticleMessagePayload {
   public id: string;
   public actor: UserDto;
   public setting: PostSettingDto;
-  public type: PostType;
+  public type: PostType | CONTENT_TYPE;
   public groupIds: string[];
   public communityIds?: string[];
   public media?: {
@@ -29,7 +31,7 @@ export class ArticleMessagePayload {
   public summary: string;
   public lang: string;
   public isHidden: boolean;
-  public status: PostStatus;
+  public status: PostStatus | CONTENT_STATUS;
   public createdAt: Date;
   public updatedAt: Date;
   public publishedAt: Date;

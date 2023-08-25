@@ -8,11 +8,11 @@ export class QuizParticipantResultJobDto {
   }
 }
 
-export class ContentScheduledJobDto {
-  public contentId: string;
-  public contentOwner: UserDto;
+export class ArticleScheduledJobDto {
+  public articleId: string;
+  public articleOwner: UserDto;
 
-  public constructor(data: Partial<ContentScheduledJobDto>) {
+  public constructor(data: Partial<ArticleScheduledJobDto>) {
     Object.assign(this, data);
   }
 }

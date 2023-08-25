@@ -1,11 +1,14 @@
-import { LinkPreviewDto } from './link-preview.dto';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+
 import { GroupDto } from '../../../v2-group/application';
 import { UserDto } from '../../../v2-user/application';
 import { PostPrivacy, PostStatus, PostType } from '../../data-type';
-import { UserMentionDto } from './user-mention.dto';
-import { TagDto } from './tag.dto';
-import { QuizDto } from './quiz.dto';
+
+import { LinkPreviewDto } from './link-preview.dto';
 import { FileDto, ImageDto, VideoDto } from './media.dto';
+import { QuizDto } from './quiz.dto';
+import { TagDto } from './tag.dto';
+import { UserMentionDto } from './user-mention.dto';
 
 export class PostDto {
   public id: string;
@@ -28,9 +31,9 @@ export class PostDto {
     videos: VideoDto[];
   };
   public actor: UserDto;
-  public status: PostStatus;
-  public privacy: PostPrivacy;
-  public type: PostType;
+  public status: PostStatus | CONTENT_STATUS;
+  public privacy: PostPrivacy | PRIVACY;
+  public type: PostType | CONTENT_TYPE;
   public markedReadPost: boolean;
   public isSaved: boolean;
   public isReported: boolean;

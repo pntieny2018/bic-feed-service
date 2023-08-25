@@ -30,6 +30,10 @@ export type DeleteReactionProps = {
 export interface IReactionDomainService {
   getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>>;
 
+  getAndCountReactionByContentIds(
+    contentIds: string[]
+  ): Promise<Map<string, Record<string, number>[]>>;
+
   createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
 
   deleteReaction(props: DeleteReactionProps): Promise<void>;

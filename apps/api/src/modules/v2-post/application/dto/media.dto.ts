@@ -1,3 +1,5 @@
+import { IMAGE_RESOURCE } from '@beincom/constants';
+
 import { ImageResource } from '../../data-type';
 
 export class FileDto {
@@ -20,7 +22,7 @@ export class ImageDto {
   public source: string;
   public createdBy: string;
   public mimeType: string;
-  public resource: ImageResource;
+  public resource: ImageResource | IMAGE_RESOURCE;
   public width: number;
   public height: number;
   public status: string;

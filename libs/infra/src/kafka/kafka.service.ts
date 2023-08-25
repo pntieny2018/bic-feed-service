@@ -11,7 +11,7 @@ import { IKafkaService } from './kafka.service.interface';
 @Injectable()
 export class KafkaService implements IKafkaService {
   private readonly _logger = new Logger(KafkaService.name);
-  public _producerOb: Observable<Producer>;
+  private readonly _producerOb: Observable<Producer>;
 
   public constructor(
     @Inject(KAFKA_TOKEN) private readonly _kafkaClient: ClientKafka,

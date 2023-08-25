@@ -12,6 +12,7 @@ export type UpdateSeriesProps = UpdateSeriesCommandPayload;
 export type DeleteSeriesProps = DeleteSeriesCommandPayload;
 
 export interface ISeriesDomainService {
+  findSeriesByIds(seriesId: string[]): Promise<SeriesEntity[]>;
   create(data: CreateSeriesProps): Promise<SeriesEntity>;
   update(input: UpdateSeriesProps): Promise<SeriesEntity>;
   delete(input: DeleteSeriesProps): Promise<void>;

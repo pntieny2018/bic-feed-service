@@ -175,7 +175,9 @@ export class QuizDomainService implements IQuizDomainService {
       throw new QuizNotFoundException();
     }
 
-    const quizEntity = await this._quizRepository.findOne(quizQuestionEntity.get('quizId'));
+    const quizEntity = await this._quizRepository.findQuizWithQuestions(
+      quizQuestionEntity.get('quizId')
+    );
 
     if (!quizEntity) {
       throw new QuizNotFoundException();
@@ -183,8 +185,11 @@ export class QuizDomainService implements IQuizDomainService {
 
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
+    quizEntity.deleteQuestion(id);
+
     try {
       await this._quizRepository.deleteQuestion(id);
+      await this._quizRepository.update(quizEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -224,6 +229,7 @@ export class QuizDomainService implements IQuizDomainService {
     if (quizEntity.isRandomQuestion()) {
       quizParticipant.shuffleQuestions();
     }
+    quizParticipant.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
     try {
       await this._quizParticipantRepository.create(quizParticipant);
       this._eventService.publish(
@@ -303,7 +309,12 @@ export class QuizDomainService implements IQuizDomainService {
     return quizEntity;
   }
 
-  public async generateQuestions(quizEntity: QuizEntity): Promise<void> {
+  public async generateQuestions(quizId: string): Promise<void> {
+    const quizEntity = await this._quizRepository.findOne(quizId);
+    if (!quizEntity) {
+      return;
+    }
+
     const cloneQuizEntity = cloneDeep(quizEntity);
     if (cloneQuizEntity.isProcessing()) {
       return;

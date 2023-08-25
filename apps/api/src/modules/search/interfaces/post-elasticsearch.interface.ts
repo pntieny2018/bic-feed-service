@@ -1,3 +1,5 @@
+import { CONTENT_TYPE } from '@beincom/constants';
+
 import { MediaType } from '../../../database/models/media.model';
 import { PostType } from '../../../database/models/post.model';
 
@@ -54,7 +56,7 @@ export interface IDataPostToAdd {
   updatedAt: Date;
   publishedAt: Date;
   createdBy: string;
-  type: PostType;
+  type: PostType | CONTENT_TYPE;
   isHidden: boolean;
   title?: string;
   summary?: string;

@@ -28,7 +28,6 @@ export interface IQuiz {
   numberOfQuestions: number;
   numberOfAnswers: number;
   numberOfQuestionsDisplay: number;
-  numberOfAnswersDisplay: number;
   isRandom: boolean;
   questions: IQuizQuestion[];
   meta: any;
@@ -74,9 +73,6 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
 
   @Column
   public numberOfQuestionsDisplay: number;
-
-  @Column
-  public numberOfAnswersDisplay: number;
 
   @Column
   public isRandom: boolean;
