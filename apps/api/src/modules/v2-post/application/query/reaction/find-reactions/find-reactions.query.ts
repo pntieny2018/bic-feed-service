@@ -1,8 +1,10 @@
 import { IQuery } from '@nestjs/cqrs';
 
 import { OrderEnum } from '../../../../../../common/dto';
+import { UserDto } from '../../../../../v2-user/application';
 
 type Props = {
+  authUser: UserDto;
   reactionName: string;
   targetId: string;
   target: string;

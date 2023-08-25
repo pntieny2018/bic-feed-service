@@ -74,7 +74,9 @@ export class CommentController {
     const data = await this._queryBus.execute(
       new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
     );
-    return data;
+    return instanceToInstance(data, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
   }
 
   @ApiOperation({ summary: 'Get comments around a comment' })
@@ -90,7 +92,9 @@ export class CommentController {
     const data = await this._queryBus.execute(
       new FindCommentsAroundIdQuery({ authUser: user, commentId, ...getCommentsAroundIdDto })
     );
-    return data;
+    return instanceToInstance(data, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
   }
 
   @ApiOperation({ summary: 'Create new comment' })

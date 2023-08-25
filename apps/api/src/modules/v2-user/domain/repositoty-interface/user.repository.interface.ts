@@ -7,6 +7,8 @@ export interface IUserRepository {
 
   findAllByIds(ids: string[]): Promise<UserEntity[]>;
 
+  findAllFromInternalByIds(ids: string[], authUserId: string): Promise<UserEntity[]>;
+
   canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean>;
 }
 

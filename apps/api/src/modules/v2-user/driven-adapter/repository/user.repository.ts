@@ -10,27 +10,8 @@ import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 import { AxiosHelper } from '../../../../common/helpers';
 import { IAxiosConfig } from '../../../../config/axios';
-import { UserBadge, UserEntity } from '../../domain/model/user';
+import { UserEntity, UserProps } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
-
-type Permission = {
-  communities: Record<string, string[]>;
-  groups: Record<string, string[]>;
-};
-type UserDataInCache = {
-  id: string;
-  username: string;
-  fullname: string;
-  avatar: string;
-  email: string;
-  groups: string[];
-  isDeactivated?: boolean;
-  permissions?: Permission;
-  isVerified?: boolean;
-  showingBadges?: UserBadge[];
-};
-
-type UserDataInRest = UserDataInCache;
 
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -60,7 +41,7 @@ export class UserRepository implements IUserRepository {
         if (response.status !== HttpStatus.OK) {
           return null;
         }
-        user = AxiosHelper.getDataResponse<UserDataInRest>(response);
+        user = AxiosHelper.getDataResponse<UserProps>(response);
       }
       return new UserEntity(user);
     } catch (ex) {
@@ -72,22 +53,7 @@ export class UserRepository implements IUserRepository {
   public async findOne(id: string): Promise<UserEntity> {
     let user = await this._getUserFromCacheById(id);
     if (!user) {
-      try {
-        const response = await lastValueFrom(
-          this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
-            params: {
-              ids: [id],
-            },
-            paramsSerializer: (params) => qs.stringify(params),
-          })
-        );
-        if (response.status !== HttpStatus.OK) {
-          return null;
-        }
-        user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
-      } catch (e) {
-        this._logger.debug(e);
-      }
+      user = (await this._getUsersFromIntenalByIds([id]))[0];
     }
     return new UserEntity(user);
   }
@@ -98,34 +64,30 @@ export class UserRepository implements IUserRepository {
     }
 
     const uniqueIds = uniq(ids);
+    const result = [];
     let users = await this._getUsersFromCacheByIds(uniqueIds);
 
     const notFoundUserIds = uniqueIds.filter((id) => !users.find((user) => user?.id === id));
-    try {
-      if (notFoundUserIds.length > 0) {
-        const response = await lastValueFrom(
-          this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
-            params: {
-              ids: notFoundUserIds,
-            },
-            paramsSerializer: (params) => qs.stringify(params),
-          })
-        );
-        if (response.status === HttpStatus.OK) {
-          users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
-        }
-      }
-    } catch (e) {
-      this._logger.debug(e);
+    if (notFoundUserIds.length > 0) {
+      const usersData = await this._getUsersFromIntenalByIds(notFoundUserIds);
+      users = users.concat(usersData);
     }
 
-    const result = [];
     for (const user of users) {
       if (user) {
         result.push(new UserEntity(user));
       }
     }
     return result;
+  }
+
+  public async findAllFromInternalByIds(ids: string[], authUserId: string): Promise<UserEntity[]> {
+    if (!ids || !ids.length) {
+      return [];
+    }
+    const uniqueIds = uniq(ids);
+    const usersData = await this._getUsersFromIntenalByIds(uniqueIds, authUserId);
+    return usersData.map((user) => new UserEntity(user));
   }
 
   /**
@@ -150,12 +112,12 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  private async _getUserProfileFromCache(username: string): Promise<UserDataInCache> {
+  private async _getUserProfileFromCache(username: string): Promise<UserProps> {
     const profileCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
-    return this._store.get<UserDataInCache>(profileCacheKey);
+    return this._store.get<UserProps>(profileCacheKey);
   }
 
-  private async _getUserFromCacheById(id: string): Promise<UserDataInCache> {
+  private async _getUserFromCacheById(id: string): Promise<UserProps> {
     if (!id) {
       return null;
     }
@@ -173,8 +135,35 @@ export class UserRepository implements IUserRepository {
     return user;
   }
 
-  private async _getUsersFromCacheByIds(ids: string[]): Promise<UserDataInCache[]> {
+  private async _getUsersFromCacheByIds(ids: string[]): Promise<UserProps[]> {
     const userCacheKeys = ids.map((id) => `${CACHE_KEYS.SHARE_USER}:${id}`);
     return this._store.mget(userCacheKeys);
+  }
+
+  private async _getUsersFromIntenalByIds(
+    ids: string[],
+    authUserId?: string
+  ): Promise<UserProps[]> {
+    let users: UserProps[] = [];
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+          params: {
+            ids,
+            ...(authUserId && {
+              actorId: authUserId,
+            }),
+          },
+          paramsSerializer: (params) => qs.stringify(params),
+        })
+      );
+      if (response.status === HttpStatus.OK) {
+        users = AxiosHelper.getDataArrayResponse<UserProps>(response);
+      }
+    } catch (e) {
+      this._logger.debug(e);
+    }
+
+    return users;
   }
 }
