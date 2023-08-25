@@ -24,10 +24,14 @@ export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, F
   ) {}
 
   public async execute(query: FindReactionsQuery): Promise<FindReactionsDto> {
+    const { authUser } = query.payload;
     const { rows, total } = await this._reactionDomainService.getReactions(query.payload);
 
     const actorIds = rows.map((r) => r.get('createdBy'));
-    const actors = await this._userAppService.findAllByIds(actorIds);
+    const actors = await this._userAppService.findAllAndFilterByPersonalVisibility(
+      actorIds,
+      authUser.id
+    );
     return new FindReactionsDto({
       rows: rows.map(
         (r: ReactionEntity) =>

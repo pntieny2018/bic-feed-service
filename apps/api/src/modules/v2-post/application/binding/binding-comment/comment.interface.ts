@@ -4,7 +4,10 @@ import { CommentResponseDto } from '../../../driving-apdater/dto/response';
 import { CommentDto } from '../../dto';
 
 export interface ICommentBinding {
-  commentsBinding(commentEntities: CommentEntity[]): Promise<CommentResponseDto[]>;
+  commentsBinding(
+    commentEntities: CommentEntity[],
+    authUser?: UserDto
+  ): Promise<CommentResponseDto[]>;
   commentBinding(
     commentEntity: CommentEntity,
     dataBinding?: {

@@ -26,16 +26,19 @@ export class CommentBinding implements ICommentBinding {
     @Inject(REACTION_QUERY_TOKEN)
     private readonly _reactionQuery: IReactionQuery
   ) {}
-
-  public async commentsBinding(rows: CommentEntity[]): Promise<CommentResponseDto[]> {
+  public async commentsBinding(
+    rows: CommentEntity[],
+    authUser?: UserDto
+  ): Promise<CommentResponseDto[]> {
     const userIdsNeedToFind = uniq([
       ...rows.map((item) => item.get('createdBy')),
       ...rows.map((item) => item.get('mentions')).flat(),
     ]);
 
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      authUser?.id
+    );
 
     const usersMapper = new Map<string, UserDto>(
       users.map((user) => {

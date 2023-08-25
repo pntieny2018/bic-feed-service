@@ -49,12 +49,12 @@ export class ContentBinding implements IContentBinding {
   ) {}
   public async postBinding(
     postEntity: PostEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
       series?: SeriesEntity[];
-      authUser?: UserDto;
+      authUser: UserDto;
       reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto> {
@@ -78,7 +78,9 @@ export class ContentBinding implements IContentBinding {
     if (dataBinding?.actor) {
       users.push(dataBinding.actor);
     }
+
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+
     if (postEntity.get('mentionUserIds') && users.length) {
       mentionUsers = this.mapMentionWithUserInfo(
         users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
@@ -189,10 +191,10 @@ export class ContentBinding implements IContentBinding {
 
   public async articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto> {
     let actor = dataBinding?.actor;
@@ -211,7 +213,7 @@ export class ContentBinding implements IContentBinding {
       (await this._groupAdapter.getGroupByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
     const communities = await this._groupAdapter.getGroupByIds(
@@ -325,10 +327,10 @@ export class ContentBinding implements IContentBinding {
 
   public async seriesBinding(
     seriesEntity: SeriesEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<SeriesDto> {
     const groups =

@@ -75,8 +75,8 @@ import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
 import {
-  ARTICLE_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
+  ARTICLE_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';

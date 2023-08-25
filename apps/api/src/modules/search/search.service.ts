@@ -355,7 +355,10 @@ export class SearchService {
       }
       return data;
     });
-    const users = await this.userAppService.findAllByIds(attrUserIds);
+    const users = await this.userAppService.findAllAndFilterByPersonalVisibility(
+      attrUserIds,
+      authUser.id
+    );
     const groups = await this.appGroupService.findAllByIds(attrGroupIds);
     const quizEntities = await this._quizRepository.findAll({
       where: {

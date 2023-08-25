@@ -24,4 +24,7 @@ export const ENDPOINT = {
       GET_IMAGES: '/internal/images/ids',
     },
   },
+  LAMBDA: {
+    COUNT_TOKEN: '/count-token',
+  },
 };
