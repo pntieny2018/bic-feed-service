@@ -1,22 +1,24 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
+
 import { PageDto, PageMetaDto } from '../../common/dto';
+import { DomainForbiddenException } from '../../common/exceptions';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostBindingService } from '../post/post-binding.service';
-import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { PostService } from '../post/post.service';
+import { ReactionService } from '../reaction';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { ReactionService } from '../reaction';
-import { DomainForbiddenException } from '../../common/exceptions';
-import { PostService } from '../post/post.service';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 
 @Injectable()
 export class FeedService {
@@ -169,7 +171,9 @@ export class FeedService {
 
   public async getPinnedList(groupId: string, authUser: UserDto): Promise<ArticleResponseDto[]> {
     const ids = await this._postService.getIdsPinnedInGroup(groupId, authUser?.id || null);
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
     const posts = await this._postService.getPostsByIds(ids, authUser?.id || null);
     const postsBoundData = await this._bindAndTransformData({
       posts,

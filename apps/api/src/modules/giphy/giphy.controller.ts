@@ -1,13 +1,15 @@
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Query } from '@nestjs/common';
-import { VERSIONS_SUPPORTED } from '../../common/constants';
+import { SentryService } from '@libs/infra/sentry';
 import { HttpService } from '@nestjs/axios';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+
+import { VERSIONS_SUPPORTED } from '../../common/constants';
+
 import { TrendingDto } from './dto/requests';
 import { SearchDto } from './dto/requests/search.dto';
 import { GiphyResponseDto } from './dto/responses/giphy-response.dto';
-import { getGiphyDetailInfo, GifType } from './giphy.util';
 import { DEFAULT_REQUEST_TIME_OUT } from './giphy.constants';
-import { SentryService } from '@app/sentry';
+import { getGiphyDetailInfo, GifType } from './giphy.util';
 
 @ApiTags('Giphy')
 @Controller({

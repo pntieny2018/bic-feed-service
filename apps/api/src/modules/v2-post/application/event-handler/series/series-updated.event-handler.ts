@@ -1,4 +1,3 @@
-import { KafkaService } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
@@ -10,13 +9,15 @@ import {
 } from '../../../../v2-group/application';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { SeriesUpdatedEvent } from '../../../domain/event';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { ImageDto } from '../../dto';
 import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @EventsHandler(SeriesUpdatedEvent)
 export class SeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEvent> {
   public constructor(
-    private readonly _kafkaService: KafkaService,
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userAppService: IUserApplicationService,
     @Inject(GROUP_APPLICATION_TOKEN)
@@ -77,7 +78,7 @@ export class SeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEve
       },
     };
 
-    this._kafkaService.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
+    this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
       key: seriesEntity.getId(),
       value: new SeriesChangedMessagePayload(payload),
     });

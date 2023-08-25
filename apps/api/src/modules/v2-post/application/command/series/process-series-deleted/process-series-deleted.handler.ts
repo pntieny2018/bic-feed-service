@@ -1,5 +1,5 @@
-import { SentryService } from '@app/sentry';
 import { CONTENT_TYPE } from '@beincom/constants';
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -8,14 +8,12 @@ import { StringHelper } from '../../../../../../common/helpers';
 import { NotificationService, TypeActivity, VerbActivity } from '../../../../../../notification';
 import { NotificationActivity } from '../../../../../../notification/dto/requests/notification-activity.dto';
 import { SearchService } from '../../../../../search/search.service';
-import { PostEntity } from '../../../../domain/model/content';
-import { ArticleEntity } from '../../../../domain/model/content/article.entity';
-import { ContentEntity } from '../../../../domain/model/content/content.entity';
+import { PostEntity, ArticleEntity, ContentEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import { SeriesMessagePayload } from '../../../dto/message/series.message-payload';
+import { SeriesMessagePayload } from '../../../dto/message';
 
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
 

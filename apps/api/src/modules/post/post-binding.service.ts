@@ -1,21 +1,23 @@
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../../database/models/post.model';
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Sequelize } from 'sequelize-typescript';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { SentryService } from '@app/sentry';
-import { ReactionService } from '../reaction';
-import { MentionService } from '../mention';
-import { PostResponseDto } from './dto/responses';
-import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { Sequelize } from 'sequelize-typescript';
+
 import { ArrayHelper } from '../../common/helpers';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { PostModel } from '../../database/models/post.model';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { MentionService } from '../mention';
+import { ReactionService } from '../reaction';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+
+import { PostResponseDto } from './dto/responses';
 
 @Injectable()
 export class PostBindingService {
@@ -62,7 +64,9 @@ export class PostBindingService {
       authUser?: UserDto;
     }
   ): Promise<PostResponseDto[]> {
-    if (posts.length === 0) return [];
+    if (posts.length === 0) {
+      return [];
+    }
     const processList = [];
     if (options?.shouldBindActor) {
       processList.push(this.bindActor(posts));
@@ -85,7 +89,9 @@ export class PostBindingService {
     if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
     }
-    if (processList.length === 0) return [];
+    if (processList.length === 0) {
+      return [];
+    }
     await Promise.all(processList);
     return posts;
   }
@@ -118,7 +124,9 @@ export class PostBindingService {
       const mappedGroups = dataGroups
         .filter((dataGroup) => {
           const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
-          if (isPostOutOfScope) return false;
+          if (isPostOutOfScope) {
+            return false;
+          }
 
           const isUserNotInGroup = !options?.authUser?.groups.includes(dataGroup.id);
           const isGuest = !options?.authUser;
@@ -153,12 +161,18 @@ export class PostBindingService {
   }
 
   private _getGroupIdsByPost(post: any): string[] {
-    if (post.groupIds) return post.groupIds;
+    if (post.groupIds) {
+      return post.groupIds;
+    }
     let postGroups = post.groups;
-    if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
+    if (post.audience?.groups) {
+      postGroups = post.audience?.groups;
+    } //bind for elasticsearch
     if (postGroups && postGroups.length) {
       return postGroups.map((postGroup) => {
-        if (postGroup.id) return postGroup.id;
+        if (postGroup.id) {
+          return postGroup.id;
+        }
         return postGroup.groupId;
       });
     }
@@ -193,7 +207,9 @@ export class PostBindingService {
     const rootGroupIds = [];
     for (const post of posts) {
       let groups = [];
-      if (post.audience?.groups) groups = post.audience?.groups; //bind for elasticsearch
+      if (post.audience?.groups) {
+        groups = post.audience?.groups;
+      } //bind for elasticsearch
 
       rootGroupIds.push(...this._getRootGroupIdsByGroups(groups));
     }
@@ -263,7 +279,9 @@ export class PostBindingService {
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
       if (findPost) {
-        if (attributes.includes('content')) post.content = findPost?.content || '';
+        if (attributes.includes('content')) {
+          post.content = findPost?.content || '';
+        }
         if (attributes.includes('commentsCount')) {
           post.commentsCount = findPost?.commentsCount || 0;
         }

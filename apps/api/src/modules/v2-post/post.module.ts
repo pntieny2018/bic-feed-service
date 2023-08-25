@@ -1,5 +1,5 @@
-import { KafkaModule } from '@app/kafka';
 import { EventModule } from '@libs/infra/event';
+import { KafkaModule } from '@libs/infra/kafka';
 import { QueueModule } from '@libs/infra/queue';
 import { GroupModule } from '@libs/service/group/group.module';
 import { UserModule } from '@libs/service/user/user.module';

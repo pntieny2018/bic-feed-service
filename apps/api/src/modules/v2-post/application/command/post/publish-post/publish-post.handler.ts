@@ -1,10 +1,9 @@
-import { KafkaService } from '@app/kafka';
-import { KAFKA_TOPIC } from '@app/kafka/kafka.constant';
 import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
+import { KAFKA_TOPIC } from '../../../../../../../src/common/constants';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
@@ -13,6 +12,7 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
 import { PostEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -38,11 +38,12 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: ContentBinding,
-    private readonly _kafkaService: KafkaService,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    private readonly _userApplicationService: IUserApplicationService,
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {
@@ -159,14 +160,14 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
           publishedAt: postEntityAfter.get('publishedAt'),
         },
       };
-      this._kafkaService.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
+      this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
         key: postEntityAfter.getId(),
         value: new PostChangedMessagePayload(payload),
       });
     }
 
     if (postEntityAfter.isProcessing() && postEntityAfter.getVideoIdProcessing()) {
-      this._kafkaService.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+      this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: { videoIds: [postEntityAfter.getVideoIdProcessing()] },
       });

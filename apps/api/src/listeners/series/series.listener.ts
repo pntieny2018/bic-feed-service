@@ -1,6 +1,8 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
+import { ArrayHelper } from '../../common/helpers';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import {
   SeriesHasBeenDeletedEvent,
@@ -9,16 +11,15 @@ import {
 } from '../../events/series';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostHistoryService } from '../../modules/post/post-history.service';
+import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
-import { PostActivityService, SeriesActivityService } from '../../notification/activities';
-import { NotificationService } from '../../notification';
-import { ArrayHelper } from '../../common/helpers';
+import { SeriesService } from '../../modules/series/series.service';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../modules/v2-group/application';
-import { PostService } from '../../modules/post/post.service';
-import { SeriesService } from '../../modules/series/series.service';
+import { NotificationService } from '../../notification';
+import { PostActivityService, SeriesActivityService } from '../../notification/activities';
 
 @Injectable()
 export class SeriesListener {
@@ -42,7 +43,9 @@ export class SeriesListener {
   public async onSeriesDeleted(event: SeriesHasBeenDeletedEvent): Promise<void> {
     this._logger.debug(`[SeriesHasBeenDeletedEvent] ${JSON.stringify(event.payload.series)}`);
     const { series } = event.payload;
-    if (series.status !== PostStatus.PUBLISHED) return;
+    if (series.status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     this._postServiceHistory.deleteEditedHistory(series.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -50,7 +53,9 @@ export class SeriesListener {
     });
 
     this._postSearchService.deletePostsToSearch([series]);
-    if (!series) return;
+    if (!series) {
+      return;
+    }
     const itemsSorted = series.items.sort(
       (a, b) => a['PostSeriesModel'].zindex - b['PostSeriesModel'].zindex
     );
@@ -58,7 +63,9 @@ export class SeriesListener {
       itemsSorted.map((item) => item.id)
     );
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
-    if (items.every((item) => item.createdBy === series.createdBy)) return;
+    if (items.every((item) => item.createdBy === series.createdBy)) {
+      return;
+    }
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
     await this._notificationService.publishPostNotification({
       key: `${series.id}`,

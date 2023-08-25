@@ -1,3 +1,4 @@
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -5,11 +6,12 @@ import { ClassTransformer } from 'class-transformer';
 import moment from 'moment';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { MediaService } from '../media';
+
 import { PostService } from './post.service';
-import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class PostCronService {
@@ -41,7 +43,9 @@ export class PostCronService {
       },
       paranoid: false,
     });
-    if (willDeletePosts.length === 0) return;
+    if (willDeletePosts.length === 0) {
+      return;
+    }
 
     const transaction = await this._sequelizeConnection.transaction();
 

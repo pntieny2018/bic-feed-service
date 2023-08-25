@@ -1,16 +1,17 @@
-import { KafkaService } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
 import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { SeriesDeletedEvent } from '../../../domain/event';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { SeriesChangedMessagePayload } from '../../dto/message';
 
 @EventsHandler(SeriesDeletedEvent)
 export class SeriesDeletedEventHandler implements IEventHandler<SeriesDeletedEvent> {
   public constructor(
-    private readonly _kafkaService: KafkaService,
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userAppService: IUserApplicationService
   ) {}
@@ -42,7 +43,7 @@ export class SeriesDeletedEventHandler implements IEventHandler<SeriesDeletedEve
       },
     };
 
-    this._kafkaService.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
+    this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.SERIES_CHANGED, {
       key: seriesEntity.getId(),
       value: new SeriesChangedMessagePayload(payload),
     });
