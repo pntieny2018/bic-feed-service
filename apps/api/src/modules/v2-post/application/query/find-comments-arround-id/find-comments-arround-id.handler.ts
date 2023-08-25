@@ -66,7 +66,8 @@ export class FindCommentsArroundIdHandler
       authUser,
     });
     const arroundTargetInstances = await this._commentBinding.commentBinding(
-      arroundTargetPagination.rows
+      arroundTargetPagination.rows,
+      authUser
     );
     const arroundTargetResult = new FindCommentsArroundIdDto(
       arroundTargetInstances,
@@ -83,7 +84,10 @@ export class FindCommentsArroundIdHandler
       });
 
       if (childsPagination && childsPagination.rows?.length) {
-        const childInstances = await this._commentBinding.commentBinding(childsPagination.rows);
+        const childInstances = await this._commentBinding.commentBinding(
+          childsPagination.rows,
+          authUser
+        );
         const childsResult = new FindCommentsArroundIdDto(childInstances, childsPagination.meta);
         for (const instance of arroundTargetResult.list) {
           if (instance.id === comment.get('id')) {
@@ -108,7 +112,8 @@ export class FindCommentsArroundIdHandler
       authUser,
     });
     const arroundParentInstances = await this._commentBinding.commentBinding(
-      arroundParentPagination.rows
+      arroundParentPagination.rows,
+      authUser
     );
     for (const instance of arroundParentInstances) {
       if (instance.id === parent.get('id')) {
