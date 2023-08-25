@@ -1,15 +1,16 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL as NIL_UUID } from 'uuid';
+
 import { getDatabaseConfig } from '../../config/database';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { FollowModel } from '../../database/models/follow.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
-import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { CommentNotFoundException } from '../../modules/v2-post/domain/exception';
+import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 
 @Injectable()
 export class CommentDissociationService {

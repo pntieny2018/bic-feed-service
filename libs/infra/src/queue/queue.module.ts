@@ -1,8 +1,9 @@
-import { SentryModule } from '@app/sentry';
 import { QUEUES } from '@libs/common/constants';
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { SentryModule } from '../sentry';
 
 import { IQueueConfig, configs } from './config';
 import { QUEUE_SERVICE_TOKEN } from './interfaces';

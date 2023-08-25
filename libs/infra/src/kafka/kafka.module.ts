@@ -1,10 +1,11 @@
-import { SentryModule } from '@app/sentry';
 import { HEADER_REQ_ID } from '@libs/common/constants';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { ClsModule } from 'nestjs-cls';
 import { v4 } from 'uuid';
+
+import { SentryModule } from '../sentry';
 
 import { IKafkaConfig, configs } from './config';
 import { KAFKA_TOKEN } from './kafka.constant';

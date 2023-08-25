@@ -1,7 +1,8 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
+import { isBoolean } from 'lodash';
 import {
   FindAttributeOptions,
   FindOptions,
@@ -13,11 +14,15 @@ import {
 } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
+
 import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
+import { ModelHelper } from '../../common/helpers/model.helper';
+import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -34,29 +39,19 @@ import { ReportContentDetailModel } from '../../database/models/report-content-d
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
+import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { ReportTo, TargetType } from '../report-content/contstants';
-import { GetPostDto } from './dto/requests';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostResponseDto } from './dto/responses';
-import { PostBindingService } from './post-binding.service';
-import { PostHelper } from './post.helper';
-import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
-import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
-import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
-import { getDatabaseConfig } from '../../config/database';
-import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { RULES } from '../v2-post/constant';
-import { isBoolean } from 'lodash';
 import {
   PostLimitAttachedSeriesException,
   ArticleLimitAttachedSeriesException,
@@ -65,6 +60,13 @@ import {
   ContentAccessDeniedException,
   ContentEmptyGroupException,
 } from '../v2-post/domain/exception';
+import { UserDto } from '../v2-user/application';
+
+import { GetPostDto } from './dto/requests';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PostResponseDto } from './dto/responses';
+import { PostBindingService } from './post-binding.service';
+import { PostHelper } from './post.helper';
 
 @Injectable()
 export class PostService {
@@ -126,7 +128,9 @@ export class PostService {
       condition['type'] = type;
     }
 
-    if (isProcessing) condition.status = PostStatus.PROCESSING;
+    if (isProcessing) {
+      condition.status = PostStatus.PROCESSING;
+    }
 
     const result = await this.getsAndCount(condition, order, { limit, offset });
 
@@ -391,7 +395,9 @@ export class PostService {
     const mappedPosts = [];
     for (const id of ids) {
       const post = rows.find((row) => row.id === id);
-      if (post) mappedPosts.push(post.toJSON());
+      if (post) {
+        mappedPosts.push(post.toJSON());
+      }
     }
 
     return mappedPosts;
@@ -558,12 +564,20 @@ export class PostService {
       if (group.privacy === GroupPrivacy.OPEN) {
         return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
-      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+      if (group.privacy === GroupPrivacy.CLOSED) {
+        totalOpen++;
+      }
+      if (group.privacy === GroupPrivacy.PRIVATE) {
+        totalPrivate++;
+      }
     }
 
-    if (totalOpen > 0) return PostPrivacy.CLOSED;
-    if (totalPrivate > 0) return PostPrivacy.PRIVATE;
+    if (totalOpen > 0) {
+      return PostPrivacy.CLOSED;
+    }
+    if (totalPrivate > 0) {
+      return PostPrivacy.PRIVATE;
+    }
     return PostPrivacy.SECRET;
   }
 
@@ -599,7 +613,9 @@ export class PostService {
     postId: string,
     transaction: Transaction
   ): Promise<void> {
-    if (groupIds.length === 0) return;
+    if (groupIds.length === 0) {
+      return;
+    }
     const postGroupDataCreate = groupIds.map((groupId) => ({
       postId: postId,
       groupId,
@@ -734,7 +750,9 @@ export class PostService {
   }
 
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
-    if (groupIds.length === 0) return [];
+    if (groupIds.length === 0) {
+      return [];
+    }
     try {
       const posts = await this.postModel.findAll({
         attributes: ['id'],
@@ -802,7 +820,9 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
-    if (!userId) return [];
+    if (!userId) {
+      return [];
+    }
     const { type, offset, limit, groupIds } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
@@ -848,7 +868,9 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
-    if (!userId) return [];
+    if (!userId) {
+      return [];
+    }
     const { groupIds, type, offset, limit } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
@@ -987,7 +1009,9 @@ export class PostService {
 
   public async updatePrivacy(postId: string): Promise<void> {
     const post = await this.findPost({ postId });
-    if (post.groups.length === 0) return;
+    if (post.groups.length === 0) {
+      return;
+    }
     const groupIds = post.groups.map((g) => g.groupId);
     const privacy = await this.getPrivacy(groupIds);
     await this.postModel.update(
@@ -1137,7 +1161,9 @@ export class PostService {
     userId: string | null,
     isPostOnly = false
   ): Promise<IPost[]> {
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
 
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
@@ -1190,7 +1216,9 @@ export class PostService {
   }
 
   public async getSimplePostsByIds(ids: string[]): Promise<IPost[]> {
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
     const rows = await this.postModel.findAll({
       attributes: [
         'id',
@@ -1228,7 +1256,9 @@ export class PostService {
     const mappedPosts = [];
     for (const id of ids) {
       const post = rows.find((row) => row.id === id);
-      if (post) mappedPosts.push(post.toJSON());
+      if (post) {
+        mappedPosts.push(post.toJSON());
+      }
     }
 
     return mappedPosts;
@@ -1368,13 +1398,14 @@ export class PostService {
 
     return groupIds.map((groupId) => {
       const findGroup = countByGroups.find((group) => group.groupId === groupId);
-      if (findGroup)
+      if (findGroup) {
         return {
           groupId,
           totalPost: findGroup.totalPost || 0,
           totalArticle: findGroup.totalArticle || 0,
           totalSeries: findGroup.totalSeries || 0,
         };
+      }
       return {
         groupId,
         totalPost: 0,
@@ -1415,7 +1446,9 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
-    if (!userId) return [];
+    if (!userId) {
+      return [];
+    }
     const { groupIds } = options ?? {};
     const condition = {
       [Op.and]: [
@@ -1538,7 +1571,9 @@ export class PostService {
     postId: string,
     transaction: Transaction
   ): Promise<void> {
-    if (seriesIds.length === 0) return;
+    if (seriesIds.length === 0) {
+      return;
+    }
     const dataCreate = seriesIds.map((seriesId) => ({
       postId: postId,
       seriesId,
@@ -1586,7 +1621,9 @@ export class PostService {
 
   public async getPinnedList(groupId: string, user: UserDto): Promise<ArticleResponseDto[]> {
     const ids = await this.getIdsPinnedInGroup(groupId, user?.id || null);
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
     const posts = await this.getPostsByIds(ids, user?.id || null);
     const postsBindedData = await this.postBinding.bindRelatedData(posts, {
       shouldBindReaction: true,
@@ -1607,7 +1644,9 @@ export class PostService {
     postId: string,
     groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
-    if (groupIds.length === 0) return;
+    if (groupIds.length === 0) {
+      return;
+    }
     const { schema } = getDatabaseConfig();
     const postGroupTableName = PostGroupModel.tableName;
     this.postGroupModel.sequelize.query(
@@ -1630,7 +1669,9 @@ export class PostService {
     postId: string,
     groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
-    if (groupIds.length === 0) return;
+    if (groupIds.length === 0) {
+      return;
+    }
     const { schema } = getDatabaseConfig();
     const postGroupTableName = PostGroupModel.tableName;
     this.postGroupModel.sequelize.query(
@@ -1767,9 +1808,9 @@ export class PostService {
     const isOverLimitedToAttachSeries = post.postSeries.length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimitedToAttachSeries) {
-      if (post.type === PostType.POST)
+      if (post.type === PostType.POST) {
         throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-      else {
+      } else {
         throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
       }
     }

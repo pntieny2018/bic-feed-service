@@ -1,6 +1,7 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
+
 import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
 import { MediaMarkAction, MediaType } from '../../database/models/media.model';
 
@@ -40,7 +41,9 @@ export class MediaService {
           ]
         : [null, null];
 
-    if (!kafkaTopic) return;
+    if (!kafkaTopic) {
+      return;
+    }
     if (mediaIds.length) {
       await this._clientKafka.emit(kafkaTopic, {
         key: null,
@@ -50,7 +53,9 @@ export class MediaService {
   }
 
   public async processVideo(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      return;
+    }
     try {
       this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,

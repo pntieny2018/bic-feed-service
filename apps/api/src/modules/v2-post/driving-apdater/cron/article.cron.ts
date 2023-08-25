@@ -1,5 +1,5 @@
-import { SentryService } from '@app/sentry';
 import { RedisService } from '@libs/infra/redis';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Cron } from '@nestjs/schedule';
