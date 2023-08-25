@@ -1,6 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { createCursor, CursorPaginator } from '@libs/database/postgres/common';
-import { IUser } from '@libs/service/user/src/interfaces';
+import { UserDto } from '@libs/service/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CursorPaginationResult } from 'libs/database/src/postgres/common/type';
 import { concat } from 'lodash';
@@ -117,7 +117,7 @@ export class LibCommentQuery implements ILibCommentQuery {
     return { rows, meta };
   }
 
-  public async findComment(id: string, authUser: IUser): Promise<CommentModel> {
+  public async findComment(id: string, authUser: UserDto): Promise<CommentModel> {
     const findOptions: FindOptions = {
       include: [
         authUser

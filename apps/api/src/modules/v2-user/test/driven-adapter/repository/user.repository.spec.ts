@@ -1,14 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UserRepository } from '../../../driven-adapter/repository/user.repository';
-import { RedisService } from '@app/redis';
 import { createMock } from '@golevelup/ts-jest';
+import { RedisService } from '@libs/infra/redis';
 import { HttpService } from '@nestjs/axios';
-import { IUserRepository } from '../../../domain/repositoty-interface/user.repository.interface';
-import { bfProfile, cacheSG, cacheSU, permissionCacheKey } from '../../mock/user-store.dto.mock';
-import * as rxjs from 'rxjs';
-import { UserEntity } from '../../../domain/model/user';
 import { InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as rxjs from 'rxjs';
+
+import { UserEntity } from '../../../domain/model/user';
+import { IUserRepository } from '../../../domain/repositoty-interface/user.repository.interface';
+import { UserRepository } from '../../../driven-adapter/repository/user.repository';
+import { bfProfile, cacheSG, cacheSU, permissionCacheKey } from '../../mock/user-store.dto.mock';
 
 describe('UserRepository', () => {
   let repo: IUserRepository;
@@ -113,7 +114,7 @@ describe('UserRepository', () => {
 
     it('Should return null because call Group API has exception', async () => {
       repo['_getUserFromCacheById'] = jest.fn().mockResolvedValue(null);
-      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({status: 500});
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({ status: 500 });
       const result = await repo.findOne(bfProfile.id);
       expect(result).toEqual(null);
     });

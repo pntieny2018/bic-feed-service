@@ -1,16 +1,17 @@
-import qs from 'qs';
-import { uniq } from 'lodash';
-import { AxiosHelper } from '../../../../common/helpers';
-import { UserBadge, UserEntity } from '../../domain/model/user';
-import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
+import { RedisService } from '@libs/infra/redis';
 import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { uniq } from 'lodash';
+import qs from 'qs';
+import { lastValueFrom } from 'rxjs';
+
 import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
-import { RedisService } from '@app/redis';
-import { ConfigService } from '@nestjs/config';
+import { AxiosHelper } from '../../../../common/helpers';
 import { IAxiosConfig } from '../../../../config/axios';
+import { UserBadge, UserEntity } from '../../domain/model/user';
+import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
 
 type Permission = {
   communities: Record<string, string[]>;
@@ -42,7 +43,9 @@ export class UserRepository implements IUserRepository {
   ) {}
 
   public async findByUserName(username: string): Promise<UserEntity> {
-    if (!username) return null;
+    if (!username) {
+      return null;
+    }
     try {
       const userProfile = await this._getUserProfileFromCache(username);
       let user = await this._getUserFromCacheById(userProfile?.id);
@@ -54,7 +57,9 @@ export class UserRepository implements IUserRepository {
             })
           )
         );
-        if (response.status !== HttpStatus.OK) return null;
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
         user = AxiosHelper.getDataResponse<UserDataInRest>(response);
       }
       return new UserEntity(user);
@@ -76,7 +81,9 @@ export class UserRepository implements IUserRepository {
             paramsSerializer: (params) => qs.stringify(params),
           })
         );
-        if (response.status !== HttpStatus.OK) return null;
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
         user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
       } catch (e) {
         this._logger.debug(e);
@@ -86,7 +93,9 @@ export class UserRepository implements IUserRepository {
   }
 
   public async findAllByIds(ids: string[]): Promise<UserEntity[]> {
-    if (!ids || !ids.length) return [];
+    if (!ids || !ids.length) {
+      return [];
+    }
 
     const uniqueIds = uniq(ids);
     let users = await this._getUsersFromCacheByIds(uniqueIds);
@@ -147,7 +156,9 @@ export class UserRepository implements IUserRepository {
   }
 
   private async _getUserFromCacheById(id: string): Promise<UserDataInCache> {
-    if (!id) return null;
+    if (!id) {
+      return null;
+    }
     let user = null;
     const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${id}`;
     const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${id}`;

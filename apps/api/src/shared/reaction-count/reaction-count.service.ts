@@ -1,5 +1,5 @@
-import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
+import { RedisService } from '@libs/infra/redis';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()

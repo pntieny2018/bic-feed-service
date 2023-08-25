@@ -1,13 +1,15 @@
+import { RedisModule } from '@libs/infra/redis';
 import { Module } from '@nestjs/common';
+
+import { ArticleModule } from '../article';
+import { CommentModule } from '../comment';
 import { FeedModule } from '../feed';
 import { PostModule } from '../post';
-import { CommentModule } from '../comment';
-import { ReportContentService } from './report-content.service';
-import { ReportContentController } from './report-content.controller';
-import { ArticleModule } from '../article';
-import { UserModuleV2 } from '../v2-user/user.module';
-import { RedisModule } from '@app/redis';
 import { GroupModuleV2 } from '../v2-group/group.module';
+import { UserModuleV2 } from '../v2-user/user.module';
+
+import { ReportContentController } from './report-content.controller';
+import { ReportContentService } from './report-content.service';
 
 @Module({
   imports: [

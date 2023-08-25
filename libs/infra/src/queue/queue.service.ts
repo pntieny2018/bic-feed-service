@@ -13,11 +13,14 @@ export class QueueService implements IQueueService {
     @InjectQueue(QUEUES.QUIZ_PENDING.QUEUE_NAME)
     private readonly _quizPendingQueue: Queue,
     @InjectQueue(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)
-    private readonly _quizParticipantQueue: Queue
+    private readonly _quizParticipantQueue: Queue,
+    @InjectQueue(QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME)
+    private readonly _contentQueue: Queue
   ) {
     this.queues = {
       [QUEUES.QUIZ_PENDING.QUEUE_NAME]: _quizPendingQueue,
       [QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME]: _quizParticipantQueue,
+      [QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME]: _contentQueue,
     };
 
     Object.values(this.queues).forEach((queue) => {
