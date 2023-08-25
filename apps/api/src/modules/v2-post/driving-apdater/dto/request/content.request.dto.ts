@@ -1,18 +1,18 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 
-import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
+import { PaginatedArgs } from '../../../../../common/dto';
 
 export class GetDraftContentsRequestDto extends PaginatedArgs {
   @ApiProperty({
-    enum: OrderEnum,
-    default: OrderEnum.DESC,
+    enum: ORDER,
+    default: ORDER.DESC,
     required: false,
   })
-  @IsEnum(OrderEnum)
-  public order: OrderEnum = OrderEnum.DESC;
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
 
   @ApiPropertyOptional({
     name: 'is_processing',

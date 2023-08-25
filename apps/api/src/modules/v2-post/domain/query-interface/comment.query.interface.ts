@@ -1,4 +1,5 @@
-import { OrderEnum } from '../../../../common/dto';
+import { ORDER } from '@beincom/constants';
+
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CommentEntity } from '../model/comment';
@@ -12,7 +13,7 @@ export type GetPaginationCommentProps = CursorPaginationProps & {
 export type GetAroundCommentProps = {
   authUser?: string;
   limit: number;
-  order: OrderEnum;
+  order: ORDER;
 };
 
 export interface ICommentQuery {

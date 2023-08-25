@@ -1,8 +1,7 @@
-import { CONTENT_STATUS } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
-import { OrderEnum } from '../../../../common/dto';
 import { StringHelper } from '../../../../common/helpers';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { ContentNotFoundException } from '../exception';
@@ -118,7 +117,7 @@ export class ContentDomainService implements IContentDomainService {
       after,
       before,
       authUserId,
-      order = OrderEnum.DESC,
+      order = ORDER.DESC,
     } = props;
     const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
@@ -169,7 +168,7 @@ export class ContentDomainService implements IContentDomainService {
       limit,
       before,
       after,
-      order = OrderEnum.DESC,
+      order = ORDER.DESC,
     } = props;
 
     const { rows, meta } = await this._contentRepository.getPagination({

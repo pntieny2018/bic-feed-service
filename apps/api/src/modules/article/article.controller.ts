@@ -10,22 +10,24 @@ import {
   Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
+import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
+import { PostResponseDto } from '../post/dto/responses';
+import { UserDto } from '../v2-user/application';
+
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
 import { ArticleSearchResponseDto } from './dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
-import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
-import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { PostResponseDto } from '../post/dto/responses';
-import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
-import { UserDto } from '../v2-user/application';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -94,6 +96,7 @@ export class ArticleController {
     type: PostResponseDto,
   })
   @Get('/params')
+  @Version([VERSIONS_SUPPORTED[0]])
   public getsByParams(
     @AuthUser() user: UserDto,
     @Query() getPostsByParamsDto: GetPostsByParamsDto

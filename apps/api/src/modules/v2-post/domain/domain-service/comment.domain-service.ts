@@ -1,5 +1,5 @@
+import { ORDER } from '@beincom/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { OrderEnum } from 'apps/api/src/common/dto/pagination';
 import { NIL } from 'uuid';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -130,7 +130,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     const aroundChildPagination = await this._commentQuery.getAroundComment(comment, {
       limit: targetChildLimit,
-      order: OrderEnum.DESC,
+      order: ORDER.DESC,
       authUser: userId,
     });
 
@@ -139,7 +139,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     const aroundParentPagination = await this._commentQuery.getAroundComment(parent, {
       limit,
-      order: OrderEnum.DESC,
+      order: ORDER.DESC,
       authUser: userId,
     });
 
@@ -157,7 +157,7 @@ export class CommentDomainService implements ICommentDomainService {
       postId: comment.get('postId'),
       parentId: comment.get('id'),
       limit: targetChildLimit,
-      order: OrderEnum.DESC,
+      order: ORDER.DESC,
     });
     if (childsPagination && childsPagination.rows?.length) {
       comment.setChilds(childsPagination);
@@ -165,7 +165,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     const aroundParentPagination = await this._commentQuery.getAroundComment(comment, {
       limit,
-      order: OrderEnum.DESC,
+      order: ORDER.DESC,
       authUser: userId,
     });
 

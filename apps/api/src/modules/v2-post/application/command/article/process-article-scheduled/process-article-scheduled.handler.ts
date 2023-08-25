@@ -1,8 +1,9 @@
+import { ORDER } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'class-validator';
 
-import { IPaginatedInfo, OrderEnum } from '../../../../../../common/dto';
+import { IPaginatedInfo } from '../../../../../../common/dto';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   GetScheduledContentProps,
@@ -32,7 +33,7 @@ export class ProcessArticleScheduledHandler
     const beforeDate = command.payload.beforeDate;
     const payload: GetScheduledContentProps = {
       limit: this.LIMIT_DEFAULT,
-      order: OrderEnum.DESC,
+      order: ORDER.DESC,
       beforeDate,
     };
     return this._recursivelyHandleScheduledContent(payload);

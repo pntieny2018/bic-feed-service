@@ -1,4 +1,5 @@
 import { AppHelper } from '../helpers/app.helper';
+
 import { VERSION_1_5_0, VERSION_1_6_0, VERSION_1_7_0 } from './app.constant';
 
 export const ROUTES = {
@@ -69,6 +70,10 @@ export const ROUTES = {
     },
     DELETE: {
       PATH: '/articles/:id',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_PARAMS: {
+      PATH: '/articles/params',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },

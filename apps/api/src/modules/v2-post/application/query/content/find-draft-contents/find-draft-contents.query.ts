@@ -1,13 +1,12 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { IQuery } from '@nestjs/cqrs';
 
-import { OrderEnum } from '../../../../../../common/dto';
 import { UserDto } from '../../../../../v2-user/application';
 
 type Props = {
   authUser: UserDto;
   limit: number;
-  order: OrderEnum | ORDER;
+  order: ORDER;
   isProcessing?: boolean;
   type?: CONTENT_TYPE;
   before?: string;

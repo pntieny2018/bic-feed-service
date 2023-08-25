@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
 import {
   ILibContentRepository,
   LIB_CONTENT_REPOSITORY_TOKEN,
@@ -10,7 +10,7 @@ import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } fr
 import { Literal } from 'sequelize/types/utils';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { CursorPaginator, OrderEnum } from '../../../../common/dto';
+import { CursorPaginator } from '../../../../common/dto';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CategoryModel } from '../../../../database/models/category.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
@@ -294,12 +294,12 @@ export class ContentRepository implements IContentRepository {
     }
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"isReadImportant"'), OrderEnum.DESC]);
+      order.push([this._sequelizeConnection.literal('"isReadImportant"'), ORDER.DESC]);
     }
     if (orderOptions.isPublishedByDesc) {
-      order.push(['publishedAt', OrderEnum.DESC]);
+      order.push(['publishedAt', ORDER.DESC]);
     }
-    order.push(['createdAt', OrderEnum.DESC]);
+    order.push(['createdAt', ORDER.DESC]);
     return order;
   }
 

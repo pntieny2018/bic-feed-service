@@ -1,3 +1,4 @@
+import { ORDER } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -15,7 +16,7 @@ import {
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 
-import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
+import { EntityIdDto, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { getDatabaseConfig } from '../../config/database';
@@ -143,7 +144,7 @@ export class PostService {
 
   public async getsAndCount(
     condition: WhereOptions<IPost>,
-    order?: OrderEnum,
+    order?: ORDER,
     otherParams?: FindOptions
   ): Promise<{ data: ArticleResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });

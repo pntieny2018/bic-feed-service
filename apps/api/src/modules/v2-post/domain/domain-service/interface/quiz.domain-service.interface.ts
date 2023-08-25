@@ -1,4 +1,5 @@
-import { OrderEnum } from '../../../../../common/dto';
+import { ORDER } from '@beincom/constants';
+
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { UserDto } from '../../../../v2-user/application';
 import { AnswerUserDto } from '../../../application/dto';
@@ -43,7 +44,7 @@ export type GetQuizzesProps = {
   status: QuizStatus;
   type?: PostType;
   limit: number;
-  order: OrderEnum;
+  order: ORDER;
   before?: string;
   after?: string;
 };

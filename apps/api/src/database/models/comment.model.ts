@@ -1,3 +1,7 @@
+import { ORDER } from '@beincom/constants';
+import { IsUUID } from 'class-validator';
+import { DataTypes, Optional, QueryTypes, Sequelize } from 'sequelize';
+import { Literal } from 'sequelize/types/utils';
 import {
   AfterCreate,
   AfterDestroy,
@@ -14,19 +18,17 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Literal } from 'sequelize/types/utils';
-import { IPost, PostModel } from './post.model';
-import { IMedia } from './media.model';
-import { getDatabaseConfig } from '../../config/database';
-import { CommentReactionModel, ICommentReaction } from './comment-reaction.model';
-import { DataTypes, Optional, QueryTypes, Sequelize } from 'sequelize';
-import { IsUUID } from 'class-validator';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
-import { OrderEnum } from '../../common/dto';
+
+import { getDatabaseConfig } from '../../config/database';
 import { GetCommentsDto } from '../../modules/comment/dto/requests';
-import { ReportContentDetailModel } from './report-content-detail.model';
 import { TargetType } from '../../modules/report-content/contstants';
 import { UserDto } from '../../modules/v2-user/application';
+
+import { CommentReactionModel, ICommentReaction } from './comment-reaction.model';
+import { IMedia } from './media.model';
+import { IPost, PostModel } from './post.model';
+import { ReportContentDetailModel } from './report-content-detail.model';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -288,7 +290,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     aroundId = NIL_UUID
   ): Promise<any[]> {
     const { limit } = getCommentsDto;
-    const order = getCommentsDto.order ?? OrderEnum.DESC;
+    const order = getCommentsDto.order ?? ORDER.DESC;
     const { schema } = getDatabaseConfig();
     const reportContentDetailTable = ReportContentDetailModel.tableName;
     let condition = await CommentModel._getCondition(getCommentsDto);
@@ -352,7 +354,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     authUserId?: string
   ): Promise<any[]> {
     const { limit } = getCommentsDto;
-    const order = getCommentsDto.order ?? OrderEnum.DESC;
+    const order = getCommentsDto.order ?? ORDER.DESC;
     const { schema } = getDatabaseConfig();
     const condition = await CommentModel._getCondition(getCommentsDto);
     const reportContentDetailTable = ReportContentDetailModel.tableName;

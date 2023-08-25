@@ -1,4 +1,5 @@
-import { OrderEnum } from '../../../../../common/dto';
+import { ORDER } from '@beincom/constants';
+
 import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { REACTION_TARGET } from '../../../data-type';
 import { ReactionEntity } from '../../model/reaction';
@@ -15,7 +16,7 @@ export type GetReactionsProps = {
   targetId: string;
   target: string;
   latestId: string;
-  order: OrderEnum;
+  order: ORDER;
   limit: number;
 };
 
