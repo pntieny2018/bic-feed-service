@@ -21,12 +21,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@app/sentry": [
-        "libs/sentry/src"
-      ],
-      "@app/sentry/*": [
-        "libs/sentry/src/*"
-      ],
       "@app/openai": [
         "libs/openai/src"
       ],
