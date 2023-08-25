@@ -67,9 +67,10 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     if (dataBinding?.mentionUsers?.length) {
       users.push(...dataBinding?.mentionUsers);
@@ -194,20 +195,16 @@ export class ContentBinding implements IContentBinding {
       authUser?: UserDto;
     }
   ): Promise<ArticleDto> {
-    const userIdsNeedToFind = [];
-    if (!dataBinding?.actor) {
-      userIdsNeedToFind.push(articleEntity.get('createdBy'));
+    let actor = dataBinding?.actor;
+
+    if (!actor) {
+      actor = (
+        await this._userAdapter.findAllAndFilterByPersonalVisibility(
+          [articleEntity.get('createdBy')],
+          dataBinding.authUser.id
+        )
+      )[0];
     }
-
-    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
-
-    if (dataBinding?.actor) {
-      users.push(dataBinding.actor);
-    }
-
-    const actor = users.find((user) => user.id === articleEntity.get('createdBy'));
 
     const groups =
       dataBinding?.groups ||
@@ -370,9 +367,10 @@ export class ContentBinding implements IContentBinding {
         ...userIdsNeedToFind,
       ]);
     }
-    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
@@ -807,11 +805,9 @@ export class ContentBinding implements IContentBinding {
         itemIds.push(...contentEntity.get('itemIds'));
       }
     });
-    const users = await this._userAdapter.getUsersByIds(
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
       ArrayHelper.arrayUnique(userIdsNeedToFind),
-      {
-        withGroupJoined: false,
-      }
+      authUser.id
     );
 
     const usersMapper = new Map<string, UserDto>(

@@ -9,4 +9,5 @@ export const USER_ADAPTER = 'USER_ADAPTER';
 
 export interface IUserAdapter {
   getUsersByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]>;
+  findAllAndFilterByPersonalVisibility(userIds: string[], authUserId: string): Promise<UserDto[]>;
 }
