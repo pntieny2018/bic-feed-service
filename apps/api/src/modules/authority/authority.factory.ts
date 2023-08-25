@@ -1,9 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Ability } from '@casl/ability';
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+
 import { SUBJECT } from '../../common/constants/casl.constant';
-import { UserPermission } from '../v2-user/domain/model/user';
 import { UserDto } from '../v2-user/application';
+import { UserPermission } from '../v2-user/domain/model/user';
 
 @Injectable()
 export class AuthorityFactory {

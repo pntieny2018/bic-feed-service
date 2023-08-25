@@ -1,15 +1,20 @@
-import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
+import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
+import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ArticleDeletedEvent } from '../../../domain/event';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { TagDto } from '../../dto';
 import { ArticleChangedMessagePayload } from '../../dto/message';
 
 @EventsHandler(ArticleDeletedEvent)
 export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
-  public constructor(private readonly _kafkaService: KafkaService) {}
+  public constructor(
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter
+  ) {}
 
-  public handle(event: ArticleDeletedEvent): void {
+  public async handle(event: ArticleDeletedEvent): Promise<void> {
     const { articleEntity, actor } = event;
 
     if (!articleEntity.isPublished()) {
@@ -37,7 +42,7 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
       },
     };
 
-    return this._kafkaService.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
+    return this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
       key: articleEntity.getId(),
       value: new ArticleChangedMessagePayload(payload),
     });

@@ -1,9 +1,10 @@
-import { KAFKA_TOPIC, KafkaService } from '@app/kafka';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
+import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ArticlePublishedEvent } from '../../../domain/event';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ImageDto, TagDto } from '../../dto';
@@ -14,7 +15,8 @@ export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublis
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
-    private readonly _kafkaService: KafkaService
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
@@ -62,7 +64,7 @@ export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublis
       },
     };
 
-    this._kafkaService.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
+    this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
       key: articleEntity.getId(),
       value: new ArticleChangedMessagePayload(payload),
     });

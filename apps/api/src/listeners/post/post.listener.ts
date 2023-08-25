@@ -1,6 +1,9 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
+
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
+import { ArrayHelper } from '../../common/helpers';
 import { MediaMarkAction, MediaStatus, MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import {
@@ -10,24 +13,22 @@ import {
 } from '../../events/post';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { FeedPublisherService } from '../../modules/feed-publisher';
+import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
+import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
+import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
 import { FeedService } from '../../modules/feed/feed.service';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+import { FilterUserService } from '../../modules/filter-user';
 import { MediaService } from '../../modules/media';
+import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
-import { NotificationService } from '../../notification';
-import { ISeriesState, PostActivityService } from '../../notification/activities';
-import { FilterUserService } from '../../modules/filter-user';
-import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
-import { ArrayHelper } from '../../common/helpers';
-import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
-import { SeriesService } from '../../modules/series/series.service';
-import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
-import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
+import { NotificationService } from '../../notification';
+import { ISeriesState, PostActivityService } from '../../notification/activities';
 
 @Injectable()
 export class PostListener {
@@ -52,7 +53,9 @@ export class PostListener {
   @On(PostHasBeenDeletedEvent)
   public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
     const { actor, post } = event.payload;
-    if (post.status !== PostStatus.PUBLISHED) return;
+    if (post.status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -152,7 +155,9 @@ export class PostListener {
         .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
     }
 
-    if (status !== PostStatus.PUBLISHED) return;
+    if (status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     const activity = this._postActivityService.createPayload({
       id,
@@ -264,7 +269,9 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (status !== PostStatus.PUBLISHED) return;
+    if (status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     const mentionUserIds = [];
     const mentionMap = new Map<string, UserDto>();

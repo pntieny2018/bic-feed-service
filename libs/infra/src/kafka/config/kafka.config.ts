@@ -1,5 +1,6 @@
-import { IKafkaConfig } from '@libs/infra/kafka';
 import { logLevel } from '@nestjs/microservices/external/kafka.interface';
+
+import { IKafkaConfig } from './kafka.config.interface';
 
 export const getKafkaConfig = (): IKafkaConfig => ({
   env: process.env.KAFKA_ENV,

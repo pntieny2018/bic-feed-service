@@ -1,5 +1,5 @@
-import { SentryService } from '@app/sentry';
 import { RedisService } from '@libs/infra/redis';
+import { SentryService } from '@libs/infra/sentry';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ReactionCountService } from '../reaction-count.service';

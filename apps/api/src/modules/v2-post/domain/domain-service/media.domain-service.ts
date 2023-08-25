@@ -1,23 +1,28 @@
 import { Inject } from '@nestjs/common';
-import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
-import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
-import { IMediaDomainService } from './interface/media.domain-service.interface';
 import { difference, intersection } from 'lodash';
+
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { MediaType } from '../../data-type';
-import { KafkaService } from '@app/kafka';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
+import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
+import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
+
+import { IMediaDomainService } from './interface/media.domain-service.interface';
 
 export class MediaDomainService implements IMediaDomainService {
   @Inject(MEDIA_REPOSITORY_TOKEN)
   private readonly _mediaRepo: IMediaRepository;
-  private readonly _kafkaService: KafkaService;
+  @Inject(KAFKA_ADAPTER)
+  private readonly _kafkaAdapter: IKafkaAdapter;
 
   public async getAvailableVideos(
     videoEntities: VideoEntity[],
     videosIds: string[],
     ownerId: string
   ): Promise<VideoEntity[]> {
-    if (!videosIds || videosIds?.length === 0) return [];
+    if (!videosIds || videosIds?.length === 0) {
+      return [];
+    }
 
     videoEntities = videoEntities || [];
     const currentVideoIds = videoEntities.map((e) => e.get('id'));
@@ -39,7 +44,9 @@ export class MediaDomainService implements IMediaDomainService {
     filesIds: string[],
     ownerId: string
   ): Promise<FileEntity[]> {
-    if (!filesIds || filesIds.length === 0) return [];
+    if (!filesIds || filesIds.length === 0) {
+      return [];
+    }
 
     fileEntities = fileEntities || [];
     const currentFileIds = fileEntities.map((e) => e.get('id'));
@@ -61,7 +68,9 @@ export class MediaDomainService implements IMediaDomainService {
     imagesIds: string[],
     ownerId: string
   ): Promise<ImageEntity[]> {
-    if (!imagesIds || imagesIds.length === 0) return [];
+    if (!imagesIds || imagesIds.length === 0) {
+      return [];
+    }
 
     imageEntities = (imageEntities || []).filter((image) => image);
     const currentImageIds = imageEntities.map((e) => e.get('id'));
@@ -94,9 +103,11 @@ export class MediaDomainService implements IMediaDomainService {
       },
     };
 
-    if (!config[mediaType]) return;
+    if (!config[mediaType]) {
+      return;
+    }
     if (mediaIds.length) {
-      await this._kafkaService.emit(config[mediaType].topic, {
+      await this._kafkaAdapter.emit(config[mediaType].topic, {
         key: null,
         value: { [config[mediaType].keyIds]: mediaIds, userId },
       });
@@ -119,9 +130,11 @@ export class MediaDomainService implements IMediaDomainService {
       },
     };
 
-    if (!config[mediaType]) return;
+    if (!config[mediaType]) {
+      return;
+    }
     if (mediaIds.length) {
-      await this._kafkaService.emit(config[mediaType].topic, {
+      await this._kafkaAdapter.emit(config[mediaType].topic, {
         key: null,
         value: { [config[mediaType].keyIds]: mediaIds, userId },
       });

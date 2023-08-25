@@ -1,11 +1,16 @@
-import { SentryModule } from '@app/sentry';
 import { HEADER_REQ_ID } from '@libs/common/constants';
-import { KafkaService, configs, KAFKA_TOKEN, IKafkaConfig } from '@libs/infra/kafka';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { ClsModule } from 'nestjs-cls';
 import { v4 } from 'uuid';
+
+import { SentryModule } from '../sentry';
+
+import { IKafkaConfig, configs } from './config';
+import { KAFKA_TOKEN } from './kafka.constant';
+import { KafkaService } from './kafka.service';
+import { KAFKA_SERVICE_TOKEN } from './kafka.service.interface';
 
 @Module({
   imports: [
@@ -40,7 +45,7 @@ import { v4 } from 'uuid';
       },
     ]),
   ],
-  providers: [KafkaService],
-  exports: [KafkaService],
+  providers: [{ provide: KAFKA_SERVICE_TOKEN, useClass: KafkaService }],
+  exports: [KAFKA_SERVICE_TOKEN],
 })
 export class KafkaModule {}

@@ -10,8 +10,5 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "moduleNameMapper": {
-    "@app/sentry/(.*)": "<rootDir>/../libs/sentry/src/$1",
-    "@app/sentry": "<rootDir>/../libs/sentry/src"
-  }
+  "moduleNameMapper": {}
 }

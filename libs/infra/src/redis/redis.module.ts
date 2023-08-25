@@ -1,18 +1,19 @@
-import { RedisStore } from './redis.store';
-import { RedisService } from './redis.service';
+import { DynamicModule, Global, Logger, Module, Provider } from '@nestjs/common';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
+
 import {
   IRedisStoreModuleAsyncOptions,
   RedisStoreModuleOptions,
   IRedisStoreModuleOptionsFactory,
 } from './interfaces/redis-store.module.interface';
 import { RedisClusterStore } from './redis-cluster.store';
-import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import {
   REDIS_STORE_INSTANCE_TOKEN,
   REDIS_STORE_MODULE_ID,
   REDIS_STORE_MODULE_OPTIONS,
 } from './redis-store.constants';
+import { RedisService } from './redis.service';
+import { RedisStore } from './redis.store';
 
 @Global()
 @Module({})
@@ -21,6 +22,15 @@ export class RedisModule {
     const store = config.clusterMode
       ? RedisClusterStore.create(config.nodes, config.clusterOptions)
       : RedisStore.create(config.redisOptions);
+
+    store.on('connect', () => {
+      Logger.debug('Redis connected');
+    });
+
+    store.on('error', (error) => {
+      Logger.error(error);
+    });
+
     return {
       module: RedisModule,
       providers: [
@@ -58,9 +68,19 @@ export class RedisModule {
           provide: REDIS_STORE_INSTANCE_TOKEN,
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           useFactory: (config: RedisStoreModuleOptions) => {
-            return config.clusterMode
+            const store = config.clusterMode
               ? RedisClusterStore.create(config.nodes, config.clusterOptions)
               : RedisStore.create(config.redisOptions);
+
+            store.on('connect', () => {
+              Logger.debug('Redis connected');
+            });
+
+            store.on('error', (error) => {
+              Logger.error(error);
+            });
+
+            return store;
           },
           inject: [REDIS_STORE_MODULE_OPTIONS],
         },
