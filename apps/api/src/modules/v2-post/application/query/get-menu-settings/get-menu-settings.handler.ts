@@ -63,7 +63,7 @@ export class GetMenuSettingsHandler
     const menuSetting: MenuSettingsDto = {
       canEdit: canCRUDContent,
       canEditSetting: this._authorityAppService.canEditSetting(groupIds),
-      canSave: !contentEntity.isSaved(),
+      isSave: !contentEntity.isSaved(),
       canCopyLink: true,
       canViewReactions: canViewReaction,
       canViewSeries: contentEntity.getType() !== PostType.SERIES,
@@ -74,7 +74,7 @@ export class GetMenuSettingsHandler
       canDelete: canCRUDContent,
       canReportContent,
       canReportMember: !contentEntity.isOwner(userId),
-      enableSpecificNotifications: isEnableSpecificNotifications,
+      isEnableNotifications: isEnableSpecificNotifications,
     };
 
     return new MenuSettingsDto(menuSetting);
