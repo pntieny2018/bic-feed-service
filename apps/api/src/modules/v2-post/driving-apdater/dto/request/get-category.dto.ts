@@ -1,7 +1,7 @@
-import { PageOptionsDto } from '../../../../common/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
+import { PageOptionsDto } from '../../../../../common/dto';
 
 export class GetCategoryDto extends PageOptionsDto {
   @ApiProperty({ type: String, required: false })

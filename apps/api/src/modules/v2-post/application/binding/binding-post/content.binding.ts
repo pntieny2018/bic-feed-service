@@ -52,12 +52,12 @@ export class ContentBinding implements IContentBinding {
   ) {}
   public async postBinding(
     postEntity: PostEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
       series?: SeriesEntity[];
-      authUser?: UserDto;
+      authUser: UserDto;
       reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto> {
@@ -70,9 +70,10 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     if (dataBinding?.mentionUsers?.length) {
       users.push(...dataBinding?.mentionUsers);
@@ -80,7 +81,9 @@ export class ContentBinding implements IContentBinding {
     if (dataBinding?.actor) {
       users.push(dataBinding.actor);
     }
+
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+
     if (postEntity.get('mentionUserIds') && users.length) {
       mentionUsers = this.mapMentionWithUserInfo(
         users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
@@ -192,33 +195,29 @@ export class ContentBinding implements IContentBinding {
 
   public async articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto> {
-    const userIdsNeedToFind = [];
-    if (!dataBinding?.actor) {
-      userIdsNeedToFind.push(articleEntity.get('createdBy'));
+    let actor = dataBinding?.actor;
+
+    if (!actor) {
+      actor = (
+        await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+          [articleEntity.get('createdBy')],
+          dataBinding.authUser.id
+        )
+      )[0];
     }
-
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
-
-    if (dataBinding?.actor) {
-      users.push(dataBinding.actor);
-    }
-
-    const actor = users.find((user) => user.id === articleEntity.get('createdBy'));
 
     const groups =
       dataBinding?.groups ||
       (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
@@ -332,10 +331,10 @@ export class ContentBinding implements IContentBinding {
 
   public async seriesBinding(
     seriesEntity: SeriesEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<SeriesDto> {
     const groups =
@@ -374,9 +373,10 @@ export class ContentBinding implements IContentBinding {
         ...userIdsNeedToFind,
       ]);
     }
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
@@ -809,11 +809,10 @@ export class ContentBinding implements IContentBinding {
         itemIds.push(...contentEntity.get('itemIds'));
       }
     });
-    const users = await this._userApplicationService.findAllByIds(
-      ArrayHelper.arrayUnique(userIdsNeedToFind),
-      {
-        withGroupJoined: false,
-      }
+
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      authUser.id
     );
 
     const usersMapper = new Map<string, UserDto>(
