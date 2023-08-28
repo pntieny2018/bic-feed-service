@@ -76,7 +76,7 @@ export class AuthorityAppService implements IAuthorityAppService {
   }
 
   public canPinContent(groupIds: string[]): boolean {
-    return groupIds.every(
+    return groupIds.some(
       (groupId) =>
         this._abilities.can(PERMISSION_KEY.PIN_CONTENT, subject(SUBJECT.GROUP, { id: groupId })) ||
         this._abilities.can(PERMISSION_KEY.MANAGE, subject(SUBJECT.GROUP, { id: groupId }))
