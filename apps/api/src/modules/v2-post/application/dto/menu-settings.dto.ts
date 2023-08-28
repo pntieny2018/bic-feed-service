@@ -1,7 +1,7 @@
 export class MenuSettingsDto {
   public canEdit = false;
   public canEditSetting = false;
-  public canSave = false;
+  public isSave = false;
   public canCopyLink = true;
   public canViewReactions = false;
   public canViewSeries = false;
@@ -12,7 +12,7 @@ export class MenuSettingsDto {
   public canDelete = false;
   public canReportContent = false;
   public canReportMember = false;
-  public enableSpecificNotifications = false;
+  public isEnableNotifications = false;
 
   public constructor(data: Partial<MenuSettingsDto>) {
     Object.assign(this, data);
