@@ -72,6 +72,7 @@ export class ArticleController {
     description: 'Get related article successfully',
   })
   @Get('/related')
+  @Version([VERSIONS_SUPPORTED[0]])
   public async getRelated(
     @AuthUser() user: UserDto,
     @Query() getArticleListDto: GetRelatedArticlesDto
