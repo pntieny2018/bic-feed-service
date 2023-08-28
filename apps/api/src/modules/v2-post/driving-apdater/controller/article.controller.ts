@@ -212,7 +212,7 @@ export class ArticleController {
   })
   @Get(ROUTES.ARTICLE.GET_SCHEDULE.PATH)
   @Version(ROUTES.ARTICLE.GET_SCHEDULE.VERSIONS)
-  public async getsByParams(
+  public async getSchedule(
     @AuthUser() user: UserDto,
     @Query() query: GetScheduleArticleDto
   ): Promise<PageDto<ArticleDto>> {
