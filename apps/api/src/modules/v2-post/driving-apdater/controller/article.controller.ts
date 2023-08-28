@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -19,6 +20,7 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
+import { PageDto } from '../../../../common/dto';
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import {
   AutoSaveArticleCommand,
@@ -31,10 +33,12 @@ import {
 } from '../../application/command/article';
 import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
 import { FindArticleQuery } from '../../application/query/article';
+import { GetScheduleArticleQuery } from '../../application/query/article/get-schedule-article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,
   ScheduleArticleRequestDto,
+  GetScheduleArticleDto,
 } from '../dto/request';
 
 @ApiTags('v2 Articles')
@@ -200,5 +204,28 @@ export class ArticleController {
       })
     );
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get posts by params' })
+  @ApiOkResponse({
+    type: PageDto<ArticleDto>,
+  })
+  @Get(ROUTES.ARTICLE.GET_SCHEDULE.PATH)
+  @Version(ROUTES.ARTICLE.GET_SCHEDULE.VERSIONS)
+  public async getsByParams(
+    @AuthUser() user: UserDto,
+    @Query() query: GetScheduleArticleDto
+  ): Promise<PageDto<ArticleDto>> {
+    const { limit, offset, order, status } = query;
+    const articleDtos = await this._queryBus.execute<GetScheduleArticleQuery, PageDto<ArticleDto>>(
+      new GetScheduleArticleQuery({
+        limit,
+        offset,
+        order,
+        statuses: status,
+        user,
+      })
+    );
+    return instanceToInstance(articleDtos, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

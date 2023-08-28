@@ -72,8 +72,8 @@ export const ROUTES = {
       PATH: '/articles/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
-    GET_PARAMS: {
-      PATH: '/articles/params',
+    GET_SCHEDULE: {
+      PATH: '/articles/schedule',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },

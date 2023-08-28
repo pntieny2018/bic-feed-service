@@ -48,6 +48,7 @@ import {
   SeriesDeletedEventHandler,
 } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
+import { GetScheduleArticleHandler } from '../application/query/article/get-schedule-article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -188,6 +189,7 @@ export const postProvider = [
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
+  GetScheduleArticleHandler,
 
   /** Event Handler */
   ArticleDeletedEventHandler,

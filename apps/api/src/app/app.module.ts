@@ -1,4 +1,5 @@
 import { HEADER_REQ_ID } from '@libs/common/constants';
+import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -84,6 +85,7 @@ import { LibModule } from './lib.module';
     GiphyModuleV2,
     AdminModule,
     I18nGlobalModule,
+    PostgresModule,
   ],
   controllers: [AppController],
   providers: [],

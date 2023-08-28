@@ -1,5 +1,7 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 
+import { PageOptionsDto } from '../../../../../common/dto';
 import {
   AutoSaveArticleCommandPayload,
   DeleteArticleCommandPayload,
@@ -37,8 +39,14 @@ export type AutoSaveArticleProps = AutoSaveArticleCommandPayload;
 
 export type DeleteArticleProps = DeleteArticleCommandPayload;
 
+export class GetArticleByParamsProps extends PageOptionsDto {
+  public statuses: CONTENT_STATUS[];
+  public user: UserDto;
+}
+
 export interface IArticleDomainService {
   getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
+  getScheduleArticle(params: GetArticleByParamsProps): Promise<ArticleEntity[]>;
   deleteArticle(props: DeleteArticleProps): Promise<void>;
   update(input: UpdateArticleProps): Promise<ArticleEntity>;
   publish(input: PublishArticleProps): Promise<ArticleEntity>;

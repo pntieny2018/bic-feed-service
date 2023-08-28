@@ -1,3 +1,4 @@
+import { ORDER } from '@beincom/constants';
 import {
   CursorPaginationResult,
   CursorPaginator,
@@ -38,8 +39,8 @@ import {
   GetPaginationContentsProps,
   OrderOptions,
   ILibContentRepository,
+  OffsetPaginationProps,
 } from '@libs/database/postgres/repository/interface';
-import { ORDER } from '@beincom/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import {
@@ -167,9 +168,16 @@ export class LibContentRepository implements ILibContentRepository {
     return this._postModel.findOne(findOption);
   }
 
-  public async findAll(findAllPostOptions: FindContentProps): Promise<PostModel[]> {
+  public async findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: OffsetPaginationProps
+  ): Promise<PostModel[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
+    if (offsetPaginate) {
+      findOption.limit = offsetPaginate.limit;
+      findOption.offset = offsetPaginate.offset;
+    }
     return this._postModel.findAll(findOption);
   }
 
@@ -239,6 +247,9 @@ export class LibContentRepository implements ILibContentRepository {
     }
     if (orderOptions.isPublishedByDesc) {
       order.push(['publishedAt', ORDER.DESC]);
+    }
+    if (orderOptions.sortColumn && orderOptions.sortBy) {
+      order.push([orderOptions.sortColumn, orderOptions.sortBy]);
     }
     order.push(['createdAt', ORDER.DESC]);
     return order;
@@ -406,6 +417,12 @@ export class LibContentRepository implements ILibContentRepository {
       if (options.where.status) {
         conditions.push({
           status: options.where.status,
+        });
+      }
+
+      if (options.where.statuses) {
+        conditions.push({
+          status: options.where.statuses,
         });
       }
 

@@ -38,6 +38,7 @@ import {
   ScheduleArticleProps,
   DeleteArticleProps,
   AutoSaveArticleProps,
+  GetArticleByParamsProps,
 } from './interface';
 import {
   IMediaDomainService,
@@ -104,6 +105,41 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     return articleEntity;
+  }
+
+  public async getScheduleArticle(params: GetArticleByParamsProps): Promise<ArticleEntity[]> {
+    const { user, limit, offset, statuses, order } = params;
+
+    return (await this._contentRepository.findAll(
+      {
+        where: {
+          createdBy: user.id,
+          statuses,
+        },
+        include: {
+          shouldIncludeCategory: true,
+          shouldIncludeReaction: {
+            userId: user.id,
+          },
+          shouldIncludeLinkPreview: true,
+          mustIncludeGroup: true,
+          shouldIncludeMarkReadImportant: {
+            userId: user.id,
+          },
+          shouldIncludeImportant: {
+            userId: user.id,
+          },
+        },
+        orderOptions: {
+          sortColumn: 'scheduledAt',
+          sortBy: order,
+        },
+      },
+      {
+        limit: limit + 1,
+        offset,
+      }
+    )) as ArticleEntity[];
   }
 
   public async deleteArticle(props: DeleteArticleProps): Promise<void> {

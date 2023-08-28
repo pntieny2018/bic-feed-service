@@ -1,5 +1,6 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -9,6 +10,9 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+
+import { PageOptionsDto } from '../../../../../common/dto';
+import { PostStatusConflictedException } from '../../../domain/exception';
 
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from './media.request.dto';
@@ -115,4 +119,25 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
     super(data);
     Object.assign(this, data);
   }
+}
+
+export class GetScheduleArticleDto extends PageOptionsDto {
+  @ApiProperty({
+    enum: [CONTENT_STATUS],
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => {
+    const status = value.split(',').filter((v) => Object.values(CONTENT_STATUS).includes(v));
+    const scheduleTypeStatus = [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
+
+    const isConflictStatus = (status: CONTENT_STATUS[]): boolean => {
+      // check status must in scheduleTypeStatus
+      return status.some((s) => !scheduleTypeStatus.includes(s));
+    };
+    if (isConflictStatus(status)) {
+      throw new PostStatusConflictedException();
+    }
+    return status;
+  })
+  public status: CONTENT_STATUS[];
 }

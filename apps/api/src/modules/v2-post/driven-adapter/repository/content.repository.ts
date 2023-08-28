@@ -48,6 +48,7 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
   IContentRepository,
+  OffsetPaginationProps,
   OrderOptions,
 } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
@@ -280,12 +281,11 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findAll(
-    findAllPostOptions: FindContentProps
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: OffsetPaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const findOption = this.buildFindOptions(findAllPostOptions);
-    findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
-    const rows = await this._postModel.findAll(findOption);
-    return rows.map((row) => this._modelToEntity(row));
+    const articles = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
+    return articles.map((article) => this._contentMapper.toDomain(article));
   }
 
   protected buildOrderByOptions(orderOptions: OrderOptions): any {

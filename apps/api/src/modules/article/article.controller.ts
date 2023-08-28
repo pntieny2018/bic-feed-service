@@ -96,7 +96,6 @@ export class ArticleController {
     type: PostResponseDto,
   })
   @Get('/params')
-  @Version([VERSIONS_SUPPORTED[0]])
   public getsByParams(
     @AuthUser() user: UserDto,
     @Query() getPostsByParamsDto: GetPostsByParamsDto

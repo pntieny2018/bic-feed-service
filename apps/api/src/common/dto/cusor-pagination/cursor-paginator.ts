@@ -25,7 +25,7 @@ export class CursorPaginator<T extends Model> {
     modelClass: ModelStatic<T>,
     cursorColumns: (keyof Attributes<T>)[],
     paginationParameters: PaginatedArgs,
-    order: ORDER | ORDER
+    order: ORDER
   ) {
     this.modelClass = modelClass;
     this.cursorColumns = cursorColumns;
