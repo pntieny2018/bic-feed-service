@@ -5,12 +5,12 @@ export const POST_VI_MAPPING = {
         ma_ascii: {
           filter: ['lowercase', 'asciifolding'],
           char_filter: ['html_strip'],
-          tokenizer: 'standard',
+          tokenizer: 'uax_url_email',
         },
         ma_no_ascii: {
           filter: ['lowercase'],
           char_filter: ['html_strip'],
-          tokenizer: 'standard',
+          tokenizer: 'uax_url_email',
         },
       },
     },
