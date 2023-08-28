@@ -998,7 +998,7 @@ export class SearchService {
     } else {
       //Vi
       if (type === PostType.POST) {
-        fields = [title.default];
+        fields = [content.default];
       } else if (type === PostType.SERIES) {
         fields = [title.default, summary.default];
       } else {
