@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -17,7 +18,11 @@ import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { instanceToInstance } from 'class-transformer';
 import { UserDto } from '../../../v2-user/application';
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import {
+  TRANSFORMER_VISIBLE_ONLY,
+  VERSIONS_SUPPORTED,
+  VERSION_1_9_0,
+} from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
 import { GetDraftContentsRequestDto, ValidateSeriesTagDto } from '../dto/request';
@@ -35,6 +40,9 @@ import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
+import { GetMenuSettingsQuery } from '../../application/query/get-menu-settings/get-menu-settings.query';
+import { MenuSettingsDto } from '../../application/dto';
+import { AppHelper } from '../../../../common/helpers/app.helper';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -68,6 +76,31 @@ export class ContentController {
     } catch (e) {
       switch (e.constructor) {
         case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get menu settings' })
+  @ApiOkResponse({
+    type: MenuSettingsDto,
+  })
+  @ResponseMessages({
+    success: 'Get menu settings successfully',
+  })
+  @Version(AppHelper.getVersionsSupportedFrom(VERSION_1_9_0))
+  @Get('/:id/menu-settings')
+  public async getMenuSettings(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<MenuSettingsDto> {
+    try {
+      return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
+    } catch (e) {
+      switch (e.constructor) {
         case DomainModelException:
           throw new BadRequestException(e);
         default:

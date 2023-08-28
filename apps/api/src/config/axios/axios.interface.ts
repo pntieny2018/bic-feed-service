@@ -19,4 +19,9 @@ export interface IAxiosConfig {
     maxRedirects: number;
     timeout: number;
   };
+  notification: {
+    baseUrl: string;
+    maxRedirects: number;
+    timeout: number;
+  };
 }

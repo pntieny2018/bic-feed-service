@@ -26,8 +26,8 @@ import { GroupPrivacy } from '../../../../v2-group/data-type';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
-  ReactionsCount,
 } from '../../../domain/query-interface/reaction.query.interface';
+import { ReactionsCount } from '../../../../../common/types/reaction-count.type';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { ArticleDto } from '../../dto/article.dto';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
