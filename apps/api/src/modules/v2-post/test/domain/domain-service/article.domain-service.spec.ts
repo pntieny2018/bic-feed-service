@@ -1,3 +1,4 @@
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { EventBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -274,6 +275,21 @@ describe('Article domain service', () => {
         expect(error).toBeDefined();
         expect(error).toBeInstanceOf(ContentAccessDeniedException);
       }
+    });
+  });
+
+  describe('get scheduled article', () => {
+    it('should get scheduled article', async () => {
+      jest.spyOn(contentRepository, 'findAll').mockResolvedValueOnce([articleEntityMock]);
+
+      const articleEntity = await domainService.getScheduleArticle({
+        user: userMock,
+        limit: 10,
+        offset: 0,
+        order: ORDER.ASC,
+        statuses: [CONTENT_STATUS.SCHEDULE_FAILED, CONTENT_STATUS.WAITING_SCHEDULE],
+      });
+      expect(articleEntity).toEqual([articleEntityMock]);
     });
   });
 });
