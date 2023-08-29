@@ -6,9 +6,13 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
 import { UserNoBelongGroupException } from '../exception';
-import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import {
+  IUserAdapter,
+  USER_ADAPTER,
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../service-adapter-interface';
 
 import { IMentionValidator } from './interface';
 
@@ -17,8 +21,8 @@ export class MentionValidator implements IMentionValidator {
   public constructor(
     @Inject(GROUP_ADAPTER)
     protected readonly _groupAdapter: IGroupAdapter,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected readonly _userApplicationService: IUserApplicationService,
+    @Inject(USER_ADAPTER)
+    protected readonly _userAdapter: IUserAdapter,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
