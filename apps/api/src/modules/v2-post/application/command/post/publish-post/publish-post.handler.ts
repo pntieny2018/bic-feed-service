@@ -68,7 +68,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       postEntity.setMarkReadImportant();
     }
 
-    const groups = await this._groupAdapter.getGroupByIds(
+    const groups = await this._groupAdapter.getGroupsByIds(
       command.payload?.groupIds || postEntity.get('groupIds')
     );
     const mentionUsers = await this._userApplicationService.findAllByIds(

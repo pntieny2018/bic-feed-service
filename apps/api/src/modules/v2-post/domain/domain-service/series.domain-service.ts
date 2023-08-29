@@ -79,7 +79,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
-    const groups = await this._groupAdapter.getGroupByIds(groupIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
@@ -158,7 +158,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     if (groupIds) {
       const oldGroupIds = seriesEntity.get('groupIds');
-      const groups = await this._groupAdapter.getGroupByIds(groupIds);
+      const groups = await this._groupAdapter.getGroupsByIds(groupIds);
 
       this._contentValidator.checkCanReadContent(seriesEntity, actor);
       await this._contentValidator.checkCanCRUDContent(

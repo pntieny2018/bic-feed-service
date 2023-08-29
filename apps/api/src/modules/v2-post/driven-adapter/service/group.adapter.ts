@@ -14,7 +14,7 @@ export class GroupAdapter implements IGroupAdapter {
     private readonly _groupService: IGroupService
   ) {}
 
-  public async getGroupByIds(groupIds: string[]): Promise<GroupDto[]> {
+  public async getGroupsByIds(groupIds: string[]): Promise<GroupDto[]> {
     return this._groupService.findAllByIds(groupIds);
   }
 }

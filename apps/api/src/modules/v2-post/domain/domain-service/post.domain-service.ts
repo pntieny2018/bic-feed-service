@@ -172,7 +172,7 @@ export class PostDomainService implements IPostDomainService {
       return postEntity;
     }
 
-    const groups = await this._groupAdapter.getGroupByIds(groupIds || postEntity.get('groupIds'));
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });
@@ -283,7 +283,7 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNoPublishYetException();
     }
 
-    const groups = await this._groupAdapter.getGroupByIds(groupIds || postEntity.get('groupIds'));
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });
@@ -448,7 +448,7 @@ export class PostDomainService implements IPostDomainService {
 
     let groups = undefined;
     if (groupIds || postEntity.get('groupIds')) {
-      groups = await this._groupAdapter.getGroupByIds(groupIds || postEntity.get('groupIds'));
+      groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     }
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,

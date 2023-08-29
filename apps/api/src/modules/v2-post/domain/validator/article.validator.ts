@@ -26,7 +26,7 @@ export class ArticleValidator implements IArticleValidator {
 
   public async validateArticle(articleEntity: ArticleEntity, actor: UserDto): Promise<void> {
     const groupIds = articleEntity.get('groupIds');
-    const groups = await this._groupAdapter.getGroupByIds(groupIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
     articleEntity.setCommunity(communityIds);

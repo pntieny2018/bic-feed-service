@@ -63,7 +63,7 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
     if (!authUser && !seriesEntity.isOpen()) {
       throw new ContentAccessDeniedException();
     }
-    const groups = await this._groupAdapter.getGroupByIds(seriesEntity.get('groupIds'));
+    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
     if (authUser) {
       this._postValidator.checkCanReadContent(seriesEntity, authUser, groups);
     }
