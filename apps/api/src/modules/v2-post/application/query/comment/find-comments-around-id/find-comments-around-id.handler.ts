@@ -50,7 +50,8 @@ export class FindCommentsAroundIdHandler
     );
 
     const bindingInstances = await this._commentBinding.commentsBinding(
-      aroundCommentPagination.rows
+      aroundCommentPagination.rows,
+      authUser
     );
 
     return new FindCommentsAroundIdDto(bindingInstances, aroundCommentPagination.meta);

@@ -15,6 +15,7 @@ import {
   IMediaRepository,
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
   IUserAdapter,
   USER_ADAPTER,

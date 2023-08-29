@@ -27,7 +27,7 @@ export class CreateDraftPostHandler
   public async execute(command: CreateDraftPostCommand): Promise<CreateDraftPostDto> {
     const { groupIds, authUser } = command.payload;
     await this._contentValidator.checkCanCRUDContent(authUser, groupIds);
-    const groups = await this._groupAdapter.getGroupByIds(groupIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     const postEntity = await this._postDomainService.createDraftPost({
       userId: authUser.id,
       groups,

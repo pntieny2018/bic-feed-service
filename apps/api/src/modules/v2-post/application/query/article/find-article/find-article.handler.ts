@@ -28,7 +28,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
   public async execute(query: FindArticleQuery): Promise<ArticleDto> {
     const { articleId, authUser } = query.payload;
     const articleEntity = await this._articleDomainService.getArticleById(articleId, authUser);
-    const groups = await this._groupAdapter.getGroupByIds(articleEntity.get('groupIds'));
+    const groups = await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds'));
     if (authUser) {
       this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
     }

@@ -23,6 +23,7 @@ import {
 import { SeriesEntity, ContentEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
   IUserAdapter,
   USER_ADAPTER,
@@ -51,7 +52,7 @@ export class ContentValidator implements IContentValidator {
     postType?: PostType | CONTENT_TYPE
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
-    const groups = await this._groupAdapter.getGroupByIds(groupAudienceIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
     const permissionKey = this.postTypeToPermissionKey(postType);
     for (const group of groups) {
@@ -74,7 +75,7 @@ export class ContentValidator implements IContentValidator {
     groupAudienceIds: string[]
   ): Promise<void> {
     const notEditSettingInGroups: GroupDto[] = [];
-    const groups = await this._groupAdapter.getGroupByIds(groupAudienceIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
     const ability = await this._authorityAppService.buildAbility(user);
     for (const group of groups) {
       if (

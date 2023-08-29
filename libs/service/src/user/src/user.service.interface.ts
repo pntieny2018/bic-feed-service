@@ -7,4 +7,5 @@ export interface IUserService {
   findById(id: string): Promise<UserDto>;
   findAllByIds(ids: string[]): Promise<UserDto[]>;
   canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean>;
+  findAllFromInternalByIds(ids: string[], authUserId: string): Promise<UserDto[]>;
 }

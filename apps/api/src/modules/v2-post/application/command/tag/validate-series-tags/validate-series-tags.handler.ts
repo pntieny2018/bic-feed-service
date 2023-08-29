@@ -22,7 +22,7 @@ export class ValidateSeriesTagsHandler implements ICommandHandler<ValidateSeries
 
   public async execute(command: ValidateSeriesTagsCommand): Promise<void> {
     const { groupIds, tagIds, seriesIds } = command.payload;
-    const groups = await this._groupAdapter.getGroupByIds(groupIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     const tags = await this._tagDomainService.findByIds(tagIds);
 
     return this._contentValidator.validateSeriesAndTags(groups, seriesIds, tags);

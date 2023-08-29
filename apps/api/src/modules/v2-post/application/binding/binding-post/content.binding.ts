@@ -50,12 +50,12 @@ export class ContentBinding implements IContentBinding {
   ) {}
   public async postBinding(
     postEntity: PostEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
       series?: SeriesEntity[];
-      authUser?: UserDto;
+      authUser: UserDto;
       reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto> {
@@ -68,9 +68,10 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     if (dataBinding?.mentionUsers?.length) {
       users.push(...dataBinding?.mentionUsers);
@@ -78,7 +79,9 @@ export class ContentBinding implements IContentBinding {
     if (dataBinding?.actor) {
       users.push(dataBinding.actor);
     }
+
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+
     if (postEntity.get('mentionUserIds') && users.length) {
       mentionUsers = this.mapMentionWithUserInfo(
         users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
@@ -86,13 +89,13 @@ export class ContentBinding implements IContentBinding {
     }
 
     const groups =
-      dataBinding?.groups || (await this._groupAdapter.getGroupByIds(postEntity.get('groupIds')));
+      dataBinding?.groups || (await this._groupAdapter.getGroupsByIds(postEntity.get('groupIds')));
 
     const audience = {
       groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
     };
 
-    const communities = await this._groupAdapter.getGroupByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
@@ -189,36 +192,32 @@ export class ContentBinding implements IContentBinding {
 
   public async articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto> {
-    const userIdsNeedToFind = [];
-    if (!dataBinding?.actor) {
-      userIdsNeedToFind.push(articleEntity.get('createdBy'));
+    let actor = dataBinding?.actor;
+
+    if (!actor) {
+      actor = (
+        await this._userAdapter.findAllAndFilterByPersonalVisibility(
+          [articleEntity.get('createdBy')],
+          dataBinding.authUser.id
+        )
+      )[0];
     }
-
-    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
-
-    if (dataBinding?.actor) {
-      users.push(dataBinding.actor);
-    }
-
-    const actor = users.find((user) => user.id === articleEntity.get('createdBy'));
 
     const groups =
       dataBinding?.groups ||
-      (await this._groupAdapter.getGroupByIds(articleEntity.get('groupIds')));
+      (await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
-    const communities = await this._groupAdapter.getGroupByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
@@ -329,22 +328,22 @@ export class ContentBinding implements IContentBinding {
 
   public async seriesBinding(
     seriesEntity: SeriesEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<SeriesDto> {
     const groups =
       dataBinding.groups && dataBinding.groups.length
         ? dataBinding.groups
-        : await this._groupAdapter.getGroupByIds(seriesEntity.get('groupIds'));
+        : await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
 
     const audience = {
       groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
-    const communities = await this._groupAdapter.getGroupByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
@@ -371,9 +370,10 @@ export class ContentBinding implements IContentBinding {
         ...userIdsNeedToFind,
       ]);
     }
-    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
@@ -808,11 +808,9 @@ export class ContentBinding implements IContentBinding {
         itemIds.push(...contentEntity.get('itemIds'));
       }
     });
-    const users = await this._userAdapter.getUsersByIds(
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
       ArrayHelper.arrayUnique(userIdsNeedToFind),
-      {
-        withGroupJoined: false,
-      }
+      authUser.id
     );
 
     const usersMapper = new Map<string, UserDto>(
@@ -835,7 +833,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const groups = await this._groupAdapter.getGroupByIds(ArrayHelper.arrayUnique(groupIds));
+    const groups = await this._groupAdapter.getGroupsByIds(ArrayHelper.arrayUnique(groupIds));
     const groupFiltered = this.filterSecretGroupCannotAccess(groups, authUser);
 
     const groupsMapper = new Map<string, GroupDto>(
@@ -844,7 +842,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const communities = await this._groupAdapter.getGroupByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(groupFiltered.map((group) => group.rootGroupId))
     );
 
