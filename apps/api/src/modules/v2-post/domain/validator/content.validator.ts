@@ -9,7 +9,6 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
 import { PostType } from '../../data-type';
 import {
   ContentAccessDeniedException,
@@ -24,6 +23,7 @@ import { UserNoBelongGroupException } from '../exception/external.exception';
 import { SeriesEntity, ContentEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -36,8 +36,8 @@ export class ContentValidator implements IContentValidator {
   public constructor(
     @Inject(GROUP_ADAPTER)
     protected readonly _groupAdapter: IGroupAdapter,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected readonly _userApplicationService: IUserApplicationService,
+    @Inject(USER_ADAPTER)
+    protected readonly _userAdapter: IUserAdapter,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -142,7 +142,7 @@ export class ContentValidator implements IContentValidator {
     if (!userIds?.length || !groupIds?.length) {
       return;
     }
-    const users = await this._userApplicationService.findAllByIds(userIds, {
+    const users = await this._userAdapter.getUsersByIds(userIds, {
       withGroupJoined: true,
     });
     const invalidUsers = [];
