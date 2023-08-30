@@ -18,6 +18,7 @@ import {
 import {
   ContentAccessDeniedException,
   ContentEmptyContentException,
+  ContentHasBeenPublishedException,
   ContentNotFoundException,
 } from '../../../domain/exception';
 import {
@@ -383,6 +384,101 @@ describe('Article domain service', () => {
       try {
         await domainService.publish({
           id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentEmptyContentException);
+      }
+    });
+  });
+
+  describe('schedule', () => {
+    const payload = {
+      id: v4(),
+      scheduledAt: new Date(),
+    };
+    it('should schedule article successfully', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isValidArticleToPublish').mockReturnValueOnce(true);
+      jest.spyOn(articleValidator, 'validateArticle').mockImplementation(jest.fn());
+      jest.spyOn(articleValidator, 'validateLimitedToAttachSeries').mockImplementation(jest.fn());
+
+      const result = await domainService.schedule({
+        payload,
+        actor: userMock,
+      });
+      expect(contentRepository.update).toBeCalledWith(articleEntityMock);
+      expect(result).toEqual(articleEntityMock);
+    });
+
+    it('should not schedule article when article not found', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(undefined);
+      try {
+        await domainService.schedule({
+          payload,
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not schedule article when article is published', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(true);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(false);
+      try {
+        await domainService.schedule({
+          payload,
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentHasBeenPublishedException);
+      }
+    });
+
+    it('should not schedule article when article is hidden', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(true);
+      try {
+        await domainService.schedule({
+          payload,
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not schedule article when article is in archived groups', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(true);
+      try {
+        await domainService.schedule({
+          payload,
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not schedule article when article is not valid to publish', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isValidArticleToPublish').mockReturnValueOnce(false);
+      try {
+        await domainService.schedule({
+          payload,
           actor: userMock,
         });
       } catch (error) {

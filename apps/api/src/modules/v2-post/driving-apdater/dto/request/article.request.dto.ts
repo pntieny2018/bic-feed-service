@@ -1,41 +1,13 @@
 import { CONTENT_STATUS } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
-import {
-  IsArray,
-  IsDateString,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
+import { PageOptionsDto } from 'apps/api/src/common/dto';
+import { Expose, Transform } from 'class-transformer';
+import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
-import { PageOptionsDto } from '../../../../../common/dto';
 import { PostStatusConflictedException } from '../../../domain/exception';
 
-import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from './media.request.dto';
 import { PublishPostRequestDto } from './post.request.dto';
-
-export class CreateDraftArticleRequestDto {
-  @ApiProperty({
-    description: 'Audience',
-    type: AudienceRequestDto,
-    example: {
-      ['group_ids']: ['02032703-6db0-437a-a900-d93e742c3cb9'],
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => AudienceRequestDto)
-  public audience: AudienceRequestDto = {
-    groupIds: [],
-  };
-  public constructor(data: CreateDraftArticleRequestDto) {
-    Object.assign(this, data);
-  }
-}
 
 export class UpdateArticleRequestDto extends PublishPostRequestDto {
   @ApiPropertyOptional({
