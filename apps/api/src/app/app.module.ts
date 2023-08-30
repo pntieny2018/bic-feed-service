@@ -93,6 +93,7 @@ export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(ClsMiddleware, I18nMiddleware, ApiVersioningMiddleware, AuthMiddleware)
+      .exclude('/app/health-check', 'health/livez', 'health/readyz')
       .forRoutes('*');
   }
 }
