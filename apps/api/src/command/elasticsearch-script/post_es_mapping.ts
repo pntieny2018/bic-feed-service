@@ -15,7 +15,7 @@ export const POST_ES_MAPPING = {
         ma_spanish: {
           filter: ['lowercase', 'spanish_stop', 'spanish_stemmer'],
           char_filter: ['html_strip'],
-          tokenizer: 'standard',
+          tokenizer: 'uax_url_email',
         },
       },
     },

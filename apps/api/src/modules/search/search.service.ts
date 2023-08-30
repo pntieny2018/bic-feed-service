@@ -1,3 +1,4 @@
+import { pick } from 'lodash';
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -25,6 +26,7 @@ import {
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../v2-post/domain/repositoty-interface';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -32,6 +34,8 @@ import {
 } from '../v2-group/application';
 import { TagService } from '../tag/tag.service';
 import { RULES } from '../v2-post/constant';
+import { QuizStatus } from '../v2-post/data-type';
+import { QuizDto } from '../v2-post/application/dto';
 
 @Injectable()
 export class SearchService {
@@ -60,7 +64,9 @@ export class SearchService {
     protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
-    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
+    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel,
+    @Inject(QUIZ_REPOSITORY_TOKEN)
+    private readonly _quizRepository: IQuizRepository
   ) {}
 
   public async addPostsToSearch(
@@ -334,8 +340,17 @@ export class SearchService {
       }
       return data;
     });
-    const users = await this.userAppService.findAllByIds(attrUserIds);
+    const users = await this.userAppService.findAllAndFilterByPersonalVisibility(
+      attrUserIds,
+      authUser.id
+    );
     const groups = await this.appGroupService.findAllByIds(attrGroupIds);
+    const quizEntities = await this._quizRepository.findAll({
+      where: {
+        contentIds: posts.map((post) => post.id),
+        status: QuizStatus.PUBLISHED,
+      },
+    });
     await Promise.all([
       this.reactionService.bindToPosts(posts),
       this.postBindingService.bindAttributes(posts, [
@@ -365,10 +380,27 @@ export class SearchService {
         articlesFilterReport = itemsInSeries;
       }
     }
+
+    const quizzesMapper = new Map<string, Partial<QuizDto>>(
+      quizEntities.map((quiz) => {
+        return [
+          quiz.get('contentId'),
+          new QuizDto({
+            id: quiz.get('id'),
+            title: quiz.get('title'),
+            description: quiz.get('description'),
+            status: quiz.get('status'),
+            genStatus: quiz.get('genStatus'),
+          }),
+        ];
+      })
+    );
+
     const result = this.bindResponseSearch(posts, {
       groups,
       users,
       articles: articlesFilterReport,
+      quizzesMapper,
     });
     return new PageDto<any>(result, {
       total: response.hits.total['value'],
@@ -383,15 +415,17 @@ export class SearchService {
       groups: GroupDto[];
       users: UserDto[];
       articles: any;
+      quizzesMapper: Map<string, Partial<QuizDto>>;
     }
   ): any {
-    const { groups, users, articles } = dataBinding;
+    const { groups, users, articles, quizzesMapper } = dataBinding;
     for (const post of posts) {
       let actor = null;
       const audienceGroups = [];
       const communities = [];
       let mentions = {};
       const reactionsCount = [];
+      post.quiz = quizzesMapper.get(post.id);
       for (const group of groups) {
         if (post.groupIds && post.groupIds.includes(group.id)) {
           audienceGroups.push({

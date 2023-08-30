@@ -7,33 +7,31 @@ import { ReactionsCount } from '../../../domain/query-interface/reaction.query.i
 export interface IContentBinding {
   postBinding(
     postEntity: PostEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
       series?: SeriesEntity[];
-      authUser?: UserDto;
+      authUser: UserDto;
       reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto>;
 
   seriesBinding(
     seriesEntity: SeriesEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<SeriesDto>;
 
   articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      series?: SeriesEntity[];
-      authUser?: UserDto;
-      reactionsCount?: ReactionsCount;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto>;
 

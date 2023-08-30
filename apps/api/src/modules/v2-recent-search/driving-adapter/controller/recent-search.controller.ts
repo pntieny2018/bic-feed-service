@@ -18,7 +18,7 @@ import { RecentSearchesResponseDto } from '../dto/response/recent-searches.respo
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { CreateRecentSearchRequestDto } from '../dto/request/create-recent-search.request.dto';
-import { CleanRecentSearchesDto } from '../../../recent-search/dto/requests/clean-recent-searches.dto';
+import { CleanRecentSearchesDto } from '../dto/request/clean-recent-searches.dto';
 import { FindRecentSearchesPaginationQuery } from '../../aplication/query/find-recent-searches/find-recent-searches-pagination.query';
 import { DeleteRecentSearchCommand } from '../../aplication/command/delete-recent-search/delete-recent-search.command';
 import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';

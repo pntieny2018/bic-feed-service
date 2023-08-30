@@ -1,4 +1,5 @@
 import { UserDto } from '.';
+import { GroupDto } from '../../v2-group/application';
 
 export type FindByUsernameOption = {
   withPermission?: boolean;
@@ -20,6 +21,8 @@ export interface IUserApplicationService {
   findOne(userId: string, options?: FindUserOption): Promise<UserDto>;
 
   findAllByIds(userIds: string[], options?: FindUsersOption): Promise<UserDto[]>;
+
+  findAllAndFilterByPersonalVisibility(userIds: string[], authUserId: string): Promise<UserDto[]>;
 
   canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean>;
 }

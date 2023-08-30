@@ -6,7 +6,15 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { Inject, Injectable } from '@nestjs/common';
-import { FileDto, ImageDto, PostDto, SeriesDto, UserMentionDto, VideoDto } from '../../dto';
+import {
+  FileDto,
+  ImageDto,
+  PostDto,
+  QuizDto,
+  SeriesDto,
+  UserMentionDto,
+  VideoDto,
+} from '../../dto';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -24,6 +32,11 @@ import { ArticleEntity } from '../../../domain/model/content/article.entity';
 import { ArticleDto } from '../../dto/article.dto';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { PostStatus } from '../../../data-type';
+import {
+  IQuizParticipantRepository,
+  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
+import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -33,16 +46,18 @@ export class ContentBinding implements IContentBinding {
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
+    @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
+    private readonly _quizParticipantRepository: IQuizParticipantRepository,
     @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
   ) {}
   public async postBinding(
     postEntity: PostEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
       series?: SeriesEntity[];
-      authUser?: UserDto;
+      authUser: UserDto;
       reactionsCount?: ReactionsCount;
     }
   ): Promise<PostDto> {
@@ -55,9 +70,10 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     if (dataBinding?.mentionUsers?.length) {
       users.push(...dataBinding?.mentionUsers);
@@ -65,7 +81,9 @@ export class ContentBinding implements IContentBinding {
     if (dataBinding?.actor) {
       users.push(dataBinding.actor);
     }
+
     const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+
     if (postEntity.get('mentionUserIds') && users.length) {
       mentionUsers = this.mapMentionWithUserInfo(
         users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
@@ -84,6 +102,23 @@ export class ContentBinding implements IContentBinding {
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
+    let quizHighestScore = null;
+    let quizDoing = null;
+    if (dataBinding?.authUser) {
+      const quizHighestScoreMapper =
+        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+          [postEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizHighestScore = quizHighestScoreMapper.get(postEntity.get('id')) ?? null;
+      const quizDoingMapper =
+        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+          [postEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizDoing = quizDoingMapper.get(postEntity.get('id')) ?? null;
+    }
+
     return new PostDto({
       id: postEntity.get('id'),
       audience,
@@ -101,6 +136,17 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
+      quiz:
+        postEntity.get('quiz') && postEntity.get('quiz').isVisible(dataBinding.authUser.id)
+          ? new QuizDto({
+              id: postEntity.get('quiz').get('id'),
+              title: postEntity.get('quiz').get('title'),
+              description: postEntity.get('quiz').get('description'),
+              status: postEntity.get('quiz').get('status'),
+              genStatus: postEntity.get('quiz').get('genStatus'),
+              error: postEntity.get('quiz').get('error'),
+            })
+          : undefined,
       communities,
       media: {
         files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
@@ -133,38 +179,45 @@ export class ContentBinding implements IContentBinding {
       isReported: postEntity.get('isReported'),
       reactionsCount: dataBinding?.reactionsCount || [],
       ownerReactions: postEntity.get('ownerReactions'),
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
     });
   }
 
   public async articleBinding(
     articleEntity: ArticleEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<ArticleDto> {
-    const userIdsNeedToFind = [];
-    if (!dataBinding?.actor) {
-      userIdsNeedToFind.push(articleEntity.get('createdBy'));
+    let actor = dataBinding?.actor;
+
+    if (!actor) {
+      actor = (
+        await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+          [articleEntity.get('createdBy')],
+          dataBinding.authUser.id
+        )
+      )[0];
     }
-
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
-
-    if (dataBinding?.actor) {
-      users.push(dataBinding.actor);
-    }
-
-    const actor = users.find((user) => user.id === articleEntity.get('createdBy'));
 
     const groups =
       dataBinding?.groups ||
       (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
 
     const audience = {
-      groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser),
+      groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
     const communities = await this._groupApplicationService.findAllByIds(
@@ -189,6 +242,22 @@ export class ContentBinding implements IContentBinding {
       articleEntity.getId(),
     ]);
 
+    let quizHighestScore = null;
+    let quizDoing = null;
+    if (dataBinding?.authUser) {
+      const quizHighestScoreMapper =
+        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+          [articleEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizHighestScore = quizHighestScoreMapper.get(articleEntity.get('id')) ?? null;
+      const quizDoingMapper =
+        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+          [articleEntity.get('id')],
+          dataBinding?.authUser.id
+        );
+      quizDoing = quizDoingMapper.get(articleEntity.get('id')) ?? null;
+    }
     return new ArticleDto({
       id: articleEntity.get('id'),
       audience,
@@ -212,6 +281,17 @@ export class ContentBinding implements IContentBinding {
             title: series.get('title'),
           }))
         : undefined,
+      quiz:
+        articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(dataBinding.authUser.id)
+          ? new QuizDto({
+              id: articleEntity.get('quiz').get('id'),
+              title: articleEntity.get('quiz').get('title'),
+              description: articleEntity.get('quiz').get('description'),
+              status: articleEntity.get('quiz').get('status'),
+              genStatus: articleEntity.get('quiz').get('genStatus'),
+              error: articleEntity.get('quiz').get('error'),
+            })
+          : undefined,
       communities,
       actor,
       status: articleEntity.get('status'),
@@ -235,15 +315,26 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
     });
   }
 
   public async seriesBinding(
     seriesEntity: SeriesEntity,
-    dataBinding?: {
+    dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];
-      authUser?: UserDto;
+      authUser: UserDto;
     }
   ): Promise<SeriesDto> {
     const groups =
@@ -272,6 +363,7 @@ export class ContentBinding implements IContentBinding {
         },
         include: {
           shouldIncludeCategory: true,
+          shouldIncludeQuiz: true,
         },
       });
 
@@ -281,9 +373,10 @@ export class ContentBinding implements IContentBinding {
         ...userIdsNeedToFind,
       ]);
     }
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-      withGroupJoined: false,
-    });
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      dataBinding.authUser.id
+    );
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
@@ -355,28 +448,44 @@ export class ContentBinding implements IContentBinding {
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
   ): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
-    const { users, groups, communities, items, reactionsCount } =
-      await this._getDataBindingForContents(contentEntities, authUser);
+    const {
+      users,
+      groups,
+      communities,
+      items,
+      reactionsCount,
+      quizDoingMapper,
+      quizHighestScoreMapper,
+    } = await this._getDataBindingForContents(contentEntities, authUser);
     const result = [];
     for (const contentEntity of contentEntities) {
       if (contentEntity instanceof PostEntity) {
         result.push(
-          this._getPostDto(contentEntity, { users, groups, communities, reactionsCount })
-        );
-      }
-      if (contentEntity instanceof ArticleEntity) {
-        result.push(
-          this._getArticleDto(contentEntity, {
+          this._getPostDto(contentEntity, authUser, {
             users,
             groups,
             communities,
             reactionsCount,
+            quizDoingMapper,
+            quizHighestScoreMapper,
+          })
+        );
+      }
+      if (contentEntity instanceof ArticleEntity) {
+        result.push(
+          this._getArticleDto(contentEntity, authUser, {
+            users,
+            groups,
+            communities,
+            reactionsCount,
+            quizDoingMapper,
+            quizHighestScoreMapper,
           })
         );
       }
       if (contentEntity instanceof SeriesEntity) {
         result.push(
-          this._getSeriesDto(contentEntity, {
+          this._getSeriesDto(contentEntity, authUser, {
             users,
             groups,
             communities,
@@ -392,11 +501,14 @@ export class ContentBinding implements IContentBinding {
 
   private _getPostDto(
     entity: PostEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
       communities: Map<string, GroupDto>;
       reactionsCount: Map<string, ReactionsCount>;
+      quizDoingMapper: Map<string, QuizParticipantEntity>;
+      quizHighestScoreMapper: Map<string, QuizParticipantEntity>;
     }
   ): PostDto {
     const groups = [];
@@ -409,6 +521,8 @@ export class ContentBinding implements IContentBinding {
       }
     });
 
+    const quizHighestScore = dataBinding.quizHighestScoreMapper.get(entity.getId()) || null;
+    const quizDoing = dataBinding.quizDoingMapper.get(entity.getId()) || null;
     return new PostDto({
       id: entity.get('id'),
       audience: {
@@ -422,6 +536,17 @@ export class ContentBinding implements IContentBinding {
         name: tag.get('name'),
         groupId: tag.get('groupId'),
       })),
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
+          : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -454,17 +579,31 @@ export class ContentBinding implements IContentBinding {
       isReported: entity.get('isReported'),
       reactionsCount: dataBinding.reactionsCount.get(entity.getId()),
       ownerReactions: entity.get('ownerReactions'),
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
     });
   }
 
   private _getArticleDto(
     entity: ArticleEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
       communities: Map<string, GroupDto>;
       reactionsCount: Map<string, ReactionsCount>;
       series?: Map<string, SeriesEntity | PostEntity | ArticleEntity>;
+      quizDoingMapper: Map<string, QuizParticipantEntity>;
+      quizHighestScoreMapper: Map<string, QuizParticipantEntity>;
     }
   ): ArticleDto {
     const groups = [];
@@ -476,6 +615,9 @@ export class ContentBinding implements IContentBinding {
         rootGroupIds.push(group.rootGroupId);
       }
     });
+
+    const quizHighestScore = dataBinding.quizHighestScoreMapper.get(entity.getId()) || null;
+    const quizDoing = dataBinding.quizDoingMapper.get(entity.getId()) || null;
 
     return new ArticleDto({
       id: entity.get('id'),
@@ -496,6 +638,17 @@ export class ContentBinding implements IContentBinding {
             title: dataBinding.series.get(seriesId)?.getTitle(),
           }))
         : undefined,
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
+          : undefined,
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
@@ -519,11 +672,23 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
+      quizDoing: quizDoing
+        ? {
+            quizParticipantId: quizDoing.get('id'),
+          }
+        : undefined,
+      quizHighestScore: quizHighestScore
+        ? {
+            quizParticipantId: quizHighestScore.get('id'),
+            score: quizHighestScore.get('score'),
+          }
+        : undefined,
     });
   }
 
   private _getSeriesDto(
     entity: SeriesEntity,
+    authUser: UserDto,
     dataBinding: {
       users: Map<string, UserDto>;
       groups: Map<string, GroupDto>;
@@ -560,6 +725,17 @@ export class ContentBinding implements IContentBinding {
       communities: ArrayHelper.arrayUnique(rootGroupIds).map((rootGroupId) =>
         dataBinding.communities.get(rootGroupId)
       ),
+      quiz:
+        entity.get('quiz') && entity.get('quiz').isVisible(authUser.id)
+          ? new QuizDto({
+              id: entity.get('quiz').get('id'),
+              title: entity.get('quiz').get('title'),
+              description: entity.get('quiz').get('description'),
+              status: entity.get('quiz').get('status'),
+              genStatus: entity.get('quiz').get('genStatus'),
+              error: entity.get('quiz').get('error'),
+            })
+          : undefined,
       items: items.map((item) => {
         if (item instanceof PostEntity) {
           return {
@@ -614,6 +790,8 @@ export class ContentBinding implements IContentBinding {
     reactionsCount: Map<string, ReactionsCount>;
     items: Map<string, PostEntity | ArticleEntity | SeriesEntity>;
     series: Map<string, SeriesEntity | PostEntity | ArticleEntity>;
+    quizHighestScoreMapper: Map<string, QuizParticipantEntity>;
+    quizDoingMapper: Map<string, QuizParticipantEntity>;
   }> {
     const userIdsNeedToFind = [];
     const itemIds = [];
@@ -631,11 +809,10 @@ export class ContentBinding implements IContentBinding {
         itemIds.push(...contentEntity.get('itemIds'));
       }
     });
-    const users = await this._userApplicationService.findAllByIds(
-      ArrayHelper.arrayUnique(userIdsNeedToFind),
-      {
-        withGroupJoined: false,
-      }
+
+    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+      userIdsNeedToFind,
+      authUser.id
     );
 
     const usersMapper = new Map<string, UserDto>(
@@ -699,6 +876,21 @@ export class ContentBinding implements IContentBinding {
         })
       );
     }
+
+    let quizHighestScoreMapper = new Map<string, QuizParticipantEntity>();
+    let quizDoingMapper = new Map<string, QuizParticipantEntity>();
+    if (authUser) {
+      quizHighestScoreMapper =
+        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+          contentIds,
+          authUser.id
+        );
+      quizDoingMapper =
+        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+          contentIds,
+          authUser.id
+        );
+    }
     return {
       groups: groupsMapper,
       users: usersMapper,
@@ -706,6 +898,8 @@ export class ContentBinding implements IContentBinding {
       items: itemsMapper,
       reactionsCount,
       series,
+      quizHighestScoreMapper,
+      quizDoingMapper,
     };
   }
 

@@ -50,6 +50,7 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
         shouldIncludeGroup: true,
         shouldIncludeCategory: true,
         shouldIncludeSeries: true,
+        shouldIncludeQuiz: true,
       },
     });
 

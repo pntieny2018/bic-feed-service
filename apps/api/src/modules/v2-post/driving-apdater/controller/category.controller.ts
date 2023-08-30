@@ -1,11 +1,10 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ClassTransformer } from 'class-transformer';
+import { QueryBus } from '@nestjs/cqrs';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
-import { GetCategoryDto } from '../../../category/dto/requests/get-category.dto';
+import { GetCategoryDto } from '../dto/request/get-category.dto';
 import { PageDto } from '../../../../common/dto';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
 import { FindCategoriesPaginationDto } from '../../application/query/find-categories/find-categories-pagination.dto';
@@ -17,12 +16,7 @@ import { FindCategoriesPaginationDto } from '../../application/query/find-catego
   path: 'category',
 })
 export class CategoryController {
-  public constructor(
-    private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
-  ) {}
-
-  private _classTransformer = new ClassTransformer();
+  public constructor(private readonly _queryBus: QueryBus) {}
 
   @ApiOperation({ summary: 'Get categories' })
   @ApiOkResponse({

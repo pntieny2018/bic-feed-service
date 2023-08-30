@@ -2,8 +2,7 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ClassTransformer } from 'class-transformer';
-import { GetReactionPipe } from '../../../reaction/pipes';
+import { GetReactionPipe } from '../pipes/get-reaction.pipe';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
 import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
@@ -30,7 +29,6 @@ export class ReactionController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
-  private _classTransformer = new ClassTransformer();
 
   @Get('/')
   @ApiOperation({ summary: 'Get reaction.' })
@@ -39,12 +37,20 @@ export class ReactionController {
     type: ReactionListDto,
   })
   public async get(
-    @AuthUser() _user: UserDto,
+    @AuthUser() authUser: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionRequestDto
   ): Promise<ReactionListDto> {
     const { reactionName, target, targetId, latestId, order, limit } = getReactionDto;
     const { rows, total } = await this._queryBus.execute(
-      new FindReactionsQuery({ reactionName, target, targetId, latestId, order, limit })
+      new FindReactionsQuery({
+        authUser,
+        reactionName,
+        target,
+        targetId,
+        latestId,
+        order,
+        limit,
+      })
     );
     return new ReactionListDto({
       list: rows,

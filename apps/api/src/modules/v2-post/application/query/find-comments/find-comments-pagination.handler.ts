@@ -5,7 +5,7 @@ import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../domain/query-interf
 import { FindCommentsPaginationDto } from './find-comments-pagination.dto';
 import {
   CONTENT_REPOSITORY_TOKEN,
-  FindOnePostOptions,
+  FindContentOptions,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import {
@@ -29,7 +29,7 @@ export class FindCommentsPaginationHandler
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
     const { postId, authUser } = query.payload;
-    const findOneOptions: FindOnePostOptions = {
+    const findOneOptions: FindContentOptions = {
       where: {
         id: postId,
         groupArchived: false,
@@ -51,7 +51,7 @@ export class FindCommentsPaginationHandler
 
     if (!rows || rows.length === 0) return new FindCommentsPaginationDto([], meta);
 
-    const instances = await this._commentBinding.commentBinding(rows);
+    const instances = await this._commentBinding.commentBinding(rows, authUser);
 
     return new FindCommentsPaginationDto(instances, meta);
   }

@@ -6,6 +6,7 @@ import { PostPrivacy, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
 import { TagDto } from './tag.dto';
 import { ImageDto } from './image.dto';
+import { QuizDto } from './quiz.dto';
 
 export class ArticleDto {
   public id: string;
@@ -25,6 +26,7 @@ export class ArticleDto {
     title: string;
     id: string;
   }[];
+  public quiz?: QuizDto;
   public setting: PostSettingDto;
   public actor: UserDto;
   public status: PostStatus;
@@ -47,6 +49,13 @@ export class ArticleDto {
   public updatedAt: Date;
   public scheduledAt?: Date;
   public publishedAt?: Date;
+  public quizHighestScore?: {
+    quizParticipantId: string;
+    score: number;
+  };
+  public quizDoing?: {
+    quizParticipantId: string;
+  };
 
   public constructor(data: Partial<ArticleDto>) {
     Object.assign(this, data);

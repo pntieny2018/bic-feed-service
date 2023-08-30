@@ -141,13 +141,7 @@ export class ContentController {
     type: ArticleResponseDto,
   })
   @Get('/draft')
-  @Version([
-    VERSIONS_SUPPORTED[0],
-    VERSIONS_SUPPORTED[1],
-    VERSIONS_SUPPORTED[2],
-    VERSIONS_SUPPORTED[3],
-    VERSIONS_SUPPORTED[4],
-  ])
+  @Version([VERSIONS_SUPPORTED[0], VERSIONS_SUPPORTED[1]])
   public getDrafts(
     @AuthUser() user: UserDto,
     @Query() getDraftPostDto: GetDraftPostDto

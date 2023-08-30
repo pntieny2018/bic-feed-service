@@ -13,10 +13,6 @@ import { AccessDeniedException } from '../../../domain/exception/access-denied.e
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
-import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
 
 @QueryHandler(FindArticleQuery)
 export class FindArticleHandler implements IQueryHandler<FindArticleQuery, ArticleDto> {
@@ -24,8 +20,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
   ) {}
 
   public async execute(query: FindArticleQuery): Promise<ArticleDto> {
@@ -40,6 +35,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
         shouldIncludeCategory: true,
         shouldIncludeSaved: {
           userId: authUser?.id,
