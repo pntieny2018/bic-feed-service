@@ -1,10 +1,8 @@
 export const PERMISSION_KEY = {
   CRUD_POST_ARTICLE: 'crud_post_article',
   CRUD_SERIES: 'crud_series',
-  //ASSIGN_CONTENT_OWNER: 'assign_content_owner',
-  //EDIT_POST_OF_INACTIVE_USER: 'edit_post_of_inactive_user',
   EDIT_OWN_CONTENT_SETTING: 'edit_own_content_setting',
-  //PUBLISH_UNPUBLISH_POST: 'publish_unpublish_post',
+  MANAGE: 'manage',
   PIN_CONTENT: 'pin_content',
   CUD_QUIZ: 'cud_quiz',
 };

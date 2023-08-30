@@ -1,9 +1,11 @@
-import { PostModule } from '../modules/post';
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CommentNotificationService } from './services';
-import { CommentDissociationService } from './dissociations';
-import { NotificationService } from './notification.service';
+import { ConfigService } from '@nestjs/config';
+
+import { IAxiosConfig } from '../config/axios';
 import { CommentModule } from '../modules/comment';
+import { PostModule } from '../modules/post';
+
 import {
   CommentActivityService,
   PostActivityService,
@@ -11,9 +13,26 @@ import {
   ReportActivityService,
   SeriesActivityService,
 } from './activities';
+import { CommentDissociationService } from './dissociations';
+import { NotificationService } from './notification.service';
+import { CommentNotificationService, ContentNotificationService } from './services';
 
 @Module({
-  imports: [PostModule, CommentModule],
+  imports: [
+    PostModule,
+    CommentModule,
+    HttpModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const axiosConfig = configService.get<IAxiosConfig>('axios');
+        return {
+          baseURL: axiosConfig.notification.baseUrl,
+          maxRedirects: axiosConfig.notification.maxRedirects,
+          timeout: axiosConfig.notification.timeout,
+        };
+      },
+    }),
+  ],
   providers: [
     ReportActivityService,
     NotificationService,
@@ -22,6 +41,7 @@ import {
     CommentActivityService,
     CommentDissociationService,
     CommentNotificationService,
+    ContentNotificationService,
     SeriesActivityService,
   ],
 
@@ -34,6 +54,7 @@ import {
     CommentActivityService,
     CommentDissociationService,
     CommentNotificationService,
+    ContentNotificationService,
   ],
 })
 export class NotificationModule {}
