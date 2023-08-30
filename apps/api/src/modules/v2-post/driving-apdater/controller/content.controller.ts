@@ -1,18 +1,34 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Version,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import {
+  TRANSFORMER_VISIBLE_ONLY,
+  VERSIONS_SUPPORTED,
+  VERSION_1_9_0,
+} from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
+import { AppHelper } from '../../../../common/helpers/app.helper';
 import { UserDto } from '../../../v2-user/application';
 import {
   MarkReadImportantContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
+import { MenuSettingsDto } from '../../application/dto';
 import { FindDraftContentsDto } from '../../application/dto/content.dto';
-import { FindDraftContentsQuery } from '../../application/query/content';
+import { FindDraftContentsQuery, GetMenuSettingsQuery } from '../../application/query/content';
 import {
   GetDraftContentsRequestDto,
   PostSettingRequestDto,
@@ -47,6 +63,22 @@ export class ContentController {
       new FindDraftContentsQuery({ authUser: user, ...getListCommentsDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get menu settings' })
+  @ApiOkResponse({
+    type: MenuSettingsDto,
+  })
+  @ResponseMessages({
+    success: 'Get menu settings successfully',
+  })
+  @Version(AppHelper.getVersionsSupportedFrom(VERSION_1_9_0))
+  @Get('/:id/menu-settings')
+  public async getMenuSettings(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<MenuSettingsDto> {
+    return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
   }
 
   @ApiOperation({ summary: 'Mark as read' })

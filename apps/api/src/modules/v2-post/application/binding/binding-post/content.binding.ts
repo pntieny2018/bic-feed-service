@@ -5,12 +5,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { ArrayHelper } from '../../../../../common/helpers';
+import { ReactionsCount } from '../../../../../common/types';
 import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import {
   IReactionQuery,
   REACTION_QUERY_TOKEN,
-  ReactionsCount,
 } from '../../../domain/query-interface/reaction.query.interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {

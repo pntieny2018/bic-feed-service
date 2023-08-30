@@ -19,7 +19,7 @@ export const POST_EN_MAPPING = {
         ma_english: {
           filter: ['english_possessive_stemmer', 'lowercase', 'english_stop', 'english_stemmer'],
           char_filter: ['html_strip'],
-          tokenizer: 'standard',
+          tokenizer: 'uax_url_email',
         },
       },
     },
