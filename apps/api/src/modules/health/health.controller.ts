@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/sequelize';
 import {
   HealthCheck,
   HealthCheckService,
@@ -7,16 +8,14 @@ import {
 } from '@nestjs/terminus';
 import { HealthCheckResult } from '@nestjs/terminus/dist/health-check/health-check-result.interface';
 import { HealthIndicatorResult } from '@nestjs/terminus/dist/health-indicator';
-import { InjectConnection } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
+
 import { HealthLabel } from './health.constants';
 import { KafkaHealthIndicator, RedisHealthIndicator } from './indicators';
-import { ModuleRef } from '@nestjs/core';
 
 @Controller('health')
 export class HealthController {
   public constructor(
-    private readonly _moduleRef: ModuleRef,
     @InjectConnection() private readonly _connection: Sequelize,
     private readonly _healthCheckService: HealthCheckService,
     private readonly _memoryHealthIndicator: MemoryHealthIndicator,
