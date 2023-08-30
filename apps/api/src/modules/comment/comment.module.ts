@@ -1,13 +1,15 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { CommentService } from './comment.service';
-import { MentionModule } from '../mention';
-import { PostModule } from '../post';
+
 import { AuthorityModule } from '../authority';
-import { MediaModule } from '../media';
-import { ReactionModule } from '../reaction';
 import { FollowModule } from '../follow';
 import { GiphyModule } from '../giphy';
+import { MediaModule } from '../media';
+import { MentionModule } from '../mention';
+import { PostModule } from '../post';
+import { ReactionModule } from '../reaction';
 import { UserModuleV2 } from '../v2-user/user.module';
+
+import { CommentService } from './comment.service';
 
 @Module({
   imports: [
