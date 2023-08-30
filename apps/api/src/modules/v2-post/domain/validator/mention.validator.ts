@@ -7,7 +7,6 @@ import {
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
 import { UserNoBelongGroupException } from '../exception';
-import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
   IUserAdapter,
   USER_ADAPTER,

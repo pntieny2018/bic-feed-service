@@ -3,12 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { IPostDomainService } from '../../../domain/domain-service/interface';
-import { LINK_PREVIEW_DOMAIN_SERVICE_TOKEN } from '../../../domain/domain-service/interface/link-preview.domain-service.interface';
 import {
+  IPostDomainService,
+  LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/media.domain-service.interface';
+} from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
 import { ArticleEntity } from '../../../domain/model/content';
 import {
@@ -17,10 +17,7 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../../../domain/service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,

@@ -8,10 +8,7 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../../../../domain/service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import { articleDtoMock, articleEntityMock } from '../../../mock/article.entity.mock';
 import { groupDtoMock } from '../../../mock/group.dto.mock';
@@ -56,7 +53,7 @@ describe('Find article handler', () => {
   describe('execute', () => {
     it('should execute find article', async () => {
       jest.spyOn(articleDomainService, 'getArticleById').mockResolvedValue(articleEntityMock);
-      jest.spyOn(groupAdapter, 'getGroupByIds').mockResolvedValue([groupDtoMock]);
+      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue([groupDtoMock]);
       jest.spyOn(contentBinding, 'articleBinding').mockResolvedValue(articleDtoMock);
 
       const result = await handler.execute({ payload: { articleId: '1', authUser: null } });
