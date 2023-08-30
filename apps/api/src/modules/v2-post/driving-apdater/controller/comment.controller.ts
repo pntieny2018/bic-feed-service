@@ -91,7 +91,10 @@ export class CommentController {
       const data = await this._queryBus.execute(
         new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
       );
-      return data;
+
+      return instanceToInstance(data, {
+        groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+      });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
@@ -119,7 +122,9 @@ export class CommentController {
       const data = await this._queryBus.execute(
         new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
       );
-      return data;
+      return instanceToInstance(data, {
+        groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+      });
     } catch (e) {
       switch (e.constructor) {
         case CommentNotFoundException:
