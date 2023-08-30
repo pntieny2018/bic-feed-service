@@ -1,18 +1,18 @@
+import { HttpService } from '@nestjs/axios';
+import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import jwkToPem from 'jwk-to-pem';
-import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import { lastValueFrom } from 'rxjs';
 
+import { ERRORS } from '../common/constants';
+import { ICognitoConfig } from '../config/cognito';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../modules/v2-user/application';
-import { ConfigService } from '@nestjs/config';
-import { ICognitoConfig } from '../config/cognito';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { ERRORS } from '../common/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
