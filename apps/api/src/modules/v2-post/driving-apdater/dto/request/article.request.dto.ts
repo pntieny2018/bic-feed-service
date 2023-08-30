@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -9,8 +9,8 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+
 import { AudienceRequestDto } from './audience.request.dto';
-import { Expose } from 'class-transformer';
 import { MediaDto } from './media.request.dto';
 import { PublishPostRequestDto } from './post.request.dto';
 

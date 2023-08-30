@@ -69,7 +69,7 @@ export class ArticleDomainService implements IArticleDomainService {
       where: {
         id: articleId,
         groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+        excludeReportedByUserId: authUser?.id,
       },
       include: {
         shouldIncludeGroup: true,
@@ -323,7 +323,7 @@ export class ArticleDomainService implements IArticleDomainService {
       return;
     }
 
-    await this._contentRepository.update(articleEntity);
+    return this._contentRepository.update(articleEntity);
   }
 
   private async _setArticleEntityAttributes(

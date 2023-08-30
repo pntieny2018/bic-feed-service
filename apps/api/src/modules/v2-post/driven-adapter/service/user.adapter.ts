@@ -22,4 +22,14 @@ export class UserAdapter implements IUserAdapter {
 
     return users.map((user) => new UserDto(user, excluded));
   }
+
+  public async findAllAndFilterByPersonalVisibility(
+    userIds: string[],
+    authUserId: string
+  ): Promise<UserDto[]> {
+    if (!userIds || userIds?.length === 0) {
+      return [];
+    }
+    return this._userService.findAllFromInternalByIds(userIds, authUserId);
+  }
 }

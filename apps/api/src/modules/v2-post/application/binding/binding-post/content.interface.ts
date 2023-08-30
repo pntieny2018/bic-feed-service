@@ -1,9 +1,10 @@
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
+
 import { ReactionsCount } from '../../../../../common/types';
-import { GroupDto } from '../../../../v2-group/application';
-import { UserDto } from '../../../../v2-user/application';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { ArticleEntity } from '../../../domain/model/content/article.entity';
+import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
 import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
+
 export interface IContentBinding {
   postBinding(
     postEntity: PostEntity,

@@ -1,9 +1,11 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { IArticleFactory } from './interface';
-import { ArticleEntity, ArticleAttributes } from '../model/content';
 import { v4 } from 'uuid';
-import { PostStatus, PostType } from '../../data-type';
+
+import { ArticleEntity, ArticleAttributes } from '../model/content';
+
+import { IArticleFactory } from './interface';
 
 export class ArticleFactory implements IArticleFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
@@ -28,8 +30,8 @@ export class ArticleFactory implements IArticleFactory {
         commentsCount: 0,
         totalUsersSeen: 0,
       },
-      type: PostType.ARTICLE,
-      status: PostStatus.DRAFT,
+      type: CONTENT_TYPE.ARTICLE,
+      status: CONTENT_STATUS.DRAFT,
       isHidden: false,
       isReported: false,
       privacy: null,

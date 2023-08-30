@@ -2,10 +2,6 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
-import {
   ContentAccessDeniedException,
   ContentNotFoundException,
 } from '../../../../domain/exception';
@@ -14,6 +10,10 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../../../../domain/service-adapter-interface /group-adapter.interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
@@ -24,7 +24,7 @@ import { FindSeriesQuery } from './find-series.query';
 @QueryHandler(FindSeriesQuery)
 export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesDto> {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER) private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
@@ -63,9 +63,9 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
     if (!authUser && !seriesEntity.isOpen()) {
       throw new ContentAccessDeniedException();
     }
-    const groups = await this._groupAppService.findAllByIds(seriesEntity.get('groupIds'));
+    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
     if (authUser) {
-      await this._postValidator.checkCanReadContent(seriesEntity, authUser, groups);
+      this._postValidator.checkCanReadContent(seriesEntity, authUser, groups);
     }
 
     return this._contentBinding.seriesBinding(seriesEntity, {

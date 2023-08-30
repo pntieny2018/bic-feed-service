@@ -2,11 +2,12 @@ import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
-import { IGroup, IGroupMember, IGroupService } from '@libs/service/group/src/interface';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
+import { GroupDto, GroupMember } from './group.dto';
+import { IGroupService } from './group.service.interface';
 
 @Injectable()
 export class GroupService implements IGroupService {
@@ -17,10 +18,10 @@ export class GroupService implements IGroupService {
     @Inject(GROUP_HTTP_TOKEN) private _httpService: IHttpService
   ) {}
 
-  public async findById(groupId: string): Promise<IGroup> {
-    let group = await this._store.get<IGroup>(`${CACHE_KEYS.SHARE_GROUP}:${groupId}`);
+  public async findById(groupId: string): Promise<GroupDto> {
+    let group = await this._store.get<GroupDto>(`${CACHE_KEYS.SHARE_GROUP}:${groupId}`);
     if (group === null) {
-      const response = await this._httpService.get<IGroup[]>(
+      const response = await this._httpService.get<GroupDto[]>(
         AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.SHARED_GROUPS, {
           ids: groupId,
         })
@@ -36,7 +37,7 @@ export class GroupService implements IGroupService {
     return group;
   }
 
-  public async findAllByIds(groupIds: string[]): Promise<IGroup[]> {
+  public async findAllByIds(groupIds: string[]): Promise<GroupDto[]> {
     if (!groupIds || groupIds?.length === 0) {
       return [];
     }
@@ -46,7 +47,7 @@ export class GroupService implements IGroupService {
     let groups = await this._store.mget(keys);
     const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group?.id === id));
     if (notFoundGroupIds.length > 0) {
-      const response = await this._httpService.get<IGroup[]>(
+      const response = await this._httpService.get<GroupDto[]>(
         AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.SHARED_GROUPS, {
           ids: notFoundGroupIds.join(','),
         })
@@ -62,9 +63,9 @@ export class GroupService implements IGroupService {
     actor: UserDto,
     groupIds: string[],
     pagination?: { offset?: number; limit?: number }
-  ): Promise<IGroupMember[]> {
+  ): Promise<GroupMember[]> {
     const response = await Promise.all(
-      groupIds.map(async (groupId): Promise<IGroupMember[]> => {
+      groupIds.map(async (groupId): Promise<GroupMember[]> => {
         try {
           const response = await this._httpService.get(
             GROUP_ENDPOINT.GROUP_MEMBERS.replace(':groupId', groupId),

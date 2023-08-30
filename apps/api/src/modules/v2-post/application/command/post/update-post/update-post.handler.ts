@@ -2,11 +2,7 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { KAFKA_TOPIC } from '../../../../../../../src/common/constants';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
+import { KAFKA_TOPIC } from '../../../../../../common/constants';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
@@ -21,6 +17,10 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../../../../domain/service-adapter-interface /group-adapter.interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
 import { PostDto } from '../../../dto';
@@ -31,16 +31,13 @@ import { UpdatePostCommand } from './update-post.command';
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, PostDto> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(POST_DOMAIN_SERVICE_TOKEN)
-    private readonly _postDomainService: IPostDomainService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupApplicationService: IGroupApplicationService,
+    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
@@ -56,7 +53,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       postEntity.setMarkReadImportant();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(
+    const groups = await this._groupAdapter.getGroupsByIds(
       command.payload?.groupIds || postEntity.get('groupIds')
     );
     const mentionUsers = await this._userApplicationService.findAllByIds(

@@ -1,10 +1,10 @@
+import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
 import { CommentHasBeenCreatedEvent } from '../../../../../../events/comment';
-import { GroupDto } from '../../../../../v2-group/application';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
