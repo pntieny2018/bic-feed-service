@@ -7,7 +7,6 @@ import { ClsMiddleware, ClsModule } from 'nestjs-cls';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { v4 as uuid } from 'uuid';
 
-import { PostModule } from '../modules/post';
 import { DatabaseModule } from '../database';
 import { ListenerModule } from '../listeners';
 import { ApiVersioningMiddleware, AuthMiddleware } from '../middlewares';
@@ -25,6 +24,7 @@ import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { InternalModule } from '../modules/internal';
 import { MediaModule } from '../modules/media';
 import { MentionModule } from '../modules/mention';
+import { PostModule } from '../modules/post';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
@@ -95,6 +95,7 @@ export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(ClsMiddleware, I18nMiddleware, ApiVersioningMiddleware, AuthMiddleware)
+      .exclude('/app/health-check', 'health/livez', 'health/readyz')
       .forRoutes('*');
   }
 }
