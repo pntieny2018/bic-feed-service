@@ -2,10 +2,10 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { PageDto } from '../../common/dto';
-import { AuthUser } from '../auth';
 import { SearchPostsDto } from './dto/requests';
 import { SearchService } from './search.service';
 import { UserDto } from '../v2-user/application';
+import { AuthUser } from '../../common/decorators';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')

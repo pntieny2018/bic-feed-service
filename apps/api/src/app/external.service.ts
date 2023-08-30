@@ -1,9 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { SentryService } from '@app/sentry';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { ENDPOINT } from '../common/constants/endpoint.constant';
 import * as fs from 'fs';
+
+import { SentryService } from '@libs/infra/sentry';
+import { HttpService } from '@nestjs/axios';
+import { Injectable, Logger } from '@nestjs/common';
+import { lastValueFrom } from 'rxjs';
+
+import { ENDPOINT } from '../common/constants/endpoint.constant';
 
 @Injectable()
 export class ExternalService {
@@ -20,7 +22,9 @@ export class ExternalService {
   ) {}
 
   public async getFileIds(ids: string[]): Promise<any> {
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
     try {
       const response = await lastValueFrom(
         this._httpService.post(
@@ -47,7 +51,9 @@ export class ExternalService {
   }
 
   public async getVideoIds(ids: string[]): Promise<any> {
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
     try {
       const response = await lastValueFrom(
         this._httpService.post(
@@ -78,7 +84,9 @@ export class ExternalService {
   }
 
   public async getImageIds(ids: string[]): Promise<any> {
-    if (ids.length === 0) return [];
+    if (ids.length === 0) {
+      return [];
+    }
     try {
       const response = await lastValueFrom(
         this._httpService.post(

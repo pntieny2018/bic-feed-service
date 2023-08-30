@@ -1,11 +1,8 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -15,50 +12,30 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../../../common/decorators';
-import { AuthUser } from '../../../auth';
-import { UserDto } from '../../../v2-user/application';
-import { ROUTES } from '../../../../common/constants/routes.constant';
-import {
-  ArticleInvalidScheduledTimeException,
-  ArticleLimitAttachedSeriesException,
-  ArticleRequiredCoverException,
-  CategoryInvalidException,
-  ContentEmptyException,
-  ContentEmptyGroupException,
-  ContentHasBeenPublishedException,
-  ContentNoCRUDPermissionAtGroupException,
-  ContentNoCRUDPermissionException,
-  ContentNoEditSettingPermissionAtGroupException,
-  ContentNoPublishYetException,
-  ContentNotFoundException,
-  ContentRequireGroupException,
-  InvalidResourceImageException,
-  TagSeriesInvalidException,
-} from '../../domain/exception';
-import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
 import { instanceToInstance, plainToInstance } from 'class-transformer';
-import { ArticleDto } from '../../application/dto';
-import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
-import { FindArticleQuery } from '../../application/query/find-article/find-article.query';
-import { ArticleResponseDto } from '../../../article/dto/responses';
+
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
-import { CreateDraftArticleCommand } from '../../application/command/create-draft-article/create-draft-article.command';
+import { ArticleResponseDto } from '../../../article/dto/responses';
+import { UserDto } from '../../../v2-user/application';
 import {
+  AutoSaveArticleCommand,
+  CreateDraftArticleCommand,
   DeleteArticleCommand,
   DeleteArticleCommandPayload,
-} from '../../application/command/delete-article/delete-article.command';
+  PublishArticleCommand,
+  ScheduleArticleCommand,
+  UpdateArticleCommand,
+} from '../../application/command/article';
+import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
+import { FindArticleQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,
   ScheduleArticleRequestDto,
 } from '../dto/request';
-import { UpdateArticleCommand } from '../../application/command/update-article/update-article.command';
-import { PublishArticleCommand } from '../../application/command/publish-article/publish-article.command';
-import { AutoSaveArticleCommand } from '../../application/command/auto-save-article/auto-save-article.command';
-import { ScheduleArticleCommand } from '../../application/command/schedule-article/schedule-article.command';
 
 @ApiTags('v2 Articles')
 @ApiSecurity('authorization')
@@ -76,23 +53,8 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    try {
-      const data = await this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
-      return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentRequireGroupException:
-        case ContentNoCRUDPermissionException:
-        case AccessDeniedException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
+    return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Create draft article' })
@@ -107,19 +69,10 @@ export class ArticleController {
     success: 'message.article.created_success',
   })
   public async create(@AuthUser() authUser: UserDto): Promise<ArticleDto> {
-    try {
-      const data = await this._commandBus.execute<CreateDraftArticleCommand, CreateDraftPostDto>(
-        new CreateDraftArticleCommand({ authUser })
-      );
-      return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._commandBus.execute<CreateDraftArticleCommand, CreateDraftPostDto>(
+      new CreateDraftArticleCommand({ authUser })
+    );
+    return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Delete article' })
@@ -136,28 +89,12 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<DeleteArticleCommand, void>(
-        new DeleteArticleCommand({
-          id,
-          actor: user,
-        } as DeleteArticleCommandPayload)
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        case AccessDeniedException:
-        case ContentNoCRUDPermissionException:
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentNoEditSettingPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<DeleteArticleCommand, void>(
+      new DeleteArticleCommand({
+        id,
+        actor: user,
+      } as DeleteArticleCommandPayload)
+    );
   }
 
   @ApiOperation({ summary: 'Auto save article' })
@@ -174,38 +111,15 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateArticleRequestDto: UpdateArticleRequestDto
   ): Promise<void> {
-    try {
-      const { audience } = updateArticleRequestDto;
-      await this._commandBus.execute<AutoSaveArticleCommand, void>(
-        new AutoSaveArticleCommand({
-          id,
-          actor: user,
-          ...updateArticleRequestDto,
-          groupIds: audience?.groupIds,
-        })
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentNoPublishYetException:
-        case ContentEmptyException:
-        case ContentEmptyGroupException:
-        case ArticleRequiredCoverException:
-        case InvalidResourceImageException:
-        case CategoryInvalidException:
-        case TagSeriesInvalidException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        case AccessDeniedException:
-        case ContentNoCRUDPermissionException:
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentNoEditSettingPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    const { audience } = updateArticleRequestDto;
+    await this._commandBus.execute<AutoSaveArticleCommand, void>(
+      new AutoSaveArticleCommand({
+        id,
+        actor: user,
+        ...updateArticleRequestDto,
+        groupIds: audience?.groupIds,
+      })
+    );
   }
 
   @ApiOperation({ summary: 'Update article' })
@@ -222,41 +136,16 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateArticleRequestDto: UpdateArticleRequestDto
   ): Promise<ArticleDto> {
-    try {
-      const { audience } = updateArticleRequestDto;
-      const articleDto = await this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
-        new UpdateArticleCommand({
-          id,
-          actor: user,
-          ...updateArticleRequestDto,
-          groupIds: audience?.groupIds,
-        })
-      );
-      return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentEmptyException:
-        case ContentEmptyGroupException:
-        case ArticleRequiredCoverException:
-        case InvalidResourceImageException:
-        case CategoryInvalidException:
-        case TagSeriesInvalidException:
-        case DomainModelException:
-        case ContentNoPublishYetException:
-        case ArticleLimitAttachedSeriesException:
-          throw new BadRequestException(e);
-        case AccessDeniedException:
-        case ContentNoCRUDPermissionException:
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentNoEditSettingPermissionAtGroupException:
-        case AccessDeniedException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    const { audience } = updateArticleRequestDto;
+    const articleDto = await this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
+      new UpdateArticleCommand({
+        id,
+        actor: user,
+        ...updateArticleRequestDto,
+        groupIds: audience?.groupIds,
+      })
+    );
+    return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Publish article' })
@@ -274,39 +163,16 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() publishArticleRequestDto: PublishArticleRequestDto
   ): Promise<ArticleDto> {
-    try {
-      const { audience } = publishArticleRequestDto;
-      const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
-        new PublishArticleCommand({
-          id,
-          actor: user,
-          ...publishArticleRequestDto,
-          groupIds: audience?.groupIds,
-        })
-      );
-      return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentEmptyException:
-        case ContentEmptyGroupException:
-        case ArticleRequiredCoverException:
-        case InvalidResourceImageException:
-        case CategoryInvalidException:
-        case TagSeriesInvalidException:
-        case DomainModelException:
-        case ArticleLimitAttachedSeriesException:
-          throw new BadRequestException(e);
-        case AccessDeniedException:
-        case ContentNoCRUDPermissionException:
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentNoEditSettingPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    const { audience } = publishArticleRequestDto;
+    const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
+      new PublishArticleCommand({
+        id,
+        actor: user,
+        ...publishArticleRequestDto,
+        groupIds: audience?.groupIds,
+      })
+    );
+    return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Schedule article' })
@@ -324,40 +190,15 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() scheduleArticleRequestDto: ScheduleArticleRequestDto
   ): Promise<ArticleDto> {
-    try {
-      const { audience } = scheduleArticleRequestDto;
-      const articleDto = await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
-        new ScheduleArticleCommand({
-          id,
-          actor: user,
-          ...scheduleArticleRequestDto,
-          groupIds: audience?.groupIds,
-        })
-      );
-      return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentEmptyException:
-        case ContentEmptyGroupException:
-        case ArticleRequiredCoverException:
-        case InvalidResourceImageException:
-        case CategoryInvalidException:
-        case TagSeriesInvalidException:
-        case DomainModelException:
-        case ArticleLimitAttachedSeriesException:
-        case ContentHasBeenPublishedException:
-        case ArticleInvalidScheduledTimeException:
-          throw new BadRequestException(e);
-        case AccessDeniedException:
-        case ContentNoCRUDPermissionException:
-        case ContentNoCRUDPermissionAtGroupException:
-        case ContentNoEditSettingPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        default:
-          throw e;
-      }
-    }
+    const { audience } = scheduleArticleRequestDto;
+    const articleDto = await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
+      new ScheduleArticleCommand({
+        id,
+        actor: user,
+        ...scheduleArticleRequestDto,
+        groupIds: audience?.groupIds,
+      })
+    );
+    return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

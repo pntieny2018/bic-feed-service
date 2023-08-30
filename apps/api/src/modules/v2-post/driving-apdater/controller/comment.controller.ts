@@ -1,67 +1,51 @@
-import { AuthUser } from '../../../auth';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../../../common/decorators';
-import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
+import { instanceToInstance } from 'class-transformer';
+
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application/user.dto';
-import { CreateCommentPipe } from '../pipes/create-comment.pipe';
-import { CreateCommentRequestDto } from '../dto/request/create-comment.request.dto';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
-} from '../../application/command/create-comment/create-comment.command';
-import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { ReplyCommentDto } from '../../application/command/reply-comment/reply-comment.dto';
-import { ReplyCommentRequestDto } from '../dto/request/reply-comment.request.dto';
-import {
-  ReplyCommentCommand,
-  ReplyCommentCommandPayload,
-} from '../../application/command/reply-comment/reply-comment.command';
-import { UpdateCommentRequestDto } from '../dto/request/update-comment.request.dto';
-import {
-  UpdateCommentCommand,
-  UpdateCommentCommandPayload,
-} from '../../application/command/update-comment/update-comment.command';
-import {
-  AccessDeniedException,
-  CommentNotFoundException,
-  CommentReplyNotExistException,
-  ContentNoCRUDPermissionException,
-  ContentNoCommentPermissionException,
-  ContentNotFoundException,
-  ContentRequireGroupException,
-  InvalidCursorParamsException,
-  InvalidResourceImageException,
-  MentionUserNotFoundException,
-} from '../../domain/exception';
-import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
-} from '../../application/command/delete-comment/delete-comment.command';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
-import { instanceToInstance } from 'class-transformer';
+  ReplyCommentCommand,
+  ReplyCommentCommandPayload,
+  UpdateCommentCommand,
+  UpdateCommentCommandPayload,
+} from '../../application/command/comment';
+import {
+  CommentDto,
+  FindCommentsAroundIdDto,
+  FindCommentsPaginationDto,
+} from '../../application/dto';
+import {
+  FindCommentsAroundIdQuery,
+  FindCommentsPaginationQuery,
+} from '../../application/query/comment';
+import {
+  CreateCommentRequestDto,
+  GetCommentsAroundIdDto,
+  GetListCommentsDto,
+  ReplyCommentRequestDto,
+  UpdateCommentRequestDto,
+} from '../dto/request';
+import { CreateCommentPipe } from '../pipes/create-comment.pipe';
+import { GetCommentsAroundIdPipe } from '../pipes/get-comments-around-id.pipe';
 import { GetCommentsPipe } from '../pipes/get-comments.pipe';
-import { GetCommentsArroundIdDto, GetListCommentsDto } from '../dto/request';
-import { FindCommentsPaginationQuery } from '../../application/query/find-comments/find-comments-pagination.query';
-import { FindCommentsPaginationDto } from '../../application/query/find-comments/find-comments-pagination.dto';
-import { GetCommentsArroundIdPipe } from '../pipes/get-comments-arround-id.pipe';
-import { FindCommentsArroundIdQuery } from '../../application/query/find-comments-arround-id/find-comments-arround-id.query';
-import { FindCommentsArroundIdDto } from '../../application/query/find-comments-arround-id/find-comments-arround-id.dto';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -87,61 +71,35 @@ export class CommentController {
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
   ): Promise<FindCommentsPaginationDto> {
-    try {
-      const data = await this._queryBus.execute(
-        new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
-      );
-
-      return instanceToInstance(data, {
-        groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
-      });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case InvalidCursorParamsException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._queryBus.execute(
+      new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
+    );
+    return instanceToInstance(data, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
   }
 
-  @ApiOperation({ summary: 'Get comments arround a comment' })
+  @ApiOperation({ summary: 'Get comments around a comment' })
   @ResponseMessages({
-    success: 'Get comments arround a comment successfully',
+    success: 'Get comments around a comment successfully',
   })
   @Get('/:commentId')
-  public async getCommentsArroundId(
+  public async getCommentsAroundId(
     @AuthUser(false) user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
-    @Query(GetCommentsArroundIdPipe) getCommentsArroundIdDto: GetCommentsArroundIdDto
-  ): Promise<FindCommentsArroundIdDto> {
-    try {
-      const data = await this._queryBus.execute(
-        new FindCommentsArroundIdQuery({ authUser: user, commentId, ...getCommentsArroundIdDto })
-      );
-      return instanceToInstance(data, {
-        groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
-      });
-    } catch (e) {
-      switch (e.constructor) {
-        case CommentNotFoundException:
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case InvalidCursorParamsException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    @Query(GetCommentsAroundIdPipe) getCommentsAroundIdDto: GetCommentsAroundIdDto
+  ): Promise<FindCommentsAroundIdDto> {
+    const data = await this._queryBus.execute(
+      new FindCommentsAroundIdQuery({ authUser: user, commentId, ...getCommentsAroundIdDto })
+    );
+    return instanceToInstance(data, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
   }
 
   @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({
-    type: CreateCommentDto,
+    type: CommentDto,
     description: 'Create comment successfully',
   })
   @ResponseMessages({
@@ -151,43 +109,26 @@ export class CommentController {
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentRequestDto
-  ): Promise<CreateCommentDto> {
-    try {
-      const data = await this._commandBus.execute<CreateCommentCommand, CreateCommentDto>(
-        new CreateCommentCommand({
-          ...createCommentDto,
-          actor: user,
-          media: createCommentDto.media
-            ? {
-                files: createCommentDto.media?.files.map((file) => file.id),
-                images: createCommentDto.media?.images.map((image) => image.id),
-                videos: createCommentDto.media?.videos.map((video) => video.id),
-              }
-            : undefined,
-        } as CreateCommentCommandPayload)
-      );
-      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-        case MentionUserNotFoundException:
-          throw new NotFoundException(e);
-        case AccessDeniedException:
-        case ContentRequireGroupException:
-        case ContentNoCommentPermissionException:
-          throw new ForbiddenException(e);
-        case InvalidResourceImageException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+  ): Promise<CommentDto> {
+    const data = await this._commandBus.execute<CreateCommentCommand, CommentDto>(
+      new CreateCommentCommand({
+        ...createCommentDto,
+        actor: user,
+        media: createCommentDto.media
+          ? {
+              files: createCommentDto.media?.files.map((file) => file.id),
+              images: createCommentDto.media?.images.map((image) => image.id),
+              videos: createCommentDto.media?.videos.map((video) => video.id),
+            }
+          : undefined,
+      } as CreateCommentCommandPayload)
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Reply comment' })
   @ApiOkResponse({
-    type: ReplyCommentDto,
+    type: CommentDto,
     description: 'Create reply comment successfully',
   })
   @ResponseMessages({
@@ -198,40 +139,22 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) replyCommentRequestDto: ReplyCommentRequestDto
-  ): Promise<ReplyCommentDto> {
-    try {
-      const data = await this._commandBus.execute<ReplyCommentCommand, ReplyCommentDto>(
-        new ReplyCommentCommand({
-          ...replyCommentRequestDto,
-          parentId: commentId,
-          actor: user,
-          media: replyCommentRequestDto.media
-            ? {
-                files: replyCommentRequestDto.media?.files.map((file) => file.id),
-                images: replyCommentRequestDto.media?.images.map((image) => image.id),
-                videos: replyCommentRequestDto.media?.videos.map((video) => video.id),
-              }
-            : undefined,
-        } as ReplyCommentCommandPayload)
-      );
-      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-        case CommentReplyNotExistException:
-        case MentionUserNotFoundException:
-          throw new NotFoundException(e);
-        case AccessDeniedException:
-        case ContentRequireGroupException:
-        case ContentNoCommentPermissionException:
-          throw new ForbiddenException(e);
-        case InvalidResourceImageException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+  ): Promise<CommentDto> {
+    const data = await this._commandBus.execute<ReplyCommentCommand, CommentDto>(
+      new ReplyCommentCommand({
+        ...replyCommentRequestDto,
+        parentId: commentId,
+        actor: user,
+        media: replyCommentRequestDto.media
+          ? {
+              files: replyCommentRequestDto.media?.files.map((file) => file.id),
+              images: replyCommentRequestDto.media?.images.map((image) => image.id),
+              videos: replyCommentRequestDto.media?.videos.map((video) => video.id),
+            }
+          : undefined,
+      } as ReplyCommentCommandPayload)
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Update comment' })
@@ -248,37 +171,20 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentRequestDto: UpdateCommentRequestDto
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<UpdateCommentCommand, void>(
-        new UpdateCommentCommand({
-          ...updateCommentRequestDto,
-          id: commentId,
-          actor: user,
-          media: updateCommentRequestDto.media
-            ? {
-                files: (updateCommentRequestDto.media?.files || []).map((file) => file.id),
-                images: (updateCommentRequestDto.media?.images || []).map((image) => image.id),
-                videos: (updateCommentRequestDto.media?.videos || []).map((video) => video.id),
-              }
-            : undefined,
-        } as UpdateCommentCommandPayload)
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-        case CommentNotFoundException:
-          throw new NotFoundException(e);
-        case AccessDeniedException:
-        case ContentRequireGroupException:
-        case ContentNoCommentPermissionException:
-        case ContentNoCRUDPermissionException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<UpdateCommentCommand, void>(
+      new UpdateCommentCommand({
+        ...updateCommentRequestDto,
+        id: commentId,
+        actor: user,
+        media: updateCommentRequestDto.media
+          ? {
+              files: (updateCommentRequestDto.media?.files || []).map((file) => file.id),
+              images: (updateCommentRequestDto.media?.images || []).map((image) => image.id),
+              videos: (updateCommentRequestDto.media?.videos || []).map((video) => video.id),
+            }
+          : undefined,
+      } as UpdateCommentCommandPayload)
+    );
   }
 
   @ApiOperation({ summary: 'Delete comment' })
@@ -294,28 +200,11 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<DeleteCommentCommand, void>(
-        new DeleteCommentCommand({
-          id: commentId,
-          actor: user,
-        } as DeleteCommentCommandPayload)
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-        case CommentNotFoundException:
-          throw new NotFoundException(e);
-        case AccessDeniedException:
-        case ContentRequireGroupException:
-        case ContentNoCommentPermissionException:
-        case ContentNoCRUDPermissionException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<DeleteCommentCommand, void>(
+      new DeleteCommentCommand({
+        id: commentId,
+        actor: user,
+      } as DeleteCommentCommandPayload)
+    );
   }
 }

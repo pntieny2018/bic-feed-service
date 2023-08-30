@@ -1,9 +1,29 @@
-import { PostEntity } from '../../model/content';
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
-import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
-import { ContentEntity } from '../../model/content/content.entity';
-import { ArticleEntity } from '../../model/content/article.entity';
+import { UpdatePostCommandPayload } from '../../../application/command/post';
+import { PostEntity, ArticleEntity } from '../../model/content';
+
+export type PublishPostPayload = {
+  id: string;
+  groupIds: string[];
+  authUser: UserDto;
+  content?: string;
+  tagIds?: string[];
+  seriesIds?: string[];
+  mentionUserIds?: string[];
+  linkPreview?: {
+    url: string;
+    domain: string;
+    image: string;
+    title: string;
+    description: string;
+  };
+  media?: {
+    filesIds: string[];
+    imagesIds: string[];
+    videosIds: string[];
+  };
+};
 
 export type PostCreateProps = {
   groups: GroupDto[];
@@ -17,27 +37,37 @@ export type ArticleCreateProps = {
 
 export type PostPublishProps = {
   postEntity: PostEntity;
-  newData: PublishPostCommandPayload & {
+  newData: PublishPostPayload & {
     groups?: GroupDto[];
     mentionUsers: UserDto[];
   };
 };
+
+export type UpdatePostProps = UpdatePostCommandPayload;
+
+export type UpdatePostResult = {
+  postEntity: PostEntity;
+  groups?: GroupDto[];
+  mentionUsers?: UserDto[];
+};
+
 export interface IPostDomainService {
+  getPostById(postId: string, authUserId: string): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
-  publishPost(input: PostPublishProps): Promise<void>;
-  updatePost(input: PostPublishProps): Promise<void>;
+  publishPost(input: UpdatePostProps): Promise<PostEntity>;
+  updatePost(props: UpdatePostProps): Promise<PostEntity>;
   updateSetting(input: {
-    entity: ContentEntity;
+    contentId: string;
     authUser: UserDto;
     canComment: boolean;
     canReact: boolean;
     isImportant: boolean;
     importantExpiredAt: Date;
   }): Promise<void>;
-  autoSavePost(input: PostPublishProps): Promise<void>;
-  markSeen(contentEntity: ContentEntity, userId: string): Promise<void>;
-  markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void>;
+  autoSavePost(input: UpdatePostProps): Promise<void>;
+  markSeen(contentId: string, userId: string): Promise<void>;
+  markReadImportant(contentId: string, userId: string): Promise<void>;
   delete(id: string): Promise<void>;
 }
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';

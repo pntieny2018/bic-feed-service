@@ -1,23 +1,35 @@
-import { pick } from 'lodash';
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
+
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
+import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
-import { SeriesSearchResponseDto } from '../series/dto/responses/series-search.response.dto';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
 import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
+import { SeriesSearchResponseDto } from '../series/dto/responses/series-search.response.dto';
+import { TagService } from '../tag/tag.service';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
+import { QuizDto } from '../v2-post/application/dto';
+import { RULES } from '../v2-post/constant';
+import { QuizStatus } from '../v2-post/data-type';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../v2-post/domain/repositoty-interface';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+
 import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
@@ -25,17 +37,6 @@ import {
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../v2-post/domain/repositoty-interface';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../v2-group/application';
-import { TagService } from '../tag/tag.service';
-import { RULES } from '../v2-post/constant';
-import { QuizStatus } from '../v2-post/data-type';
-import { QuizDto } from '../v2-post/application/dto';
 
 @Injectable()
 export class SearchService {
@@ -76,7 +77,9 @@ export class SearchService {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
-      if (post.isHidden === true) continue;
+      if (post.isHidden === true) {
+        continue;
+      }
       if (post.type === PostType.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
       }
@@ -87,7 +90,9 @@ export class SearchService {
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
-    if (body.length === 0) return { totalUpdated: 0, totalCreated: 0 };
+    if (body.length === 0) {
+      return { totalUpdated: 0, totalCreated: 0 };
+    }
     try {
       const res = await this.elasticsearchService.bulk({
         refresh: true,
@@ -111,8 +116,12 @@ export class SearchService {
       let totalCreated = 0;
       let totalUpdated = 0;
       res.items.map((item) => {
-        if (item.index.result === 'created') totalCreated++;
-        if (item.index.result === 'updated') totalUpdated++;
+        if (item.index.result === 'created') {
+          totalCreated++;
+        }
+        if (item.index.result === 'updated') {
+          totalUpdated++;
+        }
       });
       return {
         totalCreated,
@@ -150,7 +159,9 @@ export class SearchService {
   public async updatePostsToSearch(posts: IDataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      if (dataIndex.isHidden === true) continue;
+      if (dataIndex.isHidden === true) {
+        continue;
+      }
       if (dataIndex.type === PostType.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       }
@@ -225,7 +236,9 @@ export class SearchService {
         doc: dataUpdate[indexPost],
       });
     });
-    if (updateOps.length === 0) return;
+    if (updateOps.length === 0) {
+      return;
+    }
     try {
       await this.elasticsearchService.bulk(
         {
@@ -300,7 +313,9 @@ export class SearchService {
         itemIds.push(...source.items.map((item) => item.id));
       }
       attrUserIds.push(source.createdBy);
-      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
+      if (source.mentionUserIds) {
+        attrUserIds.push(...source.mentionUserIds);
+      }
       attrGroupIds.push(...source.groupIds);
       attrGroupIds.push(...source.communityIds);
       const data: any = {
@@ -481,7 +496,9 @@ export class SearchService {
         });
         for (const itemInSeries of post.items) {
           const findArticle = articles.find((item) => item.id === itemInSeries.id);
-          if (findArticle) bindArticles.push(findArticle);
+          if (findArticle) {
+            bindArticles.push(findArticle);
+          }
         }
         post.items = bindArticles;
       }
@@ -595,7 +612,9 @@ export class SearchService {
       offset,
       limitSeries,
     };
-    if (categoryIds) context.categoryIds = categoryIds;
+    if (categoryIds) {
+      context.categoryIds = categoryIds;
+    }
     const payload = await this.getPayloadSearchForArticles(context);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response['hits'].hits;
@@ -813,8 +832,12 @@ export class SearchService {
         },
       };
 
-      if (startTime) filterTime.range.createdAt['gte'] = startTime;
-      if (endTime) filterTime.range.createdAt['lte'] = endTime;
+      if (startTime) {
+        filterTime.range.createdAt['gte'] = startTime;
+      }
+      if (endTime) {
+        filterTime.range.createdAt['lte'] = endTime;
+      }
       return [filterTime];
     }
     return [];
@@ -964,7 +987,9 @@ export class SearchService {
   }
 
   private _getMatchKeyword(type: PostType, keyword: string): any {
-    if (!keyword) return [];
+    if (!keyword) {
+      return [];
+    }
     let queries;
     let fields;
     const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;

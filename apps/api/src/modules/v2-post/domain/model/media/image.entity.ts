@@ -1,22 +1,24 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { IMAGE_RESOURCE } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions';
 import { ImageResource } from '../../../data-type';
 
-export type ImageProps = {
+export type ImageAttributes = {
   id: string;
   url: string;
   src?: string;
   createdBy: string;
   mimeType: string;
-  resource: ImageResource;
+  resource: ImageResource | IMAGE_RESOURCE;
   width: number;
   height: number;
   status: string;
 };
 
-export class ImageEntity extends DomainAggregateRoot<ImageProps> {
-  public constructor(props: ImageProps) {
+export class ImageEntity extends DomainAggregateRoot<ImageAttributes> {
+  public constructor(props: ImageAttributes) {
     super(props);
   }
 

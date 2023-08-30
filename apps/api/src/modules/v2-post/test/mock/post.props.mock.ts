@@ -1,8 +1,7 @@
-import { PostPrivacy, PostType } from '../../data-type';
-import { PostStatus } from '../../data-type/post-status.enum';
-import { PostProps } from '../../domain/model/content';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
+import { PostAttributes } from '../../domain/model/content';
 
-export const postProps: PostProps = {
+export const postProps: PostAttributes = {
   id: '9bacb01c-deae-4d80-81d7-b619b26ef684',
   isReported: false,
   isHidden: false,

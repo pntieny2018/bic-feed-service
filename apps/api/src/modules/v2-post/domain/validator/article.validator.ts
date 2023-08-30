@@ -38,8 +38,8 @@ export class ArticleValidator implements IArticleValidator {
     }
   }
 
-  public async validateLimtedToAttachSeries(articleEntity: ArticleEntity): Promise<void> {
-    if (articleEntity.isOverLimtedToAttachSeries()) {
+  public async validateLimitedToAttachSeries(articleEntity: ArticleEntity): Promise<void> {
+    if (articleEntity.isOverLimitedToAttachSeries()) {
       throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 

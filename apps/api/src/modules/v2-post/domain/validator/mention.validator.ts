@@ -13,7 +13,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../../../v2-group/application';
-import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
+import { UserNoBelongGroupException } from '../exception/external.exception';
 import { IMentionValidator } from './interface';
 
 @Injectable()
@@ -37,9 +37,7 @@ export class MentionValidator implements IMentionValidator {
     }
 
     if (invalidUsers.length) {
-      throw new UserNoBelongGroupException({
-        usersDenied: invalidUsers,
-      });
+      throw new UserNoBelongGroupException(null, { usersDenied: invalidUsers });
     }
   }
 }

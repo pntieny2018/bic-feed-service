@@ -4,7 +4,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
 import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 import {
-  FindContentOptions,
+  FindContentProps,
   GetPaginationContentsProps,
   IContentRepository,
   OrderOptions,
@@ -264,7 +264,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findOne(
-    findOnePostOptions: FindContentOptions
+    findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const findOption = this.buildFindOptions(findOnePostOptions);
     const entity = await this._postModel.findOne(findOption);
@@ -283,7 +283,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findAll(
-    findAllPostOptions: FindContentOptions
+    findAllPostOptions: FindContentProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
@@ -328,7 +328,7 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  private _buildSubSelect(options: FindContentOptions): [Literal, string][] {
+  private _buildSubSelect(options: FindContentProps): [Literal, string][] {
     if (!options?.include) return [];
 
     const subSelect: [Literal, string][] = [];
@@ -352,7 +352,7 @@ export class ContentRepository implements IContentRepository {
     return subSelect;
   }
 
-  private _buildRelationOptions(options: FindContentOptions): Includeable[] {
+  private _buildRelationOptions(options: FindContentProps): Includeable[] {
     if (!options?.include) return [];
 
     const includeable = [];
@@ -471,7 +471,7 @@ export class ContentRepository implements IContentRepository {
     return includeable;
   }
 
-  protected buildFindOptions(options: FindContentOptions): FindOptions<IPost> {
+  protected buildFindOptions(options: FindContentProps): FindOptions<IPost> {
     const findOptions: FindOptions<IPost> = {};
     const subSelect = this._buildSubSelect(options);
 
@@ -491,7 +491,7 @@ export class ContentRepository implements IContentRepository {
     return findOptions;
   }
 
-  private _buildWhereOptions(options: FindContentOptions): WhereOptions<IPost> {
+  private _buildWhereOptions(options: FindContentProps): WhereOptions<IPost> {
     let whereOptions: WhereOptions<IPost> | undefined;
 
     if (options?.where) {

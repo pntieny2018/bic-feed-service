@@ -1,14 +1,15 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
-import { GroupEntity } from '../../domain/model/group';
-import { IGroupRepository } from '../../domain/repositoty-interface/group.repository.interface';
-import { GroupPrivacy } from '../../data-type';
-import { lastValueFrom } from 'rxjs';
+import { RedisService } from '@libs/infra/redis';
 import { HttpService } from '@nestjs/axios';
-import { UserDto } from '../../../v2-user/application';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { lastValueFrom } from 'rxjs';
+
 import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
-import { RedisService } from '@app/redis';
+import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
+import { UserDto } from '../../../v2-user/application';
+import { GroupPrivacy } from '../../data-type';
+import { GroupEntity } from '../../domain/model/group';
+import { IGroupRepository } from '../../domain/repositoty-interface/group.repository.interface';
 
 type GroupDataInCache = {
   id: string;
@@ -53,7 +54,9 @@ export class GroupRepository implements IGroupRepository {
   }
 
   public async findAllByIds(groupIds: string[]): Promise<GroupEntity[]> {
-    if (!groupIds || groupIds?.length === 0) return [];
+    if (!groupIds || groupIds?.length === 0) {
+      return [];
+    }
     const keys = [...new Set(ArrayHelper.arrayUnique(groupIds.map((id) => id)))].map(
       (groupId) => `${CACHE_KEYS.SHARE_GROUP}:${groupId}`
     );

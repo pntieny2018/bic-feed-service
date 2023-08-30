@@ -1,11 +1,15 @@
 import { CommentBinding } from '../application/binding/binding-comment/comment.binding';
 import { COMMENT_BINDING_TOKEN } from '../application/binding/binding-comment/comment.interface';
-import { CreateCommentHandler } from '../application/command/create-comment/create-comment.handler';
-import { DeleteCommentHandler } from '../application/command/delete-comment/delete-comment.handler';
-import { ReplyCommentHandler } from '../application/command/reply-comment/reply-comment.handler';
-import { UpdateCommentHandler } from '../application/command/update-comment/update-comment.handler';
-import { FindCommentsArroundIdHandler } from '../application/query/find-comments-arround-id/find-comments-arround-id.handler';
-import { FindCommentsPaginationHandler } from '../application/query/find-comments/find-comments-pagination.handler';
+import {
+  CreateCommentHandler,
+  DeleteCommentHandler,
+  ReplyCommentHandler,
+  UpdateCommentHandler,
+} from '../application/command/comment';
+import {
+  FindCommentsAroundIdHandler,
+  FindCommentsPaginationHandler,
+} from '../application/query/comment';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';
 import { COMMENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { CommentFactory } from '../domain/factory/comment.factory';
@@ -48,5 +52,5 @@ export const commentProvider = [
   UpdateCommentHandler,
   DeleteCommentHandler,
   FindCommentsPaginationHandler,
-  FindCommentsArroundIdHandler,
+  FindCommentsAroundIdHandler,
 ];

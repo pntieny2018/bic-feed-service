@@ -1,13 +1,12 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, FindOptions, Includeable, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
+
 import { OrderEnum, PageDto } from '../../common/dto';
-import { LogicException } from '../../common/exceptions';
 import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
@@ -19,19 +18,21 @@ import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MentionService } from '../mention';
+import { PostBindingService } from '../post/post-binding.service';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
+import { ContentNotFoundException } from '../v2-post/domain/exception';
+import { UserDto } from '../v2-user/application';
+
 import { GetArticleDto, UpdateArticleDto } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { ArticleResponseDto } from './dto/responses';
-import { UserDto } from '../v2-user/application';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
-import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
 export class ArticleService {
@@ -87,7 +88,9 @@ export class ArticleService {
       type: PostType.ARTICLE,
     };
 
-    if (isProcessing) condition['status'] = PostStatus.PROCESSING;
+    if (isProcessing) {
+      condition['status'] = PostStatus.PROCESSING;
+    }
 
     const result = await this.getsAndCount(condition, order, { limit, offset });
 
@@ -289,7 +292,7 @@ export class ArticleService {
     );
 
     if (!article) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
 
     let comments = null;
@@ -509,7 +512,9 @@ export class ArticleService {
       await transaction.commit();
       return true;
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
+      if (typeof transaction !== 'undefined') {
+        await transaction.rollback();
+      }
       this.logger.error(JSON.stringify(error?.stack));
       throw error;
     }

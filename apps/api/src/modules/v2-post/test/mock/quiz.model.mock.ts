@@ -1,3 +1,5 @@
+import { QuizQuestionAttributes } from '@libs/database/postgres/model/quiz-question.model';
+
 import { QuizGenStatus, QuizStatus } from '../../data-type';
 
 export const quizRecordMock = {
@@ -36,7 +38,7 @@ export const quizRecordMock = {
         },
       ],
     },
-  ],
+  ] as QuizQuestionAttributes[],
   meta: 'meta',
   error: {
     code: '1',

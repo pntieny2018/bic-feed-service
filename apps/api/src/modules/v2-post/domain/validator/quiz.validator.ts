@@ -5,10 +5,10 @@ import {
 } from '../../../authority/application/authority.app-service.interface';
 import { UserDto } from '../../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { IQuizValidator } from './interface/quiz.validator.interface';
+import { IQuizValidator } from './interface';
 import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from '../domain-service/interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from './interface';
-import { AccessDeniedException } from '../exception';
+import { ContentAccessDeniedException } from '../exception';
 
 @Injectable()
 export class QuizValidator implements IQuizValidator {
@@ -26,7 +26,7 @@ export class QuizValidator implements IQuizValidator {
   public async checkCanCUDQuizInContent(contentId: string, user: UserDto): Promise<void> {
     const contentEntity = await this._contentDomainService.getVisibleContent(contentId);
     if (!contentEntity.isOwner(user.id)) {
-      throw new AccessDeniedException();
+      throw new ContentAccessDeniedException();
     }
     await this._contentValidator.checkCanCRUDContent(
       user,

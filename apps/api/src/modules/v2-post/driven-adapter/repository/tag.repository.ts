@@ -3,13 +3,13 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { TagModel } from '../../../../database/models/tag.model';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
 import { TagEntity } from '../../domain/model/tag';
 import {
   FindAllTagsProps,
   FindOneTagProps,
   ITagRepository,
 } from '../../domain/repositoty-interface';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
 
 export class TagRepository implements ITagRepository {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;
@@ -92,16 +92,17 @@ export class TagRepository implements ITagRepository {
     if (name) {
       condition.name = name.trim().toLowerCase();
     }
-    const enties = await this._tagModel.findAll({
+    const entities = await this._tagModel.findAll({
       where: condition,
     });
-    const rows = enties.map((entity) => this._modelToEntity(entity));
 
-    return rows;
+    return entities.map((entity) => this._modelToEntity(entity));
   }
 
   private _modelToEntity(tag: TagModel): TagEntity {
-    if (tag === null) return null;
+    if (tag === null) {
+      return null;
+    }
     return this._factory.reconstitute(tag.toJSON());
   }
 }

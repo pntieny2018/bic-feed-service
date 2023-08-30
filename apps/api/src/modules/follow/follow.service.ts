@@ -1,17 +1,19 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Op, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel, IFollow } from '../../database/models/follow.model';
-import { FollowDto } from './dto/requests';
-import { FollowsDto } from './dto/response/follows.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+
+import { FollowDto } from './dto/requests';
+import { FollowsDto } from './dto/response/follows.dto';
 
 @Injectable()
 export class FollowService {
@@ -37,7 +39,9 @@ export class FollowService {
     const MAX_POSTS_IN_NEWSFEED = 10000;
     try {
       const followedGroupIds = await this._filterGroupsUserJoined(userId, groupIds);
-      if (followedGroupIds.length === 0) return;
+      if (followedGroupIds.length === 0) {
+        return;
+      }
 
       await this._createFollowData(userId, followedGroupIds);
 

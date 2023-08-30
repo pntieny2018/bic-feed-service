@@ -1,10 +1,11 @@
-import { StringHelper } from '../../../../../common/helpers';
-import { RULES } from '../../../constant';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
+import { StringHelper } from '@libs/common/helpers';
+import { v4, validate as isUUID } from 'uuid';
 
-export type TagProps = {
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions';
+import { RULES } from '../../../constant';
+
+export type TagAttributes = {
   id: string;
   groupId: string;
   name: string;
@@ -16,9 +17,25 @@ export type TagProps = {
   updatedAt: Date;
 };
 
-export class TagEntity extends DomainAggregateRoot<TagProps> {
-  public constructor(props: TagProps) {
+export class TagEntity extends DomainAggregateRoot<TagAttributes> {
+  public constructor(props: TagAttributes) {
     super(props);
+  }
+
+  public static create(options: Partial<TagAttributes>, userId: string): TagEntity {
+    const { name, groupId } = options;
+    const now = new Date();
+    return new TagEntity({
+      id: v4(),
+      groupId: groupId,
+      name: name,
+      slug: StringHelper.convertToSlug(name),
+      totalUsed: 0,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public validate(): void {
@@ -39,7 +56,7 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
     }
   }
 
-  public update(props: Partial<TagProps>): void {
+  public update(props: Partial<TagAttributes>): void {
     const { name, updatedBy } = props;
     this._props.name = name.toUpperCase();
     this._props.updatedBy = updatedBy;

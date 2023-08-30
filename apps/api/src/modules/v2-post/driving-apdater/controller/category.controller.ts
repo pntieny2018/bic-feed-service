@@ -1,13 +1,14 @@
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { QueryBus } from '@nestjs/cqrs';
-import { AuthUser } from '../../../auth';
-import { UserDto } from '../../../v2-user/application';
-import { GetCategoryDto } from '../dto/request/get-category.dto';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
-import { FindCategoriesPaginationDto } from '../../application/query/find-categories/find-categories-pagination.dto';
+import { UserDto } from '../../../v2-user/application';
+import { FindCategoriesPaginationDto } from '../../application/dto/category.dto';
+import { FindCategoriesPaginationQuery } from '../../application/query/category';
+import { GetCategoryRequestDto } from '../dto/request';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')
@@ -26,7 +27,7 @@ export class CategoryController {
   @Get('/')
   public async get(
     @AuthUser() _user: UserDto,
-    @Query() getCategoryDto: GetCategoryDto
+    @Query() getCategoryDto: GetCategoryRequestDto
   ): Promise<PageDto<FindCategoriesPaginationDto>> {
     const { name, level, isCreatedByMe, offset, limit } = getCategoryDto;
     const { rows, total } = await this._queryBus.execute(

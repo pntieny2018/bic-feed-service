@@ -1,6 +1,5 @@
-import { PostStatus } from '../../data-type/post-status.enum';
-import { PostPrivacy, PostType } from '../../data-type';
 import { IPost } from '../../../../database/models/post.model';
+import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 
 export const postRecordMock: IPost = {
   id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',

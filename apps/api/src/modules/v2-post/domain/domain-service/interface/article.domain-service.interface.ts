@@ -1,51 +1,47 @@
+import { UserDto } from '../../../../v2-user/application';
+import {
+  AutoSaveArticleCommandPayload,
+  DeleteArticleCommandPayload,
+  PublishArticleCommandPayload,
+  UpdateArticleCommandPayload,
+} from '../../../application/command/article';
 import { ArticleEntity } from '../../model/content';
-import { MediaDto } from '../../../driving-apdater/dto/request';
-import { UserDto } from '../../../../v2-user/application/user.dto';
 
 export type ArticlePayload = {
   id: string;
-
-  actor: UserDto;
-
   title?: string;
-
   summary?: string;
-
   content?: string;
-
   categories?: string[];
-
   series?: string[];
-
   tags?: string[];
-
   groupIds?: string[];
-
-  coverMedia?: MediaDto;
-
+  coverMedia?: {
+    id: string;
+  };
   wordCount?: number;
-
   scheduledAt?: Date;
 };
 
-export type UpdateArticleProps = {
-  articleEntity: ArticleEntity;
-  newData: ArticlePayload;
-};
+export type UpdateArticleProps = UpdateArticleCommandPayload;
 
-export type PublishArticleProps = {
-  articleEntity: ArticleEntity;
-  newData: ArticlePayload;
-};
+export type PublishArticleProps = PublishArticleCommandPayload;
 
 export type ScheduleArticleProps = {
   payload: ArticlePayload;
+  actor: UserDto;
 };
 
+export type AutoSaveArticleProps = AutoSaveArticleCommandPayload;
+
+export type DeleteArticleProps = DeleteArticleCommandPayload;
+
 export interface IArticleDomainService {
-  update(input: UpdateArticleProps): Promise<void>;
-  publish(input: PublishArticleProps): Promise<void>;
+  getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
+  deleteArticle(props: DeleteArticleProps): Promise<void>;
+  update(input: UpdateArticleProps): Promise<ArticleEntity>;
+  publish(input: PublishArticleProps): Promise<ArticleEntity>;
   schedule(input: ScheduleArticleProps): Promise<ArticleEntity>;
-  autoSave(inputData: UpdateArticleProps): Promise<void>;
+  autoSave(inputData: AutoSaveArticleProps): Promise<void>;
 }
 export const ARTICLE_DOMAIN_SERVICE_TOKEN = 'ARTICLE_DOMAIN_SERVICE_TOKEN';

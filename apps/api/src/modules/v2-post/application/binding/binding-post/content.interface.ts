@@ -1,9 +1,9 @@
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { UserDto } from '../../../../v2-user/application';
-import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
+import { ReactionsCount } from '../../../../../common/types';
 import { GroupDto } from '../../../../v2-group/application';
+import { UserDto } from '../../../../v2-user/application';
+import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { ArticleEntity } from '../../../domain/model/content/article.entity';
-import { ReactionsCount } from '../../../../../common/types/reaction-count.type';
+import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
 export interface IContentBinding {
   postBinding(
     postEntity: PostEntity,

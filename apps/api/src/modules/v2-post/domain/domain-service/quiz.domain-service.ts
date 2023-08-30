@@ -1,8 +1,40 @@
-import { cloneDeep } from 'lodash';
-import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
+import { EVENT_SERVICE_TOKEN, IEventService } from '@libs/infra/event';
 import { Inject, Logger } from '@nestjs/common';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
+import { EventBus } from '@nestjs/cqrs';
+import { cloneDeep } from 'lodash';
+
+import { ERRORS } from '../../../../common/constants/errors';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { UserDto } from '../../../v2-user/application';
+import { AnswerUserDto } from '../../application/dto';
+import { RULES } from '../../constant';
+import {
+  QuizParticipantFinishedEvent,
+  QuizParticipantStartedEvent,
+  QuizCreatedEvent,
+  QuizGeneratedEvent,
+  QuizRegenerateEvent,
+} from '../event';
+import {
+  ContentHasQuizException,
+  QuizNotFoundException,
+  QuizOverTimeException,
+  QuizParticipantNotFinishedException,
+  QuizParticipantNotFoundException,
+  QuizQuestionLimitExceededException,
+  QuizQuestionNotFoundException,
+} from '../exception';
+import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
+import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
+import { QuizParticipantEntity } from '../model/quiz-participant';
+import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
+import {
+  IQuizParticipantRepository,
+  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '../repositoty-interface/quiz-participant.repository.interface';
+import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
+
 import {
   AddQuestionProps,
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -13,32 +45,6 @@ import {
   QuizUpdateProps,
   UpdateQuestionProps,
 } from './interface';
-import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { ERRORS } from '../../../../common/constants/errors';
-import { EventBus } from '@nestjs/cqrs';
-import { QuizCreatedEvent } from '../event/quiz-created.event';
-import { QuizGeneratedEvent } from '../event/quiz-generated.event';
-import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
-import {
-  ContentHasQuizException,
-  QuizNotFoundException,
-  QuizOverTimeException,
-  QuizParticipantNotFoundException,
-} from '../exception';
-import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
-import { UserDto } from '../../../v2-user/application';
-import { QuizParticipantEntity } from '../model/quiz-participant';
-import {
-  IQuizParticipantRepository,
-  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '../repositoty-interface/quiz-participant.repository.interface';
-import { QuizQuestionNotFoundException } from '../exception/quiz-question-not-found.exception';
-import { QuizParticipantNotFinishedException } from '../exception/quiz-participant-not-finished.exception';
-import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../event';
-import { AnswerUserDto } from '../../application/dto/quiz-participant.dto';
-import { RULES } from '../../constant';
-import { QuizQuestionLimitExceededException } from '../exception/quiz-question-limit-exceeded.exception';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -54,7 +60,9 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
-    private readonly event: EventBus
+    private readonly event: EventBus,
+    @Inject(EVENT_SERVICE_TOKEN)
+    private readonly _eventService: IEventService
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
@@ -224,7 +232,7 @@ export class QuizDomainService implements IQuizDomainService {
     quizParticipant.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
     try {
       await this._quizParticipantRepository.create(quizParticipant);
-      this.event.publish(
+      this._eventService.publish(
         new QuizParticipantStartedEvent({
           quizParticipantId: quizParticipant.get('id'),
           startedAt: quizParticipant.get('startedAt'),
@@ -249,7 +257,9 @@ export class QuizDomainService implements IQuizDomainService {
     }
 
     quizParticipantEntity.updateAnswers(answers);
-    if (isFinished) quizParticipantEntity.setFinishedAt();
+    if (isFinished) {
+      quizParticipantEntity.setFinishedAt();
+    }
 
     try {
       await this._quizParticipantRepository.update(quizParticipantEntity);
@@ -299,9 +309,16 @@ export class QuizDomainService implements IQuizDomainService {
     return quizEntity;
   }
 
-  public async generateQuestions(quizEntity: QuizEntity): Promise<void> {
+  public async generateQuestions(quizId: string): Promise<void> {
+    const quizEntity = await this._quizRepository.findOne(quizId);
+    if (!quizEntity) {
+      return;
+    }
+
     const cloneQuizEntity = cloneDeep(quizEntity);
-    if (cloneQuizEntity.isProcessing()) return;
+    if (cloneQuizEntity.isProcessing()) {
+      return;
+    }
 
     const contentEntity = await this._contentDomainService.getVisibleContent(
       cloneQuizEntity.get('contentId')
@@ -309,7 +326,7 @@ export class QuizDomainService implements IQuizDomainService {
     const rawContent = this._contentDomainService.getRawContent(contentEntity);
     if (!rawContent) {
       cloneQuizEntity.setFail({
-        code: ERRORS.CONTENT.CONTENT_NOT_FOUND,
+        code: ERRORS.CONTENT_NOT_FOUND,
         message: 'Content not found',
       });
       await this._quizRepository.update(cloneQuizEntity);
@@ -324,7 +341,7 @@ export class QuizDomainService implements IQuizDomainService {
       await this._quizRepository.genQuestions(cloneQuizEntity, rawContent);
       if (cloneQuizEntity.get('questions')?.length === 0) {
         cloneQuizEntity.setFail({
-          code: ERRORS.QUIZ.GENERATE_FAIL,
+          code: ERRORS.QUIZ_GENERATE_FAIL,
           message: 'No questions generated',
         });
         await this._quizRepository.update(cloneQuizEntity);
@@ -335,8 +352,8 @@ export class QuizDomainService implements IQuizDomainService {
       cloneQuizEntity.setProcessed();
     } catch (e) {
       cloneQuizEntity.setFail({
-        code: ERRORS.QUIZ.GENERATE_FAIL,
-        message: e.response?.data?.error?.message || '',
+        code: ERRORS.QUIZ_GENERATE_FAIL,
+        message: e.response.data?.error?.message || '',
       });
       /*await this._quizRepository.update(cloneQuizEntity);
       if (e.response?.status === 429) {

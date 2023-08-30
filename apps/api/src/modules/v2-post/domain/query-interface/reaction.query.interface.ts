@@ -1,6 +1,5 @@
+import { ReactionsCount, PaginationResult } from '../../../../common/types';
 import { ReactionEntity } from '../model/reaction';
-import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import { ReactionsCount } from '../../../../common/types/reaction-count.type';
 
 export type GetReactionProps = {
   reactionName: string;

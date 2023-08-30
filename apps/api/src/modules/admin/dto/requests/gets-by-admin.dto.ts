@@ -5,8 +5,7 @@ import { validate as isValidUUID } from 'uuid';
 import { PostStatus } from '../../../../database/models/post.model';
 import { PageOptionsDto } from '../../../../common/dto';
 import { PostHelper } from '../../../post/post.helper';
-import { ExceptionHelper } from '../../../../common/helpers';
-import { HTTP_STATUS_ID } from '../../../../common/constants';
+import { PostStatusConflictedException } from '../../../v2-post/domain/exception';
 
 export class GetsByAdminDto extends PageOptionsDto {
   @ApiProperty({
@@ -30,7 +29,7 @@ export class GetsByAdminDto extends PageOptionsDto {
   @Transform(({ value }) => {
     const status = value.split(',').filter((v) => Object.values(PostStatus).includes(v));
     if (PostHelper.isConflictStatus(status)) {
-      ExceptionHelper.throwBadRequestException(HTTP_STATUS_ID.APP_POST_STATUS_CONFLICTED);
+      throw new PostStatusConflictedException();
     }
     return status;
   })

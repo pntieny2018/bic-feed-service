@@ -1,4 +1,4 @@
-import { SeriesEntity } from '../model/content/series.entity';
+import { SeriesEntity } from '../model/content';
 
 export interface ISeriesRepository {
   create(data: SeriesEntity): Promise<SeriesEntity>;
