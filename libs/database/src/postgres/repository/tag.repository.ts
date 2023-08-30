@@ -1,15 +1,16 @@
-import { getDatabaseConfig } from '@libs/database/postgres/common';
+import { getDatabaseConfig, PaginationResult } from '@libs/database/postgres/common';
 import { PostTagModel } from '@libs/database/postgres/model/post-tag.model';
 import { PostModel } from '@libs/database/postgres/model/post.model';
 import { TagAttributes, TagModel } from '@libs/database/postgres/model/tag.model';
 import {
   FindAllTagsProps,
   FindOneTagProps,
+  GetPaginationTagProps,
   ILibTagRepository,
 } from '@libs/database/postgres/repository/interface';
 import { Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize } from 'sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 
 export class LibTagRepository implements ILibTagRepository {
@@ -22,6 +23,31 @@ export class LibTagRepository implements ILibTagRepository {
     private readonly _postTagModel: typeof PostTagModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
   ) {}
+
+  public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagModel>> {
+    const { offset, limit, name, groupIds } = input;
+    const conditions = {};
+    if (groupIds && groupIds.length) {
+      conditions['groupId'] = groupIds;
+    }
+    if (name) {
+      conditions['name'] = { [Op.iLike]: name + '%' };
+    }
+    const { rows, count } = await this._tagModel.findAndCountAll({
+      attributes: this._loadAllAttributes(),
+      where: conditions,
+      offset,
+      limit,
+      order: [
+        ['totalUsed', 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
+    });
+    return {
+      rows,
+      total: count,
+    };
+  }
 
   public async create(data: TagAttributes): Promise<void> {
     await this._tagModel.create(data);

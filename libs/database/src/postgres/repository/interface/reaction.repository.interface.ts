@@ -13,7 +13,7 @@ export type GetReactionProps = {
 };
 
 export type ReactionsCount = Record<string, number>[];
-export interface ILibReactionQuery {
+export interface ILibReactionRepository {
   getPagination(
     input: GetReactionProps
   ): Promise<PaginationResult<PostReactionModel | CommentReactionModel>>;
@@ -22,4 +22,4 @@ export interface ILibReactionQuery {
   getAndCountReactionByContents(contentIds: string[]): Promise<Map<string, ReactionsCount>>;
 }
 
-export const LIB_REACTION_QUERY_TOKEN = 'LIB_REACTION_QUERY_TOKEN';
+export const LIB_REACTION_REPOSITORY_TOKEN = 'LIB_REACTION_REPOSITORY_TOKEN';
