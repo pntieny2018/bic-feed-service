@@ -82,23 +82,35 @@ export class QuizRepository implements IQuizRepository {
     );
     if (quizEntity.get('questions') !== undefined) {
       await this._quizQuestionModel.destroy({ where: { quizId: quizEntity.get('id') } });
-      await this._quizQuestionModel.bulkCreate(
-        quizEntity.get('questions').map((quizEntity) => ({
-          id: quizEntity.get('id'),
-          quizId: quizEntity.get('quizId'),
-          content: quizEntity.get('content'),
-        }))
-      );
-      await this._quizAnswerModel.bulkCreate(
-        quizEntity.get('questions').flatMap((question) =>
-          question.get('answers').map((answer) => ({
+      const questions = quizEntity.get('questions').map((question, index) => {
+        const createdAt = new Date();
+        createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+        return {
+          id: question.get('id'),
+          quizId: question.get('quizId'),
+          content: question.get('content'),
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        };
+      });
+
+      const answers = quizEntity.get('questions').flatMap((question) =>
+        question.get('answers').map((answer, index) => {
+          const createdAt = new Date();
+          createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+          return {
             id: answer.id,
             questionId: question.get('id'),
             content: answer.content,
             isCorrect: answer.isCorrect,
-          }))
-        )
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          };
+        })
       );
+
+      await this._quizQuestionModel.bulkCreate(questions);
+      await this._quizAnswerModel.bulkCreate(answers);
     }
   }
 
@@ -370,13 +382,19 @@ export class QuizRepository implements IQuizRepository {
       { where: { id: question.get('id') } }
     );
     await this._quizAnswerModel.destroy({ where: { questionId: question.get('id') } });
-    await this._quizAnswerModel.bulkCreate(
-      question.get('answers').map((answer) => ({
+
+    const answers = question.get('answers').map((answer, index) => {
+      const createdAt = new Date();
+      createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+      return {
         id: answer.id,
         questionId: question.get('id'),
         content: answer.content,
         isCorrect: answer.isCorrect,
-      }))
-    );
+        createdAt,
+        updatedAt: createdAt,
+      };
+    });
+    await this._quizAnswerModel.bulkCreate(answers);
   }
 }
