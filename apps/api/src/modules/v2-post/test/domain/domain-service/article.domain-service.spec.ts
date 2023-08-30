@@ -5,13 +5,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
 import { ArticleDomainService } from '../../../domain/domain-service/article.domain-service';
-import { IArticleDomainService } from '../../../domain/domain-service/interface';
 import {
+  IArticleDomainService,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/media.domain-service.interface';
-import { ArticleDeletedEvent, ArticleUpdatedEvent } from '../../../domain/event';
-import { ContentAccessDeniedException, ContentNotFoundException } from '../../../domain/exception';
+} from '../../../domain/domain-service/interface';
+import {
+  ArticleDeletedEvent,
+  ArticlePublishedEvent,
+  ArticleUpdatedEvent,
+} from '../../../domain/event';
+import {
+  ContentAccessDeniedException,
+  ContentEmptyContentException,
+  ContentNotFoundException,
+} from '../../../domain/exception';
 import {
   CATEGORY_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -290,6 +298,97 @@ describe('Article domain service', () => {
         statuses: [CONTENT_STATUS.SCHEDULE_FAILED, CONTENT_STATUS.WAITING_SCHEDULE],
       });
       expect(articleEntity).toEqual([articleEntityMock]);
+    });
+  });
+
+  describe('publish', () => {
+    it('should publish article successfully', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isValidArticleToPublish').mockReturnValueOnce(true);
+      jest.spyOn(articleValidator, 'validateArticle').mockImplementation(jest.fn());
+      jest.spyOn(articleValidator, 'validateLimitedToAttachSeries').mockImplementation(jest.fn());
+
+      const result = await domainService.publish({
+        id: 'id',
+        actor: userMock,
+      });
+      expect(contentRepository.update).toBeCalledWith(articleEntityMock);
+      expect(eventBus$.publish).toBeCalledWith(
+        new ArticlePublishedEvent(articleEntityMock, userMock)
+      );
+      expect(result).toEqual(articleEntityMock);
+    });
+
+    it('should not publish article when article not found', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(undefined);
+      try {
+        await domainService.publish({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not publish article when article is published', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isPublished').mockReturnValueOnce(true);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(false);
+      const res = await domainService.publish({
+        id: 'id',
+        actor: userMock,
+      });
+      expect(eventBus$.publish).toBeCalledTimes(0);
+      expect(res).toEqual(articleEntityMock);
+    });
+
+    it('should not publish article when article is hidden', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isHidden').mockReturnValueOnce(true);
+      try {
+        await domainService.publish({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not publish article when article is in archived groups', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(true);
+      try {
+        await domainService.publish({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should not publish article when article is not valid to publish', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'isInArchivedGroups').mockReturnValueOnce(false);
+      jest.spyOn(articleEntityMock, 'isValidArticleToPublish').mockReturnValueOnce(false);
+      try {
+        await domainService.publish({
+          id: 'id',
+          actor: userMock,
+        });
+      } catch (error) {
+        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(ContentEmptyContentException);
+      }
     });
   });
 });

@@ -206,7 +206,7 @@ export class ArticleController {
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
-  @ApiOperation({ summary: 'Get posts by params' })
+  @ApiOperation({ summary: 'Get articles schedule' })
   @ApiOkResponse({
     type: PageDto<ArticleDto>,
   })

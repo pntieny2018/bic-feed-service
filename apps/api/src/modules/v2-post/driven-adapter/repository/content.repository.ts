@@ -140,46 +140,6 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  private _entityToModel(postEntity): IPost {
-    return {
-      id: postEntity.getId(),
-      content: postEntity.get('content'),
-      title: postEntity.get('title'),
-      summary: postEntity.get('summary'),
-      privacy: postEntity.get('privacy'),
-      isHidden: postEntity.get('isHidden'),
-      isReported: postEntity.get('isReported'),
-      type: postEntity.get('type'),
-      status: postEntity.get('status'),
-      errorLog: postEntity.get('errorLog'),
-      createdBy: postEntity.get('createdBy'),
-      updatedBy: postEntity.get('updatedBy'),
-      isImportant: postEntity.get('setting')?.isImportant,
-      importantExpiredAt: postEntity.get('setting')?.importantExpiredAt || null,
-      canComment: postEntity.get('setting')?.canComment,
-      canReact: postEntity.get('setting')?.canReact,
-      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
-      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      linkPreviewId: postEntity.get('linkPreview')
-        ? postEntity.get('linkPreview')?.get('id')
-        : null,
-      mediaJson: {
-        files: (postEntity.get('media')?.files || []).map((file) => file.toObject()),
-        images: (postEntity.get('media')?.images || []).map((image) => image.toObject()),
-        videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
-      },
-      mentions: postEntity.get('mentionUserIds') || [],
-      coverJson: postEntity.get('cover')?.toObject(),
-      videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
-      linkPreview: postEntity.get('linkPreview')?.toObject() || null,
-      wordCount: postEntity.get('wordCount'),
-      createdAt: postEntity.get('createdAt'),
-      publishedAt: postEntity.get('publishedAt'),
-      scheduledAt: postEntity.get('scheduledAt'),
-    };
-  }
-
   private async _setSeries(
     contentEntity: PostEntity | ArticleEntity,
     transaction: Transaction

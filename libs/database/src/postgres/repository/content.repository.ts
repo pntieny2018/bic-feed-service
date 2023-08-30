@@ -7,10 +7,7 @@ import {
 } from '@libs/database/postgres/common';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
 import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
-import {
-  PostCategoryAttributes,
-  PostCategoryModel,
-} from '@libs/database/postgres/model/post-category.model';
+import { PostCategoryAttributes } from '@libs/database/postgres/model/post-category.model';
 import {
   PostGroupAttributes,
   PostGroupModel,
@@ -66,8 +63,6 @@ export class LibContentRepository implements ILibContentRepository {
     private readonly _postSeriesModel: typeof PostSeriesModel,
     @InjectModel(PostTagModel)
     private readonly _postTagModel: typeof PostTagModel,
-    @InjectModel(PostCategoryModel)
-    private readonly _postCategoryModel: typeof PostCategoryModel,
     @InjectModel(UserSeenPostModel)
     private readonly _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(UserMarkReadPostModel)

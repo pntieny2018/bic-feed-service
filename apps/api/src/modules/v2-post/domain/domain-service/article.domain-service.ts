@@ -39,11 +39,9 @@ import {
   DeleteArticleProps,
   AutoSaveArticleProps,
   GetArticleByParamsProps,
-} from './interface';
-import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
+} from './interface';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {

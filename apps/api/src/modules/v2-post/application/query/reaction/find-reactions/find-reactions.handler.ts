@@ -9,7 +9,7 @@ import {
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
+} from '../../../../domain/domain-service/interface';
 import { ReactionEntity } from '../../../../domain/model/reaction';
 import { FindReactionsDto, ReactionDto } from '../../../dto';
 

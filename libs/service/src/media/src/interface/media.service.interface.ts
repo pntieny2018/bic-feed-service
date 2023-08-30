@@ -7,5 +7,3 @@ export interface IMediaService {
 }
 
 export const MEDIA_SERVICE_TOKEN = 'MEDIA_SERVICE_TOKEN';
-
-export const MEDIA_SERVICE_TOKEN = 'MEDIA_SERVICE_TOKEN';
