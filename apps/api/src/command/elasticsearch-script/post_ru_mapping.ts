@@ -15,7 +15,7 @@ export const POST_RU_MAPPING = {
         ma_russian: {
           filter: ['lowercase', 'russian_stop', 'russian_stemmer'],
           char_filter: ['html_strip'],
-          tokenizer: 'standard',
+          tokenizer: 'uax_url_email',
         },
       },
     },

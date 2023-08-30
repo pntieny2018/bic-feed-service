@@ -4,11 +4,11 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
-import { PaginationResult } from '../../../../common/types/pagination-result.type';
+import { PaginationResult, ReactionsCount } from '../../../../common/types';
 import { getDatabaseConfig } from '../../../../config/database';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
-import { REACTION_TARGET } from '../../data-type/reaction.enum';
+import { REACTION_TARGET } from '../../data-type';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
@@ -17,7 +17,6 @@ import { ReactionEntity } from '../../domain/model/reaction';
 import {
   GetReactionProps,
   IReactionQuery,
-  ReactionsCount,
 } from '../../domain/query-interface/reaction.query.interface';
 
 export class ReactionQuery implements IReactionQuery {

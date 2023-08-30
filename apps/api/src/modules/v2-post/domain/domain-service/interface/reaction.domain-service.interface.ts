@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { ReactionsCount } from 'apps/api/src/common/types';
 
 import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { REACTION_TARGET } from '../../../data-type';
@@ -31,9 +32,7 @@ export type DeleteReactionProps = {
 export interface IReactionDomainService {
   getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>>;
 
-  getAndCountReactionByContentIds(
-    contentIds: string[]
-  ): Promise<Map<string, Record<string, number>[]>>;
+  getAndCountReactionByContentIds(contentIds: string[]): Promise<Map<string, ReactionsCount>>;
 
   createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
 

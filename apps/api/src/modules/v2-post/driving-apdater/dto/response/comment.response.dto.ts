@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
 import { PaginatedResponse } from '../../../../../common/dto';
+import { ReactionsCount } from '../../../../../common/types';
 import { CommentDto, ReactionDto } from '../../../application/dto';
-import { ReactionsCount } from '../../../domain/query-interface/reaction.query.interface';
 
 export class CommentResponseDto extends CommentDto {
   @ApiProperty({

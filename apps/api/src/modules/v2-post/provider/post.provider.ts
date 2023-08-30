@@ -53,6 +53,7 @@ import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
   FindTimelineGroupHandler,
+  GetMenuSettingsHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
@@ -190,6 +191,7 @@ export const postProvider = [
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
   GetScheduleArticleHandler,
+  GetMenuSettingsHandler,
 
   /** Event Handler */
   ArticleDeletedEventHandler,
