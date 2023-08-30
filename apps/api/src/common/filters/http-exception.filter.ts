@@ -1,3 +1,4 @@
+import { DomainException } from '@beincom/domain';
 import {
   ArgumentsHost,
   BadRequestException,
@@ -9,15 +10,18 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { isAxiosError } from '@nestjs/terminus/dist/utils';
 import * as Sentry from '@sentry/node';
 import { Response } from 'express';
 import snakecaseKeys from 'snakecase-keys';
-import { ResponseDto } from '../dto';
-import { ValidatorException } from '../exceptions';
+
 import { ERRORS } from '../constants/errors';
-import { DomainException } from '@beincom/domain';
-import { isAxiosError } from '@nestjs/terminus/dist/utils';
-import { DomainForbiddenException, DomainNotFoundException } from '../exceptions';
+import { ResponseDto } from '../dto';
+import {
+  ValidatorException,
+  DomainForbiddenException,
+  DomainNotFoundException,
+} from '../exceptions';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -39,8 +43,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const res = exception.getResponse();
 
     let errors = null;
-    if (res['errors']) errors = snakecaseKeys(res['errors']);
-    if (res['cause']) errors = snakecaseKeys(res['cause']);
+    if (res['errors']) {
+      errors = snakecaseKeys(res['errors']);
+    }
+    if (res['cause']) {
+      errors = snakecaseKeys(res['cause']);
+    }
 
     return response.status(status).json(
       new ResponseDto({
@@ -96,7 +104,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @returns Stack array
    */
   private _getStack(exception: HttpException | Error): string[] {
-    if (this._appEnv === 'production') return null;
+    if (this._appEnv === 'production') {
+      return null;
+    }
     const arrayStack = exception.stack.split('\n');
     return arrayStack;
   }
