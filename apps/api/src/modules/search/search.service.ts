@@ -1,4 +1,3 @@
-import { pick } from 'lodash';
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -1024,37 +1023,6 @@ export class SearchService {
     } else {
       return [{ createdAt: 'desc' }];
     }
-  }
-
-  private _getQueryMatchKeyword(keyword: string): any[] {
-    let queries;
-    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
-    const isASCII = StringHelper.isASCII(keyword);
-    if (isASCII) {
-      //En
-      queries = [
-        {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          multi_match: {
-            query: keyword,
-            fields: [title.ascii, summary.ascii, content.ascii],
-          },
-        },
-      ];
-    } else {
-      //Vi
-      queries = [
-        {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          multi_match: {
-            query: keyword,
-            fields: [title.default, summary.default, content.default],
-          },
-        },
-      ];
-    }
-
-    return queries;
   }
 
   public async updateSeriesAtrributeForPostSearch(ids: string[]): Promise<void> {
