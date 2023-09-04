@@ -1,3 +1,6 @@
+import { PaginationProps } from '@libs/database/postgres/common';
+
+import { PaginationResult } from '../../../../common/types';
 import { CategoryEntity } from '../model/category';
 
 export type FindCategoryProps = {
@@ -9,7 +12,15 @@ export type FindCategoryProps = {
   };
 };
 
+export type GetPaginationCategoryProps = PaginationProps & {
+  name?: string;
+  level?: number;
+  createdBy?: string;
+};
+
 export interface ICategoryRepository {
+  getPagination(input: GetPaginationCategoryProps): Promise<PaginationResult<CategoryEntity>>;
+
   count(whereOptions: FindCategoryProps): Promise<number>;
 
   findAll(input: FindCategoryProps): Promise<CategoryEntity[]>;

@@ -5,11 +5,11 @@ import { v4 } from 'uuid';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../../../../v2-group/application';
 import { FindTagsPaginationHandler } from '../../../application/query/tag';
 import { TagEntity } from '../../../domain/model/tag';
-import { TAG_QUERY_TOKEN } from '../../../domain/query-interface';
-import { TagQuery } from '../../../driven-adapter/query';
+import { TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { TagRepository } from '../../../driven-adapter/repository';
 
 describe('FindTagsPaginationHandler', () => {
-  let groupAppService, tagQuery, handler;
+  let groupAppService, tagRepo, handler;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,14 +20,14 @@ describe('FindTagsPaginationHandler', () => {
           useValue: createMock<GroupApplicationService>(),
         },
         {
-          provide: TAG_QUERY_TOKEN,
-          useValue: createMock<TagQuery>(),
+          provide: TAG_REPOSITORY_TOKEN,
+          useValue: createMock<TagRepository>(),
         },
       ],
     }).compile();
     handler = module.get<FindTagsPaginationHandler>(FindTagsPaginationHandler);
     groupAppService = module.get(GROUP_APPLICATION_TOKEN);
-    tagQuery = module.get(TAG_QUERY_TOKEN);
+    tagRepo = module.get(TAG_REPOSITORY_TOKEN);
   });
 
   afterEach(() => {
@@ -64,7 +64,7 @@ describe('FindTagsPaginationHandler', () => {
         },
       ];
       const tagEntities = tags.map((tag) => new TagEntity(tag));
-      jest.spyOn(tagQuery, 'getPagination').mockResolvedValue({ rows: tagEntities, total: 2 });
+      jest.spyOn(tagRepo, 'getPagination').mockResolvedValue({ rows: tagEntities, total: 2 });
       const groupChildrenData = {
         id: v4(),
         name: 'group2',

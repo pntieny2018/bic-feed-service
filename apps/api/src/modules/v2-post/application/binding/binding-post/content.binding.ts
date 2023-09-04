@@ -9,14 +9,13 @@ import { ReactionsCount } from '../../../../../common/types';
 import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IReactionRepository,
+  REACTION_REPOSITORY_TOKEN,
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
+} from '../../../domain/repositoty-interface';
 import {
   IUserAdapter,
   USER_ADAPTER,
@@ -46,7 +45,7 @@ export class ContentBinding implements IContentBinding {
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
-    @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery
+    @Inject(REACTION_REPOSITORY_TOKEN) private readonly _reactionRepository: IReactionRepository
   ) {}
   public async postBinding(
     postEntity: PostEntity,
@@ -235,7 +234,7 @@ export class ContentBinding implements IContentBinding {
       });
     }
 
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
+    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents([
       articleEntity.getId(),
     ]);
 
@@ -852,7 +851,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents(contentIds);
+    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents(contentIds);
 
     let series = new Map<string, SeriesEntity | PostEntity | ArticleEntity>();
     if (seriesIds.length > 0) {

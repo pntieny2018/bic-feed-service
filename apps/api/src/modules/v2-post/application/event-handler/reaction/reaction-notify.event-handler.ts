@@ -21,14 +21,12 @@ import { CommentEntity } from '../../../domain/model/comment';
 import { ArticleEntity, ContentEntity, PostEntity } from '../../../domain/model/content';
 import { ReactionEntity } from '../../../domain/model/reaction';
 import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
-import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
+  IReactionRepository,
+  REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import {
   CONTENT_BINDING_TOKEN,
@@ -49,8 +47,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    @Inject(REACTION_QUERY_TOKEN)
-    private readonly _reactionQuery: IReactionQuery,
+    @Inject(REACTION_REPOSITORY_TOKEN)
+    private readonly _reactionRepository: IReactionRepository,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
@@ -189,7 +187,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
 
     let mentionUsersComment = {};
     const commentActor = users.find((user) => user.id === commentEntity.get('createdBy'));
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByComments([
+    const reactionsCount = await this._reactionRepository.getAndCountReactionByComments([
       commentEntity.get('id'),
     ]);
     if (commentEntity.get('mentions') && users.length) {
@@ -317,7 +315,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     }
 
     const contentActor = users.find((user) => user.id === contentEntity.get('createdBy'));
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByContents([
+    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents([
       contentEntity.get('id'),
     ]);
     const groups = await this._groupAppService.findAllByIds(contentEntity.get('groupIds'));
