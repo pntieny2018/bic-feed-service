@@ -222,7 +222,7 @@ export class ContentBinding implements IContentBinding {
     );
 
     let series = [];
-    if (articleEntity.getSeriesIds()?.length > 0) {
+    if (articleEntity.getSeriesIds().length > 0) {
       series = await this._contentRepo.findAll({
         attributes: {
           exclude: ['content'],
