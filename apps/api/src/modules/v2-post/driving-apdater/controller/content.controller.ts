@@ -1,10 +1,7 @@
 import {
-  BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -14,35 +11,29 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../../../common/decorators';
-import { AuthUser } from '../../../auth';
 import { instanceToInstance } from 'class-transformer';
-import { UserDto } from '../../../v2-user/application';
+
 import {
   TRANSFORMER_VISIBLE_ONLY,
   VERSIONS_SUPPORTED,
   VERSION_1_9_0,
 } from '../../../../common/constants';
-import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
-import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
-import { GetDraftContentsRequestDto, ValidateSeriesTagDto } from '../dto/request';
-import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
-import {
-  ContentNoCRUDPermissionException,
-  ContentNoEditSettingPermissionAtGroupException,
-  ContentNoEditSettingPermissionException,
-  ContentNotFoundException,
-  InvalidCursorParamsException,
-} from '../../domain/exception';
-import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
-import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
-import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
-import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
-import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
-import { GetMenuSettingsQuery } from '../../application/query/get-menu-settings/get-menu-settings.query';
-import { MenuSettingsDto } from '../../application/dto';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { AppHelper } from '../../../../common/helpers/app.helper';
+import { UserDto } from '../../../v2-user/application';
+import {
+  MarkReadImportantContentCommand,
+  UpdateContentSettingCommand,
+} from '../../application/command/content';
+import { ValidateSeriesTagsCommand } from '../../application/command/tag';
+import { MenuSettingsDto } from '../../application/dto';
+import { FindDraftContentsDto } from '../../application/dto/content.dto';
+import { FindDraftContentsQuery, GetMenuSettingsQuery } from '../../application/query/content';
+import {
+  GetDraftContentsRequestDto,
+  PostSettingRequestDto,
+  ValidateSeriesTagDto,
+} from '../dto/request';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -68,20 +59,10 @@ export class ContentController {
     @AuthUser() user: UserDto,
     @Query() getListCommentsDto: GetDraftContentsRequestDto
   ): Promise<FindDraftContentsDto> {
-    try {
-      const data = await this._queryBus.execute(
-        new FindDraftContentsQuery({ authUser: user, ...getListCommentsDto })
-      );
-      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-    } catch (e) {
-      switch (e.constructor) {
-        case InvalidCursorParamsException:
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    const data = await this._queryBus.execute(
+      new FindDraftContentsQuery({ authUser: user, ...getListCommentsDto })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Get menu settings' })
@@ -97,16 +78,7 @@ export class ContentController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<MenuSettingsDto> {
-    try {
-      return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
-    } catch (e) {
-      switch (e.constructor) {
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
   }
 
   @ApiOperation({ summary: 'Mark as read' })
@@ -133,22 +105,13 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Body() validateSeriesTagDto: ValidateSeriesTagDto
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<ValidateSeriesTagsCommand, void>(
-        new ValidateSeriesTagsCommand({
-          groupIds: validateSeriesTagDto.groups,
-          seriesIds: validateSeriesTagDto.series,
-          tagIds: validateSeriesTagDto.tags,
-        })
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case TagSeriesInvalidException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<ValidateSeriesTagsCommand, void>(
+      new ValidateSeriesTagsCommand({
+        groupIds: validateSeriesTagDto.groups,
+        seriesIds: validateSeriesTagDto.series,
+        tagIds: validateSeriesTagDto.tags,
+      })
+    );
   }
 
   @ApiOperation({ summary: 'Update setting' })
@@ -164,28 +127,12 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Body() contentSettingRequestDto: PostSettingRequestDto
   ): Promise<void> {
-    try {
-      await this._commandBus.execute<UpdateContentSettingCommand, void>(
-        new UpdateContentSettingCommand({
-          ...contentSettingRequestDto,
-          id,
-          authUser,
-        })
-      );
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case ContentNoCRUDPermissionException:
-        case ContentNoEditSettingPermissionException:
-        case ContentNoEditSettingPermissionAtGroupException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-        case UserNoBelongGroupException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute<UpdateContentSettingCommand, void>(
+      new UpdateContentSettingCommand({
+        ...contentSettingRequestDto,
+        id,
+        authUser,
+      })
+    );
   }
 }

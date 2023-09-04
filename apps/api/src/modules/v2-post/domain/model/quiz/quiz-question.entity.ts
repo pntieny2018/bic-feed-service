@@ -1,11 +1,12 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { v4 } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { RULES } from '../../../constant';
 
 export type QuizQuestionAttributes = {
   id: string;
-  quizId: string;
+  quizId?: string;
   content: string;
   answers: {
     id?: string;

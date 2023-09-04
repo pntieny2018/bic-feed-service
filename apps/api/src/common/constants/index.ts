@@ -4,7 +4,6 @@ export * from './model.constant';
 export * from './paging.constant';
 export * from './event.constant';
 export * from './kafka.constant';
-export * from './http-message';
-export * from './http-status-id';
 export * from './casl.constant';
 export * from './transformer.constant';
+export * from './errors';

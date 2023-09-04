@@ -1,21 +1,10 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { v4 } from 'uuid';
-import { RULES } from '../../../constant';
-import { ArrayHelper } from '../../../../../common/helpers';
 
-type QuestionAttribute = {
-  id: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  answers: {
-    id: string;
-    content: string;
-    isCorrect: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
-};
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { ArrayHelper } from '../../../../../common/helpers';
+import { RULES } from '../../../constant';
+import { QuizQuestionAttributes } from '../quiz/quiz-question.entity';
+
 export type QuizParticipantProps = {
   id: string;
   contentId: string;
@@ -23,7 +12,7 @@ export type QuizParticipantProps = {
   quizSnapshot: {
     title: string;
     description: string;
-    questions: QuestionAttribute[];
+    questions: QuizQuestionAttributes[];
   };
   answers: {
     id: string;

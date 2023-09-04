@@ -1,17 +1,30 @@
-import { RULES } from '../../../constant';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { RULES } from '../../../constant';
 import { QuizGenStatus, QuizStatus } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
+
 import { QuizQuestionEntity } from './quiz-question.entity';
 
-export type QuizProps = {
+export type QuestionAttributes = {
+  id: string;
+  content: string;
+  answers: {
+    id: string;
+    content: string;
+    isCorrect: boolean;
+  }[];
+};
+
+export type QuizAttributes = {
   id: string;
   title: string;
   contentId: string;
-  status: QuizStatus;
-  genStatus: QuizGenStatus;
+  status: QuizStatus | QUIZ_STATUS;
+  genStatus: QuizGenStatus | QUIZ_PROCESS_STATUS;
   description: string;
   timeLimit: number;
   content?: PostEntity | SeriesEntity | ArticleEntity;
@@ -31,8 +44,8 @@ export type QuizProps = {
   updatedAt?: Date;
 };
 
-export class QuizEntity extends DomainAggregateRoot<QuizProps> {
-  public constructor(props: QuizProps) {
+export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
+  public constructor(props: QuizAttributes) {
     super(props);
     this.validateNumberDisplay();
   }
@@ -117,7 +130,9 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
   }
 
   public validatePublishing(): void {
-    if (this._props.status !== QuizStatus.PUBLISHED) return;
+    if (this._props.status !== QuizStatus.PUBLISHED) {
+      return;
+    }
 
     if (!this._props.title) {
       throw new DomainModelException(`Quiz title is required`);
@@ -126,7 +141,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizProps> {
     this.validateNumberDisplay();
   }
 
-  public updateAttribute(data: Partial<QuizProps>): void {
+  public updateAttribute(data: Partial<QuizAttributes>): void {
     if (data.questions) {
       this._props.questions = data.questions;
     }

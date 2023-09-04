@@ -1,28 +1,36 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { DomainException } from '@beincom/domain';
+import {
+  ArgumentsHost,
+  BadRequestException,
+  Catch,
+  ExceptionFilter,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { isAxiosError } from '@nestjs/terminus/dist/utils';
 import * as Sentry from '@sentry/node';
 import { Response } from 'express';
 import snakecaseKeys from 'snakecase-keys';
-import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
+
+import { ERRORS } from '../constants/errors';
 import { ResponseDto } from '../dto';
-import { LogicException, ValidatorException } from '../exceptions';
+import {
+  ValidatorException,
+  DomainForbiddenException,
+  DomainNotFoundException,
+} from '../exceptions';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
-  public catch(exception: Error, host: ArgumentsHost): Response {
+  public catch(error: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    if (exception instanceof ValidatorException) {
-      return this.handleValidatorException(exception, response);
-    } else if (exception instanceof LogicException) {
-      return this.handleLogicException(exception, response);
-    } else if (exception instanceof HttpException) {
-      return this.handleHttpException(exception, response);
-    } else {
-      Sentry.captureException(exception);
-      return this.handleUnKnowException(exception, response);
-    }
+    return this.handleHttpException(this._errorToHttpException(error), response);
   }
 
   /**
@@ -33,12 +41,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
   protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
     const res = exception.getResponse();
+
     let errors = null;
-    if (res['errors']) errors = snakecaseKeys(res['errors']);
-    if (res['cause']) errors = snakecaseKeys(res['cause']);
+    if (res['errors']) {
+      errors = snakecaseKeys(res['errors']);
+    }
+    if (res['cause']) {
+      errors = snakecaseKeys(res['cause']);
+    }
+
     return response.status(status).json(
       new ResponseDto({
-        code: res['code'],
+        code: res['code'] || this._getCommonErrorCodeByStatus(status),
         meta: {
           message: exception.message,
           errors,
@@ -48,76 +62,40 @@ export class HttpExceptionFilter implements ExceptionFilter {
     );
   }
 
-  /**
-   * Handle UnKnow Exception
-   * @param exception
-   * @param response
-   */
-  protected handleUnKnowException(exception: Error, response: Response): Response {
-    return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
-      new ResponseDto({
-        code: HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR,
-        meta: {
-          message: exception['message'],
-          stack: this._getStack(exception),
-        },
-      })
-    );
-  }
-
-  /**
-   * Handle ValidatorException
-   * @param exception
-   * @param response
-   */
-  protected handleValidatorException(exception: ValidatorException, response: Response): Response {
-    let message = 'Validate fails';
-
-    if (response.responseMessage && response.responseMessage.validator) {
-      message = response.responseMessage.validator.fails;
-    }
-    return response.status(HttpStatus.BAD_REQUEST).json(
-      new ResponseDto({
-        code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
-        meta: {
-          message: message,
-          errors: exception.getResponse(),
-          stack: this._getStack(exception),
-        },
-      })
-    );
-  }
-
-  /**
-   * Handle LogicException
-   * @param exception
-   * @param response
-   */
-  protected handleLogicException(exception: LogicException, response: Response): Response {
-    let status = HttpStatus.BAD_REQUEST;
-
-    switch (exception.id) {
-      case HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED:
-      case HTTP_STATUS_ID.API_UNAUTHORIZED:
-        status = HttpStatus.UNAUTHORIZED;
-        break;
-      case HTTP_STATUS_ID.API_FORBIDDEN:
-        status = HttpStatus.FORBIDDEN;
-        break;
-      case HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR:
-        status = HttpStatus.INTERNAL_SERVER_ERROR;
-        break;
+  private _errorToHttpException(error: Error): HttpException {
+    if (error instanceof HttpException) {
+      return error;
     }
 
-    return response.status(status).json(
-      new ResponseDto({
-        code: exception.id,
-        meta: {
-          message: HTTP_MESSAGES[exception.id],
-          stack: this._getStack(exception),
-        },
-      })
-    );
+    if (isAxiosError(error) && error?.response?.status) {
+      const httpStatus = error.response.status;
+      const errorResponse = {
+        ...error.response?.data,
+        message: error.response?.data?.meta?.message ?? 'Internal server error',
+        cause: { name: error['config']?.['url'], message: error.message },
+      };
+
+      return new HttpException(errorResponse, httpStatus);
+    }
+
+    if (error instanceof DomainException) {
+      if (error instanceof DomainForbiddenException) {
+        return new ForbiddenException(error);
+      } else if (error instanceof DomainNotFoundException) {
+        return new NotFoundException(error);
+      } else {
+        return new BadRequestException(error);
+      }
+    }
+
+    if (error instanceof ValidatorException) {
+      error.message = 'Validate fails';
+      return new BadRequestException(error);
+    }
+
+    error.message = 'Internal server error';
+    Sentry.captureException(error);
+    return new InternalServerErrorException(error);
   }
 
   /**
@@ -126,8 +104,28 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @returns Stack array
    */
   private _getStack(exception: HttpException | Error): string[] {
-    if (this._appEnv === 'production') return null;
+    if (this._appEnv === 'production') {
+      return null;
+    }
     const arrayStack = exception.stack.split('\n');
     return arrayStack;
+  }
+
+  /**
+   * Get common error code by http status
+   * @param status number
+   * @returns string
+   */
+  private _getCommonErrorCodeByStatus(status: number): string {
+    switch (status) {
+      case HttpStatus.NOT_FOUND:
+        return ERRORS.API_NOT_FOUND;
+      case HttpStatus.BAD_REQUEST:
+        return ERRORS.API_VALIDATION_ERROR;
+      case HttpStatus.FORBIDDEN:
+        return ERRORS.API_FORBIDDEN;
+      default:
+        return ERRORS.API_SERVER_INTERNAL_ERROR;
+    }
   }
 }

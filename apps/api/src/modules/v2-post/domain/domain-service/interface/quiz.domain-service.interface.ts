@@ -1,12 +1,10 @@
-import { QuizEntity, QuizQuestionEntity } from '../../model/quiz';
 import { OrderEnum } from '../../../../../common/dto';
-import { UserDto } from '../../../../v2-user/application';
-import { QuestionDto } from '../../../application/dto/question.dto';
-import { QuizStatus } from '../../../data-type/quiz-status.enum';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { PostType } from '../../../data-type';
+import { UserDto } from '../../../../v2-user/application';
+import { AnswerUserDto } from '../../../application/dto';
+import { QuizStatus, PostType } from '../../../data-type';
+import { QuizEntity, QuizQuestionEntity } from '../../model/quiz';
 import { QuizParticipantEntity } from '../../model/quiz-participant';
-import { AnswerUserDto } from '../../../application/dto/quiz-participant.dto';
 
 export type QuizCreateProps = {
   contentId: string;
@@ -83,7 +81,7 @@ export interface IQuizDomainService {
     isFinished: boolean
   ): Promise<void>;
   reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity>;
-  generateQuestions(quizEntity: QuizEntity): Promise<void>;
+  generateQuestions(id: string): Promise<void>;
   getQuizzes(data: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>>;
   getQuizParticipant(quizParticipantId: string, authUserId: string): Promise<QuizParticipantEntity>;
   updateQuestion(updateQuestionProps: UpdateQuestionProps): Promise<QuizQuestionEntity>;

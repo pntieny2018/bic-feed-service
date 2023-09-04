@@ -21,35 +21,35 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@app/redis": [
-        "libs/redis/src"
-      ],
-      "@app/redis/*": [
-        "libs/redis/src/*"
-      ],
-      "@app/sentry": [
-        "libs/sentry/src"
-      ],
-      "@app/sentry/*": [
-        "libs/sentry/src/*"
-      ],
-      "@app/kafka": [
-        "libs/kafka/src"
-      ],
-      "@app/kafka/*": [
-        "libs/kafka/src/*"
-      ],
       "@app/openai": [
         "libs/openai/src"
       ],
       "@app/openai/*": [
         "libs/openai/src/*"
       ],
-      "@app/queue": [
-        "libs/queue/src"
+      "@libs/service": [
+        "libs/service/src"
       ],
-      "@app/queue/*": [
-        "libs/queue/src/*"
+      "@libs/service/*": [
+        "libs/service/src/*"
+      ],
+      "@libs/infra": [
+        "libs/infra/src"
+      ],
+      "@libs/infra/*": [
+        "libs/infra/src/*"
+      ],
+      "@libs/database": [
+        "libs/database/src"
+      ],
+      "@libs/database/*": [
+        "libs/database/src/*"
+      ],
+      "@libs/common": [
+        "libs/common/src"
+      ],
+      "@libs/common/*": [
+        "libs/common/src/*"
       ]
     }
   },

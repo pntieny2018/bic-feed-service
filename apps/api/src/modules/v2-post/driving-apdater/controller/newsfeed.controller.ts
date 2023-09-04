@@ -1,15 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AuthUser } from '../../../auth';
-import { UserDto } from '../../../v2-user/application';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { GetNewsfeedRequestDto } from '../dto/request';
-import { PageDto } from '../../../../common/dto';
-import { FindNewsfeedQuery } from '../../application/query/find-newsfeed/find-newsfeed.query';
-import { KafkaService } from '@app/kafka';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import { PostChangedMessagePayload } from '../../application/dto/message';
+import { AuthUser } from '../../../../common/decorators';
+import { UserDto } from '../../../v2-user/application';
+import { FindNewsfeedQuery } from '../../application/query/content';
+import { NewsfeedRequestDto } from '../dto/request';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')
@@ -18,13 +15,13 @@ import { PostChangedMessagePayload } from '../../application/dto/message';
   version: VERSIONS_SUPPORTED,
 })
 export class NewsFeedController {
-  public constructor(private readonly _queryBus: QueryBus, private readonly _kafka: KafkaService) {}
+  public constructor(private readonly _queryBus: QueryBus) {}
 
   @ApiOperation({ summary: 'Get newsfeed.' })
   @Get('/')
   public async getNewsfeed(
     @AuthUser(false) authUser: UserDto,
-    @Query() dto: GetNewsfeedRequestDto
+    @Query() dto: NewsfeedRequestDto
   ): Promise<any> {
     const { type, isSaved, isMine, isImportant, limit, before, after } = dto;
     const data = await this._queryBus.execute(

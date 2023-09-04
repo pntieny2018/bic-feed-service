@@ -11,7 +11,7 @@ export interface IPostValidator extends IContentValidator {
     }
   ): void;
 
-  validateLimtedToAttachSeries(postEntity: PostEntity): Promise<void>;
+  validateLimitedToAttachSeries(postEntity: PostEntity): Promise<void>;
 }
 
 export const POST_VALIDATOR_TOKEN = 'POST_VALIDATOR_TOKEN';

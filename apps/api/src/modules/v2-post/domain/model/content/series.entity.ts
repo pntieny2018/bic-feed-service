@@ -1,17 +1,52 @@
-import { ImageEntity } from '../media';
-import { ContentEntity, ContentProps } from './content.entity';
-import { UpdateSeriesCommandPayload } from '../../../application/command/update-series/update-series.command';
+import { v4 } from 'uuid';
 
-export type SeriesProps = ContentProps & {
+import { PostStatus, PostType } from '../../../data-type';
+import { ImageEntity } from '../media';
+
+import { ContentEntity, ContentAttributes } from './content.entity';
+
+export type SeriesAttributes = ContentAttributes & {
   title: string;
   summary: string;
   itemIds?: string[];
   cover: ImageEntity;
 };
 
-export class SeriesEntity extends ContentEntity<SeriesProps> {
-  public constructor(props: SeriesProps) {
+export class SeriesEntity extends ContentEntity<SeriesAttributes> {
+  public constructor(props: SeriesAttributes) {
     super(props);
+  }
+
+  public static create(props: Partial<SeriesAttributes>, userId: string): SeriesEntity {
+    const { title, summary } = props;
+    const now = new Date();
+    return new SeriesEntity({
+      id: v4(),
+      title,
+      summary,
+      createdBy: userId,
+      updatedBy: userId,
+      status: PostStatus.PUBLISHED,
+      type: PostType.SERIES,
+      setting: {
+        canComment: true,
+        canReact: true,
+        importantExpiredAt: null,
+        isImportant: false,
+      },
+      privacy: null,
+      cover: null,
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: now,
+      isSaved: false,
+      isReported: false,
+      isHidden: false,
+      aggregation: {
+        commentsCount: 0,
+        totalUsersSeen: 0,
+      },
+    });
   }
 
   public setCover(coverMedia: ImageEntity): void {
@@ -25,12 +60,16 @@ export class SeriesEntity extends ContentEntity<SeriesProps> {
   /**
    * Note: Summary can be empty string
    */
-  public updateAttribute(data: UpdateSeriesCommandPayload): void {
-    const { actor, title, summary } = data;
+  public updateAttribute(data: Partial<SeriesAttributes>, userId: string): void {
+    const { title, summary } = data;
     this._props.updatedAt = new Date();
-    this._props.updatedBy = actor.id;
+    this._props.updatedBy = userId;
 
-    if (title) this._props.title = title;
-    if (summary !== undefined) this._props.summary = summary;
+    if (title) {
+      this._props.title = title;
+    }
+    if (summary !== undefined) {
+      this._props.summary = summary;
+    }
   }
 }

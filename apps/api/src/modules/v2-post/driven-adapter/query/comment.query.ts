@@ -1,24 +1,24 @@
-import { concat } from 'lodash';
 import { Inject } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { concat } from 'lodash';
 import { FindOptions, Includeable, Op, Sequelize, col } from 'sequelize';
-import { CommentModel } from '../../../../database/models/comment.model';
+
+import { CursorPaginator, createCursor } from '../../../../common/dto/cusor-pagination';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
+import { CommentModel } from '../../../../database/models/comment.model';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
+import { TargetType } from '../../../report-content/contstants';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
+import { CommentEntity } from '../../domain/model/comment';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
+import { ReactionEntity } from '../../domain/model/reaction';
 import {
-  GetArroundCommentProps,
+  GetAroundCommentProps,
   GetPaginationCommentProps,
   ICommentQuery,
 } from '../../domain/query-interface';
-import { CommentEntity } from '../../domain/model/comment';
-import { TargetType } from '../../../report-content/contstants';
-import { CursorPaginator, createCursor } from '../../../../common/dto/cusor-pagination';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { ReactionEntity } from '../../domain/model/reaction';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
-import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
-import { UserDto } from '../../../v2-user/application';
 
 export class CommentQuery implements ICommentQuery {
   public constructor(
@@ -42,7 +42,7 @@ export class CommentQuery implements ICommentQuery {
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUser.id,
+                  created_by: authUser,
                 },
               },
             }
@@ -57,7 +57,7 @@ export class CommentQuery implements ICommentQuery {
             Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
             WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
               TargetType.COMMENT
-            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser.id)})`),
+            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser)})`),
           ],
         }),
       },
@@ -110,9 +110,9 @@ export class CommentQuery implements ICommentQuery {
     };
   }
 
-  public async getArroundComment(
+  public async getAroundComment(
     comment: CommentEntity,
-    props: GetArroundCommentProps
+    props: GetAroundCommentProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
     const { limit } = props;
     const limitExcludeTarget = limit - 1;
@@ -151,60 +151,5 @@ export class CommentQuery implements ICommentQuery {
     };
 
     return { rows, meta };
-  }
-
-  public async findComment(id: string, authUser: UserDto): Promise<CommentEntity> {
-    const findOptions: FindOptions = {
-      include: [
-        authUser
-          ? {
-              model: CommentReactionModel,
-              on: {
-                [Op.and]: {
-                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUser.id,
-                },
-              },
-            }
-          : {},
-      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
-      where: {
-        id,
-        isHidden: false,
-      },
-    };
-    const data = await this._commentModel.findOne(findOptions);
-    const row = data.toJSON();
-    return this._factory.reconstitute({
-      id: row.id,
-      postId: row.postId,
-      parentId: row.parentId,
-      edited: row.edited,
-      isHidden: row.isHidden,
-      giphyId: row.giphyId,
-      totalReply: row.totalReply,
-      createdBy: row.createdBy,
-      updatedBy: row.updatedBy,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      content: row.content,
-      mentions: row.mentions,
-      media: {
-        images: (row.mediaJson?.images || []).map((image) => new ImageEntity(image)),
-        files: (row.mediaJson?.files || []).map((file) => new FileEntity(file)),
-        videos: (row.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
-      },
-      ownerReactions: (row?.ownerReactions || []).map(
-        (reaction) =>
-          new ReactionEntity({
-            id: reaction.id,
-            target: REACTION_TARGET.COMMENT,
-            targetId: row.id,
-            reactionName: reaction.reactionName,
-            createdBy: reaction.createdBy,
-            createdAt: reaction.createdAt,
-          })
-      ),
-    });
   }
 }

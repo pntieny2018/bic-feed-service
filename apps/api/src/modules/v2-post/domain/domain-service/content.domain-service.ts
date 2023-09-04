@@ -1,17 +1,22 @@
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
+
+import { OrderEnum } from '../../../../common/dto';
+import { StringHelper } from '../../../../common/helpers';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostStatus } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
-import { StringHelper } from '../../../../common/helpers';
+import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+
 import {
   GetContentByIdsProps,
+  GetContentIdsInNewsFeedProps,
+  GetContentIdsInTimelineProps,
   GetDraftsProps,
   GetScheduledContentProps,
   IContentDomainService,
 } from './interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -20,10 +25,16 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async getVisibleContent(id: string): Promise<ContentEntity> {
+  public async getVisibleContent(
+    id: string,
+    excludeReportedByUserId?: string
+  ): Promise<ContentEntity> {
     const entity = await this._contentRepository.findOne({
       include: {
         mustIncludeGroup: true,
+        ...(excludeReportedByUserId && {
+          excludeReportedByUserId,
+        }),
       },
       where: {
         id,
@@ -48,11 +59,11 @@ export class ContentDomainService implements IContentDomainService {
   public async getDraftsPagination(
     input: GetDraftsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
-    const { authUser, isProcessing, type } = input;
+    const { authUserId, isProcessing, type } = input;
     return this._contentRepository.getPagination({
       ...input,
       where: {
-        createdBy: authUser.id,
+        createdBy: authUserId,
         status: PostStatus.DRAFT,
         ...(isProcessing && {
           status: PostStatus.PROCESSING,
@@ -70,7 +81,7 @@ export class ContentDomainService implements IContentDomainService {
   public async getContentByIds(
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const { ids, authUser } = input;
+    const { ids, authUserId } = input;
     const contentEntities = await this._contentRepository.findAll({
       where: {
         ids,
@@ -81,18 +92,121 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
         shouldIncludeSaved: {
-          userId: authUser?.id,
+          userId: authUserId,
         },
         shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
+          userId: authUserId,
         },
         shouldIncludeReaction: {
-          userId: authUser?.id,
+          userId: authUserId,
         },
       },
     });
 
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+  }
+
+  public async getContentIdsInNewsFeed(
+    props: GetContentIdsInNewsFeedProps
+  ): Promise<CursorPaginationResult<string>> {
+    const {
+      isMine,
+      type,
+      isSaved,
+      limit,
+      isImportant,
+      after,
+      before,
+      authUserId,
+      order = OrderEnum.DESC,
+    } = props;
+    const { rows, meta } = await this._contentRepository.getPagination({
+      attributes: {
+        exclude: ['content'],
+      },
+      where: {
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+        inNewsfeedUserId: authUserId,
+        groupArchived: false,
+        excludeReportedByUserId: authUserId,
+        isImportant,
+        createdBy: isMine ? authUserId : undefined,
+        savedByUserId: isSaved ? authUserId : undefined,
+        type,
+      },
+      include: {
+        shouldIncludeImportant: {
+          userId: authUserId,
+        },
+      },
+      limit,
+      order,
+      orderOptions: {
+        isImportantFirst: isImportant,
+        isPublishedByDesc: true,
+      },
+      before,
+      after,
+    });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
+  }
+
+  public async getContentIdsInTimeline(
+    props: GetContentIdsInTimelineProps
+  ): Promise<CursorPaginationResult<string>> {
+    const {
+      authUserId,
+      groupIds,
+      isMine,
+      type,
+      isSaved,
+      isImportant,
+      limit,
+      before,
+      after,
+      order = OrderEnum.DESC,
+    } = props;
+
+    const { rows, meta } = await this._contentRepository.getPagination({
+      attributes: {
+        exclude: ['content'],
+      },
+      where: {
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+        groupIds,
+        groupArchived: false,
+        excludeReportedByUserId: authUserId,
+        isImportant,
+        createdBy: isMine ? authUserId : undefined,
+        savedByUserId: isSaved ? authUserId : undefined,
+        type,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeImportant: {
+          userId: authUserId,
+        },
+      },
+      limit,
+      order,
+      orderOptions: {
+        isImportantFirst: isImportant,
+        isPublishedByDesc: true,
+      },
+      before,
+      after,
+    });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 
   public async getScheduledContent(

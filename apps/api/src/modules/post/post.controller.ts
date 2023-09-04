@@ -1,9 +1,8 @@
 import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { ResponseMessages } from '../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
-import { AuthUser } from '../auth';
 import { PostAppService } from './application/post.app-service';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';

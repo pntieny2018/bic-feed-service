@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { PAGING_DEFAULT_LIMIT } from '../../../../../common/constants';
-import { GifType, GiphyRating } from '../../../../v2-post/data-type';
+import { GifType, GiphyRating } from '../../../data-type';
 
 export class GetTrendingGifRequestDto {
   @ApiProperty({

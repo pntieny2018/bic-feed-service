@@ -1,4 +1,3 @@
-import { AuthUser } from '../auth';
 import { ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   CreateReportDto,
@@ -22,7 +21,7 @@ import {
 } from '@nestjs/common';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { UserDto } from '../v2-user/application';
-import { ResponseMessages } from '../../common/decorators';
+import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { Request } from 'express';
 import { ReportStatus } from './contstants';
 import { VERSIONS_SUPPORTED } from '../../common/constants';

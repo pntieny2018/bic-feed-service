@@ -4,9 +4,9 @@ import { Test } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 import { OrderEnum } from '../../../../../common/dto';
 import { BadRequestException } from '@nestjs/common';
-import { RecentSearchNotFoundException } from '../../../exeption/recent-search-not-found.exception';
 import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
 import { RecentSearchType } from '../../../data-type';
+import { RecentSearchNotFoundException } from '../../../domain/exception';
 
 describe('RecentSearchController', () => {
   let recentSearchController: RecentSearchController;

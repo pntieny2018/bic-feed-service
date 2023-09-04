@@ -1,15 +1,14 @@
-import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { IQuizFactory } from './interface/quiz.factory.interface';
-import { QuizEntity, QuizProps, QuizQuestionEntity } from '../model/quiz';
-import {
-  AddQuestionProps,
-  QuizCreateProps,
-} from '../domain-service/interface/quiz.domain-service.interface';
-import { QuizGenStatus, QuizStatus } from '../../data-type/quiz-status.enum';
-import { QuizParticipantEntity } from '../model/quiz-participant';
+import { v4 } from 'uuid';
+
 import { RULES } from '../../constant';
+import { QuizGenStatus, QuizStatus } from '../../data-type';
+import { AddQuestionProps, QuizCreateProps } from '../domain-service/interface';
+import { QuizEntity, QuizQuestionEntity, QuizAttributes } from '../model/quiz';
+import { QuizParticipantEntity } from '../model/quiz-participant';
+
+import { IQuizFactory } from './interface/quiz.factory.interface';
 
 export class QuizFactory implements IQuizFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
@@ -107,7 +106,7 @@ export class QuizFactory implements IQuizFactory {
     return this._eventPublisher.mergeObjectContext(quizParticipant);
   }
 
-  public reconstitute(properties: QuizProps): QuizEntity {
+  public reconstitute(properties: QuizAttributes): QuizEntity {
     return new QuizEntity(properties);
   }
 }

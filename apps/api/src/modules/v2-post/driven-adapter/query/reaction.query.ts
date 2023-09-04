@@ -1,23 +1,23 @@
-import { InjectModel } from '@nestjs/sequelize';
 import { Inject } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
+
+import { OrderEnum } from '../../../../common/dto';
+import { PaginationResult, ReactionsCount } from '../../../../common/types';
 import { getDatabaseConfig } from '../../../../config/database';
+import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
+import { PostReactionModel } from '../../../../database/models/post-reaction.model';
+import { REACTION_TARGET } from '../../data-type/reaction.enum';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
 } from '../../domain/factory/interface/reaction.factory.interface';
-import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
-import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import { REACTION_TARGET } from '../../data-type/reaction-target.enum';
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
   GetReactionProps,
   IReactionQuery,
 } from '../../domain/query-interface/reaction.query.interface';
-import { PostReactionModel } from '../../../../database/models/post-reaction.model';
-import { OrderEnum } from '../../../../common/dto';
-import { ReactionsCount } from '../../../../common/types/reaction-count.type';
 
 export class ReactionQuery implements IReactionQuery {
   public constructor(
@@ -97,7 +97,9 @@ export class ReactionQuery implements IReactionQuery {
       order: [[Sequelize.literal('date'), OrderEnum.ASC]],
     });
 
-    if (!result) return;
+    if (!result) {
+      return;
+    }
 
     return new Map<string, ReactionsCount>(
       commentIds.map((commentId) => {
@@ -133,7 +135,9 @@ export class ReactionQuery implements IReactionQuery {
       order: [[Sequelize.literal('date'), OrderEnum.ASC]],
     });
 
-    if (!result) return new Map<string, ReactionsCount>();
+    if (!result) {
+      return new Map<string, ReactionsCount>();
+    }
 
     return new Map<string, ReactionsCount>(
       contentIds.map((contentId) => {

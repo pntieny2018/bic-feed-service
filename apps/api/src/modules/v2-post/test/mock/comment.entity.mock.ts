@@ -1,8 +1,10 @@
 import { NIL, v4 } from 'uuid';
+
+import { CreateCommentCommandPayload } from '../../application/command/comment';
 import { ImageResource } from '../../data-type';
-import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { CommentEntity } from '../../domain/model/comment';
-import { CreateCommentCommandPayload } from '../../application/command/create-comment/create-comment.command';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
+
 import { commentRecord } from './comment.model.mock';
 
 export const createCommentEntity = (

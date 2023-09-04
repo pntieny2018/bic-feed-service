@@ -1,4 +1,4 @@
-import { RedisService } from '@app/redis';
+import { RedisService } from '@libs/infra/redis';
 import { Injectable } from '@nestjs/common';
 import { HealthCheckError, HealthIndicator } from '@nestjs/terminus';
 import { HealthIndicatorResult } from '@nestjs/terminus/dist/health-indicator';

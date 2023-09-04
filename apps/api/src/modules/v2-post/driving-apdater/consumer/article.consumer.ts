@@ -1,11 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
+
 import { KAFKA_TOPIC } from '../../../../common/constants';
+import {
+  ProcessArticleDeletedCommand,
+  ProcessArticlePublishedCommand,
+  ProcessArticleUpdatedCommand,
+} from '../../application/command/article';
 import { ArticleChangedMessagePayload } from '../../application/dto/message';
-import { ProcessArticleDeletedCommand } from '../../application/command/process-article-deleted/process-article-deleted.command';
-import { ProcessArticlePublishedCommand } from '../../application/command/process-article-published/process-article-published.command';
-import { ProcessArticleUpdatedCommand } from '../../application/command/process-article-updated/process-article-updated.command';
 
 @Controller()
 export class ArticleConsumer {

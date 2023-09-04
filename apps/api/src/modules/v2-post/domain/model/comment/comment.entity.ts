@@ -1,12 +1,13 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { NIL, validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
 import { isEmpty } from 'lodash';
+import { NIL, validate as isUUID, v4 } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions';
+import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { ReactionEntity } from '../reaction';
 
-export type CommentProps = {
+export type CommentAttributes = {
   id: string;
   media?: {
     videos?: VideoEntity[];
@@ -24,15 +25,40 @@ export type CommentProps = {
   createdAt?: Date;
   updatedAt?: Date;
   totalReply?: number;
-  childs?: CommentEntity[];
+  childs?: CursorPaginationResult<CommentEntity>;
   mentions?: string[];
   ownerReactions?: ReactionEntity[];
 };
 
-export class CommentEntity extends DomainAggregateRoot<CommentProps> {
-  public constructor(props: CommentProps) {
+export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
+  public constructor(props: CommentAttributes) {
     super(props);
   }
+
+  public static create(props: Partial<CommentAttributes>, userId: string): CommentEntity {
+    const { parentId, postId, content, giphyId, mentions } = props;
+    const now = new Date();
+    return new CommentEntity({
+      id: v4(),
+      parentId,
+      postId,
+      content,
+      createdBy: userId,
+      updatedBy: userId,
+      media: {
+        files: [],
+        images: [],
+        videos: [],
+      },
+      mentions: mentions,
+      isHidden: false,
+      edited: false,
+      createdAt: now,
+      updatedAt: now,
+      giphyId,
+    });
+  }
+
   public validate(): void {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Comment ID is not UUID`);
@@ -45,14 +71,20 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     }
   }
 
-  public updateAttribute(data: UpdateCommentCommandPayload): void {
-    const { actor, content, mentions, giphyId } = data;
+  public updateAttribute(data: Partial<CommentAttributes>, userId: string): void {
+    const { content, mentions, giphyId } = data;
     this._props.updatedAt = new Date();
     this._props.edited = true;
-    this._props.updatedBy = actor.id;
-    if (content !== undefined) this._props.content = content;
-    if (giphyId !== undefined) this._props.giphyId = giphyId;
-    if (mentions && Array.isArray(mentions)) this._props.mentions = mentions;
+    this._props.updatedBy = userId;
+    if (content !== undefined) {
+      this._props.content = content;
+    }
+    if (giphyId !== undefined) {
+      this._props.giphyId = giphyId;
+    }
+    if (mentions && Array.isArray(mentions)) {
+      this._props.mentions = mentions;
+    }
   }
 
   public setMedia(media: {
@@ -83,5 +115,9 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
 
   public isChildComment(): boolean {
     return this._props.parentId !== NIL;
+  }
+
+  public setChilds(childs: CursorPaginationResult<CommentEntity>): void {
+    this._props.childs = childs;
   }
 }

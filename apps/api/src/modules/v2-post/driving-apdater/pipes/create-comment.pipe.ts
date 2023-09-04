@@ -1,5 +1,5 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { CreateCommentRequestDto } from '../dto/request/create-comment.request.dto';
+import { CreateCommentRequestDto } from '../dto/request';
 
 @Injectable()
 export class CreateCommentPipe implements PipeTransform {

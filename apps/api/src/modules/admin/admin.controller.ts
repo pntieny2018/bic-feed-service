@@ -5,10 +5,10 @@ import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
 import { AdminService } from './admin.service';
-import { AuthUser } from '../auth';
 import { GetPostPipe } from '../post/pipes';
 import { GetArticleDto } from '../article/dto/requests';
 import { UserDto } from '../v2-user/application';
+import { AuthUser } from '../../common/decorators';
 
 @ApiSecurity('authorization')
 @ApiTags('Admin')

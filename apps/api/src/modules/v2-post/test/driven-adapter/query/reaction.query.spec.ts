@@ -9,8 +9,8 @@ import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/reaction.factory.interface';
-import { ReactionFactory } from '../../../domain/factory/interface/reaction.factory';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { ReactionFactory } from '../../../domain/factory/reaction.factory';
+import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import { v4 } from 'uuid';
 
 describe('ReactionQuery', () => {

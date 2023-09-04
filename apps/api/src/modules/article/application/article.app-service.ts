@@ -1,9 +1,7 @@
 import { uniq } from 'lodash';
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
-import { ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
@@ -31,7 +29,11 @@ import { PostBindingService } from '../../post/post-binding.service';
 import { ExternalService } from '../../../app/external.service';
 import { ReactionService } from '../../reaction';
 import { RULES } from '../../v2-post/constant';
-import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import {
+  ArticleInvalidParameterException,
+  ArticleLimitAttachedSeriesException,
+  ContentNotFoundException,
+} from '../../v2-post/domain/exception';
 
 @Injectable()
 export class ArticleAppService {
@@ -129,7 +131,7 @@ export class ArticleAppService {
   ): Promise<ArticleResponseDto> {
     const { audience, series, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    if (!articleBefore) throw new ContentNotFoundException();
 
     if (
       updateArticleDto.coverMedia?.id &&
@@ -209,7 +211,7 @@ export class ArticleAppService {
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
 
-    await this._postService.validateLimtedToAttachSeries(article.id);
+    await this._postService.validateLimitedToAttachSeries(article.id);
 
     await this.isSeriesAndTagsValid(
       audience.groups.map((e) => e.id),
@@ -235,7 +237,7 @@ export class ArticleAppService {
       new GetArticleDto(),
       !isSchedule
     );
-    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (!article) throw new ContentNotFoundException();
     if (article.status === PostStatus.PUBLISHED) return article;
     await this._preCheck(article, user);
 
@@ -261,7 +263,7 @@ export class ArticleAppService {
     scheduleArticleDto: ScheduleArticleDto
   ): Promise<ArticleResponseDto> {
     const article = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (!article) throw new ContentNotFoundException();
     if (article.status === PostStatus.PUBLISHED) return article;
     await this._preCheck(article, user);
     await this._articleService.schedule(articleId, scheduleArticleDto);
@@ -274,7 +276,7 @@ export class ArticleAppService {
     const articles = await this._postService.getListWithGroupsByIds([articleId], false);
 
     if (articles.length === 0) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     const article = articles[0];
     await this._authorityService.checkPostOwner(article, user.id);
@@ -343,11 +345,7 @@ export class ArticleAppService {
       }
     }
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.APP_ARTICLE_INVALID_PARAMETER,
-        message: 'Invalid series, tags',
-        errors: seriesTagErrorData,
-      });
+      throw new ArticleInvalidParameterException(null, seriesTagErrorData);
     }
     return true;
   }
@@ -359,10 +357,10 @@ export class ArticleAppService {
 
     const article = (await this._postService.getPostsWithSeries([articleId], true))[0];
     const seriesIds = article.postSeries.map((item) => item.seriesId);
-    const isOverLimtedToAttachSeries =
+    const isOverLimitedToAttachSeries =
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
-    if (isOverLimtedToAttachSeries) {
+    if (isOverLimitedToAttachSeries) {
       throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }

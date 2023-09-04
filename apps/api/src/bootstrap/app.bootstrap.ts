@@ -1,10 +1,13 @@
-import { INestApplication, Logger, VersioningType } from '@nestjs/common';
+import { IS_LOCAL } from '@libs/common/constants';
+import { INestApplication, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json } from 'express';
+import { Logger, PinoLogger } from 'nestjs-pino';
+
+import { VERSION_HEADER_KEY } from '../common/constants';
 import { HttpExceptionFilter } from '../common/filters';
 import { HandleResponseInterceptor } from '../common/interceptors';
 import { IAppConfig } from '../config/app';
-import { VERSION_HEADER_KEY } from '../common/constants';
 
 export class AppBootstrap {
   /**
@@ -26,14 +29,21 @@ export class AppBootstrap {
     app.useGlobalInterceptors(new HandleResponseInterceptor());
     app.useGlobalFilters(new HttpExceptionFilter(appConfig.env, '/'));
 
+    if (!IS_LOCAL) {
+      app.useLogger(app.get(Logger));
+    }
+
     app.use(
       json({
         limit: 52428800, // maximum 50MB
       })
     );
-    await app.listen(appConfig.port).catch((ex) => Logger.error(ex));
 
-    Logger.debug(
+    const logger = new PinoLogger({}).logger;
+
+    await app.listen(appConfig.port).catch((ex) => logger.error(ex));
+
+    logger.debug(
       `${appConfig.name} API run in ${appConfig.url}:${appConfig.port}`,
       'NestApplication'
     );
