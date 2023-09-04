@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   ILibContentRepository,
   LIB_CONTENT_REPOSITORY_TOKEN,
@@ -11,7 +12,6 @@ import { Literal } from 'sequelize/types/utils';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
 import { CursorPaginator } from '../../../../common/dto';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CategoryModel } from '../../../../database/models/category.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { PostGroupModel } from '../../../../database/models/post-group.model';
@@ -48,7 +48,6 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
   IContentRepository,
-  OffsetPaginationProps,
   OrderOptions,
 } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
@@ -242,7 +241,7 @@ export class ContentRepository implements IContentRepository {
 
   public async findAll(
     findAllPostOptions: FindContentProps,
-    offsetPaginate?: OffsetPaginationProps
+    offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const articles = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
     return articles.map((article) => this._contentMapper.toDomain(article));

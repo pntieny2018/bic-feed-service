@@ -3,6 +3,7 @@ import {
   CursorPaginationResult,
   CursorPaginator,
   getDatabaseConfig,
+  PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
@@ -36,7 +37,6 @@ import {
   GetPaginationContentsProps,
   OrderOptions,
   ILibContentRepository,
-  OffsetPaginationProps,
 } from '@libs/database/postgres/repository/interface';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
@@ -165,7 +165,7 @@ export class LibContentRepository implements ILibContentRepository {
 
   public async findAll(
     findAllPostOptions: FindContentProps,
-    offsetPaginate?: OffsetPaginationProps
+    offsetPaginate?: PaginationProps
   ): Promise<PostModel[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);

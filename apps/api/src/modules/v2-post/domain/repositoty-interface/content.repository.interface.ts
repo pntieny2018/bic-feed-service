@@ -1,8 +1,11 @@
 import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginationProps,
+} from '@libs/database/postgres/common';
 import { PostAttributes } from '@libs/database/postgres/model/post.model';
 
-import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
 export type OrderOptions = {
@@ -10,11 +13,6 @@ export type OrderOptions = {
   isPublishedByDesc?: boolean;
   sortColumn?: keyof PostAttributes;
   sortBy?: ORDER;
-};
-
-export type OffsetPaginationProps = {
-  limit: number;
-  offset: number;
 };
 
 export type FindContentProps = {
@@ -68,7 +66,7 @@ export interface IContentRepository {
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
     findAllPostOptions: FindContentProps,
-    offsetPaginationProps?: OffsetPaginationProps
+    offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;

@@ -1,5 +1,9 @@
 import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
-import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginationProps,
+} from '@libs/database/postgres/common';
 import { PostCategoryAttributes } from '@libs/database/postgres/model/post-category.model';
 import { PostGroupAttributes } from '@libs/database/postgres/model/post-group.model';
 import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.model';
@@ -60,11 +64,6 @@ export type FindContentProps = {
 
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
 
-export type OffsetPaginationProps = {
-  limit: number;
-  offset: number;
-};
-
 export interface ILibContentRepository {
   create(data: PostAttributes, options?: CreateOptions): Promise<void>;
 
@@ -122,7 +121,7 @@ export interface ILibContentRepository {
 
   findAll(
     findAllPostOptions: FindContentProps,
-    offsetPaginate?: OffsetPaginationProps
+    offsetPaginate?: PaginationProps
   ): Promise<PostModel[]>;
 
   delete(id: string): Promise<void>;
