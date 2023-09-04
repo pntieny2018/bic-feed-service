@@ -336,13 +336,20 @@ export class QuizRepository implements IQuizRepository {
       quizId: question.get('quizId'),
       content: question.get('content'),
     });
+
     await this._quizAnswerModel.bulkCreate(
-      question.get('answers').map((answer) => ({
-        id: answer.id,
-        questionId: question.get('id'),
-        content: answer.content,
-        isCorrect: answer.isCorrect,
-      }))
+      question.get('answers').map((answer, index) => {
+        const createdAt = new Date();
+        createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+        return {
+          id: answer.id,
+          questionId: question.get('id'),
+          content: answer.content,
+          isCorrect: answer.isCorrect,
+          createdAt,
+          updatedAt: createdAt,
+        };
+      })
     );
   }
 
