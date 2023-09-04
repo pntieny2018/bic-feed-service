@@ -1,6 +1,7 @@
 import { OpenaiModule } from '@app/openai';
 import { DomainEventModule } from '@beincom/nest-domain-event';
 import { HttpModule as LibHttpModule } from '@libs/infra/http';
+import { IKafkaConfig } from '@libs/infra/kafka';
 import { LogModule } from '@libs/infra/log';
 import { RedisModule } from '@libs/infra/redis';
 import { SentryModule } from '@libs/infra/sentry';
@@ -16,7 +17,6 @@ import { KAFKA_PRODUCER } from '../common/constants';
 import { IAxiosConfig } from '../config/axios';
 import { configs } from '../config/configuration';
 import { IElasticsearchConfig } from '../config/elasticsearch';
-import { IKafkaConfig } from '../config/kafka';
 import { IRedisConfig } from '../config/redis';
 import { ISentryConfig } from '../config/sentry';
 

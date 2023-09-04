@@ -1,15 +1,16 @@
+import { IKafkaConfig, configs as kafkaConfig } from '@libs/infra/kafka';
+
 import { getAppConfig, IAppConfig } from './app';
-import { getKafkaConfig, IKafkaConfig } from './kafka';
-import { getEventConfig, IEventConfig } from './event';
 import { getAxiosConfig, IAxiosConfig } from './axios';
-import { getRedisConfig, IRedisConfig } from './redis';
-import { getSentryConfig, ISentryConfig } from './sentry';
 import { getCognitoConfig, ICognitoConfig } from './cognito';
-import { getSwaggerConfig, ISwaggerConfig } from './swagger';
 import { getDatabaseConfig, IDatabaseConfig } from './database';
-import { getSocketIoConfig, ISocketIoConfig } from './socket-io';
 import { getElasticsearchConfig, IElasticsearchConfig } from './elasticsearch';
+import { getEventConfig, IEventConfig } from './event';
+import { getRedisConfig, IRedisConfig } from './redis';
 import { getS3Config, IS3Config } from './s3';
+import { getSentryConfig, ISentryConfig } from './sentry';
+import { getSocketIoConfig, ISocketIoConfig } from './socket-io';
+import { getSwaggerConfig, ISwaggerConfig } from './swagger';
 
 interface IConfiguration {
   app: IAppConfig;
@@ -37,6 +38,6 @@ export const configs = (): IConfiguration => ({
   elasticsearch: getElasticsearchConfig(),
   socket: getSocketIoConfig(),
   sentry: getSentryConfig(),
-  kafka: getKafkaConfig(),
+  ...kafkaConfig(),
   s3: getS3Config(),
 });
