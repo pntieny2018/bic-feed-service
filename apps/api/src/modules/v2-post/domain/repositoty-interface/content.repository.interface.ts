@@ -1,67 +1,33 @@
-import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { PaginationProps } from '@libs/database/postgres/common';
 import {
-  CursorPaginationProps,
-  CursorPaginationResult,
-  PaginationProps,
-} from '@libs/database/postgres/common';
-import { PostAttributes } from '@libs/database/postgres/model/post.model';
+  FindContentIncludeOptions,
+  FindContentProps,
+  GetPaginationContentsProps,
+} from '@libs/database/postgres/repository/interface';
 
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
-
-export type OrderOptions = {
-  isImportantFirst?: boolean;
-  isPublishedByDesc?: boolean;
-  sortColumn?: keyof PostAttributes;
-  sortBy?: ORDER;
-};
-
-export type FindContentProps = {
-  where: {
-    type?: CONTENT_TYPE;
-    id?: string;
-    ids?: string[];
-    groupArchived?: boolean;
-    excludeReportedByUserId?: string;
-    groupIds?: string[];
-    createdBy?: string;
-    isImportant?: boolean;
-    scheduledAt?: Date;
-    isHidden?: boolean;
-    savedByUserId?: string;
-    status?: CONTENT_STATUS;
-    statuses?: CONTENT_STATUS[];
-    inNewsfeedUserId?: string;
-  };
-  include?: {
-    mustIncludeGroup?: boolean;
-    shouldIncludeGroup?: boolean;
-    shouldIncludeSeries?: boolean;
-    shouldIncludeItems?: boolean;
-    shouldIncludeCategory?: boolean;
-    shouldIncludeQuiz?: boolean;
-    shouldIncludeLinkPreview?: boolean;
-    shouldIncludeReaction?: {
-      userId?: string;
-    };
-    shouldIncludeSaved?: {
-      userId?: string;
-    };
-    shouldIncludeMarkReadImportant?: {
-      userId: string;
-    };
-    shouldIncludeImportant?: {
-      userId: string;
-    };
-  };
-  attributes?: { exclude?: (keyof PostAttributes)[] };
-  orderOptions?: OrderOptions;
-};
-
-export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
+  findContentById(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentByIdInActiveGroup(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentByIdInArchivedGroup(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentByIdExcludeReportedByUserId(
+    contentId: string,
+    userId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(

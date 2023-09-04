@@ -69,23 +69,6 @@ export class LibContentRepository implements ILibContentRepository {
     private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
   ) {}
 
-  public async create(data: PostAttributes, options?: CreateOptions): Promise<void> {
-    await this._postModel.create(data, options);
-  }
-
-  public async update(
-    contentId: string,
-    data: Partial<PostAttributes>,
-    transaction?: Transaction
-  ): Promise<void> {
-    await this._postModel.update(data, {
-      where: {
-        id: contentId,
-      },
-      transaction,
-    });
-  }
-
   public async bulkCreatePostGroup(
     postGroups: PostGroupAttributes[],
     options?: BulkCreateOptions
@@ -93,7 +76,7 @@ export class LibContentRepository implements ILibContentRepository {
     await this._postGroupModel.bulkCreate(postGroups, options);
   }
 
-  public async destroyPostGroup(
+  public async deletePostGroup(
     where: WhereOptions<PostGroupAttributes>,
     transaction?: Transaction
   ): Promise<void> {
@@ -110,7 +93,7 @@ export class LibContentRepository implements ILibContentRepository {
     await this._postSeriesModel.bulkCreate(postGroups, options);
   }
 
-  public async destroyPostSeries(
+  public async deletePostSeries(
     where: WhereOptions<PostSeriesAttributes>,
     transaction?: Transaction
   ): Promise<void> {
@@ -127,7 +110,7 @@ export class LibContentRepository implements ILibContentRepository {
     await this._postTagModel.bulkCreate(postGroups, options);
   }
 
-  public async destroyPostTag(
+  public async deletePostTag(
     where: WhereOptions<PostTagAttributes>,
     transaction?: Transaction
   ): Promise<void> {
@@ -144,12 +127,43 @@ export class LibContentRepository implements ILibContentRepository {
     await this._postTagModel.bulkCreate(postGroups, options);
   }
 
-  public async destroyPostCategory(
+  public async deletePostCategory(
     where: WhereOptions<PostCategoryAttributes>,
     transaction?: Transaction
   ): Promise<void> {
     await this._postTagModel.destroy({
       where,
+      transaction,
+    });
+  }
+
+  public async bulkCreateSeenPost(
+    seenPosts: UserSeenPostAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._userSeenPostModel.bulkCreate(seenPosts, options);
+  }
+
+  public async bulkCreateReadImportantPost(
+    readImportantPosts: UserMarkedImportantPostAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._userReadImportantPostModel.bulkCreate(readImportantPosts, options);
+  }
+
+  public async create(data: PostAttributes, options?: CreateOptions): Promise<void> {
+    await this._postModel.create(data, options);
+  }
+
+  public async update(
+    contentId: string,
+    data: Partial<PostAttributes>,
+    transaction?: Transaction
+  ): Promise<void> {
+    await this._postModel.update(data, {
+      where: {
+        id: contentId,
+      },
       transaction,
     });
   }
@@ -174,20 +188,6 @@ export class LibContentRepository implements ILibContentRepository {
       findOption.offset = offsetPaginate.offset;
     }
     return this._postModel.findAll(findOption);
-  }
-
-  public async bulkCreateSeenPost(
-    seenPosts: UserSeenPostAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._userSeenPostModel.bulkCreate(seenPosts, options);
-  }
-
-  public async bulkCreateReadImportantPost(
-    readImportantPosts: UserMarkedImportantPostAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._userReadImportantPostModel.bulkCreate(readImportantPosts, options);
   }
 
   public async getPagination(

@@ -1,8 +1,12 @@
 import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
+  FindContentIncludeOptions,
+  FindContentProps,
+  GetPaginationContentsProps,
   ILibContentRepository,
   LIB_CONTENT_REPOSITORY_TOKEN,
+  OrderOptions,
 } from '@libs/database/postgres/repository/interface';
 import { Inject } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -42,12 +46,7 @@ import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { QuizEntity } from '../../domain/model/quiz';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { TagEntity } from '../../domain/model/tag';
-import {
-  FindContentProps,
-  GetPaginationContentsProps,
-  IContentRepository,
-  OrderOptions,
-} from '../../domain/repositoty-interface';
+import { IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
 export class ContentRepository implements IContentRepository {
@@ -127,7 +126,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachGroupIds?.length > 0) {
-      await this._libContentRepository.destroyPostGroup(
+      await this._libContentRepository.deletePostGroup(
         {
           postId: postEntity.getId(),
           groupId: state.detachGroupIds,
@@ -153,7 +152,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachSeriesIds.length > 0) {
-      await this._libContentRepository.destroyPostSeries(
+      await this._libContentRepository.deletePostSeries(
         {
           postId: contentEntity.getId(),
           seriesId: state.detachSeriesIds,
@@ -179,7 +178,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachTagIds.length > 0) {
-      await this._libContentRepository.destroyPostTag(
+      await this._libContentRepository.deletePostTag(
         {
           postId: contentEntity.getId(),
           tagId: state.detachTagIds,
@@ -205,7 +204,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachCategoryIds.length > 0) {
-      await this._libContentRepository.destroyPostCategory(
+      await this._libContentRepository.deletePostCategory(
         {
           postId: contentEntity.getId(),
           categoryId: state.detachCategoryIds,
@@ -217,6 +216,51 @@ export class ContentRepository implements IContentRepository {
 
   public async delete(id: string): Promise<void> {
     return this._libContentRepository.delete(id);
+  }
+
+  public async findContentById(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const content = await this._libContentRepository.findOne({
+      where: { id: contentId },
+      include: options,
+    });
+    return this._contentMapper.toDomain(content);
+  }
+
+  public async findContentByIdInActiveGroup(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const content = await this._libContentRepository.findOne({
+      where: { id: contentId, groupArchived: false },
+      include: options,
+    });
+    return this._contentMapper.toDomain(content);
+  }
+
+  public async findContentByIdInArchivedGroup(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const content = await this._libContentRepository.findOne({
+      where: { id: contentId, groupArchived: true },
+      include: options,
+    });
+    return this._contentMapper.toDomain(content);
+  }
+
+  public async findContentByIdExcludeReportedByUserId(
+    contentId: string,
+    userId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const content = await this._libContentRepository.findOne({
+      where: { id: contentId, groupArchived: false, excludeReportedByUserId: userId },
+      include: options,
+    });
+    return this._contentMapper.toDomain(content);
   }
 
   public async findOne(

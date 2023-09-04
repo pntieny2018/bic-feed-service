@@ -13,6 +13,45 @@ import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model
 import { UserSeenPostAttributes } from '@libs/database/postgres/model/user-seen-post.model';
 import { BulkCreateOptions, CreateOptions, Transaction, WhereOptions } from 'sequelize';
 
+export type FindContentConditionOptions = {
+  type?: CONTENT_TYPE;
+  id?: string;
+  ids?: string[];
+  groupArchived?: boolean;
+  excludeReportedByUserId?: string;
+  groupIds?: string[];
+  createdBy?: string;
+  isImportant?: boolean;
+  scheduledAt?: Date;
+  isHidden?: boolean;
+  savedByUserId?: string;
+  status?: CONTENT_STATUS;
+  statuses?: CONTENT_STATUS[];
+  inNewsfeedUserId?: string;
+};
+
+export type FindContentIncludeOptions = {
+  mustIncludeGroup?: boolean;
+  shouldIncludeGroup?: boolean;
+  shouldIncludeSeries?: boolean;
+  shouldIncludeItems?: boolean;
+  shouldIncludeCategory?: boolean;
+  shouldIncludeQuiz?: boolean;
+  shouldIncludeLinkPreview?: boolean;
+  shouldIncludeReaction?: {
+    userId?: string;
+  };
+  shouldIncludeSaved?: {
+    userId?: string;
+  };
+  shouldIncludeMarkReadImportant?: {
+    userId: string;
+  };
+  shouldIncludeImportant?: {
+    userId: string;
+  };
+};
+
 export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublishedByDesc?: boolean;
@@ -21,43 +60,8 @@ export type OrderOptions = {
 };
 
 export type FindContentProps = {
-  where: {
-    type?: CONTENT_TYPE;
-    id?: string;
-    ids?: string[];
-    groupArchived?: boolean;
-    excludeReportedByUserId?: string;
-    groupIds?: string[];
-    createdBy?: string;
-    isImportant?: boolean;
-    scheduledAt?: Date;
-    isHidden?: boolean;
-    savedByUserId?: string;
-    status?: CONTENT_STATUS;
-    statuses?: CONTENT_STATUS[];
-    inNewsfeedUserId?: string;
-  };
-  include?: {
-    mustIncludeGroup?: boolean;
-    shouldIncludeGroup?: boolean;
-    shouldIncludeSeries?: boolean;
-    shouldIncludeItems?: boolean;
-    shouldIncludeCategory?: boolean;
-    shouldIncludeQuiz?: boolean;
-    shouldIncludeLinkPreview?: boolean;
-    shouldIncludeReaction?: {
-      userId?: string;
-    };
-    shouldIncludeSaved?: {
-      userId?: string;
-    };
-    shouldIncludeMarkReadImportant?: {
-      userId: string;
-    };
-    shouldIncludeImportant?: {
-      userId: string;
-    };
-  };
+  where: FindContentConditionOptions;
+  include?: FindContentIncludeOptions;
   attributes?: { exclude?: (keyof PostAttributes)[] };
   orderOptions?: OrderOptions;
 };
@@ -65,20 +69,11 @@ export type FindContentProps = {
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
 
 export interface ILibContentRepository {
-  create(data: PostAttributes, options?: CreateOptions): Promise<void>;
-
-  update(
-    contentId: string,
-    data: Partial<PostAttributes>,
-    transaction?: Transaction
-  ): Promise<void>;
-
   bulkCreatePostGroup(
     postGroups: PostGroupAttributes[],
     options?: BulkCreateOptions
   ): Promise<void>;
-
-  destroyPostGroup(
+  deletePostGroup(
     where: WhereOptions<PostGroupAttributes>,
     transaction?: Transaction
   ): Promise<void>;
@@ -87,17 +82,19 @@ export interface ILibContentRepository {
     postGroups: PostSeriesAttributes[],
     options?: BulkCreateOptions
   ): Promise<void>;
+  deletePostSeries(
+    where: WhereOptions<PostSeriesAttributes>,
+    transaction?: Transaction
+  ): Promise<void>;
 
   bulkCreatePostTag(postGroups: PostTagAttributes[], options?: BulkCreateOptions): Promise<void>;
-
-  destroyPostTag(where: WhereOptions<PostTagAttributes>, transaction?: Transaction): Promise<void>;
+  deletePostTag(where: WhereOptions<PostTagAttributes>, transaction?: Transaction): Promise<void>;
 
   bulkCreatePostCategory(
     postGroups: PostCategoryAttributes[],
     options?: BulkCreateOptions
   ): Promise<void>;
-
-  destroyPostCategory(
+  deletePostCategory(
     where: WhereOptions<PostCategoryAttributes>,
     transaction?: Transaction
   ): Promise<void>;
@@ -112,20 +109,18 @@ export interface ILibContentRepository {
     options?: BulkCreateOptions
   ): Promise<void>;
 
-  destroyPostSeries(
-    where: WhereOptions<PostSeriesAttributes>,
+  create(data: PostAttributes, options?: CreateOptions): Promise<void>;
+  update(
+    contentId: string,
+    data: Partial<PostAttributes>,
     transaction?: Transaction
   ): Promise<void>;
-
+  delete(id: string): Promise<void>;
   findOne(findOnePostOptions: FindContentProps): Promise<PostModel>;
-
   findAll(
     findAllPostOptions: FindContentProps,
     offsetPaginate?: PaginationProps
   ): Promise<PostModel[]>;
-
-  delete(id: string): Promise<void>;
-
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostModel>>;
