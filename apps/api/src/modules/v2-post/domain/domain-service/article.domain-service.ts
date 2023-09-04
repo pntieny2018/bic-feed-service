@@ -358,6 +358,6 @@ export class ArticleDomainService implements IArticleDomainService {
       articleEntity.setCategories(newCategories);
     }
 
-    articleEntity.updateAttribute(restUpdate, actor.id);
+    articleEntity.updateAttribute({ ...restUpdate, seriesIds: restUpdate.series }, actor.id);
   }
 }
