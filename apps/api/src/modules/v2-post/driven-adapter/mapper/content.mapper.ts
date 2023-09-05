@@ -94,7 +94,7 @@ export class ContentMapper {
     if (post === null) {
       return null;
     }
-    new PostEntity({
+    return new PostEntity({
       id: post.id,
       isReported: post.isReported,
       isHidden: post.isHidden,
