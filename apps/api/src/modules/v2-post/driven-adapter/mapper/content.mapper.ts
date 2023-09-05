@@ -72,7 +72,7 @@ export class ContentMapper {
         ? postEntity.get('linkPreview' as keyof ContentAttributes)?.get('id')
         : null,
       videoIdProcessing: postEntity.get('videoIdProcessing' as keyof ContentAttributes),
-      cover: (postEntity.get('cover' as keyof ContentAttributes) as ImageEntity).get('id'),
+      cover: (postEntity.get('cover' as keyof ContentAttributes) as ImageEntity)?.get('id'),
       status: postEntity.get('status') as unknown as CONTENT_STATUS,
       publishedAt: postEntity.get('publishedAt'),
       scheduledAt: postEntity.get('scheduledAt'),
