@@ -5,7 +5,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
-import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
+import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { IPost, PostType } from '../../database/models/post.model';
 import { PostBindingService } from '../post/post-binding.service';
@@ -15,20 +15,13 @@ import {
   IDataPostToAdd,
   IDataPostToDelete,
   IDataPostToUpdate,
-  IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { TagService } from '../tag/tag.service';
 import { RULES } from '../v2-post/constant';
-import { IPostSearchQuery } from './interfaces';
-import {
-  ScrollRequest,
-  ScrollResponse,
-  SearchRequest,
-  SearchResponse,
-} from '@elastic/elasticsearch/lib/api/types';
-import { SearchPostsDto } from '../post/dto/requests';
+import { IPaginationSearchResult, IPostSearchQuery, ISearchPaginationQuery } from './interfaces';
+import { QueryDslQueryContainer, SearchTotalHits } from '@elastic/elasticsearch/lib/api/types';
 
 @Injectable()
 export class SearchService {
@@ -232,158 +225,39 @@ export class SearchService {
     }
   }
 
-  public async search<T>(payload: SearchRequest): Promise<SearchResponse<T>> {
-    return this.elasticsearchService.search(payload);
-  }
-
-  public async scroll<T>(payload: ScrollRequest): Promise<ScrollResponse<T>> {
-    return this.elasticsearchService.scroll(payload);
-  }
-
-  public async getPayloadSearchForPost(
-    {
-      startTime,
-      endTime,
-      contentSearch,
-      actors,
-      limit,
-      offset,
-      type,
-      notIncludeIds,
-      tagName,
-      tagId,
-      limitSeries,
-    }: SearchPostsDto,
-    groupIds: string[]
-  ): Promise<{
-    index: string;
-    body: any;
-    from: number;
-    size: number;
-  }> {
-    const body: BodyES = {
-      query: {
-        bool: {
-          must: [],
-          must_not: [...this._getNotIncludeIds(notIncludeIds)],
-          filter: [
-            ...this._getActorFilter(actors),
-            ...this._getTypeFilter(type),
-            ...this._getAudienceFilter(groupIds),
-            ...this._getFilterTime(startTime, endTime),
-            ...(tagId ? this._getTagIdFilter(tagId) : this._getTagFilter(tagName)),
-            ...(limitSeries ? this._limitSeriesFilter() : []),
-          ],
-          should: [...this._getMatchKeyword(type, contentSearch)],
-          minimum_should_match: contentSearch ? 1 : 0,
-        },
-      },
-    };
-
-    if (contentSearch) {
-      body['highlight'] = this._getHighlight();
+  public async updateSeriesAtrributeForPostSearch(ids: string[]): Promise<void> {
+    const posts = await this.postService.getPostsWithSeries(ids);
+    for (const post of posts) {
+      await this.updateAttributePostToSearch(post, {
+        seriesIds: post.postSeries.map((series) => series.seriesId),
+      });
     }
+  }
 
-    body['sort'] = [...this._getSort(contentSearch)];
-    return {
+  public async searchContents<T>(
+    query: IPostSearchQuery & ISearchPaginationQuery
+  ): Promise<IPaginationSearchResult<T>> {
+    const { from, size } = query;
+    const body = this._getPayloadSearchForContent(query);
+    const payload = {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
-      body,
-      from: offset,
-      size: limit,
+      ...body,
+      from,
+      size,
     };
-  }
+    const response = await this.elasticsearchService.search<T>(payload);
 
-  public async getPayloadSearchForSeries(props: {
-    contentSearch: string;
-    groupIds: string[];
-    itemIds: string[];
-    limit: number;
-    offset: number;
-  }): Promise<{
-    index: string;
-    body: any;
-    from: number;
-    size: number;
-  }> {
-    const { contentSearch, groupIds, itemIds, limit, offset } = props;
-    const bool = {
-      must: [],
-      filter: [...this._getTypeFilter(PostType.SERIES)],
-    };
-    if (contentSearch) {
-      bool.must = [...this._getMatchPrefixKeyword('title', contentSearch)];
+    if (!response || !response?.hits) {
+      return;
     }
 
-    if (groupIds && groupIds.length) {
-      bool.filter.push(...this._getAudienceFilter(groupIds));
-    }
-    if (itemIds && itemIds.length) {
-      bool.filter.push(...this._getItemInSeriesFilter(itemIds));
-    }
-
-    const body: BodyES = {
-      query: { bool },
-    };
-
-    body['sort'] = [...this._getSort(contentSearch)];
     return {
-      index: ElasticsearchHelper.ALIAS.POST.all.name,
-      body,
-      from: offset,
-      size: limit,
-    };
-  }
-
-  public getPayloadSearchForArticles(props: {
-    contentSearch: string;
-    groupIds: string[];
-    categoryIds?: string[];
-    notIncludeIds?: string[];
-    limit: number;
-    offset: number;
-    limitSeries?: number;
-  }): {
-    index: string;
-    body: any;
-    from: number;
-    size: number;
-  } {
-    const { contentSearch, groupIds, categoryIds, limit, offset, notIncludeIds, limitSeries } =
-      props;
-    const body: BodyES = {
-      query: {
-        bool: {
-          filter: [...this._getTypeFilter(PostType.ARTICLE)],
-        },
-      },
-    };
-    if (notIncludeIds) {
-      body.query.bool.must_not = [...this._getNotIncludeIds(notIncludeIds)];
-    }
-    if (contentSearch) {
-      body.query.bool.should = [
-        ...this._getMatchPrefixKeyword('title', contentSearch),
-        ...this._getMatchPrefixKeyword('summary', contentSearch),
-      ];
-      body.query.bool.minimum_should_match = 1;
-    }
-
-    if (categoryIds && categoryIds.length) {
-      body.query.bool.filter.push(...this._getCategoryFilter(categoryIds));
-    }
-    if (groupIds && groupIds.length) {
-      body.query.bool.filter.push(...this._getAudienceFilter(groupIds));
-    }
-    if (limitSeries) {
-      body.query.bool.filter.push(...this._limitSeriesFilter());
-    }
-
-    body['sort'] = [...this._getSort(contentSearch)];
-    return {
-      index: ElasticsearchHelper.ALIAS.POST.all.name,
-      body,
-      from: offset,
-      size: limit,
+      total: (response.hits?.total as SearchTotalHits)?.value || 0,
+      source: (response.hits?.hits || []).map((item) => ({
+        ...item._source,
+        highlight: item?.highlight,
+      })),
+      scrollId: response?._scroll_id,
     };
   }
 
@@ -429,7 +303,7 @@ export class SearchService {
 
   private _getActorFilter(actors: string[]): any {
     const { createdBy } = ELASTIC_POST_MAPPING_PATH;
-    if (actors && actors.length) {
+    if (actors && actors?.length) {
       return [
         {
           terms: {
@@ -443,7 +317,7 @@ export class SearchService {
 
   private _getNotIncludeIds(ids: string[]): any {
     const { id } = ELASTIC_POST_MAPPING_PATH;
-    if (ids && ids.length) {
+    if (ids && ids?.length) {
       return [
         {
           terms: {
@@ -455,51 +329,9 @@ export class SearchService {
     return [];
   }
 
-  private _getTypeFilter(postType: PostType): any {
-    const { type } = ELASTIC_POST_MAPPING_PATH;
-    if (postType) {
-      return [
-        {
-          term: {
-            [type]: postType,
-          },
-        },
-      ];
-    }
-    return [];
-  }
-
-  private _getTagFilter(tagName: string): any {
-    const { tags } = ELASTIC_POST_MAPPING_PATH;
-    if (tagName) {
-      return [
-        {
-          term: {
-            [tags.name]: tagName,
-          },
-        },
-      ];
-    }
-    return [];
-  }
-
-  private _getTagIdFilter(tagId: string): any {
-    const { tags } = ELASTIC_POST_MAPPING_PATH;
-    if (tagId) {
-      return [
-        {
-          term: {
-            [tags.id]: tagId,
-          },
-        },
-      ];
-    }
-    return [];
-  }
-
   private _getCategoryFilter(categoryIds: string[]): any {
     const { categories } = ELASTIC_POST_MAPPING_PATH;
-    if (categoryIds) {
+    if (categoryIds && categoryIds?.length) {
       return [
         {
           terms: {
@@ -513,7 +345,7 @@ export class SearchService {
 
   private _getAudienceFilter(filterGroupIds: string[]): any {
     const { groupIds } = ELASTIC_POST_MAPPING_PATH;
-    if (filterGroupIds.length) {
+    if (filterGroupIds && filterGroupIds?.length) {
       return [
         {
           terms: {
@@ -528,7 +360,7 @@ export class SearchService {
 
   private _getItemInSeriesFilter(filterItemIds: string[]): any {
     const { items } = ELASTIC_POST_MAPPING_PATH;
-    if (filterItemIds.length) {
+    if (filterItemIds && filterItemIds?.length) {
       return [
         {
           terms: {
@@ -538,21 +370,6 @@ export class SearchService {
       ];
     }
 
-    return [];
-  }
-
-  private _getMatchPrefixKeyword(key: string, keyword: string): any {
-    if (keyword) {
-      return [
-        {
-          match_phrase_prefix: {
-            [key]: {
-              query: keyword,
-            },
-          },
-        },
-      ];
-    }
     return [];
   }
 
@@ -569,59 +386,6 @@ export class SearchService {
     ];
   }
 
-  private _getMatchKeyword(type: PostType, keyword: string): any {
-    if (!keyword) return [];
-    let queries;
-    let fields;
-    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
-    const isASCII = StringHelper.isASCII(keyword);
-    if (isASCII) {
-      //En
-      if (type === PostType.POST) {
-        fields = [content.ascii, content.default];
-      } else if (type === PostType.SERIES) {
-        fields = [title.ascii, title.default, summary.ascii, summary.default];
-      } else {
-        // for article or all
-        fields = [
-          title.ascii,
-          title.default,
-          summary.ascii,
-          summary.default,
-          content.ascii,
-          content.default,
-        ];
-      }
-      queries = [
-        {
-          multi_match: {
-            query: keyword,
-            fields,
-          },
-        },
-      ];
-    } else {
-      //Vi
-      if (type === PostType.POST) {
-        fields = [title.default];
-      } else if (type === PostType.SERIES) {
-        fields = [title.default, summary.default];
-      } else {
-        fields = [title.default, summary.default, content.default];
-      }
-      queries = [
-        {
-          multi_match: {
-            query: keyword,
-            fields,
-          },
-        },
-      ];
-    }
-
-    return queries;
-  }
-
   private _getSort(textSearch: string): any {
     if (textSearch) {
       return [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
@@ -630,71 +394,36 @@ export class SearchService {
     }
   }
 
-  public async updateSeriesAtrributeForPostSearch(ids: string[]): Promise<void> {
-    const posts = await this.postService.getPostsWithSeries(ids);
-    for (const post of posts) {
-      await this.updateAttributePostToSearch(post, {
-        seriesIds: post.postSeries.map((series) => series.seriesId),
-      });
-    }
-  }
-
-  private _getMatchQueryFromKeyword(types: PostType[], keyword: string): any {
+  private _getMatchQueryFromKeyword(keyword: string): QueryDslQueryContainer[] {
     if (!keyword) return [];
-    let queries: any[];
     let fields: string[];
     const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
     const isASCII = StringHelper.isASCII(keyword);
     if (isASCII) {
-      //En
-      if (ArrayHelper.hasOnlyOneElement(types, PostType.POST)) {
-        fields = [content.ascii, content.default];
-      } else if (ArrayHelper.hasOnlyOneElement(types, PostType.SERIES)) {
-        fields = [title.ascii, title.default, summary.ascii, summary.default];
-      } else {
-        // for article or all
-        fields = [
-          title.ascii,
-          title.default,
-          summary.ascii,
-          summary.default,
-          content.ascii,
-          content.default,
-        ];
-      }
-      queries = [
-        {
-          multi_match: {
-            query: keyword,
-            fields,
-          },
-        },
+      fields = [
+        title.ascii,
+        title.default,
+        summary.ascii,
+        summary.default,
+        content.ascii,
+        content.default,
       ];
     } else {
-      //Vi
-      if (ArrayHelper.hasOnlyOneElement(types, PostType.POST)) {
-        fields = [title.default];
-      } else if (ArrayHelper.hasOnlyOneElement(types, PostType.SERIES)) {
-        fields = [title.default, summary.default];
-      } else {
-        fields = [title.default, summary.default, content.default];
-      }
-      queries = [
-        {
-          multi_match: {
-            query: keyword,
-            fields,
-          },
-        },
-      ];
+      fields = [title.default, summary.default, content.default];
     }
-
-    return queries;
+    return [
+      {
+        multi_match: {
+          query: keyword,
+          fields,
+        },
+      },
+    ];
   }
 
   private _getContentTypesFilter(postTypes: PostType[]): any {
     const { type } = ELASTIC_POST_MAPPING_PATH;
-    if (postTypes) {
+    if (postTypes && postTypes?.length) {
       return [
         {
           bool: {
@@ -712,7 +441,7 @@ export class SearchService {
 
   private _getTagIdsFilter(tagIds: string[]): any {
     const { tags } = ELASTIC_POST_MAPPING_PATH;
-    if (tagIds) {
+    if (tagIds && tagIds?.length) {
       return [
         {
           term: {
@@ -724,17 +453,20 @@ export class SearchService {
     return [];
   }
 
-  public getPayloadSearchForContent(query: IPostSearchQuery): BodyES {
+  private _getPayloadSearchForContent(query: IPostSearchQuery): BodyES {
     const {
       startTime,
       endTime,
       keyword,
       contentTypes,
+      itemIds,
       actors,
       tags,
       topics,
       excludeByIds,
       groupIds,
+      islimitSeries,
+      shouldHighligh,
     } = query;
     const body: BodyES = {
       query: {
@@ -746,88 +478,23 @@ export class SearchService {
             ...this._getContentTypesFilter(contentTypes),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
-            ...(tags ? this._getTagIdsFilter(tags) : []),
-            ...(topics ? this._getCategoryFilter(topics) : []),
+            ...this._getItemInSeriesFilter(itemIds),
+            ...this._getTagIdsFilter(tags),
+            ...this._getCategoryFilter(topics),
+            ...(islimitSeries ? this._limitSeriesFilter() : []),
           ],
-          should: [...this._getMatchQueryFromKeyword(contentTypes, keyword)],
+          should: [...this._getMatchQueryFromKeyword(keyword)],
           minimum_should_match: keyword ? 1 : 0,
         },
       },
     };
 
-    if (keyword) {
+    if (keyword && shouldHighligh) {
       body['highlight'] = this._getHighlight();
     }
 
     body['sort'] = [...this._getSort(keyword)];
 
     return body;
-  }
-
-  /*
-    Search posts, articles, series
-  */
-  public async searchContent(params: IPostSearchQuery): Promise<any> {
-    const { keyword } = params;
-    const body = this.getPayloadSearchForContent(params);
-    const payload = {
-      index: ElasticsearchHelper.ALIAS.POST.all.name,
-      ...body,
-      scroll: '1m',
-      size: 1,
-    };
-    const response = await this.elasticsearchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
-    const itemIds = [];
-    const attrUserIds = [];
-    const attrGroupIds = [];
-    const posts = hits.map((item) => {
-      const { _source: source } = item;
-      if (source.items && source.items.length) {
-        itemIds.push(...source.items.map((item) => item.id));
-      }
-      attrUserIds.push(source.createdBy);
-      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
-      attrGroupIds.push(...source.groupIds);
-      attrGroupIds.push(...source.communityIds);
-      const data: any = {
-        id: source.id,
-        groupIds: source.groupIds,
-        communityIds: source.communityIds,
-        mentionUserIds: source.mentionUserIds,
-        type: source.type,
-        createdAt: source.createdAt,
-        updatedAt: source.updatedAt,
-        createdBy: source.createdBy,
-        publishedAt: source.publishedAt,
-        coverMedia: source.coverMedia ?? null,
-        media: source.media || {
-          files: [],
-          images: [],
-          videos: [],
-        },
-        content: source.content || null,
-        title: source.title || null,
-        summary: source.summary || null,
-        categories: source.categories || [],
-        items: source.items || [],
-        tags: source.tags || [],
-      };
-
-      if (keyword && item.highlight && item.highlight['content']?.length && source.content) {
-        data.highlight = item.highlight['content'][0];
-      }
-
-      if (keyword && item.highlight && item.highlight['title']?.length && source.title) {
-        data.titleHighlight = item.highlight['title'][0];
-      }
-
-      if (keyword && item.highlight && item.highlight['summary']?.length && source.summary) {
-        data.summaryHighlight = item.highlight['summary'][0];
-      }
-      return data;
-    });
-
-    return posts;
   }
 }

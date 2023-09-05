@@ -17,12 +17,14 @@ import { SeriesService } from '../series.service';
 import { UserDto } from '../../v2-user/application';
 import { RULES } from '../../v2-post/constant';
 import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
-import { plainToInstance } from 'class-transformer';
+import { ClassTransformer } from 'class-transformer';
 import { PostBindingService } from '../../post/post-binding.service';
 import { IPostElasticsearch } from '../../search/interfaces';
+import { PostType } from '../../v2-post/data-type';
 
 @Injectable()
 export class SeriesAppService {
+  private _classTransformer = new ClassTransformer();
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
@@ -35,7 +37,6 @@ export class SeriesAppService {
   /*
     Search series in article detail
   */
-
   public async searchSeries(
     user: UserDto,
     searchDto: SearchSeriesDto
@@ -53,34 +54,36 @@ export class SeriesAppService {
     if (groupIds && groupIds.length) {
       filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
     }
-    const payload = await this._searchService.getPayloadSearchForSeries({
-      contentSearch,
+
+    const response = await this._searchService.searchContents<IPostElasticsearch>({
+      keyword: contentSearch,
+      contentTypes: [PostType.SERIES],
       groupIds: filterGroupIds,
       itemIds,
-      limit,
-      offset,
+      from: offset,
+      size: limit,
     });
-    const response = await this._searchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
-    const series: any[] = hits.map((item) => {
-      const source = {
-        id: item._source.id,
-        groupIds: item._source.groupIds,
-        coverMedia: item._source.coverMedia,
-        title: item._source.title || null,
-        summary: item._source.summary,
+
+    const { source, total } = response;
+    const series = source.map((item) => {
+      const seriesItem = {
+        id: item.id,
+        groupIds: item.groupIds,
+        coverMedia: item.coverMedia,
+        title: item.title || null,
+        summary: item.summary,
       };
-      return source;
+      return seriesItem;
     });
 
     await this._postBindingService.bindAudience(series);
 
-    const result = plainToInstance(SeriesSearchResponseDto, series, {
+    const result = this._classTransformer.plainToInstance(SeriesSearchResponseDto, series, {
       excludeExtraneousValues: true,
     });
 
     return new PageDto<SeriesSearchResponseDto>(result, {
-      total: response['hits'].total['value'],
+      total,
       limit,
       offset,
     });

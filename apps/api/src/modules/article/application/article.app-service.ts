@@ -34,6 +34,7 @@ import { RULES } from '../../v2-post/constant';
 import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
 import { TargetType } from '../../report-content/contstants';
 import { IPostElasticsearch } from '../../search/interfaces';
+import { PostType } from '../../v2-post/data-type';
 
 @Injectable()
 export class ArticleAppService {
@@ -330,30 +331,30 @@ export class ArticleAppService {
     const notIncludeIds = await this._postService.getEntityIdsReportedByUser(user.id, [
       TargetType.ARTICLE,
     ]);
-    const context: any = {
-      contentSearch,
-      groupIds: filterGroupIds,
-      notIncludeIds: notIncludeIds,
-      limit,
-      offset,
-      limitSeries,
-    };
-    if (categoryIds) context.categoryIds = categoryIds;
 
-    const payload = this._searchService.getPayloadSearchForArticles(context);
-    const response = await this._searchService.search<IPostElasticsearch>(payload);
-    const hits = response['hits'].hits;
-    const articles = hits.map((item) => {
-      const source = {
-        id: item._source.id,
-        groupIds: item._source.groupIds,
-        summary: item._source.summary,
-        coverMedia: item._source.coverMedia,
-        createdBy: item._source.createdBy,
-        categories: item._source.categories,
-        title: item._source.title || null,
+    const response = await this._searchService.searchContents<IPostElasticsearch>({
+      keyword: contentSearch,
+      contentTypes: [PostType.ARTICLE],
+      groupIds: filterGroupIds,
+      excludeByIds: notIncludeIds,
+      ...(categoryIds && { topics: categoryIds }),
+      from: offset,
+      size: limit,
+      islimitSeries: limitSeries,
+    });
+
+    const { source, total } = response;
+    const articles = source.map((item) => {
+      const articleItem = {
+        id: item.id,
+        groupIds: item.groupIds,
+        summary: item.summary,
+        coverMedia: item.coverMedia,
+        createdBy: item.createdBy,
+        categories: item.categories,
+        title: item.title || null,
       };
-      return source;
+      return articleItem;
     });
 
     await this._postBindingService.bindActor(articles);
@@ -366,7 +367,7 @@ export class ArticleAppService {
     });
 
     return new PageDto<ArticleSearchResponseDto>(result, {
-      total: response['hits'].total['value'],
+      total,
       limit,
       offset,
     });

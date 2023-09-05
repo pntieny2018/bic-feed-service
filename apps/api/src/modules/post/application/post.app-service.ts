@@ -39,6 +39,8 @@ import { TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { IPostElasticsearch } from '../../search/interfaces';
 import { PostBindingService } from '../post-binding.service';
+import { ArticleDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
+import { PostType } from '../../v2-post/data-type';
 
 @Injectable()
 export class PostAppService {
@@ -323,10 +325,11 @@ export class PostAppService {
   public async searchPosts(
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<any>> {
-    const { contentSearch, limit, offset, groupId, tagName } = searchPostsDto;
+  ): Promise<PageDto<ArticleDto | PostDto | SeriesDto>> {
+    const { contentSearch, type, actors, startTime, endTime, limit, offset, groupId, tagName } =
+      searchPostsDto;
     if (!authUser || authUser.groups.length === 0) {
-      return new PageDto<any>([], {
+      return new PageDto([], {
         total: 0,
         limit,
         offset,
@@ -342,7 +345,7 @@ export class PostAppService {
       }
       groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
       if (groupIds.length === 0) {
-        return new PageDto<any>([], {
+        return new PageDto([], {
           limit,
           offset,
           hasNextPage: false,
@@ -359,57 +362,57 @@ export class PostAppService {
     const notIncludeIds = await this._postService.getEntityIdsReportedByUser(authUser.id, [
       TargetType.POST,
     ]);
-    searchPostsDto.notIncludeIds = notIncludeIds;
 
-    const payload = await this._searchService.getPayloadSearchForPost(searchPostsDto, groupIds);
-    const response = await this._searchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
-    const itemIds = [];
-    const attrUserIds = [];
-    const attrGroupIds = [];
-    const posts = hits.map((item) => {
-      const { _source: source } = item;
-      if (source.items && source.items.length) {
-        itemIds.push(...source.items.map((item) => item.id));
-      }
-      attrUserIds.push(source.createdBy);
-      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
-      attrGroupIds.push(...source.groupIds);
-      attrGroupIds.push(...source.communityIds);
-      const data: any = {
-        id: source.id,
-        groupIds: source.groupIds,
-        communityIds: source.communityIds,
-        mentionUserIds: source.mentionUserIds,
-        type: source.type,
-        createdAt: source.createdAt,
-        updatedAt: source.updatedAt,
-        createdBy: source.createdBy,
-        publishedAt: source.publishedAt,
-        coverMedia: source.coverMedia ?? null,
-        media: source.media || {
+    const response = await this._searchService.searchContents<IPostElasticsearch>({
+      keyword: contentSearch,
+      actors,
+      contentTypes: type ? [type] : [],
+      groupIds,
+      startTime,
+      endTime,
+      excludeByIds: notIncludeIds,
+      tags: tagId ? [tagId] : [],
+      from: offset,
+      size: limit,
+      shouldHighligh: true,
+    });
+    const { source, total } = response;
+
+    const posts: any[] = source.map((item) => {
+      const data = {
+        id: item.id,
+        groupIds: item.groupIds,
+        communityIds: item.communityIds,
+        mentions: item.mentionUserIds,
+        type: item.type,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        createdBy: item.createdBy,
+        publishedAt: item.publishedAt,
+        coverMedia: item.coverMedia ?? null,
+        media: item.media || {
           files: [],
           images: [],
           videos: [],
         },
-        content: source.content || null,
-        title: source.title || null,
-        summary: source.summary || null,
-        categories: source.categories || [],
-        items: source.items || [],
-        tags: source.tags || [],
+        content: item.content || null,
+        title: item.title || null,
+        summary: item.summary || null,
+        categories: item.categories || [],
+        items: item.items || [],
+        tags: item.tags || [],
       };
 
-      if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
-        data.highlight = item.highlight['content'][0];
+      if (contentSearch && item.highlight && item.highlight['content']?.length && item.content) {
+        data['highlight'] = item.highlight['content'][0];
       }
 
-      if (contentSearch && item.highlight && item.highlight['title']?.length && source.title) {
-        data.titleHighlight = item.highlight['title'][0];
+      if (contentSearch && item.highlight && item.highlight['title']?.length && item.title) {
+        data['titleHighlight'] = item.highlight['title'][0];
       }
 
-      if (contentSearch && item.highlight && item.highlight['summary']?.length && source.summary) {
-        data.summaryHighlight = item.highlight['summary'][0];
+      if (contentSearch && item.highlight && item.highlight['summary']?.length && item.summary) {
+        data['summaryHighlight'] = item.highlight['summary'][0];
       }
       return data;
     });
@@ -435,8 +438,32 @@ export class PostAppService {
       ]),
     ]);
 
-    return new PageDto<any>(posts, {
-      total: response.hits.total['value'],
+    const result = [];
+
+    for (const post of posts) {
+      delete post.groupIds;
+      delete post.communityIds;
+      post.reactionsCount = (post.reactionsCount || []).map((item) => ({
+        [item.reactionName]: item.total,
+      }));
+      post.mentions = !post.mentions || !post.mentions.length ? {} : post.mentions;
+      switch (post.type) {
+        case PostType.POST:
+          result.push(new PostDto(post));
+          break;
+        case PostType.ARTICLE:
+          result.push(new ArticleDto(post));
+          break;
+        case PostType.SERIES:
+          result.push(new SeriesDto(post));
+          break;
+        default:
+          break;
+      }
+    }
+
+    return new PageDto<ArticleDto | PostDto | SeriesDto>(posts, {
+      total,
       limit,
       offset,
     });

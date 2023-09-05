@@ -43,6 +43,7 @@ export interface IPostElasticsearch {
     id: string;
     zindex: number;
   }[];
+  highlight?: Record<string, string[]>;
 }
 
 export interface IDataPostToAdd {

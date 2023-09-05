@@ -36,6 +36,6 @@ export class SearchContentsHandler implements IQueryHandler<SearchContentsQuery,
       contentTypes
     );
 
-    await this._postSearchService.searchContent({ ...query.payload, groupIds, excludeByIds });
+    // await this._postSearchService.searchContent({ ...query.payload, groupIds, excludeByIds });
   }
 }
