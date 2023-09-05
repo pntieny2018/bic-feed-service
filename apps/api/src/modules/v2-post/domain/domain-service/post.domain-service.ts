@@ -12,7 +12,6 @@ import {
   ContentNotFoundException,
   InvalidResourceImageException,
 } from '../exception';
-import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
 import { PostEntity, ArticleEntity, ContentEntity } from '../model/content';
 import {
   IContentRepository,
@@ -20,10 +19,7 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -54,8 +50,6 @@ export class PostDomainService implements IPostDomainService {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
-    @Inject(POST_FACTORY_TOKEN)
-    private readonly _postFactory: IPostFactory,
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -117,21 +111,23 @@ export class PostDomainService implements IPostDomainService {
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
-    const postEntity = this._postFactory.createPost({
+
+    const postEntity = PostEntity.create({
       groupIds: [],
       userId,
     });
+
     postEntity.setGroups(groups.map((group) => group.id));
     postEntity.setPrivacyFromGroups(groups);
     try {
       await this._contentRepository.create(postEntity);
-      postEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
     return postEntity;
   }
+
   public async createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity> {
     const { groups, userId } = input;
 

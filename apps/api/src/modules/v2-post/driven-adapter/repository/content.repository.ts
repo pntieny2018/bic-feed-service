@@ -1,4 +1,5 @@
-import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   ILibContentRepository,
   LIB_CONTENT_REPOSITORY_TOKEN,
@@ -9,9 +10,6 @@ import { isBoolean } from 'lodash';
 import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 
-import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { CursorPaginator, OrderEnum } from '../../../../common/dto';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { CategoryModel } from '../../../../database/models/category.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { PostGroupModel } from '../../../../database/models/post-group.model';
@@ -139,46 +137,6 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  private _entityToModel(postEntity): IPost {
-    return {
-      id: postEntity.getId(),
-      content: postEntity.get('content'),
-      title: postEntity.get('title'),
-      summary: postEntity.get('summary'),
-      privacy: postEntity.get('privacy'),
-      isHidden: postEntity.get('isHidden'),
-      isReported: postEntity.get('isReported'),
-      type: postEntity.get('type'),
-      status: postEntity.get('status'),
-      errorLog: postEntity.get('errorLog'),
-      createdBy: postEntity.get('createdBy'),
-      updatedBy: postEntity.get('updatedBy'),
-      isImportant: postEntity.get('setting')?.isImportant,
-      importantExpiredAt: postEntity.get('setting')?.importantExpiredAt || null,
-      canComment: postEntity.get('setting')?.canComment,
-      canReact: postEntity.get('setting')?.canReact,
-      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
-      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      linkPreviewId: postEntity.get('linkPreview')
-        ? postEntity.get('linkPreview')?.get('id')
-        : null,
-      mediaJson: {
-        files: (postEntity.get('media')?.files || []).map((file) => file.toObject()),
-        images: (postEntity.get('media')?.images || []).map((image) => image.toObject()),
-        videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
-      },
-      mentions: postEntity.get('mentionUserIds') || [],
-      coverJson: postEntity.get('cover')?.toObject(),
-      videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
-      linkPreview: postEntity.get('linkPreview')?.toObject() || null,
-      wordCount: postEntity.get('wordCount'),
-      createdAt: postEntity.get('createdAt'),
-      publishedAt: postEntity.get('publishedAt'),
-      scheduledAt: postEntity.get('scheduledAt'),
-    };
-  }
-
   private async _setSeries(
     contentEntity: PostEntity | ArticleEntity,
     transaction: Transaction
@@ -280,12 +238,11 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findAll(
-    findAllPostOptions: FindContentProps
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const findOption = this.buildFindOptions(findAllPostOptions);
-    findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
-    const rows = await this._postModel.findAll(findOption);
-    return rows.map((row) => this._modelToEntity(row));
+    const articles = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
+    return articles.map((article) => this._contentMapper.toDomain(article));
   }
 
   protected buildOrderByOptions(orderOptions: OrderOptions): any {
@@ -294,12 +251,12 @@ export class ContentRepository implements IContentRepository {
     }
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"isReadImportant"'), OrderEnum.DESC]);
+      order.push([this._sequelizeConnection.literal('"isReadImportant"'), ORDER.DESC]);
     }
     if (orderOptions.isPublishedByDesc) {
-      order.push(['publishedAt', OrderEnum.DESC]);
+      order.push(['publishedAt', ORDER.DESC]);
     }
-    order.push(['createdAt', OrderEnum.DESC]);
+    order.push(['createdAt', ORDER.DESC]);
     return order;
   }
 
@@ -766,21 +723,12 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
-    const findOption = this.buildFindOptions(getPaginationContentsProps);
-    const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
-    const cursorColumns = orderBuilder?.map((order) => order[0]);
-
-    const paginator = new CursorPaginator(
-      this._postModel,
-      cursorColumns || ['createdAt'],
-      { before, after, limit },
-      order
+    const { rows, meta } = await this._libContentRepository.getPagination(
+      getPaginationContentsProps
     );
-    const { rows, meta } = await paginator.paginate(findOption);
 
     return {
-      rows: rows.map((row) => this._modelToEntity(row)),
+      rows: rows.map((row) => this._contentMapper.toDomain(row)),
       meta,
     };
   }

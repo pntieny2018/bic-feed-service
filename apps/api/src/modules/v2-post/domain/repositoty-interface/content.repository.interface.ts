@@ -1,13 +1,18 @@
-import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginationProps,
+} from '@libs/database/postgres/common';
 import { PostAttributes } from '@libs/database/postgres/model/post.model';
 
-import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublishedByDesc?: boolean;
+  sortColumn?: keyof PostAttributes;
+  sortBy?: ORDER;
 };
 
 export type FindContentProps = {
@@ -24,6 +29,7 @@ export type FindContentProps = {
     isHidden?: boolean;
     savedByUserId?: string;
     status?: CONTENT_STATUS;
+    statuses?: CONTENT_STATUS[];
     inNewsfeedUserId?: string;
   };
   include?: {
@@ -59,7 +65,8 @@ export interface IContentRepository {
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
-    findAllPostOptions: FindContentProps
+    findAllPostOptions: FindContentProps,
+    offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;

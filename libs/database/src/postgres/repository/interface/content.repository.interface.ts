@@ -1,4 +1,9 @@
-import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginationProps,
+} from '@libs/database/postgres/common';
 import { PostCategoryAttributes } from '@libs/database/postgres/model/post-category.model';
 import { PostGroupAttributes } from '@libs/database/postgres/model/post-group.model';
 import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.model';
@@ -6,12 +11,13 @@ import { PostTagAttributes } from '@libs/database/postgres/model/post-tag.model'
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserSeenPostAttributes } from '@libs/database/postgres/model/user-seen-post.model';
-import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { BulkCreateOptions, CreateOptions, Transaction, WhereOptions } from 'sequelize';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublishedByDesc?: boolean;
+  sortColumn?: keyof PostAttributes;
+  sortBy?: ORDER;
 };
 
 export type FindContentProps = {
@@ -28,6 +34,7 @@ export type FindContentProps = {
     isHidden?: boolean;
     savedByUserId?: string;
     status?: CONTENT_STATUS;
+    statuses?: CONTENT_STATUS[];
     inNewsfeedUserId?: string;
   };
   include?: {
@@ -112,7 +119,10 @@ export interface ILibContentRepository {
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostModel>;
 
-  findAll(findAllPostOptions: FindContentProps): Promise<PostModel[]>;
+  findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<PostModel[]>;
 
   delete(id: string): Promise<void>;
 

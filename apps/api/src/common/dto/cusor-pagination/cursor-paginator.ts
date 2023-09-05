@@ -3,7 +3,6 @@ import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } 
 
 import { InvalidCursorParamsException } from '../../../modules/v2-post/domain/exception';
 import { CursorPaginationResult } from '../../types/cursor-pagination-result.type';
-import { OrderEnum } from '../pagination';
 
 import { PaginatedArgs } from './paginated.args';
 import { CursorParam } from './paginated.interface';
@@ -20,13 +19,13 @@ export class CursorPaginator<T extends Model> {
 
   public limit = 10;
 
-  public order: OrderEnum | ORDER = OrderEnum.DESC;
+  public order: ORDER = ORDER.DESC;
 
   public constructor(
     modelClass: ModelStatic<T>,
     cursorColumns: (keyof Attributes<T>)[],
     paginationParameters: PaginatedArgs,
-    order: OrderEnum | ORDER
+    order: ORDER
   ) {
     this.modelClass = modelClass;
     this.cursorColumns = cursorColumns;
@@ -127,14 +126,14 @@ export class CursorPaginator<T extends Model> {
 
   private _getOperator(): symbol {
     if (this.after) {
-      return this.order === OrderEnum.ASC ? Op.gt : Op.lt;
+      return this.order === ORDER.ASC ? Op.gt : Op.lt;
     } else if (this.before) {
-      return this.order === OrderEnum.ASC ? Op.lt : Op.gt;
+      return this.order === ORDER.ASC ? Op.lt : Op.gt;
     }
   }
 
-  private _reverseOrder(order: OrderEnum | ORDER): OrderEnum | ORDER {
-    return order === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC;
+  private _reverseOrder(order: ORDER): ORDER {
+    return order === ORDER.ASC ? ORDER.DESC : ORDER.ASC;
   }
 
   private _isValidCursor(cursors: CursorParam): boolean {

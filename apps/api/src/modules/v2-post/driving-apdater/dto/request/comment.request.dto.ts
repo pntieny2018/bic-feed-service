@@ -1,3 +1,4 @@
+import { ORDER } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
@@ -13,7 +14,7 @@ import {
 import { NIL } from 'uuid';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../../common/constants';
-import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
+import { PaginatedArgs } from '../../../../../common/dto';
 import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
 import { UserMentionDto } from '../../../application/dto';
 
@@ -155,9 +156,9 @@ export class GetCommentsAroundIdDto {
 }
 
 export class GetListCommentsDto extends PaginatedArgs {
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
-  @IsEnum(OrderEnum)
-  public order: OrderEnum = OrderEnum.DESC;
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
 
   @ApiProperty({
     required: true,

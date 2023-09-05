@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
@@ -59,5 +60,11 @@ export class ArticleDto {
 
   public constructor(data: Partial<ArticleDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class GetScheduleArticleDto extends PaginatedResponse<ArticleDto> {
+  public constructor(list: ArticleDto[], meta?: IPaginatedInfo) {
+    super(list, meta);
   }
 }

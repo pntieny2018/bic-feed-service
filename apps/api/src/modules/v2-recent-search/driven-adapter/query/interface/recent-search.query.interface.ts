@@ -1,7 +1,8 @@
+import { ORDER } from '@beincom/constants';
+
+import { PaginationProps } from '../../../../../common/types/pagination-props.type';
 import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
-import { OrderEnum } from '../../../../../common/dto';
-import { PaginationProps } from '../../../../../common/types/pagination-props.type';
 
 export type GetPaginationRecentSearchProps = PaginationProps & {
   keyword?: string;
@@ -9,7 +10,7 @@ export type GetPaginationRecentSearchProps = PaginationProps & {
   userId: string;
   offset: number;
   limit: number;
-  order?: OrderEnum;
+  order?: ORDER;
 };
 
 export interface IRecentSearchQuery {

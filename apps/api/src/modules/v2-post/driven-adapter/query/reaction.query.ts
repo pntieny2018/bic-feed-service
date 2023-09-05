@@ -1,14 +1,14 @@
+import { ORDER } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
-import { OrderEnum } from '../../../../common/dto';
 import { PaginationResult, ReactionsCount } from '../../../../common/types';
 import { getDatabaseConfig } from '../../../../config/database';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
-import { REACTION_TARGET } from '../../data-type/reaction.enum';
+import { REACTION_TARGET } from '../../data-type';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
@@ -34,7 +34,7 @@ export class ReactionQuery implements IReactionQuery {
     const { target, targetId, latestId, limit, order, reactionName } = input;
 
     const conditions = {};
-    const symbol = order === OrderEnum.DESC ? Op.lte : Op.gte;
+    const symbol = order === ORDER.DESC ? Op.lte : Op.gte;
 
     let executer = null;
     if (target === REACTION_TARGET.POST || target === REACTION_TARGET.ARTICLE) {
@@ -94,7 +94,7 @@ export class ReactionQuery implements IReactionQuery {
         commentId: commentIds,
       },
       group: ['commentId', `reactionName`],
-      order: [[Sequelize.literal('date'), OrderEnum.ASC]],
+      order: [[Sequelize.literal('date'), ORDER.ASC]],
     });
 
     if (!result) {
@@ -132,7 +132,7 @@ export class ReactionQuery implements IReactionQuery {
         postId: contentIds,
       },
       group: ['postId', `reactionName`],
-      order: [[Sequelize.literal('date'), OrderEnum.ASC]],
+      order: [[Sequelize.literal('date'), ORDER.ASC]],
     });
 
     if (!result) {

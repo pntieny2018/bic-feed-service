@@ -1,11 +1,12 @@
+import { ORDER } from '@beincom/constants';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { emoji } from 'node-emoji';
+import { NIL as NIL_UUID } from 'uuid';
+
 import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
 import { REACTION_TARGET } from '../../../data-type';
-import { NIL as NIL_UUID } from 'uuid';
-import { OrderEnum } from '../../../../../common/dto';
 
 export class CreateReactionRequestDto {
   @ApiProperty({
@@ -124,11 +125,11 @@ export class GetReactionRequestDto {
 
   @ApiProperty({
     required: false,
-    default: OrderEnum.DESC,
-    enum: OrderEnum,
+    default: ORDER.DESC,
+    enum: ORDER,
     description: 'Order by Created At',
   })
   @IsOptional()
   @ApiHideProperty()
-  public order: OrderEnum = OrderEnum.DESC;
+  public order: ORDER = ORDER.DESC;
 }

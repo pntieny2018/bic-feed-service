@@ -15,11 +15,12 @@ import {
   IMediaRepository,
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
+  IUserAdapter,
+  USER_ADAPTER,
   GROUP_ADAPTER,
   IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+} from '../service-adapter-interface';
 
 import { ContentValidator } from './content.validator';
 import { IPostValidator } from './interface';

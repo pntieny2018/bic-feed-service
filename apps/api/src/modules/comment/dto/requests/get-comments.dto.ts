@@ -1,8 +1,10 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { ORDER } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderEnum, PageOptionsDto } from '../../../../common/dto';
 import { Expose, Type } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { NIL as NIL_UUID } from 'uuid';
+
+import { PageOptionsDto } from '../../../../common/dto';
 
 export class GetCommentsDto extends PageOptionsDto {
   @ApiProperty({
@@ -52,15 +54,15 @@ export class GetCommentsDto extends PageOptionsDto {
   public targetChildLimit?: number = 10;
 
   @ApiProperty({
-    enum: OrderEnum,
-    default: OrderEnum.DESC,
+    enum: ORDER,
+    default: ORDER.DESC,
     required: false,
     name: 'child_order',
   })
-  @IsEnum(OrderEnum)
+  @IsEnum(ORDER)
   @IsOptional()
   @Expose({
     name: 'child_order',
   })
-  public childOrder?: OrderEnum = OrderEnum.DESC;
+  public childOrder?: ORDER = ORDER.DESC;
 }

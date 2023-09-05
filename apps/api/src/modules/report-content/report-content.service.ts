@@ -1,3 +1,4 @@
+import { ORDER } from '@beincom/constants';
 import { RedisService } from '@libs/infra/redis';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -7,7 +8,7 @@ import { Sequelize } from 'sequelize-typescript';
 
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CACHE_KEYS } from '../../common/constants/casl.constant';
-import { OrderEnum, PageDto } from '../../common/dto';
+import { PageDto } from '../../common/dto';
 import { ValidatorException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
 import {
@@ -240,7 +241,7 @@ export class ReportContentService {
     `;
 
     const orderAndPaginateQuery = `    
-       ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+       ORDER BY rc.created_at ${order === ORDER.DESC ? 'DESC' : 'ASC'}
        LIMIT :limit OFFSET :offset
     `;
 
@@ -817,7 +818,7 @@ export class ReportContentService {
         AND rc.status = 'HID' 
         AND rc.target_type in ('COMMENT','CHILD_COMMENT') 
         AND rc.author_id = :authorId
-        ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+        ORDER BY rc.created_at ${order === ORDER.DESC ? 'DESC' : 'ASC'}
         LIMIT :limit OFFSET :offset
     `;
 
