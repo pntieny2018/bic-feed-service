@@ -1,3 +1,4 @@
+import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
 import { ReactionNotifyEventHandler } from '../application/event-handler/reaction';
 import { FindReactionsHandler } from '../application/query/reaction';
@@ -17,13 +18,36 @@ import {
 } from '../driven-adapter/repository';
 
 export const reactionProvider = [
+  /* Application Binding */
   {
-    provide: REACTION_REPOSITORY_TOKEN,
-    useClass: ReactionRepository,
+    provide: REACTION_BINDING_TOKEN,
+    useClass: ReactionBinding,
+  },
+
+  /* Application Command */
+  CreateReactionHandler,
+  DeleteReactionHandler,
+
+  /* Application Query */
+  FindReactionsHandler,
+
+  /* Application Event handler */
+  ReactionNotifyEventHandler,
+
+  /* Domain Service */
+  {
+    provide: REACTION_DOMAIN_SERVICE_TOKEN,
+    useClass: ReactionDomainService,
   },
   {
     provide: REACTION_FACTORY_TOKEN,
     useClass: ReactionFactory,
+  },
+
+  /* Repository */
+  {
+    provide: REACTION_REPOSITORY_TOKEN,
+    useClass: ReactionRepository,
   },
   {
     provide: POST_REACTION_REPOSITORY_TOKEN,
@@ -33,14 +57,4 @@ export const reactionProvider = [
     provide: COMMENT_REACTION_REPOSITORY_TOKEN,
     useClass: CommentReactionRepository,
   },
-  {
-    provide: REACTION_DOMAIN_SERVICE_TOKEN,
-    useClass: ReactionDomainService,
-  },
-  FindReactionsHandler,
-  CreateReactionHandler,
-  DeleteReactionHandler,
-
-  /* Event handler */
-  ReactionNotifyEventHandler,
 ];

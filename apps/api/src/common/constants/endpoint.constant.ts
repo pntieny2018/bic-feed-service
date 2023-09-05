@@ -33,3 +33,9 @@ export const ENDPOINT = {
     },
   },
 };
+
+export const AUTH_MIDDLEWARE_WHITELIST_PATTERNS = [
+  '/app/health-check',
+  '/health(.*)',
+  '/follows(.*)',
+];

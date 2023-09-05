@@ -47,7 +47,12 @@ export class KafkaService implements IKafkaService {
       next: (producer) => producer.send(record),
       error: (e) => this._logger.error(`Producing msg to ${topicName} failed: ${e.message}`),
       complete: () => {
-        this._logger.log(`Produced msg to ${topicName}: ${JSON.stringify(message)}`);
+        this._logger.log(
+          `Produced msg to ${topicName}: ${JSON.stringify({
+            ...message,
+            value: JSON.parse(message.value),
+          })}`
+        );
         sub.unsubscribe();
       },
     });
