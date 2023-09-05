@@ -5,9 +5,9 @@ import { ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
 import { PostAppService } from './application/post.app-service';
-import { GetPostEditedHistoryDto, SearchPostsDto } from './dto/requests';
+import { SearchPostsDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { PostResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
 import { ArticleResponseDto } from '../article/dto/responses';
 
