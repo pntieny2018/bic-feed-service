@@ -4,28 +4,6 @@ import { UserDto } from '@libs/service/user';
 import { UpdatePostCommandPayload } from '../../../application/command/post';
 import { PostEntity, ArticleEntity } from '../../model/content';
 
-export type PublishPostPayload = {
-  id: string;
-  groupIds: string[];
-  authUser: UserDto;
-  content?: string;
-  tagIds?: string[];
-  seriesIds?: string[];
-  mentionUserIds?: string[];
-  linkPreview?: {
-    url: string;
-    domain: string;
-    image: string;
-    title: string;
-    description: string;
-  };
-  media?: {
-    filesIds: string[];
-    imagesIds: string[];
-    videosIds: string[];
-  };
-};
-
 export type PostCreateProps = {
   groups: GroupDto[];
   userId: string;
@@ -36,21 +14,7 @@ export type ArticleCreateProps = {
   userId: string;
 };
 
-export type PostPublishProps = {
-  postEntity: PostEntity;
-  newData: PublishPostPayload & {
-    groups?: GroupDto[];
-    mentionUsers: UserDto[];
-  };
-};
-
 export type UpdatePostProps = UpdatePostCommandPayload;
-
-export type UpdatePostResult = {
-  postEntity: PostEntity;
-  groups?: GroupDto[];
-  mentionUsers?: UserDto[];
-};
 
 export interface IPostDomainService {
   getPostById(postId: string, authUserId: string): Promise<PostEntity>;

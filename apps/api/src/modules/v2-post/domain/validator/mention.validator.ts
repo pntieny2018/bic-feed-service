@@ -7,11 +7,12 @@ import {
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
 import { UserNoBelongGroupException } from '../exception';
-import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
+  IUserAdapter,
+  USER_ADAPTER,
   GROUP_ADAPTER,
   IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+} from '../service-adapter-interface';
 
 import { IMentionValidator } from './interface';
 

@@ -1,11 +1,11 @@
+import { ORDER } from '@beincom/constants';
 import { IQuery } from '@nestjs/cqrs';
-import { OrderEnum } from '../../../../../common/dto';
 
 type Props = {
   keyword?: string;
   target?: string;
   userId: string;
-  order?: OrderEnum;
+  order?: ORDER;
   offset: number;
   limit: number;
 };

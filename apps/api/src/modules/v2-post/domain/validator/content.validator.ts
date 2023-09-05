@@ -17,16 +17,17 @@ import {
   ContentNoEditSettingPermissionAtGroupException,
   ContentRequireGroupException,
   TagSeriesInvalidException,
+  UserNoBelongGroupException,
 } from '../exception';
-import { UserNoBelongGroupException } from '../exception/external.exception';
 import { SeriesEntity, ContentEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface ';
 import {
+  IUserAdapter,
+  USER_ADAPTER,
   GROUP_ADAPTER,
   IGroupAdapter,
-} from '../service-adapter-interface /group-adapter.interface';
+} from '../service-adapter-interface';
 
 import { IContentValidator } from './interface';
 

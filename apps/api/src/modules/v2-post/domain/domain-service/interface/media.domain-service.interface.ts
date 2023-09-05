@@ -1,5 +1,5 @@
-import { FileEntity, ImageEntity, VideoEntity } from '../../model/media';
 import { MediaType } from '../../../data-type';
+import { FileEntity, ImageEntity, VideoEntity } from '../../model/media';
 
 export interface IMediaDomainService {
   getAvailableImages(

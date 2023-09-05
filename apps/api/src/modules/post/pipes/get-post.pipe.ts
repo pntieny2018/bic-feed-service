@@ -1,15 +1,16 @@
-import { GetPostDto } from '../dto/requests';
-import { OrderEnum } from '../../../common/dto';
+import { ORDER } from '@beincom/constants';
 import { Injectable, PipeTransform } from '@nestjs/common';
+
+import { GetPostDto } from '../dto/requests';
 
 @Injectable()
 export class GetPostPipe implements PipeTransform {
   public transform(getPostDto: GetPostDto): GetPostDto {
     if (!getPostDto.commentOrder) {
-      getPostDto.commentOrder = OrderEnum.DESC;
+      getPostDto.commentOrder = ORDER.DESC;
     }
     if (!getPostDto.childCommentOrder) {
-      getPostDto.childCommentOrder = OrderEnum.DESC;
+      getPostDto.childCommentOrder = ORDER.DESC;
     }
 
     if (!getPostDto.commentLimit) {

@@ -99,7 +99,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
   }
 
   public getSeriesIds(): string[] {
-    return this._props.seriesIds;
+    return this._props.seriesIds || [];
   }
 
   public setTags(newTags: TagEntity[]): void {

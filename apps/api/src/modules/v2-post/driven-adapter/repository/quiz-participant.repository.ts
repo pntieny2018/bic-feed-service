@@ -1,20 +1,21 @@
-import { Sequelize } from 'sequelize-typescript';
-import { Op } from 'sequelize';
-import { difference } from 'lodash';
+import { ORDER } from '@beincom/constants';
 import { InjectModel } from '@nestjs/sequelize';
+import { difference } from 'lodash';
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
-import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
-import { IQuizParticipantRepository } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
+import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
+import { CursorPaginator } from '../../../../common/dto';
+import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
+import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { QuizParticipantAnswerModel } from '../../../../database/models/quiz-participant-answers.model';
 import {
   IQuizParticipant,
   QuizParticipantModel,
 } from '../../../../database/models/quiz-participant.model';
-import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
-import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { CursorPaginator, OrderEnum } from '../../../../common/dto';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { QuizParticipantNotFoundException } from '../../domain/exception';
+import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
+import { IQuizParticipantRepository } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
@@ -173,7 +174,9 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       },
     });
 
-    if (!quizParticipant) return null;
+    if (!quizParticipant) {
+      return null;
+    }
 
     return this._modelToEntity(quizParticipant);
   }
@@ -200,7 +203,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentId: string,
     paginationProps: CursorPaginationProps
   ): Promise<CursorPaginationResult<QuizParticipantEntity>> {
-    const { limit = PAGING_DEFAULT_LIMIT, before, after, order = OrderEnum.DESC } = paginationProps;
+    const { limit = PAGING_DEFAULT_LIMIT, before, after, order = ORDER.DESC } = paginationProps;
 
     const paginator = new CursorPaginator(
       this._quizParticipantModel,
