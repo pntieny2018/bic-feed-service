@@ -10,13 +10,13 @@ export type FindOneOptions = {
 };
 
 export type GetPaginationCommentProps = CursorPaginationProps & {
-  authUser?: UserDto;
+  authUserId?: string;
   postId: string;
   parentId?: string;
 };
 
 export type GetAroundCommentProps = {
-  authUser?: UserDto;
+  authUserId?: string;
   limit: number;
   order: ORDER;
 };
