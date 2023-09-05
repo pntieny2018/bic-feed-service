@@ -32,6 +32,14 @@ export class SearchPostsDto extends PageOptionsDto {
   })
   public contentSearch?: string;
 
+  @ApiProperty({ description: 'search by tag name', required: false, name: 'tag_name' })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'tag_name',
+  })
+  public tagName?: string;
+
   @ApiProperty({
     type: Boolean,
     description: 'Important',
@@ -91,4 +99,22 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsEnum(PostType)
   @ValidateIf((i) => i.type !== '')
   public type?: PostType;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    name: 'limit_series',
+  })
+  @Transform(({ value }) => value == 'true')
+  @Expose({
+    name: 'limit_series',
+  })
+  @IsOptional()
+  @IsBoolean()
+  public limitSeries?: boolean;
+
+  public notIncludeIds?: string[];
+
+  public tagId?: string;
 }

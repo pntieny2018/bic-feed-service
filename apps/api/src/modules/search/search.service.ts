@@ -1,36 +1,26 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
-import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { IPost, PostType } from '../../database/models/post.model';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
-import { TargetType } from '../report-content/contstants';
-import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
   IDataPostToDelete,
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../v2-post/domain/repositoty-interface';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../v2-group/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { TagService } from '../tag/tag.service';
 import { RULES } from '../v2-post/constant';
-import { QuizStatus } from '../v2-post/data-type';
-import { QuizDto } from '../v2-post/application/dto';
 import { IPostSearchQuery } from './interfaces';
 import {
   ScrollRequest,
@@ -38,6 +28,7 @@ import {
   SearchRequest,
   SearchResponse,
 } from '@elastic/elasticsearch/lib/api/types';
+import { SearchPostsDto } from '../post/dto/requests';
 
 @Injectable()
 export class SearchService {
@@ -65,9 +56,7 @@ export class SearchService {
     protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
-    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel,
-    @Inject(QUIZ_REPOSITORY_TOKEN)
-    private readonly _quizRepository: IQuizRepository
+    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
   public async addPostsToSearch(
@@ -84,7 +73,6 @@ export class SearchService {
       if (post.type === PostType.POST) {
         post.content = StringHelper.removeMarkdownCharacter(post.content);
       }
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
@@ -252,267 +240,6 @@ export class SearchService {
     return this.elasticsearchService.scroll(payload);
   }
 
-  /*
-    Search posts, articles, series
-  */
-  public async searchPosts(
-    authUser: UserDto,
-    searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<any>> {
-    const { contentSearch, limit, offset, groupId, tagName } = searchPostsDto;
-    const user = authUser;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<any>([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-
-    let groupIds = user.groups;
-    let tagId;
-    if (groupId) {
-      const group = await this.appGroupService.findOne(groupId);
-      if (!group) {
-        throw new BadRequestException(`Group ${groupId} not found`);
-      }
-      groupIds = this.appGroupService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
-      if (groupIds.length === 0) {
-        return new PageDto<any>([], {
-          limit,
-          offset,
-          hasNextPage: false,
-        });
-      }
-      if (tagName) {
-        tagId = await this.tagService.findTag(tagName, groupId);
-        if (tagId) {
-          searchPostsDto.tagId = tagId;
-        }
-      }
-    }
-
-    const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.POST,
-    ]);
-    searchPostsDto.notIncludeIds = notIncludeIds;
-    const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
-    const response = await this.elasticsearchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
-    const itemIds = []; //post or article
-    const attrUserIds = [];
-    const attrGroupIds = [];
-    const posts = hits.map((item) => {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { _source: source } = item;
-      if (source.items && source.items.length) {
-        itemIds.push(...source.items.map((item) => item.id));
-      }
-      attrUserIds.push(source.createdBy);
-      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
-      attrGroupIds.push(...source.groupIds);
-      attrGroupIds.push(...source.communityIds);
-      const data: any = {
-        id: source.id,
-        groupIds: source.groupIds,
-        communityIds: source.communityIds,
-        mentionUserIds: source.mentionUserIds,
-        type: source.type,
-        createdAt: source.createdAt,
-        updatedAt: source.updatedAt,
-        createdBy: source.createdBy,
-        publishedAt: source.publishedAt,
-        coverMedia: source.coverMedia ?? null,
-        media: source.media || {
-          files: [],
-          images: [],
-          videos: [],
-        },
-        content: source.content || null,
-        title: source.title || null,
-        summary: source.summary || null,
-        categories: source.categories || [],
-        items: source.items || [],
-        tags: source.tags || [],
-      };
-
-      if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
-        data.highlight = item.highlight['content'][0];
-      }
-
-      if (contentSearch && item.highlight && item.highlight['title']?.length && source.title) {
-        data.titleHighlight = item.highlight['title'][0];
-      }
-
-      if (contentSearch && item.highlight && item.highlight['summary']?.length && source.summary) {
-        data.summaryHighlight = item.highlight['summary'][0];
-      }
-      return data;
-    });
-    const users = await this.userAppService.findAllAndFilterByPersonalVisibility(
-      attrUserIds,
-      authUser.id
-    );
-    const groups = await this.appGroupService.findAllByIds(attrGroupIds);
-    const quizEntities = await this._quizRepository.findAll({
-      where: {
-        contentIds: posts.map((post) => post.id),
-        status: QuizStatus.PUBLISHED,
-      },
-    });
-    await Promise.all([
-      this.reactionService.bindToPosts(posts),
-      this.postBindingService.bindAttributes(posts, [
-        'content',
-        'commentsCount',
-        'totalUsersSeen',
-        'setting',
-        'wordCount',
-      ]),
-    ]);
-
-    let articlesFilterReport = [];
-
-    const itemsInSeries = await this.postService.getSimplePostsByIds(
-      ArrayHelper.arrayUnique(itemIds)
-    );
-    if (itemsInSeries.length) {
-      const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
-        TargetType.ARTICLE,
-        TargetType.POST,
-      ]);
-      if (articleIdsReported.length) {
-        articlesFilterReport = itemsInSeries.filter(
-          (article) => !articleIdsReported.includes(article.id)
-        );
-      } else {
-        articlesFilterReport = itemsInSeries;
-      }
-    }
-
-    const quizzesMapper = new Map<string, Partial<QuizDto>>(
-      quizEntities.map((quiz) => {
-        return [
-          quiz.get('contentId'),
-          new QuizDto({
-            id: quiz.get('id'),
-            title: quiz.get('title'),
-            description: quiz.get('description'),
-            status: quiz.get('status'),
-            genStatus: quiz.get('genStatus'),
-          }),
-        ];
-      })
-    );
-
-    const result = this.bindResponseSearch(posts, {
-      groups,
-      users,
-      articles: articlesFilterReport,
-      quizzesMapper,
-    });
-    return new PageDto<any>(result, {
-      total: response.hits.total['value'],
-      limit,
-      offset,
-    });
-  }
-
-  public bindResponseSearch(
-    posts: any,
-    dataBinding: {
-      groups: GroupDto[];
-      users: UserDto[];
-      articles: any;
-      quizzesMapper: Map<string, Partial<QuizDto>>;
-    }
-  ): any {
-    const { groups, users, articles, quizzesMapper } = dataBinding;
-    for (const post of posts) {
-      let actor = null;
-      const audienceGroups = [];
-      const communities = [];
-      let mentions = {};
-      const reactionsCount = [];
-      post.quiz = quizzesMapper.get(post.id);
-      for (const group of groups) {
-        if (post.groupIds && post.groupIds.includes(group.id)) {
-          audienceGroups.push({
-            id: group.id,
-            name: group.name,
-            communityId: group.communityId,
-            icon: group.icon,
-            privacy: group.privacy,
-            isCommunity: group.isCommunity,
-            rootGroupId: group.rootGroupId,
-          });
-        }
-        if (post.communityIds && post.communityIds.includes(group.id)) {
-          communities.push({
-            id: group.id,
-            name: group.name,
-            communityId: group.communityId,
-            icon: group.icon,
-            privacy: group.privacy,
-          });
-        }
-      }
-
-      const mentionList = [];
-      for (const user of users) {
-        if (user.id === post.createdBy) {
-          actor = {
-            id: user.id,
-            fullname: user.fullname,
-            email: user.email,
-            username: user.username,
-            avatar: user.avatar,
-            showingBadges: user.showingBadges,
-            isVerified: user.isVerified,
-          };
-        }
-        if (post.mentionUserIds && post.mentionUserIds.includes(user.id)) {
-          mentionList.push({
-            id: user.id,
-            fullname: user.fullname,
-            email: user.email,
-            username: user.username,
-            avatar: user.avatar,
-          });
-        }
-        mentions = mentionList.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
-      }
-
-      if (post.items) {
-        const bindArticles = [];
-        post.items.sort((a, b) => {
-          return a.zindex - b.zindex;
-        });
-        for (const itemInSeries of post.items) {
-          const findArticle = articles.find((item) => item.id === itemInSeries.id);
-          if (findArticle) bindArticles.push(findArticle);
-        }
-        post.items = bindArticles;
-      }
-      if (post.reactionsCount) {
-        post.reactionsCount.forEach(
-          (v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) })
-        );
-      }
-
-      post.reactionsCount = reactionsCount;
-      post.audience = { groups: audienceGroups };
-      post.communities = communities;
-      post.actor = actor;
-      post.mentions = mentions;
-      delete post.groupIds;
-      delete post.mentionUserIds;
-      delete post.communityIds;
-      delete post.zindex;
-    }
-    return posts;
-  }
-
   public async getPayloadSearchForPost(
     {
       startTime,
@@ -538,7 +265,6 @@ export class SearchService {
       query: {
         bool: {
           must: [],
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           must_not: [...this._getNotIncludeIds(notIncludeIds)],
           filter: [
             ...this._getActorFilter(actors),
@@ -549,7 +275,6 @@ export class SearchService {
             ...(limitSeries ? this._limitSeriesFilter() : []),
           ],
           should: [...this._getMatchKeyword(type, contentSearch)],
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           minimum_should_match: contentSearch ? 1 : 0,
         },
       },
@@ -628,7 +353,6 @@ export class SearchService {
     const body: BodyES = {
       query: {
         bool: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           filter: [...this._getTypeFilter(PostType.ARTICLE)],
         },
       },
@@ -669,19 +393,16 @@ export class SearchService {
       ['pre_tags']: ['=='],
       ['post_tags']: ['=='],
       fields: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         content: {
           ['matched_fields']: [content.default, content.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         summary: {
           ['matched_fields']: [summary.default, summary.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         title: {
           ['matched_fields']: [title.default, title.ascii],
           type: 'fvh',
@@ -824,7 +545,6 @@ export class SearchService {
     if (keyword) {
       return [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           match_phrase_prefix: {
             [key]: {
               query: keyword,
@@ -874,7 +594,6 @@ export class SearchService {
       }
       queries = [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
             fields,
@@ -892,7 +611,6 @@ export class SearchService {
       }
       queries = [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
             fields,
@@ -946,7 +664,6 @@ export class SearchService {
       }
       queries = [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
             fields,
@@ -964,7 +681,6 @@ export class SearchService {
       }
       queries = [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
             fields,
@@ -1024,7 +740,6 @@ export class SearchService {
       query: {
         bool: {
           must: [],
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           must_not: [...this._getNotIncludeIds(excludeByIds)],
           filter: [
             ...this._getActorFilter(actors),
@@ -1035,7 +750,6 @@ export class SearchService {
             ...(topics ? this._getCategoryFilter(topics) : []),
           ],
           should: [...this._getMatchQueryFromKeyword(contentTypes, keyword)],
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           minimum_should_match: keyword ? 1 : 0,
         },
       },
@@ -1064,11 +778,10 @@ export class SearchService {
     };
     const response = await this.elasticsearchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
-    const itemIds = []; //post or article
+    const itemIds = [];
     const attrUserIds = [];
     const attrGroupIds = [];
     const posts = hits.map((item) => {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { _source: source } = item;
       if (source.items && source.items.length) {
         itemIds.push(...source.items.map((item) => item.id));

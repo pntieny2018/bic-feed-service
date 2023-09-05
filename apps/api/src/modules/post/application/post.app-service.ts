@@ -1,5 +1,11 @@
 import { uniq } from 'lodash';
-import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -8,7 +14,7 @@ import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../../database/models/post.model';
 import { PostHasBeenDeletedEvent } from '../../../events/post';
 import { AuthorityService } from '../../authority';
-import { GetPostEditedHistoryDto } from '../dto/requests';
+import { GetPostEditedHistoryDto, SearchPostsDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
@@ -29,6 +35,10 @@ import { ContentPinLackException } from '../../v2-post/domain/exception/content-
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { RULES } from '../../v2-post/constant';
 import { PostLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import { TargetType } from '../../report-content/contstants';
+import { SearchService } from '../../search/search.service';
+import { IPostElasticsearch } from '../../search/interfaces';
+import { PostBindingService } from '../post-binding.service';
 
 @Injectable()
 export class PostAppService {
@@ -36,6 +46,8 @@ export class PostAppService {
 
   public constructor(
     private _postService: PostService,
+    private _searchService: SearchService,
+    private _postBindingService: PostBindingService,
     private _postHistoryService: PostHistoryService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
@@ -303,5 +315,130 @@ export class PostAppService {
     if (isOverLimtedToAttachSeries) {
       throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
+  }
+
+  /*
+    Search posts, articles, series
+  */
+  public async searchPosts(
+    authUser: UserDto,
+    searchPostsDto: SearchPostsDto
+  ): Promise<PageDto<any>> {
+    const { contentSearch, limit, offset, groupId, tagName } = searchPostsDto;
+    if (!authUser || authUser.groups.length === 0) {
+      return new PageDto<any>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+
+    let groupIds = authUser.groups;
+    let tagId: string;
+    if (groupId) {
+      const group = await this._groupAppService.findOne(groupId);
+      if (!group) {
+        throw new BadRequestException(`Group not found`);
+      }
+      groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+      if (groupIds.length === 0) {
+        return new PageDto<any>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+      if (tagName) {
+        tagId = await this._tagService.findTag(tagName, groupId);
+        if (tagId) {
+          searchPostsDto.tagId = tagId;
+        }
+      }
+    }
+
+    const notIncludeIds = await this._postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.POST,
+    ]);
+    searchPostsDto.notIncludeIds = notIncludeIds;
+
+    const payload = await this._searchService.getPayloadSearchForPost(searchPostsDto, groupIds);
+    const response = await this._searchService.search<IPostElasticsearch>(payload);
+    const hits = response.hits.hits;
+    const itemIds = [];
+    const attrUserIds = [];
+    const attrGroupIds = [];
+    const posts = hits.map((item) => {
+      const { _source: source } = item;
+      if (source.items && source.items.length) {
+        itemIds.push(...source.items.map((item) => item.id));
+      }
+      attrUserIds.push(source.createdBy);
+      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
+      attrGroupIds.push(...source.groupIds);
+      attrGroupIds.push(...source.communityIds);
+      const data: any = {
+        id: source.id,
+        groupIds: source.groupIds,
+        communityIds: source.communityIds,
+        mentionUserIds: source.mentionUserIds,
+        type: source.type,
+        createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
+        createdBy: source.createdBy,
+        publishedAt: source.publishedAt,
+        coverMedia: source.coverMedia ?? null,
+        media: source.media || {
+          files: [],
+          images: [],
+          videos: [],
+        },
+        content: source.content || null,
+        title: source.title || null,
+        summary: source.summary || null,
+        categories: source.categories || [],
+        items: source.items || [],
+        tags: source.tags || [],
+      };
+
+      if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
+        data.highlight = item.highlight['content'][0];
+      }
+
+      if (contentSearch && item.highlight && item.highlight['title']?.length && source.title) {
+        data.titleHighlight = item.highlight['title'][0];
+      }
+
+      if (contentSearch && item.highlight && item.highlight['summary']?.length && source.summary) {
+        data.summaryHighlight = item.highlight['summary'][0];
+      }
+      return data;
+    });
+
+    await Promise.all([
+      this._postBindingService.bindRelatedData(posts, {
+        shouldBindActor: true,
+        shouldBindAudience: true,
+        shouldBindCommnunity: true,
+        shouldHideSecretAudienceCanNotAccess: true,
+        shouldBindMention: true,
+        shouldBindReaction: true,
+        shouldBindQuiz: true,
+        shouldBindSeriesItems: true,
+        authUser,
+      }),
+      this._postBindingService.bindAttributes(posts, [
+        'content',
+        'commentsCount',
+        'totalUsersSeen',
+        'setting',
+        'wordCount',
+      ]),
+    ]);
+
+    return new PageDto<any>(posts, {
+      total: response.hits.total['value'],
+      limit,
+      offset,
+    });
   }
 }

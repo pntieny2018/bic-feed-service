@@ -1,5 +1,5 @@
 import { PostModule } from '../modules/post';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { CommentNotificationService } from './services';
 import { CommentDissociationService } from './dissociations';
 import { NotificationService } from './notification.service';
@@ -13,7 +13,7 @@ import {
 } from './activities';
 
 @Module({
-  imports: [PostModule, CommentModule],
+  imports: [forwardRef(() => PostModule), CommentModule],
   providers: [
     ReportActivityService,
     NotificationService,
