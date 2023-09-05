@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 
 import { ReactionEntity } from '../../../domain/model/reaction';
-import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface ';
+import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
 import { ReactionDto } from '../../dto';
 
 import { IReactionBinding } from './reaction.interface';
