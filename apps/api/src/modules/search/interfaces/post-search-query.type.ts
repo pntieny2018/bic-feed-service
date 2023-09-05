@@ -1,6 +1,6 @@
 import { PostType } from '../../v2-post/data-type';
 
-export interface IPostSearchQuery {
+export type IPostSearchQuery = {
   actors?: string[];
 
   keyword?: string;
@@ -26,18 +26,18 @@ export interface IPostSearchQuery {
   islimitSeries?: boolean;
 
   shouldHighligh?: boolean;
-}
+};
 
-export interface ISearchPaginationQuery {
+export type ISearchPaginationQuery = {
   from?: number;
 
   size?: number;
-}
+};
 
-export interface IPaginationSearchResult<T> {
+export type IPaginationSearchResult<T> = {
   total?: number;
 
   source?: T[];
 
   scrollId?: string;
-}
+};
