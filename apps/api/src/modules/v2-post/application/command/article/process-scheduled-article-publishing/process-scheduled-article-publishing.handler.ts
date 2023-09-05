@@ -1,12 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import {
+  ARTICLE_DOMAIN_SERVICE_TOKEN,
+  IArticleDomainService,
+} from '../../../../domain/domain-service/interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import { ArticleDto } from '../../../dto';
-import { PublishArticleCommand } from '../publish-article';
 
 import { ProcessScheduledArticlePublishingCommand } from './process-scheduled-article-publishing.command';
 
@@ -15,20 +17,19 @@ export class ProcessScheduledArticlePublishingHandler
   implements ICommandHandler<ProcessScheduledArticlePublishingCommand, void>
 {
   public constructor(
+    @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
+    private readonly _articleDomainService: IArticleDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    private readonly _commandBus: CommandBus
+    private readonly _contentRepository: IContentRepository
   ) {}
 
   public async execute(command: ProcessScheduledArticlePublishingCommand): Promise<void> {
-    const { id, actor } = command.payload;
+    const { id } = command.payload;
 
     const articleEntity = await this._contentRepository.getContentById(id);
 
     try {
-      await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
-        new PublishArticleCommand({ id, actor })
-      );
+      await this._articleDomainService.publish(command.payload);
     } catch (error) {
       articleEntity.setScheduleFailed();
       articleEntity.setErrorLog({

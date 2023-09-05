@@ -9,7 +9,6 @@ import {
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
   ProcessArticlePublishedHandler,
-  ProcessArticleScheduledHandler,
   ProcessArticleUpdatedHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
@@ -57,6 +56,7 @@ import {
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
+import { ArticleCron } from '../cron/article.cron';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
@@ -86,7 +86,6 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { PostValidator } from '../domain/validator/post.validator';
 import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
-import { ArticleCron } from '../driving-apdater/cron/article.cron';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
@@ -183,7 +182,6 @@ export const postProvider = [
   UpdateArticleHandler,
   DeleteArticleHandler,
   ScheduleArticleHandler,
-  ProcessArticleScheduledHandler,
   ProcessScheduledArticlePublishingHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
