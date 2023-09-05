@@ -6,6 +6,7 @@ import { SeriesEntity } from '../model/content/series.entity';
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { ContentEntity } from '../model/content/content.entity';
+import { TargetType } from '../../../report-content/contstants';
 
 export type OrderOptions = {
   isImportantFirst?: boolean;
@@ -72,6 +73,7 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getReportedContentIdsByUser(reportUser: string, target: TargetType[]): Promise<string[]>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

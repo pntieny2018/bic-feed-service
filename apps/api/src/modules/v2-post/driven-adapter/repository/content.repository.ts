@@ -42,6 +42,8 @@ import { QuizEntity } from '../../domain/model/quiz';
 import { PostCategoryModel } from '../../../../database/models/post-category.model';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { ContentNotFoundException } from '../../domain/exception';
+import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
+import { TargetType } from '../../../report-content/contstants';
 
 export class ContentRepository implements IContentRepository {
   public constructor(
@@ -66,7 +68,9 @@ export class ContentRepository implements IContentRepository {
     @InjectModel(UserSeenPostModel)
     private readonly _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(UserMarkReadPostModel)
-    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel,
+    @InjectModel(ReportContentDetailModel)
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
@@ -770,5 +774,26 @@ export class ContentRepository implements IContentRepository {
       rows: rows.map((row) => this._modelToEntity(row)),
       meta,
     };
+  }
+
+  public async getReportedContentIdsByUser(
+    createdBy: string,
+    target: TargetType[]
+  ): Promise<string[]> {
+    if (!createdBy) return [];
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy,
+          targetType: target,
+        },
+      ],
+    };
+
+    const rows = await this._reportContentDetailModel.findAll({
+      where: condition,
+    });
+
+    return rows.map((row) => row.targetId);
   }
 }
