@@ -196,6 +196,7 @@ export class LibContentRepository implements ILibContentRepository {
     const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
+
     const cursorColumns = orderBuilder?.map((order) => order[0]);
 
     const paginator = new CursorPaginator(

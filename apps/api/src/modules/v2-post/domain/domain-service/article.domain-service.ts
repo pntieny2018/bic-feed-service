@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
+import { CursorPaginationResult } from '../../../../common/types';
 import { UserDto } from '../../../v2-user/application';
 import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
@@ -38,9 +39,9 @@ import {
   ScheduleArticleProps,
   DeleteArticleProps,
   AutoSaveArticleProps,
-  GetArticleByParamsProps,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
+  GetArticlesIdsScheduleProps,
 } from './interface';
 
 @Injectable()
@@ -105,39 +106,44 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async getScheduleArticle(params: GetArticleByParamsProps): Promise<ArticleEntity[]> {
-    const { user, limit, offset, statuses, order } = params;
+  public async getArticlesIdsSchedule(
+    params: GetArticlesIdsScheduleProps
+  ): Promise<CursorPaginationResult<string>> {
+    const { user, limit, before, after, statuses, order } = params;
 
-    return (await this._contentRepository.findAll(
-      {
-        where: {
-          createdBy: user.id,
-          statuses,
+    const { rows, meta } = await this._contentRepository.getPagination({
+      where: {
+        createdBy: user.id,
+        statuses,
+      },
+      include: {
+        shouldIncludeCategory: true,
+        shouldIncludeReaction: {
+          userId: user.id,
         },
-        include: {
-          shouldIncludeCategory: true,
-          shouldIncludeReaction: {
-            userId: user.id,
-          },
-          shouldIncludeLinkPreview: true,
-          mustIncludeGroup: true,
-          shouldIncludeMarkReadImportant: {
-            userId: user.id,
-          },
-          shouldIncludeImportant: {
-            userId: user.id,
-          },
+        shouldIncludeLinkPreview: true,
+        mustIncludeGroup: true,
+        shouldIncludeMarkReadImportant: {
+          userId: user.id,
         },
-        orderOptions: {
-          sortColumn: 'scheduledAt',
-          sortBy: order,
+        shouldIncludeImportant: {
+          userId: user.id,
         },
       },
-      {
-        limit: limit + 1,
-        offset,
-      }
-    )) as ArticleEntity[];
+      orderOptions: {
+        sortColumn: 'scheduledAt',
+        sortBy: order,
+      },
+      limit,
+      before,
+      after,
+      order,
+    });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 
   public async deleteArticle(props: DeleteArticleProps): Promise<void> {

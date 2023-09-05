@@ -100,7 +100,7 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
   }
 
   public getSeriesIds(): string[] {
-    return this._props.seriesIds;
+    return this._props.seriesIds || [];
   }
 
   public getTitle(): string {

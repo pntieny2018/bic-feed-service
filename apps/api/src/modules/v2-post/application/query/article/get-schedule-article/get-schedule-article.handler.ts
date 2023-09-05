@@ -2,58 +2,61 @@ import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { PageDto } from '../../../../../../common/dto';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
+  IContentDomainService,
 } from '../../../../domain/domain-service/interface';
+import { ArticleEntity } from '../../../../domain/model/content';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
-import { ArticleDto } from '../../../dto';
+import { ArticleDto, GetScheduleArticleDto } from '../../../dto';
 
 import { GetScheduleArticleQuery } from './get-schedule-article.query';
 
 @QueryHandler(GetScheduleArticleQuery)
 export class GetScheduleArticleHandler
-  implements IQueryHandler<GetScheduleArticleQuery, PageDto<ArticleDto>>
+  implements IQueryHandler<GetScheduleArticleQuery, GetScheduleArticleDto>
 {
   public constructor(
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
     private readonly _articleDomainService: IArticleDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
   ) {}
 
-  public async execute(query: GetScheduleArticleQuery): Promise<PageDto<ArticleDto>> {
-    const { limit, offset, user } = query.payload;
-    const result = await this._articleDomainService.getScheduleArticle(query.payload);
-    let hasNextPage = false;
-    if (result.length > limit) {
-      result.pop();
-      hasNextPage = true;
-    }
-
-    const articles = await Promise.all(
-      result.map((article) => {
-        return this._contentBinding.articleBinding(article, {
-          actor: user,
-          authUser: user,
-        });
-      })
+  public async execute(query: GetScheduleArticleQuery): Promise<GetScheduleArticleDto> {
+    const { user } = query.payload;
+    const { rows: ids, meta } = await this._articleDomainService.getArticlesIdsSchedule(
+      query.payload
     );
 
-    /**
-     * Temporarily set publish to backward compatible with mobile
-     */
+    const contentEntities = await this._contentDomainService.getContentByIds({
+      ids,
+      authUserId: user.id,
+    });
+    const articles: ArticleDto[] = [];
+
+    for (const article of contentEntities) {
+      articles.push(
+        await this._contentBinding.articleBinding(article as ArticleEntity, {
+          actor: user,
+          authUser: user,
+        })
+      );
+    }
+
     articles.forEach((article) => {
       if (article.status === CONTENT_STATUS.WAITING_SCHEDULE) {
         article.publishedAt = article.scheduledAt;
       }
     });
 
-    return new PageDto<ArticleDto>(articles, {
-      limit,
-      offset,
-      hasNextPage,
-    });
+    return {
+      list: articles,
+      meta,
+    };
   }
 }

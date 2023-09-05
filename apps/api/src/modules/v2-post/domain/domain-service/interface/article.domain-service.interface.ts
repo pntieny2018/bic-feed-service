@@ -1,7 +1,8 @@
-import { CONTENT_STATUS } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
-import { PageOptionsDto } from '../../../../../common/dto';
+import { CursorPaginationResult } from '../../../../../common/types';
 import {
   AutoSaveArticleCommandPayload,
   DeleteArticleCommandPayload,
@@ -39,14 +40,17 @@ export type AutoSaveArticleProps = AutoSaveArticleCommandPayload;
 
 export type DeleteArticleProps = DeleteArticleCommandPayload;
 
-export class GetArticleByParamsProps extends PageOptionsDto {
-  public statuses: CONTENT_STATUS[];
+export class GetArticlesIdsScheduleProps extends PaginatedArgs {
+  public statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
+  public order: ORDER;
   public user: UserDto;
 }
 
 export interface IArticleDomainService {
   getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
-  getScheduleArticle(params: GetArticleByParamsProps): Promise<ArticleEntity[]>;
+  getArticlesIdsSchedule(
+    props: GetArticlesIdsScheduleProps
+  ): Promise<CursorPaginationResult<string>>;
   deleteArticle(props: DeleteArticleProps): Promise<void>;
   update(input: UpdateArticleProps): Promise<ArticleEntity>;
   publish(input: PublishArticleProps): Promise<ArticleEntity>;

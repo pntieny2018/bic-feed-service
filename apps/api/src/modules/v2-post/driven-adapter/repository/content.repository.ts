@@ -10,8 +10,6 @@ import { isBoolean } from 'lodash';
 import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 
-import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { CursorPaginator } from '../../../../common/dto';
 import { CategoryModel } from '../../../../database/models/category.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { PostGroupModel } from '../../../../database/models/post-group.model';
@@ -725,21 +723,12 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
-    const findOption = this.buildFindOptions(getPaginationContentsProps);
-    const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
-    const cursorColumns = orderBuilder?.map((order) => order[0]);
-
-    const paginator = new CursorPaginator(
-      this._postModel,
-      cursorColumns || ['createdAt'],
-      { before, after, limit },
-      order
+    const { rows, meta } = await this._libContentRepository.getPagination(
+      getPaginationContentsProps
     );
-    const { rows, meta } = await paginator.paginate(findOption);
 
     return {
-      rows: rows.map((row) => this._modelToEntity(row)),
+      rows: rows.map((row) => this._contentMapper.toDomain(row)),
       meta,
     };
   }

@@ -215,17 +215,18 @@ export class ArticleController {
   public async getSchedule(
     @AuthUser() user: UserDto,
     @Query() query: GetScheduleArticleDto
-  ): Promise<PageDto<ArticleDto>> {
-    const { limit, offset, order, status } = query;
-    const articleDtos = await this._queryBus.execute<GetScheduleArticleQuery, PageDto<ArticleDto>>(
+  ): Promise<GetScheduleArticleDto> {
+    const { limit, before, after, order, status } = query;
+    const articles = await this._queryBus.execute<GetScheduleArticleQuery, GetScheduleArticleDto>(
       new GetScheduleArticleQuery({
         limit,
-        offset,
+        before,
+        after,
         order,
         statuses: status,
         user,
       })
     );
-    return instanceToInstance(articleDtos, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(articles, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }
