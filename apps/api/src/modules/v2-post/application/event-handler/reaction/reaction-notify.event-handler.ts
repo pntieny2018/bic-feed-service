@@ -30,6 +30,7 @@ import {
   ICommentRepository,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
+import { IReactionBinding, REACTION_BINDING_TOKEN } from '../../binding';
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
@@ -49,6 +50,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
+    @Inject(REACTION_BINDING_TOKEN)
+    private readonly _reactionBinding: IReactionBinding,
     @Inject(REACTION_QUERY_TOKEN)
     private readonly _reactionQuery: IReactionQuery,
     @Inject(KAFKA_ADAPTER)
@@ -282,7 +285,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
   }
 
   private async _sendReactContentNotification(
-    reaction: ReactionEntity,
+    reactionEntity: ReactionEntity,
     contentId: string,
     action: 'create' | 'delete',
     actor: UserDto
@@ -321,6 +324,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
       contentEntity.get('id'),
     ]);
     const groups = await this._groupAppService.findAllByIds(contentEntity.get('groupIds'));
+
+    const reaction = await this._reactionBinding.binding(reactionEntity);
 
     const activity = {
       id: contentEntity.getId(),
@@ -369,8 +374,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
           verb: VerbActivity.REACT,
           target: TypeActivity.POST,
           ignore: [],
-          createdAt: reaction.get('createdAt'),
-          updatedAt: reaction.get('createdAt'),
+          createdAt: reaction.createdAt,
+          updatedAt: reaction.createdAt,
         },
       },
     });
