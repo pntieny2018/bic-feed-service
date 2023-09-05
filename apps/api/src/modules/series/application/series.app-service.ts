@@ -17,6 +17,9 @@ import { SeriesService } from '../series.service';
 import { UserDto } from '../../v2-user/application';
 import { RULES } from '../../v2-post/constant';
 import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import { plainToInstance } from 'class-transformer';
+import { PostBindingService } from '../../post/post-binding.service';
+import { IPostElasticsearch } from '../../search/interfaces';
 
 @Injectable()
 export class SeriesAppService {
@@ -24,15 +27,63 @@ export class SeriesAppService {
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _postSearchService: SearchService,
-    private _postService: PostService
+    private _searchService: SearchService,
+    private _postService: PostService,
+    private _postBindingService: PostBindingService
   ) {}
+
+  /*
+    Search series in article detail
+  */
 
   public async searchSeries(
     user: UserDto,
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
-    return this._postSearchService.searchSeries(user, searchDto);
+    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
+    if (!user || user.groups.length === 0) {
+      return new PageDto<SeriesSearchResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+
+    let filterGroupIds = [];
+    if (groupIds && groupIds.length) {
+      filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
+    }
+    const payload = await this._searchService.getPayloadSearchForSeries({
+      contentSearch,
+      groupIds: filterGroupIds,
+      itemIds,
+      limit,
+      offset,
+    });
+    const response = await this._searchService.search<IPostElasticsearch>(payload);
+    const hits = response.hits.hits;
+    const series: any[] = hits.map((item) => {
+      const source = {
+        id: item._source.id,
+        groupIds: item._source.groupIds,
+        coverMedia: item._source.coverMedia,
+        title: item._source.title || null,
+        summary: item._source.summary,
+      };
+      return source;
+    });
+
+    await this._postBindingService.bindAudience(series);
+
+    const result = plainToInstance(SeriesSearchResponseDto, series, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<SeriesSearchResponseDto>(result, {
+      total: response['hits'].total['value'],
+      limit,
+      offset,
+    });
   }
 
   public async removeItems(seriesId: string, itemIds: string[], user: UserDto): Promise<void> {

@@ -9,14 +9,10 @@ import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { IPost, PostType } from '../../database/models/post.model';
-import { SearchArticlesDto } from '../article/dto/requests';
-import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
-import { SeriesSearchResponseDto } from '../series/dto/responses/series-search.response.dto';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
-import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
@@ -36,6 +32,12 @@ import { RULES } from '../v2-post/constant';
 import { QuizStatus } from '../v2-post/data-type';
 import { QuizDto } from '../v2-post/application/dto';
 import { IPostSearchQuery } from './interfaces';
+import {
+  ScrollRequest,
+  ScrollResponse,
+  SearchRequest,
+  SearchResponse,
+} from '@elastic/elasticsearch/lib/api/types';
 
 @Injectable()
 export class SearchService {
@@ -52,7 +54,6 @@ export class SearchService {
   protected classTransformer = new ClassTransformer();
 
   public constructor(
-    protected searchService: ElasticsearchService,
     protected readonly postService: PostService,
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
@@ -195,7 +196,7 @@ export class SearchService {
     }
   }
 
-  public async updateAttributePostToSearch(post: IPost, dataUpdate: any): Promise<void> {
+  public async updateAttributePostToSearch(post: IPost, dataUpdate: unknown): Promise<void> {
     const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
     try {
       await this.elasticsearchService.update({
@@ -211,7 +212,7 @@ export class SearchService {
     }
   }
 
-  public async updateAttributePostsToSearch(posts: IPost[], dataUpdate: any): Promise<void> {
+  public async updateAttributePostsToSearch(posts: IPost[], dataUpdate: unknown): Promise<void> {
     const updateOps = [];
     posts.forEach((post, indexPost) => {
       const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
@@ -241,6 +242,14 @@ export class SearchService {
       this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
+  }
+
+  public async search<T>(payload: SearchRequest): Promise<SearchResponse<T>> {
+    return this.elasticsearchService.search(payload);
+  }
+
+  public async scroll<T>(payload: ScrollRequest): Promise<ScrollResponse<T>> {
+    return this.elasticsearchService.scroll(payload);
   }
 
   /*
@@ -288,7 +297,7 @@ export class SearchService {
     ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
-    const response = await this.searchService.search<IPostElasticsearch>(payload);
+    const response = await this.elasticsearchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const itemIds = []; //post or article
     const attrUserIds = [];
@@ -503,129 +512,6 @@ export class SearchService {
     }
     return posts;
   }
-  /*
-    Search series in article detail
-  */
-  public async searchSeries(
-    authUser: UserDto,
-    searchDto: SearchSeriesDto
-  ): Promise<PageDto<SeriesSearchResponseDto>> {
-    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
-    const user = authUser;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<SeriesSearchResponseDto>([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-
-    let filterGroupIds = [];
-    if (groupIds && groupIds.length) {
-      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
-    }
-    const payload = await this.getPayloadSearchForSeries({
-      contentSearch,
-      groupIds: filterGroupIds,
-      itemIds,
-      limit,
-      offset,
-    });
-    const response = await this.searchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
-    const series = hits.map((item) => {
-      const source = {
-        id: item._source.id,
-        groupIds: item._source.groupIds,
-        coverMedia: item._source.coverMedia,
-        title: item._source.title || null,
-        summary: item._source.summary,
-      };
-      return source;
-    });
-
-    await this.postBindingService.bindAudience(series);
-
-    const result = this.classTransformer.plainToInstance(SeriesSearchResponseDto, series, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<SeriesSearchResponseDto>(result, {
-      total: response['hits'].total['value'],
-      limit,
-      offset,
-    });
-  }
-  /*
-    Search articles in series detail
-  */
-  public async searchArticles(
-    authUser: UserDto,
-    searchDto: SearchArticlesDto
-  ): Promise<PageDto<ArticleSearchResponseDto>> {
-    const { limit, offset, groupIds, categoryIds, contentSearch, limitSeries } = searchDto;
-    const user = authUser;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<ArticleSearchResponseDto>([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-    if (!groupIds && !categoryIds) {
-      return new PageDto<ArticleSearchResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
-
-    let filterGroupIds = authUser.groups;
-    if (groupIds) {
-      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
-    }
-    const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-    ]);
-    const context: any = {
-      contentSearch,
-      groupIds: filterGroupIds,
-      notIncludeIds: notIncludeIds,
-      limit,
-      offset,
-      limitSeries,
-    };
-    if (categoryIds) context.categoryIds = categoryIds;
-    const payload = await this.getPayloadSearchForArticles(context);
-    const response = await this.searchService.search<IPostElasticsearch>(payload);
-    const hits = response['hits'].hits;
-    const articles = hits.map((item) => {
-      const source = {
-        id: item._source.id,
-        groupIds: item._source.groupIds,
-        summary: item._source.summary,
-        coverMedia: item._source.coverMedia,
-        createdBy: item._source.createdBy,
-        categories: item._source.categories,
-        title: item._source.title || null,
-      };
-      return source;
-    });
-
-    await this.postBindingService.bindActor(articles);
-    await this.postBindingService.bindAudience(articles, {
-      shouldHideSecretAudienceCanNotAccess: true,
-    });
-    const result = this.classTransformer.plainToInstance(ArticleSearchResponseDto, articles, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<ArticleSearchResponseDto>(result, {
-      total: response['hits'].total['value'],
-      limit,
-      offset,
-    });
-  }
 
   public async getPayloadSearchForPost(
     {
@@ -723,7 +609,7 @@ export class SearchService {
     };
   }
 
-  public async getPayloadSearchForArticles(props: {
+  public getPayloadSearchForArticles(props: {
     contentSearch: string;
     groupIds: string[];
     categoryIds?: string[];
@@ -731,12 +617,12 @@ export class SearchService {
     limit: number;
     offset: number;
     limitSeries?: number;
-  }): Promise<{
+  }): {
     index: string;
     body: any;
     from: number;
     size: number;
-  }> {
+  } {
     const { contentSearch, groupIds, categoryIds, limit, offset, notIncludeIds, limitSeries } =
       props;
     const body: BodyES = {
@@ -1176,7 +1062,7 @@ export class SearchService {
       scroll: '1m',
       size: 1,
     };
-    const response = await this.searchService.search<IPostElasticsearch>(payload);
+    const response = await this.elasticsearchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const itemIds = []; //post or article
     const attrUserIds = [];

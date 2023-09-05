@@ -32,6 +32,8 @@ import { ExternalService } from '../../../app/external.service';
 import { ReactionService } from '../../reaction';
 import { RULES } from '../../v2-post/constant';
 import { ArticleLimitAttachedSeriesException } from '../../v2-post/domain/exception';
+import { TargetType } from '../../report-content/contstants';
+import { IPostElasticsearch } from '../../search/interfaces';
 
 @Injectable()
 export class ArticleAppService {
@@ -42,9 +44,8 @@ export class ArticleAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
-    private _postSearchService: SearchService,
+    private _searchService: SearchService,
     private _tagService: TagService,
-    protected readonly authorityService: AuthorityService,
     private _externalService: ExternalService
   ) {}
 
@@ -299,11 +300,76 @@ export class ArticleAppService {
     return false;
   }
 
+  /*
+    Search articles in series detail
+  */
   public async searchArticles(
     user: UserDto,
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
-    return this._postSearchService.searchArticles(user, searchDto);
+    const { limit, offset, groupIds, categoryIds, contentSearch, limitSeries } = searchDto;
+    if (!user || user.groups.length === 0) {
+      return new PageDto<ArticleSearchResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+    if (!groupIds && !categoryIds) {
+      return new PageDto<ArticleSearchResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
+
+    let filterGroupIds = user.groups;
+    if (groupIds) {
+      filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
+    }
+    const notIncludeIds = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.ARTICLE,
+    ]);
+    const context: any = {
+      contentSearch,
+      groupIds: filterGroupIds,
+      notIncludeIds: notIncludeIds,
+      limit,
+      offset,
+      limitSeries,
+    };
+    if (categoryIds) context.categoryIds = categoryIds;
+
+    const payload = this._searchService.getPayloadSearchForArticles(context);
+    const response = await this._searchService.search<IPostElasticsearch>(payload);
+    const hits = response['hits'].hits;
+    const articles = hits.map((item) => {
+      const source = {
+        id: item._source.id,
+        groupIds: item._source.groupIds,
+        summary: item._source.summary,
+        coverMedia: item._source.coverMedia,
+        createdBy: item._source.createdBy,
+        categories: item._source.categories,
+        title: item._source.title || null,
+      };
+      return source;
+    });
+
+    await this._postBindingService.bindActor(articles);
+    await this._postBindingService.bindAudience(articles, {
+      shouldHideSecretAudienceCanNotAccess: true,
+    });
+
+    const result = this._classTransformer.plainToInstance(ArticleSearchResponseDto, articles, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleSearchResponseDto>(result, {
+      total: response['hits'].total['value'],
+      limit,
+      offset,
+    });
   }
 
   public async isSeriesAndTagsValid(
