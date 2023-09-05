@@ -7,6 +7,7 @@ import { ClsMiddleware, ClsModule } from 'nestjs-cls';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { v4 as uuid } from 'uuid';
 
+import { AUTH_MIDDLEWARE_WHITELIST_PATTERNS } from '../common/constants/endpoint.constant';
 import { DatabaseModule } from '../database';
 import { ListenerModule } from '../listeners';
 import { ApiVersioningMiddleware, AuthMiddleware } from '../middlewares';
@@ -94,8 +95,10 @@ import { LibModule } from './lib.module';
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
-      .apply(ClsMiddleware, I18nMiddleware, ApiVersioningMiddleware, AuthMiddleware)
-      .exclude('/app/health-check', 'health/livez', 'health/readyz')
+      .apply(ClsMiddleware, I18nMiddleware, ApiVersioningMiddleware)
+      .forRoutes('*')
+      .apply(AuthMiddleware)
+      .exclude(...AUTH_MIDDLEWARE_WHITELIST_PATTERNS)
       .forRoutes('*');
   }
 }
