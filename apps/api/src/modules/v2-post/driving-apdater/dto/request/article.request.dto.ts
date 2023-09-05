@@ -1,8 +1,16 @@
-import { CONTENT_STATUS } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PageOptionsDto } from 'apps/api/src/common/dto';
 import { Expose, Transform } from 'class-transformer';
-import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 import { PostStatusConflictedException } from '../../../domain/exception';
 
@@ -93,9 +101,9 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
   }
 }
 
-export class GetScheduleArticleDto extends PageOptionsDto {
+export class GetScheduleArticleDto extends PaginatedArgs {
   @ApiProperty({
-    enum: [CONTENT_STATUS],
+    enum: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
   })
   @IsNotEmpty()
   @Transform(({ value }) => {
@@ -111,5 +119,10 @@ export class GetScheduleArticleDto extends PageOptionsDto {
     }
     return status;
   })
-  public status: CONTENT_STATUS[];
+  public status: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
+
+  @ApiPropertyOptional({ enum: ORDER, default: ORDER.ASC, required: false })
+  @IsEnum(ORDER)
+  @IsOptional()
+  public order?: ORDER = ORDER.ASC;
 }
