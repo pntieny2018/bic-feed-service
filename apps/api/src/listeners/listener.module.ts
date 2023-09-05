@@ -1,29 +1,31 @@
-import { PostListener } from './post';
 import { Module } from '@nestjs/common';
-import { CommentListener } from './comment';
-import { PostModule } from '../modules/post';
-import { ReactionListener } from './reaction';
-import { NotificationModule } from '../notification';
-import { FeedPublisherModule } from '../modules/feed-publisher';
-import { CommentModule } from '../modules/comment';
-import { MediaModule } from '../modules/media';
-import { FeedModule } from '../modules/feed';
-import { SeriesModule } from '../modules/series';
-import { ArticleListener } from './article';
+
 import { ArticleModule } from '../modules/article';
+import { CommentModule } from '../modules/comment';
+import { FeedModule } from '../modules/feed';
+import { FeedPublisherModule } from '../modules/feed-publisher';
+import { FilterUserModule } from '../modules/filter-user';
+import { FollowModule } from '../modules/follow';
+import { MediaModule } from '../modules/media';
+import { PostModule } from '../modules/post';
+import { SearchModule } from '../modules/search';
+import { SeriesModule } from '../modules/series';
+import { TagModule } from '../modules/tag';
+import { GroupModuleV2 } from '../modules/v2-group/group.module';
+import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { NotificationModule } from '../notification';
+
+import { ArticleListener } from './article';
+import { CommentListener } from './comment';
+import { PostListener } from './post';
+import { ReactionListener } from './reaction';
+import { ReportContentListener } from './report';
 import {
   SeriesAddedItemsListener,
   SeriesListener,
   SeriesRemovedItemsListener,
   SeriesReorderItemsListener,
 } from './series';
-import { SearchModule } from '../modules/search';
-import { ReportContentListener } from './report';
-import { TagModule } from '../modules/tag';
-import { FilterUserModule } from '../modules/filter-user';
-import { FollowModule } from '../modules/follow';
-import { UserModuleV2 } from '../modules/v2-user/user.module';
-import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { SeriesChangedItemsListener } from './series/series-changed-items.listener';
 
 @Module({
