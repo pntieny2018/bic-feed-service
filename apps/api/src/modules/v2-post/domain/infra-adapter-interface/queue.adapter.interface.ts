@@ -9,5 +9,5 @@ export type ArticleScheduledJobPayload = {
 
 export interface IQueueAdapter {
   addQuizParticipantStartedJob(quizParticipantId: string, delayTime: number): Promise<void>;
-  addArticleScheduledJob(payload: ArticleScheduledJobPayload[]): Promise<void>;
+  addArticleScheduledJobs(payload: ArticleScheduledJobPayload[]): Promise<void>;
 }
