@@ -21,8 +21,8 @@ export interface IPostElasticsearch {
   groupIds: string[];
   communityIds: string[];
   seriesIds?: string[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   publishedAt: Date;
   createdBy: string;
   mentionUserIds: string[];

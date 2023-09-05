@@ -40,6 +40,7 @@ import { UpdateContentSettingCommand } from '../../application/command/update-co
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
 import { SearchContentsQuery } from '../../application/query/search-contents/search-contents.query';
+import { SearchContentsDto } from '../../application/query/search-contents/search-contents.dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -92,7 +93,7 @@ export class ContentController {
   public async searchContents(
     @AuthUser() user: UserDto,
     @Query() searchContentsRequestDto: SearchContentsRequestDto
-  ): Promise<void> {
+  ): Promise<SearchContentsDto> {
     try {
       const data = await this._queryBus.execute(
         new SearchContentsQuery({ authUser: user, ...searchContentsRequestDto })

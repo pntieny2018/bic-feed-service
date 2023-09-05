@@ -1,11 +1,5 @@
 import { uniq } from 'lodash';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -14,7 +8,7 @@ import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../../database/models/post.model';
 import { PostHasBeenDeletedEvent } from '../../../events/post';
 import { AuthorityService } from '../../authority';
-import { GetPostEditedHistoryDto, SearchPostsDto } from '../dto/requests';
+import { GetPostEditedHistoryDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
@@ -35,12 +29,6 @@ import { ContentPinLackException } from '../../v2-post/domain/exception/content-
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { RULES } from '../../v2-post/constant';
 import { PostLimitAttachedSeriesException } from '../../v2-post/domain/exception';
-import { TargetType } from '../../report-content/contstants';
-import { SearchService } from '../../search/search.service';
-import { IPostElasticsearch } from '../../search/interfaces';
-import { PostBindingService } from '../post-binding.service';
-import { ArticleDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
-import { PostType } from '../../v2-post/data-type';
 
 @Injectable()
 export class PostAppService {
@@ -48,8 +36,6 @@ export class PostAppService {
 
   public constructor(
     private _postService: PostService,
-    private _searchService: SearchService,
-    private _postBindingService: PostBindingService,
     private _postHistoryService: PostHistoryService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
@@ -317,155 +303,5 @@ export class PostAppService {
     if (isOverLimtedToAttachSeries) {
       throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
-  }
-
-  /*
-    Search posts, articles, series
-  */
-  public async searchPosts(
-    authUser: UserDto,
-    searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<ArticleDto | PostDto | SeriesDto>> {
-    const { contentSearch, type, actors, startTime, endTime, limit, offset, groupId, tagName } =
-      searchPostsDto;
-    if (!authUser || authUser.groups.length === 0) {
-      return new PageDto([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-
-    let groupIds = authUser.groups;
-    let tagId: string;
-    if (groupId) {
-      const group = await this._groupAppService.findOne(groupId);
-      if (!group) {
-        throw new BadRequestException(`Group not found`);
-      }
-      groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
-      if (groupIds.length === 0) {
-        return new PageDto([], {
-          limit,
-          offset,
-          hasNextPage: false,
-        });
-      }
-      if (tagName) {
-        tagId = await this._tagService.findTag(tagName, groupId);
-        if (tagId) {
-          searchPostsDto.tagId = tagId;
-        }
-      }
-    }
-
-    const notIncludeIds = await this._postService.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.POST,
-    ]);
-
-    const response = await this._searchService.searchContents<IPostElasticsearch>({
-      keyword: contentSearch,
-      actors,
-      contentTypes: type ? [type] : [],
-      groupIds,
-      startTime,
-      endTime,
-      excludeByIds: notIncludeIds,
-      tags: tagId ? [tagId] : [],
-      from: offset,
-      size: limit,
-      shouldHighligh: true,
-    });
-    const { source, total } = response;
-
-    const posts: any[] = source.map((item) => {
-      const data = {
-        id: item.id,
-        groupIds: item.groupIds,
-        communityIds: item.communityIds,
-        mentions: item.mentionUserIds,
-        type: item.type,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        createdBy: item.createdBy,
-        publishedAt: item.publishedAt,
-        coverMedia: item.coverMedia ?? null,
-        media: item.media || {
-          files: [],
-          images: [],
-          videos: [],
-        },
-        content: item.content || null,
-        title: item.title || null,
-        summary: item.summary || null,
-        categories: item.categories || [],
-        items: item.items || [],
-        tags: item.tags || [],
-      };
-
-      if (contentSearch && item.highlight && item.highlight['content']?.length && item.content) {
-        data['highlight'] = item.highlight['content'][0];
-      }
-
-      if (contentSearch && item.highlight && item.highlight['title']?.length && item.title) {
-        data['titleHighlight'] = item.highlight['title'][0];
-      }
-
-      if (contentSearch && item.highlight && item.highlight['summary']?.length && item.summary) {
-        data['summaryHighlight'] = item.highlight['summary'][0];
-      }
-      return data;
-    });
-
-    await Promise.all([
-      this._postBindingService.bindRelatedData(posts, {
-        shouldBindActor: true,
-        shouldBindAudience: true,
-        shouldBindCommnunity: true,
-        shouldHideSecretAudienceCanNotAccess: true,
-        shouldBindMention: true,
-        shouldBindReaction: true,
-        shouldBindQuiz: true,
-        shouldBindSeriesItems: true,
-        authUser,
-      }),
-      this._postBindingService.bindAttributes(posts, [
-        'content',
-        'commentsCount',
-        'totalUsersSeen',
-        'setting',
-        'wordCount',
-      ]),
-    ]);
-
-    const result = [];
-
-    for (const post of posts) {
-      delete post.groupIds;
-      delete post.communityIds;
-      post.reactionsCount = (post.reactionsCount || []).map((item) => ({
-        [item.reactionName]: item.total,
-      }));
-      post.mentions = !post.mentions || !post.mentions.length ? {} : post.mentions;
-      switch (post.type) {
-        case PostType.POST:
-          result.push(new PostDto(post));
-          break;
-        case PostType.ARTICLE:
-          result.push(new ArticleDto(post));
-          break;
-        case PostType.SERIES:
-          result.push(new SeriesDto(post));
-          break;
-        default:
-          break;
-      }
-    }
-
-    return new PageDto<ArticleDto | PostDto | SeriesDto>(posts, {
-      total,
-      limit,
-      offset,
-    });
   }
 }

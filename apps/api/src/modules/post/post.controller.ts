@@ -5,7 +5,6 @@ import { ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
 import { PostAppService } from './application/post.app-service';
-import { SearchPostsDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
@@ -76,15 +75,6 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<any> {
     return this._postAppService.getUserGroup(groupId, userId, postId);
-  }
-
-  @ApiOperation({ summary: 'Search posts' })
-  @Get('/')
-  public searchPosts(
-    @AuthUser() user: UserDto,
-    @Query() searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<any>> {
-    return this._postAppService.searchPosts(user, searchPostsDto);
   }
 
   @ApiOperation({ summary: 'Save post' })

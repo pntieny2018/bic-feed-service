@@ -236,13 +236,14 @@ export class SearchService {
   public async searchContents<T>(
     query: IPostSearchQuery & ISearchPaginationQuery
   ): Promise<IPaginationSearchResult<T>> {
-    const { from, size } = query;
+    const { from, size, searchAfter } = query;
     const body = this.elasticsearchQueryBuilder.buildPayloadSearchForContent(query);
     const payload = {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
       ...body,
       from,
       size,
+      search_after: searchAfter,
     };
     const response = await this.elasticsearchService.search<T>(payload);
 
@@ -256,7 +257,10 @@ export class SearchService {
         ...item._source,
         highlight: item?.highlight,
       })),
-      scrollId: response?._scroll_id,
+      cursor:
+        response.hits?.hits && response.hits?.hits[response.hits?.hits.length - 1]
+          ? response.hits?.hits[response.hits?.hits.length - 1].sort
+          : null,
     };
   }
 }

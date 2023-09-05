@@ -36,6 +36,10 @@ import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
 import { quizProvider } from './provider/quiz.provider';
 import { QueueModule } from '@app/queue';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
+import { CONTENT_BINDING_TOKEN } from './application/binding/binding-post/content.interface';
+import { ContentBinding } from './application/binding/binding-post/content.binding';
+import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
+import { ContentDomainService } from './domain/domain-service/content.domain-service';
 
 @Module({
   imports: [
@@ -79,6 +83,16 @@ import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor'
     ...quizProvider,
     QuizProcessor,
   ],
-  exports: [...quizProvider],
+  exports: [
+    ...quizProvider,
+    {
+      provide: CONTENT_BINDING_TOKEN,
+      useClass: ContentBinding,
+    },
+    {
+      provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+      useClass: ContentDomainService,
+    },
+  ],
 })
 export class PostModuleV2 {}

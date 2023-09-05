@@ -11,6 +11,8 @@ import { TagModule } from '../tag';
 import { SearchConsumer } from './search.consumer';
 import { PostModuleV2 } from '../v2-post/post.module';
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
+import { SearchAppService } from './application/search.app-service';
+import { SearchController } from './search.controller';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -24,12 +26,12 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     forwardRef(() => PostModuleV2),
     UserModuleV2,
     GroupModuleV2,
-    forwardRef(() => PostModule),
+    PostModule,
     ReactionModule,
     TagModule,
   ],
-  controllers: [SearchConsumer],
-  providers: [SearchService, ElasticsearchQueryBuilder],
+  controllers: [SearchController, SearchConsumer],
+  providers: [SearchService, ElasticsearchQueryBuilder, SearchAppService],
   exports: [SearchService],
 })
 export class SearchModule {}

@@ -20,6 +20,10 @@ type Props = {
   groupId?: string;
 
   contentTypes?: PostType[];
+
+  limit?: number;
+
+  after?: string;
 };
 
 export class SearchContentsQuery implements IQuery {

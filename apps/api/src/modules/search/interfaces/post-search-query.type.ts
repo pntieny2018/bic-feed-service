@@ -26,6 +26,8 @@ export type IPostSearchQuery = {
   islimitSeries?: boolean;
 
   shouldHighligh?: boolean;
+
+  searchAfter?: string;
 };
 
 export type ISearchPaginationQuery = {
@@ -39,5 +41,5 @@ export type IPaginationSearchResult<T> = {
 
   source?: T[];
 
-  scrollId?: string;
+  cursor?: number[];
 };
