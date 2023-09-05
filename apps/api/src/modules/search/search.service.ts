@@ -35,6 +35,7 @@ import { TagService } from '../tag/tag.service';
 import { RULES } from '../v2-post/constant';
 import { QuizStatus } from '../v2-post/data-type';
 import { QuizDto } from '../v2-post/application/dto';
+import { IPostSearchQuery } from './interfaces';
 
 @Injectable()
 export class SearchService {
@@ -1032,5 +1033,202 @@ export class SearchService {
         seriesIds: post.postSeries.map((series) => series.seriesId),
       });
     }
+  }
+
+  private _getMatchQueryFromKeyword(types: PostType[], keyword: string): any {
+    if (!keyword) return [];
+    let queries: any[];
+    let fields: string[];
+    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
+    const isASCII = StringHelper.isASCII(keyword);
+    if (isASCII) {
+      //En
+      if (ArrayHelper.hasOnlyOneElement(types, PostType.POST)) {
+        fields = [content.ascii, content.default];
+      } else if (ArrayHelper.hasOnlyOneElement(types, PostType.SERIES)) {
+        fields = [title.ascii, title.default, summary.ascii, summary.default];
+      } else {
+        // for article or all
+        fields = [
+          title.ascii,
+          title.default,
+          summary.ascii,
+          summary.default,
+          content.ascii,
+          content.default,
+        ];
+      }
+      queries = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields,
+          },
+        },
+      ];
+    } else {
+      //Vi
+      if (ArrayHelper.hasOnlyOneElement(types, PostType.POST)) {
+        fields = [title.default];
+      } else if (ArrayHelper.hasOnlyOneElement(types, PostType.SERIES)) {
+        fields = [title.default, summary.default];
+      } else {
+        fields = [title.default, summary.default, content.default];
+      }
+      queries = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields,
+          },
+        },
+      ];
+    }
+
+    return queries;
+  }
+
+  private _getContentTypesFilter(postTypes: PostType[]): any {
+    const { type } = ELASTIC_POST_MAPPING_PATH;
+    if (postTypes) {
+      return [
+        {
+          bool: {
+            should: postTypes.map((contentType) => ({
+              term: {
+                [type]: contentType,
+              },
+            })),
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getTagIdsFilter(tagIds: string[]): any {
+    const { tags } = ELASTIC_POST_MAPPING_PATH;
+    if (tagIds) {
+      return [
+        {
+          term: {
+            [tags.id]: tagIds,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  public getPayloadSearchForContent(query: IPostSearchQuery): BodyES {
+    const {
+      startTime,
+      endTime,
+      keyword,
+      contentTypes,
+      actors,
+      tags,
+      topics,
+      excludeByIds,
+      groupIds,
+    } = query;
+    const body: BodyES = {
+      query: {
+        bool: {
+          must: [],
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          must_not: [...this._getNotIncludeIds(excludeByIds)],
+          filter: [
+            ...this._getActorFilter(actors),
+            ...this._getContentTypesFilter(contentTypes),
+            ...this._getAudienceFilter(groupIds),
+            ...this._getFilterTime(startTime, endTime),
+            ...(tags ? this._getTagIdsFilter(tags) : []),
+            ...(topics ? this._getCategoryFilter(topics) : []),
+          ],
+          should: [...this._getMatchQueryFromKeyword(contentTypes, keyword)],
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          minimum_should_match: keyword ? 1 : 0,
+        },
+      },
+    };
+
+    if (keyword) {
+      body['highlight'] = this._getHighlight();
+    }
+
+    body['sort'] = [...this._getSort(keyword)];
+
+    return body;
+  }
+
+  /*
+    Search posts, articles, series
+  */
+  public async searchContent(params: IPostSearchQuery): Promise<any> {
+    const { keyword } = params;
+    const body = this.getPayloadSearchForContent(params);
+    const payload = {
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
+      ...body,
+      scroll: '1m',
+      size: 1,
+    };
+    const response = await this.searchService.search<IPostElasticsearch>(payload);
+    const hits = response.hits.hits;
+    const itemIds = []; //post or article
+    const attrUserIds = [];
+    const attrGroupIds = [];
+    const posts = hits.map((item) => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const { _source: source } = item;
+      if (source.items && source.items.length) {
+        itemIds.push(...source.items.map((item) => item.id));
+      }
+      attrUserIds.push(source.createdBy);
+      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
+      attrGroupIds.push(...source.groupIds);
+      attrGroupIds.push(...source.communityIds);
+      const data: any = {
+        id: source.id,
+        groupIds: source.groupIds,
+        communityIds: source.communityIds,
+        mentionUserIds: source.mentionUserIds,
+        type: source.type,
+        createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
+        createdBy: source.createdBy,
+        publishedAt: source.publishedAt,
+        coverMedia: source.coverMedia ?? null,
+        media: source.media || {
+          files: [],
+          images: [],
+          videos: [],
+        },
+        content: source.content || null,
+        title: source.title || null,
+        summary: source.summary || null,
+        categories: source.categories || [],
+        items: source.items || [],
+        tags: source.tags || [],
+      };
+
+      if (keyword && item.highlight && item.highlight['content']?.length && source.content) {
+        data.highlight = item.highlight['content'][0];
+      }
+
+      if (keyword && item.highlight && item.highlight['title']?.length && source.title) {
+        data.titleHighlight = item.highlight['title'][0];
+      }
+
+      if (keyword && item.highlight && item.highlight['summary']?.length && source.summary) {
+        data.summaryHighlight = item.highlight['summary'][0];
+      }
+      return data;
+    });
+
+    return posts;
   }
 }

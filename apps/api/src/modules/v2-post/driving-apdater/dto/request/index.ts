@@ -24,3 +24,4 @@ export * from './get-quizzes.request.dto';
 export * from './update-quiz-answer.request.dto';
 export * from './add-quiz-question.request.dto';
 export * from './update-quiz-question.request.dto';
+export * from './search-contents.request.dto';

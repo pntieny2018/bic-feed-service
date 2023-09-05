@@ -20,7 +20,11 @@ import { UserDto } from '../../../v2-user/application';
 import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
-import { GetDraftContentsRequestDto, ValidateSeriesTagDto } from '../dto/request';
+import {
+  GetDraftContentsRequestDto,
+  SearchContentsRequestDto,
+  ValidateSeriesTagDto,
+} from '../dto/request';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
 import {
   ContentNoCRUDPermissionException,
@@ -35,6 +39,7 @@ import { PostSettingRequestDto } from '../dto/request/post-setting.request.dto';
 import { UpdateContentSettingCommand } from '../../application/command/update-content-setting/update-content-setting.command';
 import { FindDraftContentsQuery } from '../../application/query/find-draft-contents/find-draft-contents.query';
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
+import { SearchContentsQuery } from '../../application/query/search-contents/search-contents.query';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -68,6 +73,33 @@ export class ContentController {
     } catch (e) {
       switch (e.constructor) {
         case InvalidCursorParamsException:
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Search contents' })
+  @ApiOkResponse({
+    type: FindDraftContentsDto,
+  })
+  @ResponseMessages({
+    success: 'Search contents successfully',
+  })
+  @Get('/')
+  public async searchContents(
+    @AuthUser() user: UserDto,
+    @Query() searchContentsRequestDto: SearchContentsRequestDto
+  ): Promise<void> {
+    try {
+      const data = await this._queryBus.execute(
+        new SearchContentsQuery({ authUser: user, ...searchContentsRequestDto })
+      );
+      return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    } catch (e) {
+      switch (e.constructor) {
         case DomainModelException:
           throw new BadRequestException(e);
         default:

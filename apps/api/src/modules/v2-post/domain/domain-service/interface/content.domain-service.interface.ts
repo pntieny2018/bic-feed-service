@@ -39,5 +39,6 @@ export interface IContentDomainService {
   getScheduledContent(
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getReportedContentIdsByUser(reportUser: string, postTypes?: PostType[]): Promise<string[]>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

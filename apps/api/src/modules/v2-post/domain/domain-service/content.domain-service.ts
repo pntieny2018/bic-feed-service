@@ -1,6 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
-import { PostStatus } from '../../data-type';
+import { PostStatus, PostType } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
 import { StringHelper } from '../../../../common/helpers';
 import {
@@ -12,6 +12,7 @@ import {
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { TargetType } from '../../../report-content/contstants';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -110,5 +111,27 @@ export class ContentDomainService implements IContentDomainService {
         exclude: ['content'],
       },
     });
+  }
+
+  public async getReportedContentIdsByUser(
+    reportUser: string,
+    postTypes?: PostType[]
+  ): Promise<string[]> {
+    if (!postTypes) {
+      return this._contentRepository.getReportedContentIdsByUser(reportUser, [
+        TargetType.ARTICLE,
+        TargetType.POST,
+      ]);
+    }
+
+    const target = [];
+    if (postTypes.includes(PostType.POST)) {
+      target.push(TargetType.POST);
+    }
+    if (postTypes.includes(PostType.ARTICLE)) {
+      target.push(TargetType.ARTICLE);
+    }
+
+    return this._contentRepository.getReportedContentIdsByUser(reportUser, target);
   }
 }
