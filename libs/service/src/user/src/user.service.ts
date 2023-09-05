@@ -7,6 +7,8 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 import qs from 'qs';
 
+import { ENDPOINT } from '../../../../../apps/api/src/common/constants/endpoint.constant';
+
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto } from './user.dto';
 import { IUserService } from './user.service.interface';
@@ -117,6 +119,47 @@ export class UserService implements IUserService {
       this._logger.debug(e);
       return false;
     }
+  }
+
+  public async findAllFromInternalByIds(ids: string[], authUserId: string): Promise<UserDto[]> {
+    if (!ids || !ids.length) {
+      return [];
+    }
+    const uniqueIds = uniq(ids);
+    const usersData = await this._getUsersFromInternalByIds(uniqueIds, authUserId);
+    return usersData.map((user) => {
+      const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
+        ...badge,
+        community: badge.community || null,
+      }));
+      return { ...user, showingBadges: showingBadgesWithCommunity };
+    });
+  }
+
+  private async _getUsersFromInternalByIds(
+    ids: string[],
+    authUserId?: string
+  ): Promise<SharedUserDto[]> {
+    let users: SharedUserDto[] = [];
+    try {
+      const response = await this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+        params: {
+          ids,
+          ...(authUserId && {
+            actorId: authUserId,
+          }),
+        },
+        paramsSerializer: (params) => qs.stringify(params),
+      });
+
+      if (response.status === HttpStatus.OK) {
+        users = users.concat(response.data['data']);
+      }
+    } catch (e) {
+      this._logger.debug(e);
+    }
+
+    return users;
   }
 
   private async _getUserProfileFromCacheByUsername(username: string): Promise<SharedUserDto> {

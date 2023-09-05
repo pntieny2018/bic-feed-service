@@ -1,15 +1,14 @@
+import { ORDER } from '@beincom/constants';
 import {
   CursorPaginationResult,
   CursorPaginator,
   getDatabaseConfig,
+  PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
 import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
-import {
-  PostCategoryAttributes,
-  PostCategoryModel,
-} from '@libs/database/postgres/model/post-category.model';
+import { PostCategoryAttributes } from '@libs/database/postgres/model/post-category.model';
 import {
   PostGroupAttributes,
   PostGroupModel,
@@ -39,7 +38,6 @@ import {
   OrderOptions,
   ILibContentRepository,
 } from '@libs/database/postgres/repository/interface';
-import { ORDER } from '@beincom/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import {
@@ -65,8 +63,6 @@ export class LibContentRepository implements ILibContentRepository {
     private readonly _postSeriesModel: typeof PostSeriesModel,
     @InjectModel(PostTagModel)
     private readonly _postTagModel: typeof PostTagModel,
-    @InjectModel(PostCategoryModel)
-    private readonly _postCategoryModel: typeof PostCategoryModel,
     @InjectModel(UserSeenPostModel)
     private readonly _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(UserMarkReadPostModel)
@@ -167,9 +163,16 @@ export class LibContentRepository implements ILibContentRepository {
     return this._postModel.findOne(findOption);
   }
 
-  public async findAll(findAllPostOptions: FindContentProps): Promise<PostModel[]> {
+  public async findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<PostModel[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
+    if (offsetPaginate) {
+      findOption.limit = offsetPaginate.limit;
+      findOption.offset = offsetPaginate.offset;
+    }
     return this._postModel.findAll(findOption);
   }
 
@@ -193,6 +196,7 @@ export class LibContentRepository implements ILibContentRepository {
     const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
+
     const cursorColumns = orderBuilder?.map((order) => order[0]);
 
     const paginator = new CursorPaginator(
@@ -239,6 +243,9 @@ export class LibContentRepository implements ILibContentRepository {
     }
     if (orderOptions.isPublishedByDesc) {
       order.push(['publishedAt', ORDER.DESC]);
+    }
+    if (orderOptions.sortColumn && orderOptions.sortBy) {
+      order.push([orderOptions.sortColumn, orderOptions.sortBy]);
     }
     order.push(['createdAt', ORDER.DESC]);
     return order;
@@ -406,6 +413,12 @@ export class LibContentRepository implements ILibContentRepository {
       if (options.where.status) {
         conditions.push({
           status: options.where.status,
+        });
+      }
+
+      if (options.where.statuses) {
+        conditions.push({
+          status: options.where.statuses,
         });
       }
 

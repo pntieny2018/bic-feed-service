@@ -7,8 +7,10 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+} from '../../../binding/binding-post/content.interface';
 import { ArticleDto } from '../../../dto';
 
 import { PublishArticleCommand } from './publish-article.command';
@@ -21,7 +23,7 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding
+    private readonly _contentBinding: IContentBinding
   ) {}
 
   public async execute(command: PublishArticleCommand): Promise<ArticleDto> {

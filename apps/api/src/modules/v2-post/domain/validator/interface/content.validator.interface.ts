@@ -1,7 +1,7 @@
 import { CONTENT_TYPE } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group';
+import { UserDto } from '@libs/service/user';
 
-import { GroupDto } from '../../../../v2-group/application';
-import { UserDto } from '../../../../v2-user/application';
 import { PostType } from '../../../data-type';
 import { ContentEntity } from '../../model/content';
 import { TagEntity } from '../../model/tag';

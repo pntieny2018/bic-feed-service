@@ -1,21 +1,23 @@
-import { Inject } from '@nestjs/common';
-import { Literal } from 'sequelize/types/utils';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
-  FindContentProps,
-  GetPaginationContentsProps,
-  IContentRepository,
-  OrderOptions,
-} from '../../domain/repositoty-interface';
-import { PostEntity } from '../../domain/model/content';
-import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
+  ILibContentRepository,
+  LIB_CONTENT_REPOSITORY_TOKEN,
+} from '@libs/database/postgres/repository/interface';
+import { Inject } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { isBoolean } from 'lodash';
+import { FindOptions, Includeable, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
+import { Literal } from 'sequelize/types/utils';
+
+import { CategoryModel } from '../../../../database/models/category.model';
+import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { PostGroupModel } from '../../../../database/models/post-group.model';
-import { SeriesEntity } from '../../domain/model/content/series.entity';
-import { ArticleEntity } from '../../domain/model/content/article.entity';
-import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
-import { CategoryEntity } from '../../domain/model/category';
+import { PostReactionModel } from '../../../../database/models/post-reaction.model';
+import { PostSeriesModel } from '../../../../database/models/post-series.model';
+import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
+import { QuizModel } from '../../../../database/models/quiz.model';
+import { ContentNotFoundException } from '../../domain/exception';
 import {
   ARTICLE_FACTORY_TOKEN,
   IArticleFactory,
@@ -24,25 +26,29 @@ import {
   POST_FACTORY_TOKEN,
   SERIES_FACTORY_TOKEN,
 } from '../../domain/factory/interface';
-import { PostSeriesModel } from '../../../../database/models/post-series.model';
-import { PostTagModel } from '../../../../database/models/post-tag.model';
-import { ContentEntity } from '../../domain/model/content/content.entity';
-import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
+import { CategoryEntity } from '../../domain/model/category';
+import {
+  PostEntity,
+  ArticleEntity,
+  ContentEntity,
+  SeriesEntity,
+  PostAttributes,
+  SeriesAttributes,
+  ArticleAttributes,
+  ContentAttributes,
+} from '../../domain/model/content';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
-import { TagEntity } from '../../domain/model/tag';
-import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
-import { UserMarkReadPostModel } from '../../../../database/models/user-mark-read-post.model';
-import { PostReactionModel } from '../../../../database/models/post-reaction.model';
-import { CategoryModel } from '../../../../database/models/category.model';
-import { isBoolean } from 'lodash';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { CursorPaginator, OrderEnum } from '../../../../common/dto';
-import { UserNewsFeedModel } from '../../../../database/models/user-newsfeed.model';
-import { QuizModel } from '../../../../database/models/quiz.model';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { QuizEntity } from '../../domain/model/quiz';
-import { PostCategoryModel } from '../../../../database/models/post-category.model';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
-import { ContentNotFoundException } from '../../domain/exception';
+import { TagEntity } from '../../domain/model/tag';
+import {
+  FindContentProps,
+  GetPaginationContentsProps,
+  IContentRepository,
+  OrderOptions,
+} from '../../domain/repositoty-interface';
+import { ContentMapper } from '../mapper/content.mapper';
 
 export class ContentRepository implements IContentRepository {
   public constructor(
@@ -56,25 +62,16 @@ export class ContentRepository implements IContentRepository {
     private readonly _seriesFactory: ISeriesFactory,
     @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
-    @InjectModel(PostGroupModel)
-    private readonly _postGroupModel: typeof PostGroupModel,
-    @InjectModel(PostSeriesModel)
-    private readonly _postSeriesModel: typeof PostSeriesModel,
-    @InjectModel(PostTagModel)
-    private readonly _postTagModel: typeof PostTagModel,
-    @InjectModel(PostCategoryModel)
-    private readonly _postCategoryModel: typeof PostCategoryModel,
-    @InjectModel(UserSeenPostModel)
-    private readonly _userSeenPostModel: typeof UserSeenPostModel,
-    @InjectModel(UserMarkReadPostModel)
-    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+    @Inject(LIB_CONTENT_REPOSITORY_TOKEN)
+    private readonly _libContentRepository: ILibContentRepository,
+    private readonly _contentMapper: ContentMapper
   ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const model = this._entityToModel(contentEntity);
-      await this._postModel.create(model, {
+      const model = this._contentMapper.toPersistence(contentEntity);
+      await this._libContentRepository.create(model, {
         transaction,
       });
 
@@ -93,13 +90,12 @@ export class ContentRepository implements IContentRepository {
   public async update(contentEntity: ContentEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const model = this._entityToModel(contentEntity);
-      await this._postModel.update(model, {
-        where: {
-          id: contentEntity.getId(),
-        },
-        transaction,
-      });
+      const model = this._contentMapper.toPersistence(
+        contentEntity as ContentEntity<
+          (PostAttributes | SeriesAttributes | ArticleAttributes) & ContentAttributes
+        >
+      );
+      await this._libContentRepository.update(model.id, model, transaction);
 
       if (contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity) {
         await this._setSeries(contentEntity, transaction);
@@ -121,7 +117,7 @@ export class ContentRepository implements IContentRepository {
   private async _setGroups(postEntity: ContentEntity, transaction: Transaction): Promise<void> {
     const state = postEntity.getState();
     if (state.attachGroupIds?.length > 0) {
-      await this._postGroupModel.bulkCreate(
+      await this._libContentRepository.bulkCreatePostGroup(
         state.attachGroupIds.map((groupId) => ({
           postId: postEntity.getId(),
           groupId,
@@ -131,54 +127,14 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachGroupIds?.length > 0) {
-      await this._postGroupModel.destroy({
-        where: {
+      await this._libContentRepository.destroyPostGroup(
+        {
           postId: postEntity.getId(),
           groupId: state.detachGroupIds,
         },
-        transaction,
-      });
+        transaction
+      );
     }
-  }
-
-  private _entityToModel(postEntity): IPost {
-    return {
-      id: postEntity.getId(),
-      content: postEntity.get('content'),
-      title: postEntity.get('title'),
-      summary: postEntity.get('summary'),
-      privacy: postEntity.get('privacy'),
-      isHidden: postEntity.get('isHidden'),
-      isReported: postEntity.get('isReported'),
-      type: postEntity.get('type'),
-      status: postEntity.get('status'),
-      errorLog: postEntity.get('errorLog'),
-      createdBy: postEntity.get('createdBy'),
-      updatedBy: postEntity.get('updatedBy'),
-      isImportant: postEntity.get('setting')?.isImportant,
-      importantExpiredAt: postEntity.get('setting')?.importantExpiredAt || null,
-      canComment: postEntity.get('setting')?.canComment,
-      canReact: postEntity.get('setting')?.canReact,
-      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
-      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      linkPreviewId: postEntity.get('linkPreview')
-        ? postEntity.get('linkPreview')?.get('id')
-        : null,
-      mediaJson: {
-        files: (postEntity.get('media')?.files || []).map((file) => file.toObject()),
-        images: (postEntity.get('media')?.images || []).map((image) => image.toObject()),
-        videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
-      },
-      mentions: postEntity.get('mentionUserIds') || [],
-      coverJson: postEntity.get('cover')?.toObject(),
-      videoIdProcessing: postEntity.get('videoIdProcessing'),
-      tagsJson: postEntity.get('tags')?.map((tag) => tag.toObject()) || [],
-      linkPreview: postEntity.get('linkPreview')?.toObject() || null,
-      wordCount: postEntity.get('wordCount'),
-      createdAt: postEntity.get('createdAt'),
-      publishedAt: postEntity.get('publishedAt'),
-      scheduledAt: postEntity.get('scheduledAt'),
-    };
   }
 
   private async _setSeries(
@@ -187,7 +143,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachSeriesIds.length > 0) {
-      await this._postSeriesModel.bulkCreate(
+      await this._libContentRepository.bulkCreatePostSeries(
         state.attachSeriesIds.map((seriesId) => ({
           postId: contentEntity.getId(),
           seriesId,
@@ -197,13 +153,13 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachSeriesIds.length > 0) {
-      await this._postSeriesModel.destroy({
-        where: {
+      await this._libContentRepository.destroyPostSeries(
+        {
           postId: contentEntity.getId(),
           seriesId: state.detachSeriesIds,
         },
-        transaction,
-      });
+        transaction
+      );
     }
   }
 
@@ -213,7 +169,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachTagIds.length > 0) {
-      await this._postTagModel.bulkCreate(
+      await this._libContentRepository.bulkCreatePostTag(
         state.attachTagIds.map((tagId) => ({
           postId: contentEntity.getId(),
           tagId,
@@ -223,13 +179,13 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachTagIds.length > 0) {
-      await this._postTagModel.destroy({
-        where: {
+      await this._libContentRepository.destroyPostTag(
+        {
           postId: contentEntity.getId(),
           tagId: state.detachTagIds,
         },
-        transaction,
-      });
+        transaction
+      );
     }
   }
 
@@ -239,7 +195,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachCategoryIds.length > 0) {
-      await this._postCategoryModel.bulkCreate(
+      await this._libContentRepository.bulkCreatePostCategory(
         state.attachCategoryIds.map((categoryId) => ({
           postId: contentEntity.getId(),
           categoryId,
@@ -249,26 +205,25 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachCategoryIds.length > 0) {
-      await this._postCategoryModel.destroy({
-        where: {
+      await this._libContentRepository.destroyPostCategory(
+        {
           postId: contentEntity.getId(),
           categoryId: state.detachCategoryIds,
         },
-        transaction,
-      });
+        transaction
+      );
     }
   }
 
   public async delete(id: string): Promise<void> {
-    await this._postModel.destroy({ where: { id } });
+    return this._libContentRepository.delete(id);
   }
 
   public async findOne(
     findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const findOption = this.buildFindOptions(findOnePostOptions);
-    const entity = await this._postModel.findOne(findOption);
-    return this._modelToEntity(entity);
+    const content = await this._libContentRepository.findOne(findOnePostOptions);
+    return this._contentMapper.toDomain(content);
   }
 
   public async getContentById(
@@ -283,29 +238,30 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findAll(
-    findAllPostOptions: FindContentProps
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const findOption = this.buildFindOptions(findAllPostOptions);
-    findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
-    const rows = await this._postModel.findAll(findOption);
-    return rows.map((row) => this._modelToEntity(row));
+    const articles = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
+    return articles.map((article) => this._contentMapper.toDomain(article));
   }
 
   protected buildOrderByOptions(orderOptions: OrderOptions): any {
-    if (!orderOptions) return undefined;
+    if (!orderOptions) {
+      return undefined;
+    }
     const order = [];
     if (orderOptions.isImportantFirst) {
-      order.push([this._sequelizeConnection.literal('"isReadImportant"'), OrderEnum.DESC]);
+      order.push([this._sequelizeConnection.literal('"isReadImportant"'), ORDER.DESC]);
     }
     if (orderOptions.isPublishedByDesc) {
-      order.push(['publishedAt', OrderEnum.DESC]);
+      order.push(['publishedAt', ORDER.DESC]);
     }
-    order.push(['createdAt', OrderEnum.DESC]);
+    order.push(['createdAt', ORDER.DESC]);
     return order;
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {
-    await this._userSeenPostModel.bulkCreate(
+    return this._libContentRepository.bulkCreateSeenPost(
       [
         {
           postId: postId,
@@ -317,7 +273,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async markReadImportant(postId: string, userId: string): Promise<void> {
-    await this._userReadImportantPostModel.bulkCreate(
+    return this._libContentRepository.bulkCreateReadImportantPost(
       [
         {
           postId,
@@ -329,7 +285,9 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _buildSubSelect(options: FindContentProps): [Literal, string][] {
-    if (!options?.include) return [];
+    if (!options?.include) {
+      return [];
+    }
 
     const subSelect: [Literal, string][] = [];
     const { shouldIncludeSaved, shouldIncludeMarkReadImportant, shouldIncludeImportant } =
@@ -353,7 +311,9 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _buildRelationOptions(options: FindContentProps): Includeable[] {
-    if (!options?.include) return [];
+    if (!options?.include) {
+      return [];
+    }
 
     const includeable = [];
     const { groupArchived, groupIds } = options.where || {};
@@ -423,23 +383,6 @@ export class ContentRepository implements IContentRepository {
         },
       });
     }
-    if (shouldIncludeQuiz) {
-      includeable.push({
-        model: QuizModel,
-        as: 'quiz',
-        required: false,
-        attributes: [
-          'id',
-          'title',
-          'description',
-          'status',
-          'genStatus',
-          'createdBy',
-          'createdAt',
-          'updatedAt',
-        ],
-      });
-    }
 
     if (shouldIncludeQuiz) {
       includeable.push({
@@ -496,10 +439,11 @@ export class ContentRepository implements IContentRepository {
 
     if (options?.where) {
       const conditions = [];
-      if (options.where.id)
+      if (options.where.id) {
         conditions.push({
           id: options.where.id,
         });
+      }
 
       if (options.where.ids) {
         conditions.push({
@@ -574,7 +518,9 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _modelToEntity(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
-    if (post === null) return null;
+    if (post === null) {
+      return null;
+    }
     post = post.toJSON();
     switch (post.type) {
       case PostType.POST:
@@ -589,17 +535,19 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _modelToPostEntity(post: IPost): PostEntity {
-    if (post === null) return null;
+    if (post === null) {
+      return null;
+    }
     return this._postFactory.reconstitute({
       id: post.id,
       isReported: post.isReported,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,
-      privacy: post.privacy,
-      status: post.status,
-      type: post.type,
-      lang: post.lang,
+      privacy: post.privacy as unknown as PRIVACY,
+      status: post.status as unknown as CONTENT_STATUS,
+      type: post.type as unknown as CONTENT_TYPE,
+      lang: post.lang as unknown as LANGUAGE,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -672,7 +620,9 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _modelToArticleEntity(post: IPost): ArticleEntity {
-    if (post === null) return null;
+    if (post === null) {
+      return null;
+    }
     return this._articleFactory.reconstitute({
       id: post.id,
       content: post.content,
@@ -680,12 +630,12 @@ export class ContentRepository implements IContentRepository {
       isHidden: post.isHidden,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,
-      privacy: post.privacy,
-      status: post.status,
-      type: post.type,
+      privacy: post.privacy as unknown as PRIVACY,
+      status: post.status as unknown as CONTENT_STATUS,
+      type: post.type as unknown as CONTENT_TYPE,
       title: post.title,
       summary: post.summary,
-      lang: post.lang,
+      lang: post.lang as unknown as LANGUAGE,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -732,19 +682,21 @@ export class ContentRepository implements IContentRepository {
   }
 
   private _modelToSeriesEntity(post: IPost): SeriesEntity {
-    if (post === null) return null;
+    if (post === null) {
+      return null;
+    }
     return this._seriesFactory.reconstitute({
       id: post.id,
       isReported: post.isReported,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,
-      privacy: post.privacy,
-      status: post.status,
-      type: post.type,
+      privacy: post.privacy as unknown as PRIVACY,
+      status: post.status as unknown as CONTENT_STATUS,
+      type: post.type as unknown as CONTENT_TYPE,
       title: post.title,
       summary: post.summary,
-      lang: post.lang,
+      lang: post.lang as unknown as LANGUAGE,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -771,21 +723,12 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
-    const findOption = this.buildFindOptions(getPaginationContentsProps);
-    const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
-    const cursorColumns = orderBuilder?.map((order) => order[0]);
-
-    const paginator = new CursorPaginator(
-      this._postModel,
-      cursorColumns || ['createdAt'],
-      { before, after, limit },
-      order
+    const { rows, meta } = await this._libContentRepository.getPagination(
+      getPaginationContentsProps
     );
-    const { rows, meta } = await paginator.paginate(findOption);
 
     return {
-      rows: rows.map((row) => this._modelToEntity(row)),
+      rows: rows.map((row) => this._contentMapper.toDomain(row)),
       meta,
     };
   }

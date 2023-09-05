@@ -1,6 +1,8 @@
 import { EventModule } from '@libs/infra/event';
 import { KafkaModule } from '@libs/infra/kafka';
 import { QueueModule } from '@libs/infra/queue';
+import { GroupModule } from '@libs/service/group/group.module';
+import { MediaModule as LibMediaModule } from '@libs/service/media/media.module';
 import { UserModule } from '@libs/service/user/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { Module, forwardRef } from '@nestjs/common';
@@ -57,6 +59,8 @@ import { quizProvider } from './provider/quiz.provider';
     QueueModule,
     EventModule,
     UserModule,
+    GroupModule,
+    LibMediaModule,
   ],
   controllers: [
     TagController,

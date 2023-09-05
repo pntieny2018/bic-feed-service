@@ -1,8 +1,8 @@
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
 
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
-import { GroupDto } from '../../../v2-group/application';
-import { UserDto } from '../../../v2-user/application';
 
 import { ArticleDto, ImageDto, PostDto, PostSettingDto, QuizDto } from '.';
 

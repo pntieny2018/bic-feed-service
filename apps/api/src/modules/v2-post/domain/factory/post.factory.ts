@@ -1,9 +1,11 @@
-import { v4 } from 'uuid';
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { IPostFactory } from './interface';
+import { v4 } from 'uuid';
+
 import { PostEntity, PostAttributes } from '../model/content';
-import { PostStatus, PostType } from '../../data-type';
+
+import { IPostFactory } from './interface';
 
 export class PostFactory implements IPostFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
@@ -20,8 +22,8 @@ export class PostFactory implements IPostFactory {
         commentsCount: 0,
         totalUsersSeen: 0,
       },
-      type: PostType.POST,
-      status: PostStatus.DRAFT,
+      type: CONTENT_TYPE.POST,
+      status: CONTENT_STATUS.DRAFT,
       media: {
         files: [],
         images: [],

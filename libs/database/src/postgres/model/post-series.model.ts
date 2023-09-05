@@ -36,7 +36,7 @@ export class PostSeriesModel extends Model<
   public seriesId: string;
 
   @Column
-  public zindex: number;
+  public zindex?: number;
 
   @BelongsTo(() => PostModel, 'postId')
   public post?: PostModel;

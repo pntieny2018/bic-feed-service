@@ -1,7 +1,7 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { v4 } from 'uuid';
 
 import { RULES } from '../../../constant';
-import { PostStatus, PostType } from '../../../data-type';
 import { LinkPreviewEntity } from '../link-preview';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { TagEntity } from '../tag';
@@ -39,8 +39,8 @@ export class PostEntity extends ContentEntity<PostAttributes> {
         commentsCount: 0,
         totalUsersSeen: 0,
       },
-      type: PostType.POST,
-      status: PostStatus.DRAFT,
+      type: CONTENT_TYPE.POST,
+      status: CONTENT_STATUS.DRAFT,
       media: {
         files: [],
         images: [],
@@ -99,7 +99,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
   }
 
   public getSeriesIds(): string[] {
-    return this._props.seriesIds;
+    return this._props.seriesIds || [];
   }
 
   public setTags(newTags: TagEntity[]): void {

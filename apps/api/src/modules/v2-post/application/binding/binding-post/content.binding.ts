@@ -1,20 +1,11 @@
+import { CONTENT_STATUS, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { ArrayHelper } from '../../../../../common/helpers';
 import { ReactionsCount } from '../../../../../common/types';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
-import { GroupPrivacy } from '../../../../v2-group/data-type';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
-import { PostStatus } from '../../../data-type';
 import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import {
@@ -26,6 +17,12 @@ import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/quiz-participant.repository.interface';
+import {
+  IUserAdapter,
+  USER_ADAPTER,
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../../../domain/service-adapter-interface';
 import {
   FileDto,
   ImageDto,
@@ -42,10 +39,10 @@ import { IContentBinding } from './content.interface';
 @Injectable()
 export class ContentBinding implements IContentBinding {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupApplicationService: IGroupApplicationService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
@@ -71,7 +68,7 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
       userIdsNeedToFind,
       dataBinding.authUser.id
     );
@@ -92,14 +89,13 @@ export class ContentBinding implements IContentBinding {
     }
 
     const groups =
-      dataBinding?.groups ||
-      (await this._groupApplicationService.findAllByIds(postEntity.get('groupIds')));
+      dataBinding?.groups || (await this._groupAdapter.getGroupsByIds(postEntity.get('groupIds')));
 
     const audience = {
       groups: this.filterSecretGroupCannotAccess(groups, dataBinding?.authUser || null),
     };
 
-    const communities = await this._groupApplicationService.findAllByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
@@ -206,7 +202,7 @@ export class ContentBinding implements IContentBinding {
 
     if (!actor) {
       actor = (
-        await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+        await this._userAdapter.findAllAndFilterByPersonalVisibility(
           [articleEntity.get('createdBy')],
           dataBinding.authUser.id
         )
@@ -215,13 +211,13 @@ export class ContentBinding implements IContentBinding {
 
     const groups =
       dataBinding?.groups ||
-      (await this._groupApplicationService.findAllByIds(articleEntity.get('groupIds')));
+      (await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds')));
 
     const audience = {
       groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
-    const communities = await this._groupApplicationService.findAllByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
@@ -341,13 +337,13 @@ export class ContentBinding implements IContentBinding {
     const groups =
       dataBinding.groups && dataBinding.groups.length
         ? dataBinding.groups
-        : await this._groupApplicationService.findAllByIds(seriesEntity.get('groupIds'));
+        : await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
 
     const audience = {
       groups: this.filterSecretGroupCannotAccess(groups, dataBinding.authUser),
     };
 
-    const communities = await this._groupApplicationService.findAllByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
     );
 
@@ -360,7 +356,7 @@ export class ContentBinding implements IContentBinding {
           ids: itemIds,
           excludeReportedByUserId: dataBinding.authUser?.id,
           isHidden: false,
-          status: PostStatus.PUBLISHED,
+          status: CONTENT_STATUS.PUBLISHED,
         },
         include: {
           shouldIncludeCategory: true,
@@ -374,7 +370,7 @@ export class ContentBinding implements IContentBinding {
         ...userIdsNeedToFind,
       ]);
     }
-    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
       userIdsNeedToFind,
       dataBinding.authUser.id
     );
@@ -628,6 +624,7 @@ export class ContentBinding implements IContentBinding {
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
       publishedAt: entity.get('publishedAt'),
+      scheduledAt: entity.get('scheduledAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -812,9 +809,8 @@ export class ContentBinding implements IContentBinding {
         itemIds.push(...contentEntity.get('itemIds'));
       }
     });
-
-    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
-      userIdsNeedToFind,
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      ArrayHelper.arrayUnique(userIdsNeedToFind),
       authUser.id
     );
 
@@ -829,7 +825,7 @@ export class ContentBinding implements IContentBinding {
         ids: itemIds,
         excludeReportedByUserId: authUser?.id,
         isHidden: false,
-        status: PostStatus.PUBLISHED,
+        status: CONTENT_STATUS.PUBLISHED,
       },
     });
     const itemsMapper = new Map<string, PostEntity | ArticleEntity | SeriesEntity>(
@@ -838,9 +834,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const groups = await this._groupApplicationService.findAllByIds(
-      ArrayHelper.arrayUnique(groupIds)
-    );
+    const groups = await this._groupAdapter.getGroupsByIds(ArrayHelper.arrayUnique(groupIds));
     const groupFiltered = this.filterSecretGroupCannotAccess(groups, authUser);
 
     const groupsMapper = new Map<string, GroupDto>(
@@ -849,7 +843,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const communities = await this._groupApplicationService.findAllByIds(
+    const communities = await this._groupAdapter.getGroupsByIds(
       ArrayHelper.arrayUnique(groupFiltered.map((group) => group.rootGroupId))
     );
 
@@ -930,7 +924,7 @@ export class ContentBinding implements IContentBinding {
     return groups.filter((group) => {
       const isUserNotInGroup = !authUser?.groups.includes(group.id);
       const isGuest = !authUser;
-      return !(group.privacy === GroupPrivacy.SECRET && (isUserNotInGroup || isGuest));
+      return !(group.privacy === PRIVACY.SECRET && (isUserNotInGroup || isGuest));
     });
   }
 }

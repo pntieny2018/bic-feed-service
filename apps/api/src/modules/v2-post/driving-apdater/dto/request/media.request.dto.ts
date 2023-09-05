@@ -1,14 +1,6 @@
-import {
-  IsArray,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 
 export class MediaDto {
   @ApiProperty()

@@ -1,6 +1,6 @@
+import { ORDER } from '@beincom/constants';
 import { IQuery } from '@nestjs/cqrs';
 
-import { OrderEnum } from '../../../../../../common/dto';
 import { UserDto } from '../../../../../v2-user/application';
 import { PostType, QuizStatus } from '../../../../data-type';
 
@@ -9,7 +9,7 @@ type Props = {
   status: QuizStatus;
   type?: PostType;
   limit: number;
-  order: OrderEnum;
+  order: ORDER;
   before?: string;
   after?: string;
 };

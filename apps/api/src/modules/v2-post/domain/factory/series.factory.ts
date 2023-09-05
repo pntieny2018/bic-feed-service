@@ -1,9 +1,11 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { BasedSeriesProps, ISeriesFactory } from './interface';
-import { SeriesEntity, SeriesAttributes } from '../model/content';
 import { v4 } from 'uuid';
-import { PostStatus, PostType } from '../../data-type';
+
+import { SeriesEntity, SeriesAttributes } from '../model/content';
+
+import { BasedSeriesProps, ISeriesFactory } from './interface';
 
 export class SeriesFactory implements ISeriesFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
@@ -17,8 +19,8 @@ export class SeriesFactory implements ISeriesFactory {
       summary,
       createdBy: userId,
       updatedBy: userId,
-      status: PostStatus.PUBLISHED,
-      type: PostType.SERIES,
+      status: CONTENT_STATUS.PUBLISHED,
+      type: CONTENT_TYPE.SERIES,
       setting: {
         canComment: true,
         canReact: true,
