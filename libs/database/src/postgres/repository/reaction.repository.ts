@@ -1,5 +1,10 @@
-import { getDatabaseConfig, PaginationResult } from '@libs/database/postgres/common';
 import { CONTENT_TARGET, ORDER } from '@beincom/constants';
+import { getDatabaseConfig, PaginationResult } from '@libs/database/postgres/common';
+import {
+  GetReactionProps,
+  ILibReactionRepository,
+  ReactionsCount,
+} from '@libs/database/postgres/repository/interface/reaction.repository.interface';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
@@ -7,9 +12,7 @@ import { NIL as NIL_UUID } from 'uuid';
 import { CommentReactionModel } from '../model/comment-reaction.model';
 import { PostReactionModel } from '../model/post-reaction.model';
 
-import { GetReactionProps, ILibReactionQuery, ReactionsCount } from './interface';
-
-export class LibReactionQuery implements ILibReactionQuery {
+export class LibReactionRepository implements ILibReactionRepository {
   public constructor(
     @InjectModel(PostReactionModel)
     private readonly _postReactionModel: typeof PostReactionModel,

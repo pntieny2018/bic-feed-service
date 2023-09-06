@@ -1,13 +1,13 @@
+import { ORDER } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { EventBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
 
-import { OrderEnum } from '../../../../../common/dto';
 import { DatabaseException } from '../../../../../common/exceptions';
 import { REACTION_TARGET } from '../../../data-type';
-import { IReactionDomainService } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { IReactionDomainService } from '../../../domain/domain-service/interface';
 import { ReactionDomainService } from '../../../domain/domain-service/reaction.domain-service';
 import {
   IReactionFactory,
@@ -15,20 +15,18 @@ import {
 } from '../../../domain/factory/interface/reaction.factory.interface';
 import { ReactionEntity } from '../../../domain/model/reaction';
 import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
-import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
   IPostReactionRepository,
+  IReactionRepository,
   POST_REACTION_REPOSITORY_TOKEN,
+  REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 
 describe('ReactionDomainService', () => {
   let domainService: IReactionDomainService;
   let postRepo: IPostReactionRepository;
-  let reactionQuery: IReactionQuery;
+  let reactionRepository: IReactionRepository;
   let commentRepo: ICommentReactionRepository;
   let factory: IReactionFactory;
   let eventBus$: EventBus;
@@ -38,8 +36,8 @@ describe('ReactionDomainService', () => {
       providers: [
         ReactionDomainService,
         {
-          provide: REACTION_QUERY_TOKEN,
-          useValue: createMock<IReactionQuery>(),
+          provide: REACTION_REPOSITORY_TOKEN,
+          useValue: createMock<IReactionRepository>(),
         },
         {
           provide: REACTION_FACTORY_TOKEN,
@@ -62,7 +60,7 @@ describe('ReactionDomainService', () => {
 
     domainService = module.get<ReactionDomainService>(ReactionDomainService);
     postRepo = module.get(POST_REACTION_REPOSITORY_TOKEN);
-    reactionQuery = module.get(REACTION_QUERY_TOKEN);
+    reactionRepository = module.get(REACTION_REPOSITORY_TOKEN);
     commentRepo = module.get(COMMENT_REACTION_REPOSITORY_TOKEN);
     factory = module.get(REACTION_FACTORY_TOKEN);
     eventBus$ = module.get<EventBus>(EventBus);
@@ -104,7 +102,7 @@ describe('ReactionDomainService', () => {
 
   describe('getReactions', () => {
     it('should get post reactions', async () => {
-      jest.spyOn(reactionQuery, 'getPagination').mockResolvedValue({
+      jest.spyOn(reactionRepository, 'getPagination').mockResolvedValue({
         rows: [postReactionEntity],
         total: 1,
       });
@@ -114,7 +112,7 @@ describe('ReactionDomainService', () => {
         targetId: v4(),
         target: REACTION_TARGET.POST,
         latestId: v4(),
-        order: OrderEnum.ASC,
+        order: ORDER.ASC,
         limit: 1,
       });
       expect(result).toEqual({

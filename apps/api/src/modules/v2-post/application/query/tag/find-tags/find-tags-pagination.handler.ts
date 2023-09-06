@@ -6,7 +6,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../../../../../v2-group/application';
-import { ITagQuery, TAG_QUERY_TOKEN } from '../../../../domain/query-interface';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../../domain/repositoty-interface';
 import { FindTagsPaginationDto } from '../../../dto';
 
 import { FindTagsPaginationQuery } from './find-tags-pagination.query';
@@ -17,7 +17,7 @@ export class FindTagsPaginationHandler
 {
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
-    @Inject(TAG_QUERY_TOKEN) private readonly _tagQuery: ITagQuery
+    @Inject(TAG_REPOSITORY_TOKEN) private readonly _tagRepository: ITagRepository
   ) {}
 
   public async execute(query: FindTagsPaginationQuery): Promise<FindTagsPaginationDto> {
@@ -28,7 +28,7 @@ export class FindTagsPaginationHandler
         total: 0,
       };
     }
-    const { rows, total } = await this._tagQuery.getPagination({
+    const { rows, total } = await this._tagRepository.getPagination({
       name,
       groupIds,
       offset,

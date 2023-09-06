@@ -1,3 +1,5 @@
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
+
 import { TagEntity } from '../model/tag';
 
 export type FindOneTagProps = {
@@ -12,7 +14,14 @@ export type FindAllTagsProps = {
   name?: string;
 };
 
+export type GetPaginationTagProps = PaginationProps & {
+  groupIds: string[];
+  name?: string;
+};
+
 export interface ITagRepository {
+  getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>>;
+
   findOne(input: FindOneTagProps): Promise<TagEntity>;
 
   findAll(input: FindAllTagsProps): Promise<TagEntity[]>;
