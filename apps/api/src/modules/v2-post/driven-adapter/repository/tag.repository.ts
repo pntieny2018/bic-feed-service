@@ -95,7 +95,7 @@ export class TagRepository implements ITagRepository {
 
     if (keyword) {
       condition.name = {
-        [Op.like]: `%${keyword}%`,
+        [Op.iLike]: `%${keyword}%`,
       };
     }
     const enties = await this._tagModel.findAll({
