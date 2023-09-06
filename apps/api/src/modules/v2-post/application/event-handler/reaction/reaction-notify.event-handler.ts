@@ -86,7 +86,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
   }
 
   private async _sendReactCommentNotification(
-    reaction: ReactionEntity,
+    reactionEntity: ReactionEntity,
     commentId: string,
     action: 'create' | 'delete',
     actor: UserDto
@@ -156,7 +156,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
           (video) => new VideoDto(video.toObject())
         ),
       },
-      comment: await this._getCommentPayload(reaction, commentEntity),
+      comment: await this._getCommentPayload(reactionEntity, commentEntity),
       createdAt: contentEntity.get('createdAt'),
       updatedAt: contentEntity.get('updatedAt'),
     };
@@ -173,15 +173,15 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
             ? TypeActivity.CHILD_COMMENT
             : TypeActivity.COMMENT,
           ignore: [],
-          createdAt: reaction.get('createdAt'),
-          updatedAt: reaction.get('createdAt'),
+          createdAt: reactionEntity.get('createdAt'),
+          updatedAt: reactionEntity.get('createdAt'),
         },
       },
     });
   }
 
   private async _getCommentPayload(
-    reaction: ReactionEntity,
+    reactionEntity: ReactionEntity,
     commentEntity: CommentEntity
   ): Promise<any> {
     const userIds = [commentEntity.get('createdBy')];
@@ -200,6 +200,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
         users.filter((user) => commentEntity.get('mentions').includes(user.id))
       );
     }
+
+    const reaction = await this._reactionBinding.binding(reactionEntity);
 
     let comment: any;
 
