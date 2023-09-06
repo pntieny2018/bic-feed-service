@@ -43,15 +43,19 @@ export class SearchContentsHandler
       tags,
       groupId,
       contentTypes,
+      isIncludedInnerGroups = true,
       limit,
       after,
     } = query.payload;
 
     let groupIds: string[] = authUser.groups;
-
     if (groupId) {
-      const group = await this._groupAppService.findOne(groupId);
-      groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+      if (isIncludedInnerGroups) {
+        const group = await this._groupAppService.findOne(groupId);
+        groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+      } else {
+        groupIds = [groupId];
+      }
     }
 
     const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(
