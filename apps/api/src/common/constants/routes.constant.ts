@@ -8,6 +8,10 @@ export const ROUTES = {
       PATH: '/tags',
       VERSIONS: AppHelper.getVersionsSupported(),
     },
+    SEARCH_TAGS: {
+      PATH: '/tags/search',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
     CREATE_TAG: {
       PATH: '/tags',
       VERSIONS: AppHelper.getVersionsSupported(),

@@ -1,4 +1,5 @@
 import { IQueryResult } from '@nestjs/cqrs';
+
 import { GroupDto } from '../../../v2-group/application';
 
 export class TagDto {
@@ -26,5 +27,22 @@ export class FindTagsPaginationDto implements IQueryResult {
 
   public constructor(data: Partial<FindTagsPaginationDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class GroupTagsDto {
+  public name: string;
+  public ids: string[];
+
+  public constructor(data: Partial<GroupTagsDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class SearchTagsDto {
+  public list?: GroupTagsDto[];
+
+  public constructor(list: GroupTagsDto[]) {
+    this.list = list;
   }
 }

@@ -16,6 +16,9 @@ import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
 import { UserModuleV2 } from '../v2-user/user.module';
 
+import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
+import { ContentDomainService } from './domain/domain-service/content.domain-service';
+import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
 import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
 import { PostConsumer } from './driving-apdater/consumer/post.consumer';
 import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
@@ -91,6 +94,16 @@ import { quizProvider } from './provider/quiz.provider';
     ...quizProvider,
     QuizProcessor,
   ],
-  exports: [...quizProvider],
+  exports: [
+    ...quizProvider,
+    {
+      provide: CONTENT_BINDING_TOKEN,
+      useClass: ContentBinding,
+    },
+    {
+      provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+      useClass: ContentDomainService,
+    },
+  ],
 })
 export class PostModuleV2 {}

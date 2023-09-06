@@ -55,8 +55,10 @@ import {
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
 } from '../application/query/content';
+import { SearchContentsHandler } from '../application/query/content/search-contents';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
+import { SearchTagsHandler } from '../application/query/tag/search-tags';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
@@ -192,6 +194,8 @@ export const postProvider = [
   FindDraftContentsHandler,
   GetScheduleArticleHandler,
   GetMenuSettingsHandler,
+  SearchContentsHandler,
+  SearchTagsHandler,
 
   /** Event Handler */
   ArticleDeletedEventHandler,

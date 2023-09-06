@@ -90,7 +90,7 @@ export class LibTagRepository implements ILibTagRepository {
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagModel[]> {
-    const { groupIds, name, ids } = input;
+    const { groupIds, name, ids, keyword } = input;
     const condition: any = {};
     if (ids) {
       condition.id = ids;
@@ -100,6 +100,11 @@ export class LibTagRepository implements ILibTagRepository {
     }
     if (name) {
       condition.name = name.trim().toLowerCase();
+    }
+    if (keyword) {
+      condition.name = {
+        [Op.iLike]: `%${keyword}%`,
+      };
     }
     return this._tagModel.findAll({
       where: condition,

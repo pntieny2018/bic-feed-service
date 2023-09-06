@@ -1,11 +1,13 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { PageDto } from '../../common/dto';
-import { SearchPostsDto } from './dto/requests';
-import { SearchService } from './search.service';
-import { UserDto } from '../v2-user/application';
 import { AuthUser } from '../../common/decorators';
+import { PageDto } from '../../common/dto';
+import { SearchPostsDto } from '../post/dto/requests';
+import { UserDto } from '../v2-user/application';
+
+import { SearchAppService } from './application/search.app-service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -14,7 +16,7 @@ import { AuthUser } from '../../common/decorators';
   path: 'posts',
 })
 export class SearchController {
-  public constructor(private _postAppService: SearchService) {}
+  public constructor(private _searchAppService: SearchAppService) {}
 
   @ApiOperation({ summary: 'Search posts' })
   @Get('/')
@@ -22,6 +24,6 @@ export class SearchController {
     @AuthUser() user: UserDto,
     @Query() searchPostsDto: SearchPostsDto
   ): Promise<PageDto<any>> {
-    return this._postAppService.searchPosts(user, searchPostsDto);
+    return this._searchAppService.searchPosts(user, searchPostsDto);
   }
 }
