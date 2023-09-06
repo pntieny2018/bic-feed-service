@@ -1,67 +1,35 @@
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { Sequelize } from 'sequelize';
-import { ILinkPreviewRepository } from '../../domain/repositoty-interface';
-import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
-import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import {
-  ILinkPreviewFactory,
-  LINK_PREVIEW_FACTORY_TOKEN,
-} from '../../domain/factory/interface/link-preview.factory.interface';
+  ILibLinkPreviewRepository,
+  LIB_LINK_PREVIEW_REPOSITORY_TOKEN,
+} from '@libs/database/postgres/repository/interface';
 import { Inject } from '@nestjs/common';
 
-export class LinkPreviewRepository implements ILinkPreviewRepository {
-  @Inject(LINK_PREVIEW_FACTORY_TOKEN)
-  private readonly _linkPreviewFactory: ILinkPreviewFactory;
-  @InjectModel(LinkPreviewModel)
-  private readonly _linkPreviewModel: typeof LinkPreviewModel;
+import { LinkPreviewEntity } from '../../domain/model/link-preview';
+import { ILinkPreviewRepository } from '../../domain/repositoty-interface';
+import { LinkPreviewMapper } from '../mapper/link-preview.mapper';
 
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
+export class LinkPreviewRepository implements ILinkPreviewRepository {
+  public constructor(
+    @Inject(LIB_LINK_PREVIEW_REPOSITORY_TOKEN)
+    private readonly _libLinkPreviewRepository: ILibLinkPreviewRepository,
+    private readonly _linkPreviewMapper: LinkPreviewMapper
+  ) {}
 
   public async create(linkPreviewEntity: LinkPreviewEntity): Promise<void> {
-    await this._linkPreviewModel.create({
-      id: linkPreviewEntity.get('id'),
-      url: linkPreviewEntity.get('url'),
-      title: linkPreviewEntity.get('title'),
-      description: linkPreviewEntity.get('description'),
-      domain: linkPreviewEntity.get('domain'),
-      image: linkPreviewEntity.get('image'),
-      createdAt: linkPreviewEntity.get('createdAt'),
-      updatedAt: linkPreviewEntity.get('updatedAt'),
-    });
+    return this._libLinkPreviewRepository.create(
+      this._linkPreviewMapper.toPersistence(linkPreviewEntity)
+    );
   }
 
   public async update(linkPreviewEntity: LinkPreviewEntity): Promise<void> {
-    await this._linkPreviewModel.update(
-      {
-        id: linkPreviewEntity.get('id'),
-        url: linkPreviewEntity.get('url'),
-        title: linkPreviewEntity.get('title'),
-        description: linkPreviewEntity.get('description'),
-        domain: linkPreviewEntity.get('domain'),
-        image: linkPreviewEntity.get('image'),
-        createdAt: linkPreviewEntity.get('createdAt'),
-        updatedAt: linkPreviewEntity.get('updatedAt'),
-      },
-      {
-        where: {
-          id: linkPreviewEntity.get('id'),
-        },
-      }
+    return this._libLinkPreviewRepository.update(
+      linkPreviewEntity.get('id'),
+      this._linkPreviewMapper.toPersistence(linkPreviewEntity)
     );
   }
 
   public async findByUrl(url: string): Promise<LinkPreviewEntity> {
-    const linkPreview = await this._linkPreviewModel.findOne({
-      where: {
-        url,
-      },
-    });
-
-    return this._modelToEntity(linkPreview);
-  }
-
-  private _modelToEntity(model: LinkPreviewModel): LinkPreviewEntity {
-    if (model === null) return null;
-    return this._linkPreviewFactory.reconstitute(model.toJSON());
+    const linkPreviewModel = await this._libLinkPreviewRepository.findByUrl(url);
+    return this._linkPreviewMapper.toDomain(linkPreviewModel);
   }
 }
