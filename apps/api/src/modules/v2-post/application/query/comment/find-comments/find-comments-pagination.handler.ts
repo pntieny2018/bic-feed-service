@@ -5,7 +5,10 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../../../../domain/query-interface';
+import {
+  COMMENT_REPOSITORY_TOKEN,
+  ICommentRepository,
+} from '../../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
 import {
   COMMENT_BINDING_TOKEN,
@@ -20,8 +23,8 @@ export class FindCommentsPaginationHandler
   implements IQueryHandler<FindCommentsPaginationQuery, FindCommentsPaginationDto>
 {
   public constructor(
-    @Inject(COMMENT_QUERY_TOKEN)
-    private readonly _commentQuery: ICommentQuery,
+    @Inject(COMMENT_REPOSITORY_TOKEN)
+    private readonly _commentRepository: ICommentRepository,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -37,7 +40,7 @@ export class FindCommentsPaginationHandler
 
     this._contentValidator.checkCanReadContent(post, authUser);
 
-    const { rows, meta } = await this._commentQuery.getPagination({
+    const { rows, meta } = await this._commentRepository.getPagination({
       ...query.payload,
       authUser: authUser.id,
     });

@@ -10,9 +10,9 @@ import {
 } from '../../../../v2-user/application';
 import { CommentEntity } from '../../../domain/model/comment';
 import {
-  IReactionQuery,
-  REACTION_QUERY_TOKEN,
-} from '../../../domain/query-interface/reaction.query.interface';
+  IReactionRepository,
+  REACTION_REPOSITORY_TOKEN,
+} from '../../../domain/repositoty-interface';
 import { CommentResponseDto } from '../../../driving-apdater/dto/response';
 import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
 
@@ -23,8 +23,8 @@ export class CommentBinding implements ICommentBinding {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(REACTION_QUERY_TOKEN)
-    private readonly _reactionQuery: IReactionQuery
+    @Inject(REACTION_REPOSITORY_TOKEN)
+    private readonly _reactionRepository: IReactionRepository
   ) {}
   public async commentsBinding(
     rows: CommentEntity[],
@@ -46,7 +46,7 @@ export class CommentBinding implements ICommentBinding {
       })
     );
 
-    const reactionsCount = await this._reactionQuery.getAndCountReactionByComments(
+    const reactionsCount = await this._reactionRepository.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
     );
 

@@ -1,5 +1,5 @@
-import { PaginationProps } from '../../../../../common/types/pagination-props.type';
-import { PaginationResult } from '../../../../../common/types/pagination-result.type';
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
+
 import { CategoryEntity } from '../../model/category';
 
 export type GetPaginationCategoryProps = PaginationProps & {
