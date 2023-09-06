@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import {
@@ -9,8 +10,6 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-
-import { PostType } from '../../../data-type';
 
 export class SearchContentsRequestDto {
   @ApiPropertyOptional({
@@ -103,9 +102,9 @@ export class SearchContentsRequestDto {
   @IsOptional()
   @IsNotEmpty()
   @IsArray()
-  @IsEnum(PostType, { each: true })
+  @IsEnum(CONTENT_TYPE, { each: true })
   @Expose({
     name: 'content_types',
   })
-  public contentTypes?: PostType[];
+  public contentTypes?: CONTENT_TYPE[];
 }

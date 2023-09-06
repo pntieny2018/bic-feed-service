@@ -9,6 +9,10 @@ import { PostGroupAttributes } from '@libs/database/postgres/model/post-group.mo
 import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.model';
 import { PostTagAttributes } from '@libs/database/postgres/model/post-tag.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import {
+  ReportContentDetailAttribute,
+  ReportContentDetailModel,
+} from '@libs/database/postgres/model/report-content-detail.model';
 import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserSeenPostAttributes } from '@libs/database/postgres/model/user-seen-post.model';
 import { BulkCreateOptions, CreateOptions, Transaction, WhereOptions } from 'sequelize';
@@ -124,6 +128,10 @@ export interface ILibContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostModel>>;
+
+  getReportedContents(
+    whereOptions: WhereOptions<ReportContentDetailAttribute>
+  ): Promise<ReportContentDetailModel[]>;
 }
 
 export const LIB_CONTENT_REPOSITORY_TOKEN = 'LIB_CONTENT_REPOSITORY_TOKEN';

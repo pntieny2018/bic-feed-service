@@ -21,7 +21,10 @@ import {
 import { PostTagAttributes, PostTagModel } from '@libs/database/postgres/model/post-tag.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { QuizModel } from '@libs/database/postgres/model/quiz.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
+import {
+  ReportContentDetailAttribute,
+  ReportContentDetailModel,
+} from '@libs/database/postgres/model/report-content-detail.model';
 import {
   UserMarkedImportantPostAttributes,
   UserMarkReadPostModel,
@@ -66,7 +69,9 @@ export class LibContentRepository implements ILibContentRepository {
     @InjectModel(UserSeenPostModel)
     private readonly _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(UserMarkReadPostModel)
-    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel,
+    @InjectModel(ReportContentDetailModel)
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   public async bulkCreatePostGroup(
@@ -211,6 +216,14 @@ export class LibContentRepository implements ILibContentRepository {
       rows,
       meta,
     };
+  }
+
+  public async getReportedContents(
+    whereOptions: WhereOptions<ReportContentDetailAttribute>
+  ): Promise<ReportContentDetailModel[]> {
+    return this._reportContentDetailModel.findAll({
+      where: whereOptions,
+    });
   }
 
   protected buildFindOptions(options: FindContentProps): FindOptions<PostAttributes> {
