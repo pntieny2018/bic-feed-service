@@ -85,7 +85,6 @@ export class UserService implements IUserService {
           params: {
             ids: notFoundUserIds,
           },
-          paramsSerializer: (params) => qs.stringify(params),
         });
 
         if (response.status === HttpStatus.OK) {
@@ -149,7 +148,6 @@ export class UserService implements IUserService {
             actorId: authUserId,
           }),
         },
-        paramsSerializer: (params) => qs.stringify(params),
       });
 
       if (response.status === HttpStatus.OK) {
