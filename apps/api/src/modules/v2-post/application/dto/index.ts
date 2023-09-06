@@ -12,3 +12,4 @@ export * from './series.dto';
 export * from './comment.dto';
 export * from './article.dto';
 export * from './quiz.dto';
+export * from './content-hightlight.dto';

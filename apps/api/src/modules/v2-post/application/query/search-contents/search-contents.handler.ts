@@ -17,6 +17,7 @@ import {
 } from '../../binding/binding-post/content.interface';
 import { createCursor } from '../../../../../common/dto/cusor-pagination';
 import { SearchService } from '../../../../search/search.service';
+import { ArticleDto, ContentHighlightDto, PostDto, SeriesDto } from '../../dto';
 
 @QueryHandler(SearchContentsQuery)
 export class SearchContentsHandler
@@ -85,11 +86,54 @@ export class SearchContentsHandler
       authUser,
     });
 
-    const result = await this._contentBinding.contentsBinding(contentEntities, authUser);
+    let result = await this._contentBinding.contentsBinding(contentEntities, authUser);
+
+    const sourceHasHightlight = source.filter((item) => item?.highlight);
+
+    if (keyword && sourceHasHightlight.length) {
+      const highlightMapper = this._buildHighlightMapper(sourceHasHightlight);
+      result = this._bindingHighlight(result, highlightMapper);
+    }
 
     return new SearchContentsDto(result, {
+      total,
       hasNextPage: total > source.length,
       endCursor: cursor ? createCursor(cursor) : '',
     });
+  }
+
+  private _buildHighlightMapper(source: IPostElasticsearch[]): Map<string, ContentHighlightDto> {
+    const mapper = new Map<string, ContentHighlightDto>();
+
+    source.forEach((item) => {
+      const contentHighlight = new ContentHighlightDto();
+      if (item.highlight['content']?.length) {
+        contentHighlight.highlight = item.highlight['content'][0];
+      }
+      if (item.highlight['title']?.length) {
+        contentHighlight.titleHighlight = item.highlight['title'][0];
+      }
+      if (item.highlight['summary']?.length) {
+        contentHighlight.summaryHighlight = item.highlight['summary'][0];
+      }
+      mapper.set(item.id, contentHighlight);
+    });
+
+    return mapper;
+  }
+
+  private _bindingHighlight(
+    contents: (ArticleDto | PostDto | SeriesDto)[],
+    highlightMapper: Map<string, ContentHighlightDto>
+  ): (ArticleDto | PostDto | SeriesDto)[] {
+    contents.forEach((content) => {
+      if (highlightMapper.has(content.id)) {
+        const value = highlightMapper.get(content.id);
+        content.highlight = value?.highlight;
+        content.titleHighlight = value?.titleHighlight;
+        content.summaryHighlight = value?.summaryHighlight;
+      }
+    });
+    return contents;
   }
 }

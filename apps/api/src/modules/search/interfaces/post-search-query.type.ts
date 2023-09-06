@@ -26,14 +26,14 @@ export type IPostSearchQuery = {
   islimitSeries?: boolean;
 
   shouldHighligh?: boolean;
-
-  searchAfter?: string;
 };
 
 export type ISearchPaginationQuery = {
   from?: number;
 
   size?: number;
+
+  searchAfter?: string;
 };
 
 export type IPaginationSearchResult<T> = {
