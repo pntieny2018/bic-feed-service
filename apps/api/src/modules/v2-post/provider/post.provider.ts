@@ -64,6 +64,7 @@ import { FindDraftContentsHandler } from '../application/query/find-draft-conten
 import { ScheduleArticleHandler } from '../application/command/schedule-article/schedule-article.handler';
 import { ProcessArticleScheduledHandler } from '../application/command/process-article-scheduled/process-article-scheduled.handler';
 import { SearchContentsHandler } from '../application/query/search-contents/search-contents.handler';
+import { SearchTagsHandler } from '../application/query/search-tags/search-tags.handler';
 
 export const postProvider = [
   {
@@ -157,4 +158,5 @@ export const postProvider = [
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
   SearchContentsHandler,
+  SearchTagsHandler,
 ];

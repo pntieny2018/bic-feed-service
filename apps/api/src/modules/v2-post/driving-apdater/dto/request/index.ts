@@ -25,3 +25,4 @@ export * from './update-quiz-answer.request.dto';
 export * from './add-quiz-question.request.dto';
 export * from './update-quiz-question.request.dto';
 export * from './search-contents.request.dto';
+export * from './search-tag.request.dto';

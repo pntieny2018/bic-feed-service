@@ -1,6 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Sequelize } from 'sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { TagModel } from '../../../../database/models/tag.model';
 import { TagEntity } from '../../domain/model/tag';
@@ -81,7 +81,7 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
-    const { groupIds, name, ids } = input;
+    const { groupIds, name, ids, keyword } = input;
     const condition: any = {};
     if (ids) {
       condition.id = ids;
@@ -91,6 +91,12 @@ export class TagRepository implements ITagRepository {
     }
     if (name) {
       condition.name = name.trim().toLowerCase();
+    }
+
+    if (keyword) {
+      condition.name = {
+        [Op.like]: `%${keyword}%`,
+      };
     }
     const enties = await this._tagModel.findAll({
       where: condition,

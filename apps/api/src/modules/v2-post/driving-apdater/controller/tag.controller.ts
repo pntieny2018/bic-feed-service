@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ClassTransformer } from 'class-transformer';
 import { ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { AuthUser } from '../../../auth';
@@ -33,11 +32,18 @@ import {
   TagNoUpdatePermissionException,
   TagUsedException,
 } from '../../domain/exception';
-import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
+import {
+  CreateTagRequestDto,
+  GetTagRequestDto,
+  SearchTagRequestDto,
+  UpdateTagRequestDto,
+} from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
 import { TagDto } from '../../application/dto';
 import { ROUTES } from '../../../../common/constants/routes.constant';
+import { SearchTagsDto } from '../../application/query/search-tags/search-tags.dto';
+import { SearchTagsQuery } from '../../application/query/search-tags/search-tags.query';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -47,7 +53,21 @@ export class TagController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
-  private _classTransformer = new ClassTransformer();
+
+  @ApiOperation({ summary: 'Search and group tags' })
+  @ApiOkResponse({
+    type: SearchTagsDto,
+    description: 'Search and group tags successfully',
+  })
+  @Get(ROUTES.TAG.SEARCH_TAGS.PATH)
+  public async searchAndGroup(
+    @AuthUser() _user: UserDto,
+    @Query() searchTagDto: SearchTagRequestDto
+  ): Promise<SearchTagsDto> {
+    const { keyword } = searchTagDto;
+    return this._queryBus.execute(new SearchTagsQuery({ keyword }));
+  }
+
   @ApiOperation({ summary: 'Get tags' })
   @Get(ROUTES.TAG.GET_TAGS.PATH)
   public async get(
