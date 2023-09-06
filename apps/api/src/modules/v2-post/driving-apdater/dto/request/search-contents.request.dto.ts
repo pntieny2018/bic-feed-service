@@ -1,6 +1,6 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -107,4 +107,18 @@ export class SearchContentsRequestDto {
     name: 'content_types',
   })
   public contentTypes?: CONTENT_TYPE[];
+
+  @ApiPropertyOptional({
+    type: 'boolean',
+    required: false,
+    default: true,
+    name: 'is_included_inner_groups',
+  })
+  @IsOptional()
+  @IsNotEmpty()
+  @Transform(({ value }) => value && value === 'true')
+  @Expose({
+    name: 'is_included_inner_groups',
+  })
+  public isIncludedInnerGroups: boolean;
 }

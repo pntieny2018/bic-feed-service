@@ -25,6 +25,8 @@ type Props = {
   limit?: number;
 
   after?: string;
+
+  isIncludedInnerGroups?: boolean;
 };
 
 export class SearchContentsQuery implements IQuery {
