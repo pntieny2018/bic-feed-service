@@ -94,14 +94,17 @@ export class UserService implements IUserService {
     } catch (e) {
       this._logger.debug(e);
     }
-
-    return users.map((user) => {
-      const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
-        ...badge,
-        community: badge.community || null,
-      }));
-      return { ...user, showingBadges: showingBadgesWithCommunity };
+    const result: UserDto[] = [];
+    users.forEach((user) => {
+      if (user) {
+        const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
+          ...badge,
+          community: badge.community || null,
+        }));
+        result.push({ ...user, showingBadges: showingBadgesWithCommunity });
+      }
     });
+    return result;
   }
 
   public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
