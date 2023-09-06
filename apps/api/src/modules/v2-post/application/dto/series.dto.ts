@@ -54,6 +54,12 @@ export class SeriesDto {
 
   public createdBy: string;
 
+  public highlight?: string;
+
+  public titleHighlight?: string;
+
+  public summaryHighlight?: string;
+
   public constructor(data: Partial<SeriesDto>) {
     Object.assign(this, data);
   }

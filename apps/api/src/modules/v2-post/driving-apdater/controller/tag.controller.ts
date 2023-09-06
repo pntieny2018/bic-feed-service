@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ClassTransformer } from 'class-transformer';
 
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
@@ -23,9 +22,15 @@ import {
   DeleteTagCommand,
   UpdateTagCommand,
 } from '../../application/command/tag';
-import { FindTagsPaginationDto, TagDto } from '../../application/dto';
+import { FindTagsPaginationDto, SearchTagsDto, TagDto } from '../../application/dto';
 import { FindTagsPaginationQuery } from '../../application/query/tag';
-import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
+import { SearchTagsQuery } from '../../application/query/tag/search-tags';
+import {
+  CreateTagRequestDto,
+  GetTagRequestDto,
+  SearchTagRequestDto,
+  UpdateTagRequestDto,
+} from '../dto/request';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -35,7 +40,21 @@ export class TagController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
-  private _classTransformer = new ClassTransformer();
+
+  @ApiOperation({ summary: 'Search and group tags' })
+  @ApiOkResponse({
+    type: SearchTagsDto,
+    description: 'Search and group tags successfully',
+  })
+  @Get(ROUTES.TAG.SEARCH_TAGS.PATH)
+  public async searchAndGroup(
+    @AuthUser() _user: UserDto,
+    @Query() searchTagDto: SearchTagRequestDto
+  ): Promise<SearchTagsDto> {
+    const { keyword } = searchTagDto;
+    return this._queryBus.execute(new SearchTagsQuery({ keyword }));
+  }
+
   @ApiOperation({ summary: 'Get tags' })
   @Get(ROUTES.TAG.GET_TAGS.PATH)
   public async get(

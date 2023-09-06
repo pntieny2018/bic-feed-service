@@ -101,4 +101,8 @@ export class TagDomainService implements ITagDomainService {
       throw new DatabaseException();
     }
   }
+
+  public async findTagsByKeyword(keyword: string): Promise<TagEntity[]> {
+    return this._tagRepository.findAll({ keyword });
+  }
 }
