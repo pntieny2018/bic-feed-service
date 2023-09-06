@@ -5,7 +5,7 @@ import { UserDto } from '../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 import { SearchService } from '../search.service';
 import { IPostElasticsearch } from '../interfaces';
-import { ArticleDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
+import { ArticleDto, ContentHighlightDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -95,12 +95,54 @@ export class SearchAppService {
       authUser,
     });
 
-    const result = await this._contentBinding.contentsBinding(contentEntities, authUser);
+    let result = await this._contentBinding.contentsBinding(contentEntities, authUser);
+
+    const sourceHasHightlight = source.filter((item) => item?.highlight);
+
+    if (contentSearch && sourceHasHightlight.length) {
+      const highlightMapper = this._buildHighlightMapper(sourceHasHightlight);
+      result = this._bindingHighlight(result, highlightMapper);
+    }
 
     return new PageDto<ArticleDto | PostDto | SeriesDto>(result, {
       total,
       limit,
       offset,
     });
+  }
+
+  private _buildHighlightMapper(source: IPostElasticsearch[]): Map<string, ContentHighlightDto> {
+    const mapper = new Map<string, ContentHighlightDto>();
+
+    source.forEach((item) => {
+      const contentHighlight = new ContentHighlightDto();
+      if (item.highlight['content']?.length) {
+        contentHighlight.highlight = item.highlight['content'][0];
+      }
+      if (item.highlight['title']?.length) {
+        contentHighlight.titleHighlight = item.highlight['title'][0];
+      }
+      if (item.highlight['summary']?.length) {
+        contentHighlight.summaryHighlight = item.highlight['summary'][0];
+      }
+      mapper.set(item.id, contentHighlight);
+    });
+
+    return mapper;
+  }
+
+  private _bindingHighlight(
+    contents: (ArticleDto | PostDto | SeriesDto)[],
+    highlightMapper: Map<string, ContentHighlightDto>
+  ): (ArticleDto | PostDto | SeriesDto)[] {
+    contents.forEach((content) => {
+      if (highlightMapper.has(content.id)) {
+        const value = highlightMapper.get(content.id);
+        content.highlight = value?.highlight;
+        content.titleHighlight = value?.titleHighlight;
+        content.summaryHighlight = value?.summaryHighlight;
+      }
+    });
+    return contents;
   }
 }
