@@ -11,6 +11,7 @@ export type FindAllTagsProps = {
   ids?: string[];
   groupIds?: string[];
   name?: string;
+  keyword?: string;
 };
 
 export type GetPaginationTagProps = PaginationProps & {

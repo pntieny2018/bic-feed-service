@@ -1,39 +1,43 @@
-import { uniq } from 'lodash';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ClassTransformer } from 'class-transformer';
+import { uniq } from 'lodash';
+
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { ExternalService } from '../../../app/external.service';
 import { PageDto } from '../../../common/dto';
+import { PostStatus } from '../../../database/models/post.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../../events/article';
 import { AuthorityService } from '../../authority';
-import { PostService } from '../../post/post.service';
-import { SearchService } from '../../search/search.service';
-import { ArticleService } from '../article.service';
-import { SearchArticlesDto } from '../dto/requests';
-import { GetArticleDto } from '../dto/requests/get-article.dto';
-import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
-import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
-import { UpdateArticleDto } from '../dto/requests/update-article.dto';
-import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
-import { ArticleResponseDto } from '../dto/responses/article.response.dto';
-import { TagService } from '../../tag/tag.service';
-import { PostStatus } from '../../../database/models/post.model';
-import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
-import { ClassTransformer } from 'class-transformer';
-import { PostHelper } from '../../post/post.helper';
-import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
-import { ExternalService } from '../../../app/external.service';
+import { PostHelper } from '../../post/post.helper';
+import { PostService } from '../../post/post.service';
 import { ReactionService } from '../../reaction';
+import { TargetType } from '../../report-content/contstants';
+import { IPostElasticsearch } from '../../search/interfaces';
+import { SearchService } from '../../search/search.service';
+import { TagService } from '../../tag/tag.service';
 import { RULES } from '../../v2-post/constant';
+import { PostType } from '../../v2-post/data-type';
 import {
   ArticleInvalidParameterException,
   ArticleLimitAttachedSeriesException,
   ContentNotFoundException,
 } from '../../v2-post/domain/exception';
+import { UserDto } from '../../v2-user/application';
+import { ArticleService } from '../article.service';
+import { SearchArticlesDto } from '../dto/requests';
+import { GetArticleDto } from '../dto/requests/get-article.dto';
+import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
+import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
+import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
+import { UpdateArticleDto } from '../dto/requests/update-article.dto';
+import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
+import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 
 @Injectable()
 export class ArticleAppService {
@@ -44,9 +48,8 @@ export class ArticleAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
-    private _postSearchService: SearchService,
+    private _searchService: SearchService,
     private _tagService: TagService,
-    protected readonly authorityService: AuthorityService,
     private _externalService: ExternalService
   ) {}
 
@@ -131,7 +134,9 @@ export class ArticleAppService {
   ): Promise<ArticleResponseDto> {
     const { audience, series, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (!articleBefore) throw new ContentNotFoundException();
+    if (!articleBefore) {
+      throw new ContentNotFoundException();
+    }
 
     if (
       updateArticleDto.coverMedia?.id &&
@@ -161,8 +166,12 @@ export class ArticleAppService {
       articleBefore.status === PostStatus.PUBLISHED ||
       articleBefore.status === PostStatus.WAITING_SCHEDULE
     ) {
-      if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
-      if (coverMedia === null) throw new BadRequestException('Cover is required');
+      if (audience.groupIds.length === 0) {
+        throw new BadRequestException('Audience is required');
+      }
+      if (coverMedia === null) {
+        throw new BadRequestException('Cover is required');
+      }
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
       const setting = articleBefore.setting;
@@ -176,7 +185,9 @@ export class ArticleAppService {
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
         await this._authorityService.checkCanCreatePost(user, newAudienceIds);
-        if (isEnableSetting) await this._authorityService.checkCanEditSetting(user, newAudienceIds);
+        if (isEnableSetting) {
+          await this._authorityService.checkCanEditSetting(user, newAudienceIds);
+        }
       }
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
@@ -205,8 +216,12 @@ export class ArticleAppService {
     await this._authorityService.checkPostOwner(article, user.id);
 
     const { audience } = article;
-    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
-    if (article.coverMedia === null) throw new BadRequestException('Cover is required');
+    if (audience.groups.length === 0) {
+      throw new BadRequestException('Audience is required');
+    }
+    if (article.coverMedia === null) {
+      throw new BadRequestException('Cover is required');
+    }
     const groupIds = audience.groups.map((group) => group.id);
 
     await this._authorityService.checkCanCreatePost(user, groupIds);
@@ -237,8 +252,12 @@ export class ArticleAppService {
       new GetArticleDto(),
       !isSchedule
     );
-    if (!article) throw new ContentNotFoundException();
-    if (article.status === PostStatus.PUBLISHED) return article;
+    if (!article) {
+      throw new ContentNotFoundException();
+    }
+    if (article.status === PostStatus.PUBLISHED) {
+      return article;
+    }
     await this._preCheck(article, user);
 
     article.status = PostStatus.PUBLISHED;
@@ -263,8 +282,12 @@ export class ArticleAppService {
     scheduleArticleDto: ScheduleArticleDto
   ): Promise<ArticleResponseDto> {
     const article = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (!article) throw new ContentNotFoundException();
-    if (article.status === PostStatus.PUBLISHED) return article;
+    if (!article) {
+      throw new ContentNotFoundException();
+    }
+    if (article.status === PostStatus.PUBLISHED) {
+      return article;
+    }
     await this._preCheck(article, user);
     await this._articleService.schedule(articleId, scheduleArticleDto);
     article.status = PostStatus.WAITING_SCHEDULE;
@@ -301,11 +324,76 @@ export class ArticleAppService {
     return false;
   }
 
+  /*
+    Search articles in series detail
+  */
   public async searchArticles(
     user: UserDto,
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
-    return this._postSearchService.searchArticles(user, searchDto);
+    const { limit, offset, groupIds, categoryIds, contentSearch, limitSeries } = searchDto;
+    if (!user || user.groups.length === 0) {
+      return new PageDto<ArticleSearchResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+    if (!groupIds && !categoryIds) {
+      return new PageDto<ArticleSearchResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
+
+    let filterGroupIds = user.groups;
+    if (groupIds) {
+      filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
+    }
+    const notIncludeIds = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.ARTICLE,
+    ]);
+
+    const response = await this._searchService.searchContents<IPostElasticsearch>({
+      keyword: contentSearch,
+      contentTypes: [PostType.ARTICLE],
+      groupIds: filterGroupIds,
+      excludeByIds: notIncludeIds,
+      ...(categoryIds && { topics: categoryIds }),
+      from: offset,
+      size: limit,
+      islimitSeries: limitSeries,
+    });
+
+    const { source, total } = response;
+    const articles = source.map((item) => {
+      const articleItem = {
+        id: item.id,
+        groupIds: item.groupIds,
+        summary: item.summary,
+        coverMedia: item.coverMedia,
+        createdBy: item.createdBy,
+        categories: item.categories,
+        title: item.title || null,
+      };
+      return articleItem;
+    });
+
+    await this._postBindingService.bindActor(articles);
+    await this._postBindingService.bindAudience(articles, {
+      shouldHideSecretAudienceCanNotAccess: true,
+    });
+
+    const result = this._classTransformer.plainToInstance(ArticleSearchResponseDto, articles, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleSearchResponseDto>(result, {
+      total,
+      limit,
+      offset,
+    });
   }
 
   public async isSeriesAndTagsValid(

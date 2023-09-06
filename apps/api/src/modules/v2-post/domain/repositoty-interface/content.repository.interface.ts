@@ -6,6 +6,7 @@ import {
 } from '@libs/database/postgres/repository/interface';
 
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { TargetType } from '../../../report-content/contstants';
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
 export interface IContentRepository {
@@ -41,6 +42,7 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getReportedContentIdsByUser(reportUser: string, target: TargetType[]): Promise<string[]>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

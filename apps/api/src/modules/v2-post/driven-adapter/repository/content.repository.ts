@@ -21,6 +21,8 @@ import { PostReactionModel } from '../../../../database/models/post-reaction.mod
 import { PostSeriesModel } from '../../../../database/models/post-series.model';
 import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
 import { QuizModel } from '../../../../database/models/quiz.model';
+import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
+import { TargetType } from '../../../report-content/contstants';
 import { ContentNotFoundException } from '../../domain/exception';
 import {
   ARTICLE_FACTORY_TOKEN,
@@ -61,6 +63,8 @@ export class ContentRepository implements IContentRepository {
     private readonly _seriesFactory: ISeriesFactory,
     @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
+    @InjectModel(ReportContentDetailModel)
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel,
     @Inject(LIB_CONTENT_REPOSITORY_TOKEN)
     private readonly _libContentRepository: ILibContentRepository,
     private readonly _contentMapper: ContentMapper
@@ -775,5 +779,28 @@ export class ContentRepository implements IContentRepository {
       rows: rows.map((row) => this._contentMapper.toDomain(row)),
       meta,
     };
+  }
+
+  public async getReportedContentIdsByUser(
+    createdBy: string,
+    target: TargetType[]
+  ): Promise<string[]> {
+    if (!createdBy) {
+      return [];
+    }
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy,
+          targetType: target,
+        },
+      ],
+    };
+
+    const rows = await this._reportContentDetailModel.findAll({
+      where: condition,
+    });
+
+    return rows.map((row) => row.targetId);
   }
 }

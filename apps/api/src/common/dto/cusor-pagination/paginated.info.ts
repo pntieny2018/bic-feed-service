@@ -1,21 +1,25 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IPaginatedInfo } from './paginated.interface';
 import { IsOptional } from 'class-validator';
 
 export class PaginatedInfo implements IPaginatedInfo {
-  @ApiProperty()
+  @IsOptional()
+  @ApiPropertyOptional()
+  public total?: number;
+
+  @ApiPropertyOptional()
   @IsOptional()
   public startCursor?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   public endCursor?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   public hasPreviousPage?: boolean = false;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   public hasNextPage?: boolean = false;
 }
