@@ -1,6 +1,5 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
-import { QuizModel } from '../../database/models/quiz.model';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ClassTransformer } from 'class-transformer';
@@ -17,8 +16,6 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { PostStatus, PostType, QuizStatus } from '../v2-post/data-type';
-import { QuizDto } from '../v2-post/application/dto';
 
 @Injectable()
 export class PostBindingService {
@@ -39,8 +36,6 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    @InjectModel(QuizModel)
-    protected quizModel: typeof QuizModel,
     @Inject(USER_APPLICATION_TOKEN)
     protected userAppService: IUserApplicationService,
     @Inject(GROUP_APPLICATION_TOKEN)
@@ -61,19 +56,16 @@ export class PostBindingService {
       shouldBindActor?: boolean;
       shouldBindMention?: boolean;
       shouldBindAudience?: boolean;
-      shouldBindCommnunity?: boolean;
       shouldBindReaction?: boolean;
       shouldBindAudienceReported?: boolean;
       shouldHideSecretAudienceCanNotAccess?: boolean;
-      shouldBindQuiz?: boolean;
-      shouldBindSeriesItems?: boolean;
       authUser?: UserDto;
     }
   ): Promise<PostResponseDto[]> {
     if (posts.length === 0) return [];
     const processList = [];
     if (options?.shouldBindActor) {
-      processList.push(this.bindActor(posts, options?.authUser));
+      processList.push(this.bindActor(posts));
     }
     if (options?.shouldBindMention) {
       processList.push(this.mentionService.bindToPosts(posts));
@@ -87,15 +79,8 @@ export class PostBindingService {
           shouldHideSecretAudienceCanNotAccess:
             options?.shouldHideSecretAudienceCanNotAccess ?? false,
           authUser: options?.authUser ?? null,
-          shouldBindCommnunity: options?.shouldBindCommnunity ?? false,
         })
       );
-    }
-    if (options?.shouldBindQuiz) {
-      processList.push(this.bindQuiz(posts));
-    }
-    if (options?.shouldBindSeriesItems) {
-      processList.push(this.bindSeriesItems(posts));
     }
     if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
@@ -124,7 +109,6 @@ export class PostBindingService {
     options?: {
       shouldHideSecretAudienceCanNotAccess?: boolean;
       authUser?: UserDto;
-      shouldBindCommnunity?: boolean;
     }
   ): Promise<void> {
     //get all groups in onetime
@@ -153,10 +137,6 @@ export class PostBindingService {
           return dataGroup;
         });
       post.audience = { groups: mappedGroups };
-    }
-
-    if (options && options?.shouldBindCommnunity) {
-      await this.bindCommunity(posts);
     }
   }
 
@@ -242,7 +222,7 @@ export class PostBindingService {
   /**
    * Bind Actor info to post.createdBy
    */
-  public async bindActor(posts: any[], authUser?: UserDto): Promise<void> {
+  public async bindActor(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
       userIds.push(post.createdBy);
@@ -250,10 +230,7 @@ export class PostBindingService {
         userIds.push(...post.articles.map((article) => article.createdBy));
       }
     }
-    const users = await this.userAppService.findAllAndFilterByPersonalVisibility(
-      userIds,
-      authUser?.id
-    );
+    const users = await this.userAppService.findAllByIds(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
       if (post.articles?.length) {
@@ -306,77 +283,6 @@ export class PostBindingService {
             canReact: findPost.canReact,
             canComment: findPost.canComment,
           };
-        }
-      }
-    }
-  }
-
-  public async bindQuiz(posts: any[]): Promise<void> {
-    const contentIds = posts.map((post) => post.id);
-    const rows = await this.quizModel.findAll({
-      where: {
-        postId: contentIds,
-        status: QuizStatus.PUBLISHED,
-      },
-    });
-
-    const quizzesMapper = new Map<string, Partial<QuizDto>>(
-      rows.map((quiz) => {
-        return [
-          quiz.postId,
-          new QuizDto({
-            id: quiz.id,
-            title: quiz.title,
-            description: quiz.description,
-            status: quiz.status,
-            genStatus: quiz.genStatus,
-          }),
-        ];
-      })
-    );
-
-    for (const post of posts) {
-      post.quiz = quizzesMapper.get(post.id);
-    }
-  }
-
-  public async bindSeriesItems(posts: any[]): Promise<void> {
-    const itemIds = [];
-    for (const post of posts) {
-      if (post.type === PostType.SERIES) {
-        itemIds.push(...post.items.map((item) => item.id));
-      }
-    }
-
-    if (itemIds.length) {
-      const items = await this.postModel.findAll({
-        where: { id: itemIds, status: PostStatus.PUBLISHED },
-      });
-
-      const itemsMapper = new Map<string, Partial<PostModel>>(
-        items.map((item) => {
-          return [
-            item.id,
-            {
-              id: item.id,
-              content: item.content,
-              title: item.title,
-              type: item.type,
-              summary: item.summary,
-              createdAt: item.createdAt,
-              publishedAt: item.publishedAt,
-            },
-          ];
-        })
-      );
-
-      for (const post of posts) {
-        if (post.type === PostType.SERIES) {
-          post.items = post.items
-            .sort((a, b) => {
-              return a.zindex - b.zindex;
-            })
-            .map((item) => itemsMapper.get(item.id));
         }
       }
     }
