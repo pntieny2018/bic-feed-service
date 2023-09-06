@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { IImage } from '@libs/database/postgres/model/comment.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { Injectable } from '@nestjs/common';
@@ -60,7 +60,6 @@ export class ContentMapper {
       mentions: postEntity.get('mentionUserIds' as keyof ContentAttributes) || [],
       type: postEntity.get('type') as unknown as CONTENT_TYPE,
       summary: postEntity.get('summary' as keyof ContentAttributes),
-      lang: postEntity.get('lang') as LANGUAGE,
       privacy: postEntity.get('privacy' as keyof ContentAttributes),
       tagsJson:
         postEntity
@@ -72,7 +71,6 @@ export class ContentMapper {
         ? postEntity.get('linkPreview' as keyof ContentAttributes)?.get('id')
         : null,
       videoIdProcessing: postEntity.get('videoIdProcessing' as keyof ContentAttributes),
-      cover: (postEntity.get('cover' as keyof ContentAttributes) as ImageEntity)?.get('id'),
       status: postEntity.get('status') as unknown as CONTENT_STATUS,
       publishedAt: postEntity.get('publishedAt'),
       scheduledAt: postEntity.get('scheduledAt'),
