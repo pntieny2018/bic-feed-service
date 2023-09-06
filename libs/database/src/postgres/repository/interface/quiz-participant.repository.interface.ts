@@ -47,6 +47,7 @@ export interface ILibQuizParticipantRepository {
     quizParticipant: Partial<QuizParticipantAttributes>
   ): Promise<void>;
   findQuizParticipant(findOptions: FindQuizParticipantProps): Promise<QuizParticipantModel>;
+  findAllQuizParticipants(findOptions: FindQuizParticipantProps): Promise<QuizParticipantModel[]>;
 
   bulkCreateQuizParticipantAnswers(answers: QuizParticipantAnswerAttributes[]): Promise<void>;
   updateQuizParticipantAnswer(
