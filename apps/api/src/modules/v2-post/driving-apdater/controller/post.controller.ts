@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -7,7 +8,6 @@ import { Request } from 'express';
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PostStatus } from '../../../../database/models/post.model';
-import { UserDto } from '../../../v2-user/application';
 import {
   AutoSavePostCommand,
   CreateDraftPostCommand,

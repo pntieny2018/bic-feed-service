@@ -7,11 +7,12 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { plainToClass } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 import { I18nContext } from 'nestjs-i18n';
 
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../common/constants';
+import { DomainModelException } from '../../../../../common/exceptions';
 import { CreateDraftPostCommand, PublishPostCommand } from '../../../application/command/post';
 import { CreateDraftPostDto, PostDto } from '../../../application/dto';
 import {
@@ -43,6 +44,7 @@ describe('PostController', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           t: (...args) => {},
         } as any)
     );
@@ -52,17 +54,25 @@ describe('PostController', () => {
     jest.clearAllMocks();
   });
 
-  describe.skip('Create', () => {
+  describe('Create draft post', () => {
     const createPostRequestDto = new CreateDraftPostRequestDto({
       audience: {
         groupIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
       },
     });
 
-    it('Should create post successfully', async () => {
-      const commandExecute = jest.spyOn(command, 'execute').mockReturnThis();
-      await postController.createDraft(userMock, createPostRequestDto);
-      expect(1).toEqual(1);
+    it('Should create draft post successfully', async () => {
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(postMock);
+      const result = await postController.createDraft(userMock, createPostRequestDto);
+      expect(commandExecute).toBeCalledWith(
+        new CreateDraftPostCommand({
+          groupIds: createPostRequestDto.audience.groupIds,
+          authUser: userMock,
+        })
+      );
+      expect(
+        plainToInstance(PostDto, postMock, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
+      ).toEqual(result);
     });
   });
 
