@@ -245,7 +245,7 @@ export class ElasticsearchQueryBuilder {
     if (tagIds && tagIds?.length) {
       return [
         {
-          term: {
+          terms: {
             [tags.id]: tagIds,
           },
         },
