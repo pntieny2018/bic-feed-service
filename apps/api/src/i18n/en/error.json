@@ -87,7 +87,8 @@
     "quiz_question_limit_exceeded": "Quiz question limit exceeded"
   },
   "quiz_question": {
-    "not_found": "Session ID not found"
+    "not_found": "Question is not found",
+    "not_belongs_to_quiz": "Question does not belong to quiz"
   },
   "quiz_participant": {
     "not_found": "Session ID not found",

@@ -15,8 +15,8 @@ export class DeleteQuizQuestionHandler implements ICommandHandler<DeleteQuizQues
     private readonly _quizDomainService: IQuizDomainService
   ) {}
   public async execute(command: DeleteQuizQuestionCommand): Promise<void> {
-    const { authUser, questionId } = command.payload;
+    const { quizId, questionId, authUser } = command.payload;
 
-    await this._quizDomainService.deleteQuestion(questionId, authUser);
+    await this._quizDomainService.deleteQuestion(questionId, quizId, authUser);
   }
 }
