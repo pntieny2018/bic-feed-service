@@ -363,7 +363,7 @@ export class ArticleAppService {
       ...(categoryIds && { topics: categoryIds }),
       from: offset,
       size: limit,
-      islimitSeries: limitSeries,
+      isLimitSeries: limitSeries,
     });
 
     const { source, total } = response;

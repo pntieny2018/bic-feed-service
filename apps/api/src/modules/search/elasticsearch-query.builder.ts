@@ -23,8 +23,8 @@ export class ElasticsearchQueryBuilder {
       topics,
       excludeByIds,
       groupIds,
-      islimitSeries,
-      shouldHighligh,
+      isLimitSeries,
+      shouldHighlight,
     } = query;
     const body: BodyES = {
       query: {
@@ -39,7 +39,7 @@ export class ElasticsearchQueryBuilder {
             ...this._getItemInSeriesFilter(itemIds),
             ...this._getTagIdsFilter(tags),
             ...this._getCategoryFilter(topics),
-            ...(islimitSeries ? this._limitSeriesFilter() : []),
+            ...(isLimitSeries ? this._limitSeriesFilter() : []),
           ],
           should: [...this._getMatchQueryFromKeyword(keyword)],
           minimum_should_match: keyword ? 1 : 0,
@@ -47,7 +47,7 @@ export class ElasticsearchQueryBuilder {
       },
     };
 
-    if (keyword && shouldHighligh) {
+    if (keyword && shouldHighlight) {
       body['highlight'] = this._getHighlight();
     }
 
