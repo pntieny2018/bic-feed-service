@@ -9,6 +9,7 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
+
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 import { PostType } from '../../../../database/models/post.model';
 
@@ -31,6 +32,14 @@ export class SearchPostsDto extends PageOptionsDto {
     name: 'content_search',
   })
   public contentSearch?: string;
+
+  @ApiProperty({ description: 'search by tag name', required: false, name: 'tag_name' })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'tag_name',
+  })
+  public tagName?: string;
 
   @ApiProperty({
     type: Boolean,
@@ -91,4 +100,22 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsEnum(PostType)
   @ValidateIf((i) => i.type !== '')
   public type?: PostType;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    name: 'limit_series',
+  })
+  @Transform(({ value }) => value == 'true')
+  @Expose({
+    name: 'limit_series',
+  })
+  @IsOptional()
+  @IsBoolean()
+  public limitSeries?: boolean;
+
+  public notIncludeIds?: string[];
+
+  public tagId?: string;
 }

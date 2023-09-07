@@ -1,4 +1,5 @@
 export interface IPaginatedInfo {
+  total?: number;
   startCursor?: string;
   endCursor?: string;
   hasNextPage?: boolean;

@@ -79,4 +79,8 @@ export class ArrayHelper {
       return Math.random() - 0.5;
     });
   }
+
+  public static hasOnlyOneElement(arr: any[], item: unknown): boolean {
+    return arr && arr.length === 1 && arr.includes(item);
+  }
 }
