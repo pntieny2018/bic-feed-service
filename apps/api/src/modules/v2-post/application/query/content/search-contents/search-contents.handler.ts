@@ -110,7 +110,7 @@ export class SearchContentsHandler
 
     return new SearchContentsDto(result, {
       total,
-      hasNextPage: limit >= source.length,
+      hasNextPage: limit <= source.length,
       endCursor: cursor ? createCursor(cursor) : '',
     });
   }
