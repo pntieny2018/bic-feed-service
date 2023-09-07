@@ -32,7 +32,6 @@ import { UserDto } from '../../v2-user/application';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
-import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
@@ -58,13 +57,6 @@ export class ArticleAppService {
     getArticleListDto: GetRelatedArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     return this._articleService.getRelatedById(getArticleListDto, user);
-  }
-
-  public getDrafts(
-    user: UserDto,
-    getDraftDto: GetDraftArticleDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
   public async getsByParams(

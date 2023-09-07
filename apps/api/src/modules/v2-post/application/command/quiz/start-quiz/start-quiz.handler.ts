@@ -22,6 +22,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
   public constructor(
     @Inject(QUIZ_DOMAIN_SERVICE_TOKEN)
     private readonly _quizDomainService: IQuizDomainService,
+
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
@@ -42,10 +43,8 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
     );
 
     const hasQuizDoing = quizParticipantEntities.filter(
-      (quizParticipantEntity) =>
-        !quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()
+      (quizParticipantEntity) => !quizParticipantEntity.isFinishedOrOverTimeLimit()
     );
-
     if (hasQuizDoing.length) {
       throw new QuizParticipantNotFinishedException(null, {
         quizDoing: {
@@ -53,6 +52,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
         },
       });
     }
+
     const takeQuiz = await this._quizDomainService.startQuiz(quizEntity, authUser);
 
     return takeQuiz.get('id');
