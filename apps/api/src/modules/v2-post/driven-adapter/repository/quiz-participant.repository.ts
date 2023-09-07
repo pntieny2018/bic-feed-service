@@ -4,20 +4,12 @@ import {
   LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '@libs/database/postgres';
 import { Inject } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
 import { difference } from 'lodash';
-import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { CursorPaginator } from '../../../../common/dto';
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { QuizParticipantAnswerModel } from '../../../../database/models/quiz-participant-answers.model';
-import {
-  IQuizParticipant,
-  QuizParticipantModel,
-} from '../../../../database/models/quiz-participant.model';
 import { QuizParticipantNotFoundException } from '../../domain/exception';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
@@ -28,13 +20,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     @Inject(LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _libQuizParticipantRepo: ILibQuizParticipantRepository,
 
-    private readonly _quizParticipantMapper: QuizParticipantMapper,
-
-    @InjectModel(QuizParticipantAnswerModel)
-    private readonly _quizParticipantAnswerModel: typeof QuizParticipantAnswerModel,
-
-    @InjectModel(QuizParticipantModel)
-    private readonly _quizParticipantModel: typeof QuizParticipantModel
+    private readonly _quizParticipantMapper: QuizParticipantMapper
   ) {}
 
   public async create(quizParticipantEntity: QuizParticipantEntity): Promise<void> {
@@ -95,7 +81,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
   }
 
   public async updateIsHighest(quizParticipantId: string, isHighest: boolean): Promise<void> {
-    await this._quizParticipantModel.update({ isHighest }, { where: { id: quizParticipantId } });
+    await this._libQuizParticipantRepo.updateQuizParticipant(quizParticipantId, { isHighest });
   }
 
   public async findQuizParticipantById(
@@ -105,10 +91,6 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       condition: { ids: [quizParticipantId] },
       include: { shouldInCludeAnswers: true },
     });
-
-    if (!quizParticipant) {
-      return null;
-    }
 
     return this._quizParticipantMapper.toDomain(quizParticipant);
   }
@@ -121,118 +103,6 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     }
 
     return quizParticipantEntity;
-  }
-
-  public async findQuizParticipantHighestScoreByContentIdAndUserId(
-    contentId: string,
-    userId: string
-  ): Promise<QuizParticipantEntity> {
-    const quizParticipant = await this._quizParticipantModel.findOne({
-      where: {
-        postId: contentId,
-        createdBy: userId,
-        isHighest: true,
-      },
-    });
-
-    if (!quizParticipant) {
-      return null;
-    }
-
-    return this._modelToEntity(quizParticipant);
-  }
-
-  public async getHighestScoreOfMember(
-    contentId: string
-  ): Promise<{ createdBy: string; score: number }[]> {
-    const rows = await this._quizParticipantModel.findAll({
-      attributes: ['createdBy', [Sequelize.fn('max', Sequelize.col('score')), 'score']],
-      where: {
-        postId: contentId,
-        [Op.or]: [
-          { finishedAt: { [Op.not]: null } },
-          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
-        ],
-      },
-      group: ['created_by'],
-    });
-
-    return rows.map((row) => row.toJSON());
-  }
-
-  public async getQuizParticipantHighestScoreGroupByUserId(
-    contentId: string,
-    paginationProps: CursorPaginationProps
-  ): Promise<CursorPaginationResult<QuizParticipantEntity>> {
-    const { limit = PAGING_DEFAULT_LIMIT, before, after, order = ORDER.DESC } = paginationProps;
-
-    const paginator = new CursorPaginator(
-      this._quizParticipantModel,
-      ['createdAt'],
-      { before, after, limit },
-      order
-    );
-
-    const { rows, meta } = await paginator.paginate({
-      where: {
-        postId: contentId,
-        isHighest: true,
-        [Op.or]: [
-          { finishedAt: { [Op.not]: null } },
-          Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
-        ],
-      },
-    });
-
-    return {
-      rows: rows.map((row) => this._modelToEntity(row)),
-      meta,
-    };
-  }
-
-  public async getQuizParticipantHighestScoreGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantEntity>> {
-    const rows = await this._quizParticipantModel.findAll({
-      where: {
-        postId: contentIds,
-        createdBy: userId,
-        isHighest: true,
-        finishedAt: {
-          [Op.ne]: null,
-        },
-      },
-    });
-    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
-    rows.forEach((row) => {
-      const contentId = row.postId;
-      if (!contentIdsMapHighestScore.has(contentId)) {
-        contentIdsMapHighestScore.set(contentId, this._modelToEntity(row));
-      }
-    });
-    return contentIdsMapHighestScore;
-  }
-
-  public async getQuizParticipantsDoingGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantEntity>> {
-    const rows = await this._quizParticipantModel.findAll({
-      where: {
-        postId: contentIds,
-        createdBy: userId,
-        [Op.and]: Sequelize.literal(
-          `finished_at is null AND started_at + time_limit * interval '1 second' > now()`
-        ),
-      },
-    });
-    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
-    rows.forEach((row) => {
-      const contentId = row.postId;
-      contentIdsMapHighestScore.set(contentId, this._modelToEntity(row));
-    });
-    return contentIdsMapHighestScore;
   }
 
   public async findAllByContentId(
@@ -249,24 +119,93 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     );
   }
 
-  private _modelToEntity(takeQuizModel: IQuizParticipant): QuizParticipantEntity {
-    return new QuizParticipantEntity({
-      id: takeQuizModel.id,
-      contentId: takeQuizModel.postId,
-      quizId: takeQuizModel.quizId,
-      quizSnapshot: takeQuizModel.quizSnapshot,
-      score: takeQuizModel.score,
-      isHighest: takeQuizModel.isHighest,
-      timeLimit: takeQuizModel.timeLimit,
-      totalAnswers: takeQuizModel.totalAnswers,
-      totalCorrectAnswers: takeQuizModel.totalCorrectAnswers,
-      startedAt: takeQuizModel.startedAt,
-      finishedAt: takeQuizModel.finishedAt,
-      createdBy: takeQuizModel.createdBy,
-      updatedBy: takeQuizModel.updatedBy,
-      createdAt: takeQuizModel.createdAt,
-      updatedAt: takeQuizModel.updatedAt,
-      answers: takeQuizModel.answers,
+  public async findQuizParticipantHighestScoreByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipant = await this._libQuizParticipantRepo.findQuizParticipant({
+      condition: {
+        contentIds: [contentId],
+        createdBy: userId,
+        isHighest: true,
+      },
     });
+
+    return this._quizParticipantMapper.toDomain(quizParticipant);
+  }
+
+  public async getQuizParticipantHighestScoreGroupByUserId(
+    contentId: string
+  ): Promise<{ createdBy: string; score: number }[]> {
+    const rows = await this._libQuizParticipantRepo.findAllQuizParticipants({
+      condition: { contentIds: [contentId], isFinished: true },
+      attributes: {
+        include: ['createdBy', [Sequelize.fn('max', Sequelize.col('score')), 'score']],
+      },
+      group: ['created_by'],
+    });
+
+    return rows.map((row) => row.toJSON());
+  }
+
+  public async getPaginationQuizParticipantHighestScoreGroupByUserId(
+    contentId: string,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<QuizParticipantEntity>> {
+    const { limit = PAGING_DEFAULT_LIMIT, before, after, order = ORDER.DESC } = paginationProps;
+
+    const { rows, meta } = await this._libQuizParticipantRepo.getQuizParticipantsPagination({
+      condition: { contentIds: [contentId], isHighest: true, isFinished: true },
+      limit,
+      before,
+      after,
+      order,
+    });
+
+    return {
+      rows: rows.map((row) => this._quizParticipantMapper.toDomain(row)),
+      meta,
+    };
+  }
+
+  public async getMapQuizParticipantHighestScoreGroupByContentId(
+    contentIds: string[],
+    userId: string
+  ): Promise<Map<string, QuizParticipantEntity>> {
+    const rows = await this._libQuizParticipantRepo.findAllQuizParticipants({
+      condition: {
+        contentIds,
+        createdBy: userId,
+        isHighest: true,
+        isFinished: true,
+      },
+    });
+    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
+    rows.forEach((row) => {
+      const contentId = row.postId;
+      if (!contentIdsMapHighestScore.has(contentId)) {
+        contentIdsMapHighestScore.set(contentId, this._quizParticipantMapper.toDomain(row));
+      }
+    });
+    return contentIdsMapHighestScore;
+  }
+
+  public async getMapQuizParticipantsDoingGroupByContentId(
+    contentIds: string[],
+    userId: string
+  ): Promise<Map<string, QuizParticipantEntity>> {
+    const rows = await this._libQuizParticipantRepo.findAllQuizParticipants({
+      condition: {
+        contentIds,
+        createdBy: userId,
+        isFinished: false,
+      },
+    });
+    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
+    rows.forEach((row) => {
+      const contentId = row.postId;
+      contentIdsMapHighestScore.set(contentId, this._quizParticipantMapper.toDomain(row));
+    });
+    return contentIdsMapHighestScore;
   }
 }
