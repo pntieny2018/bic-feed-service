@@ -93,6 +93,7 @@ export class ContentController {
   @ResponseMessages({
     success: 'Search contents successfully',
   })
+  @Version(AppHelper.getVersionsSupportedFrom(VERSION_1_9_0))
   @Get('/')
   public async searchContents(
     @AuthUser() user: UserDto,
