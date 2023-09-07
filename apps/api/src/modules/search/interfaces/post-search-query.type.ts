@@ -1,5 +1,7 @@
 import { PostType } from '../../v2-post/data-type';
 
+export const ELASTICSEARCH_DEFAULT_SIZE_PAGE = 10;
+
 export type IPostSearchQuery = {
   actors?: string[];
 
@@ -33,7 +35,7 @@ export type ISearchPaginationQuery = {
 
   size?: number;
 
-  searchAfter?: string;
+  searchAfter?: unknown;
 };
 
 export type IPaginationSearchResult<T> = {
