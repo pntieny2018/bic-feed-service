@@ -74,7 +74,7 @@ export class SearchContentsHandler
       tags,
       size: limit,
       searchAfter: after,
-      shouldHighligh: true,
+      shouldHighlight: true,
     });
 
     const { source, total, cursor } = response;

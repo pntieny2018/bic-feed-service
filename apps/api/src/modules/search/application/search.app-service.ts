@@ -86,7 +86,7 @@ export class SearchAppService {
       tags: tagId ? [tagId] : [],
       from: offset,
       size: limit,
-      shouldHighligh: true,
+      shouldHighlight: true,
     });
     const { source, total } = response;
 

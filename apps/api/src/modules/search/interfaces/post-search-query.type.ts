@@ -23,9 +23,9 @@ export type IPostSearchQuery = {
 
   excludeByIds?: string[];
 
-  islimitSeries?: boolean;
+  isLimitSeries?: boolean;
 
-  shouldHighligh?: boolean;
+  shouldHighlight?: boolean;
 };
 
 export type ISearchPaginationQuery = {
