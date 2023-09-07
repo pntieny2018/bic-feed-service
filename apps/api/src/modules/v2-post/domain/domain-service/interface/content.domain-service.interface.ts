@@ -57,5 +57,6 @@ export interface IContentDomainService {
     id: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  getReportedContentIdsByUser(reportUser: string, postTypes?: PostType[]): Promise<string[]>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';
