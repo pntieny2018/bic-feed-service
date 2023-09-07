@@ -27,11 +27,16 @@ import {
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
 import { MenuSettingsDto } from '../../application/dto';
-import { FindDraftContentsDto } from '../../application/dto/content.dto';
-import { FindDraftContentsQuery, GetMenuSettingsQuery } from '../../application/query/content';
+import { FindDraftContentsDto, SearchContentsDto } from '../../application/dto/content.dto';
+import {
+  FindDraftContentsQuery,
+  GetMenuSettingsQuery,
+  SearchContentsQuery,
+} from '../../application/query/content';
 import {
   GetDraftContentsRequestDto,
   PostSettingRequestDto,
+  SearchContentsRequestDto,
   ValidateSeriesTagDto,
 } from '../dto/request';
 
@@ -79,6 +84,24 @@ export class ContentController {
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<MenuSettingsDto> {
     return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
+  }
+
+  @ApiOperation({ summary: 'Search contents' })
+  @ApiOkResponse({
+    type: FindDraftContentsDto,
+  })
+  @ResponseMessages({
+    success: 'Search contents successfully',
+  })
+  @Get('/')
+  public async searchContents(
+    @AuthUser() user: UserDto,
+    @Query() searchContentsRequestDto: SearchContentsRequestDto
+  ): Promise<SearchContentsDto> {
+    const data = await this._queryBus.execute(
+      new SearchContentsQuery({ authUser: user, ...searchContentsRequestDto })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Mark as read' })

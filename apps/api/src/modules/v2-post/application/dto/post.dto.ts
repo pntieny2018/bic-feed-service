@@ -56,6 +56,9 @@ export class PostDto {
   public quizDoing?: {
     quizParticipantId: string;
   };
+  public highlight?: string;
+  public titleHighlight?: string;
+  public summaryHighlight?: string;
 
   public constructor(data: Partial<PostDto>) {
     Object.assign(this, data);

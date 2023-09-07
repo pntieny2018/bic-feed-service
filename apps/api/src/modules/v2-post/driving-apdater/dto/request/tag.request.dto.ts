@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsUUID, MaxLength } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
+import { IsNotEmpty, IsOptional, IsUUID, MaxLength, MinLength } from 'class-validator';
+
 import { PageOptionsDto } from '../../../../../common/dto';
 
 export class UpdateTagRequestDto {
@@ -53,4 +54,16 @@ export class CreateTagRequestDto {
   public constructor(data: CreateTagRequestDto) {
     Object.assign(this, data);
   }
+}
+
+const MIN_LENGTH = 3;
+export class SearchTagRequestDto {
+  @ApiProperty({ description: 'Search tags by keyword', required: true })
+  @IsNotEmpty()
+  @Type(() => String)
+  @MinLength(MIN_LENGTH)
+  @Expose({
+    name: 'keyword',
+  })
+  public keyword: string;
 }

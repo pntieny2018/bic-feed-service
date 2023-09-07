@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IPaginatedResponse } from './paginated.interface';
 import { IsArray, IsOptional } from 'class-validator';
 import { PaginatedInfo } from './paginated.info';
@@ -8,7 +8,7 @@ export class PaginatedResponse<T> implements IPaginatedResponse<T> {
   @ApiProperty()
   public list: T[] = [];
 
-  @ApiProperty({ type: () => PaginatedInfo })
+  @ApiPropertyOptional({ type: () => PaginatedInfo })
   @IsOptional()
   public meta?: PaginatedInfo;
 

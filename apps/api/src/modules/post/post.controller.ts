@@ -4,9 +4,8 @@ import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { PostAppService } from './application/post.app-service';
-import { GetPostEditedHistoryDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { PostResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
 import { ArticleResponseDto } from '../article/dto/responses';
 
@@ -18,19 +17,6 @@ import { ArticleResponseDto } from '../article/dto/responses';
 })
 export class PostController {
   public constructor(private _postAppService: PostAppService) {}
-
-  @ApiOperation({ summary: 'Get post edited history' })
-  @ApiOkResponse({
-    type: PostEditedHistoryDto,
-  })
-  @Get('/:postId/edited-history')
-  public getEditedHistory(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string,
-    @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
-  ): Promise<PageDto<PostEditedHistoryDto>> {
-    return this._postAppService.getEditedHistory(user, postId, getPostEditedHistoryDto);
-  }
 
   @ApiOperation({ summary: 'Get draft posts' })
   @ApiOkResponse({

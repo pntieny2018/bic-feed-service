@@ -1,42 +1,97 @@
 import { Injectable } from '@nestjs/common';
+import { ClassTransformer } from 'class-transformer';
+
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
+import { DomainForbiddenException } from '../../../common/exceptions';
 import {
   SeriesAddedItemsEvent,
   SeriesReoderItemsEvent,
   SeriesRemovedItemsEvent,
 } from '../../../events/series';
-import { SeriesSearchResponseDto } from '../dto/responses/series-search.response.dto';
 import { AuthorityService } from '../../authority';
+import { PostBindingService } from '../../post/post-binding.service';
 import { PostService } from '../../post/post.service';
+import { IPostElasticsearch } from '../../search/interfaces';
 import { SearchService } from '../../search/search.service';
-import { SearchSeriesDto } from '../dto/requests/search-series.dto';
-import { SeriesService } from '../series.service';
-import { UserDto } from '../../v2-user/application';
 import { RULES } from '../../v2-post/constant';
+import { PostType } from '../../v2-post/data-type';
 import {
   ArticleLimitAttachedSeriesException,
   ContentEmptyGroupException,
   SeriesNotFoundException,
   ValidationException,
 } from '../../v2-post/domain/exception';
-import { DomainForbiddenException } from '../../../common/exceptions';
+import { UserDto } from '../../v2-user/application';
+import { SearchSeriesDto } from '../dto/requests/search-series.dto';
+import { SeriesSearchResponseDto } from '../dto/responses/series-search.response.dto';
+import { SeriesService } from '../series.service';
 
 @Injectable()
 export class SeriesAppService {
+  private _classTransformer = new ClassTransformer();
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _postSearchService: SearchService,
-    private _postService: PostService
+    private _searchService: SearchService,
+    private _postService: PostService,
+    private _postBindingService: PostBindingService
   ) {}
 
+  /*
+    Search series in article detail
+  */
   public async searchSeries(
     user: UserDto,
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
-    return this._postSearchService.searchSeries(user, searchDto);
+    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
+    if (!user || user.groups.length === 0) {
+      return new PageDto<SeriesSearchResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+
+    let filterGroupIds = [];
+    if (groupIds && groupIds.length) {
+      filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
+    }
+
+    const response = await this._searchService.searchContents<IPostElasticsearch>({
+      keyword: contentSearch,
+      contentTypes: [PostType.SERIES],
+      groupIds: filterGroupIds,
+      itemIds,
+      from: offset,
+      size: limit,
+    });
+
+    const { source, total } = response;
+    const series = source.map((item) => {
+      const seriesItem = {
+        id: item.id,
+        groupIds: item.groupIds,
+        coverMedia: item.coverMedia,
+        title: item.title || null,
+        summary: item.summary,
+      };
+      return seriesItem;
+    });
+
+    await this._postBindingService.bindAudience(series);
+
+    const result = this._classTransformer.plainToInstance(SeriesSearchResponseDto, series, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<SeriesSearchResponseDto>(result, {
+      total,
+      limit,
+      offset,
+    });
   }
 
   public async removeItems(seriesId: string, itemIds: string[], user: UserDto): Promise<void> {
@@ -139,7 +194,9 @@ export class SeriesAppService {
     const series = await this._seriesService.findSeriesById(seriesId, {
       withGroups: true,
     });
-    if (!series) throw new SeriesNotFoundException();
+    if (!series) {
+      throw new SeriesNotFoundException();
+    }
     await this._authorityService.checkPostOwner(series, user.id);
     await this._authorityService.checkCanUpdateSeries(
       user,

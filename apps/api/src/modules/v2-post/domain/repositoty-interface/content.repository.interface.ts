@@ -1,6 +1,7 @@
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { IPost } from '../../../../database/models/post.model';
+import { TargetType } from '../../../report-content/contstants';
 import { PostStatus, PostType } from '../../data-type';
 import { PostEntity } from '../model/content';
 import { ArticleEntity } from '../model/content/article.entity';
@@ -70,6 +71,7 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getReportedContentIdsByUser(reportUser: string, target: TargetType[]): Promise<string[]>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
