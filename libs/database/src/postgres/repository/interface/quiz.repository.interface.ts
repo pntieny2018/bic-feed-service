@@ -65,10 +65,12 @@ export interface ILibQuizRepository {
   ): Promise<CursorPaginationResult<QuizModel>>;
 
   bulkCreateQuizQuestions(questions: QuizQuestionAttributes[]): Promise<void>;
+  updateQuizQuestion(questionId: string, question: Partial<QuizQuestionAttributes>): Promise<void>;
   deleteQuizQuestion(conditions: WhereOptions<QuizQuestionAttributes>): Promise<void>;
   findQuizQuestion(findOptions: FindQuizQuestionProps): Promise<QuizQuestionModel>;
 
   bulkCreateQuizAnswers(answers: QuizAnswerAttributes[]): Promise<void>;
+  deleteQuizAnswer(conditions: WhereOptions<QuizAnswerAttributes>): Promise<void>;
 }
 
 export const LIB_QUIZ_REPOSITORY_TOKEN = 'LIB_QUIZ_REPOSITORY_TOKEN';

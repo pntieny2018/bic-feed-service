@@ -139,14 +139,17 @@ export class QuizDomainService implements IQuizDomainService {
   public async updateQuestion(
     updateQuestionProps: UpdateQuestionProps
   ): Promise<QuizQuestionEntity> {
-    const { authUser, questionId, content, answers } = updateQuestionProps;
+    const { quizId, questionId, content, answers, authUser } = updateQuestionProps;
     const quizQuestionEntity = await this._quizRepository.findQuestionById(questionId);
     if (!quizQuestionEntity) {
       throw new QuizQuestionNotFoundException();
     }
 
-    const quizEntity = await this._quizRepository.findQuizById(quizQuestionEntity.get('quizId'));
+    if (quizQuestionEntity.get('quizId') !== quizId) {
+      throw new QuizQuestionBelongsToQuizException();
+    }
 
+    const quizEntity = await this._quizRepository.findQuizById(quizQuestionEntity.get('quizId'));
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -161,9 +164,11 @@ export class QuizDomainService implements IQuizDomainService {
     if (quizQuestionEntity.isChanged()) {
       try {
         await this._quizRepository.updateQuestion(quizQuestionEntity);
+        await this._quizRepository.deleteAnswersByQuestionId(quizQuestionEntity.get('id'));
+        await this._quizRepository.createAnswers(quizQuestionEntity);
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
-        throw new DatabaseException();
+        throw new DatabaseException(e.message);
       }
     }
 

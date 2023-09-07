@@ -60,6 +60,7 @@ export type AddQuestionProps = {
 };
 
 export type UpdateQuestionProps = {
+  quizId: string;
   questionId: string;
   content: string;
   answers: {

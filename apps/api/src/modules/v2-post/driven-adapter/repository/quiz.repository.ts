@@ -1,6 +1,7 @@
 import { ILibQuizRepository, LIB_QUIZ_REPOSITORY_TOKEN } from '@libs/database/postgres';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+
 import { CursorPaginationResult } from '../../../../common/types';
 import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
 import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
@@ -131,14 +132,21 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async updateQuestion(questionEntity: QuizQuestionEntity): Promise<void> {
-    await this._quizQuestionModel.update(
-      {
-        content: questionEntity.get('content'),
-      },
-      { where: { id: questionEntity.get('id') } }
-    );
-    await this._quizAnswerModel.destroy({ where: { questionId: questionEntity.get('id') } });
+    await this._libQuizRepo.updateQuizQuestion(questionEntity.get('id'), {
+      content: questionEntity.get('content'),
+    });
+  }
 
+  public async findQuestionById(questionId: string): Promise<QuizQuestionEntity> {
+    const question = await this._libQuizRepo.findQuizQuestion({
+      condition: { ids: [questionId] },
+      include: { shouldIncludeAnswers: true },
+    });
+
+    return this._quizQuestionMapper.toDomain(question);
+  }
+
+  public async createAnswers(questionEntity: QuizQuestionEntity): Promise<void> {
     const answers = questionEntity.get('answers').map((answer, index) => {
       const createdAt = new Date();
       createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
@@ -151,17 +159,10 @@ export class QuizRepository implements IQuizRepository {
         updatedAt: createdAt,
       };
     });
-    await this._quizAnswerModel.bulkCreate(answers);
+    await this._libQuizRepo.bulkCreateQuizAnswers(answers);
   }
 
-  public async findQuestionById(questionId: string): Promise<QuizQuestionEntity> {
-    const question = await this._libQuizRepo.findQuizQuestion({
-      condition: { ids: [questionId] },
-      include: { shouldIncludeAnswers: true },
-    });
-    if (!question) {
-      return null;
-    }
-    return this._quizQuestionMapper.toDomain(question);
+  public async deleteAnswersByQuestionId(questionId: string): Promise<void> {
+    await this._libQuizRepo.deleteQuizAnswer({ questionId });
   }
 }
