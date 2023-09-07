@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { createCursor } from '../../../../../../common/dto/cusor-pagination';
-import { IPostElasticsearch } from '../../../../../search';
+import { createCursor, parseCursor } from '../../../../../../common/dto/cusor-pagination';
+import { ELASTICSEARCH_DEFAULT_SIZE_PAGE, IPostElasticsearch } from '../../../../../search';
 import { SearchService } from '../../../../../search/search.service';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -51,7 +51,7 @@ export class SearchContentsHandler
       groupId,
       contentTypes,
       isIncludedInnerGroups = true,
-      limit,
+      limit = ELASTICSEARCH_DEFAULT_SIZE_PAGE,
       after,
     } = query.payload;
 
@@ -80,7 +80,7 @@ export class SearchContentsHandler
       excludeByIds,
       tags,
       size: limit,
-      searchAfter: after,
+      searchAfter: after ? parseCursor(after) : undefined,
       shouldHighlight: true,
     });
 
@@ -108,7 +108,7 @@ export class SearchContentsHandler
 
     return new SearchContentsDto(result, {
       total,
-      hasNextPage: total > source.length,
+      hasNextPage: limit > source.length,
       endCursor: cursor ? createCursor(cursor) : '',
     });
   }
