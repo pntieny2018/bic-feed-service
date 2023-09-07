@@ -1,6 +1,15 @@
 import { IsUUID } from 'class-validator';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
-import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  Default,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
 import { QuizQuestionModel } from './quiz-question.model';
@@ -21,9 +30,6 @@ export class QuizAnswerModel extends Model<
   public id: string;
 
   @Column
-  public quizId: string;
-
-  @Column
   public questionId: string;
 
   @Column
@@ -36,4 +42,12 @@ export class QuizAnswerModel extends Model<
     foreignKey: 'questionId',
   })
   public quizQuestion?: QuizQuestionModel;
+
+  @CreatedAt
+  @Column
+  public createdAt?: Date;
+
+  @UpdatedAt
+  @Column
+  public updatedAt?: Date;
 }

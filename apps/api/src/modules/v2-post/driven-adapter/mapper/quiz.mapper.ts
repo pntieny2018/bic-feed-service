@@ -1,4 +1,5 @@
-import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
+import { QUIZ_STATUS } from '@beincom/constants';
+import { QUIZ_PROCESS_STATUS } from '@beincom/constants/lib/content';
 import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
 import { Injectable } from '@nestjs/common';
 
@@ -22,23 +23,25 @@ export class QuizMapper {
       numberOfQuestionsDisplay: model.numberOfQuestionsDisplay,
       timeLimit: model.timeLimit,
       isRandom: model.isRandom,
-      questions: (model.questions || []).map(
-        (question) =>
-          new QuizQuestionEntity({
-            id: question.id,
-            quizId: model.id,
-            content: question.content,
-            answers: question.answers.map((answer) => ({
-              id: answer.id,
-              content: answer.content,
-              isCorrect: answer.isCorrect,
-              createdAt: answer.createdAt,
-              updatedAt: answer.updatedAt,
-            })),
-            createdAt: question.createdAt,
-            updatedAt: question.updatedAt,
-          })
-      ),
+      questions: model.questions
+        ? model.questions.map(
+            (question) =>
+              new QuizQuestionEntity({
+                id: question.id,
+                quizId: question.quizId,
+                content: question.content,
+                createdAt: question.createdAt,
+                updatedAt: question.updatedAt,
+                answers: question.answers.map((answer) => ({
+                  id: answer.id,
+                  content: answer.content,
+                  isCorrect: answer.isCorrect,
+                  createdAt: answer.createdAt,
+                  updatedAt: answer.updatedAt,
+                })),
+              })
+          )
+        : undefined,
       meta: model.meta,
       createdBy: model.createdBy,
       updatedBy: model.updatedBy,
@@ -50,22 +53,22 @@ export class QuizMapper {
   public toPersistence(entity: QuizEntity): QuizAttributes {
     return {
       id: entity.get('id'),
-      description: entity.get('description'),
-      error: entity.get('error'),
-      genStatus: entity.get('genStatus') as unknown as QUIZ_PROCESS_STATUS,
-      isRandom: entity.get('isRandom'),
-      meta: entity.get('meta'),
-      numberOfAnswers: entity.get('numberOfAnswers'),
-      numberOfQuestions: entity.get('numberOfQuestions'),
-      numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
-      postId: entity.get('contentId'),
-      status: entity.get('status') as unknown as QUIZ_STATUS,
-      timeLimit: entity.get('timeLimit'),
       title: entity.get('title'),
-      updatedAt: entity.get('updatedAt'),
+      postId: entity.get('contentId'),
+      description: entity.get('description'),
+      numberOfQuestions: entity.get('numberOfQuestions'),
+      numberOfAnswers: entity.get('numberOfAnswers'),
+      numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
+      timeLimit: entity.get('timeLimit'),
+      status: entity.get('status') as QUIZ_STATUS,
+      genStatus: entity.get('genStatus') as QUIZ_PROCESS_STATUS,
+      error: entity.get('error'),
+      isRandom: entity.get('isRandom'),
+      createdBy: entity.get('createdBy'),
       updatedBy: entity.get('updatedBy'),
       createdAt: entity.get('createdAt'),
-      createdBy: entity.get('createdBy'),
+      updatedAt: entity.get('updatedAt'),
+      meta: entity.get('meta'),
     };
   }
 }
