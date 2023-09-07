@@ -1,19 +1,19 @@
+import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 
-import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { CategoryEntity } from '../model/category';
-import { CATEGORY_QUERY_TOKEN, ICategoryQuery } from '../query-interface';
+import { CATEGORY_REPOSITORY_TOKEN, ICategoryRepository } from '../repositoty-interface';
 
 import { GetPaginationCategoryProps, ICategoryDomainService } from './interface';
 
 export class CategoryDomainService implements ICategoryDomainService {
   public constructor(
-    @Inject(CATEGORY_QUERY_TOKEN) private readonly _categoryQuery: ICategoryQuery
+    @Inject(CATEGORY_REPOSITORY_TOKEN) private readonly _categoryRepository: ICategoryRepository
   ) {}
 
   public async getPagination(
     props: GetPaginationCategoryProps
   ): Promise<PaginationResult<CategoryEntity>> {
-    return this._categoryQuery.getPagination(props);
+    return this._categoryRepository.getPagination(props);
   }
 }

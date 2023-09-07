@@ -23,8 +23,8 @@ export interface IPostElasticsearch {
   groupIds: string[];
   communityIds: string[];
   seriesIds?: string[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   publishedAt: Date;
   createdBy: string;
   mentionUserIds: string[];
@@ -45,6 +45,7 @@ export interface IPostElasticsearch {
     id: string;
     zindex: number;
   }[];
+  highlight?: Record<string, string[]>;
 }
 
 export interface IDataPostToAdd {

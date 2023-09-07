@@ -12,7 +12,6 @@ import {
 import { InvalidResourceImageException } from '../exception/media.exception';
 import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
 import { CommentEntity } from '../model/comment';
-import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../query-interface';
 import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
 
 import {
@@ -20,19 +19,17 @@ import {
   GetCommentsAroundIdProps,
   ICommentDomainService,
   UpdateCommentProps,
-} from './interface';
-import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
+} from './interface';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
   private readonly _logger = new Logger(CommentDomainService.name);
 
   public constructor(
-    @Inject(COMMENT_QUERY_TOKEN)
-    private readonly _commentQuery: ICommentQuery,
+    @Inject(COMMENT_REPOSITORY_TOKEN)
+    private readonly _commentQuery: ICommentRepository,
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _commentFactory: ICommentFactory,
     @Inject(COMMENT_REPOSITORY_TOKEN)

@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, Sequelize, WhereOptions, col } from 'sequelize';
+import { concat } from 'lodash';
+import { FindOptions, Op, Sequelize, WhereOptions, col, Includeable } from 'sequelize';
 
+import { createCursor, CursorPaginator } from '../../../../common/dto';
+import { CursorPaginationResult } from '../../../../common/types';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { CommentModel, IComment } from '../../../../database/models/comment.model';
 import { ReportContentDetailModel } from '../../../../database/models/report-content-detail.model';
@@ -11,7 +14,12 @@ import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/int
 import { CommentEntity } from '../../domain/model/comment';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { ReactionEntity } from '../../domain/model/reaction';
-import { FindOneProps, ICommentRepository } from '../../domain/repositoty-interface';
+import {
+  FindOneProps,
+  GetAroundCommentProps,
+  GetPaginationCommentProps,
+  ICommentRepository,
+} from '../../domain/repositoty-interface';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -22,8 +30,133 @@ export class CommentRepository implements ICommentRepository {
     private readonly _commentModel: typeof CommentModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    @InjectConnection() private readonly _sequelizeConnection: Sequelize
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize,
+    @Inject(COMMENT_FACTORY_TOKEN)
+    private readonly _factory: ICommentFactory
   ) {}
+
+  public async getPagination(
+    input: GetPaginationCommentProps
+  ): Promise<CursorPaginationResult<CommentEntity>> {
+    const { authUser, limit, order, postId, parentId, before, after } = input;
+    const findOptions: FindOptions = {
+      include: [
+        authUser
+          ? {
+              model: CommentReactionModel,
+              on: {
+                [Op.and]: {
+                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
+                  created_by: authUser,
+                },
+              },
+            }
+          : {},
+      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
+      where: {
+        postId: postId,
+        parentId: parentId,
+        isHidden: false,
+        ...(authUser && {
+          [Op.and]: [
+            Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
+            WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
+              TargetType.COMMENT
+            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser)})`),
+          ],
+        }),
+      },
+    };
+
+    const paginator = new CursorPaginator(
+      this._commentModel,
+      ['createdAt'],
+      { before, after, limit },
+      order
+    );
+
+    const { rows, meta } = await paginator.paginate(findOptions);
+
+    return {
+      rows: rows.map((row) =>
+        this._factory.reconstitute({
+          id: row.id,
+          postId: row.postId,
+          parentId: row.parentId,
+          edited: row.edited,
+          isHidden: row.isHidden,
+          giphyId: row.giphyId,
+          totalReply: row.totalReply,
+          createdBy: row.createdBy,
+          updatedBy: row.updatedBy,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          content: row.content,
+          mentions: row.mentions,
+          media: {
+            images: (row.mediaJson?.images || []).map((image) => new ImageEntity(image)),
+            files: (row.mediaJson?.files || []).map((file) => new FileEntity(file)),
+            videos: (row.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
+          },
+          ownerReactions: (row?.ownerReactions || []).map(
+            (reaction) =>
+              new ReactionEntity({
+                id: reaction.id,
+                target: REACTION_TARGET.COMMENT,
+                targetId: row.id,
+                reactionName: reaction.reactionName,
+                createdBy: reaction.createdBy,
+                createdAt: reaction.createdAt,
+              })
+          ),
+        })
+      ),
+      meta,
+    };
+  }
+
+  public async getAroundComment(
+    comment: CommentEntity,
+    props: GetAroundCommentProps
+  ): Promise<CursorPaginationResult<CommentEntity>> {
+    const { limit } = props;
+    const limitExcludeTarget = limit - 1;
+    const first = Math.ceil(limitExcludeTarget / 2);
+    const last = limitExcludeTarget - first;
+    const cursor = createCursor({ createdAt: comment.get('createdAt') });
+
+    const soonerCommentsQuery = this.getPagination({
+      ...props,
+      limit: first,
+      after: cursor,
+      postId: comment.get('postId'),
+      parentId: comment.get('parentId'),
+    });
+
+    const laterCommentsQuery = this.getPagination({
+      ...props,
+      limit: last,
+      before: cursor,
+      postId: comment.get('postId'),
+      parentId: comment.get('parentId'),
+    });
+
+    const [soonerComment, laterComments] = await Promise.all([
+      soonerCommentsQuery,
+      laterCommentsQuery,
+    ]);
+
+    const rows = concat(laterComments.rows, comment, soonerComment.rows);
+
+    const meta = {
+      startCursor: laterComments.rows.length > 0 ? laterComments.meta.startCursor : cursor,
+      endCursor: soonerComment.rows.length > 0 ? soonerComment.meta.endCursor : cursor,
+      hasNextPage: soonerComment.meta.hasNextPage,
+      hasPreviousPage: laterComments.meta.hasPreviousPage,
+    };
+
+    return { rows, meta };
+  }
 
   public async createComment(data: CommentEntity): Promise<CommentEntity> {
     const comment = await this._commentModel.create({

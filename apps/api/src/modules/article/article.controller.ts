@@ -21,7 +21,6 @@ import { UserDto } from '../v2-user/application';
 
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';
-import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
@@ -78,18 +77,6 @@ export class ArticleController {
     @Query() getArticleListDto: GetRelatedArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     return this._articleAppService.getRelatedById(user, getArticleListDto);
-  }
-
-  @ApiOperation({ summary: 'Get draft articles' })
-  @ApiOkResponse({
-    type: ArticleResponseDto,
-  })
-  @Get('/draft')
-  public getDrafts(
-    @AuthUser() user: UserDto,
-    @Query() getDraftDto: GetDraftArticleDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleAppService.getDrafts(user, getDraftDto);
   }
 
   @ApiOperation({ summary: 'Get posts by params' })

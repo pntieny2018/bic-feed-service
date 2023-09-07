@@ -4,6 +4,8 @@ import { isEmpty } from 'class-validator';
 
 import { StringHelper } from '../../../../common/helpers';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { TargetType } from '../../../report-content/contstants';
+import { PostType } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
@@ -25,25 +27,28 @@ export class ContentDomainService implements IContentDomainService {
   ) {}
 
   public async getVisibleContent(
-    id: string,
+    contentId: string,
     excludeReportedByUserId?: string
   ): Promise<ContentEntity> {
-    const entity = await this._contentRepository.findOne({
-      include: {
-        mustIncludeGroup: true,
-        ...(excludeReportedByUserId && {
-          excludeReportedByUserId,
-        }),
-      },
-      where: {
-        id,
-      },
-    });
+    let contentEntity: ContentEntity;
 
-    if (!entity || !entity.isVisible()) {
+    if (excludeReportedByUserId) {
+      contentEntity = await this._contentRepository.findContentByIdExcludeReportedByUserId(
+        contentId,
+        excludeReportedByUserId,
+        { mustIncludeGroup: true }
+      );
+    } else {
+      contentEntity = await this._contentRepository.findContentById(contentId, {
+        mustIncludeGroup: true,
+      });
+    }
+
+    if (!contentEntity || !contentEntity.isVisible()) {
       throw new ContentNotFoundException();
     }
-    return entity;
+
+    return contentEntity;
   }
 
   public getRawContent(contentEntity: ContentEntity): string {
@@ -242,5 +247,27 @@ export class ContentDomainService implements IContentDomainService {
         },
       },
     });
+  }
+
+  public async getReportedContentIdsByUser(
+    reportUser: string,
+    postTypes?: PostType[]
+  ): Promise<string[]> {
+    if (!postTypes) {
+      return this._contentRepository.getReportedContentIdsByUser(reportUser, [
+        TargetType.ARTICLE,
+        TargetType.POST,
+      ]);
+    }
+
+    const target = [];
+    if (postTypes.includes(PostType.POST)) {
+      target.push(TargetType.POST);
+    }
+    if (postTypes.includes(PostType.ARTICLE)) {
+      target.push(TargetType.ARTICLE);
+    }
+
+    return this._contentRepository.getReportedContentIdsByUser(reportUser, target);
   }
 }

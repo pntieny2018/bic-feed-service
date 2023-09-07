@@ -1,5 +1,11 @@
+import {
+  LIB_CONTENT_REPOSITORY_TOKEN,
+  LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+  LIB_QUIZ_REPOSITORY_TOKEN,
+} from '@libs/database/postgres';
 import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LIB_CONTENT_REPOSITORY_TOKEN } from '@libs/database/postgres/repository/interface';
+import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
+import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
 
 import { ContentBinding } from '../application/binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
@@ -54,8 +60,10 @@ import {
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
 } from '../application/query/content';
+import { SearchContentsHandler } from '../application/query/content/search-contents';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
+import { SearchTagsHandler } from '../application/query/tag/search-tags';
 import { ArticleCron } from '../cron/article.cron';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
@@ -85,6 +93,8 @@ import {
 import { MentionValidator } from '../domain/validator/mention.validator';
 import { PostValidator } from '../domain/validator/post.validator';
 import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
+import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
+import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
@@ -141,12 +151,25 @@ export const postProvider = [
     provide: CONTENT_DOMAIN_SERVICE_TOKEN,
     useClass: ContentDomainService,
   },
+
+  /** Library Repository */
   {
     provide: LIB_CONTENT_REPOSITORY_TOKEN,
     useClass: LibContentRepository,
   },
+  {
+    provide: LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+    useClass: LibQuizParticipantRepository,
+  },
+  {
+    provide: LIB_QUIZ_REPOSITORY_TOKEN,
+    useClass: LibQuizRepository,
+  },
 
+  /** Mapper */
   ContentMapper,
+  QuizParticipantMapper,
+  QuizMapper,
 
   /** CronService */
   ArticleCron,
@@ -190,6 +213,8 @@ export const postProvider = [
   FindDraftContentsHandler,
   GetScheduleArticleHandler,
   GetMenuSettingsHandler,
+  SearchContentsHandler,
+  SearchTagsHandler,
 
   /** Event Handler */
   ArticleDeletedEventHandler,

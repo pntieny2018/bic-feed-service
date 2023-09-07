@@ -100,7 +100,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
 
   @AllowNull(true)
   @Column
-  public lang: LANGUAGE;
+  public lang?: LANGUAGE;
 
   @Column
   public privacy: PRIVACY;
@@ -128,7 +128,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
 
   @AllowNull(true)
   @Column
-  public cover: string;
+  public cover?: string;
 
   @AllowNull(false)
   @Column

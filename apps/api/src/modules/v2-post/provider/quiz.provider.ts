@@ -14,8 +14,8 @@ import {
   UpdateQuizAnswerHandler,
   UpdateQuizHandler,
   UpdateQuizQuestionHandler,
+  ProcessGenerationQuizHandler,
 } from '../application/command/quiz';
-import { ProcessGenerationQuizHandler } from '../application/command/quiz/process-generation-quiz';
 import {
   QuizCreatedEventHandler,
   QuizGeneratedEventHandler,
@@ -34,14 +34,13 @@ import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
 import { QUIZ_FACTORY_TOKEN } from '../domain/factory/interface/quiz.factory.interface';
 import { QuizFactory } from '../domain/factory/quiz.factory';
-import { TAG_QUERY_TOKEN } from '../domain/query-interface';
-import { QUIZ_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { QUIZ_PARTICIPANT_REPOSITORY_TOKEN } from '../domain/repositoty-interface/quiz-participant.repository.interface';
+import {
+  QUIZ_REPOSITORY_TOKEN,
+  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '../domain/repositoty-interface';
 import { QUIZ_VALIDATOR_TOKEN } from '../domain/validator/interface';
 import { QuizValidator } from '../domain/validator/quiz.validator';
-import { TagQuery } from '../driven-adapter/query';
-import { QuizParticipantRepository } from '../driven-adapter/repository/quiz-participant.repository';
-import { QuizRepository } from '../driven-adapter/repository/quiz.repository';
+import { QuizParticipantRepository, QuizRepository } from '../driven-adapter/repository';
 import { QuizParticipantProcessor } from '../driving-apdater/queue-processor/quiz-participant.processor';
 
 export const quizProvider = [
@@ -52,10 +51,6 @@ export const quizProvider = [
   {
     provide: QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
     useClass: QuizParticipantRepository,
-  },
-  {
-    provide: TAG_QUERY_TOKEN,
-    useClass: TagQuery,
   },
   {
     provide: QUIZ_DOMAIN_SERVICE_TOKEN,

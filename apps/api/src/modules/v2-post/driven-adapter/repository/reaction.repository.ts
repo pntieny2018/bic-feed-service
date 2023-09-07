@@ -14,12 +14,9 @@ import {
   REACTION_FACTORY_TOKEN,
 } from '../../domain/factory/interface/reaction.factory.interface';
 import { ReactionEntity } from '../../domain/model/reaction';
-import {
-  GetReactionProps,
-  IReactionQuery,
-} from '../../domain/query-interface/reaction.query.interface';
+import { GetReactionProps, IReactionRepository } from '../../domain/repositoty-interface';
 
-export class ReactionQuery implements IReactionQuery {
+export class ReactionRepository implements IReactionRepository {
   public constructor(
     @Inject(REACTION_FACTORY_TOKEN)
     private readonly _reactionFactory: IReactionFactory,

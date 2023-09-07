@@ -1,12 +1,32 @@
-import { QuizParticipantAnswerModel } from '@libs/database/postgres/model/quiz-participant-answers.model';
+import { ORDER } from '@beincom/constants';
+import { InjectModel } from '@nestjs/sequelize';
+import {
+  FindAttributeOptions,
+  FindOptions,
+  GroupOption,
+  Includeable,
+  Op,
+  Order,
+  WhereOptions,
+} from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+
+import {
+  QuizParticipantAnswerAttributes,
+  QuizParticipantAnswerModel,
+} from '../../postgres/model/quiz-participant-answers.model';
 import {
   QuizParticipantAttributes,
   QuizParticipantModel,
-} from '@libs/database/postgres/model/quiz-participant.model';
-import { ILibQuizParticipantRepository } from '@libs/database/postgres/repository/interface';
-import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
+} from '../../postgres/model/quiz-participant.model';
+import {
+  FindQuizParticipantAttributeOptions,
+  FindQuizParticipantConditionOptions,
+  FindQuizParticipantIncludeOptions,
+  FindQuizParticipantOrderOptions,
+  FindQuizParticipantProps,
+  ILibQuizParticipantRepository,
+} from '../repository/interface';
 
 export class LibQuizParticipantRepository implements ILibQuizParticipantRepository {
   public constructor(
@@ -17,11 +37,11 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
     private readonly _quizParticipantModel: typeof QuizParticipantModel
   ) {}
 
-  public async create(quizParticipant: QuizParticipantAttributes): Promise<void> {
+  public async createQuizParticipant(quizParticipant: QuizParticipantAttributes): Promise<void> {
     await this._quizParticipantModel.create(quizParticipant);
   }
 
-  public async update(
+  public async updateQuizParticipant(
     quizParticipantId: string,
     quizParticipant: Partial<QuizParticipantAttributes>
   ): Promise<void> {
@@ -30,102 +50,159 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
         id: quizParticipantId,
       },
     });
-    if (quizParticipant?.answers) {
-      await this._quizParticipantAnswerModel.destroy({
-        where: {
-          quizParticipantId,
-        },
-      });
-      await this._quizParticipantAnswerModel.bulkCreate(
-        quizParticipant.answers.map((answer) => ({
-          id: answer.id,
-          quizParticipantId,
-          questionId: answer.questionId,
-          answerId: answer.answerId,
-          isCorrect: answer.isCorrect,
-          createdAt: answer.createdAt,
-          updatedAt: answer.updatedAt,
-        }))
-      );
-    }
   }
 
-  public async findOne(takeId: string): Promise<QuizParticipantModel> {
-    return this._quizParticipantModel.findOne({
-      include: [
-        {
-          model: QuizParticipantAnswerModel,
-          as: 'answers',
-          required: false,
-        },
-      ],
-      where: {
-        id: takeId,
-      },
-    });
+  public async findQuizParticipant(
+    findOptions: FindQuizParticipantProps
+  ): Promise<QuizParticipantModel> {
+    const options = this._buildFindOptions(findOptions);
+    return this._quizParticipantModel.findOne(options);
   }
 
-  public async getQuizParticipantHighestScoreGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantModel>> {
-    const rows = await this._quizParticipantModel.findAll({
-      where: {
-        postId: contentIds,
-        createdBy: userId,
-        [Op.and]: Sequelize.literal(
-          `finished_at is NOT null OR started_at + time_limit * interval '1 second' <= now()`
-        ),
-      },
-    });
-    const contentIdsMapHighestScore = new Map<string, QuizParticipantModel>();
-    rows.forEach((row) => {
-      const contentId = row.postId;
-      if (
-        !contentIdsMapHighestScore.has(contentId) ||
-        contentIdsMapHighestScore.get(contentId).get('score') < row.score
-      ) {
-        contentIdsMapHighestScore.set(contentId, row);
-      }
-    });
-    return contentIdsMapHighestScore;
-  }
-
-  public async getQuizParticipantsDoingGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantModel>> {
-    const rows = await this._quizParticipantModel.findAll({
-      where: {
-        postId: contentIds,
-        createdBy: userId,
-        [Op.and]: Sequelize.literal(
-          `finished_at is null AND started_at + time_limit * interval '1 second' > now()`
-        ),
-      },
-    });
-    const contentIdsMapHighestScore = new Map<string, QuizParticipantModel>();
-    rows.forEach((row) => {
-      const contentId = row.postId;
-      contentIdsMapHighestScore.set(contentId, row);
-    });
-    return contentIdsMapHighestScore;
-  }
-
-  public async findAllByContentId(
-    contentId: string,
-    userId: string
+  public async findAllQuizParticipants(
+    findOptions: FindQuizParticipantProps
   ): Promise<QuizParticipantModel[]> {
-    return this._quizParticipantModel.findAll({
-      include: [
-        {
-          model: this._quizParticipantAnswerModel,
-          required: false,
-        },
-      ],
+    const options = this._buildFindOptions(findOptions);
+    return this._quizParticipantModel.findAll(options);
+  }
+
+  private _buildFindOptions(
+    options: FindQuizParticipantProps
+  ): FindOptions<QuizParticipantAttributes> {
+    const findOptions: FindOptions<QuizParticipantAttributes> = {};
+
+    findOptions.where = this._buildWhereOptions(options.condition);
+    findOptions.include = this._buildRelationOptions(options.include);
+    findOptions.attributes = this._buildAttributesOptions(options.attributes);
+    findOptions.order = this._buildOrderOptions(options.order);
+    findOptions.group = this._buildGroupOptions(options.group);
+
+    return findOptions;
+  }
+
+  private _buildWhereOptions(
+    options: FindQuizParticipantConditionOptions = {}
+  ): WhereOptions<QuizParticipantAttributes> {
+    const whereOptions: WhereOptions<QuizParticipantAttributes> = {};
+
+    const conditions = [];
+
+    if (options.ids) {
+      conditions.push({ id: options.ids });
+    }
+
+    if (options.contentIds) {
+      conditions.push({ postId: options.contentIds });
+    }
+
+    if (options.createdBy) {
+      conditions.push({ createdBy: options.createdBy });
+    }
+
+    if (options.isHighest !== undefined && options.isHighest !== null) {
+      conditions.push({ isHighest: options.isHighest });
+    }
+
+    if (conditions.length > 0) {
+      whereOptions[Op.and] = conditions;
+    }
+
+    if (options.isFinished !== undefined && options.isFinished !== null) {
+      if (options.isFinished === true) {
+        conditions.push({
+          [Op.or]: [
+            { finishedAt: { [Op.not]: null } },
+            Sequelize.literal(`started_at + time_limit * interval '1 second' <= NOW()`),
+          ],
+        });
+      } else {
+        conditions.push({
+          [Op.or]: [
+            { finishedAt: null },
+            Sequelize.literal(`started_at + time_limit * interval '1 second' > NOW()`),
+          ],
+        });
+      }
+    }
+
+    return whereOptions;
+  }
+
+  private _buildRelationOptions(options: FindQuizParticipantIncludeOptions = {}): Includeable[] {
+    const relationOptions: Includeable[] = [];
+
+    if (options.shouldInCludeAnswers) {
+      relationOptions.push({
+        model: this._quizParticipantAnswerModel,
+        as: 'answers',
+        required: false,
+      });
+    }
+
+    return relationOptions;
+  }
+
+  private _buildAttributesOptions(
+    options: FindQuizParticipantAttributeOptions = {}
+  ): FindAttributeOptions {
+    let attributesOptions: FindAttributeOptions;
+
+    if (options.exclude?.length > 0) {
+      attributesOptions['exclude'] = options.exclude;
+    }
+
+    if (options.include) {
+      attributesOptions['include'] = options.include;
+    }
+
+    return attributesOptions;
+  }
+
+  private _buildOrderOptions(options: FindQuizParticipantOrderOptions = {}): Order {
+    const orderOptions = [];
+
+    if (options.sortColumn) {
+      orderOptions.push([options.sortColumn, options.sortBy || ORDER.DESC]);
+    }
+
+    return orderOptions;
+  }
+
+  private _buildGroupOptions(options: string[] = []): GroupOption {
+    return options;
+  }
+
+  public async bulkCreateQuizParticipantAnswers(
+    answers: QuizParticipantAnswerAttributes[]
+  ): Promise<void> {
+    await this._quizParticipantAnswerModel.bulkCreate(answers);
+  }
+
+  public async updateQuizParticipantAnswer(
+    answerId: string,
+    answer: Partial<QuizParticipantAnswerAttributes>
+  ): Promise<void> {
+    await this._quizParticipantAnswerModel.update(answer, {
       where: {
-        postId: contentId,
-        createdBy: userId,
+        id: answerId,
+      },
+    });
+  }
+
+  public async deleteQuizParticipantAnswer(
+    conditions: WhereOptions<QuizParticipantAnswerAttributes>
+  ): Promise<void> {
+    await this._quizParticipantAnswerModel.destroy({
+      where: conditions,
+    });
+  }
+
+  public async findAllQuizParticipantAnswers(
+    quizParticipantId: string
+  ): Promise<QuizParticipantAnswerModel[]> {
+    return this._quizParticipantAnswerModel.findAll({
+      where: {
+        quizParticipantId,
       },
     });
   }

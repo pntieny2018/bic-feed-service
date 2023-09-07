@@ -56,7 +56,14 @@ export class GroupService implements IGroupService {
         groups = groups.concat(response.data['data']);
       }
     }
-    return groups;
+
+    const result: GroupDto[] = [];
+    for (const group of groups) {
+      if (group) {
+        result.push(new GroupDto(group));
+      }
+    }
+    return result;
   }
 
   public async getGroupMembersDividedByRole(
