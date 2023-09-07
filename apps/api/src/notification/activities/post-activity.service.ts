@@ -23,22 +23,37 @@ export class PostActivityService {
     createdAt: Date;
     mentions?: MentionObject;
     media?: MediaObject;
+    cover?: string;
+    summary?: string;
   }): NotificationActivity {
-    const { title, content, contentType, setting, audience, actor, mentions, createdAt, media } =
-      post;
+    const {
+      title,
+      content,
+      contentType,
+      setting,
+      audience,
+      actor,
+      mentions,
+      createdAt,
+      media,
+      cover,
+      summary,
+    } = post;
 
     const activityObject: ActivityObject = {
       id: post.id,
-      title: title,
+      title,
       contentType: contentType.toLowerCase(),
       setting,
       actor,
       audience,
       mentions: mentions as any,
-      content: content,
-      media: media,
-      // reactionsCount: post.reactionsCount,
+      content,
+      media,
       createdAt,
+      cover,
+      summary,
+      // reactionsCount: post.reactionsCount,
       // updatedAt: post.createdAt,
     };
 
