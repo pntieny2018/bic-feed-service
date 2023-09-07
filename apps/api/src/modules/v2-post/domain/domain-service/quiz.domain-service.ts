@@ -17,11 +17,11 @@ import {
   QuizRegenerateEvent,
 } from '../event';
 import {
+  ContentAccessDeniedException,
   ContentHasQuizException,
   QuizNotFoundException,
   QuizOverTimeException,
   QuizParticipantNotFinishedException,
-  QuizParticipantNotFoundException,
   QuizQuestionLimitExceededException,
   QuizQuestionNotFoundException,
 } from '../exception';
@@ -368,18 +368,15 @@ export class QuizDomainService implements IQuizDomainService {
     quizParticipantId: string,
     authUserId: string
   ): Promise<QuizParticipantEntity> {
-    const quizParticipantEntity = await this._quizParticipantRepository.findQuizParticipantById(
+    const quizParticipantEntity = await this._quizParticipantRepository.getQuizParticipantById(
       quizParticipantId
     );
-    if (!quizParticipantEntity) {
-      throw new QuizParticipantNotFoundException();
-    }
 
     if (!quizParticipantEntity.isOwner(authUserId)) {
-      throw new QuizParticipantNotFoundException();
+      throw new ContentAccessDeniedException();
     }
 
-    if (!quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()) {
+    if (!quizParticipantEntity.isFinishedOrOverTimeLimit()) {
       quizParticipantEntity.hideResult();
     }
 
