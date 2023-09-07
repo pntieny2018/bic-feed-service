@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -17,7 +18,11 @@ import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { instanceToInstance } from 'class-transformer';
 import { UserDto } from '../../../v2-user/application';
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import {
+  TRANSFORMER_VISIBLE_ONLY,
+  VERSIONS_SUPPORTED,
+  VERSION_1_9_0,
+} from '../../../../common/constants';
 import { MarkReadImportantContentCommand } from '../../application/command/mark-read-important-content/mark-read-important-content.command';
 import { ValidateSeriesTagsCommand } from '../../application/command/validate-series-tags/validate-series-tag.command';
 import {
@@ -41,6 +46,7 @@ import { FindDraftContentsQuery } from '../../application/query/find-draft-conte
 import { FindDraftContentsDto } from '../../application/query/find-draft-contents/find-draft-contents.dto';
 import { SearchContentsQuery } from '../../application/query/search-contents/search-contents.query';
 import { SearchContentsDto } from '../../application/query/search-contents/search-contents.dto';
+import { AppHelper } from '../../../../common/helpers/app.helper';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
@@ -89,6 +95,7 @@ export class ContentController {
   @ResponseMessages({
     success: 'Search contents successfully',
   })
+  @Version(AppHelper.getVersionsSupportedFrom(VERSION_1_9_0))
   @Get('/')
   public async searchContents(
     @AuthUser() user: UserDto,
