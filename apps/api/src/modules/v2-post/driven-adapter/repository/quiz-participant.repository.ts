@@ -37,39 +37,9 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     private readonly _quizParticipantModel: typeof QuizParticipantModel
   ) {}
 
-  public async create(quizParticipant: QuizParticipantEntity): Promise<void> {
-    await this._quizParticipantModel.create({
-      id: quizParticipant.get('id'),
-      quizId: quizParticipant.get('quizId'),
-      postId: quizParticipant.get('contentId'),
-      quizSnapshot: {
-        title: quizParticipant.get('quizSnapshot').title,
-        description: quizParticipant.get('quizSnapshot').description,
-        questions: quizParticipant.get('quizSnapshot').questions.map((question) => ({
-          id: question.id,
-          content: question.content,
-          createdAt: question.createdAt,
-          updatedAt: question.updatedAt,
-          answers: question.answers.map((answer) => ({
-            id: answer.id,
-            content: answer.content,
-            isCorrect: answer.isCorrect,
-            createdAt: question.createdAt,
-            updatedAt: question.updatedAt,
-          })),
-        })),
-      },
-      score: quizParticipant.get('score'),
-      timeLimit: quizParticipant.get('timeLimit'),
-      totalAnswers: quizParticipant.get('totalAnswers'),
-      totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
-      startedAt: quizParticipant.get('startedAt'),
-      finishedAt: quizParticipant.get('finishedAt'),
-      createdBy: quizParticipant.get('createdBy'),
-      updatedBy: quizParticipant.get('updatedBy'),
-      createdAt: quizParticipant.get('createdAt'),
-      updatedAt: quizParticipant.get('updatedAt'),
-    });
+  public async create(quizParticipantEntity: QuizParticipantEntity): Promise<void> {
+    const quizParticipant = this._quizParticipantMapper.toPersistence(quizParticipantEntity);
+    await this._libQuizParticipantRepo.createQuizParticipant(quizParticipant);
   }
 
   public async update(quizParticipant: QuizParticipantEntity): Promise<void> {

@@ -225,26 +225,28 @@ export class QuizDomainService implements IQuizDomainService {
     quizEntity: QuizEntity,
     authUser: UserDto
   ): Promise<QuizParticipantEntity> {
-    const quizParticipant = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
+    const quizParticipantEntity = QuizParticipantEntity.createFromQuiz(quizEntity, authUser.id);
+
     if (quizEntity.isRandomQuestion()) {
-      quizParticipant.shuffleQuestions();
+      quizParticipantEntity.shuffleQuestions();
     }
-    quizParticipant.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
+    quizParticipantEntity.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
+
     try {
-      await this._quizParticipantRepository.create(quizParticipant);
+      await this._quizParticipantRepository.create(quizParticipantEntity);
       this._eventService.publish(
         new QuizParticipantStartedEvent({
-          quizParticipantId: quizParticipant.get('id'),
-          startedAt: quizParticipant.get('startedAt'),
-          timeLimit: quizParticipant.get('timeLimit'),
+          quizParticipantId: quizParticipantEntity.get('id'),
+          startedAt: quizParticipantEntity.get('startedAt'),
+          timeLimit: quizParticipantEntity.get('timeLimit'),
         })
       );
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+      throw new DatabaseException(e.message);
     }
 
-    return quizParticipant;
+    return quizParticipantEntity;
   }
 
   public async updateQuizAnswers(

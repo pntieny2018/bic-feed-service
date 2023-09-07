@@ -14,7 +14,7 @@ export type FindQuizConditionOptions = {
 };
 
 export type FindQuizIncludeOptions = {
-  shouldInCludeQuestions?: boolean;
+  shouldIncludeQuestions?: boolean;
   shouldIncludeContent?: {
     contentType?: CONTENT_TYPE;
   };

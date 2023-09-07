@@ -123,7 +123,7 @@ export class LibQuizRepository implements ILibQuizRepository {
   private _buildRelationOptions(options: FindQuizIncludeOptions = {}): Includeable[] {
     const relationOptions: Includeable[] = [];
 
-    if (options.shouldInCludeQuestions) {
+    if (options.shouldIncludeQuestions) {
       relationOptions.push({
         model: this._quizQuestionModel,
         as: 'questions',
