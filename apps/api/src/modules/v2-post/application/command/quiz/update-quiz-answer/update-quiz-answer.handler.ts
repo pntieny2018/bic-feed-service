@@ -5,7 +5,7 @@ import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { QuizParticipantNotFoundException } from '../../../../domain/exception';
+import { ContentAccessDeniedException } from '../../../../domain/exception';
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
@@ -29,7 +29,7 @@ export class UpdateQuizAnswerHandler implements ICommandHandler<UpdateQuizAnswer
     );
 
     if (!quizParticipantEntity.isOwner(authUser.id)) {
-      throw new QuizParticipantNotFoundException();
+      throw new ContentAccessDeniedException();
     }
 
     await this._quizDomainService.updateQuizAnswers(quizParticipantEntity, answers, isFinished);
