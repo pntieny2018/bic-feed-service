@@ -6,7 +6,6 @@ import { RULES } from '../../constant';
 import { QuizGenStatus, QuizStatus } from '../../data-type';
 import { AddQuestionProps, QuizCreateProps } from '../domain-service/interface';
 import { QuizEntity, QuizQuestionEntity, QuizAttributes } from '../model/quiz';
-import { QuizParticipantEntity } from '../model/quiz-participant';
 
 import { IQuizFactory } from './interface/quiz.factory.interface';
 
@@ -65,45 +64,6 @@ export class QuizFactory implements IQuizFactory {
         updatedAt: new Date(),
       })),
     });
-  }
-
-  public createTakeQuiz(userId: string, quizEntity: QuizEntity): QuizParticipantEntity {
-    const now = new Date();
-    const quizParticipant = new QuizParticipantEntity({
-      id: v4(),
-      quizId: quizEntity.get('id'),
-      contentId: quizEntity.get('contentId'),
-      quizSnapshot: {
-        title: quizEntity.get('title'),
-        description: quizEntity.get('description'),
-        questions: quizEntity.get('questions').map((question) => ({
-          id: question.get('id'),
-          content: question.get('content'),
-          createdAt: question.get('createdAt'),
-          updatedAt: question.get('updatedAt'),
-          answers: question.get('answers').map((answer) => ({
-            id: answer.id,
-            content: answer.content,
-            isCorrect: answer.isCorrect,
-            createdAt: answer.createdAt,
-            updatedAt: answer.updatedAt,
-          })),
-        })),
-      },
-      score: 0,
-      isHighest: false,
-      timeLimit: quizEntity.get('timeLimit'),
-      answers: [],
-      totalAnswers: 0,
-      totalCorrectAnswers: 0,
-      startedAt: now,
-      finishedAt: null,
-      createdBy: userId,
-      updatedBy: userId,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return this._eventPublisher.mergeObjectContext(quizParticipant);
   }
 
   public reconstitute(properties: QuizAttributes): QuizEntity {

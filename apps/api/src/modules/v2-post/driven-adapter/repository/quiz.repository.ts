@@ -1,4 +1,5 @@
 import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
+import { ILibQuizRepository, LIB_QUIZ_REPOSITORY_TOKEN } from '@libs/database/postgres';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, WhereOptions } from 'sequelize';
@@ -22,11 +23,17 @@ import {
   GetPaginationQuizzesProps,
   IQuizRepository,
 } from '../../domain/repositoty-interface';
+import { QuizMapper } from '../mapper/quiz.mapper';
 
 export class QuizRepository implements IQuizRepository {
   private readonly QUERY_LIMIT_DEFAULT = 10;
 
   public constructor(
+    @Inject(LIB_QUIZ_REPOSITORY_TOKEN)
+    private readonly _libQuizRepo: ILibQuizRepository,
+
+    private readonly _quizMapper: QuizMapper,
+
     @Inject(QUIZ_FACTORY_TOKEN)
     private readonly _factory: IQuizFactory,
     @InjectModel(QuizModel)
@@ -124,26 +131,15 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async findQuizWithQuestions(id: string): Promise<QuizEntity> {
-    const quiz = await this._quizModel.findByPk(id);
+    const quiz = await this._libQuizRepo.findQuiz({
+      condition: { ids: [id] },
+      include: { shouldIncludeQuestions: true },
+    });
     if (!quiz) {
       return null;
     }
 
-    quiz.questions = await this._quizQuestionModel.findAll({
-      where: { quizId: id },
-      order: [['createdAt', 'ASC']],
-    });
-
-    const questionIds = quiz.questions.map((question) => question.id);
-    const answers = await this._quizAnswerModel.findAll({
-      where: { questionId: questionIds },
-      order: [['createdAt', 'ASC']],
-    });
-
-    quiz.questions.forEach((question) => {
-      question.answers = answers.filter((answer) => answer.questionId === question.id);
-    });
-    return this._modelToEntity(quiz);
+    return this._quizMapper.toDomain(quiz);
   }
 
   private _buildFindOptions(

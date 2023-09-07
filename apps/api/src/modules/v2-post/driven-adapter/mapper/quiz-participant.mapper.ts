@@ -34,11 +34,27 @@ export class QuizParticipantMapper {
 
   public toPersistence(entity: QuizParticipantEntity): QuizParticipantAttributes {
     return {
-      answers: [],
       id: entity.get('id'),
-      postId: entity.get('contentId'),
       quizId: entity.get('quizId'),
-      quizSnapshot: entity.get('quizSnapshot'),
+      postId: entity.get('contentId'),
+      quizSnapshot: {
+        title: entity.get('quizSnapshot').title,
+        description: entity.get('quizSnapshot').description,
+        questions: entity.get('quizSnapshot').questions.map((question) => ({
+          id: question.id,
+          content: question.content,
+          createdAt: question.createdAt,
+          updatedAt: question.updatedAt,
+          answers: question.answers.map((answer) => ({
+            id: answer.id,
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+            createdAt: question.createdAt,
+            updatedAt: question.updatedAt,
+          })),
+        })),
+      },
+      answers: [],
       score: entity.get('score'),
       isHighest: entity.get('isHighest'),
       timeLimit: entity.get('timeLimit'),
