@@ -1,13 +1,11 @@
-import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
-import { PageDto } from '../../common/dto';
-import { PostAppService } from './application/post.app-service';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
-import { ArticleResponseDto } from '../article/dto/responses';
+
+import { PostAppService } from './application/post.app-service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -17,18 +15,6 @@ import { ArticleResponseDto } from '../article/dto/responses';
 })
 export class PostController {
   public constructor(private _postAppService: PostAppService) {}
-
-  @ApiOperation({ summary: 'Get draft posts' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-  })
-  @Get('/draft')
-  public getDrafts(
-    @AuthUser() user: UserDto,
-    @Query() getDraftPostDto: GetDraftPostDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._postAppService.getDraftPosts(user, getDraftPostDto);
-  }
 
   @ApiOperation({ summary: 'Get total draft posts' })
   @ApiOkResponse({

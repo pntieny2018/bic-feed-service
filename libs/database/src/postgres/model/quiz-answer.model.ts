@@ -45,9 +45,9 @@ export class QuizAnswerModel extends Model<
 
   @CreatedAt
   @Column
-  public createdAt?: Date;
+  public createdAt: Date;
 
   @UpdatedAt
   @Column
-  public updatedAt?: Date;
+  public updatedAt: Date;
 }

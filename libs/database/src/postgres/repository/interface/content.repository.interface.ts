@@ -10,7 +10,7 @@ import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.
 import { PostTagAttributes } from '@libs/database/postgres/model/post-tag.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import {
-  ReportContentDetailAttribute,
+  ReportContentDetailAttributes,
   ReportContentDetailModel,
 } from '@libs/database/postgres/model/report-content-detail.model';
 import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model/user-mark-read-post.model';
@@ -72,6 +72,8 @@ export type FindContentProps = {
 
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
 
+export type GetReportContentDetailsProps = WhereOptions<ReportContentDetailAttributes>;
+
 export interface ILibContentRepository {
   bulkCreatePostGroup(
     postGroups: PostGroupAttributes[],
@@ -130,7 +132,7 @@ export interface ILibContentRepository {
   ): Promise<CursorPaginationResult<PostModel>>;
 
   getReportedContents(
-    whereOptions: WhereOptions<ReportContentDetailAttribute>
+    getReportedContentsProps: GetReportContentDetailsProps
   ): Promise<ReportContentDetailModel[]>;
 }
 

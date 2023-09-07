@@ -39,6 +39,8 @@ export class QuizQuestionMapper {
         questionId: entity.get('id'),
         content: answer.content,
         isCorrect: answer.isCorrect,
+        createdAt: answer.createdAt,
+        updatedAt: answer.updatedAt,
       })),
       createdAt: entity.get('createdAt'),
       updatedAt: entity.get('updatedAt'),

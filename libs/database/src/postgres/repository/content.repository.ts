@@ -21,10 +21,7 @@ import {
 import { PostTagAttributes, PostTagModel } from '@libs/database/postgres/model/post-tag.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { QuizModel } from '@libs/database/postgres/model/quiz.model';
-import {
-  ReportContentDetailAttribute,
-  ReportContentDetailModel,
-} from '@libs/database/postgres/model/report-content-detail.model';
+import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import {
   UserMarkedImportantPostAttributes,
   UserMarkReadPostModel,
@@ -40,6 +37,7 @@ import {
   GetPaginationContentsProps,
   OrderOptions,
   ILibContentRepository,
+  GetReportContentDetailsProps,
 } from '@libs/database/postgres/repository/interface';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
@@ -219,10 +217,10 @@ export class LibContentRepository implements ILibContentRepository {
   }
 
   public async getReportedContents(
-    whereOptions: WhereOptions<ReportContentDetailAttribute>
+    getReportedContentsProps: GetReportContentDetailsProps
   ): Promise<ReportContentDetailModel[]> {
     return this._reportContentDetailModel.findAll({
-      where: whereOptions,
+      where: getReportedContentsProps,
     });
   }
 

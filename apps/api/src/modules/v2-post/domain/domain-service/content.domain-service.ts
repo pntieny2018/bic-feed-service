@@ -25,25 +25,28 @@ export class ContentDomainService implements IContentDomainService {
   ) {}
 
   public async getVisibleContent(
-    id: string,
+    contentId: string,
     excludeReportedByUserId?: string
   ): Promise<ContentEntity> {
-    const entity = await this._contentRepository.findOne({
-      include: {
-        mustIncludeGroup: true,
-        ...(excludeReportedByUserId && {
-          excludeReportedByUserId,
-        }),
-      },
-      where: {
-        id,
-      },
-    });
+    let contentEntity: ContentEntity;
 
-    if (!entity || !entity.isVisible()) {
+    if (excludeReportedByUserId) {
+      contentEntity = await this._contentRepository.findContentByIdExcludeReportedByUserId(
+        contentId,
+        excludeReportedByUserId,
+        { mustIncludeGroup: true }
+      );
+    } else {
+      contentEntity = await this._contentRepository.findContentById(contentId, {
+        mustIncludeGroup: true,
+      });
+    }
+
+    if (!contentEntity || !contentEntity.isVisible()) {
       throw new ContentNotFoundException();
     }
-    return entity;
+
+    return contentEntity;
   }
 
   public getRawContent(contentEntity: ContentEntity): string {

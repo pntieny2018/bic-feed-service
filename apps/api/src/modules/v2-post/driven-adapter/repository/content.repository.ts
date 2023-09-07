@@ -1,6 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
-import { ReportContentDetailAttribute } from '@libs/database/postgres/model/report-content-detail.model';
+import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
 import {
   FindContentIncludeOptions,
   FindContentProps,
@@ -304,7 +304,7 @@ export class ContentRepository implements IContentRepository {
     if (!createdBy) {
       return [];
     }
-    const condition: WhereOptions<ReportContentDetailAttribute> = {
+    const condition: WhereOptions<ReportContentDetailAttributes> = {
       [Op.and]: [
         {
           createdBy,

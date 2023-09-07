@@ -1,4 +1,9 @@
 import { ORDER } from '@beincom/constants';
+import {
+  ILibQuizParticipantRepository,
+  LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '@libs/database/postgres';
+import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { difference } from 'lodash';
 import { Op } from 'sequelize';
@@ -16,9 +21,15 @@ import {
 import { QuizParticipantNotFoundException } from '../../domain/exception';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface/quiz-participant.repository.interface';
+import { QuizParticipantMapper } from '../mapper/quiz-participant.mapper';
 
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
+    @Inject(LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
+    private readonly _libQuizParticipantRepo: ILibQuizParticipantRepository,
+
+    private readonly _quizParticipantMapper: QuizParticipantMapper,
+
     @InjectModel(QuizParticipantAnswerModel)
     private readonly _quizParticipantAnswerModel: typeof QuizParticipantAnswerModel,
 
@@ -62,28 +73,22 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
   }
 
   public async update(quizParticipant: QuizParticipantEntity): Promise<void> {
-    await this._quizParticipantModel.update(
-      {
-        score: quizParticipant.get('score'),
-        totalAnswers: quizParticipant.get('totalAnswers'),
-        totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
-        startedAt: quizParticipant.get('startedAt'),
-        finishedAt: quizParticipant.get('finishedAt'),
-        updatedBy: quizParticipant.get('updatedBy'),
-        updatedAt: quizParticipant.get('updatedAt'),
-      },
-      {
-        where: {
-          id: quizParticipant.get('id'),
-        },
-      }
-    );
+    const quizParticipantId = quizParticipant.get('id');
+
+    await this._libQuizParticipantRepo.updateQuizParticipant(quizParticipantId, {
+      score: quizParticipant.get('score'),
+      totalAnswers: quizParticipant.get('totalAnswers'),
+      totalCorrectAnswers: quizParticipant.get('totalCorrectAnswers'),
+      startedAt: quizParticipant.get('startedAt'),
+      finishedAt: quizParticipant.get('finishedAt'),
+      updatedBy: quizParticipant.get('updatedBy'),
+      updatedAt: quizParticipant.get('updatedAt'),
+    });
+
     if (quizParticipant.get('answers') !== undefined) {
-      const currentAnswers = await this._quizParticipantAnswerModel.findAll({
-        where: {
-          quizParticipantId: quizParticipant.get('id'),
-        },
-      });
+      const currentAnswers = await this._libQuizParticipantRepo.findAllQuizParticipantAnswers(
+        quizParticipantId
+      );
       const newAnswerIds = quizParticipant.get('answers').map((answer) => answer.id);
       const currentAnswerIds = currentAnswers.map((answer) => answer.get('id'));
       for (const currentAnswer of currentAnswers) {
@@ -91,33 +96,24 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
           .get('answers')
           .find((newAnswer) => newAnswer.id === currentAnswer.get('id'));
         if (findAnswer && findAnswer.isCorrect !== currentAnswer.get('isCorrect')) {
-          await this._quizParticipantAnswerModel.update(
-            {
-              isCorrect: findAnswer.isCorrect,
-            },
-            {
-              where: {
-                id: findAnswer.id,
-              },
-            }
-          );
+          await this._libQuizParticipantRepo.updateQuizParticipantAnswer(findAnswer.id, {
+            isCorrect: findAnswer.isCorrect,
+          });
         }
       }
 
-      await this._quizParticipantAnswerModel.destroy({
-        where: {
-          quizParticipantId: quizParticipant.get('id'),
-          id: difference(currentAnswerIds, newAnswerIds),
-        },
+      await this._libQuizParticipantRepo.deleteQuizParticipantAnswer({
+        quizParticipantId,
+        id: difference(currentAnswerIds, newAnswerIds),
       });
 
-      await this._quizParticipantAnswerModel.bulkCreate(
+      await this._libQuizParticipantRepo.bulkCreateQuizParticipantAnswers(
         quizParticipant
           .get('answers')
           .filter((answer) => !currentAnswerIds.includes(answer.id))
           .map((answer) => ({
             id: answer.id,
-            quizParticipantId: quizParticipant.get('id'),
+            quizParticipantId,
             questionId: answer.questionId,
             answerId: answer.answerId,
             isCorrect: answer.isCorrect,
@@ -135,21 +131,16 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
   public async findQuizParticipantById(
     quizParticipantId: string
   ): Promise<QuizParticipantEntity | null> {
-    const quizParticipant = await this._quizParticipantModel.findByPk(quizParticipantId, {
-      include: [
-        {
-          model: this._quizParticipantAnswerModel,
-          as: 'answers',
-          required: false,
-        },
-      ],
+    const quizParticipant = await this._libQuizParticipantRepo.findQuizParticipant({
+      condition: { ids: [quizParticipantId] },
+      include: { shouldInCludeAnswers: true },
     });
 
     if (!quizParticipant) {
       return null;
     }
 
-    return this._modelToEntity(quizParticipant);
+    return this._quizParticipantMapper.toDomain(quizParticipant);
   }
 
   public async getQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity> {
@@ -278,20 +269,14 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentId: string,
     userId: string
   ): Promise<QuizParticipantEntity[]> {
-    const rows = await this._quizParticipantModel.findAll({
-      include: [
-        {
-          model: this._quizParticipantAnswerModel,
-          required: false,
-        },
-      ],
-      where: {
-        postId: contentId,
-        createdBy: userId,
-      },
+    const quizParticipants = await this._libQuizParticipantRepo.findAllQuizParticipants({
+      condition: { contentIds: [contentId], createdBy: userId },
+      include: { shouldInCludeAnswers: true },
     });
 
-    return rows.map((row) => this._modelToEntity(row));
+    return quizParticipants.map((quizParticipant) =>
+      this._quizParticipantMapper.toDomain(quizParticipant)
+    );
   }
 
   private _modelToEntity(takeQuizModel: IQuizParticipant): QuizParticipantEntity {
