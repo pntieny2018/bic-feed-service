@@ -9,13 +9,13 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import { IPostElasticsearch } from '../../../../search';
+import { ELASTICSEARCH_DEFAULT_SIZE_PAGE, IPostElasticsearch } from '../../../../search';
 import { SearchContentsDto } from './search-contents.dto';
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
-import { createCursor } from '../../../../../common/dto/cusor-pagination';
+import { createCursor, parseCursor } from '../../../../../common/dto/cusor-pagination';
 import { SearchService } from '../../../../search/search.service';
 import { ArticleDto, ContentHighlightDto, PostDto, SeriesDto } from '../../dto';
 
@@ -44,7 +44,7 @@ export class SearchContentsHandler
       groupId,
       contentTypes,
       isIncludedInnerGroups = true,
-      limit,
+      limit = ELASTICSEARCH_DEFAULT_SIZE_PAGE,
       after,
     } = query.payload;
 
@@ -73,7 +73,7 @@ export class SearchContentsHandler
       excludeByIds,
       tags,
       size: limit,
-      searchAfter: after,
+      searchAfter: after ? parseCursor(after) : undefined,
       shouldHighlight: true,
     });
 
@@ -101,7 +101,7 @@ export class SearchContentsHandler
 
     return new SearchContentsDto(result, {
       total,
-      hasNextPage: total > source.length,
+      hasNextPage: limit > source.length,
       endCursor: cursor ? createCursor(cursor) : '',
     });
   }

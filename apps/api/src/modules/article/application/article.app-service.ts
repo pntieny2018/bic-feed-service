@@ -337,7 +337,7 @@ export class ArticleAppService {
       contentTypes: [PostType.ARTICLE],
       groupIds: filterGroupIds,
       excludeByIds: notIncludeIds,
-      ...(categoryIds && { topics: categoryIds }),
+      topics: categoryIds,
       from: offset,
       size: limit,
       isLimitSeries: limitSeries,
