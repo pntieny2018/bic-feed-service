@@ -59,17 +59,10 @@ export type AddQuestionProps = {
   authUser: UserDto;
 };
 
-export type UpdateQuestionProps = {
-  quizId: string;
+export type UpdateQuestionProps = AddQuestionProps & {
   questionId: string;
-  content: string;
-  answers: {
-    id?: string;
-    content: string;
-    isCorrect: boolean;
-  }[];
-  authUser: UserDto;
 };
+
 export interface IQuizDomainService {
   create(data: QuizCreateProps): Promise<QuizEntity>;
   update(data: QuizUpdateProps): Promise<QuizEntity>;

@@ -219,13 +219,13 @@ export class QuizController {
   @Post(ROUTES.QUIZ.ADD_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.ADD_QUIZ_QUESTION.VERSIONS)
   public async addQuizQuestion(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @Body() addQuestionDto: AddQuizQuestionRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<QuestionDto> {
     const data = await this._commandBus.execute<AddQuizQuestionCommand, QuestionDto>(
       new AddQuizQuestionCommand({
-        quizId: id,
+        quizId,
         content: addQuestionDto.content,
         answers: addQuestionDto.answers,
         authUser,
