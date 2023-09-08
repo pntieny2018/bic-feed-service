@@ -1,7 +1,6 @@
-import { PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 
 import { PostDto } from '../../application/dto';
-import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 
 export const postMock: PostDto = {
   id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
@@ -56,9 +55,9 @@ export const postMock: PostDto = {
     isDeactivated: false,
     isVerified: false,
   },
-  status: PostStatus.PUBLISHED,
-  type: PostType.POST,
-  privacy: PostPrivacy.OPEN,
+  status: CONTENT_STATUS.PUBLISHED,
+  type: CONTENT_TYPE.POST,
+  privacy: PRIVACY.OPEN,
   setting: {
     canComment: true,
     canReact: true,
