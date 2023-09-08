@@ -47,7 +47,7 @@ export class ContentValidator implements IContentValidator {
   public async checkCanCRUDContent(
     user: UserDto,
     groupAudienceIds: string[],
-    postType?: PostType | CONTENT_TYPE
+    postType?: CONTENT_TYPE
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);

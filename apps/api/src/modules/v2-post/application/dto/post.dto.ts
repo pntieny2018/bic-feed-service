@@ -2,8 +2,6 @@ import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { PostPrivacy, PostStatus, PostType } from '../../data-type';
-
 import { LinkPreviewDto } from './link-preview.dto';
 import { FileDto, ImageDto, VideoDto } from './media.dto';
 import { QuizDto } from './quiz.dto';
@@ -31,9 +29,9 @@ export class PostDto {
     videos: VideoDto[];
   };
   public actor: UserDto;
-  public status: PostStatus | CONTENT_STATUS;
-  public privacy: PostPrivacy | PRIVACY;
-  public type: PostType | CONTENT_TYPE;
+  public status: CONTENT_STATUS;
+  public privacy: PRIVACY;
+  public type: CONTENT_TYPE;
   public markedReadPost: boolean;
   public isSaved: boolean;
   public isReported: boolean;

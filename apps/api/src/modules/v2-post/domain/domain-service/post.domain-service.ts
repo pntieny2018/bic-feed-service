@@ -1,11 +1,7 @@
 import { Inject, Logger } from '@nestjs/common';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../v2-user/application';
+import { UserDto } from '../../../v2-user/application';
 import {
   ContentAccessDeniedException,
   ContentNoPublishYetException,
@@ -19,7 +15,12 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -34,15 +35,11 @@ import {
   IPostDomainService,
   PostCreateProps,
   UpdatePostProps,
-} from './interface';
-import {
   ILinkPreviewDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
-} from './interface/link-preview.domain-service.interface';
-import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
+} from './interface';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -64,8 +61,8 @@ export class PostDomainService implements IPostDomainService {
     private readonly _mediaDomainService: IMediaDomainService,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async getPostById(postId: string, authUserId: string): Promise<PostEntity> {
@@ -169,7 +166,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
       withGroupJoined: true,
     });
 
@@ -250,19 +247,13 @@ export class PostDomainService implements IPostDomainService {
   public async updatePost(props: UpdatePostProps): Promise<PostEntity> {
     const { authUser, id, groupIds, mentionUserIds } = props;
 
-    const postEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
-        },
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+      shouldIncludeLinkPreview: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeMarkReadImportant: {
+        userId: authUser?.id,
       },
     });
 
@@ -280,7 +271,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
       withGroupJoined: true,
     });
 
@@ -446,7 +437,7 @@ export class PostDomainService implements IPostDomainService {
     if (groupIds || postEntity.get('groupIds')) {
       groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     }
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
       withGroupJoined: true,
     });
 

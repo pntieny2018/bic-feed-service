@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -147,7 +147,7 @@ export class AutoSavePostRequestDto {
 }
 
 export class PublishPostRequestDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Audience',
     type: AudienceRequestDto,
     required: true,
@@ -161,7 +161,7 @@ export class PublishPostRequestDto {
   @Type(() => AudienceRequestDto)
   public audience?: AudienceRequestDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Content of post',
     type: String,
     example: 'Bla bla bla...',
@@ -170,7 +170,7 @@ export class PublishPostRequestDto {
   @Type(() => String)
   public content?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Post data, includes content, images, files, videos',
     type: MediaDto,
     required: false,
@@ -189,7 +189,7 @@ export class PublishPostRequestDto {
   @Type(() => MediaRequestDto)
   public media?: MediaRequestDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: UserMentionDto,
     example: {
       dangdiep: {
@@ -222,7 +222,7 @@ export class PublishPostRequestDto {
   })
   public mentions?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: LinkPreviewDto,
     example: {
       url: 'https://beincomm.com',
@@ -239,7 +239,7 @@ export class PublishPostRequestDto {
   })
   public linkPreview?: LinkPreviewDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: [String],
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
@@ -247,7 +247,7 @@ export class PublishPostRequestDto {
   @IsUUID('4', { each: true })
   public tags?: string[];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: [String],
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })

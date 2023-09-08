@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -6,7 +7,6 @@ import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { PostStatus } from '../../../../database/models/post.model';
 import { UserDto } from '../../../v2-user/application';
 import {
   AutoSavePostCommand,
@@ -85,7 +85,7 @@ export class PostController {
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -123,7 +123,7 @@ export class PostController {
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
 
