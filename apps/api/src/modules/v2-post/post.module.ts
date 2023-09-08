@@ -46,6 +46,7 @@ import {
   adapterProvider,
 } from './provider';
 import { quizProvider } from './provider/quiz.provider';
+import { OpenaiModule } from '@libs/service/openai';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { quizProvider } from './provider/quiz.provider';
     UserModule,
     GroupModule,
     LibMediaModule,
+    OpenaiModule,
   ],
   controllers: [
     TagController,

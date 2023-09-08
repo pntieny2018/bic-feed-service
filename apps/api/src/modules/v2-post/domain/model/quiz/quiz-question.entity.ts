@@ -15,8 +15,8 @@ export type QuizQuestionAttributes = {
     updatedAt?: Date;
     createdAt?: Date;
   }[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttributes> {

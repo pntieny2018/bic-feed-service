@@ -4,6 +4,7 @@ import {
   USER_HTTP_TOKEN,
   HttpService,
   IAxiosConfig,
+  PRIVATE_GATEWAY_HTTP_TOKEN,
 } from '@libs/infra/http';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -49,6 +50,18 @@ export class HttpModule {
               baseURL: axiosConfig.upload.baseUrl,
               maxRedirects: axiosConfig.upload.maxRedirects,
               timeout: axiosConfig.upload.timeout,
+            });
+          },
+          inject: [ConfigService],
+        },
+        {
+          provide: PRIVATE_GATEWAY_HTTP_TOKEN,
+          useFactory: (configService: ConfigService) => {
+            const axiosConfig = configService.get<IAxiosConfig>('axios');
+            return new HttpService({
+              baseURL: axiosConfig.privateGateway.baseUrl,
+              maxRedirects: axiosConfig.privateGateway.maxRedirects,
+              timeout: axiosConfig.privateGateway.timeout,
             });
           },
           inject: [ConfigService],

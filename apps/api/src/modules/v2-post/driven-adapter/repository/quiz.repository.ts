@@ -1,10 +1,9 @@
-import { IOpenaiService, OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, WhereOptions } from 'sequelize';
 
 import { CursorPaginator } from '../../../../common/dto';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { CursorPaginationResult } from '../../../../common/types';
 import { PostModel } from '../../../../database/models/post.model';
 import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
 import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
@@ -14,8 +13,7 @@ import {
   IQuizFactory,
   QUIZ_FACTORY_TOKEN,
 } from '../../domain/factory/interface/quiz.factory.interface';
-import { QuizEntity } from '../../domain/model/quiz';
-import { QuizQuestionEntity } from '../../domain/model/quiz/quiz-question.entity';
+import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import {
   FindAllQuizProps,
   FindOneQuizProps,
@@ -34,9 +32,7 @@ export class QuizRepository implements IQuizRepository {
     @InjectModel(QuizQuestionModel)
     private readonly _quizQuestionModel: typeof QuizQuestionModel,
     @InjectModel(QuizAnswerModel)
-    private readonly _quizAnswerModel: typeof QuizAnswerModel,
-    @Inject(OPEN_AI_SERVICE_TOKEN)
-    private readonly _openaiService: IOpenaiService
+    private readonly _quizAnswerModel: typeof QuizAnswerModel
   ) {}
 
   public async create(quizEntity: QuizEntity): Promise<void> {
@@ -300,31 +296,6 @@ export class QuizRepository implements IQuizRepository {
       meta,
     };
   }
-
-  public async genQuestions(quizEntity: QuizEntity, rawContent: string): Promise<void> {
-    const { questions, usage, model, maxTokens, completion } =
-      await this._openaiService.generateQuestion({
-        content: rawContent,
-        numberOfQuestions: quizEntity.get('numberOfQuestions'),
-        numberOfAnswers: quizEntity.get('numberOfAnswers'),
-      });
-    quizEntity.updateAttribute({
-      meta: {
-        usage,
-        model,
-        maxTokens,
-        completion,
-      },
-      questions: questions.map(
-        (question) =>
-          new QuizQuestionEntity({
-            ...question,
-            quizId: quizEntity.get('id'),
-          })
-      ),
-    });
-  }
-
   public async findQuizQuestion(id: string): Promise<QuizQuestionEntity> {
     const question = await this._quizQuestionModel.findByPk(id, {
       include: [

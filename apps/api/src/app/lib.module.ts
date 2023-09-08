@@ -1,4 +1,3 @@
-import { OpenaiModule } from '@app/openai';
 import { DomainEventModule } from '@beincom/nest-domain-event';
 import { HttpModule as LibHttpModule } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
@@ -136,7 +135,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     }),
     InternalEventEmitterModule,
     DomainEventModule,
-    OpenaiModule,
     LibHttpModule.forRoot(),
     LogModule,
   ],
