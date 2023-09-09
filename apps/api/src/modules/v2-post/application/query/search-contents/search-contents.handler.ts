@@ -81,8 +81,9 @@ export class SearchContentsHandler
 
     const { source, total, cursor } = response;
 
-    if (!source || !source.length || !total) {
+    if (!source || !source.length) {
       return new SearchContentsDto([], {
+        total,
         hasNextPage: false,
       });
     }
