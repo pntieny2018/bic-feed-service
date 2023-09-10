@@ -85,15 +85,15 @@ export class ElasticsearchQueryBuilder {
     if (startTime || endTime) {
       const filterTime = {
         range: {
-          createdAt: {},
+          publishedAt: {},
         },
       };
 
       if (startTime) {
-        filterTime.range.createdAt['gte'] = startTime;
+        filterTime.range.publishedAt['gte'] = startTime;
       }
       if (endTime) {
-        filterTime.range.createdAt['lte'] = endTime;
+        filterTime.range.publishedAt['lte'] = endTime;
       }
       return [filterTime];
     }
