@@ -26,7 +26,7 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
   public async handle(event: QuizGeneratedEvent): Promise<void> {
     this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
     const { quizId } = event;
-    const quizEntity = await this._quizRepository.findOne(quizId);
+    const quizEntity = await this._quizRepository.findQuizById(quizId);
     if (!quizEntity) {
       return;
     }
