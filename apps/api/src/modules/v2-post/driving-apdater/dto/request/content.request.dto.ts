@@ -141,6 +141,7 @@ export class SearchContentsRequestDto {
   public groupId?: string;
 
   @ApiPropertyOptional({
+    name: 'content_types',
     description: 'Filter by type of contents',
     required: false,
   })
