@@ -128,7 +128,7 @@ export class CommentDomainService implements ICommentDomainService {
     const aroundChildPagination = await this._commentQuery.getAroundComment(comment, {
       limit: targetChildLimit,
       order: ORDER.DESC,
-      authUser: userId,
+      authUserId: userId,
     });
 
     const parent = await this.getVisibleComment(comment.get('parentId'), userId);
@@ -137,7 +137,7 @@ export class CommentDomainService implements ICommentDomainService {
     const aroundParentPagination = await this._commentQuery.getAroundComment(parent, {
       limit,
       order: ORDER.DESC,
-      authUser: userId,
+      authUserId: userId,
     });
 
     return aroundParentPagination;
@@ -150,7 +150,7 @@ export class CommentDomainService implements ICommentDomainService {
     const { userId, targetChildLimit, limit } = pagination;
 
     const childsPagination = await this._commentQuery.getPagination({
-      authUser: userId,
+      authUserId: userId,
       postId: comment.get('postId'),
       parentId: comment.get('id'),
       limit: targetChildLimit,
@@ -163,7 +163,7 @@ export class CommentDomainService implements ICommentDomainService {
     const aroundParentPagination = await this._commentQuery.getAroundComment(comment, {
       limit,
       order: ORDER.DESC,
-      authUser: userId,
+      authUserId: userId,
     });
 
     return aroundParentPagination;

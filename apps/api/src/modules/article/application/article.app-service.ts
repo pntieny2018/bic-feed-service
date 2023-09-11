@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { uniq } from 'lodash';
@@ -22,7 +23,6 @@ import { IPostElasticsearch } from '../../search/interfaces';
 import { SearchService } from '../../search/search.service';
 import { TagService } from '../../tag/tag.service';
 import { RULES } from '../../v2-post/constant';
-import { PostType } from '../../v2-post/data-type';
 import {
   ArticleInvalidParameterException,
   ArticleLimitAttachedSeriesException,
@@ -349,7 +349,7 @@ export class ArticleAppService {
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({
       keyword: contentSearch,
-      contentTypes: [PostType.ARTICLE],
+      contentTypes: [CONTENT_TYPE.ARTICLE],
       groupIds: filterGroupIds,
       excludeByIds: notIncludeIds,
       ...(categoryIds && { topics: categoryIds }),

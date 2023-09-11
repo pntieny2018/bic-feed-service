@@ -1,6 +1,7 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { IQuery } from '@nestjs/cqrs';
+
 import { UserDto } from '../../../../../v2-user/application';
-import { PostType } from '../../../../data-type';
 
 type Props = {
   authUser: UserDto;
@@ -19,7 +20,7 @@ type Props = {
 
   groupId?: string;
 
-  contentTypes?: PostType[];
+  contentTypes?: CONTENT_TYPE[];
 
   limit?: number;
 

@@ -40,6 +40,7 @@ import {
   GetPaginationContentsProps,
   OrderOptions,
   ILibContentRepository,
+  GetReportContentDetailsProps,
 } from '@libs/database/postgres/repository/interface';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
@@ -71,7 +72,9 @@ export class LibContentRepository implements ILibContentRepository {
     @InjectModel(UserSeenPostModel)
     private readonly _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(UserMarkReadPostModel)
-    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel,
+    @InjectModel(ReportContentDetailModel)
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   public async bulkCreatePostGroup(
@@ -216,6 +219,14 @@ export class LibContentRepository implements ILibContentRepository {
       rows,
       meta,
     };
+  }
+
+  public async getReportedContents(
+    getReportedContentsProps: GetReportContentDetailsProps
+  ): Promise<ReportContentDetailModel[]> {
+    return this._reportContentDetailModel.findAll({
+      where: getReportedContentsProps,
+    });
   }
 
   protected buildFindOptions(options: FindContentProps): FindOptions<PostAttributes> {

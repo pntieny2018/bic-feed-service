@@ -42,7 +42,7 @@ export class FindCommentsPaginationHandler
 
     const { rows, meta } = await this._commentRepository.getPagination({
       ...query.payload,
-      authUser: authUser.id,
+      authUserId: authUser.id,
     });
 
     if (!rows || rows.length === 0) {

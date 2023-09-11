@@ -1,10 +1,10 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { QueryDslQueryContainer } from '@elastic/elasticsearch/lib/api/types';
 import { Injectable } from '@nestjs/common';
 
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
-import { PostType } from '../../database/models/post.model';
 import { RULES } from '../v2-post/constant';
 
 import { IPostSearchQuery } from './interfaces';
@@ -222,7 +222,7 @@ export class ElasticsearchQueryBuilder {
     ];
   }
 
-  private _getContentTypesFilter(postTypes: PostType[]): any {
+  private _getContentTypesFilter(postTypes: CONTENT_TYPE[]): any {
     const { type } = ELASTIC_POST_MAPPING_PATH;
     if (postTypes && postTypes?.length) {
       return [

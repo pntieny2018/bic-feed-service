@@ -14,7 +14,7 @@ import {
 import { v4 as uuid_v4 } from 'uuid';
 
 import { QuizAnswerAttributes, QuizAnswerModel } from './quiz-answer.model';
-import { QuizAttributes, QuizModel } from './quiz.model';
+import { QuizModel } from './quiz.model';
 
 export type QuizQuestionAttributes = InferAttributes<QuizQuestionModel>;
 @Table({
@@ -53,5 +53,5 @@ export class QuizQuestionModel extends Model<
   @BelongsTo(() => QuizModel, {
     foreignKey: 'quizId',
   })
-  public quiz?: QuizAttributes;
+  public quiz?: QuizModel;
 }
