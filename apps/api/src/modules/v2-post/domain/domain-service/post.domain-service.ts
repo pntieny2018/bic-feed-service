@@ -277,7 +277,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (
       !postEntity ||
-      postEntity.isHidden() ||
+      (postEntity.isHidden() && !postEntity.isOwner(authUser.id)) ||
       !(postEntity instanceof PostEntity) ||
       postEntity.isInArchivedGroups()
     ) {
