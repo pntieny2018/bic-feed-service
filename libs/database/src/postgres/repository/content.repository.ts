@@ -244,8 +244,8 @@ export class LibContentRepository implements ILibContentRepository {
     if (orderOptions.isPublishedByDesc) {
       order.push(['publishedAt', ORDER.DESC]);
     }
-    if (orderOptions.sortColumn && orderOptions.sortBy) {
-      order.push([orderOptions.sortColumn, orderOptions.sortBy]);
+    if (orderOptions.sortColumn && orderOptions.orderBy) {
+      order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
     order.push(['createdAt', ORDER.DESC]);
     return order;
