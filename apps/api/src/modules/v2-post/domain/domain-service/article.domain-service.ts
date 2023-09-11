@@ -276,7 +276,7 @@ export class ArticleDomainService implements IArticleDomainService {
     if (
       !articleEntity ||
       !(articleEntity instanceof ArticleEntity) ||
-      articleEntity.isHidden() ||
+      (articleEntity.isHidden() && !articleEntity.isOwner(actor.id)) ||
       articleEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();

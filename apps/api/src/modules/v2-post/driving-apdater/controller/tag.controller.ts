@@ -23,8 +23,7 @@ import {
   UpdateTagCommand,
 } from '../../application/command/tag';
 import { FindTagsPaginationDto, SearchTagsDto, TagDto } from '../../application/dto';
-import { FindTagsPaginationQuery } from '../../application/query/tag';
-import { SearchTagsQuery } from '../../application/query/tag/search-tags';
+import { FindTagsPaginationQuery, SearchTagsQuery } from '../../application/query/tag';
 import {
   CreateTagRequestDto,
   GetTagRequestDto,
