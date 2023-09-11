@@ -1,12 +1,9 @@
 import { KAFKA_ADAPTER, QUEUE_ADAPTER } from '../domain/infra-adapter-interface';
-import {
-  USER_ADAPTER,
-  GROUP_ADAPTER,
-  MEDIA_ADAPTER,
-  OPENAI_ADAPTER,
-} from '../domain/service-adapter-interface';
+import { USER_ADAPTER, GROUP_ADAPTER, MEDIA_ADAPTER } from '../domain/service-adapter-interface';
 import { KafkaAdapter, QueueAdapter } from '../driven-adapter/infra';
-import { UserAdapter, GroupAdapter, MediaAdapter, OpenAIAdapter } from '../driven-adapter/service';
+import { GroupAdapter } from '../driven-adapter/service/group.adapter';
+import { MediaAdapter } from '../driven-adapter/service/media.adapter';
+import { UserAdapter } from '../driven-adapter/service/user.adapter';
 
 export const adapterProvider = [
   {
@@ -28,9 +25,5 @@ export const adapterProvider = [
   {
     provide: MEDIA_ADAPTER,
     useClass: MediaAdapter,
-  },
-  {
-    provide: OPENAI_ADAPTER,
-    useClass: OpenAIAdapter,
   },
 ];

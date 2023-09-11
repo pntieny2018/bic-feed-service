@@ -1,9 +1,8 @@
-import { configs } from '@libs/infra/queue/config';
+import { configs } from '@libs/service/openai';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { OpenAIService } from './openai.service';
-import { OPEN_AI_SERVICE_TOKEN } from './openai.service.interface';
+import { OpenaiService } from './openai.service';
 
 @Module({
   imports: [
@@ -12,12 +11,7 @@ import { OPEN_AI_SERVICE_TOKEN } from './openai.service.interface';
       load: [configs],
     }),
   ],
-  providers: [
-    {
-      provide: OPEN_AI_SERVICE_TOKEN,
-      useClass: OpenAIService,
-    },
-  ],
-  exports: [OPEN_AI_SERVICE_TOKEN],
+  providers: [OpenaiService],
+  exports: [OpenaiService],
 })
-export class OpenAIModule {}
+export class OpenaiModule {}

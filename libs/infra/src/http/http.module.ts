@@ -4,7 +4,6 @@ import {
   USER_HTTP_TOKEN,
   HttpService,
   IAxiosConfig,
-  LAMBDA_COUNT_TOKEN_HTTP_TOKEN,
 } from '@libs/infra/http';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -20,7 +19,7 @@ export class HttpModule {
       providers: [
         {
           provide: USER_HTTP_TOKEN,
-          useFactory: (configService: ConfigService): HttpService => {
+          useFactory: (configService: ConfigService) => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.user.baseUrl,
@@ -32,7 +31,7 @@ export class HttpModule {
         },
         {
           provide: GROUP_HTTP_TOKEN,
-          useFactory: (configService: ConfigService): HttpService => {
+          useFactory: (configService: ConfigService) => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.group.baseUrl,
@@ -44,7 +43,7 @@ export class HttpModule {
         },
         {
           provide: MEDIA_HTTP_TOKEN,
-          useFactory: (configService: ConfigService): HttpService => {
+          useFactory: (configService: ConfigService) => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.upload.baseUrl,
@@ -54,20 +53,8 @@ export class HttpModule {
           },
           inject: [ConfigService],
         },
-        {
-          provide: LAMBDA_COUNT_TOKEN_HTTP_TOKEN,
-          useFactory: (configService: ConfigService): HttpService => {
-            const axiosConfig = configService.get<IAxiosConfig>('axios');
-            return new HttpService({
-              baseURL: axiosConfig.lambda.baseUrl,
-              maxRedirects: axiosConfig.lambda.maxRedirects,
-              timeout: axiosConfig.lambda.timeout,
-            });
-          },
-          inject: [ConfigService],
-        },
       ],
-      exports: [USER_HTTP_TOKEN, GROUP_HTTP_TOKEN, MEDIA_HTTP_TOKEN, LAMBDA_COUNT_TOKEN_HTTP_TOKEN],
+      exports: [USER_HTTP_TOKEN, GROUP_HTTP_TOKEN, MEDIA_HTTP_TOKEN],
     };
   }
 }
