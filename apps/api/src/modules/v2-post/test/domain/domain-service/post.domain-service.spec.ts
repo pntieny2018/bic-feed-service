@@ -2,14 +2,16 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { groupMock } from '../../../../v2-group/tests/mocks/group.mock';
 import {
   IPostDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
+  UpdatePostProps,
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
+import { ContentNotFoundException } from '../../../domain/exception';
 import { ArticleEntity } from '../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -17,7 +19,12 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../../../domain/service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -27,10 +34,17 @@ import {
   POST_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
 import { articleEntityMock } from '../../mock/article.entity.mock';
+import { postEntityMock } from '../../mock/post.entity.mock';
+import { userMock } from '../../mock/user.dto.mock';
 
 describe('Post domain service', () => {
   let domainService: IPostDomainService;
   let contentRepository: IContentRepository;
+  let groupAdapter: IGroupAdapter;
+  let userAdapter: IUserAdapter;
+  let postValidator: IPostValidator;
+  let mentionValidator: IMentionValidator;
+  let contentValidator: IContentValidator;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -69,13 +83,18 @@ describe('Post domain service', () => {
           useValue: createMock<IGroupAdapter>(),
         },
         {
-          provide: USER_APPLICATION_TOKEN,
-          useValue: createMock<IUserApplicationService>(),
+          provide: USER_ADAPTER,
+          useValue: createMock<IUserAdapter>(),
         },
       ],
     }).compile();
     domainService = module.get<IPostDomainService>(PostDomainService);
     contentRepository = module.get<IContentRepository>(CONTENT_REPOSITORY_TOKEN);
+    groupAdapter = module.get<IGroupAdapter>(GROUP_ADAPTER);
+    userAdapter = module.get<IUserAdapter>(USER_ADAPTER);
+    postValidator = module.get<IPostValidator>(POST_VALIDATOR_TOKEN);
+    mentionValidator = module.get<IMentionValidator>(MENTION_VALIDATOR_TOKEN);
+    contentValidator = module.get<IContentValidator>(CONTENT_VALIDATOR_TOKEN);
   });
 
   afterEach(() => {
@@ -111,6 +130,42 @@ describe('Post domain service', () => {
           groups: [],
         })
       ).rejects.toThrow();
+    });
+  });
+
+  describe('publishPost', () => {
+    const props: UpdatePostProps = {
+      id: postEntityMock.getId(),
+      groupIds: postEntityMock.getGroupIds(),
+      authUser: userMock,
+    };
+
+    it('should publish post successfully', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'isPublished').mockReturnValue(false);
+      jest.spyOn(postEntityMock, 'setPublish').mockImplementation(jest.fn());
+
+      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
+      jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
+      jest.spyOn(postValidator, 'validatePublishContent').mockImplementation(jest.fn());
+      jest.spyOn(mentionValidator, 'validateMentionUsers').mockImplementation(jest.fn());
+      jest.spyOn(contentValidator, 'validateSeriesAndTags').mockImplementation(jest.fn());
+
+      jest.spyOn(postEntityMock, 'isPublished').mockReturnValue(false);
+
+      const result = await domainService.publishPost(props);
+      expect(result).toEqual(postEntityMock);
+      expect(postEntityMock.setPublish).toBeCalledTimes(1);
+    });
+
+    it('should throw error ContentNotFoundException when content is not post', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(articleEntityMock);
+
+      try {
+        await domainService.publishPost(props);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
     });
   });
 });

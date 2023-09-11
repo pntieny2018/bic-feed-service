@@ -291,12 +291,11 @@ describe('Article domain service', () => {
     it('should get scheduled article', async () => {
       jest.spyOn(contentRepository, 'findAll').mockResolvedValueOnce([articleEntityMock]);
 
-      const articleEntity = await domainService.getScheduleArticle({
+      const articleEntity = await domainService.getArticlesIdsSchedule({
         user: userMock,
         limit: 10,
-        offset: 0,
         order: ORDER.ASC,
-        statuses: [CONTENT_STATUS.SCHEDULE_FAILED, CONTENT_STATUS.WAITING_SCHEDULE],
+        statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
       });
       expect(articleEntity).toEqual([articleEntityMock]);
     });
