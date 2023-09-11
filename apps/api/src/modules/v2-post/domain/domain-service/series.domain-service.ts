@@ -153,16 +153,13 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setCover(images[0]);
     }
 
-    if (groupIds) {
-      const oldGroupIds = seriesEntity.get('groupIds');
-      const groups = await this._groupAppService.findAllByIds(groupIds);
+    this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
-      this._contentValidator.checkCanReadContent(seriesEntity, actor);
-      await this._contentValidator.checkCanCRUDContent(
-        actor,
-        oldGroupIds,
-        seriesEntity.get('type')
-      );
+    const oldGroupIds = seriesEntity.get('groupIds');
+    await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
+
+    if (groupIds) {
+      const groups = await this._groupAppService.findAllByIds(groupIds);
 
       seriesEntity.setGroups(groupIds);
       seriesEntity.setPrivacyFromGroups(groups);
