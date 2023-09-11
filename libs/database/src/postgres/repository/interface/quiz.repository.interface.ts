@@ -3,7 +3,7 @@ import { WhereOptions } from 'sequelize';
 
 import { CursorPaginationProps, CursorPaginationResult } from '../../common';
 import { QuizAnswerAttributes } from '../../model/quiz-answer.model';
-import { QuizQuestionAttributes } from '../../model/quiz-question.model';
+import { QuizQuestionAttributes, QuizQuestionModel } from '../../model/quiz-question.model';
 import { QuizAttributes, QuizModel } from '../../model/quiz.model';
 
 export type FindQuizConditionOptions = {
@@ -40,6 +40,20 @@ export type FindQuizProps = {
 
 export type GetPaginationQuizzesProps = FindQuizProps & CursorPaginationProps;
 
+export type FindQuizQuestionConditionOptions = {
+  ids?: string[];
+  quizId?: string;
+};
+
+export type FindQuizQuestionIncludeOptions = {
+  shouldIncludeAnswers?: boolean;
+};
+
+export type FindQuizQuestionProps = {
+  condition: FindQuizQuestionConditionOptions;
+  include?: FindQuizQuestionIncludeOptions;
+};
+
 export interface ILibQuizRepository {
   createQuiz(quiz: QuizAttributes): Promise<void>;
   updateQuiz(quizId: string, quiz: Partial<QuizAttributes>): Promise<void>;
@@ -51,9 +65,12 @@ export interface ILibQuizRepository {
   ): Promise<CursorPaginationResult<QuizModel>>;
 
   bulkCreateQuizQuestions(questions: QuizQuestionAttributes[]): Promise<void>;
+  updateQuizQuestion(questionId: string, question: Partial<QuizQuestionAttributes>): Promise<void>;
   deleteQuizQuestion(conditions: WhereOptions<QuizQuestionAttributes>): Promise<void>;
+  findQuizQuestion(findOptions: FindQuizQuestionProps): Promise<QuizQuestionModel>;
 
   bulkCreateQuizAnswers(answers: QuizAnswerAttributes[]): Promise<void>;
+  deleteQuizAnswer(conditions: WhereOptions<QuizAnswerAttributes>): Promise<void>;
 }
 
 export const LIB_QUIZ_REPOSITORY_TOKEN = 'LIB_QUIZ_REPOSITORY_TOKEN';
