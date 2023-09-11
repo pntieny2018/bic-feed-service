@@ -60,11 +60,11 @@ import {
   FindNewsfeedHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  SearchContentsHandler,
 } from '../application/query/content';
-import { SearchContentsHandler } from '../application/query/content/search-contents';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
-import { SearchTagsHandler } from '../application/query/tag/search-tags';
+import { SearchTagsHandler } from '../application/query/tag';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {

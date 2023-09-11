@@ -28,8 +28,11 @@ import {
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
 import { MenuSettingsDto } from '../../application/dto';
 import { FindDraftContentsDto, SearchContentsDto } from '../../application/dto/content.dto';
-import { FindDraftContentsQuery, GetMenuSettingsQuery } from '../../application/query/content';
-import { SearchContentsQuery } from '../../application/query/content/search-contents';
+import {
+  FindDraftContentsQuery,
+  GetMenuSettingsQuery,
+  SearchContentsQuery,
+} from '../../application/query/content';
 import {
   GetDraftContentsRequestDto,
   PostSettingRequestDto,
@@ -90,6 +93,7 @@ export class ContentController {
   @ResponseMessages({
     success: 'Search contents successfully',
   })
+  @Version(AppHelper.getVersionsSupportedFrom(VERSION_1_9_0))
   @Get('/')
   public async searchContents(
     @AuthUser() user: UserDto,

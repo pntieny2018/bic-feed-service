@@ -3,6 +3,7 @@ import { KafkaModule } from '@libs/infra/kafka';
 import { QueueModule } from '@libs/infra/queue';
 import { GroupModule } from '@libs/service/group/group.module';
 import { MediaModule as LibMediaModule } from '@libs/service/media/media.module';
+import { OpenaiModule } from '@libs/service/openai';
 import { UserModule } from '@libs/service/user/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { Module, forwardRef } from '@nestjs/common';
@@ -46,7 +47,6 @@ import {
   adapterProvider,
 } from './provider';
 import { quizProvider } from './provider/quiz.provider';
-import { OpenaiModule } from '@libs/service/openai';
 
 @Module({
   imports: [

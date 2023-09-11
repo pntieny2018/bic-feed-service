@@ -51,6 +51,10 @@ export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublis
         communityIds: articleEntity.get('communityIds'),
         seriesIds,
         tags: (articleEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
+        categories: (articleEntity.get('categories') || []).map((item) => ({
+          id: item.get('id'),
+          name: item.get('name'),
+        })),
         title: articleEntity.get('title'),
         summary: articleEntity.get('summary'),
         content: articleEntity.get('content'),
