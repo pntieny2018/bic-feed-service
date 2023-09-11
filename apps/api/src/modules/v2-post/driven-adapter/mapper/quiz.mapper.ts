@@ -53,22 +53,22 @@ export class QuizMapper {
   public toPersistence(entity: QuizEntity): QuizAttributes {
     return {
       id: entity.get('id'),
-      title: entity.get('title'),
       postId: entity.get('contentId'),
+      title: entity.get('title'),
       description: entity.get('description'),
+      timeLimit: entity.get('timeLimit'),
       numberOfQuestions: entity.get('numberOfQuestions'),
       numberOfAnswers: entity.get('numberOfAnswers'),
       numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
-      timeLimit: entity.get('timeLimit'),
-      status: entity.get('status') as QUIZ_STATUS,
-      genStatus: entity.get('genStatus') as QUIZ_PROCESS_STATUS,
-      error: entity.get('error'),
       isRandom: entity.get('isRandom'),
-      createdBy: entity.get('createdBy'),
+      meta: entity.get('meta'),
+      status: entity.get('status') as unknown as QUIZ_STATUS,
+      genStatus: entity.get('genStatus') as unknown as QUIZ_PROCESS_STATUS,
+      error: entity.get('error'),
+      updatedAt: entity.get('updatedAt'),
       updatedBy: entity.get('updatedBy'),
       createdAt: entity.get('createdAt'),
-      updatedAt: entity.get('updatedAt'),
-      meta: entity.get('meta'),
+      createdBy: entity.get('createdBy'),
     };
   }
 }

@@ -1,8 +1,8 @@
+import { UserDto } from '@libs/service/user';
 import { ICommand } from '@nestjs/cqrs';
 
-import { UserDto } from '../../../../../v2-user/application';
-
 export type DeleteQuizQuestionCommandPayload = {
+  quizId: string;
   questionId: string;
   authUser: UserDto;
 };

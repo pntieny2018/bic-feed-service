@@ -37,6 +37,14 @@ export class QuizQuestionModel extends Model<
   @Column
   public content: string;
 
+  @CreatedAt
+  @Column
+  public createdAt: Date;
+
+  @UpdatedAt
+  @Column
+  public updatedAt: Date;
+
   @HasMany(() => QuizAnswerModel, {
     foreignKey: 'questionId',
   })
@@ -46,12 +54,4 @@ export class QuizQuestionModel extends Model<
     foreignKey: 'quizId',
   })
   public quiz?: QuizAttributes;
-
-  @CreatedAt
-  @Column
-  public createdAt: Date;
-
-  @UpdatedAt
-  @Column
-  public updatedAt: Date;
 }

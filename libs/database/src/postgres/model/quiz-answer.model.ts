@@ -38,11 +38,6 @@ export class QuizAnswerModel extends Model<
   @Column
   public isCorrect: boolean;
 
-  @BelongsTo(() => QuizQuestionModel, {
-    foreignKey: 'questionId',
-  })
-  public quizQuestion?: QuizQuestionModel;
-
   @CreatedAt
   @Column
   public createdAt: Date;
@@ -50,4 +45,9 @@ export class QuizAnswerModel extends Model<
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  @BelongsTo(() => QuizQuestionModel, {
+    foreignKey: 'questionId',
+  })
+  public quizQuestion?: QuizQuestionModel;
 }

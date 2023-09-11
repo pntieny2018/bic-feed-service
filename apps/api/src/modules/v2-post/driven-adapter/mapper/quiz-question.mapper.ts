@@ -15,17 +15,17 @@ export class QuizQuestionMapper {
 
     return new QuizQuestionEntity({
       id: model.id,
-      content: model.content,
       quizId: model.quizId,
-      createdAt: model.createdAt,
-      updatedAt: model.updatedAt,
-      answers: model.answers.map((answer) => ({
+      content: model.content,
+      answers: (model.answers || []).map((answer) => ({
         id: answer.id,
         content: answer.content,
         isCorrect: answer.isCorrect,
-        createdAt: model.createdAt,
-        updatedAt: model.updatedAt,
+        createdAt: answer.createdAt,
+        updatedAt: answer.updatedAt,
       })),
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
     });
   }
 
