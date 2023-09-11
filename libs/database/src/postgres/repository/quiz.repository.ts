@@ -46,6 +46,39 @@ export class LibQuizRepository implements ILibQuizRepository {
 
   public async updateQuiz(quizId: string, quiz: Partial<QuizAttributes>): Promise<void> {
     await this._quizModel.update(quiz, { where: { id: quizId } });
+
+    if (quiz.questions !== undefined) {
+      await this._quizQuestionModel.destroy({ where: { quizId } });
+      const questions = quiz.questions.map((question, index) => {
+        const createdAt = new Date();
+        createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+        return {
+          id: question.get('id'),
+          quizId: question.get('quizId'),
+          content: question.get('content'),
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        };
+      });
+
+      const answers = quiz.questions.flatMap((question) =>
+        question.answers.map((answer, index) => {
+          const createdAt = new Date();
+          createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+          return {
+            id: answer.id,
+            questionId: question.get('id'),
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          };
+        })
+      );
+
+      await this._quizQuestionModel.bulkCreate(questions);
+      await this._quizAnswerModel.bulkCreate(answers);
+    }
   }
 
   public async deleteQuiz(conditions: WhereOptions<QuizAttributes>): Promise<void> {

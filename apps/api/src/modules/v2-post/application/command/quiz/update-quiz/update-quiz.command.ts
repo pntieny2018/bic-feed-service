@@ -1,7 +1,6 @@
 import { ICommand } from '@nestjs/cqrs';
-
-import { UserDto } from '../../../../../v2-user/application';
-import { QuizStatus } from '../../../../data-type';
+import { QUIZ_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 
 export type UpdateQuizCommandPayload = {
   quizId: string;
@@ -11,7 +10,7 @@ export type UpdateQuizCommandPayload = {
   description?: string;
   numberOfQuestionsDisplay?: number;
   isRandom?: boolean;
-  status?: QuizStatus;
+  status?: QUIZ_STATUS;
   authUser: UserDto;
 };
 export class UpdateQuizCommand implements ICommand {

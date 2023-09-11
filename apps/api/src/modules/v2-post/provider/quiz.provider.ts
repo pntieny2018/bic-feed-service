@@ -1,6 +1,3 @@
-import { OpenaiService } from '@app/openai';
-import { OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
-
 import { QuizBinding } from '../application/binding/binding-quiz/quiz.binding';
 import { QUIZ_BINDING_TOKEN } from '../application/binding/binding-quiz/quiz.interface';
 import {
@@ -42,6 +39,7 @@ import { QUIZ_VALIDATOR_TOKEN } from '../domain/validator/interface';
 import { QuizValidator } from '../domain/validator/quiz.validator';
 import { QuizParticipantRepository, QuizRepository } from '../driven-adapter/repository';
 import { QuizParticipantProcessor } from '../driving-apdater/queue-processor/quiz-participant.processor';
+import { OpenAIAdapter } from '../driven-adapter/service/openai.adapter';
 
 export const quizProvider = [
   {
@@ -63,10 +61,6 @@ export const quizProvider = [
   {
     provide: QUIZ_VALIDATOR_TOKEN,
     useClass: QuizValidator,
-  },
-  {
-    provide: OPEN_AI_SERVICE_TOKEN,
-    useClass: OpenaiService,
   },
   {
     provide: QUIZ_BINDING_TOKEN,
