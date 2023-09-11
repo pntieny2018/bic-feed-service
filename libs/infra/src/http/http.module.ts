@@ -67,7 +67,7 @@ export class HttpModule {
           inject: [ConfigService],
         },
       ],
-      exports: [USER_HTTP_TOKEN, GROUP_HTTP_TOKEN, MEDIA_HTTP_TOKEN],
+      exports: [USER_HTTP_TOKEN, GROUP_HTTP_TOKEN, MEDIA_HTTP_TOKEN, PRIVATE_GATEWAY_HTTP_TOKEN],
     };
   }
 }

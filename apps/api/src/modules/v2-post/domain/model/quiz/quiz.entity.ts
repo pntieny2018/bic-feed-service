@@ -4,7 +4,6 @@ import { v4, validate as isUUID } from 'uuid';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
 import { RULES } from '../../../constant';
-import { QuizGenStatus, QuizStatus } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../content';
 
 import { QuizQuestionEntity } from './quiz-question.entity';
@@ -13,8 +12,8 @@ export type QuizAttributes = {
   id: string;
   title: string;
   contentId: string;
-  status: QuizStatus | QUIZ_STATUS;
-  genStatus: QuizGenStatus | QUIZ_PROCESS_STATUS;
+  status: QUIZ_STATUS;
+  genStatus: QUIZ_PROCESS_STATUS;
   description: string;
   timeLimit: number;
   content?: PostEntity | SeriesEntity | ArticleEntity;
@@ -63,8 +62,8 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
       isRandom: isRandom || true,
       timeLimit: RULES.QUIZ_TIME_LIMIT_DEFAULT,
       questions: [],
-      status: QuizStatus.DRAFT,
-      genStatus: QuizGenStatus.PENDING,
+      status: QUIZ_STATUS.DRAFT,
+      genStatus: QUIZ_PROCESS_STATUS.PENDING,
       createdBy: userId,
       updatedBy: userId,
       createdAt: now,
@@ -151,7 +150,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   }
 
   public validatePublishing(): void {
-    if (this._props.status !== QuizStatus.PUBLISHED) {
+    if (this._props.status !== QUIZ_STATUS.PUBLISHED) {
       return;
     }
 
@@ -208,7 +207,7 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   }
 
   public setProcessed(): void {
-    this._props.genStatus = QuizGenStatus.PROCESSED;
+    this._props.genStatus = QUIZ_PROCESS_STATUS.PROCESSED;
   }
 
   public isOwner(userId: string): boolean {
@@ -216,32 +215,32 @@ export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   }
 
   public isVisible(userId: string): boolean {
-    return this._props.status === QuizStatus.PUBLISHED || this.isOwner(userId);
+    return this._props.status === QUIZ_STATUS.PUBLISHED || this.isOwner(userId);
   }
 
   public setFail(error: { code: string; message: string }): void {
     this._props.error = error;
-    this._props.genStatus = QuizGenStatus.FAILED;
+    this._props.genStatus = QUIZ_PROCESS_STATUS.FAILED;
   }
 
   public setProcessing(): void {
-    this._props.genStatus = QuizGenStatus.PROCESSING;
+    this._props.genStatus = QUIZ_PROCESS_STATUS.PROCESSING;
   }
 
   public setPending(): void {
-    this._props.genStatus = QuizGenStatus.PENDING;
+    this._props.genStatus = QUIZ_PROCESS_STATUS.PENDING;
   }
 
   public isPending(): boolean {
-    return this._props.genStatus === QuizGenStatus.PENDING;
+    return this._props.genStatus === QUIZ_PROCESS_STATUS.PENDING;
   }
 
   public isProcessing(): boolean {
-    return this._props.genStatus === QuizGenStatus.PROCESSING;
+    return this._props.genStatus === QUIZ_PROCESS_STATUS.PROCESSING;
   }
 
   public isPublished(): boolean {
-    return this._props.status === QuizStatus.PUBLISHED;
+    return this._props.status === QUIZ_STATUS.PUBLISHED;
   }
 
   public isRandomQuestion(): boolean {

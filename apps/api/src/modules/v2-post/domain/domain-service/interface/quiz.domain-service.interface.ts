@@ -1,9 +1,8 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { UserDto } from '../../../../v2-user/application';
 import { AnswerUserDto } from '../../../application/dto';
-import { QuizStatus, PostType } from '../../../data-type';
 import { QuizEntity, QuizQuestionEntity } from '../../model/quiz';
 import { QuizParticipantEntity } from '../../model/quiz-participant';
 
@@ -35,14 +34,14 @@ export type QuizUpdateProps = {
   numberOfQuestionsDisplay?: number;
   isRandom?: boolean;
   meta?: any;
-  status?: QuizStatus;
+  status?: QUIZ_STATUS;
   authUser: UserDto;
 };
 
 export type GetQuizzesProps = {
   authUser: UserDto;
-  status: QuizStatus;
-  type?: PostType;
+  status: QUIZ_STATUS;
+  type?: CONTENT_TYPE;
   limit: number;
   order: ORDER;
   before?: string;
@@ -87,7 +86,7 @@ export interface IQuizDomainService {
   getQuizParticipant(quizParticipantId: string, authUserId: string): Promise<QuizParticipantEntity>;
   updateQuestion(updateQuestionProps: UpdateQuestionProps): Promise<QuizQuestionEntity>;
   addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity>;
-  deleteQuestion(questionId: string, authUser: UserDto): Promise<void>;
+  deleteQuestion(questionId: string, quizId: string, authUser: UserDto): Promise<void>;
   calculateHighestScore(quizParticipantEntity: QuizParticipantEntity): Promise<void>;
 }
 export const QUIZ_DOMAIN_SERVICE_TOKEN = 'QUIZ_DOMAIN_SERVICE_TOKEN';

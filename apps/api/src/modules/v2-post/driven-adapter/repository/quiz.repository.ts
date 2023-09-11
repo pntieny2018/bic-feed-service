@@ -10,12 +10,15 @@ import {
   GetPaginationQuizzesProps,
   IQuizRepository,
 } from '../../domain/repositoty-interface';
+import { QuizQuestionMapper } from '../mapper/quiz-question.mapper';
 import { QuizMapper } from '../mapper/quiz.mapper';
 
 export class QuizRepository implements IQuizRepository {
   public constructor(
     @Inject(LIB_QUIZ_REPOSITORY_TOKEN)
     private readonly _libQuizRepo: ILibQuizRepository,
+
+    private readonly _quizQuestionMapper: QuizQuestionMapper,
 
     private readonly _quizMapper: QuizMapper,
 
@@ -25,33 +28,31 @@ export class QuizRepository implements IQuizRepository {
     private readonly _quizAnswerModel: typeof QuizAnswerModel
   ) {}
 
-  public async create(quizEntity: QuizEntity): Promise<void> {
+  public async createQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
     await this._libQuizRepo.createQuiz(model);
   }
-
-  public async update(quizEntity: QuizEntity): Promise<void> {
+  public async updateQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
-
     await this._libQuizRepo.updateQuiz(quizEntity.get('id'), model);
   }
 
-  public async delete(id: string): Promise<void> {
+  public async deleteQuiz(id: string): Promise<void> {
     await this._libQuizRepo.deleteQuiz({
       id,
     });
   }
 
-  public async findOne(id: string): Promise<QuizEntity> {
+  public async findQuizById(quizId: string): Promise<QuizEntity> {
     const model = await this._libQuizRepo.findQuiz({
-      condition: { ids: [id] },
+      condition: { ids: [quizId] },
     });
     return this._quizMapper.toDomain(model);
   }
 
-  public async findQuizWithQuestions(id: string): Promise<QuizEntity> {
+  public async findQuizByIdWithQuestions(quizId: string): Promise<QuizEntity> {
     const quiz = await this._libQuizRepo.findQuiz({
-      condition: { ids: [id] },
+      condition: { ids: [quizId] },
       include: { shouldIncludeQuestions: true },
     });
     if (!quiz) {
@@ -61,7 +62,7 @@ export class QuizRepository implements IQuizRepository {
     return this._quizMapper.toDomain(quiz);
   }
 
-  public async findAll(input: FindAllQuizProps): Promise<QuizEntity[]> {
+  public async findAllQuizzes(input: FindAllQuizProps): Promise<QuizEntity[]> {
     const rows = await this._libQuizRepo.findAllQuizzes({
       condition: {
         status: input.where.status,
@@ -98,71 +99,18 @@ export class QuizRepository implements IQuizRepository {
       meta,
     };
   }
-
-  public async genQuestions(quizEntity: QuizEntity, rawContent: string): Promise<void> {
-    const { questions, usage, model, maxTokens, completion } =
-      await this._openaiService.generateQuestion({
-        content: rawContent,
-        numberOfQuestions: quizEntity.get('numberOfQuestions'),
-        numberOfAnswers: quizEntity.get('numberOfAnswers'),
-      });
-    quizEntity.updateAttribute({
-      meta: {
-        usage,
-        model,
-        maxTokens,
-        completion,
-      },
-      questions: questions.map(
-        (question) =>
-          new QuizQuestionEntity({
-            ...question,
-            quizId: quizEntity.get('id'),
-          })
-      ),
-    });
-  }
-
-  public async findQuizQuestion(id: string): Promise<QuizQuestionEntity> {
-    const question = await this._quizQuestionModel.findByPk(id, {
-      include: [
-        {
-          model: QuizAnswerModel,
-          as: 'answers',
-          required: false,
-        },
-      ],
-    });
-    if (!question) {
-      return null;
-    }
-    return new QuizQuestionEntity({
-      id: question.id,
-      content: question.content,
-      quizId: question.quizId,
-      createdAt: question.createdAt,
-      updatedAt: question.updatedAt,
-      answers: question.answers.map((answer) => ({
-        id: answer.id,
-        content: answer.content,
-        isCorrect: answer.isCorrect,
-        createdAt: question.createdAt,
-        updatedAt: question.updatedAt,
-      })),
-    });
-  }
-
   public async addQuestion(question: QuizQuestionEntity): Promise<void> {
+    const createdAt = new Date();
     await this._libQuizRepo.bulkCreateQuizQuestions([
       {
         id: question.get('id'),
         quizId: question.get('quizId'),
         content: question.get('content'),
         answers: [],
+        createdAt,
+        updatedAt: createdAt,
       },
     ]);
-
-    const createdAt = new Date();
 
     const answers = question.get('answers').map((answer, index) => {
       createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
@@ -182,21 +130,21 @@ export class QuizRepository implements IQuizRepository {
     await this._libQuizRepo.deleteQuizQuestion({ id: questionId });
   }
 
-  public async updateQuestion(question: QuizQuestionEntity): Promise<void> {
+  public async updateQuestion(questionEntity: QuizQuestionEntity): Promise<void> {
     await this._quizQuestionModel.update(
       {
-        content: question.get('content'),
+        content: questionEntity.get('content'),
       },
-      { where: { id: question.get('id') } }
+      { where: { id: questionEntity.get('id') } }
     );
-    await this._quizAnswerModel.destroy({ where: { questionId: question.get('id') } });
+    await this._quizAnswerModel.destroy({ where: { questionId: questionEntity.get('id') } });
 
-    const answers = question.get('answers').map((answer, index) => {
+    const answers = questionEntity.get('answers').map((answer, index) => {
       const createdAt = new Date();
       createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
       return {
         id: answer.id,
-        questionId: question.get('id'),
+        questionId: questionEntity.get('id'),
         content: answer.content,
         isCorrect: answer.isCorrect,
         createdAt,
@@ -204,5 +152,16 @@ export class QuizRepository implements IQuizRepository {
       };
     });
     await this._quizAnswerModel.bulkCreate(answers);
+  }
+
+  public async findQuestionById(questionId: string): Promise<QuizQuestionEntity> {
+    const question = await this._libQuizRepo.findQuizQuestion({
+      condition: { ids: [questionId] },
+      include: { shouldIncludeAnswers: true },
+    });
+    if (!question) {
+      return null;
+    }
+    return this._quizQuestionMapper.toDomain(question);
   }
 }
