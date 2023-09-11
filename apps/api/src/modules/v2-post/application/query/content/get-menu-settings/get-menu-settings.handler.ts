@@ -4,7 +4,7 @@ import { isBoolean } from 'lodash';
 
 import { ContentNotificationService } from '../../../../../../notification/services';
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../../../authority';
-import { PostType, QuizStatus } from '../../../../data-type';
+import { PostType } from '../../../../data-type';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -18,6 +18,7 @@ import { ContentEntity } from '../../../../domain/model/content';
 import { MenuSettingsDto } from '../../../dto';
 
 import { GetMenuSettingsQuery } from './get-menu-settings.query';
+import { QUIZ_STATUS } from '@beincom/constants';
 
 @QueryHandler(GetMenuSettingsQuery)
 export class GetMenuSettingsHandler
@@ -94,7 +95,7 @@ export class GetMenuSettingsHandler
         contentEntity.getType() !== PostType.SERIES &&
         canCRUDContent &&
         contentEntity.hasQuiz() &&
-        contentEntity.getQuiz().get('status') === QuizStatus.PUBLISHED,
+        contentEntity.getQuiz().get('status') === QUIZ_STATUS.PUBLISHED,
     };
   }
 

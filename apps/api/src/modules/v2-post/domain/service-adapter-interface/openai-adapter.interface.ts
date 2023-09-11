@@ -1,10 +1,10 @@
-export type GenerateQuestionProps = {
+export type OpenAIGenerateQuestionProps = {
   content: string;
   numberOfQuestions: number;
   numberOfAnswers: number;
 };
 
-export type GenerateQuestionResponse = {
+export type OpenAIGenerateQuestionResponse = {
   model: string;
   usage: {
     promptTokens: number;
@@ -16,18 +16,16 @@ export type GenerateQuestionResponse = {
   questions: {
     id: string;
     content: string;
-    createdAt: Date;
-    updatedAt: Date;
     answers: {
       id: string;
       content: string;
       isCorrect: boolean;
-      createdAt: Date;
-      updatedAt: Date;
     }[];
   }[];
 };
-export interface IOpenaiService {
-  generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse>;
+
+export interface IOpenAIAdapter {
+  generateQuestions(input: OpenAIGenerateQuestionProps): Promise<OpenAIGenerateQuestionResponse>;
 }
-export const OPEN_AI_SERVICE_TOKEN = 'OPEN_AI_SERVICE_TOKEN';
+
+export const OPEN_AI_ADAPTER = 'OPEN_AI_ADAPTER';

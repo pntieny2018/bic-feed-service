@@ -1,4 +1,3 @@
-import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -42,12 +41,6 @@ export class GetScheduleArticleHandler
       contentEntities,
       user
     )) as ArticleDto[];
-
-    articles.forEach((article) => {
-      if (article.status === CONTENT_STATUS.WAITING_SCHEDULE) {
-        article.publishedAt = article.scheduledAt;
-      }
-    });
 
     return {
       list: articles,

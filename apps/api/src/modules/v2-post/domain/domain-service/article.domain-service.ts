@@ -116,23 +116,9 @@ export class ArticleDomainService implements IArticleDomainService {
         createdBy: user.id,
         statuses,
       },
-      include: {
-        shouldIncludeCategory: true,
-        shouldIncludeReaction: {
-          userId: user.id,
-        },
-        shouldIncludeLinkPreview: true,
-        mustIncludeGroup: true,
-        shouldIncludeMarkReadImportant: {
-          userId: user.id,
-        },
-        shouldIncludeImportant: {
-          userId: user.id,
-        },
-      },
       orderOptions: {
         sortColumn: 'scheduledAt',
-        sortBy: order,
+        orderBy: order,
       },
       limit,
       before,
