@@ -5,8 +5,7 @@ import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { QuizBinding } from '../../../binding/binding-quiz/quiz.binding';
-import { QUIZ_BINDING_TOKEN } from '../../../binding/binding-quiz/quiz.interface';
+import { QuizBinding, QUIZ_BINDING_TOKEN } from '../../../binding';
 import { QuizDto } from '../../../dto';
 
 import { GenerateQuizCommand } from './generate-quiz.command';

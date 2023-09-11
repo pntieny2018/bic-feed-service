@@ -15,7 +15,7 @@ import {
 } from '@libs/service/openai/constant';
 import { IOpenAIConfig } from '@libs/service/openai/config';
 import { ENDPOINT } from '../../../../apps/api/src/common/constants/endpoint.constant';
-import { IHttpService, PRIVATE_GATEWAY_HTTP_TOKEN } from '@libs/infra/http';
+import { IHttpService, LAMBDA_COUNT_TOKEN_HTTP_TOKEN } from '@libs/infra/http';
 import { CountTokenException } from '@libs/service/openai/openai.exception';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class OpenAIService implements IOpenAIService {
   };
   public constructor(
     private readonly _configService: ConfigService,
-    @Inject(PRIVATE_GATEWAY_HTTP_TOKEN) private readonly _httpService: IHttpService
+    @Inject(LAMBDA_COUNT_TOKEN_HTTP_TOKEN) private readonly _httpService: IHttpService
   ) {}
 
   public async generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse> {

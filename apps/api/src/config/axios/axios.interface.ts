@@ -14,7 +14,7 @@ export interface IAxiosConfig {
     maxRedirects: number;
     timeout: number;
   };
-  privateGateway: {
+  lambda: {
     baseUrl: string;
     maxRedirects: number;
     timeout: number;

@@ -4,7 +4,7 @@ import {
   USER_HTTP_TOKEN,
   HttpService,
   IAxiosConfig,
-  PRIVATE_GATEWAY_HTTP_TOKEN,
+  LAMBDA_COUNT_TOKEN_HTTP_TOKEN,
 } from '@libs/infra/http';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -55,19 +55,19 @@ export class HttpModule {
           inject: [ConfigService],
         },
         {
-          provide: PRIVATE_GATEWAY_HTTP_TOKEN,
+          provide: LAMBDA_COUNT_TOKEN_HTTP_TOKEN,
           useFactory: (configService: ConfigService) => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
-              baseURL: axiosConfig.privateGateway.baseUrl,
-              maxRedirects: axiosConfig.privateGateway.maxRedirects,
-              timeout: axiosConfig.privateGateway.timeout,
+              baseURL: axiosConfig.lambda.baseUrl,
+              maxRedirects: axiosConfig.lambda.maxRedirects,
+              timeout: axiosConfig.lambda.timeout,
             });
           },
           inject: [ConfigService],
         },
       ],
-      exports: [USER_HTTP_TOKEN, GROUP_HTTP_TOKEN, MEDIA_HTTP_TOKEN, PRIVATE_GATEWAY_HTTP_TOKEN],
+      exports: [USER_HTTP_TOKEN, GROUP_HTTP_TOKEN, MEDIA_HTTP_TOKEN, LAMBDA_COUNT_TOKEN_HTTP_TOKEN],
     };
   }
 }
