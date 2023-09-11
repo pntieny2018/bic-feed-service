@@ -223,6 +223,13 @@ export class LibQuizRepository implements ILibQuizRepository {
     await this._quizQuestionModel.bulkCreate(questions);
   }
 
+  public async updateQuizQuestion(
+    questionId: string,
+    question: Partial<QuizQuestionAttributes>
+  ): Promise<void> {
+    await this._quizQuestionModel.update(question, { where: { id: questionId } });
+  }
+
   public async deleteQuizQuestion(conditions: WhereOptions<QuizQuestionAttributes>): Promise<void> {
     await this._quizQuestionModel.destroy({ where: conditions });
   }
@@ -283,5 +290,9 @@ export class LibQuizRepository implements ILibQuizRepository {
 
   public async bulkCreateQuizAnswers(answers: QuizAnswerAttributes[]): Promise<void> {
     await this._quizAnswerModel.bulkCreate(answers);
+  }
+
+  public async deleteQuizAnswer(conditions: WhereOptions<QuizAnswerAttributes>): Promise<void> {
+    await this._quizAnswerModel.destroy({ where: conditions });
   }
 }

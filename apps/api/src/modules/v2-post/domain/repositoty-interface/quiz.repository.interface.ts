@@ -48,6 +48,9 @@ export interface IQuizRepository {
   deleteQuestion(questionId: string): Promise<void>;
   updateQuestion(questionEntity: QuizQuestionEntity): Promise<void>;
   findQuestionById(questionId: string): Promise<QuizQuestionEntity>;
+
+  createAnswers(questionEntity: QuizQuestionEntity): Promise<void>;
+  deleteAnswersByQuestionId(questionId: string): Promise<void>;
 }
 
 export const QUIZ_REPOSITORY_TOKEN = 'QUIZ_REPOSITORY_TOKEN';

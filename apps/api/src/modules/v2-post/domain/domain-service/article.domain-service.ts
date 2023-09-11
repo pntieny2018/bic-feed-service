@@ -118,7 +118,7 @@ export class ArticleDomainService implements IArticleDomainService {
       },
       orderOptions: {
         sortColumn: 'scheduledAt',
-        sortBy: order,
+        orderBy: order,
       },
       limit,
       before,
