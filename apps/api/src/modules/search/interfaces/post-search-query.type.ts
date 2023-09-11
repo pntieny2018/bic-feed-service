@@ -1,4 +1,4 @@
-import { PostType } from '../../v2-post/data-type';
+import { CONTENT_TYPE } from '@beincom/constants';
 
 export type IPostSearchQuery = {
   actors?: string[];
@@ -19,7 +19,7 @@ export type IPostSearchQuery = {
 
   itemIds?: string[];
 
-  contentTypes?: PostType[];
+  contentTypes?: CONTENT_TYPE[];
 
   excludeByIds?: string[];
 

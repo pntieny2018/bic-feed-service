@@ -30,16 +30,16 @@ export class CommentMapper {
       updatedAt: model.updatedAt,
       content: model.content,
       childs: {
-        rows: model.child?.map((item) => this.toDomain(item)) || [],
+        rows: (model?.child || []).map((item) => this.toDomain(item)),
         meta: {},
       },
       mentions: model.mentions,
       media: {
-        images: model.mediaJson?.images.map(
+        images: (model.mediaJson?.images || []).map(
           (image) => new ImageEntity(image as unknown as ImageAttributes)
         ),
-        files: model.mediaJson?.files.map((file) => new FileEntity(file)),
-        videos: model.mediaJson?.videos.map((video) => new VideoEntity(video)),
+        files: (model.mediaJson?.files || []).map((file) => new FileEntity(file)),
+        videos: (model.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
       },
       ownerReactions: (model?.ownerReactions || []).map(
         (reaction) =>

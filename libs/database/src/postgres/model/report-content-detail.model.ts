@@ -18,13 +18,13 @@ export enum ReportTo {
   COMMUNITY = 'COMMUNITY',
 }
 
-export type ReportContentDetailAttribute = InferAttributes<ReportContentDetailModel>;
+export type ReportContentDetailAttributes = InferAttributes<ReportContentDetailModel>;
 @Table({
   tableName: 'report_content_details',
   paranoid: false,
 })
 export class ReportContentDetailModel extends Model<
-  ReportContentDetailAttribute,
+  ReportContentDetailAttributes,
   InferCreationAttributes<ReportContentDetailModel>
 > {
   @PrimaryKey

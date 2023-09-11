@@ -2,7 +2,6 @@ import { CONTENT_TYPE } from '@beincom/constants';
 
 import { CursorPaginationProps } from '../../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { PostType } from '../../../data-type';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
@@ -59,6 +58,6 @@ export interface IContentDomainService {
     id: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getReportedContentIdsByUser(reportUser: string, postTypes?: PostType[]): Promise<string[]>;
+  getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

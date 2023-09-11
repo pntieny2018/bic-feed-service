@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { PageDto } from '../../../common/dto';
@@ -9,7 +10,6 @@ import {
   IContentBinding,
 } from '../../v2-post/application/binding/binding-post/content.interface';
 import { ArticleDto, ContentHighlightDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
-import { PostType } from '../../v2-post/data-type';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -73,7 +73,7 @@ export class SearchAppService {
 
     const notIncludeIds = await this._contentDomainService.getReportedContentIdsByUser(
       authUser.id,
-      [PostType.POST]
+      [CONTENT_TYPE.POST]
     );
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({
