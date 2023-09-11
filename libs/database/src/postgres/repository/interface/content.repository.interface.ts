@@ -60,7 +60,7 @@ export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublishedByDesc?: boolean;
   sortColumn?: keyof PostAttributes;
-  sortBy?: ORDER;
+  orderBy?: ORDER;
 };
 
 export type FindContentProps = {

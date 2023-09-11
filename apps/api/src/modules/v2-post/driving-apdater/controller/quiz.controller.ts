@@ -46,7 +46,6 @@ import {
   FindQuizSummaryQuery,
   FindQuizzesQuery,
 } from '../../application/query/quiz';
-import { QuizStatus } from '../../data-type';
 import {
   AddQuizQuestionRequestDto,
   CreateQuizRequestDto,
@@ -57,6 +56,7 @@ import {
   UpdateQuizQuestionRequestDto,
   UpdateQuizRequestDto,
 } from '../dto/request';
+import { QUIZ_STATUS } from '@beincom/constants';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -179,7 +179,7 @@ export class QuizController {
       new UpdateQuizCommand({ ...updateQuizDto, quizId, authUser })
     );
 
-    if (updateQuizDto.status === QuizStatus.PUBLISHED) {
+    if (updateQuizDto.status === QUIZ_STATUS.PUBLISHED) {
       req.message = 'message.quiz.published_success';
     }
 
