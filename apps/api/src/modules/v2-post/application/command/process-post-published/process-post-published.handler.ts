@@ -94,6 +94,7 @@ export class ProcessPostPublishedHandler
       content: postEntity.get('content'),
       contentType: postEntity.get('type'),
       setting: postEntity.get('setting'),
+      media: after.media,
       audience: {
         groups,
       },
