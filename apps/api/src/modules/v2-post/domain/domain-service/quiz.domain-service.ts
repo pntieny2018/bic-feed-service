@@ -2,7 +2,6 @@ import { EVENT_SERVICE_TOKEN, IEventService } from '@libs/infra/event';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-
 import { ERRORS } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions';
 import { CursorPaginationResult } from '../../../../common/types';
@@ -28,11 +27,12 @@ import {
 import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
 import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
 import { QuizParticipantEntity } from '../model/quiz-participant';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
+  IQuizRepository,
+  QUIZ_REPOSITORY_TOKEN,
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '../repositoty-interface/quiz-participant.repository.interface';
+} from '../repositoty-interface';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 
 import {
@@ -384,7 +384,6 @@ export class QuizDomainService implements IQuizDomainService {
           code: ERRORS.QUIZ_GENERATE_FAIL,
           message: 'No questions generated',
         });
-        await this._quizRepository.updateQuiz(quizEntity);
         await this._quizRepository.updateQuiz(quizEntity);
         this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
         return;

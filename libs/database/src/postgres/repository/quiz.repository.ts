@@ -61,7 +61,23 @@ export class LibQuizRepository implements ILibQuizRepository {
         };
       });
 
+      const answers = quiz.questions.flatMap((question) =>
+        question.answers.map((answer, index) => {
+          const createdAt = new Date();
+          createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+          return {
+            id: answer.id,
+            questionId: question.get('id'),
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          };
+        })
+      );
+
       await this._quizQuestionModel.bulkCreate(questions);
+      await this._quizAnswerModel.bulkCreate(answers);
     }
   }
 
