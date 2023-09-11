@@ -10,6 +10,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsUUID,
+  NotEquals,
 } from 'class-validator';
 
 import { PostStatusConflictedException } from '../../../domain/exception';
@@ -101,11 +102,13 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
   }
 }
 
-export class GetScheduleArticleDto extends PaginatedArgs {
+export class GetScheduleArticleQueryDto extends PaginatedArgs {
   @ApiProperty({
     enum: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
   })
   @IsNotEmpty()
+  @IsEnum([CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED], { each: true })
+  @NotEquals([CONTENT_STATUS.PUBLISHED, CONTENT_STATUS.DRAFT])
   @Transform(({ value }) => {
     const status = value.split(',').filter((v) => Object.values(CONTENT_STATUS).includes(v));
     const scheduleTypeStatus = [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
