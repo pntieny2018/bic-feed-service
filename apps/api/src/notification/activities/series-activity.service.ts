@@ -101,7 +101,7 @@ export class SeriesActivityService {
         contentType: item.type.toLowerCase(),
         actor: { id: item.createdBy },
         audience: {
-          groups: item.groupIds,
+          groups: (item.groupIds || []).map((groupId) => ({ id: groupId })),
         },
         content:
           item.type === PostType.POST ? StringHelper.removeMarkdownCharacter(item.content) : null,
