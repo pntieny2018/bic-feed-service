@@ -90,7 +90,7 @@ export class AuthorityAppService implements IAuthorityAppService {
   public canDoActionOnGroup(permissionKey: string, groupId: string): boolean {
     this._logger.debug(
       `checkCanCRUDContent - canDoActionOnGroup - ${groupId} - ${permissionKey}: ${JSON.stringify(
-        this._abilities
+        this._abilities.rules
       )}`
     );
     return this._abilities.can(permissionKey, subject(SUBJECT.GROUP, { id: groupId }));
