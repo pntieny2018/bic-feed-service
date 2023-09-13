@@ -1,26 +1,20 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 
-import { PageDto } from '../../../../../common/dto';
 import {
   AutoSaveArticleCommand,
   CreateDraftArticleCommand,
   DeleteArticleCommand,
   PublishArticleCommand,
 } from '../../../application/command/article';
-import { ArticleDto } from '../../../application/dto';
 import { FindArticleQuery } from '../../../application/query/article';
-import { GetScheduleArticleQuery } from '../../../application/query/article/get-schedule-article';
 import { ArticleController } from '../../../driving-apdater/controller/article.controller';
 import {
-  GetScheduleArticleDto,
   PublishArticleRequestDto,
   ScheduleArticleRequestDto,
   UpdateArticleRequestDto,
 } from '../../../driving-apdater/dto/request';
-import { articleDtoMock } from '../../mock/article.entity.mock';
 import { userMock } from '../../mock/user.dto.mock';
 
 describe('ArticleController', () => {
@@ -167,44 +161,6 @@ describe('ArticleController', () => {
           actor: userMock,
           ...mockPublishArticleRequestDto,
           groupIds: mockPublishArticleRequestDto.audience?.groupIds,
-        })
-      );
-    });
-  });
-
-  describe('Get schedule article', () => {
-    const queryMock: GetScheduleArticleDto = {
-      limit: 10,
-      offset: 0,
-      order: ORDER.ASC,
-      status: [CONTENT_STATUS.SCHEDULE_FAILED, CONTENT_STATUS.WAITING_SCHEDULE],
-    };
-
-    it('Should get schedule article successfully', async () => {
-      const queryExecute = jest.spyOn(query, 'execute').mockResolvedValue(
-        new PageDto<ArticleDto>([articleDtoMock], {
-          limit: 10,
-          offset: 0,
-          hasNextPage: false,
-        })
-      );
-      const res = await articleController.getSchedule(userMock, queryMock);
-
-      expect(queryExecute).toBeCalledTimes(1);
-      expect(queryExecute).toBeCalledWith(
-        new GetScheduleArticleQuery({
-          user: userMock,
-          limit: 10,
-          offset: 0,
-          order: ORDER.ASC,
-          statuses: [CONTENT_STATUS.SCHEDULE_FAILED, CONTENT_STATUS.WAITING_SCHEDULE],
-        })
-      );
-      expect(res).toEqual(
-        new PageDto<ArticleDto>([articleDtoMock], {
-          limit: 10,
-          offset: 0,
-          hasNextPage: false,
         })
       );
     });

@@ -32,7 +32,8 @@ export class FindQuizSummaryHandler implements IQueryHandler<FindQuizSummaryQuer
       throw new ContentAccessDeniedException();
     }
 
-    const participants = await this._quizParticipantRepo.getHighestScoreOfMember(contentId);
+    const participants =
+      await this._quizParticipantRepo.getQuizParticipantHighestScoreGroupByUserId(contentId);
 
     const totalParticipants = participants.length;
     const totalPass = participants.filter((participant) => participant.score === 100).length;

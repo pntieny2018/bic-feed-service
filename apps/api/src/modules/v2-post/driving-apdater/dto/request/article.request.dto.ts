@@ -1,19 +1,6 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
-import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
-import {
-  IsArray,
-  IsDateString,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  NotEquals,
-} from 'class-validator';
-
-import { PostStatusConflictedException } from '../../../domain/exception';
+import { Expose } from 'class-transformer';
+import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 import { MediaDto } from './media.request.dto';
 import { PublishPostRequestDto } from './post.request.dto';
@@ -100,32 +87,4 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
     super(data);
     Object.assign(this, data);
   }
-}
-
-export class GetScheduleArticleQueryDto extends PaginatedArgs {
-  @ApiProperty({
-    enum: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
-  })
-  @IsNotEmpty()
-  @IsEnum([CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED], { each: true })
-  @NotEquals([CONTENT_STATUS.PUBLISHED, CONTENT_STATUS.DRAFT])
-  @Transform(({ value }) => {
-    const status = value.split(',').filter((v) => Object.values(CONTENT_STATUS).includes(v));
-    const scheduleTypeStatus = [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
-
-    const isConflictStatus = (status: CONTENT_STATUS[]): boolean => {
-      // check status must in scheduleTypeStatus
-      return status.some((s) => !scheduleTypeStatus.includes(s));
-    };
-    if (isConflictStatus(status)) {
-      throw new PostStatusConflictedException();
-    }
-    return status;
-  })
-  public status: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
-
-  @ApiPropertyOptional({ enum: ORDER, default: ORDER.ASC, required: false })
-  @IsEnum(ORDER)
-  @IsOptional()
-  public order?: ORDER = ORDER.ASC;
 }

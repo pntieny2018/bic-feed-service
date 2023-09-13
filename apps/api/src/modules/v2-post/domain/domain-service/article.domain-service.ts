@@ -1,8 +1,7 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
-import { CursorPaginationResult } from '../../../../common/types';
-import { UserDto } from '../../../v2-user/application';
 import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
   ArticleRequiredCoverException,
@@ -41,27 +40,33 @@ import {
   AutoSaveArticleProps,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-  GetArticlesIdsScheduleProps,
+  POST_DOMAIN_SERVICE_TOKEN,
+  IPostDomainService,
 } from './interface';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {
   public constructor(
-    private readonly event: EventBus,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
+
     @Inject(ARTICLE_VALIDATOR_TOKEN)
     private readonly _articleValidator: IArticleValidator,
     @Inject(CATEGORY_VALIDATOR_TOKEN)
     private readonly _categoryValidator: ICategoryValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
+
     @Inject(CATEGORY_REPOSITORY_TOKEN)
     protected readonly _categoryRepository: ICategoryRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
-    @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator
+
+    private readonly event: EventBus
   ) {}
 
   public async getArticleById(articleId: string, authUser: UserDto): Promise<ArticleEntity> {
@@ -106,32 +111,6 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async getArticlesIdsSchedule(
-    params: GetArticlesIdsScheduleProps
-  ): Promise<CursorPaginationResult<string>> {
-    const { user, limit, before, after, statuses, order } = params;
-
-    const { rows, meta } = await this._contentRepository.getPagination({
-      where: {
-        createdBy: user.id,
-        statuses,
-      },
-      orderOptions: {
-        sortColumn: 'scheduledAt',
-        orderBy: order,
-      },
-      limit,
-      before,
-      after,
-      order,
-    });
-
-    return {
-      rows: rows.map((row) => row.getId()),
-      meta,
-    };
-  }
-
   public async deleteArticle(props: DeleteArticleProps): Promise<void> {
     const { actor, id } = props;
 
@@ -168,24 +147,14 @@ export class ArticleDomainService implements IArticleDomainService {
   public async publish(inputData: PublishArticleProps): Promise<ArticleEntity> {
     const { actor, id } = inputData;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSeries: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      articleEntity.isHidden() ||
-      articleEntity.isInArchivedGroups()
-    ) {
+    const isArticleNotFound = !articleEntity || !(articleEntity instanceof ArticleEntity);
+    if (isArticleNotFound || articleEntity.isHidden() || articleEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
 
@@ -193,20 +162,23 @@ export class ArticleDomainService implements IArticleDomainService {
       return articleEntity;
     }
 
-    await this._setArticleEntityAttributes(articleEntity, inputData, inputData.actor);
-
+    await this._setArticleEntityAttributes(articleEntity, inputData, actor);
     articleEntity.setPublish();
 
-    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
-
+    await this._articleValidator.validateArticle(articleEntity, actor);
     await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
-
-    if (!articleEntity.isValidArticleToPublish()) {
-      throw new ContentEmptyContentException();
-    }
+    this._articleValidator.validateArticleToPublish(articleEntity);
 
     await this._contentRepository.update(articleEntity);
     this.event.publish(new ArticlePublishedEvent(articleEntity, actor));
+
+    await this._postDomainService.markSeen(articleEntity.get('id'), actor.id);
+    articleEntity.increaseTotalSeen();
+
+    if (articleEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(articleEntity.get('id'), actor.id);
+      articleEntity.setMarkReadImportant();
+    }
 
     return articleEntity;
   }

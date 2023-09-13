@@ -6,8 +6,6 @@ import { RedisService } from '@libs/infra/redis';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { ENDPOINT } from '../../../../../apps/api/src/common/constants/endpoint.constant';
-
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
 import { IUserService } from './user.service.interface';
@@ -23,7 +21,8 @@ export class UserService implements IUserService {
 
   public async findByUserName(username: string): Promise<UserDto> {
     try {
-      const userCache = await this._getUserFromCacheByUsername(username);
+      const userProfileCache = await this._getUserFromCacheByUsername(username);
+      const userCache = await this._getUserFromCacheById(userProfileCache.id);
       if (userCache) {
         return userCache;
       }
@@ -70,57 +69,25 @@ export class UserService implements IUserService {
     }
   }
 
-  public async findAllFromInternalByIds(ids: string[], authUserId: string): Promise<UserDto[]> {
-    if (!ids || !ids.length) {
+  public async findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]> {
+    if (!ids.length) {
       return [];
     }
-    const uniqueIds = uniq(ids);
-    const usersData = await this._getUsersFromInternalByIds(uniqueIds, authUserId);
-    return usersData.map((user) => {
-      const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
-        ...badge,
-        community: badge.community || null,
-      }));
-      return { ...user, showingBadges: showingBadgesWithCommunity };
-    });
-  }
 
-  private async _getUsersFromInternalByIds(
-    ids: string[],
-    authUserId?: string
-  ): Promise<SharedUserDto[]> {
-    let users: SharedUserDto[] = [];
     try {
-      const response = await this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
-        params: {
-          ids,
-          ...(authUserId && {
-            actorId: authUserId,
-          }),
-        },
-      });
-
-      if (response.status === HttpStatus.OK) {
-        users = users.concat(response.data['data']);
-      }
+      const uniqueIds = uniq(ids);
+      const users = await this._getUsersFromApiByIds(uniqueIds, authUserId);
+      return users;
     } catch (e) {
-      this._logger.debug(e);
+      this._logger.error(e);
+      return [];
     }
-
-    return users;
   }
 
-  private async _getUserFromCacheByUsername(username: string): Promise<UserDto> {
+  private async _getUserFromCacheByUsername(username: string): Promise<ProfileUserDto> {
     const profileCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
     const user = await this._store.get<ProfileUserDto>(profileCacheKey);
-
-    const permissions = await this._getUserPermissionFromCache(user.id);
-    const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
-      ...badge,
-      community: badge.community || null,
-    }));
-
-    return new UserDto({ ...user, permissions, showingBadges: showingBadgesWithCommunity });
+    return user;
   }
 
   private async _getUserFromCacheById(id: string): Promise<UserDto> {
@@ -167,14 +134,16 @@ export class UserService implements IUserService {
     return this._store.get<UserPermissionDto>(permissionCacheKey);
   }
 
-  private async _getUsersFromApiByIds(ids: string[]): Promise<UserDto[]> {
+  private async _getUsersFromApiByIds(ids: string[], authUserId?: string): Promise<UserDto[]> {
     if (!ids.length) {
       return [];
     }
 
-    const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, {
-      params: { ids },
-    });
+    const params = { ids };
+    if (authUserId) {
+      params['actorId'] = authUserId;
+    }
+    const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, { params });
     if (response.status !== HttpStatus.OK) {
       return [];
     }

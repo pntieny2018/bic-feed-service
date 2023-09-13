@@ -14,3 +14,9 @@ export class SearchContentsDto extends PaginatedResponse<ArticleDto | PostDto | 
     super(list, meta);
   }
 }
+
+export class GetScheduleContentsResponseDto extends PaginatedResponse<ArticleDto | PostDto> {
+  public constructor(list: (ArticleDto | PostDto)[], meta?: IPaginatedInfo) {
+    super(list, meta);
+  }
+}

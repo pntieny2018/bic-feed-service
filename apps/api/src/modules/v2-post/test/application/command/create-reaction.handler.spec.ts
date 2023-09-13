@@ -17,7 +17,6 @@ import {
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
 import { ReactionDuplicateException } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/content';
 import { ReactionEntity } from '../../../domain/model/reaction';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
@@ -123,7 +122,6 @@ describe('CreateReactionHandler', () => {
     };
 
     const reactionEntity = new ReactionEntity(reactionRecord);
-    const postEntity = new PostEntity(postRecord);
 
     it('should success', async () => {
       jest.spyOn(postReactionRepository, 'findOne').mockResolvedValue(null);

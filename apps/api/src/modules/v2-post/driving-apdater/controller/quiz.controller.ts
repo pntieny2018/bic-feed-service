@@ -154,7 +154,7 @@ export class QuizController {
     @Query() query: GetQuizParticipantsSummaryDetailRequestDto
   ): Promise<FindQuizParticipantsSummaryDetailDto> {
     const data = await this._queryBus.execute(
-      new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId: contentId, ...query })
+      new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId, ...query })
     );
     return data;
   }

@@ -6,5 +6,5 @@ export interface IUserService {
   findByUserName(username: string): Promise<UserDto>;
   findById(id: string): Promise<UserDto>;
   findAllByIds(ids: string[]): Promise<UserDto[]>;
-  findAllFromInternalByIds(ids: string[], authUserId: string): Promise<UserDto[]>;
+  findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]>;
 }

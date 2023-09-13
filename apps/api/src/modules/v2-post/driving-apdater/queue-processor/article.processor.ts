@@ -13,10 +13,10 @@ export class ArticleProcessor {
 
   @Process(QUEUES.ARTICLE_SCHEDULED.JOBS.PROCESS_ARTICLE_SCHEDULED)
   public async handleArticleScheduled(job: JobWithContext<ArticleScheduledJobDto>): Promise<void> {
-    const { articleId, articleOwner } = job.data.data;
+    const { articleId, articleOwnerId } = job.data.data;
 
     await this._commandBus.execute<ProcessScheduledArticlePublishingCommand, void>(
-      new ProcessScheduledArticlePublishingCommand({ id: articleId, actor: articleOwner })
+      new ProcessScheduledArticlePublishingCommand({ id: articleId, actorId: articleOwnerId })
     );
   }
 }

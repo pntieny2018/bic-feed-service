@@ -182,3 +182,18 @@ export class SearchContentsRequestDto {
   })
   public isIncludedInnerGroups: boolean;
 }
+
+export class GetScheduleContentsQueryDto extends PaginatedArgs {
+  @ApiPropertyOptional({ enum: ORDER, default: ORDER.ASC, required: false })
+  @IsEnum(ORDER)
+  @IsOptional()
+  public order?: ORDER = ORDER.ASC;
+
+  @ApiPropertyOptional({
+    description: 'Filter by content type',
+    enum: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
+  })
+  @IsOptional()
+  @IsEnum([CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST])
+  public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+}

@@ -1,5 +1,6 @@
-import Redis from 'ioredis';
 import { Inject, Injectable } from '@nestjs/common';
+import Redis from 'ioredis';
+
 import { REDIS_STORE_INSTANCE_TOKEN } from './redis-store.constants';
 
 @Injectable()
@@ -34,10 +35,12 @@ export class RedisService {
   }
 
   public async mget(keys: string[]): Promise<any> {
-    if (keys.length === 0) return [];
+    if (keys.length === 0) {
+      return [];
+    }
     const result = await this._store.mget(keys);
     try {
-      return result.map((r) => JSON.parse(r));
+      return result.map((r) => JSON.parse(r)).filter((r) => !!r);
     } catch (e) {
       return [];
     }
