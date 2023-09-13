@@ -18,6 +18,8 @@ export class ActivityObject {
   public reaction?: ReactionObject;
   public report?: ReportObject;
   public article?: ActivityObject;
+  public cover?: string;
+  public summary?: string;
   public item?: any;
   public items?: any;
   public createdAt: Date;

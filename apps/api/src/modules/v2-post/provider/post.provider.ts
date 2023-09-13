@@ -1,3 +1,12 @@
+import {
+  LIB_CONTENT_REPOSITORY_TOKEN,
+  LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+  LIB_QUIZ_REPOSITORY_TOKEN,
+} from '@libs/database/postgres';
+import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
+import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
+import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
+
 import { ContentBinding } from '../application/binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
 import {
@@ -45,6 +54,7 @@ import {
   SeriesDeletedEventHandler,
 } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
+import { GetScheduleArticleHandler } from '../application/query/article/get-schedule-article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -82,6 +92,10 @@ import {
 } from '../domain/validator/interface';
 import { MentionValidator } from '../domain/validator/mention.validator';
 import { PostValidator } from '../domain/validator/post.validator';
+import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
+import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
+import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
+import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { ArticleCron } from '../driving-apdater/cron/article.cron';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
@@ -139,6 +153,27 @@ export const postProvider = [
     provide: CONTENT_DOMAIN_SERVICE_TOKEN,
     useClass: ContentDomainService,
   },
+
+  /** Library Repository */
+  {
+    provide: LIB_CONTENT_REPOSITORY_TOKEN,
+    useClass: LibContentRepository,
+  },
+  {
+    provide: LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+    useClass: LibQuizParticipantRepository,
+  },
+  {
+    provide: LIB_QUIZ_REPOSITORY_TOKEN,
+    useClass: LibQuizRepository,
+  },
+
+  /** Mapper */
+  ContentMapper,
+  QuizParticipantMapper,
+  QuizQuestionMapper,
+  QuizMapper,
+
   /** CronService */
   ArticleCron,
 
@@ -180,6 +215,7 @@ export const postProvider = [
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
+  GetScheduleArticleHandler,
   GetMenuSettingsHandler,
   SearchContentsHandler,
   SearchTagsHandler,

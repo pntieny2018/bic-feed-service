@@ -1,4 +1,7 @@
+import { ORDER } from '@beincom/constants';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
+import { UserDto } from '@libs/service/user';
 import { WhereOptions } from 'sequelize/types';
 
 export type FindOneOptions = {
@@ -6,8 +9,30 @@ export type FindOneOptions = {
   includeOwnerReactions?: string;
 };
 
+export type GetPaginationCommentProps = CursorPaginationProps & {
+  authUserId?: string;
+  postId: string;
+  parentId?: string;
+};
+
+export type GetAroundCommentProps = {
+  authUserId?: string;
+  limit: number;
+  order: ORDER;
+};
+
 export interface ILibCommentRepository {
+  getPagination(input: GetPaginationCommentProps): Promise<CursorPaginationResult<CommentModel>>;
+
+  getAroundComment(
+    comment: CommentAttributes,
+    props: GetAroundCommentProps
+  ): Promise<CursorPaginationResult<CommentModel>>;
+
+  findComment(id: string, authUser: UserDto): Promise<CommentModel>;
+
   createComment(data: CommentAttributes): Promise<CommentModel>;
+
   update(commentId: string, data: Partial<CommentAttributes>): Promise<void>;
 
   destroyComment(id: string): Promise<void>;

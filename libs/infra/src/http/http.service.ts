@@ -27,7 +27,7 @@ export class HttpService implements IHttpService {
     params: object = {},
     options: IHttpServiceRequestOptions = {}
   ): Promise<IHttpServiceResponse<T>> {
-    return this.getResponse<T>(axios.get(path, this.getConfigs({ ...options, params })));
+    return this.getResponse<T>(axios.get(path, this.getConfigs({ ...options, ...params })));
   }
 
   public async post<T = any>(

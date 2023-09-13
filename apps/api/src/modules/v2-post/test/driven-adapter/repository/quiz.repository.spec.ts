@@ -1,20 +1,16 @@
+import { ORDER } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FindOptions, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
-import { CursorPaginator, OrderEnum } from '../../../../../common/dto';
+import { CursorPaginator } from '../../../../../common/dto';
 import { PostModel } from '../../../../../database/models/post.model';
 import { QuizAnswerModel } from '../../../../../database/models/quiz-answer.model';
 import { QuizQuestionModel } from '../../../../../database/models/quiz-question.model';
 import { IQuiz, QuizModel } from '../../../../../database/models/quiz.model';
 import { PostType } from '../../../data-type';
-import {
-  IQuizFactory,
-  QUIZ_FACTORY_TOKEN,
-} from '../../../domain/factory/interface/quiz.factory.interface';
-import { QuizFactory } from '../../../domain/factory/quiz.factory';
 import { QuizEntity } from '../../../domain/model/quiz';
 import {
   FindAllQuizProps,
@@ -54,14 +50,9 @@ describe('QuizRepository', () => {
           provide: getModelToken(QuizAnswerModel),
           useValue: createMock<QuizAnswerModel>(),
         },
-        {
-          provide: QUIZ_FACTORY_TOKEN,
-          useValue: createMock<QuizFactory>(),
-        },
       ],
     }).compile();
     repo = module.get<IQuizRepository>(QuizRepository);
-    factory = module.get<IQuizFactory>(QUIZ_FACTORY_TOKEN);
     quizModel = module.get<QuizModel>(getModelToken(QuizModel));
     sequelizeConnection = module.get<Sequelize>(Sequelize);
     sequelizeConnection.transaction.mockResolvedValue(transaction);
@@ -75,7 +66,7 @@ describe('QuizRepository', () => {
     it('Should create quiz successfully', async () => {
       const spyOnModelCreate = jest.spyOn(quizModel, 'create').mockResolvedValue(quizEntityMock);
 
-      await repo.create(quizEntityMock);
+      await repo.createQuiz(quizEntityMock);
       expect(spyOnModelCreate).toBeCalledTimes(1);
       expect(spyOnModelCreate).toBeCalledWith({
         id: quizEntityMock.get('id'),
@@ -102,7 +93,7 @@ describe('QuizRepository', () => {
     it('Should update quiz successfully', async () => {
       const spyOnModelUpdate = jest.spyOn(quizModel, 'update').mockResolvedValue(quizEntityMock);
 
-      await repo.update(quizEntityMock);
+      await repo.updateQuizWithUpdateQuestions(quizEntityMock);
       expect(spyOnModelUpdate).toBeCalledTimes(1);
       expect(spyOnModelUpdate).toBeCalledWith(
         {
@@ -129,7 +120,7 @@ describe('QuizRepository', () => {
     it('Should delete quiz successfully', async () => {
       const spyOnModelDelete = jest.spyOn(quizModel, 'destroy').mockResolvedValue(quizEntityMock);
 
-      await repo.delete(quizEntityMock.get('id'));
+      await repo.deleteQuiz(quizEntityMock.get('id'));
       expect(spyOnModelDelete).toBeCalledTimes(1);
       expect(spyOnModelDelete).toBeCalledWith({ where: { id: quizEntityMock.get('id') } });
     });
@@ -147,7 +138,7 @@ describe('QuizRepository', () => {
       });
       jest.spyOn(factory, 'reconstitute').mockReturnValue(quizEntityMock);
 
-      const result = await repo.findOne(findOneOptions);
+      const result = await repo.findQuizById(findOneOptions);
 
       expect(spyOnModelFindOne).toBeCalledWith({
         ...findOneOptions,
@@ -172,7 +163,7 @@ describe('QuizRepository', () => {
 
       const spyOnModelFindOne = jest.spyOn(quizModel, 'findOne').mockResolvedValue(null);
 
-      const result = await repo.findOne(findOneOptions);
+      const result = await repo.findQuizById(findOneOptions);
 
       expect(spyOnModelFindOne).toBeCalledWith({
         ...findOneOptions,
@@ -204,7 +195,7 @@ describe('QuizRepository', () => {
       ]);
       jest.spyOn(factory, 'reconstitute').mockReturnValue(new QuizEntity(quizRecordMock));
 
-      const result = await repo.findAll(findAllOptions);
+      const result = await repo.findAllQuizzes(findAllOptions);
 
       expect(spyOnModelFindAll).toBeCalledTimes(1);
       expect(spyOnModelFindAll).toBeCalledWith({
@@ -243,7 +234,7 @@ describe('QuizRepository', () => {
     ]);
     jest.spyOn(factory, 'reconstitute').mockReturnValue(new QuizEntity(quizRecordMock));
 
-    const result = await repo.findAll(findAllOptions);
+    const result = await repo.findAllQuizzes(findAllOptions);
 
     expect(spyOnModelFindAll).toBeCalledTimes(1);
     expect(spyOnModelFindAll).toBeCalledWith({
@@ -317,7 +308,7 @@ describe('QuizRepository', () => {
         where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
         contentType: PostType.POST,
         attributes: ['id', 'contentId', 'createdAt'],
-        order: OrderEnum.DESC,
+        order: ORDER.DESC,
       };
       jest.spyOn(quizModel, 'findAll').mockResolvedValue([
         {

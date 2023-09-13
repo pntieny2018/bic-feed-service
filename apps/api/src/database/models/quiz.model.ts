@@ -13,17 +13,17 @@ import {
 import { DataTypes, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { QuizGenStatus, QuizStatus } from '../../modules/v2-post/data-type/quiz.enum';
 import { PostModel } from './post.model';
 import { IQuizQuestion, QuizQuestionModel } from './quiz-question.model';
+import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 
 export interface IQuiz {
   id: string;
   title: string;
   description: string;
   postId: string;
-  status: QuizStatus;
-  genStatus: QuizGenStatus;
+  status: QUIZ_STATUS;
+  genStatus: QUIZ_PROCESS_STATUS;
   timeLimit: number;
   numberOfQuestions: number;
   numberOfAnswers: number;
@@ -83,10 +83,10 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   public meta: any;
 
   @Column
-  public status: QuizStatus;
+  public status: QUIZ_STATUS;
 
   @Column
-  public genStatus: QuizGenStatus;
+  public genStatus: QUIZ_PROCESS_STATUS;
 
   @Column({
     type: DataTypes.JSONB,

@@ -35,22 +35,22 @@ export class LinkPreviewModel extends Model<
   @Length({ max: 255 })
   @AllowNull(true)
   @Column
-  public domain: string;
+  public domain?: string;
 
   @Length({ max: 2048 })
   @AllowNull(true)
   @Column
-  public image: string;
+  public image?: string;
 
   @Length({ max: 255 })
   @AllowNull(true)
   @Column
-  public title: string;
+  public title?: string;
 
   @Length({ max: 255 })
   @AllowNull(true)
   @Column
-  public description: string;
+  public description?: string;
 
   @CreatedAt
   @Column

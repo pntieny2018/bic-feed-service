@@ -1,7 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
@@ -13,12 +12,6 @@ import {
   ContentNotFoundException,
   InvalidResourceImageException,
 } from '../exception';
-import {
-  ARTICLE_FACTORY_TOKEN,
-  IArticleFactory,
-  IPostFactory,
-  POST_FACTORY_TOKEN,
-} from '../factory/interface';
 import { PostEntity, ArticleEntity, ContentEntity } from '../model/content';
 import {
   IContentRepository,
@@ -26,6 +19,7 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -56,10 +50,6 @@ export class PostDomainService implements IPostDomainService {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
-    @Inject(POST_FACTORY_TOKEN)
-    private readonly _postFactory: IPostFactory,
-    @Inject(ARTICLE_FACTORY_TOKEN)
-    private readonly _articleFactory: IArticleFactory,
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -72,8 +62,8 @@ export class PostDomainService implements IPostDomainService {
     private readonly _tagRepo: ITagRepository,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupApplicationService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService
   ) {}
@@ -121,32 +111,35 @@ export class PostDomainService implements IPostDomainService {
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
-    const postEntity = this._postFactory.createPost({
+
+    const postEntity = PostEntity.create({
       groupIds: [],
       userId,
     });
+
     postEntity.setGroups(groups.map((group) => group.id));
     postEntity.setPrivacyFromGroups(groups);
     try {
       await this._contentRepository.create(postEntity);
-      postEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
     return postEntity;
   }
+
   public async createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity> {
     const { groups, userId } = input;
-    const articleEntity = this._articleFactory.createArticle({
+
+    const articleEntity = ArticleEntity.create({
       groupIds: groups.map((group) => group.id),
       userId,
     });
+
     articleEntity.setGroups(groups.map((group) => group.id));
     articleEntity.setPrivacyFromGroups(groups);
     try {
       await this._contentRepository.create(articleEntity);
-      articleEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -175,9 +168,7 @@ export class PostDomainService implements IPostDomainService {
       return postEntity;
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(
-      groupIds || postEntity.get('groupIds')
-    );
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });
@@ -288,9 +279,7 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNoPublishYetException();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(
-      groupIds || postEntity.get('groupIds')
-    );
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });
@@ -455,9 +444,7 @@ export class PostDomainService implements IPostDomainService {
 
     let groups = undefined;
     if (groupIds || postEntity.get('groupIds')) {
-      groups = await this._groupApplicationService.findAllByIds(
-        groupIds || postEntity.get('groupIds')
-      );
+      groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     }
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,

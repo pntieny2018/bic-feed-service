@@ -1,5 +1,6 @@
+import { PRIVACY } from '@beincom/constants';
+
 import { PostDto } from '../../application/dto';
-import { GroupPrivacy } from '../../../v2-group/data-type';
 import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 
 export const postMock: PostDto = {
@@ -12,7 +13,7 @@ export const postMock: PostDto = {
         icon: 'https://evolgroup.vn/wp-content/uploads/sites/18/2020/04/Thumb-EVOL.jpg',
         communityId: '0204fff4-1269-4213-a1a6-4d60be69af0d',
         isCommunity: true,
-        privacy: GroupPrivacy.OPEN,
+        privacy: PRIVACY.OPEN,
         rootGroupId: 'e22e09b2-7956-483a-ab46-87db8a74c09d',
       },
     ],
@@ -35,7 +36,7 @@ export const postMock: PostDto = {
       icon: 'https://evolgroup.vn/wp-content/uploads/sites/18/2020/04/Thumb-EVOL.jpg',
       communityId: '0204fff4-1269-4213-a1a6-4d60be69af0d',
       isCommunity: true,
-      privacy: GroupPrivacy.OPEN,
+      privacy: PRIVACY.OPEN,
       rootGroupId: 'e22e09b2-7956-483a-ab46-87db8a74c09d',
     },
   ],

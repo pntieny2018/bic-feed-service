@@ -1,6 +1,6 @@
+import { ORDER } from '@beincom/constants';
 import { IQuery } from '@nestjs/cqrs';
 
-import { OrderEnum } from '../../../../../../common/dto';
 import { UserDto } from '../../../../../v2-user/application';
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
   limit: number;
   before?: string;
   after?: string;
-  order: OrderEnum;
+  order: ORDER;
 };
 
 export class FindCommentsPaginationQuery implements IQuery {

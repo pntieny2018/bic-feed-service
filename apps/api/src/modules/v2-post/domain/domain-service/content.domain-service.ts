@@ -1,11 +1,9 @@
+import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
-import { OrderEnum } from '../../../../common/dto';
 import { StringHelper } from '../../../../common/helpers';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { TargetType } from '../../../report-content/contstants';
-import { PostStatus, PostType } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
@@ -27,25 +25,28 @@ export class ContentDomainService implements IContentDomainService {
   ) {}
 
   public async getVisibleContent(
-    id: string,
+    contentId: string,
     excludeReportedByUserId?: string
   ): Promise<ContentEntity> {
-    const entity = await this._contentRepository.findOne({
-      include: {
-        mustIncludeGroup: true,
-        ...(excludeReportedByUserId && {
-          excludeReportedByUserId,
-        }),
-      },
-      where: {
-        id,
-      },
-    });
+    let contentEntity: ContentEntity;
 
-    if (!entity || !entity.isVisible()) {
+    if (excludeReportedByUserId) {
+      contentEntity = await this._contentRepository.findContentByIdExcludeReportedByUserId(
+        contentId,
+        excludeReportedByUserId,
+        { mustIncludeGroup: true }
+      );
+    } else {
+      contentEntity = await this._contentRepository.findContentById(contentId, {
+        mustIncludeGroup: true,
+      });
+    }
+
+    if (!contentEntity || !contentEntity.isVisible()) {
       throw new ContentNotFoundException();
     }
-    return entity;
+
+    return contentEntity;
   }
 
   public getRawContent(contentEntity: ContentEntity): string {
@@ -65,9 +66,9 @@ export class ContentDomainService implements IContentDomainService {
       ...input,
       where: {
         createdBy: authUserId,
-        status: PostStatus.DRAFT,
+        status: CONTENT_STATUS.DRAFT,
         ...(isProcessing && {
-          status: PostStatus.PROCESSING,
+          status: CONTENT_STATUS.PROCESSING,
         }),
         ...(!isEmpty(type) && {
           type,
@@ -119,7 +120,7 @@ export class ContentDomainService implements IContentDomainService {
       after,
       before,
       authUserId,
-      order = OrderEnum.DESC,
+      order = ORDER.DESC,
     } = props;
     const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
@@ -127,7 +128,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       where: {
         isHidden: false,
-        status: PostStatus.PUBLISHED,
+        status: CONTENT_STATUS.PUBLISHED,
         inNewsfeedUserId: authUserId,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
@@ -170,7 +171,7 @@ export class ContentDomainService implements IContentDomainService {
       limit,
       before,
       after,
-      order = OrderEnum.DESC,
+      order = ORDER.DESC,
     } = props;
 
     const { rows, meta } = await this._contentRepository.getPagination({
@@ -179,7 +180,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       where: {
         isHidden: false,
-        status: PostStatus.PUBLISHED,
+        status: CONTENT_STATUS.PUBLISHED,
         groupIds,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
@@ -218,7 +219,7 @@ export class ContentDomainService implements IContentDomainService {
     return this._contentRepository.getPagination({
       ...input,
       where: {
-        status: PostStatus.WAITING_SCHEDULE,
+        status: CONTENT_STATUS.WAITING_SCHEDULE,
         scheduledAt: beforeDate,
       },
       attributes: {
@@ -248,21 +249,21 @@ export class ContentDomainService implements IContentDomainService {
 
   public async getReportedContentIdsByUser(
     reportUser: string,
-    postTypes?: PostType[]
+    postTypes?: CONTENT_TYPE[]
   ): Promise<string[]> {
     if (!postTypes) {
       return this._contentRepository.getReportedContentIdsByUser(reportUser, [
-        TargetType.ARTICLE,
-        TargetType.POST,
+        CONTENT_TARGET.ARTICLE,
+        CONTENT_TARGET.POST,
       ]);
     }
 
-    const target = [];
-    if (postTypes.includes(PostType.POST)) {
-      target.push(TargetType.POST);
+    const target: CONTENT_TARGET[] = [];
+    if (postTypes.includes(CONTENT_TYPE.POST)) {
+      target.push(CONTENT_TARGET.POST);
     }
-    if (postTypes.includes(PostType.ARTICLE)) {
-      target.push(TargetType.ARTICLE);
+    if (postTypes.includes(CONTENT_TYPE.ARTICLE)) {
+      target.push(CONTENT_TARGET.ARTICLE);
     }
 
     return this._contentRepository.getReportedContentIdsByUser(reportUser, target);

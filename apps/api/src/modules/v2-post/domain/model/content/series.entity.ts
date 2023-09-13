@@ -1,6 +1,6 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { v4 } from 'uuid';
 
-import { PostStatus, PostType } from '../../../data-type';
 import { ImageEntity } from '../media';
 
 import { ContentEntity, ContentAttributes } from './content.entity';
@@ -26,8 +26,8 @@ export class SeriesEntity extends ContentEntity<SeriesAttributes> {
       summary,
       createdBy: userId,
       updatedBy: userId,
-      status: PostStatus.PUBLISHED,
-      type: PostType.SERIES,
+      status: CONTENT_STATUS.PUBLISHED,
+      type: CONTENT_TYPE.SERIES,
       setting: {
         canComment: true,
         canReact: true,

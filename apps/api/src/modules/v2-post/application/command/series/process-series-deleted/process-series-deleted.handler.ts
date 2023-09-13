@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -7,15 +8,12 @@ import { StringHelper } from '../../../../../../common/helpers';
 import { NotificationService, TypeActivity, VerbActivity } from '../../../../../../notification';
 import { NotificationActivity } from '../../../../../../notification/dto/requests/notification-activity.dto';
 import { SearchService } from '../../../../../search/search.service';
-import { PostType } from '../../../../data-type';
-import { PostEntity } from '../../../../domain/model/content';
-import { ArticleEntity } from '../../../../domain/model/content/article.entity';
-import { ContentEntity } from '../../../../domain/model/content/content.entity';
+import { PostEntity, ArticleEntity, ContentEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import { SeriesMessagePayload } from '../../../dto/message/series.message-payload';
+import { SeriesMessagePayload } from '../../../dto/message';
 
 import { ProcessSeriesDeletedCommand } from './process-series-deleted.command';
 
@@ -78,14 +76,16 @@ export class ProcessSeriesDeletedHandler
           filterItems.push({
             id: item.get('id'),
             title:
-              item.get('type') === PostType.ARTICLE ? (item as ArticleEntity).get('title') : null,
+              item.get('type') === CONTENT_TYPE.ARTICLE
+                ? (item as ArticleEntity).get('title')
+                : null,
             contentType: item.get('type').toLowerCase(),
             actor: { id: item.get('createdBy') },
             audience: {
               groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
             },
             content:
-              item.get('type') === PostType.POST
+              item.get('type') === CONTENT_TYPE.POST
                 ? StringHelper.removeMarkdownCharacter((item as PostEntity).get('content'))
                 : null,
             createdAt: item.get('createdAt'),

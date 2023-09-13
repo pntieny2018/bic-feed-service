@@ -1,37 +1,22 @@
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsUUID,
-  ValidateNested,
+  NotEquals,
 } from 'class-validator';
-import { AudienceRequestDto } from './audience.request.dto';
-import { Expose } from 'class-transformer';
+
+import { PostStatusConflictedException } from '../../../domain/exception';
+
 import { MediaDto } from './media.request.dto';
 import { PublishPostRequestDto } from './post.request.dto';
-
-export class CreateDraftArticleRequestDto {
-  @ApiProperty({
-    description: 'Audience',
-    type: AudienceRequestDto,
-    example: {
-      ['group_ids']: ['02032703-6db0-437a-a900-d93e742c3cb9'],
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => AudienceRequestDto)
-  public audience: AudienceRequestDto = {
-    groupIds: [],
-  };
-  public constructor(data: CreateDraftArticleRequestDto) {
-    Object.assign(this, data);
-  }
-}
 
 export class UpdateArticleRequestDto extends PublishPostRequestDto {
   @ApiPropertyOptional({
@@ -115,4 +100,32 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
     super(data);
     Object.assign(this, data);
   }
+}
+
+export class GetScheduleArticleQueryDto extends PaginatedArgs {
+  @ApiProperty({
+    enum: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
+  })
+  @IsNotEmpty()
+  @IsEnum([CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED], { each: true })
+  @NotEquals([CONTENT_STATUS.PUBLISHED, CONTENT_STATUS.DRAFT])
+  @Transform(({ value }) => {
+    const status = value.split(',').filter((v) => Object.values(CONTENT_STATUS).includes(v));
+    const scheduleTypeStatus = [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
+
+    const isConflictStatus = (status: CONTENT_STATUS[]): boolean => {
+      // check status must in scheduleTypeStatus
+      return status.some((s) => !scheduleTypeStatus.includes(s));
+    };
+    if (isConflictStatus(status)) {
+      throw new PostStatusConflictedException();
+    }
+    return status;
+  })
+  public status: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED];
+
+  @ApiPropertyOptional({ enum: ORDER, default: ORDER.ASC, required: false })
+  @IsEnum(ORDER)
+  @IsOptional()
+  public order?: ORDER = ORDER.ASC;
 }

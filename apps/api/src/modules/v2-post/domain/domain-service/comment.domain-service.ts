@@ -1,5 +1,5 @@
+import { ORDER } from '@beincom/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { OrderEnum } from 'apps/api/src/common/dto/pagination';
 import { NIL } from 'uuid';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -12,7 +12,6 @@ import {
 import { InvalidResourceImageException } from '../exception/media.exception';
 import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
 import { CommentEntity } from '../model/comment';
-import { COMMENT_QUERY_TOKEN, ICommentQuery } from '../query-interface';
 import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
 
 import {
@@ -20,19 +19,17 @@ import {
   GetCommentsAroundIdProps,
   ICommentDomainService,
   UpdateCommentProps,
-} from './interface';
-import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
+} from './interface';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
   private readonly _logger = new Logger(CommentDomainService.name);
 
   public constructor(
-    @Inject(COMMENT_QUERY_TOKEN)
-    private readonly _commentQuery: ICommentQuery,
+    @Inject(COMMENT_REPOSITORY_TOKEN)
+    private readonly _commentQuery: ICommentRepository,
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _commentFactory: ICommentFactory,
     @Inject(COMMENT_REPOSITORY_TOKEN)
@@ -130,8 +127,8 @@ export class CommentDomainService implements ICommentDomainService {
 
     const aroundChildPagination = await this._commentQuery.getAroundComment(comment, {
       limit: targetChildLimit,
-      order: OrderEnum.DESC,
-      authUser: userId,
+      order: ORDER.DESC,
+      authUserId: userId,
     });
 
     const parent = await this.getVisibleComment(comment.get('parentId'), userId);
@@ -139,8 +136,8 @@ export class CommentDomainService implements ICommentDomainService {
 
     const aroundParentPagination = await this._commentQuery.getAroundComment(parent, {
       limit,
-      order: OrderEnum.DESC,
-      authUser: userId,
+      order: ORDER.DESC,
+      authUserId: userId,
     });
 
     return aroundParentPagination;
@@ -153,11 +150,11 @@ export class CommentDomainService implements ICommentDomainService {
     const { userId, targetChildLimit, limit } = pagination;
 
     const childsPagination = await this._commentQuery.getPagination({
-      authUser: userId,
+      authUserId: userId,
       postId: comment.get('postId'),
       parentId: comment.get('id'),
       limit: targetChildLimit,
-      order: OrderEnum.DESC,
+      order: ORDER.DESC,
     });
     if (childsPagination && childsPagination.rows?.length) {
       comment.setChilds(childsPagination);
@@ -165,8 +162,8 @@ export class CommentDomainService implements ICommentDomainService {
 
     const aroundParentPagination = await this._commentQuery.getAroundComment(comment, {
       limit,
-      order: OrderEnum.DESC,
-      authUser: userId,
+      order: ORDER.DESC,
+      authUserId: userId,
     });
 
     return aroundParentPagination;

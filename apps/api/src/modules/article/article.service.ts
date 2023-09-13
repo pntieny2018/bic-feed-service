@@ -2,11 +2,11 @@ import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FindAttributeOptions, FindOptions, Includeable, Op, WhereOptions } from 'sequelize';
+import { FindAttributeOptions, Includeable, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 
-import { OrderEnum, PageDto } from '../../common/dto';
+import { PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
@@ -29,7 +29,6 @@ import { ContentNotFoundException } from '../v2-post/domain/exception';
 import { UserDto } from '../v2-user/application';
 
 import { GetArticleDto, UpdateArticleDto } from './dto/requests';
-import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { ArticleResponseDto } from './dto/responses';
@@ -73,87 +72,6 @@ export class ArticleService {
     private readonly _categoryService: CategoryService,
     private readonly _postService: PostService
   ) {}
-
-  /**
-   * Get Draft Articles
-   */
-  public async getDrafts(
-    authUserId: string,
-    getDraftPostDto: GetDraftArticleDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset, order, isProcessing } = getDraftPostDto;
-    const condition = {
-      createdBy: authUserId,
-      status: PostStatus.DRAFT,
-      type: PostType.ARTICLE,
-    };
-
-    if (isProcessing) {
-      condition['status'] = PostStatus.PROCESSING;
-    }
-
-    const result = await this.getsAndCount(condition, order, { limit, offset });
-
-    return new PageDto<ArticleResponseDto>(result.data, {
-      total: result.count,
-      limit,
-      offset,
-    });
-  }
-
-  public async getsAndCount(
-    condition: WhereOptions<IPost>,
-    order?: OrderEnum,
-    otherParams?: FindOptions
-  ): Promise<{ data: ArticleResponseDto[]; count: number }> {
-    const attributes = this.getAttributesObj({ loadMarkRead: false });
-    const include = this._postService.getIncludeObj({
-      shouldIncludeOwnerReaction: false,
-      shouldIncludeGroup: true,
-      shouldIncludeCategory: true,
-    });
-    const orderOption = [];
-    if (
-      condition['status'] &&
-      PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
-    ) {
-      orderOption.push(['publishedAt', order]);
-    } else {
-      orderOption.push(['createdAt', order]);
-    }
-    const rows = await this.postModel.findAll<PostModel>({
-      where: condition,
-      attributes,
-      include,
-      subQuery: false,
-      order: orderOption,
-      ...otherParams,
-    });
-    const jsonArticles = rows.map((r) => r.toJSON());
-    const articlesBindedData = await this.postBindingService.bindRelatedData(jsonArticles, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    await this.postBindingService.bindCommunity(articlesBindedData);
-
-    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
-      excludeExtraneousValues: true,
-    });
-    const total = await this.postModel.count<PostModel>({
-      where: condition,
-      attributes,
-      include: otherParams.include ? otherParams.include : include,
-      distinct: true,
-    });
-
-    return {
-      data: result,
-      count: total,
-    };
-  }
 
   /**
    * Get list related article

@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { uniq } from 'lodash';
@@ -22,7 +23,6 @@ import { IPostElasticsearch } from '../../search/interfaces';
 import { SearchService } from '../../search/search.service';
 import { TagService } from '../../tag/tag.service';
 import { RULES } from '../../v2-post/constant';
-import { PostType } from '../../v2-post/data-type';
 import {
   ArticleInvalidParameterException,
   ArticleLimitAttachedSeriesException,
@@ -32,7 +32,6 @@ import { UserDto } from '../../v2-user/application';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
-import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
@@ -58,13 +57,6 @@ export class ArticleAppService {
     getArticleListDto: GetRelatedArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     return this._articleService.getRelatedById(getArticleListDto, user);
-  }
-
-  public getDrafts(
-    user: UserDto,
-    getDraftDto: GetDraftArticleDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
   public async getsByParams(
@@ -357,7 +349,7 @@ export class ArticleAppService {
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({
       keyword: contentSearch,
-      contentTypes: [PostType.ARTICLE],
+      contentTypes: [CONTENT_TYPE.ARTICLE],
       groupIds: filterGroupIds,
       excludeByIds: notIncludeIds,
       topics: categoryIds,

@@ -1,7 +1,7 @@
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
 
-import { GroupDto } from '../../../v2-group/application';
-import { UserDto } from '../../../v2-user/application';
 import { PostPrivacy, PostStatus, PostType } from '../../data-type';
 
 import { LinkPreviewDto } from './link-preview.dto';

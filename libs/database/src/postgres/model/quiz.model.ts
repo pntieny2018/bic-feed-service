@@ -16,7 +16,7 @@ import {
 import { v4 as uuid_v4 } from 'uuid';
 
 import { PostModel } from './post.model';
-import { QuizQuestionModel } from './quiz-question.model';
+import { QuizQuestionAttributes, QuizQuestionModel } from './quiz-question.model';
 
 export type QuizAttributes = InferAttributes<QuizModel>;
 @Table({
@@ -93,5 +93,5 @@ export class QuizModel extends Model<QuizAttributes, InferCreationAttributes<Qui
   @HasMany(() => QuizQuestionModel, {
     foreignKey: 'quizId',
   })
-  public questions?: QuizQuestionModel[];
+  public questions?: QuizQuestionAttributes[];
 }

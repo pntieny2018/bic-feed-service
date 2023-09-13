@@ -1,4 +1,5 @@
-import { PostPrivacy, PostStatus, PostType } from '../../data-type';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+
 import { PostAttributes } from '../../domain/model/content';
 
 export const postProps: PostAttributes = {
@@ -7,9 +8,9 @@ export const postProps: PostAttributes = {
   isHidden: false,
   createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
   updatedBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
-  privacy: PostPrivacy.PRIVATE,
-  status: PostStatus.DRAFT,
-  type: PostType.POST,
+  privacy: PRIVACY.PRIVATE,
+  status: CONTENT_STATUS.DRAFT,
+  type: CONTENT_TYPE.POST,
   createdAt: new Date(),
   updatedAt: new Date(),
   setting: {

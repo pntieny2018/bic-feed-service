@@ -1,14 +1,13 @@
 import { QuizQuestionAttributes } from '@libs/database/postgres/model/quiz-question.model';
-
-import { QuizGenStatus, QuizStatus } from '../../data-type';
+import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 
 export const quizRecordMock = {
   id: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
   title: 'title',
   description: 'description',
   contentId: 'ff09eb67-3319-4c0a-9e15-04cf14358ae7',
-  status: QuizStatus.PUBLISHED,
-  genStatus: QuizGenStatus.PROCESSED,
+  status: QUIZ_STATUS.PUBLISHED,
+  genStatus: QUIZ_PROCESS_STATUS.PROCESSED,
   numberOfQuestions: 4,
   numberOfAnswers: 4,
   numberOfQuestionsDisplay: 3,

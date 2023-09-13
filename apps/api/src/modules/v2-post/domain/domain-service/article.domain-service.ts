@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
+import { CursorPaginationResult } from '../../../../common/types';
 import { UserDto } from '../../../v2-user/application';
 import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
@@ -38,11 +39,10 @@ import {
   ScheduleArticleProps,
   DeleteArticleProps,
   AutoSaveArticleProps,
-} from './interface';
-import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from './interface/media.domain-service.interface';
+  GetArticlesIdsScheduleProps,
+} from './interface';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {
@@ -69,7 +69,7 @@ export class ArticleDomainService implements IArticleDomainService {
       where: {
         id: articleId,
         groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+        excludeReportedByUserId: authUser?.id,
       },
       include: {
         shouldIncludeGroup: true,
@@ -104,6 +104,32 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     return articleEntity;
+  }
+
+  public async getArticlesIdsSchedule(
+    params: GetArticlesIdsScheduleProps
+  ): Promise<CursorPaginationResult<string>> {
+    const { user, limit, before, after, statuses, order } = params;
+
+    const { rows, meta } = await this._contentRepository.getPagination({
+      where: {
+        createdBy: user.id,
+        statuses,
+      },
+      orderOptions: {
+        sortColumn: 'scheduledAt',
+        orderBy: order,
+      },
+      limit,
+      before,
+      after,
+      order,
+    });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 
   public async deleteArticle(props: DeleteArticleProps): Promise<void> {
@@ -323,7 +349,7 @@ export class ArticleDomainService implements IArticleDomainService {
       return;
     }
 
-    await this._contentRepository.update(articleEntity);
+    return this._contentRepository.update(articleEntity);
   }
 
   private async _setArticleEntityAttributes(

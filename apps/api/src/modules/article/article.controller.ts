@@ -10,22 +10,23 @@ import {
   Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
+import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
+import { PostResponseDto } from '../post/dto/responses';
+import { UserDto } from '../v2-user/application';
+
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';
-import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
 import { ArticleSearchResponseDto } from './dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
-import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
-import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { PostResponseDto } from '../post/dto/responses';
-import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
-import { UserDto } from '../v2-user/application';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -70,23 +71,12 @@ export class ArticleController {
     description: 'Get related article successfully',
   })
   @Get('/related')
+  @Version([VERSIONS_SUPPORTED[0]])
   public async getRelated(
     @AuthUser() user: UserDto,
     @Query() getArticleListDto: GetRelatedArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     return this._articleAppService.getRelatedById(user, getArticleListDto);
-  }
-
-  @ApiOperation({ summary: 'Get draft articles' })
-  @ApiOkResponse({
-    type: ArticleResponseDto,
-  })
-  @Get('/draft')
-  public getDrafts(
-    @AuthUser() user: UserDto,
-    @Query() getDraftDto: GetDraftArticleDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleAppService.getDrafts(user, getDraftDto);
   }
 
   @ApiOperation({ summary: 'Get posts by params' })
