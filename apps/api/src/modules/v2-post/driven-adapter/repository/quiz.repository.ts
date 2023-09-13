@@ -1,10 +1,7 @@
 import { ILibQuizRepository, LIB_QUIZ_REPOSITORY_TOKEN } from '@libs/database/postgres';
 import { Inject } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
 
 import { CursorPaginationResult } from '../../../../common/types';
-import { QuizAnswerModel } from '../../../../database/models/quiz-answer.model';
-import { QuizQuestionModel } from '../../../../database/models/quiz-question.model';
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import {
   FindAllQuizProps,
@@ -20,19 +17,14 @@ export class QuizRepository implements IQuizRepository {
     private readonly _libQuizRepo: ILibQuizRepository,
 
     private readonly _quizQuestionMapper: QuizQuestionMapper,
-
-    private readonly _quizMapper: QuizMapper,
-
-    @InjectModel(QuizQuestionModel)
-    private readonly _quizQuestionModel: typeof QuizQuestionModel,
-    @InjectModel(QuizAnswerModel)
-    private readonly _quizAnswerModel: typeof QuizAnswerModel
+    private readonly _quizMapper: QuizMapper
   ) {}
 
   public async createQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
     await this._libQuizRepo.createQuiz(model);
   }
+
   public async updateQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
     await this._libQuizRepo.updateQuiz(quizEntity.get('id'), model);
@@ -100,31 +92,11 @@ export class QuizRepository implements IQuizRepository {
       meta,
     };
   }
-  public async addQuestion(question: QuizQuestionEntity): Promise<void> {
-    const createdAt = new Date();
-    await this._libQuizRepo.bulkCreateQuizQuestions([
-      {
-        id: question.get('id'),
-        quizId: question.get('quizId'),
-        content: question.get('content'),
-        answers: [],
-        createdAt,
-        updatedAt: createdAt,
-      },
-    ]);
 
-    const answers = question.get('answers').map((answer, index) => {
-      createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
-      return {
-        id: answer.id,
-        questionId: question.get('id'),
-        content: answer.content,
-        isCorrect: answer.isCorrect,
-        createdAt,
-        updatedAt: createdAt,
-      };
-    });
-    await this._libQuizRepo.bulkCreateQuizAnswers(answers);
+  public async createQuestion(questionEntity: QuizQuestionEntity): Promise<void> {
+    await this._libQuizRepo.bulkCreateQuizQuestions([
+      this._quizQuestionMapper.toPersistence(questionEntity),
+    ]);
   }
 
   public async deleteQuestion(questionId: string): Promise<void> {

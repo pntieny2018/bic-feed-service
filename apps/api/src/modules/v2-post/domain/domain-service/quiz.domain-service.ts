@@ -2,6 +2,7 @@ import { EVENT_SERVICE_TOKEN, IEventService } from '@libs/infra/event';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+
 import { ERRORS } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions';
 import { CursorPaginationResult } from '../../../../common/types';
@@ -24,7 +25,6 @@ import {
   QuizQuestionLimitExceededException,
   QuizQuestionNotFoundException,
 } from '../exception';
-import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
 import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
 import { QuizParticipantEntity } from '../model/quiz-participant';
 import {
@@ -33,6 +33,10 @@ import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
+import {
+  IOpenAIAdapter,
+  OPEN_AI_ADAPTER,
+} from '../service-adapter-interface/openai-adapter.interface';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 
 import {
@@ -45,10 +49,6 @@ import {
   QuizUpdateProps,
   UpdateQuestionProps,
 } from './interface';
-import {
-  IOpenAIAdapter,
-  OPEN_AI_ADAPTER,
-} from '../service-adapter-interface/openai-adapter.interface';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
@@ -58,8 +58,6 @@ export class QuizDomainService implements IQuizDomainService {
     private readonly _quizRepository: IQuizRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
-    @Inject(QUIZ_FACTORY_TOKEN)
-    private readonly _quizFactory: IQuizFactory,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(QUIZ_VALIDATOR_TOKEN)
@@ -176,23 +174,27 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity> {
-    const { authUser, quizId } = addQuestionProps;
+    const { quizId, authUser } = addQuestionProps;
+
     const quizEntity = await this._quizRepository.findQuizByIdWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
+
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
     if (quizEntity.get('questions')?.length >= RULES.QUIZ_MAX_QUESTION) {
       throw new QuizQuestionLimitExceededException();
     }
-    const quizQuestionEntity = this._quizFactory.createQuizQuestion(addQuestionProps);
 
-    quizQuestionEntity.validateAnswers();
+    const quizQuestionEntity = QuizQuestionEntity.create(addQuestionProps);
+
     try {
-      await this._quizRepository.addQuestion(quizQuestionEntity);
+      await this._quizRepository.createQuestion(quizQuestionEntity);
+      await this._quizRepository.createAnswers(quizQuestionEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+      throw new DatabaseException(e.message);
     }
 
     return quizQuestionEntity;
@@ -224,7 +226,6 @@ export class QuizDomainService implements IQuizDomainService {
     quizEntity.deleteQuestion(questionId);
 
     try {
-      await this._quizRepository.deleteQuestion(questionId);
       await this._quizRepository.updateQuiz(quizEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
