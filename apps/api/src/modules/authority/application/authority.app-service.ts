@@ -1,6 +1,6 @@
 import { Ability, subject } from '@casl/ability';
 import { SentryService } from '@libs/infra/sentry';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 
 import { PERMISSION_KEY, SUBJECT } from '../../../common/constants/casl.constant';
 import { UserDto } from '../../v2-user/application';
@@ -11,6 +11,7 @@ import { IAuthorityAppService } from './authority.app-service.interface';
 @Injectable()
 export class AuthorityAppService implements IAuthorityAppService {
   private _abilities: Ability;
+  private _logger = new Logger(AuthorityAppService.name);
 
   public constructor(private _sentryService: SentryService) {}
 
@@ -18,6 +19,7 @@ export class AuthorityAppService implements IAuthorityAppService {
     try {
       const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {
+        this._abilities = new Ability([]);
         return;
       }
       const permissions = AuthorityAppService.extractAbilitiesFromPermission(cachedPermissions);
@@ -86,6 +88,11 @@ export class AuthorityAppService implements IAuthorityAppService {
   }
 
   public canDoActionOnGroup(permissionKey: string, groupId: string): boolean {
+    this._logger.debug(
+      `checkCanCRUDContent - canDoActionOnGroup - ${groupId} - ${permissionKey}: ${JSON.stringify(
+        this._abilities
+      )}`
+    );
     return this._abilities.can(permissionKey, subject(SUBJECT.GROUP, { id: groupId }));
   }
 }
