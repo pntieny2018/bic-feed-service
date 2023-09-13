@@ -124,10 +124,6 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
       conditions.push({ isHighest: options.isHighest });
     }
 
-    if (conditions.length > 0) {
-      whereOptions[Op.and] = conditions;
-    }
-
     if (options.isFinished !== undefined && options.isFinished !== null) {
       if (options.isFinished === true) {
         conditions.push({
@@ -146,6 +142,10 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
       }
     }
 
+    if (conditions.length > 0) {
+      whereOptions[Op.and] = conditions;
+    }
+
     return whereOptions;
   }
 
@@ -160,13 +160,13 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
       });
     }
 
-    return relationOptions;
+    return relationOptions.length > 0 ? relationOptions : undefined;
   }
 
   private _buildAttributesOptions(
     options: FindQuizParticipantAttributeOptions = {}
   ): FindAttributeOptions {
-    let attributesOptions: FindAttributeOptions = [];
+    let attributesOptions: FindAttributeOptions | undefined;
 
     const hasInclude = options.include?.length > 0;
     const hasExclude = options.exclude?.length > 0;
@@ -196,11 +196,11 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
       orderOptions.push([options.sortColumn, options.sortBy || ORDER.DESC]);
     }
 
-    return orderOptions;
+    return orderOptions.length > 0 ? orderOptions : undefined;
   }
 
   private _buildGroupOptions(options: string[] = []): GroupOption {
-    return options;
+    return options.length > 0 ? options : undefined;
   }
 
   public async bulkCreateQuizParticipantAnswers(
