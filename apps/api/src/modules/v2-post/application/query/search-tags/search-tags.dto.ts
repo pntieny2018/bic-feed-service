@@ -1,16 +1,7 @@
-export class GroupTagsDto {
-  public name: string;
-  public ids: string[];
-
-  public constructor(data: Partial<GroupTagsDto>) {
-    Object.assign(this, data);
-  }
-}
-
 export class SearchTagsDto {
-  public list?: GroupTagsDto[];
+  public list?: string[];
 
-  public constructor(list: GroupTagsDto[]) {
+  public constructor(list: string[]) {
     this.list = list;
   }
 }
