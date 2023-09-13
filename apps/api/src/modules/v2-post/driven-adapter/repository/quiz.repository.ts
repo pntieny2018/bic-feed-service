@@ -60,7 +60,7 @@ export class QuizRepository implements IQuizRepository {
       condition: {
         status: input.where.status,
         ids: input.where.ids,
-        contentIds: input.where.contentIds,
+        contentId: input.where.contentId,
         createdBy: input.where.createdBy,
       },
     });

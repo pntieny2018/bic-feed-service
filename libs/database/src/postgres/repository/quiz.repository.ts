@@ -141,6 +141,10 @@ export class LibQuizRepository implements ILibQuizRepository {
       conditions.push({ postId: options.contentIds });
     }
 
+    if (options.contentId) {
+      conditions.push({ postId: options.contentId });
+    }
+
     if (options.status) {
       conditions.push({ status: options.status });
     }
