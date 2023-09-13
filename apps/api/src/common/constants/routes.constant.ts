@@ -134,7 +134,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     ADD_QUIZ_QUESTION: {
-      PATH: '/quizzes/:id/questions',
+      PATH: '/quizzes/:quizId/questions',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     UPDATE_QUIZ_QUESTION: {
