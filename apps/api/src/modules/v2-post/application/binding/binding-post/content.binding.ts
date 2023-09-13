@@ -120,6 +120,7 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: postEntity.get('content'),
       createdAt: postEntity.get('createdAt'),
+      scheduledAt: postEntity.get('scheduledAt'),
       publishedAt: postEntity.get('publishedAt'),
       tags: (postEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
@@ -527,6 +528,7 @@ export class ContentBinding implements IContentBinding {
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
       publishedAt: entity.get('publishedAt'),
+      scheduledAt: entity.get('scheduledAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
