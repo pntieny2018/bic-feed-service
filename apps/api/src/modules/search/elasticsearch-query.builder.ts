@@ -17,7 +17,8 @@ export class ElasticsearchQueryBuilder {
       contentTypes,
       itemIds,
       actors,
-      tags,
+      tagIds,
+      tagNames,
       topics,
       excludeByIds,
       groupIds,
@@ -35,7 +36,8 @@ export class ElasticsearchQueryBuilder {
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
             ...this._getItemInSeriesFilter(itemIds),
-            ...this._getTagIdsFilter(tags),
+            ...this._getTagIdsFilter(tagIds),
+            ...this._getTagNamesFilter(tagNames),
             ...this._getCategoryFilter(topics),
             ...(isLimitSeries ? this._limitSeriesFilter() : []),
           ],
@@ -239,6 +241,20 @@ export class ElasticsearchQueryBuilder {
         {
           terms: {
             [tags.id]: tagIds,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getTagNamesFilter(tagNames: string[]): any {
+    const { tags } = ELASTIC_POST_MAPPING_PATH;
+    if (tagNames && tagNames?.length) {
+      return [
+        {
+          term: {
+            [tags.name]: tagNames,
           },
         },
       ];

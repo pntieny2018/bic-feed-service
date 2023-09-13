@@ -7,9 +7,9 @@ export type IPostSearchQuery = {
 
   keyword?: string;
 
-  tags?: string[];
+  tagIds?: string[];
 
-  tagName?: string;
+  tagNames?: string[];
 
   topics?: string[];
 

@@ -9,7 +9,9 @@ type Props = {
 
   keyword?: string;
 
-  tags?: string[];
+  tagIds?: string[];
+
+  tagNames?: string[];
 
   topics?: string[];
 

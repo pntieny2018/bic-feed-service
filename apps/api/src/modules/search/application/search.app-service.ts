@@ -83,7 +83,7 @@ export class SearchAppService {
       startTime,
       endTime,
       excludeByIds: notIncludeIds,
-      tags: tagId ? [tagId] : [],
+      tagIds: tagId ? [tagId] : [],
       from: offset,
       size: limit,
       shouldHighlight: true,
