@@ -24,6 +24,11 @@ export class ShowingBadgeDto {
   public community: CommunityInfo;
 }
 
+export class UserPermissionDto {
+  public communities: { [commId: string]: string[] };
+  public groups: { [groupId: string]: string[] };
+}
+
 export class UserDto {
   @Expose()
   public id: string;
