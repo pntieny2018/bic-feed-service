@@ -1,9 +1,9 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { UserDto } from '../../../v2-user/application';
 import { RULES } from '../../constant';
-import { ArticleLimitAttachedSeriesException } from '../exception';
+import { ArticleLimitAttachedSeriesException, ContentEmptyContentException } from '../exception';
 import { ArticleEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
@@ -66,6 +66,12 @@ export class ArticleValidator implements IArticleValidator {
 
     if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
       throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+  }
+
+  public validateArticleToPublish(articleEntity: ArticleEntity): void {
+    if (!articleEntity.isValidArticleToPublish()) {
+      throw new ContentEmptyContentException();
     }
   }
 }
