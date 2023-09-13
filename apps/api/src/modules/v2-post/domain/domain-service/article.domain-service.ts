@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
-import { CursorPaginationResult } from '../../../../common/types';
 import { UserDto } from '../../../v2-user/application';
 import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
@@ -41,7 +40,6 @@ import {
   AutoSaveArticleProps,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-  GetArticlesIdsScheduleProps,
 } from './interface';
 
 @Injectable()
@@ -104,32 +102,6 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     return articleEntity;
-  }
-
-  public async getArticlesIdsSchedule(
-    params: GetArticlesIdsScheduleProps
-  ): Promise<CursorPaginationResult<string>> {
-    const { user, limit, before, after, statuses, order } = params;
-
-    const { rows, meta } = await this._contentRepository.getPagination({
-      where: {
-        createdBy: user.id,
-        statuses,
-      },
-      orderOptions: {
-        sortColumn: 'scheduledAt',
-        orderBy: order,
-      },
-      limit,
-      before,
-      after,
-      order,
-    });
-
-    return {
-      rows: rows.map((row) => row.getId()),
-      meta,
-    };
   }
 
   public async deleteArticle(props: DeleteArticleProps): Promise<void> {

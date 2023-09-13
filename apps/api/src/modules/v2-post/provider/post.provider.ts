@@ -54,7 +54,6 @@ import {
   SeriesDeletedEventHandler,
 } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
-import { GetScheduleArticleHandler } from '../application/query/article/get-schedule-article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -62,6 +61,7 @@ import {
   GetMenuSettingsHandler,
   SearchContentsHandler,
 } from '../application/query/content';
+import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
 import { SearchTagsHandler } from '../application/query/tag';
@@ -215,7 +215,7 @@ export const postProvider = [
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
-  GetScheduleArticleHandler,
+  GetScheduleContentHandler,
   GetMenuSettingsHandler,
   SearchContentsHandler,
   SearchTagsHandler,

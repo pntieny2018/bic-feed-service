@@ -18,6 +18,7 @@ import {
   VERSIONS_SUPPORTED,
   VERSION_1_9_0,
 } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { AppHelper } from '../../../../common/helpers/app.helper';
 import { UserDto } from '../../../v2-user/application';
@@ -26,15 +27,17 @@ import {
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
-import { MenuSettingsDto } from '../../application/dto';
+import { GetScheduleContentsResponseDto, MenuSettingsDto } from '../../application/dto';
 import { FindDraftContentsDto, SearchContentsDto } from '../../application/dto/content.dto';
 import {
   FindDraftContentsQuery,
   GetMenuSettingsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
+import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
   GetDraftContentsRequestDto,
+  GetScheduleContentsQueryDto,
   PostSettingRequestDto,
   SearchContentsRequestDto,
   ValidateSeriesTagDto,
@@ -158,5 +161,33 @@ export class ContentController {
         authUser,
       })
     );
+  }
+
+  @ApiOperation({ summary: 'Get schedule contents' })
+  @ApiOkResponse({
+    type: GetScheduleContentsResponseDto,
+    description: 'Get schedule contents',
+  })
+  @Get(ROUTES.CONTENT.GET_SCHEDULE.PATH)
+  @Version(ROUTES.CONTENT.GET_SCHEDULE.VERSIONS)
+  public async getScheduleContents(
+    @AuthUser() user: UserDto,
+    @Query() query: GetScheduleContentsQueryDto
+  ): Promise<GetScheduleContentsResponseDto> {
+    const { limit, before, after, order, type } = query;
+    const contents = await this._queryBus.execute<
+      GetScheduleContentQuery,
+      GetScheduleContentsResponseDto
+    >(
+      new GetScheduleContentQuery({
+        limit,
+        before,
+        after,
+        order,
+        type,
+        user,
+      })
+    );
+    return instanceToInstance(contents, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

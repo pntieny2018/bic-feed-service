@@ -82,10 +82,6 @@ export const ROUTES = {
       PATH: '/articles/:id',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
-    GET_SCHEDULE: {
-      PATH: '/articles/schedule',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
-    },
   },
   QUIZ: {
     GET_QUIZZES: {
@@ -144,6 +140,12 @@ export const ROUTES = {
     DELETE_QUIZ_QUESTION: {
       PATH: '/quizzes/:quizId/questions/:questionId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
+    },
+  },
+  CONTENT: {
+    GET_SCHEDULE: {
+      PATH: '/schedule',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },
 };
