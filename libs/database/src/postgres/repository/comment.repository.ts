@@ -39,6 +39,7 @@ export class LibCommentRepository implements ILibCommentRepository {
         authUserId
           ? {
               model: CommentReactionModel,
+              as: 'ownerReactions',
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },

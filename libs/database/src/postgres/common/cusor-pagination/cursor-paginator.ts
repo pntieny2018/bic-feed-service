@@ -2,6 +2,8 @@ import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult, CursorParam, PaginatedArgs } from '@libs/database/postgres/common';
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
 
+import { CursorPaginationResult, CursorParam, PaginatedArgs } from '../../common';
+
 import { createCursor, parseCursor } from './utils';
 
 export class CursorPaginator<T extends Model> {

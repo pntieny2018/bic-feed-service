@@ -25,11 +25,11 @@ export class QueueAdapter implements IQueueAdapter {
     ]);
   }
 
-  public async addArticleScheduledJob(payloads: ArticleScheduledJobPayload[]): Promise<void> {
+  public async addArticleScheduledJobs(payloads: ArticleScheduledJobPayload[]): Promise<void> {
     await this._queueService.addBulkJobs<ArticleScheduledJobDto>(
-      payloads.map(({ articleId, articleOwner }) => ({
+      payloads.map(({ articleId, articleOwnerId }) => ({
         name: QUEUES.ARTICLE_SCHEDULED.JOBS.PROCESS_ARTICLE_SCHEDULED,
-        data: { articleId, articleOwner },
+        data: { articleId, articleOwnerId },
         opts: { jobId: articleId },
         queue: { name: QUEUES.ARTICLE_SCHEDULED.QUEUE_NAME },
       }))
