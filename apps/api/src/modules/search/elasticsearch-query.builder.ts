@@ -253,7 +253,7 @@ export class ElasticsearchQueryBuilder {
     if (tagNames && tagNames?.length) {
       return [
         {
-          term: {
+          terms: {
             [tags.name]: tagNames,
           },
         },
