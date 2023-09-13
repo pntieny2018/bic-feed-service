@@ -1,5 +1,4 @@
 import { ORDER } from '@beincom/constants';
-import { ArrayHelper } from '@libs/common/helpers';
 import { IPaginatedInfo } from '@libs/database/postgres/common';
 import { RedisService } from '@libs/infra/redis';
 import { SentryService } from '@libs/infra/sentry';
@@ -15,7 +14,6 @@ import {
   IContentDomainService,
 } from '../../domain/domain-service/interface';
 import { IQueueAdapter, QUEUE_ADAPTER } from '../../domain/infra-adapter-interface';
-import { IUserAdapter, USER_ADAPTER } from '../../domain/service-adapter-interface';
 
 @Injectable()
 export class ArticleCron {
@@ -26,8 +24,6 @@ export class ArticleCron {
   public constructor(
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter,
     @Inject(QUEUE_ADAPTER)
     private readonly _queueAdapter: IQueueAdapter,
     private readonly _redisService: RedisService,
@@ -81,16 +77,9 @@ export class ArticleCron {
       return;
     }
 
-    const contentOwnerIds = rows.map((row) => row.getCreatedBy());
-    const contentOwners = await this._userAdapter.getUsersByIds(contentOwnerIds, {
-      withPermission: true,
-      withGroupJoined: true,
-    });
-    const contentOwnerMap = ArrayHelper.convertArrayToObject(contentOwners, 'id');
-
     const contentScheduledJobPayloads = rows.map((row) => ({
       articleId: row.getId(),
-      articleOwner: contentOwnerMap[row.getCreatedBy()],
+      articleOwnerId: row.getCreatedBy(),
     }));
 
     await this._queueAdapter.addArticleScheduledJobs(contentScheduledJobPayloads);

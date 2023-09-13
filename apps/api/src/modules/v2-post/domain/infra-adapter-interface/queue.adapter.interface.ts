@@ -1,10 +1,8 @@
-import { UserDto } from '@libs/service/user';
-
 export const QUEUE_ADAPTER = 'QUEUE_ADAPTER';
 
 export type ArticleScheduledJobPayload = {
   articleId: string;
-  articleOwner: UserDto;
+  articleOwnerId: string;
 };
 
 export interface IQueueAdapter {
