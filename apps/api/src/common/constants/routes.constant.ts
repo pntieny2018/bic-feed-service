@@ -1,6 +1,12 @@
 import { AppHelper } from '../helpers/app.helper';
 
-import { VERSION_1_5_0, VERSION_1_6_0, VERSION_1_7_0, VERSION_1_8_0 } from './app.constant';
+import {
+  VERSION_1_10_0,
+  VERSION_1_5_0,
+  VERSION_1_6_0,
+  VERSION_1_7_0,
+  VERSION_1_8_0,
+} from './app.constant';
 
 export const ROUTES = {
   TAG: {
@@ -78,7 +84,7 @@ export const ROUTES = {
     },
     GET_SCHEDULE: {
       PATH: '/articles/schedule',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },
   QUIZ: {
@@ -128,15 +134,15 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     ADD_QUIZ_QUESTION: {
-      PATH: '/quizzes/:id/questions',
+      PATH: '/quizzes/:quizId/questions',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     UPDATE_QUIZ_QUESTION: {
-      PATH: '/quizzes/:id/questions/:questionId',
+      PATH: '/quizzes/:quizId/questions/:questionId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     DELETE_QUIZ_QUESTION: {
-      PATH: '/quizzes/:id/questions/:questionId',
+      PATH: '/quizzes/:quizId/questions/:questionId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
   },

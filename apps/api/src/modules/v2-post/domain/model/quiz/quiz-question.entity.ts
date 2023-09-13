@@ -3,6 +3,7 @@ import { v4 } from 'uuid';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { RULES } from '../../../constant';
+import { AddQuestionProps } from '../../domain-service/interface';
 
 export type QuizQuestionAttributes = {
   id: string;
@@ -15,8 +16,8 @@ export type QuizQuestionAttributes = {
     updatedAt?: Date;
     createdAt?: Date;
   }[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttributes> {
@@ -26,6 +27,27 @@ export class QuizQuestionEntity extends DomainAggregateRoot<QuizQuestionAttribut
 
   public validate(): void {
     //
+  }
+
+  public static create(props: AddQuestionProps): QuizQuestionEntity {
+    const now = new Date();
+    const quizQuestionEntity = new QuizQuestionEntity({
+      id: v4(),
+      quizId: props.quizId,
+      content: props.content,
+      answers: props.answers.map((answer) => ({
+        id: v4(),
+        content: answer.content,
+        isCorrect: answer.isCorrect,
+        createdAt: now,
+        updatedAt: now,
+      })),
+      createdAt: now,
+      updatedAt: now,
+    });
+    quizQuestionEntity.validateAnswers();
+
+    return quizQuestionEntity;
   }
 
   public validateAnswers(): void {

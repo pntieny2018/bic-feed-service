@@ -1,6 +1,3 @@
-import { OpenaiService } from '@app/openai';
-import { OPEN_AI_SERVICE_TOKEN } from '@app/openai/openai.service.interface';
-
 import { QuizBinding } from '../application/binding/binding-quiz/quiz.binding';
 import { QUIZ_BINDING_TOKEN } from '../application/binding/binding-quiz/quiz.interface';
 import {
@@ -32,8 +29,6 @@ import {
 } from '../application/query/quiz';
 import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
-import { QUIZ_FACTORY_TOKEN } from '../domain/factory/interface/quiz.factory.interface';
-import { QuizFactory } from '../domain/factory/quiz.factory';
 import {
   QUIZ_REPOSITORY_TOKEN,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
@@ -57,16 +52,8 @@ export const quizProvider = [
     useClass: QuizDomainService,
   },
   {
-    provide: QUIZ_FACTORY_TOKEN,
-    useClass: QuizFactory,
-  },
-  {
     provide: QUIZ_VALIDATOR_TOKEN,
     useClass: QuizValidator,
-  },
-  {
-    provide: OPEN_AI_SERVICE_TOKEN,
-    useClass: OpenaiService,
   },
   {
     provide: QUIZ_BINDING_TOKEN,

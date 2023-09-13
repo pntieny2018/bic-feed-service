@@ -31,7 +31,7 @@ export class StartQuizHandler implements ICommandHandler<StartQuizCommand, strin
   public async execute(command: StartQuizCommand): Promise<string> {
     const { authUser, quizId } = command.payload;
 
-    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
+    const quizEntity = await this._quizRepository.findQuizByIdWithQuestions(quizId);
 
     if (!quizEntity || !quizEntity.isPublished()) {
       throw new QuizNotFoundException();

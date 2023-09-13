@@ -9,6 +9,10 @@ import { PostGroupAttributes } from '@libs/database/postgres/model/post-group.mo
 import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.model';
 import { PostTagAttributes } from '@libs/database/postgres/model/post-tag.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import {
+  ReportContentDetailAttributes,
+  ReportContentDetailModel,
+} from '@libs/database/postgres/model/report-content-detail.model';
 import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserSeenPostAttributes } from '@libs/database/postgres/model/user-seen-post.model';
 import { BulkCreateOptions, CreateOptions, Transaction, WhereOptions } from 'sequelize';
@@ -56,7 +60,7 @@ export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublishedByDesc?: boolean;
   sortColumn?: keyof PostAttributes;
-  sortBy?: ORDER;
+  orderBy?: ORDER;
 };
 
 export type FindContentProps = {
@@ -67,6 +71,8 @@ export type FindContentProps = {
 };
 
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
+
+export type GetReportContentDetailsProps = WhereOptions<ReportContentDetailAttributes>;
 
 export interface ILibContentRepository {
   bulkCreatePostGroup(
@@ -124,6 +130,10 @@ export interface ILibContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostModel>>;
+
+  getReportedContents(
+    getReportedContentsProps: GetReportContentDetailsProps
+  ): Promise<ReportContentDetailModel[]>;
 }
 
 export const LIB_CONTENT_REPOSITORY_TOKEN = 'LIB_CONTENT_REPOSITORY_TOKEN';

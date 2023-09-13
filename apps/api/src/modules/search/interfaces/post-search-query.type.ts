@@ -1,4 +1,6 @@
-import { PostType } from '../../v2-post/data-type';
+import { CONTENT_TYPE } from '@beincom/constants';
+
+export const ELASTICSEARCH_DEFAULT_SIZE_PAGE = 10;
 
 export type IPostSearchQuery = {
   actors?: string[];
@@ -19,13 +21,13 @@ export type IPostSearchQuery = {
 
   itemIds?: string[];
 
-  contentTypes?: PostType[];
+  contentTypes?: CONTENT_TYPE[];
 
   excludeByIds?: string[];
 
-  islimitSeries?: boolean;
+  isLimitSeries?: boolean;
 
-  shouldHighligh?: boolean;
+  shouldHighlight?: boolean;
 };
 
 export type ISearchPaginationQuery = {
@@ -33,7 +35,7 @@ export type ISearchPaginationQuery = {
 
   size?: number;
 
-  searchAfter?: string;
+  searchAfter?: unknown;
 };
 
 export type IPaginationSearchResult<T> = {

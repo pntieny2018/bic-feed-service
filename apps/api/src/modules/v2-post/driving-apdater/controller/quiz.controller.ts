@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -19,7 +20,6 @@ import { Request } from 'express';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { UserDto } from '../../../v2-user/application';
 import {
   AddQuizQuestionCommand,
   CreateQuizCommand,
@@ -46,7 +46,6 @@ import {
   FindQuizSummaryQuery,
   FindQuizzesQuery,
 } from '../../application/query/quiz';
-import { QuizStatus } from '../../data-type';
 import {
   AddQuizQuestionRequestDto,
   CreateQuizRequestDto,
@@ -57,6 +56,7 @@ import {
   UpdateQuizQuestionRequestDto,
   UpdateQuizRequestDto,
 } from '../dto/request';
+import { QUIZ_STATUS } from '@beincom/constants';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')
@@ -179,7 +179,7 @@ export class QuizController {
       new UpdateQuizCommand({ ...updateQuizDto, quizId, authUser })
     );
 
-    if (updateQuizDto.status === QuizStatus.PUBLISHED) {
+    if (updateQuizDto.status === QUIZ_STATUS.PUBLISHED) {
       req.message = 'message.quiz.published_success';
     }
 
@@ -219,13 +219,13 @@ export class QuizController {
   @Post(ROUTES.QUIZ.ADD_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.ADD_QUIZ_QUESTION.VERSIONS)
   public async addQuizQuestion(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @Body() addQuestionDto: AddQuizQuestionRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<QuestionDto> {
     const data = await this._commandBus.execute<AddQuizQuestionCommand, QuestionDto>(
       new AddQuizQuestionCommand({
-        quizId: id,
+        quizId,
         content: addQuestionDto.content,
         answers: addQuestionDto.answers,
         authUser,
@@ -241,13 +241,14 @@ export class QuizController {
   @Put(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.UPDATE_QUIZ_QUESTION.VERSIONS)
   public async updateQuizQuestion(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @Param('questionId', ParseUUIDPipe) questionId: string,
     @Body() updateQuestionDto: UpdateQuizQuestionRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<QuestionDto> {
     const data = await this._commandBus.execute<UpdateQuizQuestionCommand, QuestionDto>(
       new UpdateQuizQuestionCommand({
+        quizId,
         questionId,
         content: updateQuestionDto.content,
         answers: updateQuestionDto.answers,
@@ -264,12 +265,13 @@ export class QuizController {
   @Delete(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.PATH)
   @Version(ROUTES.QUIZ.DELETE_QUIZ_QUESTION.VERSIONS)
   public async deleteQuizQuestion(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @Param('questionId', ParseUUIDPipe) questionId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
     await this._commandBus.execute<DeleteQuizQuestionCommand, string>(
       new DeleteQuizQuestionCommand({
+        quizId,
         questionId,
         authUser,
       })

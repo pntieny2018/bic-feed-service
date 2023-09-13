@@ -5,7 +5,6 @@ import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
-import { QuizGenStatus, QuizStatus } from '../../data-type';
 
 import { ArticleDto } from './article.dto';
 import { PostDto } from './post.dto';
@@ -23,8 +22,8 @@ export class QuizDto {
   public questions?: QuestionDto[];
   public createdAt: Date;
   public updatedAt: Date;
-  public status: QuizStatus | QUIZ_STATUS;
-  public genStatus: QuizGenStatus | QUIZ_PROCESS_STATUS;
+  public status: QUIZ_STATUS;
+  public genStatus: QUIZ_PROCESS_STATUS;
   public error?: {
     code: string;
     message: string;

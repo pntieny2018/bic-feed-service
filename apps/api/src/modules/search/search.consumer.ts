@@ -1,12 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+
 import { KAFKA_TOPIC } from '../../common/constants';
-import { SearchService } from './search.service';
 import {
   PostChangedMessagePayload,
   SeriesChangedMessagePayload,
   ArticleChangedMessagePayload,
 } from '../v2-post/application/dto/message';
+
+import { SearchService } from './search.service';
 
 @Controller()
 export class SearchConsumer {

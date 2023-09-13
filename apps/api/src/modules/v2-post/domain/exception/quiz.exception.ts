@@ -74,3 +74,13 @@ export class QuizQuestionNotFoundException extends DomainException {
     super(ERRORS.QUIZ_QUESTION_NOT_FOUND, message || i18n?.t(`error.quiz_question.not_found`));
   }
 }
+
+export class QuizQuestionBelongsToQuizException extends DomainException {
+  public constructor(message?: string) {
+    const i18n = I18nContext.current();
+    super(
+      ERRORS.QUIZ_QUESTION_NOT_BELONGS_TO_QUIZ,
+      message || i18n?.t(`error.quiz_question.not_belongs_to_quiz`)
+    );
+  }
+}

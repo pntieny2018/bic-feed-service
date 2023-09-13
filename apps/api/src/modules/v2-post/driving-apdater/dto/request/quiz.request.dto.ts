@@ -1,4 +1,4 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import {
@@ -16,7 +16,6 @@ import {
 } from 'class-validator';
 
 import { PaginatedArgs } from '../../../../../common/dto';
-import { PostType, QuizStatus } from '../../../data-type';
 
 export class CreateQuizRequestDto {
   @ApiProperty({ type: String })
@@ -179,10 +178,10 @@ export class UpdateQuizRequestDto {
   @Type(() => QuizQuestionRequestDto)
   public questions?: QuizQuestionRequestDto[];
 
-  @ApiProperty({ enum: QuizStatus, required: false })
+  @ApiProperty({ enum: QUIZ_STATUS, required: false })
   @IsOptional()
-  @IsEnum(QuizStatus)
-  public status?: QuizStatus;
+  @IsEnum(QUIZ_STATUS)
+  public status?: QUIZ_STATUS;
 
   @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
   @IsEnum(ORDER)
@@ -267,26 +266,26 @@ export class GetQuizzesRequestDto extends PaginatedArgs {
   @ApiProperty({
     description: 'Quizz status',
     required: true,
-    enum: QuizStatus,
+    enum: QUIZ_STATUS,
   })
   @Expose({
     name: 'status',
   })
-  @IsEnum(QuizStatus)
-  public status: QuizStatus;
+  @IsEnum(QUIZ_STATUS)
+  public status: QUIZ_STATUS;
 
   @ApiPropertyOptional({
     description: 'Content type',
     required: false,
-    enum: PostType,
+    enum: CONTENT_TYPE,
   })
   @Expose({
     name: 'type',
   })
   @IsOptional()
-  @IsEnum(PostType)
+  @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
-  public type?: PostType;
+  public type?: CONTENT_TYPE;
 }
 
 class AddQuizAnswerRequestDto {

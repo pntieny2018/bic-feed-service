@@ -1,19 +1,13 @@
 import { SearchTotalHits } from '@elastic/elasticsearch/lib/api/types';
 import { SentryService } from '@libs/infra/sentry';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
-import { ClassTransformer } from 'class-transformer';
 
 import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { IPost, PostType } from '../../database/models/post.model';
-import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
-import { ReactionService } from '../reaction';
-import { TagService } from '../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
 import { IPaginationSearchResult, IPostSearchQuery, ISearchPaginationQuery } from './interfaces';
@@ -31,24 +25,11 @@ export class SearchService {
    */
   protected logger = new Logger(SearchService.name);
 
-  /**
-   *  ClassTransformer
-   * @protected
-   */
-  protected classTransformer = new ClassTransformer();
-
   public constructor(
     protected readonly postService: PostService,
     protected readonly sentryService: SentryService,
-    protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly elasticsearchQueryBuilder: ElasticsearchQueryBuilder,
-    protected readonly tagService: TagService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected readonly appGroupService: IGroupApplicationService,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected readonly userAppService: IUserApplicationService,
-    protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
     private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}

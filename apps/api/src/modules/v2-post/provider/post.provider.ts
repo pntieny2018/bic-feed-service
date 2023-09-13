@@ -60,11 +60,11 @@ import {
   FindNewsfeedHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  SearchContentsHandler,
 } from '../application/query/content';
-import { SearchContentsHandler } from '../application/query/content/search-contents';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
-import { SearchTagsHandler } from '../application/query/tag/search-tags';
+import { SearchTagsHandler } from '../application/query/tag';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
@@ -94,10 +94,11 @@ import { MentionValidator } from '../domain/validator/mention.validator';
 import { PostValidator } from '../domain/validator/post.validator';
 import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
+import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
+import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
 import { ArticleCron } from '../driving-apdater/cron/article.cron';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
-import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 
 export const postProvider = [
   {
@@ -170,6 +171,7 @@ export const postProvider = [
   /** Mapper */
   ContentMapper,
   QuizParticipantMapper,
+  QuizQuestionMapper,
   QuizMapper,
 
   /** CronService */
