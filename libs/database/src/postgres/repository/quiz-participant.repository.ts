@@ -19,12 +19,14 @@ import {
   QuizParticipantAttributes,
   QuizParticipantModel,
 } from '../../postgres/model/quiz-participant.model';
+import { CursorPaginationResult, CursorPaginator, PAGING_DEFAULT_LIMIT } from '../common';
 import {
   FindQuizParticipantAttributeOptions,
   FindQuizParticipantConditionOptions,
   FindQuizParticipantIncludeOptions,
   FindQuizParticipantOrderOptions,
   FindQuizParticipantProps,
+  GetPaginationQuizParticipantsProps,
   ILibQuizParticipantRepository,
 } from '../repository/interface';
 
@@ -66,6 +68,25 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
     return this._quizParticipantModel.findAll(options);
   }
 
+  public async getQuizParticipantsPagination(
+    props: GetPaginationQuizParticipantsProps
+  ): Promise<CursorPaginationResult<QuizParticipantModel>> {
+    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = props;
+
+    const findOption = this._buildFindOptions(props);
+
+    const paginator = new CursorPaginator(
+      this._quizParticipantModel,
+      ['createdAt'],
+      { before, after, limit },
+      order
+    );
+
+    const { rows, meta } = await paginator.paginate(findOption);
+
+    return { rows, meta };
+  }
+
   private _buildFindOptions(
     options: FindQuizParticipantProps
   ): FindOptions<QuizParticipantAttributes> {
@@ -74,7 +95,7 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
     findOptions.where = this._buildWhereOptions(options.condition);
     findOptions.include = this._buildRelationOptions(options.include);
     findOptions.attributes = this._buildAttributesOptions(options.attributes);
-    findOptions.order = this._buildOrderOptions(options.order);
+    findOptions.order = this._buildOrderOptions(options.orderOptions);
     findOptions.group = this._buildGroupOptions(options.group);
 
     return findOptions;
@@ -145,14 +166,24 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
   private _buildAttributesOptions(
     options: FindQuizParticipantAttributeOptions = {}
   ): FindAttributeOptions {
-    let attributesOptions: FindAttributeOptions;
+    let attributesOptions: FindAttributeOptions = [];
 
-    if (options.exclude?.length > 0) {
-      attributesOptions['exclude'] = options.exclude;
+    const hasInclude = options.include?.length > 0;
+    const hasExclude = options.exclude?.length > 0;
+
+    if (hasInclude && !hasExclude) {
+      attributesOptions = options.include;
     }
 
-    if (options.include) {
-      attributesOptions['include'] = options.include;
+    if (!hasInclude && hasExclude) {
+      attributesOptions = { exclude: options.exclude };
+    }
+
+    if (hasInclude && hasExclude) {
+      attributesOptions = {
+        include: options.include,
+        exclude: options.exclude,
+      };
     }
 
     return attributesOptions;

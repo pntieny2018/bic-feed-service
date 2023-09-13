@@ -5,6 +5,7 @@ import {
 } from '@libs/database/postgres/model/quiz-participant.model';
 import { WhereOptions } from 'sequelize';
 
+import { CursorPaginationProps, CursorPaginationResult } from '../../common';
 import {
   QuizParticipantAnswerAttributes,
   QuizParticipantAnswerModel,
@@ -36,9 +37,11 @@ export type FindQuizParticipantProps = {
   condition: FindQuizParticipantConditionOptions;
   include?: FindQuizParticipantIncludeOptions;
   attributes?: FindQuizParticipantAttributeOptions;
-  order?: FindQuizParticipantOrderOptions;
+  orderOptions?: FindQuizParticipantOrderOptions;
   group?: string[];
 };
+
+export type GetPaginationQuizParticipantsProps = FindQuizParticipantProps & CursorPaginationProps;
 
 export interface ILibQuizParticipantRepository {
   createQuizParticipant(quizParticipant: QuizParticipantAttributes): Promise<void>;
@@ -48,6 +51,9 @@ export interface ILibQuizParticipantRepository {
   ): Promise<void>;
   findQuizParticipant(findOptions: FindQuizParticipantProps): Promise<QuizParticipantModel>;
   findAllQuizParticipants(findOptions: FindQuizParticipantProps): Promise<QuizParticipantModel[]>;
+  getQuizParticipantsPagination(
+    props: GetPaginationQuizParticipantsProps
+  ): Promise<CursorPaginationResult<QuizParticipantModel>>;
 
   bulkCreateQuizParticipantAnswers(answers: QuizParticipantAnswerAttributes[]): Promise<void>;
   updateQuizParticipantAnswer(

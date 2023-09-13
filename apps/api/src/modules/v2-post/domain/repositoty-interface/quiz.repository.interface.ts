@@ -1,8 +1,9 @@
+import { CONTENT_TYPE, QUIZ_STATUS } from '@beincom/constants';
+
 import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
 import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import { IQuiz } from '../../../../database/models/quiz.model';
 import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
-import { CONTENT_TYPE, QUIZ_STATUS } from '@beincom/constants';
 
 export type FindOneQuizProps = {
   where: {
