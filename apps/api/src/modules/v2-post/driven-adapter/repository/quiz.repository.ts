@@ -60,7 +60,7 @@ export class QuizRepository implements IQuizRepository {
       condition: {
         status: input.where.status,
         ids: input.where.ids,
-        contentIds: input.where.contentIds,
+        contentIds: [input.where.contentId],
         createdBy: input.where.createdBy,
       },
     });
@@ -71,6 +71,7 @@ export class QuizRepository implements IQuizRepository {
     getPaginationQuizzesProps: GetPaginationQuizzesProps
   ): Promise<CursorPaginationResult<QuizEntity>> {
     const { where, limit, before, after, order } = getPaginationQuizzesProps;
+
     const { rows, meta } = await this._libQuizRepo.getQuizzesPagination({
       condition: {
         status: where.status,

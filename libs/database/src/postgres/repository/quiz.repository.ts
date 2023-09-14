@@ -176,7 +176,7 @@ export class LibQuizRepository implements ILibQuizRepository {
       });
     }
 
-    if (options.shouldIncludeContent) {
+    if (options.shouldIncludeContent?.contentType) {
       relationOptions.push({
         model: this._postModel,
         as: 'post',
