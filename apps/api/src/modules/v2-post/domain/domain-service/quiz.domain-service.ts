@@ -375,16 +375,12 @@ export class QuizDomainService implements IQuizDomainService {
     try {
       quizEntity.setProcessing();
       await this._quizRepository.updateQuiz(quizEntity);
-      quizEntity.setProcessing();
-      await this._quizRepository.updateQuiz(quizEntity);
-
       const { questions, usage, model, maxTokens, completion } =
         await this._openAiAdapter.generateQuestions({
           content: rawContent,
           numberOfQuestions: quizEntity.get('numberOfQuestions'),
           numberOfAnswers: quizEntity.get('numberOfAnswers'),
         });
-
       if (questions.length === 0) {
         quizEntity.setFail({
           code: ERRORS.QUIZ_GENERATE_FAIL,
@@ -414,9 +410,13 @@ export class QuizDomainService implements IQuizDomainService {
       quizEntity.setProcessed();
       await this._quizRepository.updateQuiz(quizEntity);
     } catch (e) {
+      let message = e.message || '';
+      if (e.response?.data?.error?.message) {
+        message = e.response?.data?.error?.message;
+      }
       quizEntity.setFail({
         code: ERRORS.QUIZ_GENERATE_FAIL,
-        message: e.response.data?.error?.message || '',
+        message,
       });
     }
     await this._quizRepository.updateQuiz(quizEntity);
