@@ -194,9 +194,17 @@ export class ArticleController {
     const articleDto = await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
       new ScheduleArticleCommand({
         id,
-        actor: user,
-        ...scheduleArticleRequestDto,
+        title: scheduleArticleRequestDto.title,
+        summary: scheduleArticleRequestDto.summary,
+        content: scheduleArticleRequestDto.content,
+        categoryIds: scheduleArticleRequestDto.categories,
+        seriesIds: scheduleArticleRequestDto.series,
+        tagIds: scheduleArticleRequestDto.tags,
         groupIds: audience?.groupIds,
+        coverMedia: scheduleArticleRequestDto.coverMedia,
+        wordCount: scheduleArticleRequestDto.wordCount,
+        scheduledAt: scheduleArticleRequestDto.scheduledAt,
+        actor: user,
       })
     );
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

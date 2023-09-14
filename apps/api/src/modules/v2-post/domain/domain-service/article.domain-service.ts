@@ -162,7 +162,22 @@ export class ArticleDomainService implements IArticleDomainService {
       return articleEntity;
     }
 
-    await this._setArticleEntityAttributes(articleEntity, inputData, actor);
+    await this._setArticleEntityAttributes(
+      articleEntity,
+      {
+        id: inputData.id,
+        title: inputData.title,
+        summary: inputData.summary,
+        content: inputData.content,
+        categoryIds: inputData.categories,
+        seriesIds: inputData.series,
+        tagIds: inputData.tags,
+        groupIds: inputData.groupIds,
+        coverMedia: inputData.coverMedia,
+        wordCount: inputData.wordCount,
+      },
+      actor
+    );
     articleEntity.setPublish();
 
     await this._articleValidator.validateArticle(articleEntity, actor);
@@ -262,7 +277,22 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(articleEntity, inputData, actor);
+    await this._setArticleEntityAttributes(
+      articleEntity,
+      {
+        id: inputData.id,
+        title: inputData.title,
+        summary: inputData.summary,
+        content: inputData.content,
+        categoryIds: inputData.categories,
+        seriesIds: inputData.series,
+        tagIds: inputData.tags,
+        groupIds: inputData.groupIds,
+        coverMedia: inputData.coverMedia,
+        wordCount: inputData.wordCount,
+      },
+      actor
+    );
 
     await this._articleValidator.validateArticle(articleEntity, actor);
 
@@ -313,7 +343,22 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(articleEntity, inputData, inputData.actor);
+    await this._setArticleEntityAttributes(
+      articleEntity,
+      {
+        id: inputData.id,
+        title: inputData.title,
+        summary: inputData.summary,
+        content: inputData.content,
+        categoryIds: inputData.categories,
+        seriesIds: inputData.series,
+        tagIds: inputData.tags,
+        groupIds: inputData.groupIds,
+        coverMedia: inputData.coverMedia,
+        wordCount: inputData.wordCount,
+      },
+      inputData.actor
+    );
 
     await this._articleValidator.validateArticle(articleEntity, inputData.actor);
 
@@ -329,10 +374,10 @@ export class ArticleDomainService implements IArticleDomainService {
     payload: ArticlePayload,
     actor: UserDto
   ): Promise<void> {
-    const { categories, tags, coverMedia, ...restUpdate } = payload;
+    const { categoryIds, tagIds, coverMedia, ...restUpdate } = payload;
 
-    if (tags) {
-      const newTags = await this._tagRepository.findAll({ ids: tags });
+    if (tagIds) {
+      const newTags = await this._tagRepository.findAll({ ids: tagIds });
       articleEntity.setTags(newTags);
     }
 
@@ -348,14 +393,14 @@ export class ArticleDomainService implements IArticleDomainService {
       articleEntity.setCover(images[0]);
     }
 
-    if (categories) {
-      const newCategories = await this._categoryRepository.findAll({ where: { ids: categories } });
+    if (categoryIds) {
+      const newCategories = await this._categoryRepository.findAll({ where: { ids: categoryIds } });
       if (newCategories.length) {
-        await this._categoryValidator.checkValidCategories(categories, actor.id);
+        await this._categoryValidator.checkValidCategories(categoryIds, actor.id);
       }
       articleEntity.setCategories(newCategories);
     }
 
-    articleEntity.updateAttribute({ ...restUpdate, seriesIds: restUpdate.series }, actor.id);
+    articleEntity.updateAttribute({ ...restUpdate, seriesIds: restUpdate.seriesIds }, actor.id);
   }
 }

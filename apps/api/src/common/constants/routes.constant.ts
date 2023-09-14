@@ -53,6 +53,32 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
+  POST: {
+    CREATE: {
+      PATH: '/posts',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    UPDATE: {
+      PATH: '/posts/:postId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    AUTO_SAVE: {
+      PATH: '/posts/:postId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_DETAIL: {
+      PATH: '/posts/:postId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    PUBLISH: {
+      PATH: '/posts/:postId/publish',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    SCHEDULE: {
+      PATH: '/posts/:postId/schedule',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+  },
   ARTICLE: {
     CREATE: {
       PATH: '/articles',

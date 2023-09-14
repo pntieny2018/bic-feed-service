@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Req,
+  Version,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ROUTES } from 'apps/api/src/common/constants/routes.constant';
 import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
@@ -12,6 +24,7 @@ import {
   AutoSavePostCommand,
   CreateDraftPostCommand,
   PublishPostCommand,
+  SchedulePostCommand,
   UpdatePostCommand,
 } from '../../application/command/post';
 import { CreateDraftPostDto, PostDto } from '../../application/dto';
@@ -20,13 +33,13 @@ import {
   AutoSavePostRequestDto,
   CreateDraftPostRequestDto,
   PublishPostRequestDto,
+  SchedulePostRequestDto,
   UpdatePostRequestDto,
 } from '../dto/request';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
 @Controller({
-  path: 'posts',
   version: VERSIONS_SUPPORTED,
 })
 export class PostController {
@@ -39,7 +52,7 @@ export class PostController {
   @ResponseMessages({
     success: 'message.post.created_success',
   })
-  @Post('/')
+  @Post(ROUTES.POST.CREATE.PATH)
   public async createDraft(
     @AuthUser() authUser: UserDto,
     @Body() createDraftPostRequestDto: CreateDraftPostRequestDto
@@ -57,7 +70,7 @@ export class PostController {
   @ResponseMessages({
     success: 'message.post.updated_success',
   })
-  @Put('/:postId')
+  @Put(ROUTES.POST.UPDATE.PATH)
   public async updatePost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
@@ -95,7 +108,7 @@ export class PostController {
   @ResponseMessages({
     success: 'message.post.published_success',
   })
-  @Put('/:postId/publish')
+  @Put(ROUTES.POST.PUBLISH.PATH)
   public async publishPost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
@@ -134,7 +147,7 @@ export class PostController {
   @ResponseMessages({
     success: 'message.post.updated_success',
   })
-  @Patch('/:postId')
+  @Patch(ROUTES.POST.AUTO_SAVE.PATH)
   public async autoSave(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
@@ -162,12 +175,40 @@ export class PostController {
   }
 
   @ApiOperation({ summary: 'Get post detail' })
-  @Get('/:postId')
+  @Get(ROUTES.POST.GET_DETAIL.PATH)
   public async getPostDetail(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto
   ): Promise<PostDto> {
     const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Schedule post' })
+  @ResponseMessages({
+    success: 'Successful Schedule',
+    error: 'Fail Schedule',
+  })
+  @Put(ROUTES.POST.SCHEDULE.PATH)
+  @Version(ROUTES.POST.SCHEDULE.VERSIONS)
+  public async schedule(
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @Body() scheduleData: SchedulePostRequestDto,
+    @AuthUser() user: UserDto
+  ): Promise<void> {
+    await this._commandBus.execute<SchedulePostCommand, void>(
+      new SchedulePostCommand({
+        id: postId,
+        content: scheduleData.content,
+        seriesIds: scheduleData.series,
+        tagIds: scheduleData.tags,
+        groupIds: scheduleData.audience?.groupIds || [],
+        media: scheduleData.media,
+        mentionUserIds: scheduleData.mentions,
+        linkPreview: scheduleData.linkPreview,
+        scheduledAt: scheduleData.scheduledAt,
+        actor: user,
+      })
+    );
   }
 }
