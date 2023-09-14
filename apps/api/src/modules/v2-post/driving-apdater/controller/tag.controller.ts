@@ -89,11 +89,9 @@ export class TagController {
     const { groupId, name } = createTagDto;
     const userId = user.id;
 
-    const tag = await this._commandBus.execute<CreateTagCommand, TagDto>(
+    return this._commandBus.execute<CreateTagCommand, TagDto>(
       new CreateTagCommand({ groupId, name, userId })
     );
-
-    return tag;
   }
 
   @ApiOperation({ summary: 'Update tag' })
