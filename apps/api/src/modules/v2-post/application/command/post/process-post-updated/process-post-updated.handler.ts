@@ -137,15 +137,21 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
       where: {
         ids: after.state.detachSeriesIds,
       },
+      include: {
+        mustIncludeGroup: true,
+      },
     });
 
-    const removeSeriesWithState = removeSeries.map((item: SeriesEntity) => ({
+    const removeSeriesWithState: ISeriesState[] = removeSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
         id: item.get('createdBy'),
       },
       state: 'remove',
+      audience: {
+        groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
+      },
     }));
 
     const newSeries = await this._contentRepository.findAll({
@@ -155,14 +161,20 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
       where: {
         ids: after.state.attachSeriesIds,
       },
+      include: {
+        mustIncludeGroup: true,
+      },
     });
-    const newSeriesWithState = newSeries.map((item: SeriesEntity) => ({
+    const newSeriesWithState: ISeriesState[] = newSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
         id: item.get('createdBy'),
       },
       state: 'add',
+      audience: {
+        groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
+      },
     }));
 
     let skipNotifyForNewItems = [];

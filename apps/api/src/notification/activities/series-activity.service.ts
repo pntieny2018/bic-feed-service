@@ -1,4 +1,4 @@
-import { NotificationActivity } from '../dto/requests/notification-activity.dto';
+import { AudienceObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { IPost, PostType } from '../../database/models/post.model';
 import { StringHelper } from '../../common/helpers';
@@ -150,4 +150,5 @@ export interface ISeriesState {
   id: string;
   title: string;
   state: 'add' | 'remove';
+  audience?: AudienceObject;
 }
