@@ -9,7 +9,6 @@ import { QuizAttributes, QuizModel } from '../../model/quiz.model';
 export type FindQuizConditionOptions = {
   ids?: string[];
   contentIds?: string[];
-  contentId?: string;
   status?: QUIZ_STATUS;
   createdBy?: string;
 };
