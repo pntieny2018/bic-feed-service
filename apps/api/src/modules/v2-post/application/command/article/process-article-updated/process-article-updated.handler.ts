@@ -154,6 +154,9 @@ export class ProcessArticleUpdatedHandler
         isHidden: false,
         ids: seriesIdsNeedToFind,
       },
+      include: {
+        mustIncludeGroup: true,
+      },
     })) as SeriesEntity[];
 
     const addSeries = seriesEntites.filter((series) =>
@@ -162,21 +165,27 @@ export class ProcessArticleUpdatedHandler
     const removeSeries = seriesEntites.filter((series) =>
       state.detachSeriesIds.includes(series.get('id'))
     );
-    const removeSeriesWithState = removeSeries.map((item: SeriesEntity) => ({
+    const removeSeriesWithState: ISeriesState[] = removeSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
         id: item.get('createdBy'),
       },
       state: 'remove',
+      audience: {
+        groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
+      },
     }));
-    const newSeriesWithState = addSeries.map((item: SeriesEntity) => ({
+    const newSeriesWithState: ISeriesState[] = addSeries.map((item: SeriesEntity) => ({
       id: item.get('id'),
       title: item.get('title'),
       actor: {
         id: item.get('createdBy'),
       },
       state: 'add',
+      audience: {
+        groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
+      },
     }));
 
     let skipNotifyForNewItems = [];
