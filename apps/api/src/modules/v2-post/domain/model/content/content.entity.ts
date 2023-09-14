@@ -189,6 +189,10 @@ export class ContentEntity<
     return this._props.status === CONTENT_STATUS.WAITING_SCHEDULE;
   }
 
+  public isScheduleFailed(): boolean {
+    return this._props.status === CONTENT_STATUS.SCHEDULE_FAILED;
+  }
+
   public isProcessing(): boolean {
     return this._props.status === CONTENT_STATUS.PROCESSING;
   }
