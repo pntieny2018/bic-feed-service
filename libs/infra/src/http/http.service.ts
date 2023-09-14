@@ -10,6 +10,7 @@ import axios, { AxiosResponse } from 'axios';
 import camelcaseKeys from 'camelcase-keys';
 import { merge } from 'lodash';
 import { ClsServiceManager } from 'nestjs-cls';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class HttpService implements IHttpService {
@@ -56,7 +57,7 @@ export class HttpService implements IHttpService {
   private getConfigs(options: object = {}): IHttpServiceRequestOptions {
     const extraHeaders = {
       headers: {
-        [HEADER_REQ_ID]: ClsServiceManager.getClsService().getId(),
+        [HEADER_REQ_ID]: ClsServiceManager.getClsService().getId() ?? v4(),
       },
     };
 
