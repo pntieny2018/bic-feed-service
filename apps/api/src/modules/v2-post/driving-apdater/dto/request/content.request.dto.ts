@@ -80,16 +80,30 @@ export class SearchContentsRequestDto {
   public keyword?: string;
 
   @ApiPropertyOptional({
-    description: 'Search by tags',
+    name: 'tag_ids',
+    description: 'Search by tag ids',
   })
   @IsOptional()
   @IsNotEmpty()
   @IsUUID('4', { each: true })
   @IsArray()
   @Expose({
-    name: 'tags',
+    name: 'tag_ids',
   })
-  public tags?: string[];
+  public tagIds?: string[];
+
+  @ApiPropertyOptional({
+    name: 'tag_names',
+    description: 'Search by tag names',
+  })
+  @IsOptional()
+  @IsNotEmpty()
+  @IsString({ each: true })
+  @IsArray()
+  @Expose({
+    name: 'tag_names',
+  })
+  public tagNames?: string[];
 
   @ApiPropertyOptional({
     description: 'Search by topics',
