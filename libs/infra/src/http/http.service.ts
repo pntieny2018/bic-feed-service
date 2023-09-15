@@ -5,7 +5,7 @@ import {
   IHttpServiceRequestOptions,
   IHttpServiceOptions,
 } from '@libs/infra/http';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
 import camelcaseKeys from 'camelcase-keys';
 import { merge } from 'lodash';
@@ -14,6 +14,7 @@ import { v4 } from 'uuid';
 
 @Injectable()
 export class HttpService implements IHttpService {
+  private readonly _logger = new Logger(HttpService.name);
   public constructor(private readonly options: IHttpServiceOptions) {
     this.options.headers = this.options.headers || {};
 
@@ -28,7 +29,9 @@ export class HttpService implements IHttpService {
     params: object = {},
     options: IHttpServiceRequestOptions = {}
   ): Promise<IHttpServiceResponse<T>> {
-    return this.getResponse<T>(axios.get(path, this.getConfigs({ ...options, ...params })));
+    const config = this.getConfigs({ ...options, ...params });
+    this._logger.debug(`[HTTP] ${JSON.stringify({ method: 'GET', path, config })}`);
+    return this.getResponse<T>(axios.get(path, config));
   }
 
   public async post<T = any>(
@@ -36,7 +39,9 @@ export class HttpService implements IHttpService {
     data: object = {},
     options: IHttpServiceRequestOptions = {}
   ): Promise<IHttpServiceResponse<T>> {
-    return this.getResponse<T>(axios.post(path, data, this.getConfigs(options)));
+    const config = this.getConfigs(options);
+    this._logger.debug(`[HTTP] ${JSON.stringify({ method: 'POST', path, data, config })}`);
+    return this.getResponse<T>(axios.post(path, data, config));
   }
 
   public async put<T = any>(
@@ -44,14 +49,18 @@ export class HttpService implements IHttpService {
     data: object = {},
     options: IHttpServiceRequestOptions = {}
   ): Promise<IHttpServiceResponse<T>> {
-    return this.getResponse<T>(axios.put(path, data, this.getConfigs(options)));
+    const config = this.getConfigs(options);
+    this._logger.debug(`[HTTP] ${JSON.stringify({ method: 'PUT', path, data, config })}`);
+    return this.getResponse<T>(axios.put(path, data, config));
   }
 
   public async delete<T = any>(
     path: string,
     options: IHttpServiceRequestOptions = {}
   ): Promise<IHttpServiceResponse<T>> {
-    return this.getResponse<T>(axios.delete(path, this.getConfigs(options)));
+    const config = this.getConfigs(options);
+    this._logger.debug(`[HTTP] ${JSON.stringify({ method: 'DELETE', path, config })}`);
+    return this.getResponse<T>(axios.delete(path, config));
   }
 
   private getConfigs(options: object = {}): IHttpServiceRequestOptions {
