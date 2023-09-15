@@ -3,7 +3,6 @@ import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash';
-import qs from 'qs';
 import { lastValueFrom } from 'rxjs';
 
 import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
@@ -147,17 +146,15 @@ export class UserRepository implements IUserRepository {
     let users: UserProps[] = [];
     try {
       const response = await lastValueFrom(
-        this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+        this._httpService.post(ENDPOINT.USER.INTERNAL.GET_USERS, ids, {
           params: {
-            ids,
             ...(authUserId && {
               actorId: authUserId,
             }),
           },
-          paramsSerializer: (params) => qs.stringify(params),
         })
       );
-      if (response.status === HttpStatus.OK) {
+      if (response.status === HttpStatus.OK || response.status === HttpStatus.CREATED) {
         users = AxiosHelper.getDataArrayResponse<UserProps>(response);
       }
     } catch (e) {
