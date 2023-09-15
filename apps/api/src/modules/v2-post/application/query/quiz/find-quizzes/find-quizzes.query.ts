@@ -1,15 +1,14 @@
+import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
 import { IQuery } from '@nestjs/cqrs';
 
-import { OrderEnum } from '../../../../../../common/dto';
 import { UserDto } from '../../../../../v2-user/application';
-import { PostType, QuizStatus } from '../../../../data-type';
 
 type Props = {
   authUser: UserDto;
-  status: QuizStatus;
-  type?: PostType;
+  status: QUIZ_STATUS;
+  type?: CONTENT_TYPE;
   limit: number;
-  order: OrderEnum;
+  order: ORDER;
   before?: string;
   after?: string;
 };

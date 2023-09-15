@@ -1,39 +1,49 @@
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { Configuration, OpenAIApi } from 'openai';
+import { ConfigService } from '@nestjs/config';
+import { v4 } from 'uuid';
 import {
   GenerateQuestionProps,
   GenerateQuestionResponse,
-  IOpenaiService,
-  IOpenAIConfig,
+  IOpenAIService,
+  Question,
+} from '@libs/service/openai/openai.service.interface';
+import {
   CORRECT_ANSWER_KEY,
-  MAX_COMPLETION_TOKEN,
   MAX_TOKEN,
   TOKEN_IN_CONTEXT,
   TOKEN_PER_QUESTION_OR_ANSWER,
-} from '@libs/service/openai';
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Configuration, OpenAIApi } from 'openai';
-import { v4 } from 'uuid';
+} from '@libs/service/openai/constant';
+import { IOpenAIConfig } from '@libs/service/openai/config';
+import { ENDPOINT } from '../../../../apps/api/src/common/constants/endpoint.constant';
+import { IHttpService, LAMBDA_COUNT_TOKEN_HTTP_TOKEN } from '@libs/infra/http';
+import { CountTokenException } from '@libs/service/openai/openai.exception';
 
 @Injectable()
-export class OpenaiService implements IOpenaiService {
+export class OpenAIService implements IOpenAIService {
   private _openAI;
   private _model = {
     gpt_4k: 'gpt-3.5-turbo',
     gpt_16k: 'gpt-3.5-turbo-16k',
   };
-  public constructor(private readonly _configService: ConfigService) {}
+  public constructor(
+    private readonly _configService: ConfigService,
+    @Inject(LAMBDA_COUNT_TOKEN_HTTP_TOKEN) private readonly _httpService: IHttpService
+  ) {}
 
   public async generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse> {
-    const inputTokens = this._getInputTokens(props);
+    const inputTokens = await this._getInputTokens(props);
 
     const completionTokens = this._getCompletionTokens(props);
     if (props.numberOfQuestions <= 0 || props.numberOfAnswers <= 0) {
       throw new Error('The number of questions and answers must be greater than 0');
     }
 
-    if (completionTokens >= MAX_COMPLETION_TOKEN) {
+    if (completionTokens >= MAX_TOKEN - inputTokens) {
       throw new Error(
-        `The number of tokens in questions and answers cannot exceed ${MAX_COMPLETION_TOKEN} tokens`
+        `The number of tokens in questions and answers cannot exceed ${
+          MAX_TOKEN - inputTokens
+        } tokens`
       );
     }
 
@@ -47,6 +57,7 @@ export class OpenaiService implements IOpenaiService {
       numQuestion: props.numberOfQuestions,
       numAnswer: props.numberOfAnswers,
     });
+
     const model = this._getModel(inputTokens + completionTokens);
     const openAIConfig = this._configService.get<IOpenAIConfig>('openai');
     const configuration = new Configuration({
@@ -76,11 +87,17 @@ export class OpenaiService implements IOpenaiService {
       throw e;
     }
   }
-  private _getInputTokens(props: GenerateQuestionProps): number {
+  private async _getInputTokens(props: GenerateQuestionProps): Promise<number> {
     const { content } = props;
-    const tokenInContent = content.length; //TODO: get from lambda
-    return TOKEN_IN_CONTEXT + tokenInContent;
+    const response = await this._httpService.post(ENDPOINT.LAMBDA.COUNT_TOKEN, {
+      content,
+    });
+    if (response.status !== HttpStatus.OK) {
+      throw new CountTokenException();
+    }
+    return +response.data + TOKEN_IN_CONTEXT;
   }
+
   private _getCompletionTokens(props: GenerateQuestionProps): number {
     const { numberOfQuestions, numberOfAnswers } = props;
     return numberOfQuestions * (numberOfAnswers + 1) * TOKEN_PER_QUESTION_OR_ANSWER;
@@ -161,7 +178,7 @@ export class OpenaiService implements IOpenaiService {
       isCorrect: boolean;
     }[];
   }[] {
-    const lines = text.split('\n');
+    const lines = text.split(/[\n=>]+/); // split by new line or "=>"
     const questions = [];
     let currentQuestion = null;
 
@@ -177,21 +194,36 @@ export class OpenaiService implements IOpenaiService {
         }
 
         const questionText = questionMatch[2];
-        currentQuestion = { id: v4(), content: questionText, answers: [] };
+        currentQuestion = {
+          id: v4(),
+          content: questionText,
+          answers: [],
+        };
+        continue;
       }
+
       const answerMatch = line.match(/([A-Za-z])\) (.+)$/);
       if (answerMatch && currentQuestion !== null) {
         const answerText = answerMatch[2] ?? '';
-        currentQuestion.answers.push({ id: v4(), content: answerText, isCorrect: false });
+        currentQuestion.answers.push({
+          id: v4(),
+          content: answerText,
+          isCorrect: false,
+        });
+        continue;
       }
-      if (line.includes(CORRECT_ANSWER_KEY) && currentQuestion !== null) {
-        const answerCorrect = line.trim().slice(CORRECT_ANSWER_KEY.length).trim();
-        const indexAnswerCorrect = answerCorrect.toLowerCase().charCodeAt(0) - 97;
+
+      const lineIsCorrectAnswer = line.trim().length === 1;
+      if (lineIsCorrectAnswer && currentQuestion !== null) {
+        const answerCorrect = line.trim();
+        const firstAlphaCharCode = 97; // a
+        const indexAnswerCorrect = answerCorrect.toLowerCase().charCodeAt(0) - firstAlphaCharCode;
         if (currentQuestion.answers[indexAnswerCorrect]) {
           currentQuestion.answers[indexAnswerCorrect].isCorrect = true;
         }
       }
     }
+
     if (currentQuestion !== null) {
       questions.push(currentQuestion);
     }

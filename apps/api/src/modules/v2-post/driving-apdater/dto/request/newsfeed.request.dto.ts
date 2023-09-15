@@ -1,9 +1,9 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 
 import { PaginatedArgs } from '../../../../../common/dto';
-import { PostType } from '../../../data-type';
 
 export class NewsfeedRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'is_important', example: true })
@@ -61,11 +61,11 @@ export class NewsfeedRequestDto extends PaginatedArgs {
     description: 'Type',
     required: false,
     default: '',
-    enum: PostType,
+    enum: CONTENT_TYPE,
   })
   @Expose()
   @IsOptional()
-  @IsEnum(PostType)
+  @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
-  public type?: PostType;
+  public type?: CONTENT_TYPE;
 }

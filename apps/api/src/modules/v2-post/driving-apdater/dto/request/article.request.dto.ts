@@ -1,37 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsDateString,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
-import { AudienceRequestDto } from './audience.request.dto';
 import { Expose } from 'class-transformer';
+import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+
 import { MediaDto } from './media.request.dto';
 import { PublishPostRequestDto } from './post.request.dto';
-
-export class CreateDraftArticleRequestDto {
-  @ApiProperty({
-    description: 'Audience',
-    type: AudienceRequestDto,
-    example: {
-      ['group_ids']: ['02032703-6db0-437a-a900-d93e742c3cb9'],
-    },
-  })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => AudienceRequestDto)
-  public audience: AudienceRequestDto = {
-    groupIds: [],
-  };
-  public constructor(data: CreateDraftArticleRequestDto) {
-    Object.assign(this, data);
-  }
-}
 
 export class UpdateArticleRequestDto extends PublishPostRequestDto {
   @ApiPropertyOptional({

@@ -1,4 +1,3 @@
-import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
 import { Injectable } from '@nestjs/common';
 
@@ -50,22 +49,37 @@ export class QuizMapper {
   public toPersistence(entity: QuizEntity): QuizAttributes {
     return {
       id: entity.get('id'),
+      postId: entity.get('contentId'),
+      title: entity.get('title'),
       description: entity.get('description'),
-      error: entity.get('error'),
-      genStatus: entity.get('genStatus') as unknown as QUIZ_PROCESS_STATUS,
+      timeLimit: entity.get('timeLimit'),
+      numberOfQuestions: entity.get('numberOfQuestions'),
+      numberOfAnswers: entity.get('numberOfAnswers'),
+      numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
       isRandom: entity.get('isRandom'),
       meta: entity.get('meta'),
-      numberOfAnswers: entity.get('numberOfAnswers'),
-      numberOfQuestions: entity.get('numberOfQuestions'),
-      numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
-      postId: entity.get('contentId'),
-      status: entity.get('status') as unknown as QUIZ_STATUS,
-      timeLimit: entity.get('timeLimit'),
-      title: entity.get('title'),
+      status: entity.get('status'),
+      genStatus: entity.get('genStatus'),
+      error: entity.get('error'),
       updatedAt: entity.get('updatedAt'),
       updatedBy: entity.get('updatedBy'),
       createdAt: entity.get('createdAt'),
       createdBy: entity.get('createdBy'),
+      questions: (entity.get('questions') || []).map((question) => ({
+        id: question.get('id'),
+        quizId: entity.get('id'),
+        content: question.get('content'),
+        answers: (question.get('answers') || []).map((answer) => ({
+          id: answer.id,
+          questionId: question.get('id'),
+          content: answer.content,
+          isCorrect: answer.isCorrect,
+          createdAt: answer.createdAt,
+          updatedAt: answer.updatedAt,
+        })),
+        createdAt: question.get('createdAt'),
+        updatedAt: question.get('updatedAt'),
+      })),
     };
   }
 }

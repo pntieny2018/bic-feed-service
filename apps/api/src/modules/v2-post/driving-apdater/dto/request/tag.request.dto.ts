@@ -3,12 +3,14 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID, MaxLength, MinLength } from 'class-validator';
 
 import { PageOptionsDto } from '../../../../../common/dto';
+import { RULES } from '../../../constant';
 
 export class UpdateTagRequestDto {
   @ApiProperty({ type: String })
   @Type(() => String)
   @IsNotEmpty()
-  @MaxLength(32)
+  @MaxLength(RULES.TAG_MAX_NAME)
+  @MinLength(RULES.TAG_MIN_NAME)
   public name: string;
 }
 
@@ -40,7 +42,8 @@ export class GetTagRequestDto extends PageOptionsDto {
 export class CreateTagRequestDto {
   @ApiProperty({ type: String })
   @Type(() => String)
-  @MaxLength(32)
+  @MaxLength(RULES.TAG_MAX_NAME)
+  @MinLength(RULES.TAG_MIN_NAME)
   public name: string;
 
   @ApiProperty({ type: String })
@@ -56,12 +59,11 @@ export class CreateTagRequestDto {
   }
 }
 
-const MIN_LENGTH = 3;
 export class SearchTagRequestDto {
   @ApiProperty({ description: 'Search tags by keyword', required: true })
   @IsNotEmpty()
   @Type(() => String)
-  @MinLength(MIN_LENGTH)
+  @MinLength(RULES.TAG_MIN_NAME)
   @Expose({
     name: 'keyword',
   })

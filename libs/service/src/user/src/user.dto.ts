@@ -1,12 +1,26 @@
+import { Expose } from 'class-transformer';
+
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../apps/api/src/common/constants';
+
 class CommunityInfo {
+  @Expose()
   public id: string;
+
+  @Expose()
   public name: string;
 }
 
 export class ShowingBadgeDto {
+  @Expose()
   public id: string;
+
+  @Expose()
   public name: string;
+
+  @Expose()
   public iconUrl: string;
+
+  @Expose()
   public community: CommunityInfo;
 }
 
@@ -16,18 +30,38 @@ export class UserPermissionDto {
 }
 
 export class UserDto {
+  @Expose()
   public id: string;
+
+  @Expose()
   public username: string;
+
+  @Expose()
   public fullname: string;
+
+  @Expose()
   public email: string;
+
+  @Expose()
   public avatar: string;
 
-  public isDeactivated: boolean;
-  public isVerified: boolean;
-
+  @Expose()
   public showingBadges?: ShowingBadgeDto[];
+
+  @Expose()
+  public isDeactivated?: boolean;
+
+  @Expose()
+  public isVerified?: boolean;
+
+  @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
+  public permissions?: {
+    communities: Record<string, string[]>;
+    groups: Record<string, string[]>;
+  };
+
+  @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
   public groups?: string[];
-  public permissions?: UserPermissionDto;
 
   public constructor(data: Partial<UserDto>, excluded?: string[]) {
     Object.assign(this, data);

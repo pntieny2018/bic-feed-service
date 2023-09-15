@@ -1,166 +1,106 @@
-import { CursorPaginationResult, CursorPaginator } from '@libs/database/postgres/common';
-import { PostModel } from '@libs/database/postgres/model/post.model';
-import { QuizAnswerModel } from '@libs/database/postgres/model/quiz-answer.model';
-import { QuizQuestionModel } from '@libs/database/postgres/model/quiz-question.model';
-import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
+import { ORDER } from '@beincom/constants';
+import { InjectModel } from '@nestjs/sequelize';
 import {
-  FindAllQuizProps,
-  FindOneQuizProps,
+  Op,
+  FindOptions,
+  WhereOptions,
+  Includeable,
+  FindAttributeOptions,
+  Order,
+  GroupOption,
+} from 'sequelize';
+
+import { CursorPaginationResult, CursorPaginator, PAGING_DEFAULT_LIMIT } from '../common';
+import { PostModel } from '../model/post.model';
+import { QuizAnswerAttributes, QuizAnswerModel } from '../model/quiz-answer.model';
+import { QuizQuestionAttributes, QuizQuestionModel } from '../model/quiz-question.model';
+import { QuizAttributes, QuizModel } from '../model/quiz.model';
+import {
+  FindQuizProps,
   GetPaginationQuizzesProps,
   ILibQuizRepository,
-} from '@libs/database/postgres/repository/interface';
-import { InjectModel } from '@nestjs/sequelize';
-import { FindOptions, WhereOptions } from 'sequelize';
+  FindQuizConditionOptions,
+  FindQuizIncludeOptions,
+  FindQuizAttributeOptions,
+  FindQuizOrderOptions,
+  FindQuizQuestionProps,
+  FindQuizQuestionConditionOptions,
+  FindQuizQuestionIncludeOptions,
+} from '../repository/interface';
 
 export class LibQuizRepository implements ILibQuizRepository {
-  private readonly QUERY_LIMIT_DEFAULT = 10;
-
   public constructor(
     @InjectModel(QuizModel)
     private readonly _quizModel: typeof QuizModel,
-
     @InjectModel(QuizQuestionModel)
     private readonly _quizQuestionModel: typeof QuizQuestionModel,
-
     @InjectModel(QuizAnswerModel)
-    private readonly _quizAnswerModel: typeof QuizAnswerModel
+    private readonly _quizAnswerModel: typeof QuizAnswerModel,
+    @InjectModel(PostModel)
+    private readonly _postModel: typeof PostModel
   ) {}
 
-  public async create(data: QuizAttributes): Promise<void> {
-    await this._quizModel.create(data);
+  public async createQuiz(quiz: QuizAttributes): Promise<void> {
+    await this._quizModel.create(quiz);
   }
 
-  public async update(quizId: string, data: Partial<QuizAttributes>): Promise<void> {
-    await this._quizModel.update(data, { where: { id: quizId } });
+  public async updateQuiz(quizId: string, quiz: Partial<QuizAttributes>): Promise<void> {
+    await this._quizModel.update(quiz, { where: { id: quizId } });
 
-    if (data?.questions) {
-      await this._quizQuestionModel.destroy({ where: { quizId: quizId } });
-      await this._quizQuestionModel.bulkCreate(
-        data.questions.map((question) => ({
+    if (quiz.questions !== undefined) {
+      await this._quizQuestionModel.destroy({ where: { quizId } });
+      const questions = quiz.questions.map((question, index) => {
+        const createdAt = new Date();
+        createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+        return {
           id: question.id,
-          quizId: quizId,
+          quizId: question.quizId,
           content: question.content,
-        }))
-      );
-      await this._quizAnswerModel.bulkCreate(
-        data.questions.flatMap((question) =>
-          question.answers.map((answer) => ({
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        };
+      });
+
+      const answers = quiz.questions.flatMap((question) =>
+        question.answers.map((answer, index) => {
+          const createdAt = new Date();
+          createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+          return {
             id: answer.id,
-            quizId: quizId,
             questionId: question.id,
             content: answer.content,
             isCorrect: answer.isCorrect,
-          }))
-        )
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          };
+        })
       );
+
+      await this._quizQuestionModel.bulkCreate(questions);
+      await this._quizAnswerModel.bulkCreate(answers);
     }
   }
 
-  public async delete(id: string): Promise<void> {
-    await this._quizModel.destroy({ where: { id: id } });
+  public async deleteQuiz(conditions: WhereOptions<QuizAttributes>): Promise<void> {
+    await this._quizModel.destroy({ where: conditions });
   }
 
-  public async findOne(input: FindOneQuizProps): Promise<QuizModel> {
-    const findOptions: FindOptions<QuizAttributes> = this._buildFindOptions(input);
-    return this._quizModel.findOne(findOptions);
+  public async findQuiz(findOptions: FindQuizProps): Promise<QuizModel> {
+    const options = this._buildFindOptions(findOptions);
+    return this._quizModel.findOne(options);
   }
 
-  private _buildFindOptions(
-    options: Partial<FindAllQuizProps & FindOneQuizProps>
-  ): FindOptions<QuizAttributes> {
-    const findOption: FindOptions<QuizAttributes> = {};
-    findOption.where = this._getCondition(options);
-    findOption.include = [
-      {
-        model: QuizQuestionModel,
-        as: 'questions',
-        required: false,
-        include: [
-          {
-            model: QuizAnswerModel,
-            as: 'answers',
-            required: false,
-          },
-        ],
-      },
-    ];
-    if (options.attributes) {
-      findOption.attributes = options.attributes as (keyof QuizAttributes)[];
-    }
-    return findOption;
+  public async findAllQuizzes(findOptions: FindQuizProps): Promise<QuizModel[]> {
+    const options = this._buildFindOptions(findOptions);
+    return this._quizModel.findAll(options);
   }
 
-  private _getCondition(
-    options: Partial<FindAllQuizProps & FindOneQuizProps>
-  ): WhereOptions<QuizAttributes> {
-    const { createdBy, status, id, ids, contentId, contentIds } = options.where;
-    const where: WhereOptions<QuizAttributes> = {};
-
-    if (createdBy) {
-      where['createdBy'] = createdBy;
-    }
-
-    if (id) {
-      where['id'] = id;
-    }
-
-    if (ids) {
-      where['id'] = ids;
-    }
-
-    if (contentId) {
-      where['postId'] = contentId;
-    }
-
-    if (contentIds) {
-      where['postId'] = contentIds;
-    }
-
-    if (status) {
-      where['status'] = status;
-    }
-
-    return where;
-  }
-
-  public async findAll(input: FindAllQuizProps): Promise<QuizModel[]> {
-    const findOptions: FindOptions<QuizAttributes> = this._buildFindOptions(input);
-    return this._quizModel.findAll(findOptions);
-  }
-
-  public async getPagination(
+  public async getQuizzesPagination(
     getPaginationQuizzesProps: GetPaginationQuizzesProps
   ): Promise<CursorPaginationResult<QuizModel>> {
-    const findOption: FindOptions<QuizAttributes> = {};
-    const {
-      contentType,
-      after,
-      before,
-      limit = this.QUERY_LIMIT_DEFAULT,
-      order,
-      attributes,
-    } = getPaginationQuizzesProps;
+    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationQuizzesProps;
 
-    findOption.where = this._getCondition(getPaginationQuizzesProps);
-
-    if (contentType) {
-      findOption.include = [
-        {
-          model: PostModel,
-          attributes: ['id'],
-          as: 'post',
-          required: true,
-          where: {
-            isHidden: false,
-            type: contentType,
-          },
-        },
-      ];
-    }
-
-    if (attributes) {
-      findOption.attributes = attributes as (keyof QuizAttributes)[];
-    }
+    const findOption = this._buildFindOptions(getPaginationQuizzesProps);
 
     const paginator = new CursorPaginator(
       this._quizModel,
@@ -174,5 +114,185 @@ export class LibQuizRepository implements ILibQuizRepository {
       rows,
       meta,
     };
+  }
+
+  private _buildFindOptions(options: FindQuizProps): FindOptions<QuizAttributes> {
+    const findOption: FindOptions<QuizAttributes> = {};
+
+    findOption.where = this._buildWhereOptions(options.condition);
+    findOption.include = this._buildRelationOptions(options.include);
+    findOption.attributes = this._buildAttributesOptions(options.attributes);
+    findOption.order = this._buildOrderOptions(options.orderOptions);
+    findOption.group = this._buildGroupOptions(options.group);
+
+    return findOption;
+  }
+
+  private _buildWhereOptions(options: FindQuizConditionOptions): WhereOptions<QuizAttributes> {
+    const whereOptions: WhereOptions<QuizAttributes> = {};
+
+    const conditions = [];
+
+    if (options.ids) {
+      conditions.push({ id: options.ids });
+    }
+
+    if (options.contentIds) {
+      conditions.push({ postId: options.contentIds });
+    }
+
+    if (options.status) {
+      conditions.push({ status: options.status });
+    }
+
+    if (options.createdBy) {
+      conditions.push({ createdBy: options.createdBy });
+    }
+
+    if (conditions.length > 0) {
+      whereOptions[Op.and] = conditions;
+    }
+
+    return whereOptions;
+  }
+
+  private _buildRelationOptions(options: FindQuizIncludeOptions = {}): Includeable[] {
+    const relationOptions: Includeable[] = [];
+
+    if (options.shouldIncludeQuestions) {
+      relationOptions.push({
+        model: this._quizQuestionModel,
+        as: 'questions',
+        required: false,
+        order: [['createdAt', 'ASC']],
+        include: [
+          {
+            model: this._quizAnswerModel,
+            as: 'answers',
+            required: false,
+            order: [['createdAt', 'ASC']],
+          },
+        ],
+      });
+    }
+
+    if (options.shouldIncludeContent?.contentType) {
+      relationOptions.push({
+        model: this._postModel,
+        as: 'post',
+        required: true,
+        where: {
+          isHidden: false,
+          type: options.shouldIncludeContent.contentType,
+        },
+      });
+    }
+
+    return relationOptions;
+  }
+
+  private _buildAttributesOptions(options: FindQuizAttributeOptions = {}): FindAttributeOptions {
+    let attributesOptions: FindAttributeOptions;
+
+    if (options.exclude?.length > 0) {
+      attributesOptions['exclude'] = options.exclude;
+    }
+
+    if (options.include) {
+      attributesOptions['include'] = options.include;
+    }
+
+    return attributesOptions;
+  }
+
+  private _buildOrderOptions(options: FindQuizOrderOptions = {}): Order {
+    const orderOptions = [];
+
+    if (options.sortColumn) {
+      orderOptions.push([options.sortColumn, options.sortBy || ORDER.DESC]);
+    }
+
+    return orderOptions;
+  }
+
+  private _buildGroupOptions(options: string[] = []): GroupOption {
+    return options;
+  }
+
+  public async bulkCreateQuizQuestions(questions: QuizQuestionAttributes[]): Promise<void> {
+    await this._quizQuestionModel.bulkCreate(questions);
+  }
+
+  public async updateQuizQuestion(
+    questionId: string,
+    question: Partial<QuizQuestionAttributes>
+  ): Promise<void> {
+    await this._quizQuestionModel.update(question, { where: { id: questionId } });
+  }
+
+  public async deleteQuizQuestion(conditions: WhereOptions<QuizQuestionAttributes>): Promise<void> {
+    await this._quizQuestionModel.destroy({ where: conditions });
+  }
+
+  public async findQuizQuestion(findOptions: FindQuizQuestionProps): Promise<QuizQuestionModel> {
+    const options = this._buildFindQuizQuestionOptions(findOptions);
+    return this._quizQuestionModel.findOne(options);
+  }
+
+  private _buildFindQuizQuestionOptions(
+    options: FindQuizQuestionProps
+  ): FindOptions<QuizQuestionAttributes> {
+    const findOption: FindOptions<QuizQuestionAttributes> = {};
+
+    findOption.where = this._buildWhereOptionsForQuizQuestion(options.condition);
+    findOption.include = this._buildRelationOptionsForQuizQuestion(options.include);
+
+    return findOption;
+  }
+
+  private _buildWhereOptionsForQuizQuestion(
+    options: FindQuizQuestionConditionOptions
+  ): WhereOptions<QuizQuestionAttributes> {
+    const whereOptions: WhereOptions<QuizQuestionAttributes> = {};
+
+    const conditions = [];
+
+    if (options.ids) {
+      conditions.push({ id: options.ids });
+    }
+
+    if (options.quizId) {
+      conditions.push({ quizId: options.quizId });
+    }
+
+    if (conditions.length > 0) {
+      whereOptions[Op.and] = conditions;
+    }
+
+    return whereOptions;
+  }
+
+  private _buildRelationOptionsForQuizQuestion(
+    options: FindQuizQuestionIncludeOptions = {}
+  ): Includeable[] {
+    const relationOptions: Includeable[] = [];
+
+    if (options.shouldIncludeAnswers) {
+      relationOptions.push({
+        model: this._quizAnswerModel,
+        as: 'answers',
+        required: false,
+      });
+    }
+
+    return relationOptions;
+  }
+
+  public async bulkCreateQuizAnswers(answers: QuizAnswerAttributes[]): Promise<void> {
+    await this._quizAnswerModel.bulkCreate(answers);
+  }
+
+  public async deleteQuizAnswer(conditions: WhereOptions<QuizAnswerAttributes>): Promise<void> {
+    await this._quizAnswerModel.destroy({ where: conditions });
   }
 }

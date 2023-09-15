@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -19,7 +20,6 @@ import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
 import { ArticleResponseDto } from '../../../article/dto/responses';
-import { UserDto } from '../../../v2-user/application';
 import {
   AutoSaveArticleCommand,
   CreateDraftArticleCommand,

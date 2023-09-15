@@ -9,7 +9,7 @@ import { uniq } from 'lodash';
 
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
-import { IUserService } from './user.service.interface';
+import { IUserService } from '@libs/service/user';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -23,7 +23,8 @@ export class UserService implements IUserService {
 
   public async findByUserName(username: string): Promise<UserDto> {
     try {
-      const userCache = await this._getUserFromCacheByUsername(username);
+      const userProfileCache = await this._getUserFromCacheByUsername(username);
+      const userCache = await this._getUserFromCacheById(userProfileCache.id);
       if (userCache) {
         return userCache;
       }
@@ -66,6 +67,21 @@ export class UserService implements IUserService {
       return [...userCaches, ...userApis];
     } catch (e) {
       console.log(e);
+      this._logger.error(e);
+      return [];
+    }
+  }
+
+  public async findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]> {
+    if (!ids.length) {
+      return [];
+    }
+
+    try {
+      const uniqueIds = uniq(ids);
+      const users = await this._getUsersFromApiByIds(uniqueIds, authUserId);
+      return users;
+    } catch (e) {
       this._logger.error(e);
       return [];
     }
@@ -128,14 +144,16 @@ export class UserService implements IUserService {
     return this._store.get<UserPermissionDto>(permissionCacheKey);
   }
 
-  private async _getUsersFromApiByIds(ids: string[]): Promise<UserDto[]> {
+  private async _getUsersFromApiByIds(ids: string[], authUserId?: string): Promise<UserDto[]> {
     if (!ids.length) {
       return [];
     }
 
-    const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, {
-      params: { ids },
-    });
+    const params = { ids };
+    if (authUserId) {
+      params['actorId'] = authUserId;
+    }
+    const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, { params });
     if (response.status !== HttpStatus.OK) {
       return [];
     }

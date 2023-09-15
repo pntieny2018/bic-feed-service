@@ -1,8 +1,8 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { difference, isEmpty } from 'lodash';
 import { v4 } from 'uuid';
 
 import { RULES } from '../../../constant';
-import { PostStatus, PostType } from '../../../data-type';
 import { CategoryEntity } from '../category';
 import { ImageEntity } from '../media';
 import { TagEntity } from '../tag';
@@ -44,8 +44,8 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
         commentsCount: 0,
         totalUsersSeen: 0,
       },
-      type: PostType.ARTICLE,
-      status: PostStatus.DRAFT,
+      type: CONTENT_TYPE.ARTICLE,
+      status: CONTENT_STATUS.DRAFT,
       isHidden: false,
       isReported: false,
       privacy: null,
@@ -96,11 +96,11 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     }
     this._state.isChangeStatus = true;
     this._props.scheduledAt = scheduledAt;
-    this._props.status = PostStatus.WAITING_SCHEDULE;
+    this._props.status = CONTENT_STATUS.WAITING_SCHEDULE;
   }
 
   public getSeriesIds(): string[] {
-    return this._props.seriesIds;
+    return this._props.seriesIds || [];
   }
 
   public getTitle(): string {

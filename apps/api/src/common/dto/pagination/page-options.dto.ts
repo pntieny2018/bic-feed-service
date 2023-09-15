@@ -1,17 +1,15 @@
-import { Expose, Type } from 'class-transformer';
+import { ORDER } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+
 import { PAGING_DEFAULT_LIMIT } from '../../constants';
 
-export enum OrderEnum {
-  ASC = 'ASC',
-  DESC = 'DESC',
-}
 export class PageOptionsDto {
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
-  @IsEnum(OrderEnum)
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
   @IsOptional()
-  public order?: OrderEnum = OrderEnum.DESC;
+  public order?: ORDER = ORDER.DESC;
 
   @ApiProperty({
     minimum: 1,

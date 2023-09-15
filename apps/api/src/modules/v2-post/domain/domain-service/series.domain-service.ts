@@ -2,13 +2,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event';
 import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
 import { InvalidResourceImageException } from '../exception/media.exception';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 
 import {
@@ -30,8 +30,8 @@ export class SeriesDomainService implements ISeriesDomainService {
 
   public constructor(
     private readonly event: EventBus,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
@@ -76,7 +76,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
-    const groups = await this._groupAppService.findAllByIds(groupIds);
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
@@ -159,7 +159,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
 
     if (groupIds) {
-      const groups = await this._groupAppService.findAllByIds(groupIds);
+      const groups = await this._groupAdapter.getGroupsByIds(groupIds);
 
       seriesEntity.setGroups(groupIds);
       seriesEntity.setPrivacyFromGroups(groups);

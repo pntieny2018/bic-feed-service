@@ -1,7 +1,9 @@
+import { ORDER } from '@beincom/constants';
 import {
   CursorPaginationResult,
   CursorPaginator,
   getDatabaseConfig,
+  PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
@@ -38,8 +40,8 @@ import {
   GetPaginationContentsProps,
   OrderOptions,
   ILibContentRepository,
+  GetReportContentDetailsProps,
 } from '@libs/database/postgres/repository/interface';
-import { ORDER } from '@beincom/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import {
@@ -70,8 +72,92 @@ export class LibContentRepository implements ILibContentRepository {
     @InjectModel(UserSeenPostModel)
     private readonly _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(UserMarkReadPostModel)
-    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel
+    private readonly _userReadImportantPostModel: typeof UserMarkReadPostModel,
+    @InjectModel(ReportContentDetailModel)
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
+
+  public async bulkCreatePostGroup(
+    postGroups: PostGroupAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._postGroupModel.bulkCreate(postGroups, options);
+  }
+
+  public async deletePostGroup(
+    where: WhereOptions<PostGroupAttributes>,
+    transaction?: Transaction
+  ): Promise<void> {
+    await this._postGroupModel.destroy({
+      where,
+      transaction,
+    });
+  }
+
+  public async bulkCreatePostSeries(
+    postGroups: PostSeriesAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._postSeriesModel.bulkCreate(postGroups, options);
+  }
+
+  public async deletePostSeries(
+    where: WhereOptions<PostSeriesAttributes>,
+    transaction?: Transaction
+  ): Promise<void> {
+    await this._postSeriesModel.destroy({
+      where,
+      transaction,
+    });
+  }
+
+  public async bulkCreatePostTag(
+    postGroups: PostTagAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._postTagModel.bulkCreate(postGroups, options);
+  }
+
+  public async deletePostTag(
+    where: WhereOptions<PostTagAttributes>,
+    transaction?: Transaction
+  ): Promise<void> {
+    await this._postTagModel.destroy({
+      where,
+      transaction,
+    });
+  }
+
+  public async bulkCreatePostCategory(
+    postGroups: PostCategoryAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._postCategoryModel.bulkCreate(postGroups, options);
+  }
+
+  public async deletePostCategory(
+    where: WhereOptions<PostCategoryAttributes>,
+    transaction?: Transaction
+  ): Promise<void> {
+    await this._postCategoryModel.destroy({
+      where,
+      transaction,
+    });
+  }
+
+  public async bulkCreateSeenPost(
+    seenPosts: UserSeenPostAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._userSeenPostModel.bulkCreate(seenPosts, options);
+  }
+
+  public async bulkCreateReadImportantPost(
+    readImportantPosts: UserMarkedImportantPostAttributes[],
+    options?: BulkCreateOptions
+  ): Promise<void> {
+    await this._userReadImportantPostModel.bulkCreate(readImportantPosts, options);
+  }
 
   public async create(data: PostAttributes, options?: CreateOptions): Promise<void> {
     await this._postModel.create(data, options);
@@ -90,74 +176,6 @@ export class LibContentRepository implements ILibContentRepository {
     });
   }
 
-  public async bulkCreatePostGroup(
-    postGroups: PostGroupAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._postGroupModel.bulkCreate(postGroups, options);
-  }
-
-  public async destroyPostGroup(
-    where: WhereOptions<PostGroupAttributes>,
-    transaction?: Transaction
-  ): Promise<void> {
-    await this._postGroupModel.destroy({
-      where,
-      transaction,
-    });
-  }
-
-  public async bulkCreatePostSeries(
-    postGroups: PostSeriesAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._postSeriesModel.bulkCreate(postGroups, options);
-  }
-
-  public async destroyPostSeries(
-    where: WhereOptions<PostSeriesAttributes>,
-    transaction?: Transaction
-  ): Promise<void> {
-    await this._postSeriesModel.destroy({
-      where,
-      transaction,
-    });
-  }
-
-  public async bulkCreatePostTag(
-    postGroups: PostTagAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._postTagModel.bulkCreate(postGroups, options);
-  }
-
-  public async destroyPostTag(
-    where: WhereOptions<PostTagAttributes>,
-    transaction?: Transaction
-  ): Promise<void> {
-    await this._postTagModel.destroy({
-      where,
-      transaction,
-    });
-  }
-
-  public async bulkCreatePostCategory(
-    postGroups: PostCategoryAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._postTagModel.bulkCreate(postGroups, options);
-  }
-
-  public async destroyPostCategory(
-    where: WhereOptions<PostCategoryAttributes>,
-    transaction?: Transaction
-  ): Promise<void> {
-    await this._postTagModel.destroy({
-      where,
-      transaction,
-    });
-  }
-
   public async delete(id: string): Promise<void> {
     await this._postModel.destroy({ where: { id } });
   }
@@ -167,24 +185,17 @@ export class LibContentRepository implements ILibContentRepository {
     return this._postModel.findOne(findOption);
   }
 
-  public async findAll(findAllPostOptions: FindContentProps): Promise<PostModel[]> {
+  public async findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<PostModel[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
+    if (offsetPaginate) {
+      findOption.limit = offsetPaginate.limit;
+      findOption.offset = offsetPaginate.offset;
+    }
     return this._postModel.findAll(findOption);
-  }
-
-  public async bulkCreateSeenPost(
-    seenPosts: UserSeenPostAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._userSeenPostModel.bulkCreate(seenPosts, options);
-  }
-
-  public async bulkCreateReadImportantPost(
-    readImportantPosts: UserMarkedImportantPostAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void> {
-    await this._userReadImportantPostModel.bulkCreate(readImportantPosts, options);
   }
 
   public async getPagination(
@@ -193,6 +204,7 @@ export class LibContentRepository implements ILibContentRepository {
     const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
+
     const cursorColumns = orderBuilder?.map((order) => order[0]);
 
     const paginator = new CursorPaginator(
@@ -207,6 +219,14 @@ export class LibContentRepository implements ILibContentRepository {
       rows,
       meta,
     };
+  }
+
+  public async getReportedContents(
+    getReportedContentsProps: GetReportContentDetailsProps
+  ): Promise<ReportContentDetailModel[]> {
+    return this._reportContentDetailModel.findAll({
+      where: getReportedContentsProps,
+    });
   }
 
   protected buildFindOptions(options: FindContentProps): FindOptions<PostAttributes> {
@@ -239,6 +259,9 @@ export class LibContentRepository implements ILibContentRepository {
     }
     if (orderOptions.isPublishedByDesc) {
       order.push(['publishedAt', ORDER.DESC]);
+    }
+    if (orderOptions.sortColumn && orderOptions.orderBy) {
+      order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
     order.push(['createdAt', ORDER.DESC]);
     return order;
@@ -406,6 +429,12 @@ export class LibContentRepository implements ILibContentRepository {
       if (options.where.status) {
         conditions.push({
           status: options.where.status,
+        });
+      }
+
+      if (options.where.statuses) {
+        conditions.push({
+          status: options.where.statuses,
         });
       }
 

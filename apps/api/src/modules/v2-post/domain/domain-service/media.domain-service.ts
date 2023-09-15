@@ -6,14 +6,19 @@ import { MediaType } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
+import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';
 
 import { IMediaDomainService } from './interface/media.domain-service.interface';
 
 export class MediaDomainService implements IMediaDomainService {
-  @Inject(MEDIA_REPOSITORY_TOKEN)
-  private readonly _mediaRepo: IMediaRepository;
-  @Inject(KAFKA_ADAPTER)
-  private readonly _kafkaAdapter: IKafkaAdapter;
+  public constructor(
+    @Inject(MEDIA_REPOSITORY_TOKEN)
+    private readonly _mediaRepo: IMediaRepository,
+    @Inject(KAFKA_ADAPTER)
+    private readonly _kafkaAdapter: IKafkaAdapter,
+    @Inject(MEDIA_ADAPTER)
+    private readonly _mediaAdapter: IMediaAdapter
+  ) {}
 
   public async getAvailableVideos(
     videoEntities: VideoEntity[],
@@ -79,7 +84,7 @@ export class MediaDomainService implements IMediaDomainService {
     let result = imageEntities.filter((e) => notChangedIds.includes(e.get('id')));
 
     if (addingImageIds.length) {
-      const images = await this._mediaRepo.findImages(addingImageIds);
+      const images = await this._mediaAdapter.findImagesByIds(addingImageIds);
       const availableImages = images.filter((image) => image.isOwner(ownerId) && image.isReady());
       result = result.concat(availableImages);
     }

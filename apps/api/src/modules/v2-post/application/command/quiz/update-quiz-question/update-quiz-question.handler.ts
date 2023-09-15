@@ -21,13 +21,14 @@ export class UpdateQuizQuestionHandler
     private readonly _quizBinding: IQuizBinding
   ) {}
   public async execute(command: UpdateQuizQuestionCommand): Promise<QuestionDto> {
-    const { authUser, answers, questionId, content } = command.payload;
+    const { quizId, questionId, authUser, answers, content } = command.payload;
 
     const quizQuestionEntity = await this._quizDomainService.updateQuestion({
-      authUser,
-      answers,
+      quizId,
       questionId,
       content,
+      answers,
+      authUser,
     });
 
     return this._quizBinding.bindQuizQuestion(quizQuestionEntity);

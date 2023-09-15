@@ -1,29 +1,29 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { ORDER } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderEnum } from '../../../../common/dto';
 import { Expose, Transform, Type } from 'class-transformer';
+import { IsEnum, IsOptional } from 'class-validator';
 
 export class GetPostDto {
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.ASC, required: false, name: 'comment_order' })
-  @IsEnum(OrderEnum)
+  @ApiProperty({ enum: ORDER, default: ORDER.ASC, required: false, name: 'comment_order' })
+  @IsEnum(ORDER)
   @IsOptional()
   @Expose({
     name: 'comment_order',
   })
-  public commentOrder?: OrderEnum = OrderEnum.DESC;
+  public commentOrder?: ORDER = ORDER.DESC;
 
   @ApiProperty({
-    enum: OrderEnum,
-    default: OrderEnum.ASC,
+    enum: ORDER,
+    default: ORDER.ASC,
     required: false,
     name: 'child_comment_order',
   })
-  @IsEnum(OrderEnum)
+  @IsEnum(ORDER)
   @IsOptional()
   @Expose({
     name: 'child_comment_order',
   })
-  public childCommentOrder?: OrderEnum = OrderEnum.DESC;
+  public childCommentOrder?: ORDER = ORDER.DESC;
 
   @ApiProperty({
     required: false,

@@ -1,18 +1,16 @@
+import { CONTENT_TYPE, QUIZ_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'lodash';
 
 import { ContentNotificationService } from '../../../../../../notification/services';
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../../../authority';
-import { PostType, QuizStatus } from '../../../../data-type';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
-} from '../../../../domain/domain-service/interface';
-import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
+} from '../../../../domain/domain-service/interface';
 import { ContentNotFoundException } from '../../../../domain/exception';
 import { ContentEntity } from '../../../../domain/model/content';
 import { MenuSettingsDto } from '../../../dto';
@@ -50,6 +48,16 @@ export class GetMenuSettingsHandler
 
     const groupIds = contentEntity.getGroupIds();
     const canCRUDContent = this._canCURDContent(contentEntity, userId);
+
+    if (contentEntity.isWaitingSchedule() || contentEntity.isScheduleFailed()) {
+      return new MenuSettingsDto({
+        canEdit: canCRUDContent,
+        canCopyLink: true,
+        canViewSeries: contentEntity.getType() !== CONTENT_TYPE.SERIES,
+        canDelete: canCRUDContent,
+      });
+    }
+
     const canReportContent = this._canReportContent(contentEntity, userId);
     const { canCreateQuiz, canDeleteQuiz, canEditQuiz } = this._canCURDQuiz(
       contentEntity,
@@ -67,7 +75,7 @@ export class GetMenuSettingsHandler
       isSave: contentEntity.isSaved(),
       canCopyLink: true,
       canViewReactions: canViewReaction,
-      canViewSeries: contentEntity.getType() !== PostType.SERIES,
+      canViewSeries: contentEntity.getType() !== CONTENT_TYPE.SERIES,
       canPinContent: this._authorityAppService.canPinContent(groupIds),
       canCreateQuiz,
       canDeleteQuiz,
@@ -87,20 +95,24 @@ export class GetMenuSettingsHandler
   ): { canCreateQuiz: boolean; canDeleteQuiz: boolean; canEditQuiz: boolean } {
     return {
       canCreateQuiz:
-        contentEntity.getType() !== PostType.SERIES && canCRUDContent && !contentEntity.hasQuiz(),
+        contentEntity.getType() !== CONTENT_TYPE.SERIES &&
+        canCRUDContent &&
+        !contentEntity.hasQuiz(),
       canDeleteQuiz:
-        contentEntity.getType() !== PostType.SERIES && canCRUDContent && contentEntity.hasQuiz(),
+        contentEntity.getType() !== CONTENT_TYPE.SERIES &&
+        canCRUDContent &&
+        contentEntity.hasQuiz(),
       canEditQuiz:
-        contentEntity.getType() !== PostType.SERIES &&
+        contentEntity.getType() !== CONTENT_TYPE.SERIES &&
         canCRUDContent &&
         contentEntity.hasQuiz() &&
-        contentEntity.getQuiz().get('status') === QuizStatus.PUBLISHED,
+        contentEntity.getQuiz().get('status') === QUIZ_STATUS.PUBLISHED,
     };
   }
 
   private _canCURDContent(contentEntity: ContentEntity, userId: string): boolean {
     const groupIds = contentEntity.getGroupIds();
-    if (contentEntity.getType() === PostType.SERIES) {
+    if (contentEntity.getType() === CONTENT_TYPE.SERIES) {
       const canCRUDSeries = this._authorityAppService.canCRUDSeries(groupIds);
       return contentEntity.isOwner(userId) && canCRUDSeries;
     }
@@ -109,7 +121,7 @@ export class GetMenuSettingsHandler
   }
 
   private _canReportContent(contentEntity: ContentEntity, userId: string): boolean {
-    return contentEntity.getType() !== PostType.SERIES && !contentEntity.isOwner(userId);
+    return contentEntity.getType() !== CONTENT_TYPE.SERIES && !contentEntity.isOwner(userId);
   }
 
   private async _isEnableSpecificNotifications(

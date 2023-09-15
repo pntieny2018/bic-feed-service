@@ -1,3 +1,4 @@
+import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
@@ -12,17 +13,16 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
-import { PostType } from '../../../data-type';
+import { PaginatedArgs } from '../../../../../common/dto';
 
 export class GetDraftContentsRequestDto extends PaginatedArgs {
   @ApiProperty({
-    enum: OrderEnum,
-    default: OrderEnum.DESC,
+    enum: ORDER,
+    default: ORDER.DESC,
     required: false,
   })
-  @IsEnum(OrderEnum)
-  public order: OrderEnum = OrderEnum.DESC;
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
 
   @ApiPropertyOptional({
     name: 'is_processing',
@@ -47,13 +47,13 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
     description: 'Content type',
     required: false,
     default: '',
-    enum: PostType,
+    enum: CONTENT_TYPE,
   })
   @Expose()
   @IsOptional()
-  @IsEnum(PostType)
+  @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
-  public type?: PostType;
+  public type?: CONTENT_TYPE;
 }
 
 export class SearchContentsRequestDto {
@@ -162,11 +162,11 @@ export class SearchContentsRequestDto {
   @IsOptional()
   @IsNotEmpty()
   @IsArray()
-  @IsEnum(PostType, { each: true })
+  @IsEnum(CONTENT_TYPE, { each: true })
   @Expose({
     name: 'content_types',
   })
-  public contentTypes?: PostType[];
+  public contentTypes?: CONTENT_TYPE[];
 
   @ApiPropertyOptional({
     type: 'boolean',
@@ -181,4 +181,19 @@ export class SearchContentsRequestDto {
     name: 'is_included_inner_groups',
   })
   public isIncludedInnerGroups: boolean;
+}
+
+export class GetScheduleContentsQueryDto extends PaginatedArgs {
+  @ApiPropertyOptional({ enum: ORDER, default: ORDER.ASC, required: false })
+  @IsEnum(ORDER)
+  @IsOptional()
+  public order?: ORDER = ORDER.ASC;
+
+  @ApiPropertyOptional({
+    description: 'Filter by content type',
+    enum: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
+  })
+  @IsOptional()
+  @IsEnum([CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST])
+  public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
 }

@@ -1,7 +1,8 @@
+import { ORDER } from '@beincom/constants';
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { GetReactionRequestDto } from '../dto/request';
-import { OrderEnum } from '../../../../common/dto';
 import { NIL as NIL_UUID } from 'uuid';
+
+import { GetReactionRequestDto } from '../dto/request';
 
 @Injectable()
 export class GetReactionPipe implements PipeTransform {
@@ -13,7 +14,7 @@ export class GetReactionPipe implements PipeTransform {
       getReactionDto.limit = 25;
     }
     if (!getReactionDto.order || getReactionDto.order) {
-      getReactionDto.order = OrderEnum.DESC;
+      getReactionDto.order = ORDER.DESC;
     }
 
     return getReactionDto;

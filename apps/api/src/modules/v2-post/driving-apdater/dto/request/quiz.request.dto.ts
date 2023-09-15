@@ -1,3 +1,4 @@
+import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import {
@@ -14,8 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { OrderEnum, PaginatedArgs } from '../../../../../common/dto';
-import { PostType, QuizStatus } from '../../../data-type';
+import { PaginatedArgs } from '../../../../../common/dto';
 
 export class CreateQuizRequestDto {
   @ApiProperty({ type: String })
@@ -178,15 +178,15 @@ export class UpdateQuizRequestDto {
   @Type(() => QuizQuestionRequestDto)
   public questions?: QuizQuestionRequestDto[];
 
-  @ApiProperty({ enum: QuizStatus, required: false })
+  @ApiProperty({ enum: QUIZ_STATUS, required: false })
   @IsOptional()
-  @IsEnum(QuizStatus)
-  public status?: QuizStatus;
+  @IsEnum(QUIZ_STATUS)
+  public status?: QUIZ_STATUS;
 
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
-  @IsEnum(OrderEnum)
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
   @IsOptional()
-  public order?: OrderEnum = OrderEnum.DESC;
+  public order?: ORDER = ORDER.DESC;
 
   public constructor(data: UpdateQuizRequestDto) {
     Object.assign(this, data);
@@ -259,33 +259,33 @@ export class GenerateQuizRequestDto {
 }
 
 export class GetQuizzesRequestDto extends PaginatedArgs {
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
-  @IsEnum(OrderEnum)
-  public order: OrderEnum = OrderEnum.DESC;
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
 
   @ApiProperty({
     description: 'Quizz status',
     required: true,
-    enum: QuizStatus,
+    enum: QUIZ_STATUS,
   })
   @Expose({
     name: 'status',
   })
-  @IsEnum(QuizStatus)
-  public status: QuizStatus;
+  @IsEnum(QUIZ_STATUS)
+  public status: QUIZ_STATUS;
 
   @ApiPropertyOptional({
     description: 'Content type',
     required: false,
-    enum: PostType,
+    enum: CONTENT_TYPE,
   })
   @Expose({
     name: 'type',
   })
   @IsOptional()
-  @IsEnum(PostType)
+  @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
-  public type?: PostType;
+  public type?: CONTENT_TYPE;
 }
 
 class AddQuizAnswerRequestDto {
@@ -324,9 +324,9 @@ export class AddQuizQuestionRequestDto {
 }
 
 export class GetQuizParticipantsSummaryDetailRequestDto extends PaginatedArgs {
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
-  @IsEnum(OrderEnum)
-  public order: OrderEnum = OrderEnum.DESC;
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
 }
 
 class UpdateQuizAnswerRequestDto {

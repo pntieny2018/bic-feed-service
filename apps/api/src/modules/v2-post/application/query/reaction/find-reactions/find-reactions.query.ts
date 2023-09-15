@@ -1,7 +1,6 @@
+import { ORDER } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { IQuery } from '@nestjs/cqrs';
-
-import { OrderEnum } from '../../../../../../common/dto';
-import { UserDto } from '../../../../../v2-user/application';
 
 type Props = {
   authUser: UserDto;
@@ -9,7 +8,7 @@ type Props = {
   targetId: string;
   target: string;
   latestId: string;
-  order: OrderEnum;
+  order: ORDER;
   limit: number;
 };
 export class FindReactionsQuery implements IQuery {

@@ -1,5 +1,5 @@
-import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -9,11 +9,13 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { AudienceRequestDto } from './audience.request.dto';
+
+import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
 import { MediaDto } from '../../../../media/dto';
 import { UserMentionDto } from '../../../../mention/dto';
-import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
 import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
+
+import { AudienceRequestDto } from './audience.request.dto';
 import { MediaRequestDto } from './media.request.dto';
 
 export class AutoSavePostRequestDto {
@@ -100,7 +102,9 @@ export class AutoSavePostRequestDto {
     if (typeof value === 'object') {
       const mentionUserIds = [];
       for (const property in value) {
-        if (value[property]?.id) mentionUserIds.push(value[property].id);
+        if (value[property]?.id) {
+          mentionUserIds.push(value[property].id);
+        }
       }
       return mentionUserIds;
     }
@@ -208,7 +212,9 @@ export class PublishPostRequestDto {
     if (typeof value === 'object') {
       const mentionUserIds = [];
       for (const property in value) {
-        if (value[property]?.id) mentionUserIds.push(value[property].id);
+        if (value[property]?.id) {
+          mentionUserIds.push(value[property].id);
+        }
       }
       return mentionUserIds;
     }
