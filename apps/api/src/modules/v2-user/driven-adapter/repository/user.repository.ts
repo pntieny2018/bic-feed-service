@@ -1,4 +1,3 @@
-import qs from 'qs';
 import { uniq } from 'lodash';
 import { AxiosHelper } from '../../../../common/helpers';
 import { UserEntity, UserProps } from '../../domain/model/user';
@@ -136,17 +135,15 @@ export class UserRepository implements IUserRepository {
     let users: UserProps[] = [];
     try {
       const response = await lastValueFrom(
-        this._httpService.get(ENDPOINT.USER.INTERNAL.USERS_PATH, {
+        this._httpService.post(ENDPOINT.USER.INTERNAL.GET_USERS, ids, {
           params: {
-            ids,
             ...(authUserId && {
               actorId: authUserId,
             }),
           },
-          paramsSerializer: (params) => qs.stringify(params),
         })
       );
-      if (response.status === HttpStatus.OK) {
+      if (response.status === HttpStatus.OK || response.status === HttpStatus.CREATED) {
         users = AxiosHelper.getDataArrayResponse<UserProps>(response);
       }
     } catch (e) {
