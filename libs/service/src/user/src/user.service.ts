@@ -87,7 +87,9 @@ export class UserService implements IUserService {
     }
 
     const user = await this._store.get<SharedUserDto>(`${CACHE_KEYS.SHARE_USER}:${id}`);
-
+    if (!user) {
+      return null;
+    }
     const permissions = await this._getUserPermissionFromCache(user.id);
     const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
       ...badge,
