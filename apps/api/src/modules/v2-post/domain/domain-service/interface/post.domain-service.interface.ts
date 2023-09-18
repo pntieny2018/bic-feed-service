@@ -38,6 +38,7 @@ export interface IPostDomainService {
   getPostById(postId: string, authUserId: string): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
+  schedule(input: SchedulePostProps): Promise<PostEntity>;
   publishPost(input: UpdatePostProps): Promise<PostEntity>;
   updatePost(props: UpdatePostProps): Promise<PostEntity>;
   updateSetting(input: {
