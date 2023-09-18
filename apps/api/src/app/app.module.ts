@@ -39,6 +39,7 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
+import { UserModule } from '@libs/service/user';
 
 @Module({
   imports: [
@@ -85,6 +86,7 @@ import { LibModule } from './lib.module';
     GiphyModuleV2,
     AdminModule,
     I18nGlobalModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [],
