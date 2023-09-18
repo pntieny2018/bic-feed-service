@@ -1,4 +1,4 @@
-import { HEADER_REQ_ID } from '@libs/common/constants';
+import { HEADER_REQ_ID, REGEX_UID } from '@libs/common/constants';
 import {
   IHttpServiceResponse,
   IHttpService,
@@ -80,7 +80,7 @@ export class HttpService implements IHttpService {
       status,
       statusText,
       headers: JSON.parse(JSON.stringify(headers)),
-      data: camelcaseKeys(data, { deep: true }) as T,
+      data: camelcaseKeys(data, { deep: true, exclude: [REGEX_UID] }) as T,
     };
   }
 }
