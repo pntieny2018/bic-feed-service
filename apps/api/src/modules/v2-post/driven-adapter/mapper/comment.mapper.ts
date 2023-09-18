@@ -58,16 +58,10 @@ export class CommentMapper {
   public toPersistence(comment: CommentEntity): CommentAttributes {
     return {
       id: comment.get('id'),
-      actor: undefined,
-      child: [],
-      createdAt: undefined,
-      edited: false,
-      ownerReactions: [],
-      parent: undefined,
-      post: undefined,
-      reactionsCount: '',
-      totalReply: 0,
-      updatedAt: undefined,
+      edited: comment.get('edited'),
+      totalReply: comment.get('totalReply') || 0,
+      createdAt: comment.get('createdAt'),
+      updatedAt: comment.get('updatedAt'),
       content: comment.get('content'),
       postId: comment.get('postId'),
       parentId: comment.get('parentId'),
@@ -76,9 +70,11 @@ export class CommentMapper {
       createdBy: comment.get('createdBy'),
       giphyId: comment.get('giphyId'),
       mediaJson: {
-        files: comment.get('media').files.map((file) => file.toObject()),
-        images: comment.get('media').images.map((image) => image.toObject() as unknown as IImage),
-        videos: comment.get('media').videos.map((video) => video.toObject()),
+        files: (comment.get('media').files || []).map((file) => file.toObject()),
+        images: (comment.get('media').images || []).map(
+          (image) => image.toObject() as unknown as IImage
+        ),
+        videos: (comment.get('media').videos || []).map((video) => video.toObject()),
       },
       mentions: comment.get('mentions'),
     };
