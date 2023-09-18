@@ -6,6 +6,7 @@ import {
   PublishArticleCommandPayload,
   UpdateArticleCommandPayload,
 } from '../../../application/command/article';
+import { MediaItemDto } from '../../../application/dto';
 import { ArticleEntity } from '../../model/content';
 
 export type ArticlePayload = {
@@ -13,23 +14,22 @@ export type ArticlePayload = {
   title?: string;
   summary?: string;
   content?: string;
-  categories?: string[];
-  series?: string[];
-  tags?: string[];
+  categoryIds?: string[];
+  seriesIds?: string[];
+  tagIds?: string[];
   groupIds?: string[];
-  coverMedia?: {
-    id: string;
-  };
+  coverMedia?: MediaItemDto;
   wordCount?: number;
-  scheduledAt?: Date;
 };
 
+// TODO: refactor using ArticlePayload
 export type UpdateArticleProps = UpdateArticleCommandPayload;
 
+// TODO: refactor using ArticlePayload
 export type PublishArticleProps = PublishArticleCommandPayload;
 
 export type ScheduleArticleProps = {
-  payload: ArticlePayload;
+  payload: ArticlePayload & { scheduledAt: Date };
   actor: UserDto;
 };
 
