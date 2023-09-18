@@ -2,6 +2,7 @@ import { CACHE_KEYS } from '@beincom/constants';
 import { UserDto as ProfileUserDto } from '@beincom/dto';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
+import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
 import { IUserService, ShowingBadgeDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
@@ -160,12 +161,9 @@ export class UserService implements IUserService {
     permissions.groups = groupPermissions?.groups;
 
     if (!communityPermissions || !groupPermissions) {
-      const response = await this._groupHttpService.get(
-        USER_ENDPOINT.INTERNAL.GET_USER_PERMISSIONS,
-        {
-          params: { userId },
-        }
-      );
+      const response = await this._groupHttpService.get(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, {
+        params: { userId },
+      });
 
       if (response.status !== HttpStatus.OK) {
         return null;

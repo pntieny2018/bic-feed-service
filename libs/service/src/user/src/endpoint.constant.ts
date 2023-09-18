@@ -3,6 +3,5 @@ export const USER_ENDPOINT = {
     CHECK_CUD_TAG: '/internal/users/:userId/can-cud-tags/:rootGroupId',
     GET_USER: '/internal/shared-users/:username',
     USERS_PATH: '/internal/shared-users',
-    GET_USER_PERMISSIONS: '/internal/users/:userId/permissions',
   },
 };
