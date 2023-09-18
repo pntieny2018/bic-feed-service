@@ -20,10 +20,10 @@ import {
   ScheduleArticleHandler,
   UpdateArticleHandler,
 } from '../application/command/article';
-import { ProcessScheduledArticlePublishingHandler } from '../application/command/article/process-scheduled-article-publishing';
 import {
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
+  ProcessScheduledArticlePublishingHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
@@ -43,12 +43,13 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
-import { ArticleCron } from '../application/cron/article.cron';
+import { ContentCron } from '../application/cron';
 import {
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
+import { PostPublishedEventHandler } from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
@@ -105,12 +106,13 @@ export const postProvider = [
   ArticleProcessor,
 
   /** Application Cron Handler */
-  ArticleCron,
+  ContentCron,
 
   /** Application Event Handler */
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
+  PostPublishedEventHandler,
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,

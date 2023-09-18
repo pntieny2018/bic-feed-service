@@ -56,6 +56,7 @@ export const ERRORS = {
   POST_INVALID_PARAMETER: 'post.invalid_parameter',
   POST_STATUS_CONFLICTED: 'post.status_conflicted',
   POST_LIMIT_ATTACHED_SERIES: 'post.limit_attached_series',
+  POST_VIDEO_PROCESSING: 'post.video_processing',
 
   // SERIES
   SERIES_NOT_FOUND: 'series.not_found',
