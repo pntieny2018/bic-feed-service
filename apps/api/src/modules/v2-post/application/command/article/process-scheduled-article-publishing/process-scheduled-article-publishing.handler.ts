@@ -31,7 +31,10 @@ export class ProcessScheduledArticlePublishingHandler
     const { id, actorId } = command.payload;
 
     const articleEntity = await this._contentRepository.getContentById(id);
-    const actor = await this._userAdapter.getUserById(actorId);
+    const actor = await this._userAdapter.getUserById(actorId, {
+      withPermission: true,
+      withGroupJoined: true,
+    });
     if (!actor) {
       throw new DomainNotFoundException('User not found');
     }
