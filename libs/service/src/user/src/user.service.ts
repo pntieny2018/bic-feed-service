@@ -1,14 +1,15 @@
 import { SharedUserDto, UserDto as ProfileUserDto } from '@beincom/dto';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { AxiosHelper } from '@libs/common/helpers';
-import { IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
+import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
+import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
-import { IUserService } from './user.service.interface';
+import { IUserService } from '@libs/service/user';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -16,7 +17,8 @@ export class UserService implements IUserService {
 
   public constructor(
     private readonly _store: RedisService,
-    @Inject(USER_HTTP_TOKEN) private readonly _httpService: IHttpService
+    @Inject(USER_HTTP_TOKEN) private readonly _httpService: IHttpService,
+    @Inject(GROUP_HTTP_TOKEN) private readonly _groupHttpService: IHttpService
   ) {}
 
   public async findByUserName(username: string): Promise<UserDto> {
@@ -64,6 +66,7 @@ export class UserService implements IUserService {
 
       return [...userCaches, ...userApis];
     } catch (e) {
+      console.log(e);
       this._logger.error(e);
       return [];
     }
@@ -84,10 +87,17 @@ export class UserService implements IUserService {
     }
   }
 
-  private async _getUserFromCacheByUsername(username: string): Promise<ProfileUserDto> {
+  private async _getUserFromCacheByUsername(username: string): Promise<UserDto> {
     const profileCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
     const user = await this._store.get<ProfileUserDto>(profileCacheKey);
-    return user;
+
+    const permissions = await this._getUserPermission(user.id);
+    const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
+      ...badge,
+      community: badge.community || null,
+    }));
+
+    return new UserDto({ ...user, permissions, showingBadges: showingBadgesWithCommunity });
   }
 
   private async _getUserFromCacheById(id: string): Promise<UserDto> {
@@ -97,7 +107,7 @@ export class UserService implements IUserService {
 
     const user = await this._store.get<SharedUserDto>(`${CACHE_KEYS.SHARE_USER}:${id}`);
 
-    const permissions = await this._getUserPermissionFromCache(user.id);
+    const permissions = await this._getUserPermission(user.id);
     const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
       ...badge,
       community: badge.community || null,
@@ -116,7 +126,7 @@ export class UserService implements IUserService {
 
     const users = await Promise.all(
       userCaches.map(async (user) => {
-        const permissions = await this._getUserPermissionFromCache(user.id);
+        const permissions = await this._getUserPermission(user.id);
         const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
           ...badge,
           community: badge.community || null,
@@ -152,7 +162,7 @@ export class UserService implements IUserService {
 
     const users = await Promise.all(
       userApis.map(async (user) => {
-        const permissions = await this._getUserPermissionFromCache(user.id);
+        const permissions = await this._getUserPermission(user.id);
         const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
           ...badge,
           community: badge.community || null,
@@ -176,5 +186,26 @@ export class UserService implements IUserService {
     }
 
     return response.data['data'];
+  }
+
+  private async _getUserPermissionFromApi(userId: string): Promise<UserPermissionDto> {
+    const response = await this._groupHttpService.get(
+      AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, { userId })
+    );
+    if (response.status !== HttpStatus.OK) {
+      return null;
+    }
+
+    return response.data['data'];
+  }
+
+  private async _getUserPermission(userId: string): Promise<UserPermissionDto> {
+    const permissionCache = await this._getUserPermissionFromCache(userId);
+    if (permissionCache) {
+      return permissionCache;
+    }
+
+    const permissionApi = await this._getUserPermissionFromApi(userId);
+    return permissionApi;
   }
 }

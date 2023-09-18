@@ -1,3 +1,4 @@
+import { QUIZ_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
@@ -56,7 +57,6 @@ import {
   UpdateQuizQuestionRequestDto,
   UpdateQuizRequestDto,
 } from '../dto/request';
-import { QUIZ_STATUS } from '@beincom/constants';
 
 @ApiTags('Quizzes')
 @ApiSecurity('authorization')

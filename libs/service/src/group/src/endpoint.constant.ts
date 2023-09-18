@@ -6,5 +6,6 @@ export const GROUP_ENDPOINT = {
   INTERNAL: {
     COMMUNITY_ADMINS: '/internal/communities-admins',
     SHARED_GROUPS: '/internal/shared-groups?ids=:ids',
+    USER_PERMISSIONS: '/internal/users/:userId/permissions',
   },
 };
