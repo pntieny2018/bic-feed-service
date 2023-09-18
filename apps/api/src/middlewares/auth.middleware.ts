@@ -13,7 +13,6 @@ import {
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../modules/v2-user/application';
-import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -21,10 +20,7 @@ export class AuthMiddleware implements NestMiddleware {
     private readonly _configService: ConfigService,
     private readonly _httpService: HttpService,
     @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userAppService: IUserApplicationService,
-
-    @Inject(USER_SERVICE_TOKEN)
-    private readonly _userService: IUserService
+    private readonly _userAppService: IUserApplicationService
   ) {}
 
   public async use(req: Request, res: Response, next: () => void): Promise<void> {
@@ -107,7 +103,10 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   private async _getUser(username: string): Promise<UserDto> {
-    const userInfo = await this._userService.findById('7b63852c-5249-499a-a32b-6bdaa2761fc2');
+    const userInfo = await this._userAppService.findByUserName(username, {
+      withGroupJoined: true,
+      withPermission: true,
+    });
     if (!userInfo) {
       throw new UnauthorizedException({
         code: ERRORS.API_UNAUTHORIZED,
