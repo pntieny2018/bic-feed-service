@@ -7,6 +7,7 @@ import { LinkPreviewDto, MediaDto } from '../../application/dto';
 import { PostPublishedEvent } from '../event';
 import {
   ContentAccessDeniedException,
+  ContentHasBeenPublishedException,
   ContentNoPublishYetException,
   ContentNotFoundException,
   InvalidResourceImageException,
@@ -172,6 +173,10 @@ export class PostDomainService implements IPostDomainService {
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isHidden()) {
       throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isPublished()) {
+      throw new ContentHasBeenPublishedException();
     }
 
     await this._validateAndSetPostAttributes(postEntity, payload, actor);

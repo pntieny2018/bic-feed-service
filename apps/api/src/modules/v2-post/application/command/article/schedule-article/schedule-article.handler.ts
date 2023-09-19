@@ -5,37 +5,25 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
-import { ArticleInvalidScheduledTimeException } from '../../../../domain/exception';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
-import { ArticleDto } from '../../../dto';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
 
 import { ScheduleArticleCommand } from './schedule-article.command';
 
 @CommandHandler(ScheduleArticleCommand)
-export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCommand, ArticleDto> {
+export class ScheduleArticleHandler implements ICommandHandler<ScheduleArticleCommand, void> {
   public constructor(
-    @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding,
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
-    private readonly _articleDomainService: IArticleDomainService
+    private readonly _articleDomainService: IArticleDomainService,
+
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator
   ) {}
 
-  public async execute(command: ScheduleArticleCommand): Promise<ArticleDto> {
-    const payload = command.payload;
-    const { actor, scheduledAt } = payload;
+  public async execute(command: ScheduleArticleCommand): Promise<void> {
+    const { actor, ...payload } = command.payload;
 
-    const scheduledDate = new Date(scheduledAt);
+    this._contentValidator.validateScheduleTime(payload.scheduledAt);
 
-    if (!scheduledDate.getTime() || scheduledDate.getTime() <= Date.now()) {
-      throw new ArticleInvalidScheduledTimeException();
-    }
-
-    const articleEntity = await this._articleDomainService.schedule({
-      payload,
-      actor,
-    });
-
-    return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
+    await this._articleDomainService.schedule({ payload, actor });
   }
 }
