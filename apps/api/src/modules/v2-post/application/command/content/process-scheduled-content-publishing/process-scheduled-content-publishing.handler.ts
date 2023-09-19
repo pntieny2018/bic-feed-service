@@ -19,7 +19,7 @@ import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-i
 import { ProcessScheduledContentPublishingCommand } from './process-scheduled-content-publishing.command';
 
 @CommandHandler(ProcessScheduledContentPublishingCommand)
-export class ProcessScheduledArticlePublishingHandler
+export class ProcessScheduledContentPublishingHandler
   implements ICommandHandler<ProcessScheduledContentPublishingCommand, void>
 {
   public constructor(

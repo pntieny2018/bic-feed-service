@@ -23,7 +23,7 @@ import {
 import {
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
-  ProcessScheduledArticlePublishingHandler,
+  ProcessScheduledContentPublishingHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
@@ -130,7 +130,7 @@ export const postProvider = [
   ProcessArticleDeletedHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
-  ProcessScheduledArticlePublishingHandler,
+  ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
