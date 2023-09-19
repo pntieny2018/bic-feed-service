@@ -1,11 +1,8 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../v2-user/application';
+import { LinkPreviewDto, MediaDto } from '../../application/dto';
 import {
   ContentAccessDeniedException,
   ContentNoPublishYetException,
@@ -19,7 +16,12 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -33,6 +35,8 @@ import {
   ArticleCreateProps,
   IPostDomainService,
   PostCreateProps,
+  PostPayload,
+  SchedulePostProps,
   UpdatePostProps,
 } from './interface';
 import {
@@ -48,24 +52,27 @@ export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
 
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    @Inject(LINK_PREVIEW_DOMAIN_SERVICE_TOKEN)
+    private readonly _linkPreviewDomainService: ILinkPreviewDomainService,
+    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
+    private readonly _mediaDomainService: IMediaDomainService,
+
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(MENTION_VALIDATOR_TOKEN)
     private readonly _mentionValidator: IMentionValidator,
-    @Inject(LINK_PREVIEW_DOMAIN_SERVICE_TOKEN)
-    private readonly _linkPreviewDomainService: ILinkPreviewDomainService,
+
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepo: ITagRepository,
-    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService,
+
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async getPostById(postId: string, authUserId: string): Promise<PostEntity> {
@@ -147,6 +154,32 @@ export class PostDomainService implements IPostDomainService {
     return articleEntity;
   }
 
+  public async schedule(input: SchedulePostProps): Promise<PostEntity> {
+    const { payload, actor } = input;
+    const { id, scheduledAt } = payload;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      mustIncludeGroup: true,
+      shouldIncludeSeries: true,
+      shouldIncludeLinkPreview: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+
+    postEntity.setWaitingSchedule(scheduledAt);
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+    }
+
+    return postEntity;
+  }
+
   public async publishPost(props: UpdatePostProps): Promise<PostEntity> {
     const { authUser, id, groupIds, mentionUserIds } = props;
     const postEntity = await this._contentRepository.findOne({
@@ -169,7 +202,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
       withGroupJoined: true,
     });
 
@@ -280,7 +313,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
       withGroupJoined: true,
     });
 
@@ -446,7 +479,7 @@ export class PostDomainService implements IPostDomainService {
     if (groupIds || postEntity.get('groupIds')) {
       groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     }
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
       withGroupJoined: true,
     });
 
@@ -509,5 +542,95 @@ export class PostDomainService implements IPostDomainService {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
+  }
+
+  private async _validateAndSetPostAttributes(
+    postEntity: PostEntity,
+    payload: PostPayload,
+    actor: UserDto
+  ): Promise<void> {
+    const { content, seriesIds, tagIds, groupIds, media, mentionUserIds, linkPreview } = payload;
+
+    if (tagIds) {
+      await this._setNewTags(postEntity, tagIds);
+    }
+
+    if (media) {
+      await this._setNewMedia(postEntity, media);
+    }
+
+    const currentLinkPreviewUrl = postEntity.get('linkPreview')?.get('url');
+    if (linkPreview?.url !== currentLinkPreviewUrl) {
+      await this._setNewLinkPreview(postEntity, linkPreview);
+    }
+
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
+      withGroupJoined: true,
+    });
+
+    postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
+    postEntity.setPrivacyFromGroups(groups);
+
+    await this._postValidator.validatePublishContent(postEntity, actor, postEntity.get('groupIds'));
+    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+    await this._postValidator.validateLimitedToAttachSeries(postEntity);
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      postEntity.get('seriesIds'),
+      postEntity.get('tags')
+    );
+  }
+
+  private async _setNewTags(postEntity: PostEntity, tagIds: string[]): Promise<void> {
+    const newTagEntities = await this._tagRepo.findAll({
+      ids: tagIds,
+    });
+    postEntity.setTags(newTagEntities);
+  }
+
+  private async _setNewLinkPreview(
+    postEntity: PostEntity,
+    linkPreview: LinkPreviewDto
+  ): Promise<void> {
+    const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
+    postEntity.setLinkPreview(linkPreviewEntity);
+  }
+
+  private async _setNewMedia(postEntity: PostEntity, media: MediaDto): Promise<void> {
+    const ownerId = postEntity.get('createdBy');
+
+    const imageEntities = postEntity.get('media').images;
+    const fileEntities = postEntity.get('media').files;
+    const videoEntities = postEntity.get('media').videos;
+
+    const newImageIds = media?.images?.map((image) => image.id) || [];
+    const newFileIds = media?.files?.map((file) => file.id) || [];
+    const newVideoIds = media?.videos?.map((video) => video.id) || [];
+
+    const images = await this._mediaDomainService.getAvailableImages(
+      imageEntities,
+      newImageIds,
+      ownerId
+    );
+    if (images.some((image) => !image.isPostContentResource())) {
+      throw new InvalidResourceImageException();
+    }
+    const files = await this._mediaDomainService.getAvailableFiles(
+      fileEntities,
+      newFileIds,
+      ownerId
+    );
+    const videos = await this._mediaDomainService.getAvailableVideos(
+      videoEntities,
+      newVideoIds,
+      ownerId
+    );
+
+    postEntity.setMedia({
+      files,
+      images,
+      videos,
+    });
   }
 }

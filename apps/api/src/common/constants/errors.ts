@@ -43,6 +43,7 @@ export const ERRORS = {
   CONTENT_NO_PUBLISH_YET: 'content.no_publish_yet',
   CONTENT_HAS_BEEN_PUBLISHED: 'content.has_been_published',
   CONTENT_QUIZ_EXISTED: 'content.quiz_existed',
+  CONTENT_INVALID_SCHEDULED_TIME: 'content.invalid_scheduled_time',
 
   // ARTICLE
   ARTICLE_INVALID_PARAMETER: 'article.invalid_parameter',
