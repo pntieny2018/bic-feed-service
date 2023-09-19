@@ -6,11 +6,7 @@ import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
 import { MediaMarkAction, MediaStatus, MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
+import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
@@ -127,119 +123,6 @@ export class PostListener {
       this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
       return;
-    }
-  }
-
-  @On(PostHasBeenPublishedEvent)
-  public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
-    const { post, actor } = event.payload;
-    const {
-      status,
-      id,
-      content,
-      media,
-      mentions,
-      createdBy,
-      audience,
-      createdAt,
-      updatedAt,
-      publishedAt,
-      type,
-      isHidden,
-      tags,
-      setting,
-    } = post;
-    if (post.videoIdProcessing) {
-      await this._mediaService
-        .processVideo([post.videoIdProcessing])
-        .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
-    }
-
-    if (status !== PostStatus.PUBLISHED) {
-      return;
-    }
-
-    const activity = this._postActivityService.createPayload({
-      id,
-      title: null,
-      content,
-      contentType: type,
-      setting,
-      audience: audience,
-      mentions: mentions as any,
-      actor: actor,
-      createdAt: createdAt,
-    });
-    if (((activity.object.mentions as any) ?? [])?.length === 0) {
-      activity.object.mentions = {};
-    }
-
-    await this._notificationService.publishPostNotification({
-      key: `${post.id}`,
-      value: {
-        actor: {
-          id: post.createdBy,
-        },
-        event: event.getEventName(),
-        data: activity,
-        meta: {
-          post: {
-            ignoreUserIds: post.series?.map((series) => series.createdBy),
-          },
-        },
-      },
-    });
-    const mentionUserIds = [];
-    for (const key in mentions) {
-      mentionUserIds.push(mentions[key].id);
-    }
-    const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
-    this._postSearchService.addPostsToSearch([
-      {
-        id,
-        type,
-        content,
-        isHidden,
-        media,
-        mentionUserIds,
-        groupIds: audience.groups.map((group) => group.id),
-        communityIds: audience.groups.map((group) => group.rootGroupId),
-        seriesIds: contentSeries.postSeries.map((item) => item.seriesId),
-        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
-        createdBy,
-        createdAt,
-        updatedAt,
-        publishedAt,
-      },
-    ]);
-
-    if (post.tags.length) {
-      this._tagService
-        .increaseTotalUsed(post.tags.map((e) => e.id))
-        .catch((ex) => this._logger.debug(ex));
-    }
-
-    try {
-      // Fanout to write post to all news feed of user follow group audience
-      this._feedPublisherService.fanoutOnWrite(
-        id,
-        audience.groups.map((g) => g.id),
-        []
-      );
-    } catch (error) {
-      this._sentryService.captureException(error);
-    }
-    if (post.series && post.series.length) {
-      for (const sr of post.series) {
-        this._internalEventEmitter.emit(
-          new SeriesAddedItemsEvent({
-            itemIds: [post.id],
-            seriesId: sr.id,
-            actor: actor,
-            context: 'publish',
-          })
-        );
-      }
     }
   }
 

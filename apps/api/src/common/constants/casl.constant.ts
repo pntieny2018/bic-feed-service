@@ -18,7 +18,7 @@ export const CACHE_KEYS = {
   REPORT_REASON_TYPE: 'report_reason_type',
   SHARE_USER: 'SU',
   SHARE_GROUP: 'SG',
-  IS_RUNNING_ARTICLE_SCHEDULE: 'is_running_article_schedule',
+  IS_RUNNING_CONTENT_SCHEDULE: 'is_running_content_schedule',
 };
 
 export class BasicPermissionDto {

@@ -176,29 +176,29 @@ export class ArticleController {
   }
 
   @ApiOperation({ summary: 'Schedule article' })
-  @ApiOkResponse({
-    type: ArticleDto,
-    description: 'Schedule article successfully',
-  })
+  @ApiOkResponse({ description: 'Schedule article successfully' })
   @ResponseMessages({
-    success: 'message.article.scheduled_success',
+    success: 'Successful Schedule',
+    error: 'Fail Schedule',
   })
   @Put(ROUTES.ARTICLE.SCHEDULE.PATH)
   @Version(ROUTES.ARTICLE.SCHEDULE.VERSIONS)
   public async schedule(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() scheduleArticleRequestDto: ScheduleArticleRequestDto
-  ): Promise<ArticleDto> {
-    const { audience } = scheduleArticleRequestDto;
-    const articleDto = await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() scheduleData: ScheduleArticleRequestDto,
+    @AuthUser() user: UserDto
+  ): Promise<void> {
+    const { audience } = scheduleData;
+    await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
       new ScheduleArticleCommand({
-        id,
-        actor: user,
-        ...scheduleArticleRequestDto,
+        ...scheduleData,
+        id: articleId,
+        categoryIds: scheduleData.categories,
+        seriesIds: scheduleData.series,
+        tagIds: scheduleData.tags,
         groupIds: audience?.groupIds,
+        actor: user,
       })
     );
-    return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

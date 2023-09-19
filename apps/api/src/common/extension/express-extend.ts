@@ -1,11 +1,8 @@
 import { UserDto } from '../../modules/v2-user/application';
 
 export interface IResponseMessage {
-  validator?: {
-    fails: string;
-  };
   success: string;
-  forbidden?: string;
+  error?: string;
 }
 
 declare module 'express-serve-static-core' {

@@ -1,5 +1,6 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
+
 import { ERRORS } from '../../../../common/constants/errors';
 import { RULES } from '../../constant';
 
@@ -36,5 +37,14 @@ export class PostLimitAttachedSeriesException extends DomainException {
       '';
 
     super(PostLimitAttachedSeriesException.code, message, error);
+  }
+}
+
+export class PostVideoProcessingException extends DomainException {
+  public static code = ERRORS.POST_VIDEO_PROCESSING;
+
+  public constructor(message: string = null, error: any = null) {
+    message = message || 'Post video is processing';
+    super(PostStatusConflictedException.code, message, error);
   }
 }
