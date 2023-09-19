@@ -22,13 +22,17 @@ export type GetAroundCommentProps = {
   order: ORDER;
 };
 
+export type GetAroundCommentResult = CursorPaginationResult<CommentEntity> & {
+  targetIndex: number;
+};
+
 export interface ICommentRepository {
   getPagination(input: GetPaginationCommentProps): Promise<CursorPaginationResult<CommentEntity>>;
 
   getAroundComment(
-    comment: CommentEntity,
+    commentId: string,
     props: GetAroundCommentProps
-  ): Promise<CursorPaginationResult<CommentEntity>>;
+  ): Promise<GetAroundCommentResult>;
 
   createComment(data: CommentEntity): Promise<CommentEntity>;
 
