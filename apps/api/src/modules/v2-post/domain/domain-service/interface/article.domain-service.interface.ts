@@ -1,9 +1,6 @@
 import { UserDto } from '@libs/service/user';
 
-import {
-  AutoSaveArticleCommandPayload,
-  DeleteArticleCommandPayload,
-} from '../../../application/command/article';
+import { DeleteArticleCommandPayload } from '../../../application/command/article';
 import { MediaItemDto } from '../../../application/dto';
 import { ArticleEntity } from '../../model/content';
 
@@ -35,7 +32,10 @@ export type ScheduleArticleProps = {
   actor: UserDto;
 };
 
-export type AutoSaveArticleProps = AutoSaveArticleCommandPayload;
+export type AutoSaveArticleProps = {
+  payload: ArticlePayload;
+  actor: UserDto;
+};
 
 export type DeleteArticleProps = DeleteArticleCommandPayload;
 

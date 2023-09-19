@@ -107,17 +107,19 @@ export class ArticleController {
   @Patch(ROUTES.ARTICLE.AUTO_SAVE.PATH)
   @Version(ROUTES.ARTICLE.AUTO_SAVE.VERSIONS)
   public async autoSave(
-    @AuthUser() user: UserDto,
-    @Param('articleId', ParseUUIDPipe) id: string,
-    @Body() updateArticleRequestDto: UpdateArticleRequestDto
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() updateData: UpdateArticleRequestDto,
+    @AuthUser() authUser: UserDto
   ): Promise<void> {
-    const { audience } = updateArticleRequestDto;
     await this._commandBus.execute<AutoSaveArticleCommand, void>(
       new AutoSaveArticleCommand({
-        id,
-        actor: user,
-        ...updateArticleRequestDto,
-        groupIds: audience?.groupIds,
+        ...updateData,
+        id: articleId,
+        categoryIds: updateData.categories,
+        seriesIds: updateData.series,
+        tagIds: updateData.tags,
+        groupIds: updateData.audience?.groupIds,
+        actor: authUser,
       })
     );
   }

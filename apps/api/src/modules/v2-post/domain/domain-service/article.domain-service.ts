@@ -255,22 +255,18 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async autoSave(inputData: AutoSaveArticleProps): Promise<void> {
-    const { actor, id, coverMedia } = inputData;
+  public async autoSave(input: AutoSaveArticleProps): Promise<void> {
+    const { payload, actor } = input;
+    const { id: articleId, coverMedia } = payload;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSeries: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+      shouldIncludeGroup: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
     });
 
-    if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle) {
       throw new ContentNotFoundException();
     }
 
@@ -286,24 +282,9 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(
-      articleEntity,
-      {
-        id: inputData.id,
-        title: inputData.title,
-        summary: inputData.summary,
-        content: inputData.content,
-        categoryIds: inputData.categories,
-        seriesIds: inputData.series,
-        tagIds: inputData.tags,
-        groupIds: inputData.groupIds,
-        coverMedia: inputData.coverMedia,
-        wordCount: inputData.wordCount,
-      },
-      inputData.actor
-    );
+    await this._setArticleEntityAttributes(articleEntity, payload, input.actor);
 
-    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
+    await this._articleValidator.validateArticle(articleEntity, input.actor);
 
     if (!articleEntity.isChanged()) {
       return;
