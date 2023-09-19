@@ -18,6 +18,7 @@ export class AuthorityAppService implements IAuthorityAppService {
     try {
       const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {
+        this._abilities = new Ability([]);
         return;
       }
       const permissions = AuthorityAppService.extractAbilitiesFromPermission(cachedPermissions);

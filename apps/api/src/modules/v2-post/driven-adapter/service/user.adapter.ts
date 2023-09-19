@@ -43,6 +43,6 @@ export class UserAdapter implements IUserAdapter {
     if (!userIds || userIds?.length === 0) {
       return [];
     }
-    return this._userService.findAllFromInternalByIds(userIds, authUserId);
+    return this._userService.findAllByIdsWithAuthUser(userIds, authUserId);
   }
 }

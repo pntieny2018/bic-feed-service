@@ -47,12 +47,10 @@ export class FindQuizParticipantsSummaryDetailHandler
     }
 
     const { rows: quizParticipantEntities, meta } =
-      await this._quizParticipantRepo.getQuizParticipantHighestScoreGroupByUserId(contentId, {
-        limit,
-        before,
-        after,
-        order,
-      });
+      await this._quizParticipantRepo.getPaginationQuizParticipantHighestScoreGroupByUserId(
+        contentId,
+        { limit, before, after, order }
+      );
 
     const userIds = quizParticipantEntities.map((quizParticipantEntity) =>
       quizParticipantEntity.get('createdBy')

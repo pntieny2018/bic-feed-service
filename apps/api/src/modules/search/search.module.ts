@@ -4,11 +4,9 @@ import { KafkaOptions, Transport } from '@nestjs/microservices';
 
 import { IKafkaConfig } from '../../config/kafka';
 import { PostModule } from '../post';
-import { ReactionModule } from '../reaction';
 import { TagModule } from '../tag';
 import { GroupModuleV2 } from '../v2-group/group.module';
 import { PostModuleV2 } from '../v2-post/post.module';
-import { UserModuleV2 } from '../v2-user/user.module';
 
 import { SearchAppService } from './application/search.app-service';
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
@@ -24,14 +22,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
   };
 };
 @Module({
-  imports: [
-    forwardRef(() => PostModuleV2),
-    UserModuleV2,
-    GroupModuleV2,
-    PostModule,
-    ReactionModule,
-    TagModule,
-  ],
+  imports: [forwardRef(() => PostModuleV2), GroupModuleV2, PostModule, TagModule],
   controllers: [SearchController, SearchConsumer],
   providers: [SearchService, ElasticsearchQueryBuilder, SearchAppService],
   exports: [SearchService],

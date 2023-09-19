@@ -1,5 +1,4 @@
 import { IMAGE_RESOURCE } from '@beincom/constants';
-import { UserDto } from '@libs/service/user';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes, Sequelize } from 'sequelize';
 import {
@@ -86,8 +85,6 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   @Column
   public id: string;
 
-  public actor: UserDto;
-
   @AllowNull(false)
   @ForeignKey(() => CommentModel)
   @IsUUID()
@@ -144,9 +141,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   public mentions: string[];
 
   @BelongsTo(() => PostModel)
-  public post: PostModel;
-
-  public parent?: CommentModel;
+  public post?: PostModel;
 
   @HasMany(() => CommentModel, {
     foreignKey: {
@@ -156,9 +151,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   public child?: CommentModel[];
 
   @HasMany(() => CommentReactionModel)
-  public ownerReactions: CommentReactionModel[];
-
-  public reactionsCount: string;
+  public ownerReactions?: CommentReactionModel[];
 
   @AfterCreate
   public static async onCommentCreated(comment: CommentModel): Promise<void> {

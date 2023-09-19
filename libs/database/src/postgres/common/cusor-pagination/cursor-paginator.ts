@@ -1,6 +1,7 @@
-import { CursorPaginationResult, CursorParam, PaginatedArgs } from '@libs/database/postgres/common';
 import { ORDER } from '@beincom/constants';
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
+
+import { CursorPaginationResult, CursorParam, PaginatedArgs } from '../../common';
 
 import { createCursor, parseCursor } from './utils';
 
@@ -112,7 +113,6 @@ export class CursorPaginator<T extends Model> {
 
   private _buildOrder(): Order {
     let { order } = this;
-
     if (!this.after && this.before) {
       order = this._reverseOrder(order);
     }
