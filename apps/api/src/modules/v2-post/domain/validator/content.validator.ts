@@ -1,7 +1,7 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import moment from 'moment';
 
 import { PERMISSION_KEY } from '../../../../common/constants';
@@ -35,6 +35,7 @@ import { IContentValidator } from './interface';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
+  private _logger = new Logger(ContentValidator.name);
   public constructor(
     @Inject(GROUP_ADAPTER)
     protected readonly _groupAdapter: IGroupAdapter,
@@ -51,11 +52,19 @@ export class ContentValidator implements IContentValidator {
     groupAudienceIds: string[],
     postType?: PostType | CONTENT_TYPE
   ): Promise<void> {
+    this._logger.debug(
+      `checkCanCRUDContent - input: ${JSON.stringify({ user, groupAudienceIds, postType })}`
+    );
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
+    this._logger.debug(`checkCanCRUDContent - groups: ${JSON.stringify({ groups })}`);
     await this._authorityAppService.buildAbility(user);
+    this._logger.debug(`checkCanCRUDContent - buildAbility`);
     const permissionKey = this._postTypeToPermissionKey(postType);
+    this._logger.debug(`checkCanCRUDContent - permissionKey: ${permissionKey}`);
     for (const group of groups) {
+      const canDoAction = this._authorityAppService.canDoActionOnGroup(permissionKey, group.id);
+      this._logger.debug(`checkCanCRUDContent - canDoActionOnGroup: ${group.id} - ${canDoAction}`);
       if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)) {
         notCreatableInGroups.push(group);
       }
