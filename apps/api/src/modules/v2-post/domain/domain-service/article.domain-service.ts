@@ -144,17 +144,18 @@ export class ArticleDomainService implements IArticleDomainService {
     this.event.publish(new ArticleDeletedEvent(articleEntity, actor));
   }
 
-  public async publish(inputData: PublishArticleProps): Promise<ArticleEntity> {
-    const { actor, id } = inputData;
+  public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
+    const { payload, actor } = input;
+    const { id: articleId } = payload;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
       shouldIncludeGroup: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
     });
 
-    const isArticleNotFound = !articleEntity || !(articleEntity instanceof ArticleEntity);
-    if (isArticleNotFound || articleEntity.isHidden() || articleEntity.isInArchivedGroups()) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || articleEntity.isHidden()) {
       throw new ContentNotFoundException();
     }
 
@@ -162,22 +163,7 @@ export class ArticleDomainService implements IArticleDomainService {
       return articleEntity;
     }
 
-    await this._setArticleEntityAttributes(
-      articleEntity,
-      {
-        id: inputData.id,
-        title: inputData.title,
-        summary: inputData.summary,
-        content: inputData.content,
-        categoryIds: inputData.categories,
-        seriesIds: inputData.series,
-        tagIds: inputData.tags,
-        groupIds: inputData.groupIds,
-        coverMedia: inputData.coverMedia,
-        wordCount: inputData.wordCount,
-      },
-      actor
-    );
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
     articleEntity.setPublish();
 
     await this._articleValidator.validateArticle(articleEntity, actor);

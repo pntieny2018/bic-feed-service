@@ -50,7 +50,7 @@ export class ArticleController {
   @Get(ROUTES.ARTICLE.GET_DETAIL.PATH)
   @Version(ROUTES.ARTICLE.GET_DETAIL.VERSIONS)
   public async getPostDetail(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('articleId', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
     const data = await this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
@@ -87,7 +87,7 @@ export class ArticleController {
   @Version(ROUTES.ARTICLE.DELETE.VERSIONS)
   public async delete(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('articleId', ParseUUIDPipe) id: string
   ): Promise<void> {
     await this._commandBus.execute<DeleteArticleCommand, void>(
       new DeleteArticleCommand({
@@ -108,7 +108,7 @@ export class ArticleController {
   @Version(ROUTES.ARTICLE.AUTO_SAVE.VERSIONS)
   public async autoSave(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('articleId', ParseUUIDPipe) id: string,
     @Body() updateArticleRequestDto: UpdateArticleRequestDto
   ): Promise<void> {
     const { audience } = updateArticleRequestDto;
@@ -133,7 +133,7 @@ export class ArticleController {
   @Version(ROUTES.ARTICLE.UPDATE.VERSIONS)
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('articleId', ParseUUIDPipe) id: string,
     @Body() updateArticleRequestDto: UpdateArticleRequestDto
   ): Promise<ArticleDto> {
     const { audience } = updateArticleRequestDto;
@@ -159,17 +159,19 @@ export class ArticleController {
   @Put(ROUTES.ARTICLE.PUBLISH.PATH)
   @Version(ROUTES.ARTICLE.PUBLISH.VERSIONS)
   public async publish(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() publishArticleRequestDto: PublishArticleRequestDto
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() publishData: PublishArticleRequestDto,
+    @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const { audience } = publishArticleRequestDto;
     const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
       new PublishArticleCommand({
-        id,
-        actor: user,
-        ...publishArticleRequestDto,
-        groupIds: audience?.groupIds,
+        ...publishData,
+        id: articleId,
+        categoryIds: publishData.categories,
+        seriesIds: publishData.series,
+        tagIds: publishData.tags,
+        groupIds: publishData.audience?.groupIds,
+        actor: authUser,
       })
     );
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

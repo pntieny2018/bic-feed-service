@@ -85,15 +85,15 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UPDATE: {
-      PATH: '/articles/:id',
+      PATH: '/articles/:articleId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
     },
     AUTO_SAVE: {
-      PATH: '/articles/:id',
+      PATH: '/articles/:articleId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
     },
     PUBLISH: {
-      PATH: '/articles/:id/publish',
+      PATH: '/articles/:articleId/publish',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_6_0),
     },
     SCHEDULE: {
@@ -101,11 +101,11 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_7_0),
     },
     GET_DETAIL: {
-      PATH: '/articles/:id([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})',
+      PATH: '/articles/:articleId([a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     DELETE: {
-      PATH: '/articles/:id',
+      PATH: '/articles/:articleId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },

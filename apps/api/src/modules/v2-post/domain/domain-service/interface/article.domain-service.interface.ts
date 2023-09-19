@@ -3,7 +3,6 @@ import { UserDto } from '@libs/service/user';
 import {
   AutoSaveArticleCommandPayload,
   DeleteArticleCommandPayload,
-  PublishArticleCommandPayload,
   UpdateArticleCommandPayload,
 } from '../../../application/command/article';
 import { MediaItemDto } from '../../../application/dto';
@@ -25,8 +24,10 @@ export type ArticlePayload = {
 // TODO: refactor using ArticlePayload
 export type UpdateArticleProps = UpdateArticleCommandPayload;
 
-// TODO: refactor using ArticlePayload
-export type PublishArticleProps = PublishArticleCommandPayload;
+export type PublishArticleProps = {
+  payload: ArticlePayload;
+  actor: UserDto;
+};
 
 export type ScheduleArticleProps = {
   payload: ArticlePayload & { scheduledAt: Date };

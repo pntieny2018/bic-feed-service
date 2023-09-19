@@ -48,7 +48,7 @@ export class ProcessScheduledContentPublishingHandler
     try {
       switch (contentEntity.getType()) {
         case CONTENT_TYPE.ARTICLE: {
-          await this._articleDomainService.publish({ id, actor });
+          await this._articleDomainService.publish({ payload: { id }, actor });
           break;
         }
 
