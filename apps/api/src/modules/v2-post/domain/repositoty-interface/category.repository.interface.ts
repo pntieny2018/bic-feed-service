@@ -1,6 +1,5 @@
-import { PaginationProps } from '@libs/database/postgres/common';
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
 
-import { PaginationResult } from '../../../../common/types';
 import { CategoryEntity } from '../model/category';
 
 export type FindCategoryProps = {

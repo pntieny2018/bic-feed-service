@@ -102,13 +102,13 @@ export class ContentBinding implements IContentBinding {
     let quizDoing = null;
     if (dataBinding?.authUser) {
       const quizHighestScoreMapper =
-        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+        await this._quizParticipantRepository.getMapQuizParticipantHighestScoreGroupByContentId(
           [postEntity.get('id')],
           dataBinding?.authUser.id
         );
       quizHighestScore = quizHighestScoreMapper.get(postEntity.get('id')) ?? null;
       const quizDoingMapper =
-        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+        await this._quizParticipantRepository.getMapQuizParticipantsDoingGroupByContentId(
           [postEntity.get('id')],
           dataBinding?.authUser.id
         );
@@ -120,6 +120,7 @@ export class ContentBinding implements IContentBinding {
       audience,
       content: postEntity.get('content'),
       createdAt: postEntity.get('createdAt'),
+      scheduledAt: postEntity.get('scheduledAt'),
       publishedAt: postEntity.get('publishedAt'),
       tags: (postEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
@@ -242,13 +243,13 @@ export class ContentBinding implements IContentBinding {
     let quizDoing = null;
     if (dataBinding?.authUser) {
       const quizHighestScoreMapper =
-        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+        await this._quizParticipantRepository.getMapQuizParticipantHighestScoreGroupByContentId(
           [articleEntity.get('id')],
           dataBinding?.authUser.id
         );
       quizHighestScore = quizHighestScoreMapper.get(articleEntity.get('id')) ?? null;
       const quizDoingMapper =
-        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+        await this._quizParticipantRepository.getMapQuizParticipantsDoingGroupByContentId(
           [articleEntity.get('id')],
           dataBinding?.authUser.id
         );
@@ -527,6 +528,7 @@ export class ContentBinding implements IContentBinding {
       content: entity.get('content'),
       createdAt: entity.get('createdAt'),
       publishedAt: entity.get('publishedAt'),
+      scheduledAt: entity.get('scheduledAt'),
       tags: entity.get('tags')?.map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -877,12 +879,12 @@ export class ContentBinding implements IContentBinding {
     let quizDoingMapper = new Map<string, QuizParticipantEntity>();
     if (authUser) {
       quizHighestScoreMapper =
-        await this._quizParticipantRepository.getQuizParticipantHighestScoreGroupByContentId(
+        await this._quizParticipantRepository.getMapQuizParticipantHighestScoreGroupByContentId(
           contentIds,
           authUser.id
         );
       quizDoingMapper =
-        await this._quizParticipantRepository.getQuizParticipantsDoingGroupByContentId(
+        await this._quizParticipantRepository.getMapQuizParticipantsDoingGroupByContentId(
           contentIds,
           authUser.id
         );

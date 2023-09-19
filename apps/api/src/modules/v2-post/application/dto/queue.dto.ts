@@ -1,5 +1,3 @@
-import { UserDto } from '@libs/service/user';
-
 export class QuizParticipantResultJobDto {
   public quizParticipantId: string;
 
@@ -10,7 +8,7 @@ export class QuizParticipantResultJobDto {
 
 export class ArticleScheduledJobDto {
   public articleId: string;
-  public articleOwner: UserDto;
+  public articleOwnerId: string;
 
   public constructor(data: Partial<ArticleScheduledJobDto>) {
     Object.assign(this, data);

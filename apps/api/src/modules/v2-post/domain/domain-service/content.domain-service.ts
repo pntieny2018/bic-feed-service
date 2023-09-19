@@ -1,11 +1,9 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
 import { StringHelper } from '../../../../common/helpers';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { TargetType } from '../../../report-content/contstants';
-import { PostType } from '../../data-type';
 import { ContentNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
@@ -14,6 +12,7 @@ import {
   GetContentByIdsProps,
   GetContentIdsInNewsFeedProps,
   GetContentIdsInTimelineProps,
+  GetContentIdsScheduleProps,
   GetDraftsProps,
   GetScheduledContentProps,
   IContentDomainService,
@@ -251,23 +250,50 @@ export class ContentDomainService implements IContentDomainService {
 
   public async getReportedContentIdsByUser(
     reportUser: string,
-    postTypes?: PostType[]
+    postTypes?: CONTENT_TYPE[]
   ): Promise<string[]> {
     if (!postTypes) {
       return this._contentRepository.getReportedContentIdsByUser(reportUser, [
-        TargetType.ARTICLE,
-        TargetType.POST,
+        CONTENT_TARGET.ARTICLE,
+        CONTENT_TARGET.POST,
       ]);
     }
 
-    const target = [];
-    if (postTypes.includes(PostType.POST)) {
-      target.push(TargetType.POST);
+    const target: CONTENT_TARGET[] = [];
+    if (postTypes.includes(CONTENT_TYPE.POST)) {
+      target.push(CONTENT_TARGET.POST);
     }
-    if (postTypes.includes(PostType.ARTICLE)) {
-      target.push(TargetType.ARTICLE);
+    if (postTypes.includes(CONTENT_TYPE.ARTICLE)) {
+      target.push(CONTENT_TARGET.ARTICLE);
     }
 
     return this._contentRepository.getReportedContentIdsByUser(reportUser, target);
+  }
+
+  public async getScheduleContentIds(
+    params: GetContentIdsScheduleProps
+  ): Promise<CursorPaginationResult<string>> {
+    const { user, limit, before, after, type, order } = params;
+
+    const { rows, meta } = await this._contentRepository.getPagination({
+      where: {
+        createdBy: user.id,
+        type,
+        statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
+      },
+      orderOptions: {
+        sortColumn: 'scheduledAt',
+        orderBy: order,
+      },
+      limit,
+      before,
+      after,
+      order,
+    });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 }

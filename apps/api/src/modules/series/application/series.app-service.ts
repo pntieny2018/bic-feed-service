@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { Injectable } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 
@@ -15,7 +16,6 @@ import { PostService } from '../../post/post.service';
 import { IPostElasticsearch } from '../../search/interfaces';
 import { SearchService } from '../../search/search.service';
 import { RULES } from '../../v2-post/constant';
-import { PostType } from '../../v2-post/data-type';
 import {
   ArticleLimitAttachedSeriesException,
   ContentEmptyGroupException,
@@ -62,7 +62,7 @@ export class SeriesAppService {
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({
       keyword: contentSearch,
-      contentTypes: [PostType.SERIES],
+      contentTypes: [CONTENT_TYPE.SERIES],
       groupIds: filterGroupIds,
       itemIds,
       from: offset,

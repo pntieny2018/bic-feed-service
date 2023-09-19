@@ -29,8 +29,6 @@ import {
 } from '../application/query/quiz';
 import { QUIZ_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { QuizDomainService } from '../domain/domain-service/quiz.domain-service';
-import { QUIZ_FACTORY_TOKEN } from '../domain/factory/interface/quiz.factory.interface';
-import { QuizFactory } from '../domain/factory/quiz.factory';
 import {
   QUIZ_REPOSITORY_TOKEN,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
@@ -39,7 +37,6 @@ import { QUIZ_VALIDATOR_TOKEN } from '../domain/validator/interface';
 import { QuizValidator } from '../domain/validator/quiz.validator';
 import { QuizParticipantRepository, QuizRepository } from '../driven-adapter/repository';
 import { QuizParticipantProcessor } from '../driving-apdater/queue-processor/quiz-participant.processor';
-import { OpenAIAdapter } from '../driven-adapter/service/openai.adapter';
 
 export const quizProvider = [
   {
@@ -53,10 +50,6 @@ export const quizProvider = [
   {
     provide: QUIZ_DOMAIN_SERVICE_TOKEN,
     useClass: QuizDomainService,
-  },
-  {
-    provide: QUIZ_FACTORY_TOKEN,
-    useClass: QuizFactory,
   },
   {
     provide: QUIZ_VALIDATOR_TOKEN,

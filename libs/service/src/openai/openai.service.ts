@@ -6,6 +6,7 @@ import {
   GenerateQuestionProps,
   GenerateQuestionResponse,
   IOpenAIService,
+  Question,
 } from '@libs/service/openai/openai.service.interface';
 import {
   CORRECT_ANSWER_KEY,
@@ -198,7 +199,9 @@ export class OpenAIService implements IOpenAIService {
           content: questionText,
           answers: [],
         };
+        continue;
       }
+
       const answerMatch = line.match(/([A-Za-z])\) (.+)$/);
       if (answerMatch && currentQuestion !== null) {
         const answerText = answerMatch[2] ?? '';
@@ -207,9 +210,12 @@ export class OpenAIService implements IOpenAIService {
           content: answerText,
           isCorrect: false,
         });
+        continue;
       }
-      if (line.includes(CORRECT_ANSWER_KEY) && currentQuestion !== null) {
-        const answerCorrect = line.trim().slice(CORRECT_ANSWER_KEY.length).trim();
+
+      const lineIsCorrectAnswer = line.trim().length === 1;
+      if (lineIsCorrectAnswer && currentQuestion !== null) {
+        const answerCorrect = line.trim();
         const firstAlphaCharCode = 97; // a
         const indexAnswerCorrect = answerCorrect.toLowerCase().charCodeAt(0) - firstAlphaCharCode;
         if (currentQuestion.answers[indexAnswerCorrect]) {
@@ -217,6 +223,7 @@ export class OpenAIService implements IOpenAIService {
         }
       }
     }
+
     if (currentQuestion !== null) {
       questions.push(currentQuestion);
     }

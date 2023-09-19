@@ -1,9 +1,8 @@
 import { ORDER } from '@beincom/constants';
-import { CursorPaginationProps } from '@libs/database/postgres/common';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { CommentAttributes } from '@libs/database/postgres/model/comment.model';
 import { WhereOptions } from 'sequelize/types';
 
-import { CursorPaginationResult } from '../../../../common/types';
-import { IComment } from '../../../../database/models/comment.model';
 import { CommentEntity } from '../model/comment';
 
 export type FindOneProps = {
@@ -12,13 +11,13 @@ export type FindOneProps = {
 };
 
 export type GetPaginationCommentProps = CursorPaginationProps & {
-  authUser?: string;
+  authUserId?: string;
   postId: string;
   parentId?: string;
 };
 
 export type GetAroundCommentProps = {
-  authUser?: string;
+  authUserId?: string;
   limit: number;
   order: ORDER;
 };
@@ -40,7 +39,7 @@ export interface ICommentRepository {
    */
   destroyComment(id: string): Promise<void>;
 
-  findOne(where: WhereOptions<IComment>, options?: FindOneProps): Promise<CommentEntity>;
+  findOne(where: WhereOptions<CommentAttributes>, options?: FindOneProps): Promise<CommentEntity>;
 }
 
 export const COMMENT_REPOSITORY_TOKEN = 'COMMENT_REPOSITORY_TOKEN';

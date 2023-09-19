@@ -1,20 +1,16 @@
+import { ORDER } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FindOptions, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
-import { CursorPaginator, OrderEnum } from '../../../../../common/dto';
+import { CursorPaginator } from '../../../../../common/dto';
 import { PostModel } from '../../../../../database/models/post.model';
 import { QuizAnswerModel } from '../../../../../database/models/quiz-answer.model';
 import { QuizQuestionModel } from '../../../../../database/models/quiz-question.model';
 import { IQuiz, QuizModel } from '../../../../../database/models/quiz.model';
 import { PostType } from '../../../data-type';
-import {
-  IQuizFactory,
-  QUIZ_FACTORY_TOKEN,
-} from '../../../domain/factory/interface/quiz.factory.interface';
-import { QuizFactory } from '../../../domain/factory/quiz.factory';
 import { QuizEntity } from '../../../domain/model/quiz';
 import {
   FindAllQuizProps,
@@ -54,14 +50,9 @@ describe('QuizRepository', () => {
           provide: getModelToken(QuizAnswerModel),
           useValue: createMock<QuizAnswerModel>(),
         },
-        {
-          provide: QUIZ_FACTORY_TOKEN,
-          useValue: createMock<QuizFactory>(),
-        },
       ],
     }).compile();
     repo = module.get<IQuizRepository>(QuizRepository);
-    factory = module.get<IQuizFactory>(QUIZ_FACTORY_TOKEN);
     quizModel = module.get<QuizModel>(getModelToken(QuizModel));
     sequelizeConnection = module.get<Sequelize>(Sequelize);
     sequelizeConnection.transaction.mockResolvedValue(transaction);
@@ -317,7 +308,7 @@ describe('QuizRepository', () => {
         where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
         contentType: PostType.POST,
         attributes: ['id', 'contentId', 'createdAt'],
-        order: OrderEnum.DESC,
+        order: ORDER.DESC,
       };
       jest.spyOn(quizModel, 'findAll').mockResolvedValue([
         {

@@ -1,4 +1,3 @@
-import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
 import { Injectable } from '@nestjs/common';
 
@@ -59,13 +58,28 @@ export class QuizMapper {
       numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
       isRandom: entity.get('isRandom'),
       meta: entity.get('meta'),
-      status: entity.get('status') as unknown as QUIZ_STATUS,
-      genStatus: entity.get('genStatus') as unknown as QUIZ_PROCESS_STATUS,
+      status: entity.get('status'),
+      genStatus: entity.get('genStatus'),
       error: entity.get('error'),
       updatedAt: entity.get('updatedAt'),
       updatedBy: entity.get('updatedBy'),
       createdAt: entity.get('createdAt'),
       createdBy: entity.get('createdBy'),
+      questions: (entity.get('questions') || []).map((question) => ({
+        id: question.get('id'),
+        quizId: entity.get('id'),
+        content: question.get('content'),
+        answers: (question.get('answers') || []).map((answer) => ({
+          id: answer.id,
+          questionId: question.get('id'),
+          content: answer.content,
+          isCorrect: answer.isCorrect,
+          createdAt: answer.createdAt,
+          updatedAt: answer.updatedAt,
+        })),
+        createdAt: question.get('createdAt'),
+        updatedAt: question.get('updatedAt'),
+      })),
     };
   }
 }

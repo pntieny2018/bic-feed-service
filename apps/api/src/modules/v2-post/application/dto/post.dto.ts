@@ -46,6 +46,7 @@ export class PostDto {
   }[];
   public createdAt: Date;
   public updatedAt: Date;
+  public scheduledAt?: Date;
   public publishedAt?: Date;
   public quizHighestScore?: {
     quizParticipantId: string;

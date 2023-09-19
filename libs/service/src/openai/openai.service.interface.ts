@@ -3,7 +3,15 @@ export type GenerateQuestionProps = {
   numberOfQuestions: number;
   numberOfAnswers: number;
 };
-
+export type Question = {
+  id: string;
+  content: string;
+  answers: {
+    id: string;
+    content: string;
+    isCorrect: boolean;
+  }[];
+};
 export type GenerateQuestionResponse = {
   model: string;
   usage: {
@@ -13,15 +21,7 @@ export type GenerateQuestionResponse = {
   };
   maxTokens: number;
   completion: any;
-  questions: {
-    id: string;
-    content: string;
-    answers: {
-      id: string;
-      content: string;
-      isCorrect: boolean;
-    }[];
-  }[];
+  questions: Question[];
 };
 export interface IOpenAIService {
   generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse>;

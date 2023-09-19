@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
@@ -11,7 +12,6 @@ import {
 } from 'class-validator';
 
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
-import { PostType } from '../../../../database/models/post.model';
 
 export class SearchPostsDto extends PageOptionsDto {
   @ApiPropertyOptional({
@@ -93,13 +93,13 @@ export class SearchPostsDto extends PageOptionsDto {
     description: 'Type',
     required: false,
     default: '',
-    enum: PostType,
+    enum: CONTENT_TYPE,
   })
   @Expose()
   @IsOptional()
-  @IsEnum(PostType)
+  @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
-  public type?: PostType;
+  public type?: CONTENT_TYPE;
 
   @ApiProperty({
     type: Boolean,

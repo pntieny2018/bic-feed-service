@@ -33,16 +33,17 @@ export class LibCommentRepository implements ILibCommentRepository {
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentModel>> {
-    const { authUser, limit, order, postId, parentId, before, after } = input;
+    const { authUserId, limit, order, postId, parentId, before, after } = input;
     const findOptions: FindOptions = {
       include: [
-        authUser
+        authUserId
           ? {
               model: CommentReactionModel,
+              as: 'ownerReactions',
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUser.id,
+                  created_by: authUserId,
                 },
               },
             }
@@ -52,12 +53,12 @@ export class LibCommentRepository implements ILibCommentRepository {
         postId: postId,
         parentId: parentId,
         isHidden: false,
-        ...(authUser && {
+        ...(authUserId && {
           [Op.and]: [
             Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
             WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
               CONTENT_TARGET.COMMENT
-            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUser.id)})`),
+            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUserId)})`),
           ],
         }),
       },
@@ -194,15 +195,11 @@ export class LibCommentRepository implements ILibCommentRepository {
   }
 
   public async update(commentId: string, attributes: Partial<CommentAttributes>): Promise<void> {
-    try {
-      await this._commentModel.update(attributes, {
-        where: {
-          id: commentId,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
+    await this._commentModel.update(attributes, {
+      where: {
+        id: commentId,
+      },
+    });
   }
 
   public async destroyComment(id: string): Promise<void> {

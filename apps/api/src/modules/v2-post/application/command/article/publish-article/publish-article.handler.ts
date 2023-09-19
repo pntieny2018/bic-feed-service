@@ -4,8 +4,6 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
-  IPostDomainService,
-  POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import {
   CONTENT_BINDING_TOKEN,
@@ -20,8 +18,6 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
   public constructor(
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
     private readonly _articleDomainService: IArticleDomainService,
-    @Inject(POST_DOMAIN_SERVICE_TOKEN)
-    private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding
   ) {}
@@ -29,14 +25,6 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
   public async execute(command: PublishArticleCommand): Promise<ArticleDto> {
     const { actor } = command.payload;
     const articleEntity = await this._articleDomainService.publish(command.payload);
-
-    await this._postDomainService.markSeen(articleEntity.get('id'), actor.id);
-    articleEntity.increaseTotalSeen();
-
-    if (articleEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(articleEntity.get('id'), actor.id);
-      articleEntity.setMarkReadImportant();
-    }
 
     return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }

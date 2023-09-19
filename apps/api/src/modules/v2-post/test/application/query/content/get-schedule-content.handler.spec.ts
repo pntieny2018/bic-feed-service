@@ -2,36 +2,32 @@ import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 
-import { ContentBinding } from '../../../../application/binding/binding-post/content.binding';
 import {
+  ContentBinding,
   CONTENT_BINDING_TOKEN,
   IContentBinding,
-} from '../../../../application/binding/binding-post/content.interface';
-import { ArticleDto, GetScheduleArticleDto } from '../../../../application/dto';
-import { GetScheduleArticleHandler } from '../../../../application/query/article/get-schedule-article';
+} from '../../../../application/binding';
+import { GetScheduleContentsResponseDto } from '../../../../application/dto';
+import { GetScheduleContentHandler } from '../../../../application/query/content/get-schedule-content';
 import {
-  ARTICLE_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
-  IArticleDomainService,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { articleDtoMock, articleEntityMock } from '../../../mock/article.entity.mock';
+import { postMock } from '../../../mock/post.dto.mock';
+import { postEntityMock } from '../../../mock/post.entity.mock';
 import { userMock } from '../../../mock/user.dto.mock';
 
-describe('GetScheduleArticleHandler', () => {
-  let handler: GetScheduleArticleHandler;
-  let articleDomainService: IArticleDomainService;
+describe('GetScheduleContentHandler', () => {
+  let handler: GetScheduleContentHandler;
   let contentDomainService: IContentDomainService;
   let contentBinding: ContentBinding;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
-        GetScheduleArticleHandler,
-        {
-          provide: ARTICLE_DOMAIN_SERVICE_TOKEN,
-          useValue: createMock<IArticleDomainService>(),
-        },
+        GetScheduleContentHandler,
+
         {
           provide: CONTENT_DOMAIN_SERVICE_TOKEN,
           useValue: createMock<IContentDomainService>(),
@@ -42,8 +38,7 @@ describe('GetScheduleArticleHandler', () => {
         },
       ],
     }).compile();
-    handler = module.get(GetScheduleArticleHandler);
-    articleDomainService = module.get(ARTICLE_DOMAIN_SERVICE_TOKEN);
+    handler = module.get(GetScheduleContentHandler);
     contentDomainService = module.get(CONTENT_DOMAIN_SERVICE_TOKEN);
     contentBinding = module.get(CONTENT_BINDING_TOKEN);
   });
@@ -54,8 +49,8 @@ describe('GetScheduleArticleHandler', () => {
 
   describe('execute', () => {
     it('should execute query successfully', async () => {
-      jest.spyOn(articleDomainService, 'getArticlesIdsSchedule').mockResolvedValue({
-        rows: [articleEntityMock.get('id')],
+      jest.spyOn(contentDomainService, 'getScheduleContentIds').mockResolvedValue({
+        rows: [articleEntityMock.get('id'), postEntityMock.get('id')],
         meta: {
           startCursor:
             'eyJzY2hlZHVsZWRBdCI6IjIwMjMtMTItMjlUMTE6MDA6MDAuMDAwWiIsImNyZWF0ZWRBdCI6IjIwMjMtMDYtMjlUMTA6NTA6NTcuOTQ0WiJ9',
@@ -65,30 +60,36 @@ describe('GetScheduleArticleHandler', () => {
           hasPreviousPage: false,
         },
       });
-      jest.spyOn(contentDomainService, 'getContentByIds').mockResolvedValue([articleEntityMock]);
+      jest
+        .spyOn(contentDomainService, 'getContentByIds')
+        .mockResolvedValue([articleEntityMock, postEntityMock]);
       jest.spyOn(contentBinding, 'contentsBinding').mockResolvedValue([
         {
           ...articleDtoMock,
           status: CONTENT_STATUS.WAITING_SCHEDULE,
         },
-      ] as ArticleDto[]);
+        {
+          ...postMock,
+          status: CONTENT_STATUS.SCHEDULE_FAILED,
+        },
+      ]);
       const result = await handler.execute({
         payload: {
-          limit: 1,
+          limit: 2,
           order: ORDER.ASC,
-          statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
           user: userMock,
         },
       });
 
       expect(result).toEqual(
-        new GetScheduleArticleDto(
-          [{ ...articleDtoMock, status: CONTENT_STATUS.WAITING_SCHEDULE }].map((article) => {
-            if (article.status === CONTENT_STATUS.WAITING_SCHEDULE) {
-              article.publishedAt = article.scheduledAt;
-            }
-            return article;
-          }),
+        new GetScheduleContentsResponseDto(
+          [
+            { ...articleDtoMock, status: CONTENT_STATUS.WAITING_SCHEDULE },
+            {
+              ...postMock,
+              status: CONTENT_STATUS.SCHEDULE_FAILED,
+            },
+          ],
           {
             startCursor:
               'eyJzY2hlZHVsZWRBdCI6IjIwMjMtMTItMjlUMTE6MDA6MDAuMDAwWiIsImNyZWF0ZWRBdCI6IjIwMjMtMDYtMjlUMTA6NTA6NTcuOTQ0WiJ9',

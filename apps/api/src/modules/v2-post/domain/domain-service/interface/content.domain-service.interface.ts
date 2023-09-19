@@ -1,8 +1,8 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 
-import { CursorPaginationProps } from '../../../../../common/types/cursor-pagination-props.type';
-import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { PostType } from '../../../data-type';
+import { CursorPaginationProps, CursorPaginationResult } from '../../../../../common/types';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
@@ -37,6 +37,12 @@ export type GetContentIdsInTimelineProps = {
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
 
+export class GetContentIdsScheduleProps extends PaginatedArgs {
+  public order: ORDER;
+  public user: UserDto;
+  public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+}
+
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
@@ -59,6 +65,7 @@ export interface IContentDomainService {
     id: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getReportedContentIdsByUser(reportUser: string, postTypes?: PostType[]): Promise<string[]>;
+  getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
+  getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';
