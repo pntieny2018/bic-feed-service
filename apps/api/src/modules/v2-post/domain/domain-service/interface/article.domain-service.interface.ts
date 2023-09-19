@@ -1,6 +1,5 @@
 import { UserDto } from '@libs/service/user';
 
-import { DeleteArticleCommandPayload } from '../../../application/command/article';
 import { MediaItemDto } from '../../../application/dto';
 import { ArticleEntity } from '../../model/content';
 
@@ -37,11 +36,14 @@ export type AutoSaveArticleProps = {
   actor: UserDto;
 };
 
-export type DeleteArticleProps = DeleteArticleCommandPayload;
+export type DeleteArticleProps = {
+  id: string;
+  actor: UserDto;
+};
 
 export interface IArticleDomainService {
   getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
-  deleteArticle(props: DeleteArticleProps): Promise<void>;
+  delete(input: DeleteArticleProps): Promise<void>;
   update(input: UpdateArticleProps): Promise<ArticleEntity>;
   publish(input: PublishArticleProps): Promise<ArticleEntity>;
   schedule(input: ScheduleArticleProps): Promise<ArticleEntity>;

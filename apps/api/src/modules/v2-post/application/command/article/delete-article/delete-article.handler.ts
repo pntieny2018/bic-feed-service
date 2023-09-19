@@ -16,6 +16,6 @@ export class DeleteArticleHandler implements ICommandHandler<DeleteArticleComman
   ) {}
 
   public async execute(command: DeleteArticleCommand): Promise<void> {
-    return this._articleDomainService.deleteArticle(command.payload);
+    return this._articleDomainService.delete(command.payload);
   }
 }

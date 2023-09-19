@@ -110,18 +110,12 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async deleteArticle(props: DeleteArticleProps): Promise<void> {
+  public async delete(props: DeleteArticleProps): Promise<void> {
     const { actor, id } = props;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
     });
 
     if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
@@ -282,9 +276,9 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(articleEntity, payload, input.actor);
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
 
-    await this._articleValidator.validateArticle(articleEntity, input.actor);
+    await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (!articleEntity.isChanged()) {
       return;
