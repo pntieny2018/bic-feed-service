@@ -132,17 +132,19 @@ export class ArticleController {
   @Put(ROUTES.ARTICLE.UPDATE.PATH)
   @Version(ROUTES.ARTICLE.UPDATE.VERSIONS)
   public async update(
-    @AuthUser() user: UserDto,
-    @Param('articleId', ParseUUIDPipe) id: string,
-    @Body() updateArticleRequestDto: UpdateArticleRequestDto
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() updateData: UpdateArticleRequestDto,
+    @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const { audience } = updateArticleRequestDto;
     const articleDto = await this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
       new UpdateArticleCommand({
-        id,
-        actor: user,
-        ...updateArticleRequestDto,
-        groupIds: audience?.groupIds,
+        ...updateData,
+        id: articleId,
+        categoryIds: updateData.categories,
+        seriesIds: updateData.series,
+        tagIds: updateData.tags,
+        groupIds: updateData.audience?.groupIds,
+        actor: authUser,
       })
     );
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

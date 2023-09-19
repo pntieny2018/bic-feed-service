@@ -6,7 +6,6 @@ import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from 
 import {
   ArticleRequiredCoverException,
   ContentAccessDeniedException,
-  ContentEmptyContentException,
   ContentHasBeenPublishedException,
   ContentNoPublishYetException,
   ContentNotFoundException,
@@ -218,28 +217,19 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async update(inputData: UpdateArticleProps): Promise<ArticleEntity> {
-    const { actor, id, coverMedia } = inputData;
+  public async update(input: UpdateArticleProps): Promise<ArticleEntity> {
+    const { payload, actor } = input;
+    const { id: articleId, coverMedia } = payload;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSeries: true,
-        shouldIncludeQuiz: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+      shouldIncludeGroup: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+      shouldIncludeQuiz: true,
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      (articleEntity.isHidden() && !articleEntity.isOwner(actor.id)) ||
-      articleEntity.isInArchivedGroups()
-    ) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || (articleEntity.isHidden() && !articleEntity.isOwner(actor.id))) {
       throw new ContentNotFoundException();
     }
 
@@ -251,37 +241,16 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(
-      articleEntity,
-      {
-        id: inputData.id,
-        title: inputData.title,
-        summary: inputData.summary,
-        content: inputData.content,
-        categoryIds: inputData.categories,
-        seriesIds: inputData.series,
-        tagIds: inputData.tags,
-        groupIds: inputData.groupIds,
-        coverMedia: inputData.coverMedia,
-        wordCount: inputData.wordCount,
-      },
-      actor
-    );
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
-
     await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
+    this._articleValidator.validateArticleToPublish(articleEntity);
 
-    if (!articleEntity.isValidArticleToPublish()) {
-      throw new ContentEmptyContentException();
+    if (articleEntity.isChanged()) {
+      await this._contentRepository.update(articleEntity);
+      this.event.publish(new ArticleUpdatedEvent(articleEntity, actor));
     }
-
-    if (!articleEntity.isChanged()) {
-      return;
-    }
-
-    await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticleUpdatedEvent(articleEntity, actor));
 
     return articleEntity;
   }

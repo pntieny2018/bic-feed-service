@@ -3,7 +3,6 @@ import { UserDto } from '@libs/service/user';
 import {
   AutoSaveArticleCommandPayload,
   DeleteArticleCommandPayload,
-  UpdateArticleCommandPayload,
 } from '../../../application/command/article';
 import { MediaItemDto } from '../../../application/dto';
 import { ArticleEntity } from '../../model/content';
@@ -21,8 +20,10 @@ export type ArticlePayload = {
   wordCount?: number;
 };
 
-// TODO: refactor using ArticlePayload
-export type UpdateArticleProps = UpdateArticleCommandPayload;
+export type UpdateArticleProps = {
+  payload: ArticlePayload;
+  actor: UserDto;
+};
 
 export type PublishArticleProps = {
   payload: ArticlePayload;
