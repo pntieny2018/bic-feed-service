@@ -7,10 +7,7 @@ import {
   IQuizDomainService,
   QUIZ_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { FindQuizzesDto } from '../../../dto';
 
 import { FindQuizzesQuery } from './find-quizzes.query';

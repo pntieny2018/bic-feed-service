@@ -53,9 +53,9 @@ export class LibQuizRepository implements ILibQuizRepository {
         const createdAt = new Date();
         createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
         return {
-          id: question.get('id'),
-          quizId: question.get('quizId'),
-          content: question.get('content'),
+          id: question.id,
+          quizId: question.quizId,
+          content: question.content,
           createdAt: createdAt,
           updatedAt: createdAt,
         };
@@ -67,7 +67,7 @@ export class LibQuizRepository implements ILibQuizRepository {
           createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
           return {
             id: answer.id,
-            questionId: question.get('id'),
+            questionId: question.id,
             content: answer.content,
             isCorrect: answer.isCorrect,
             createdAt: createdAt,
@@ -176,7 +176,7 @@ export class LibQuizRepository implements ILibQuizRepository {
       });
     }
 
-    if (options.shouldIncludeContent) {
+    if (options.shouldIncludeContent?.contentType) {
       relationOptions.push({
         model: this._postModel,
         as: 'post',

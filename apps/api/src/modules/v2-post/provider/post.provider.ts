@@ -15,7 +15,6 @@ import {
   DeleteArticleHandler,
   ProcessArticleDeletedHandler,
   ProcessArticlePublishedHandler,
-  ProcessArticleScheduledHandler,
   ProcessArticleUpdatedHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
@@ -54,17 +53,18 @@ import {
   SeriesDeletedEventHandler,
 } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
-import { GetScheduleArticleHandler } from '../application/query/article/get-schedule-article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  SearchContentsHandler,
 } from '../application/query/content';
-import { SearchContentsHandler } from '../application/query/content/search-contents';
+import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
-import { SearchTagsHandler } from '../application/query/tag/search-tags';
+import { SearchTagsHandler } from '../application/query/tag';
+import { ArticleCron } from '../application/cron/article.cron';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
@@ -97,7 +97,6 @@ import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository/content.repository';
-import { ArticleCron } from '../driving-apdater/cron/article.cron';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
@@ -208,14 +207,13 @@ export const postProvider = [
   UpdateArticleHandler,
   DeleteArticleHandler,
   ScheduleArticleHandler,
-  ProcessArticleScheduledHandler,
   ProcessScheduledArticlePublishingHandler,
   ProcessArticlePublishedHandler,
   ProcessArticleUpdatedHandler,
   ProcessArticleDeletedHandler,
   UpdateContentSettingHandler,
   FindDraftContentsHandler,
-  GetScheduleArticleHandler,
+  GetScheduleContentHandler,
   GetMenuSettingsHandler,
   SearchContentsHandler,
   SearchTagsHandler,

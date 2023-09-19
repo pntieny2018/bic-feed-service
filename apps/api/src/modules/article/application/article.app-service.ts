@@ -352,10 +352,10 @@ export class ArticleAppService {
       contentTypes: [CONTENT_TYPE.ARTICLE],
       groupIds: filterGroupIds,
       excludeByIds: notIncludeIds,
-      ...(categoryIds && { topics: categoryIds }),
+      topics: categoryIds,
       from: offset,
       size: limit,
-      islimitSeries: limitSeries,
+      isLimitSeries: limitSeries,
     });
 
     const { source, total } = response;

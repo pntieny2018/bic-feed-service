@@ -112,6 +112,7 @@ export class ContentMapper {
       updatedAt: post.updatedAt,
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
+      scheduledAt: post.scheduledAt,
       content: post.content,
       mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),

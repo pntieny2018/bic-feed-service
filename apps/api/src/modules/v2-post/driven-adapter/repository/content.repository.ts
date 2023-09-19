@@ -30,7 +30,6 @@ export class ContentRepository implements IContentRepository {
   public constructor(
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
-
     @Inject(LIB_CONTENT_REPOSITORY_TOKEN)
     private readonly _libContentRepository: ILibContentRepository,
     private readonly _contentMapper: ContentMapper
@@ -243,13 +242,12 @@ export class ContentRepository implements IContentRepository {
   public async getContentById(
     contentId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._libContentRepository.findOne({
-      where: { id: contentId },
-    });
+    const content = await this.findContentById(contentId);
     if (!content) {
       throw new ContentNotFoundException();
     }
-    return this._contentMapper.toDomain(content);
+
+    return content;
   }
 
   public async findAll(

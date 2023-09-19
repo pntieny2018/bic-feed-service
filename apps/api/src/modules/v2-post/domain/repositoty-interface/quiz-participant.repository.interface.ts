@@ -6,23 +6,27 @@ export interface IQuizParticipantRepository {
   create(quizParticipant: QuizParticipantEntity): Promise<void>;
   update(quizParticipant: QuizParticipantEntity): Promise<void>;
   updateIsHighest(quizParticipantId: string, isHighest: boolean): Promise<void>;
+
   findQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity | null>;
-  findAllByContentId(contentId: string, userId: string): Promise<QuizParticipantEntity[]>;
   getQuizParticipantById(quizParticipantId: string): Promise<QuizParticipantEntity>;
+  findAllByContentId(contentId: string, userId: string): Promise<QuizParticipantEntity[]>;
+
   findQuizParticipantHighestScoreByContentIdAndUserId(
     contentId: string,
     userId: string
   ): Promise<QuizParticipantEntity>;
-  getHighestScoreOfMember(contentId: string): Promise<{ createdBy: string; score: number }[]>;
   getQuizParticipantHighestScoreGroupByUserId(
+    contentId: string
+  ): Promise<{ createdBy: string; score: number }[]>;
+  getPaginationQuizParticipantHighestScoreGroupByUserId(
     contentId: string,
     paginationProps: CursorPaginationProps
   ): Promise<CursorPaginationResult<QuizParticipantEntity>>;
-  getQuizParticipantHighestScoreGroupByContentId(
+  getMapQuizParticipantHighestScoreGroupByContentId(
     contentIds: string[],
     userId: string
   ): Promise<Map<string, QuizParticipantEntity>>;
-  getQuizParticipantsDoingGroupByContentId(
+  getMapQuizParticipantsDoingGroupByContentId(
     contentIds: string[],
     userId: string
   ): Promise<Map<string, QuizParticipantEntity>>;

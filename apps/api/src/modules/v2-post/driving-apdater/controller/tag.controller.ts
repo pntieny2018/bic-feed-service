@@ -23,8 +23,7 @@ import {
   UpdateTagCommand,
 } from '../../application/command/tag';
 import { FindTagsPaginationDto, SearchTagsDto, TagDto } from '../../application/dto';
-import { FindTagsPaginationQuery } from '../../application/query/tag';
-import { SearchTagsQuery } from '../../application/query/tag/search-tags';
+import { FindTagsPaginationQuery, SearchTagsQuery } from '../../application/query/tag';
 import {
   CreateTagRequestDto,
   GetTagRequestDto,
@@ -90,11 +89,9 @@ export class TagController {
     const { groupId, name } = createTagDto;
     const userId = user.id;
 
-    const tag = await this._commandBus.execute<CreateTagCommand, TagDto>(
+    return this._commandBus.execute<CreateTagCommand, TagDto>(
       new CreateTagCommand({ groupId, name, userId })
     );
-
-    return tag;
   }
 
   @ApiOperation({ summary: 'Update tag' })

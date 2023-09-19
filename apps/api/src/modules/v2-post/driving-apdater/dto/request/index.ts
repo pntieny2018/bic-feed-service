@@ -11,5 +11,3 @@ export * from './reaction.request.dto';
 export * from './series.request.dto';
 export * from './tag.request.dto';
 export * from './timeline.request.dto';
-export * from './search-contents.request.dto';
-export * from './search-tag.request.dto';
