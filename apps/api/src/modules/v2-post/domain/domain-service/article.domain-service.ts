@@ -199,27 +199,17 @@ export class ArticleDomainService implements IArticleDomainService {
   }
 
   public async schedule(inputData: ScheduleArticleProps): Promise<ArticleEntity> {
-    const { payload } = inputData;
+    const { payload, actor } = inputData;
     const { id, scheduledAt } = payload;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSeries: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      articleEntity.isHidden() ||
-      articleEntity.isInArchivedGroups()
-    ) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || articleEntity.isHidden()) {
       throw new ContentNotFoundException();
     }
 
@@ -227,19 +217,17 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ContentHasBeenPublishedException();
     }
 
-    await this._setArticleEntityAttributes(articleEntity, payload, inputData.actor);
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
 
     articleEntity.setWaitingSchedule(scheduledAt);
 
-    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
-
+    await this._articleValidator.validateArticle(articleEntity, actor);
     await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
+    this._articleValidator.validateArticleToPublish(articleEntity);
 
-    if (!articleEntity.isValidArticleToPublish()) {
-      throw new ContentEmptyContentException();
+    if (articleEntity.isChanged()) {
+      await this._contentRepository.update(articleEntity);
     }
-
-    await this._contentRepository.update(articleEntity);
 
     return articleEntity;
   }
