@@ -1,8 +1,10 @@
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaDto } from '../../application/dto';
+import { PostPublishedEvent } from '../event';
 import {
   ContentAccessDeniedException,
   ContentNoPublishYetException,
@@ -36,6 +38,7 @@ import {
   IPostDomainService,
   PostCreateProps,
   PostPayload,
+  PublishPostProps,
   SchedulePostProps,
   UpdatePostProps,
 } from './interface';
@@ -72,7 +75,9 @@ export class PostDomainService implements IPostDomainService {
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter
+    private readonly _userAdapter: IUserAdapter,
+
+    private readonly event: EventBus
   ) {}
 
   public async getPostById(postId: string, authUserId: string): Promise<PostEntity> {
@@ -180,20 +185,18 @@ export class PostDomainService implements IPostDomainService {
     return postEntity;
   }
 
-  public async publishPost(props: UpdatePostProps): Promise<PostEntity> {
-    const { authUser, id, groupIds, mentionUserIds } = props;
-    const postEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        mustIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-      },
+  public async publish(input: PublishPostProps): Promise<PostEntity> {
+    const { payload, actor } = input;
+    const { id: postId } = payload;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(postId, {
+      mustIncludeGroup: true,
+      shouldIncludeSeries: true,
+      shouldIncludeLinkPreview: true,
     });
-    if (!postEntity || !(postEntity instanceof PostEntity) || postEntity.isHidden()) {
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isHidden()) {
       throw new ContentNotFoundException();
     }
 
@@ -201,82 +204,30 @@ export class PostDomainService implements IPostDomainService {
       return postEntity;
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
-      withGroupJoined: true,
-    });
+    await this._validateAndSetPostAttributes(postEntity, payload, actor);
 
-    const newData = {
-      ...props,
-      mentionUsers,
-      groups,
-    };
-
-    const { tagIds, media, linkPreview, ...restUpdate } = newData;
-
-    let newTagEntities = [];
-    if (tagIds) {
-      newTagEntities = await this._tagRepo.findAll({
-        ids: tagIds,
-      });
-      postEntity.setTags(newTagEntities);
-    }
-    if (media) {
-      const images = await this._mediaDomainService.getAvailableImages(
-        postEntity.get('media').images,
-        media?.imagesIds,
-        postEntity.get('createdBy')
-      );
-      if (images.some((image) => !image.isPostContentResource())) {
-        throw new InvalidResourceImageException();
-      }
-      const files = await this._mediaDomainService.getAvailableFiles(
-        postEntity.get('media').files,
-        media?.filesIds,
-        postEntity.get('createdBy')
-      );
-      const videos = await this._mediaDomainService.getAvailableVideos(
-        postEntity.get('media').videos,
-        media?.videosIds,
-        postEntity.get('createdBy')
-      );
-      postEntity.setMedia({
-        files,
-        images,
-        videos,
-      });
-    }
-    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
-      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
-      postEntity.setLinkPreview(linkPreviewEntity);
-    }
-    postEntity.updateAttribute(restUpdate, authUser.id);
-    postEntity.setPrivacyFromGroups(newData.groups);
     if (postEntity.hasVideoProcessing()) {
       postEntity.setProcessing();
     } else {
       postEntity.setPublish();
     }
 
-    await this._postValidator.validatePublishContent(
-      postEntity,
-      authUser,
-      postEntity.get('groupIds')
-    );
-    await this._mentionValidator.validateMentionUsers(newData.mentionUsers, newData.groups);
-
-    await this._postValidator.validateLimitedToAttachSeries(postEntity);
-
-    await this._contentValidator.validateSeriesAndTags(
-      newData.groups,
-      postEntity.get('seriesIds'),
-      postEntity.get('tags')
-    );
-
-    if (!postEntity.isChanged()) {
-      return;
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
     }
-    await this._contentRepository.update(postEntity);
+
+    if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
+      await this.markSeen(postId, actor.id);
+      postEntity.increaseTotalSeen();
+    }
+
+    if (postEntity.isImportant()) {
+      await this.markReadImportant(postId, actor.id);
+      postEntity.setMarkReadImportant();
+    }
+
+    this.event.publish(new PostPublishedEvent({ postEntity, actor }));
+
     return postEntity;
   }
 
@@ -313,7 +264,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
       withGroupJoined: true,
     });
 
@@ -479,7 +430,7 @@ export class PostDomainService implements IPostDomainService {
     if (groupIds || postEntity.get('groupIds')) {
       groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     }
-    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
       withGroupJoined: true,
     });
 
@@ -565,7 +516,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds, {
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
       withGroupJoined: true,
     });
 

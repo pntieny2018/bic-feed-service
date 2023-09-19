@@ -34,12 +34,17 @@ export type SchedulePostProps = {
   actor: UserDto;
 };
 
+export type PublishPostProps = {
+  payload: PostPayload;
+  actor: UserDto;
+};
+
 export interface IPostDomainService {
   getPostById(postId: string, authUserId: string): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
   schedule(input: SchedulePostProps): Promise<PostEntity>;
-  publishPost(input: UpdatePostProps): Promise<PostEntity>;
+  publish(input: PublishPostProps): Promise<PostEntity>;
   updatePost(props: UpdatePostProps): Promise<PostEntity>;
   updateSetting(input: {
     contentId: string;

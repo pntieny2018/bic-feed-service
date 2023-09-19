@@ -11,10 +11,10 @@ export const QUEUES = {
       PROCESS_QUIZ_PARTICIPANT_RESULT: 'ProcessQuizParticipantResult',
     },
   },
-  ARTICLE_SCHEDULED: {
-    QUEUE_NAME: 'ArticleScheduled',
+  CONTENT_SCHEDULED: {
+    QUEUE_NAME: 'ContentScheduled',
     JOBS: {
-      PROCESS_ARTICLE_SCHEDULED: 'ProcessArticleScheduled',
+      PROCESS_CONTENT_SCHEDULED: 'ProcessContentScheduled',
     },
   },
 };

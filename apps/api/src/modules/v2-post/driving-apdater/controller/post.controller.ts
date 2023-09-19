@@ -112,27 +112,18 @@ export class PostController {
   public async publishPost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
-    @Body() publishPostRequestDto: PublishPostRequestDto,
+    @Body() publishData: PublishPostRequestDto,
     @Req() req: Request
   ): Promise<PostDto> {
-    const { audience, tags, series, mentions, media } = publishPostRequestDto;
-
     const data = await this._commandBus.execute<PublishPostCommand, PostDto>(
       new PublishPostCommand({
-        ...publishPostRequestDto,
+        ...publishData,
         id: postId,
-        mentionUserIds: mentions,
-        groupIds: audience?.groupIds,
-        tagIds: tags,
-        seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
-        authUser,
+        seriesIds: publishData.series,
+        tagIds: publishData.tags,
+        groupIds: publishData.audience?.groupIds,
+        mentionUserIds: publishData.mentions,
+        actor: authUser,
       })
     );
 
