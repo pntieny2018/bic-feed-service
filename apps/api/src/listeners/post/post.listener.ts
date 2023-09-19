@@ -374,6 +374,10 @@ export class PostListener {
     const posts = await this._postService.getsByMedia(videoId);
     const contentSeries = await this._postService.getPostsWithSeries(posts.map((post) => post.id));
     for (const post of posts) {
+      if (post.status === PostStatus.SCHEDULE_FAILED) {
+        continue;
+      }
+
       const publishedAt = new Date();
       try {
         await this._postService.updateData([post.id], {
@@ -484,6 +488,9 @@ export class PostListener {
     }
 
     for (const post of contentSeries) {
+      if (post.status === PostStatus.SCHEDULE_FAILED) {
+        continue;
+      }
       if (post['postSeries']?.length > 0) {
         for (const seriesItem of post['postSeries']) {
           this._internalEventEmitter.emit(
@@ -512,8 +519,12 @@ export class PostListener {
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
     const { videoId } = event.payload;
     const posts = await this._postService.getsByMedia(videoId);
-    posts.forEach((post) => {
-      this._postService
+    for (const post of posts) {
+      if (post.status === PostStatus.SCHEDULE_FAILED) {
+        continue;
+      }
+
+      await this._postService
         .updateData([post.id], {
           mediaJson: {
             ...post.media,
@@ -559,7 +570,7 @@ export class PostListener {
           data: postActivity,
         },
       });
-    });
+    }
   }
 
   @On(PostsArchivedOrRestoredByGroupEvent)

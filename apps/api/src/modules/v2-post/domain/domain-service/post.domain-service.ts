@@ -11,6 +11,7 @@ import {
   ContentNoPublishYetException,
   ContentNotFoundException,
   InvalidResourceImageException,
+  PostVideoProcessingException,
 } from '../exception';
 import { PostEntity, ArticleEntity, ContentEntity } from '../model/content';
 import {
@@ -211,6 +212,10 @@ export class PostDomainService implements IPostDomainService {
 
     await this._validateAndSetPostAttributes(postEntity, payload, actor);
 
+    if (postEntity.isWaitingSchedule() && postEntity.hasVideoProcessing()) {
+      throw new PostVideoProcessingException();
+    }
+
     if (postEntity.hasVideoProcessing()) {
       postEntity.setProcessing();
     } else {
@@ -219,19 +224,19 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-    }
 
-    if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
-      await this.markSeen(postId, actor.id);
-      postEntity.increaseTotalSeen();
-    }
+      if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
+        await this.markSeen(postId, actor.id);
+        postEntity.increaseTotalSeen();
+      }
 
-    if (postEntity.isImportant()) {
-      await this.markReadImportant(postId, actor.id);
-      postEntity.setMarkReadImportant();
-    }
+      if (postEntity.isImportant()) {
+        await this.markReadImportant(postId, actor.id);
+        postEntity.setMarkReadImportant();
+      }
 
-    this.event.publish(new PostPublishedEvent({ postEntity, actor }));
+      this.event.publish(new PostPublishedEvent({ postEntity, actor }));
+    }
 
     return postEntity;
   }
