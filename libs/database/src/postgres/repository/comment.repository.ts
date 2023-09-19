@@ -16,6 +16,7 @@ import { FindOptions, Op, Sequelize, WhereOptions, col, Includeable } from 'sequ
 import {
   FindOneOptions,
   GetAroundCommentProps,
+  GetAroundCommentResult,
   GetPaginationCommentProps,
   ILibCommentRepository,
 } from './interface';
@@ -79,44 +80,41 @@ export class LibCommentRepository implements ILibCommentRepository {
   }
 
   public async getAroundComment(
-    comment: CommentAttributes,
+    commentId: string,
     props: GetAroundCommentProps
-  ): Promise<CursorPaginationResult<CommentModel>> {
+  ): Promise<GetAroundCommentResult> {
     const { limit } = props;
     const limitExcludeTarget = limit - 1;
     const first = Math.ceil(limitExcludeTarget / 2);
     const last = limitExcludeTarget - first;
-    const cursor = createCursor({ createdAt: comment.createdAt });
+
+    const targetComment = await this._commentModel.findByPk(commentId);
+    const cursor = createCursor({ createdAt: targetComment.get('createdAt') });
+    const postId = targetComment.get('postId');
+    const parentId = targetComment.get('parentId');
 
     const soonerCommentsQuery = this.getPagination({
       ...props,
       limit: first,
       after: cursor,
-      postId: comment.postId,
-      parentId: comment.parentId,
+      postId,
+      parentId,
     });
 
     const laterCommentsQuery = this.getPagination({
       ...props,
       limit: last,
       before: cursor,
-      postId: comment.postId,
-      parentId: comment.parentId,
+      postId,
+      parentId,
     });
 
-    const currentCommentQuery = this._commentModel.findOne({
-      where: {
-        id: comment.id,
-      },
-    });
-
-    const [soonerComment, laterComments, currentComment] = await Promise.all([
+    const [soonerComment, laterComments] = await Promise.all([
       soonerCommentsQuery,
       laterCommentsQuery,
-      currentCommentQuery,
     ]);
 
-    const rows = concat(laterComments.rows, currentComment, soonerComment.rows);
+    const rows = concat(laterComments.rows, targetComment, soonerComment.rows);
 
     const meta = {
       startCursor: laterComments.rows.length > 0 ? laterComments.meta.startCursor : cursor,
@@ -125,7 +123,9 @@ export class LibCommentRepository implements ILibCommentRepository {
       hasPreviousPage: laterComments.meta.hasPreviousPage,
     };
 
-    return { rows, meta };
+    const targetIndex = rows.length - (soonerComment.rows?.length || 0) - 1;
+
+    return { rows, meta, targetIndex };
   }
 
   public async findComment(id: string, authUser: UserDto): Promise<CommentModel> {

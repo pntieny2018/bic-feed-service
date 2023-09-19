@@ -11,6 +11,7 @@ import { CommentEntity } from '../../domain/model/comment';
 import {
   FindOneProps,
   GetAroundCommentProps,
+  GetAroundCommentResult,
   GetPaginationCommentProps,
   ICommentRepository,
 } from '../../domain/repositoty-interface';
@@ -35,16 +36,17 @@ export class CommentRepository implements ICommentRepository {
   }
 
   public async getAroundComment(
-    comment: CommentEntity,
+    commentId: string,
     props: GetAroundCommentProps
-  ): Promise<CursorPaginationResult<CommentEntity>> {
-    const { rows, meta } = await this._libCommentRepository.getAroundComment(
-      this._commentMapper.toPersistence(comment),
+  ): Promise<GetAroundCommentResult> {
+    const { rows, meta, targetIndex } = await this._libCommentRepository.getAroundComment(
+      commentId,
       props
     );
     return {
       rows: rows.map((comment) => this._commentMapper.toDomain(comment)),
       meta,
+      targetIndex,
     };
   }
 
