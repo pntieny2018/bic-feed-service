@@ -28,8 +28,6 @@ export class CommentDomainService implements ICommentDomainService {
   private readonly _logger = new Logger(CommentDomainService.name);
 
   public constructor(
-    @Inject(COMMENT_REPOSITORY_TOKEN)
-    private readonly _commentQuery: ICommentRepository,
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _commentFactory: ICommentFactory,
     @Inject(COMMENT_REPOSITORY_TOKEN)
@@ -58,7 +56,7 @@ export class CommentDomainService implements ICommentDomainService {
     id: string,
     props: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const comment = await this.getVisibleComment(id);
+    const comment = await this._commentRepository.findOne({ id });
     const isChild = comment.isChildComment();
 
     if (isChild) {
@@ -120,53 +118,57 @@ export class CommentDomainService implements ICommentDomainService {
   }
 
   private async _getCommentsAroundChild(
-    comment: CommentEntity,
+    child: CommentEntity,
     pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
+    const commentId = child.get('id');
+    const parentId = child.get('parentId');
     const { userId, targetChildLimit, limit } = pagination;
 
-    const aroundChildPagination = await this._commentQuery.getAroundComment(comment, {
+    const aroundChild = await this._commentRepository.getAroundComment(commentId, {
       limit: targetChildLimit,
       order: ORDER.DESC,
       authUserId: userId,
     });
 
-    const parent = await this.getVisibleComment(comment.get('parentId'), userId);
-    parent.setChilds(aroundChildPagination);
-
-    const aroundParentPagination = await this._commentQuery.getAroundComment(parent, {
+    const { rows, meta, targetIndex } = await this._commentRepository.getAroundComment(parentId, {
       limit,
       order: ORDER.DESC,
       authUserId: userId,
     });
 
-    return aroundParentPagination;
+    rows[targetIndex].setChilds({ rows: aroundChild.rows, meta: aroundChild.meta });
+
+    return { rows, meta };
   }
 
   private async _getCommentsAroundParent(
-    comment: CommentEntity,
+    parent: CommentEntity,
     pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
+    const postId = parent.get('postId');
+    const commentId = parent.get('id');
     const { userId, targetChildLimit, limit } = pagination;
 
-    const childsPagination = await this._commentQuery.getPagination({
-      authUserId: userId,
-      postId: comment.get('postId'),
-      parentId: comment.get('id'),
-      limit: targetChildLimit,
-      order: ORDER.DESC,
-    });
-    if (childsPagination && childsPagination.rows?.length) {
-      comment.setChilds(childsPagination);
-    }
-
-    const aroundParentPagination = await this._commentQuery.getAroundComment(comment, {
+    const { rows, meta, targetIndex } = await this._commentRepository.getAroundComment(commentId, {
       limit,
       order: ORDER.DESC,
       authUserId: userId,
     });
 
-    return aroundParentPagination;
+    const childsPagination = await this._commentRepository.getPagination({
+      authUserId: userId,
+      postId,
+      parentId: commentId,
+      limit: targetChildLimit,
+      order: ORDER.DESC,
+    });
+
+    if (childsPagination && childsPagination.rows?.length) {
+      rows[targetIndex].setChilds(childsPagination);
+    }
+
+    return { rows, meta };
   }
 
   private async _setCommentMedia(
