@@ -9,7 +9,6 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { PostVideoProcessingException } from '../../../../domain/exception';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -53,10 +52,7 @@ export class ProcessScheduledContentPublishingHandler
         }
 
         case CONTENT_TYPE.POST: {
-          const postEntity = await this._postDomainService.publish({ payload: { id }, actor });
-          if (postEntity.isProcessing()) {
-            throw new PostVideoProcessingException();
-          }
+          await this._postDomainService.publish({ payload: { id }, actor });
         }
 
         default:
