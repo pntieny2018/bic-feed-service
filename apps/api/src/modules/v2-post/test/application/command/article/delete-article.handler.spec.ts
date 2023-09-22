@@ -42,7 +42,7 @@ describe('DeleteArticleHandler', () => {
           actor: userMock,
         },
       });
-      expect(articleDomainService.deleteArticle).toBeCalledWith({ id, actor: userMock });
+      expect(articleDomainService.delete).toBeCalledWith({ id, actor: userMock });
     });
 
     it('should throw error when article not found', async () => {
