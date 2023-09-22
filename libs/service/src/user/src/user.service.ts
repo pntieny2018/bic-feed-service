@@ -66,7 +66,6 @@ export class UserService implements IUserService {
 
       return [...userCaches, ...userApis];
     } catch (e) {
-      console.log(e);
       this._logger.error(e);
       return [];
     }
@@ -106,7 +105,9 @@ export class UserService implements IUserService {
     }
 
     const user = await this._store.get<SharedUserDto>(`${CACHE_KEYS.SHARE_USER}:${id}`);
-
+    if (!user) {
+      return null;
+    }
     const permissions = await this._getUserPermission(user.id);
     const showingBadgesWithCommunity = user?.showingBadges?.map((badge) => ({
       ...badge,

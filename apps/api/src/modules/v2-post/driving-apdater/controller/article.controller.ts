@@ -50,7 +50,7 @@ export class ArticleController {
   @Get(ROUTES.ARTICLE.GET_DETAIL.PATH)
   @Version(ROUTES.ARTICLE.GET_DETAIL.VERSIONS)
   public async getPostDetail(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('articleId', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
     const data = await this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
@@ -87,7 +87,7 @@ export class ArticleController {
   @Version(ROUTES.ARTICLE.DELETE.VERSIONS)
   public async delete(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('articleId', ParseUUIDPipe) id: string
   ): Promise<void> {
     await this._commandBus.execute<DeleteArticleCommand, void>(
       new DeleteArticleCommand({
@@ -107,17 +107,19 @@ export class ArticleController {
   @Patch(ROUTES.ARTICLE.AUTO_SAVE.PATH)
   @Version(ROUTES.ARTICLE.AUTO_SAVE.VERSIONS)
   public async autoSave(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateArticleRequestDto: UpdateArticleRequestDto
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() updateData: UpdateArticleRequestDto,
+    @AuthUser() authUser: UserDto
   ): Promise<void> {
-    const { audience } = updateArticleRequestDto;
     await this._commandBus.execute<AutoSaveArticleCommand, void>(
       new AutoSaveArticleCommand({
-        id,
-        actor: user,
-        ...updateArticleRequestDto,
-        groupIds: audience?.groupIds,
+        ...updateData,
+        id: articleId,
+        categoryIds: updateData.categories,
+        seriesIds: updateData.series,
+        tagIds: updateData.tags,
+        groupIds: updateData.audience?.groupIds,
+        actor: authUser,
       })
     );
   }
@@ -132,17 +134,19 @@ export class ArticleController {
   @Put(ROUTES.ARTICLE.UPDATE.PATH)
   @Version(ROUTES.ARTICLE.UPDATE.VERSIONS)
   public async update(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateArticleRequestDto: UpdateArticleRequestDto
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() updateData: UpdateArticleRequestDto,
+    @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const { audience } = updateArticleRequestDto;
     const articleDto = await this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
       new UpdateArticleCommand({
-        id,
-        actor: user,
-        ...updateArticleRequestDto,
-        groupIds: audience?.groupIds,
+        ...updateData,
+        id: articleId,
+        categoryIds: updateData.categories,
+        seriesIds: updateData.series,
+        tagIds: updateData.tags,
+        groupIds: updateData.audience?.groupIds,
+        actor: authUser,
       })
     );
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -159,46 +163,48 @@ export class ArticleController {
   @Put(ROUTES.ARTICLE.PUBLISH.PATH)
   @Version(ROUTES.ARTICLE.PUBLISH.VERSIONS)
   public async publish(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() publishArticleRequestDto: PublishArticleRequestDto
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() publishData: PublishArticleRequestDto,
+    @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const { audience } = publishArticleRequestDto;
     const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
       new PublishArticleCommand({
-        id,
-        actor: user,
-        ...publishArticleRequestDto,
-        groupIds: audience?.groupIds,
+        ...publishData,
+        id: articleId,
+        categoryIds: publishData.categories,
+        seriesIds: publishData.series,
+        tagIds: publishData.tags,
+        groupIds: publishData.audience?.groupIds,
+        actor: authUser,
       })
     );
     return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Schedule article' })
-  @ApiOkResponse({
-    type: ArticleDto,
-    description: 'Schedule article successfully',
-  })
+  @ApiOkResponse({ description: 'Schedule article successfully' })
   @ResponseMessages({
-    success: 'message.article.scheduled_success',
+    success: 'Successful Schedule',
+    error: 'Fail Schedule',
   })
   @Put(ROUTES.ARTICLE.SCHEDULE.PATH)
   @Version(ROUTES.ARTICLE.SCHEDULE.VERSIONS)
   public async schedule(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() scheduleArticleRequestDto: ScheduleArticleRequestDto
-  ): Promise<ArticleDto> {
-    const { audience } = scheduleArticleRequestDto;
-    const articleDto = await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
+    @Param('articleId', ParseUUIDPipe) articleId: string,
+    @Body() scheduleData: ScheduleArticleRequestDto,
+    @AuthUser() user: UserDto
+  ): Promise<void> {
+    const { audience } = scheduleData;
+    await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
       new ScheduleArticleCommand({
-        id,
-        actor: user,
-        ...scheduleArticleRequestDto,
+        ...scheduleData,
+        id: articleId,
+        categoryIds: scheduleData.categories,
+        seriesIds: scheduleData.series,
+        tagIds: scheduleData.tags,
         groupIds: audience?.groupIds,
+        actor: user,
       })
     );
-    return instanceToInstance(articleDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

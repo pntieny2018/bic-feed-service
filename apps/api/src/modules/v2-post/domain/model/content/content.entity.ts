@@ -145,6 +145,15 @@ export class ContentEntity<
     }
   }
 
+  public setWaitingSchedule(scheduledAt: Date): void {
+    if (this.isPublished()) {
+      return;
+    }
+    this._state.isChangeStatus = true;
+    this._props.scheduledAt = scheduledAt;
+    this._props.status = CONTENT_STATUS.WAITING_SCHEDULE;
+  }
+
   public getId(): string {
     return this._props.id;
   }

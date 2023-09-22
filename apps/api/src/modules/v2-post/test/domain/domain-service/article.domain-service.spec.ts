@@ -130,7 +130,7 @@ describe('Article domain service', () => {
       jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
       jest.spyOn(contentRepository, 'delete').mockResolvedValueOnce(undefined);
 
-      await domainService.deleteArticle({
+      await domainService.delete({
         id,
         actor: userMock,
       });
@@ -143,7 +143,7 @@ describe('Article domain service', () => {
     it('should throw error when article not found', async () => {
       jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(undefined);
       try {
-        await domainService.deleteArticle({
+        await domainService.delete({
           id,
           actor: userMock,
         });
@@ -156,7 +156,7 @@ describe('Article domain service', () => {
     it('should throw error when authUser not found', async () => {
       jest.spyOn(contentRepository, 'findOne').mockResolvedValueOnce(articleEntityMock);
       try {
-        await domainService.deleteArticle({
+        await domainService.delete({
           id,
           actor: { ...userMock, id: 'anotherUserId' },
         });

@@ -22,7 +22,9 @@ export class RedisService {
 
   public async setNxEx(key: string, value: unknown, expireTime = 1000): Promise<any> {
     const setnxResult = await this._store.setnx(key, JSON.stringify(value));
-    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'SETNX', key, value })}`);
+    this._logger.debug(
+      `[CACHE] ${JSON.stringify({ method: 'SETNX', key, value, result: setnxResult })}`
+    );
     if (setnxResult === 1) {
       await this._store.expire(key, expireTime);
     }
@@ -53,7 +55,9 @@ export class RedisService {
   }
 
   public async del(key: string): Promise<number> {
-    return await this._store.del(key);
+    const result = await this._store.del(key);
+    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'DEL', key, result })}`);
+    return result;
   }
 
   public async reset(): Promise<'OK'> {
