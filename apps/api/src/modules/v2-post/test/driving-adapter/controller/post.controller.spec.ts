@@ -141,7 +141,7 @@ describe('PostController', () => {
           tagIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
           seriesIds: undefined,
           media: undefined,
-          authUser: userMock,
+          actor: userMock,
         })
       );
       expect(plainToClass(PostDto, postMock)).toEqual(result);
@@ -199,18 +199,11 @@ describe('PostController', () => {
       expect(commandExecute).toBeCalledWith(
         new UpdatePostCommand({
           ...updatePostRequestDto,
-          id: postMock.id,
           mentionUserIds: updatePostRequestDto?.mentions,
           groupIds: updatePostRequestDto?.audience?.groupIds,
           tagIds: updatePostRequestDto?.tags,
           seriesIds: updatePostRequestDto?.series,
-          media: updatePostRequestDto?.media
-            ? {
-                filesIds: updatePostRequestDto?.media?.files.map((file) => file.id),
-                imagesIds: updatePostRequestDto?.media?.images.map((image) => image.id),
-                videosIds: updatePostRequestDto?.media?.videos.map((video) => video.id),
-              }
-            : undefined,
+          id: postMock.id,
           authUser: userMock,
         })
       );

@@ -1,6 +1,17 @@
 import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Req,
+  Version,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ROUTES } from 'apps/api/src/common/constants/routes.constant';
@@ -66,16 +77,16 @@ export class PostController {
     @Body() updatePostRequestDto: UpdatePostRequestDto,
     @Req() req: Request
   ): Promise<PostDto> {
-    const { audience, tags, series, mentions, media } = updatePostRequestDto;
+    const { audience, tags, series, mentions } = updatePostRequestDto;
 
     const data = await this._commandBus.execute<UpdatePostCommand, PostDto>(
       new UpdatePostCommand({
         ...updatePostRequestDto,
-        id: postId,
         mentionUserIds: mentions,
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
+        id: postId,
         authUser,
       })
     );

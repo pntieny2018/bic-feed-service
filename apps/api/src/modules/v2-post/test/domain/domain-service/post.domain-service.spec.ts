@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { EventBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
@@ -48,6 +49,10 @@ describe('Post domain service', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostDomainService,
+        {
+          provide: EventBus,
+          useFactory: () => jest.fn(),
+        },
         {
           provide: CONTENT_REPOSITORY_TOKEN,
           useValue: createMock<IContentRepository>(),
@@ -131,10 +136,12 @@ describe('Post domain service', () => {
 
   describe('updatePost', () => {
     const updatePostProps: UpdatePostProps = {
-      id: postEntityMock.get('id'),
-      groupIds: postEntityMock.get('groupIds'),
+      payload: {
+        id: postEntityMock.get('id'),
+        groupIds: postEntityMock.get('groupIds'),
+        content: 'test',
+      },
       authUser: userMock,
-      content: 'test',
     };
 
     it('should update post successfully', async () => {
