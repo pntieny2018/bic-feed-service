@@ -1,5 +1,6 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { BooleanHelper } from 'apps/api/src/common/helpers';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -15,41 +16,21 @@ import {
 
 import { PaginatedArgs } from '../../../../../common/dto';
 
+import { PublishArticleRequestDto } from './article.request.dto';
+
 export class GetDraftContentsRequestDto extends PaginatedArgs {
-  @ApiProperty({
-    enum: ORDER,
-    default: ORDER.DESC,
-    required: false,
-  })
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
   @IsEnum(ORDER)
   public order: ORDER = ORDER.DESC;
 
-  @ApiPropertyOptional({
-    name: 'is_processing',
-    required: false,
-    type: Boolean,
-  })
+  @ApiPropertyOptional({ name: 'is_processing', required: false, type: Boolean })
   @IsOptional()
   @IsBoolean()
   @Expose({ name: 'is_processing' })
-  @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
-    }
-    if (value === 'false') {
-      return false;
-    }
-    return null;
-  })
+  @Transform(({ value }) => BooleanHelper.convertStringToBoolean(value))
   public isProcessing?: boolean;
 
-  @ApiProperty({
-    description: 'Content type',
-    required: false,
-    default: '',
-    enum: CONTENT_TYPE,
-  })
-  @Expose()
+  @ApiProperty({ description: 'Content type', required: false, default: '', enum: CONTENT_TYPE })
   @IsOptional()
   @IsEnum(CONTENT_TYPE)
   @ValidateIf((i) => i.type !== '')
@@ -57,26 +38,16 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
 }
 
 export class SearchContentsRequestDto {
-  @ApiPropertyOptional({
-    description: 'List of creator',
-  })
+  @ApiPropertyOptional({ description: 'List of creator' })
   @IsOptional()
   @IsNotEmpty()
   @IsUUID('4', { each: true })
   @IsArray()
-  @Expose({
-    name: 'actors',
-  })
   public actors?: string[];
 
-  @ApiPropertyOptional({
-    description: 'Filter by keyword',
-  })
+  @ApiPropertyOptional({ description: 'Filter by keyword' })
   @IsOptional()
   @IsString()
-  @Expose({
-    name: 'keyword',
-  })
   public keyword?: string;
 
   @ApiPropertyOptional({
@@ -105,16 +76,11 @@ export class SearchContentsRequestDto {
   })
   public tagNames?: string[];
 
-  @ApiPropertyOptional({
-    description: 'Search by topics',
-  })
+  @ApiPropertyOptional({ description: 'Search by topics' })
   @IsOptional()
   @IsNotEmpty()
   @IsUUID('4', { each: true })
   @IsArray()
-  @Expose({
-    name: 'topics',
-  })
   public topics?: string[];
 
   @ApiPropertyOptional({
@@ -124,9 +90,7 @@ export class SearchContentsRequestDto {
   })
   @IsOptional()
   @IsDateString()
-  @Expose({
-    name: 'start_time',
-  })
+  @Expose({ name: 'start_time' })
   public startTime?: string;
 
   @ApiPropertyOptional({
@@ -136,22 +100,14 @@ export class SearchContentsRequestDto {
   })
   @IsOptional()
   @IsDateString()
-  @Expose({
-    name: 'end_time',
-  })
+  @Expose({ name: 'end_time' })
   public endTime?: string;
 
-  @ApiPropertyOptional({
-    description: 'Filter by group',
-    required: false,
-    name: 'group_id',
-  })
-  @Expose({
-    name: 'group_id',
-  })
+  @ApiPropertyOptional({ description: 'Filter by group', required: false, name: 'group_id' })
   @Type(() => String)
   @IsUUID()
   @IsOptional()
+  @Expose({ name: 'group_id' })
   public groupId?: string;
 
   @ApiPropertyOptional({
@@ -163,9 +119,7 @@ export class SearchContentsRequestDto {
   @IsNotEmpty()
   @IsArray()
   @IsEnum(CONTENT_TYPE, { each: true })
-  @Expose({
-    name: 'content_types',
-  })
+  @Expose({ name: 'content_types' })
   public contentTypes?: CONTENT_TYPE[];
 
   @ApiPropertyOptional({
@@ -177,9 +131,7 @@ export class SearchContentsRequestDto {
   @IsOptional()
   @IsNotEmpty()
   @Transform(({ value }) => value && value === 'true')
-  @Expose({
-    name: 'is_included_inner_groups',
-  })
+  @Expose({ name: 'is_included_inner_groups' })
   public isIncludedInnerGroups: boolean;
 }
 
@@ -196,4 +148,22 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
   @IsOptional()
   @IsEnum([CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST])
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+}
+
+export class ScheduleContentRequestDto extends PublishArticleRequestDto {
+  @ApiProperty({ required: true, type: Date })
+  @IsNotEmpty()
+  @IsDateString()
+  @Expose({ name: 'scheduled_at' })
+  public scheduledAt: Date;
+
+  @ApiProperty({ required: true, enum: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST] })
+  @Expose()
+  @IsEnum([CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST])
+  public type: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+
+  public constructor(data: ScheduleContentRequestDto) {
+    super(data);
+    Object.assign(this, data);
+  }
 }

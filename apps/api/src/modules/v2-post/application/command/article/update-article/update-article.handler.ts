@@ -21,8 +21,8 @@ export class UpdateArticleHandler implements ICommandHandler<UpdateArticleComman
   ) {}
 
   public async execute(command: UpdateArticleCommand): Promise<ArticleDto> {
-    const { actor } = command.payload;
-    const articleEntity = await this._articleDomainService.update(command.payload);
+    const { actor, ...payload } = command.payload;
+    const articleEntity = await this._articleDomainService.update({ payload, actor });
     return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }
 }

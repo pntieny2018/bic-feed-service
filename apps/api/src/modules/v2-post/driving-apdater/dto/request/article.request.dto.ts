@@ -1,69 +1,74 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
-import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDateString,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
-import { MediaDto } from './media.request.dto';
-import { PublishPostRequestDto } from './post.request.dto';
+import { MediaDto, MediaItemDto } from '../../../application/dto';
 
-export class UpdateArticleRequestDto extends PublishPostRequestDto {
-  @ApiPropertyOptional({
-    type: String,
-  })
+import { AudienceRequestDto } from './audience.request.dto';
+
+export class UpdateArticleRequestDto {
+  @ApiPropertyOptional({ type: String })
   @IsOptional()
-  @Expose({
-    name: 'title',
-  })
   public title?: string;
 
   @ApiPropertyOptional({
     type: String,
   })
-  @Expose({
-    name: 'summary',
-  })
   @IsOptional()
   public summary?: string;
 
-  @ApiPropertyOptional({
-    type: [String],
-    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8'],
-  })
+  @ApiProperty({ description: 'Content of post', type: String })
+  @IsOptional()
+  public content?: string;
+
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsUUID('4', { each: true })
   @IsArray()
   public categories?: string[];
 
-  @ApiPropertyOptional({
-    type: [String],
-    example: ['Beincomm', 'EVOL'],
-  })
+  @ApiProperty({ type: [String] })
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public series?: string[];
+
+  @ApiProperty({ type: [String] })
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public tags?: string[];
+
+  @ApiProperty({ description: 'Audience', type: AudienceRequestDto, required: false })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => AudienceRequestDto)
+  public audience?: AudienceRequestDto;
+
+  @ApiPropertyOptional({ type: MediaDto })
+  @IsOptional()
+  @Expose({ name: 'cover_media' })
+  public coverMedia?: MediaItemDto;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Expose({ name: 'word_count' })
+  public wordCount?: number;
+
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsUUID('4', { each: true })
   @IsArray()
   public hashtags?: string[];
 
-  @ApiPropertyOptional({
-    type: MediaDto,
-    example: {
-      id: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
-    },
-  })
-  @IsOptional()
-  @Expose({
-    name: 'cover_media',
-  })
-  public coverMedia?: MediaDto;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Expose({
-    name: 'word_count',
-  })
-  public wordCount?: number;
-
   public constructor(data: UpdateArticleRequestDto) {
-    super(data);
     Object.assign(this, data);
   }
 }
@@ -71,14 +76,8 @@ export class UpdateArticleRequestDto extends PublishPostRequestDto {
 export class PublishArticleRequestDto extends UpdateArticleRequestDto {}
 
 export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
-  @ApiProperty({
-    required: true,
-    example: '2021-11-03T16:59:00.000Z',
-    type: Date,
-  })
-  @Expose({
-    name: 'scheduled_at',
-  })
+  @ApiProperty({ type: Date, required: true })
+  @Expose({ name: 'scheduled_at' })
   @IsNotEmpty()
   @IsDateString()
   public scheduledAt: Date;

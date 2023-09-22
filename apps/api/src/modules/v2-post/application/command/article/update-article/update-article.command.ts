@@ -1,21 +1,9 @@
 import { UserDto } from '@libs/service/user';
 import { ICommand } from '@nestjs/cqrs';
 
-import { MediaDto } from '../../../../driving-apdater/dto/request';
+import { ArticlePayload } from '../../../../domain/domain-service/interface';
 
-export type UpdateArticleCommandPayload = {
-  id: string;
-  actor: UserDto;
-  title?: string;
-  summary?: string;
-  content?: string;
-  categories?: string[];
-  series?: string[];
-  tags?: string[];
-  groupIds?: string[];
-  coverMedia?: MediaDto;
-  wordCount?: number;
-};
+export type UpdateArticleCommandPayload = ArticlePayload & { actor: UserDto };
 
 export class UpdateArticleCommand implements ICommand {
   public constructor(public readonly payload: UpdateArticleCommandPayload) {}
