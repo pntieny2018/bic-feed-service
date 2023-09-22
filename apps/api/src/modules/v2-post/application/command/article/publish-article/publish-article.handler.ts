@@ -23,8 +23,8 @@ export class PublishArticleHandler implements ICommandHandler<PublishArticleComm
   ) {}
 
   public async execute(command: PublishArticleCommand): Promise<ArticleDto> {
-    const { actor } = command.payload;
-    const articleEntity = await this._articleDomainService.publish(command.payload);
+    const { actor, ...payload } = command.payload;
+    const articleEntity = await this._articleDomainService.publish({ payload, actor });
 
     return this._contentBinding.articleBinding(articleEntity, { actor, authUser: actor });
   }

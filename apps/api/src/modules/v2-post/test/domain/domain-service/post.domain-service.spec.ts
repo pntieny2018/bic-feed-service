@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { EventBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
@@ -50,6 +51,10 @@ describe('Post domain service', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostDomainService,
+        {
+          provide: EventBus,
+          useFactory: () => jest.fn(),
+        },
         {
           provide: CONTENT_REPOSITORY_TOKEN,
           useValue: createMock<IContentRepository>(),
@@ -166,6 +171,66 @@ describe('Post domain service', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ContentNotFoundException);
       }
+    });
+  });
+
+  describe('updatePost', () => {
+    const updatePostProps: UpdatePostProps = {
+      payload: {
+        id: postEntityMock.get('id'),
+        groupIds: postEntityMock.get('groupIds'),
+        content: 'test',
+      },
+      authUser: userMock,
+    };
+
+    it('should update post successfully', async () => {
+      jest
+        .spyOn(contentRepository, 'findContentByIdInActiveGroup')
+        .mockResolvedValue(postEntityMock);
+      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
+      jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
+      jest.spyOn(postEntityMock, 'updateAttribute').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(postEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      jest.spyOn(postValidator, 'validatePublishContent').mockResolvedValue();
+
+      jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(true);
+      jest.spyOn(contentRepository, 'update').mockResolvedValue();
+
+      const result = await domainService.updatePost(updatePostProps);
+
+      expect(result).toEqual(postEntityMock);
+    });
+
+    it('should throw error when update post', async () => {
+      jest.spyOn(contentRepository, 'findContentByIdInActiveGroup').mockResolvedValue(null);
+
+      try {
+        await domainService.updatePost(updatePostProps);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
+    });
+
+    it('should return void when post not changed', async () => {
+      jest
+        .spyOn(contentRepository, 'findContentByIdInActiveGroup')
+        .mockResolvedValue(postEntityMock);
+      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
+      jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
+      jest.spyOn(postEntityMock, 'updateAttribute').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(postEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      jest.spyOn(postValidator, 'validatePublishContent').mockResolvedValue();
+
+      jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(false);
+
+      const result = await domainService.updatePost(updatePostProps);
+
+      expect(result).toBeUndefined();
     });
   });
 });

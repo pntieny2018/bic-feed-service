@@ -1,8 +1,19 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { UpdatePostCommandPayload } from '../../../application/command/post';
+import { LinkPreviewDto, MediaDto } from '../../../application/dto';
 import { PostEntity, ArticleEntity } from '../../model/content';
+
+export type PostPayload = {
+  id: string;
+  content?: string;
+  seriesIds?: string[];
+  tagIds?: string[];
+  groupIds?: string[];
+  media?: MediaDto;
+  mentionUserIds?: string[];
+  linkPreview?: LinkPreviewDto;
+};
 
 export type PostCreateProps = {
   groups: GroupDto[];
@@ -14,13 +25,27 @@ export type ArticleCreateProps = {
   userId: string;
 };
 
-export type UpdatePostProps = UpdatePostCommandPayload;
+export type UpdatePostProps = {
+  payload: PostPayload;
+  authUser: UserDto;
+};
+
+export type SchedulePostProps = {
+  payload: PostPayload & { scheduledAt: Date };
+  actor: UserDto;
+};
+
+export type PublishPostProps = {
+  payload: PostPayload;
+  actor: UserDto;
+};
 
 export interface IPostDomainService {
   getPostById(postId: string, authUserId: string): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
-  publishPost(input: UpdatePostProps): Promise<PostEntity>;
+  schedule(input: SchedulePostProps): Promise<PostEntity>;
+  publish(input: PublishPostProps): Promise<PostEntity>;
   updatePost(props: UpdatePostProps): Promise<PostEntity>;
   updateSetting(input: {
     contentId: string;
@@ -35,4 +60,5 @@ export interface IPostDomainService {
   markReadImportant(contentId: string, userId: string): Promise<void>;
   delete(id: string): Promise<void>;
 }
+
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';

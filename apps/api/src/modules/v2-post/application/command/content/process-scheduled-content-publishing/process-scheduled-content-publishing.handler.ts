@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -5,6 +6,8 @@ import { DomainNotFoundException } from '../../../../../../common/exceptions';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
+  IPostDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -12,25 +15,27 @@ import {
 } from '../../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 
-import { ProcessScheduledArticlePublishingCommand } from './process-scheduled-article-publishing.command';
+import { ProcessScheduledContentPublishingCommand } from './process-scheduled-content-publishing.command';
 
-@CommandHandler(ProcessScheduledArticlePublishingCommand)
-export class ProcessScheduledArticlePublishingHandler
-  implements ICommandHandler<ProcessScheduledArticlePublishingCommand, void>
+@CommandHandler(ProcessScheduledContentPublishingCommand)
+export class ProcessScheduledContentPublishingHandler
+  implements ICommandHandler<ProcessScheduledContentPublishingCommand, void>
 {
   public constructor(
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
     private readonly _articleDomainService: IArticleDomainService,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
 
-  public async execute(command: ProcessScheduledArticlePublishingCommand): Promise<void> {
+  public async execute(command: ProcessScheduledContentPublishingCommand): Promise<void> {
     const { id, actorId } = command.payload;
 
-    const articleEntity = await this._contentRepository.getContentById(id);
+    const contentEntity = await this._contentRepository.getContentById(id);
     const actor = await this._userAdapter.getUserById(actorId, {
       withPermission: true,
       withGroupJoined: true,
@@ -40,15 +45,27 @@ export class ProcessScheduledArticlePublishingHandler
     }
 
     try {
-      await this._articleDomainService.publish({ id, actor });
+      switch (contentEntity.getType()) {
+        case CONTENT_TYPE.ARTICLE: {
+          await this._articleDomainService.publish({ payload: { id }, actor });
+          break;
+        }
+
+        case CONTENT_TYPE.POST: {
+          await this._postDomainService.publish({ payload: { id }, actor });
+        }
+
+        default:
+          break;
+      }
     } catch (error) {
-      articleEntity.setScheduleFailed();
-      articleEntity.setErrorLog({
+      contentEntity.setScheduleFailed();
+      contentEntity.setErrorLog({
         message: error.message,
         code: error.code,
         stack: JSON.stringify(error.stack),
       });
-      await this._contentRepository.update(articleEntity);
+      await this._contentRepository.update(contentEntity);
     }
   }
 }

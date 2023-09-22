@@ -23,7 +23,8 @@
     "no_crud_permission_at_group": "You don't have CRUD permission at group {groups}",
     "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}",
     "no_publish_yet": "Content has not been published yet",
-    "has_been_published": "Content has been published"
+    "has_been_published": "Content has been published",
+    "invalid_scheduled_time": "The scheduled time is invalid"
   },
   "post": {
     "not_found": "Post not found",
