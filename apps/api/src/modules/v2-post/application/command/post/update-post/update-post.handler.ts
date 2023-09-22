@@ -40,7 +40,8 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
   ) {}
 
   public async execute(command: UpdatePostCommand): Promise<PostDto> {
-    const postEntity = await this._postDomainService.updatePost(command.payload);
+    const { authUser, ...payload } = command.payload;
+    const postEntity = await this._postDomainService.updatePost({ authUser, payload });
 
     if (postEntity.isImportant()) {
       await this._postDomainService.markReadImportant(

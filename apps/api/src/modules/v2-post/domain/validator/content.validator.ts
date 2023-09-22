@@ -2,6 +2,7 @@ import { CONTENT_TYPE } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
+import moment from 'moment';
 
 import { PERMISSION_KEY } from '../../../../common/constants';
 import {
@@ -12,6 +13,7 @@ import { PostType } from '../../data-type';
 import {
   ContentAccessDeniedException,
   ContentEmptyGroupException,
+  ContentInvalidScheduledTimeException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
@@ -223,6 +225,13 @@ export class ContentValidator implements IContentValidator {
 
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
       throw new TagSeriesInvalidException(null, seriesTagErrorData);
+    }
+  }
+
+  public validateScheduleTime(scheduleAt: Date): void {
+    const validScheduleTime = moment().add(30, 'minutes');
+    if (moment(scheduleAt).isBefore(validScheduleTime)) {
+      throw new ContentInvalidScheduledTimeException();
     }
   }
 }

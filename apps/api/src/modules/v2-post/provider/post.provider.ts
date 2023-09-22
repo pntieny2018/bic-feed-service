@@ -20,10 +20,10 @@ import {
   ScheduleArticleHandler,
   UpdateArticleHandler,
 } from '../application/command/article';
-import { ProcessScheduledArticlePublishingHandler } from '../application/command/article/process-scheduled-article-publishing';
 import {
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
+  ProcessScheduledContentPublishingHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
@@ -31,6 +31,7 @@ import {
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   PublishPostHandler,
+  SchedulePostHandler,
   UpdatePostHandler,
 } from '../application/command/post';
 import {
@@ -42,11 +43,13 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
+import { ContentCron } from '../application/cron';
 import {
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
+import { PostPublishedEventHandler } from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
@@ -64,7 +67,6 @@ import { GetScheduleContentHandler } from '../application/query/content/get-sche
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
 import { SearchTagsHandler } from '../application/query/tag';
-import { ArticleCron } from '../application/cron/article.cron';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
@@ -100,29 +102,77 @@ import { ContentRepository } from '../driven-adapter/repository/content.reposito
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
+  /** Processor */
+  ArticleProcessor,
+
+  /** Application Cron Handler */
+  ContentCron,
+
+  /** Application Event Handler */
+  ArticleDeletedEventHandler,
+  ArticlePublishedEventHandler,
+  ArticleUpdatedEventHandler,
+  PostPublishedEventHandler,
+  SeriesCreatedEventHandler,
+  SeriesUpdatedEventHandler,
+  SeriesDeletedEventHandler,
+
+  /** Application Binding */
   {
-    provide: CONTENT_VALIDATOR_TOKEN,
-    useClass: ContentValidator,
+    provide: CONTENT_BINDING_TOKEN,
+    useClass: ContentBinding,
+  },
+
+  /** Application Command */
+  AutoSaveArticleHandler,
+  CreateDraftArticleHandler,
+  DeleteArticleHandler,
+  ProcessArticleDeletedHandler,
+  ProcessArticlePublishedHandler,
+  ProcessArticleUpdatedHandler,
+  ProcessScheduledContentPublishingHandler,
+  PublishArticleHandler,
+  ScheduleArticleHandler,
+  UpdateArticleHandler,
+  MarkReadImportantContentHandler,
+  UpdateContentSettingHandler,
+  AutoSavePostHandler,
+  CreateDraftPostHandler,
+  ProcessPostPublishedHandler,
+  ProcessPostUpdatedHandler,
+  PublishPostHandler,
+  SchedulePostHandler,
+  UpdatePostHandler,
+  CreateSeriesHandler,
+  DeleteSeriesHandler,
+  ProcessSeriesDeletedHandler,
+  ProcessSeriesPublishedHandler,
+  ProcessSeriesUpdatedHandler,
+  UpdateSeriesHandler,
+  ValidateSeriesTagsHandler,
+
+  /** Application Query */
+  FindArticleHandler,
+  FindDraftContentsHandler,
+  FindNewsfeedHandler,
+  FindTimelineGroupHandler,
+  GetMenuSettingsHandler,
+  GetScheduleContentHandler,
+  SearchContentsHandler,
+  FindPostHandler,
+  FindPostsByIdsHandler,
+  FindItemsBySeriesHandler,
+  FindSeriesHandler,
+  SearchTagsHandler,
+
+  /** Domain Service */
+  {
+    provide: ARTICLE_DOMAIN_SERVICE_TOKEN,
+    useClass: ArticleDomainService,
   },
   {
-    provide: POST_VALIDATOR_TOKEN,
-    useClass: PostValidator,
-  },
-  {
-    provide: ARTICLE_VALIDATOR_TOKEN,
-    useClass: ArticleValidator,
-  },
-  {
-    provide: POST_FACTORY_TOKEN,
-    useClass: PostFactory,
-  },
-  {
-    provide: ARTICLE_FACTORY_TOKEN,
-    useClass: ArticleFactory,
-  },
-  {
-    provide: SERIES_FACTORY_TOKEN,
-    useClass: SeriesFactory,
+    provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+    useClass: ContentDomainService,
   },
   {
     provide: POST_DOMAIN_SERVICE_TOKEN,
@@ -132,25 +182,49 @@ export const postProvider = [
     provide: SERIES_DOMAIN_SERVICE_TOKEN,
     useClass: SeriesDomainService,
   },
+
+  /** Domain Factory */
   {
-    provide: ARTICLE_DOMAIN_SERVICE_TOKEN,
-    useClass: ArticleDomainService,
+    provide: ARTICLE_FACTORY_TOKEN,
+    useClass: ArticleFactory,
   },
   {
-    provide: CONTENT_REPOSITORY_TOKEN,
-    useClass: ContentRepository,
+    provide: POST_FACTORY_TOKEN,
+    useClass: PostFactory,
   },
   {
-    provide: CONTENT_BINDING_TOKEN,
-    useClass: ContentBinding,
+    provide: SERIES_FACTORY_TOKEN,
+    useClass: SeriesFactory,
+  },
+
+  /** Domain Validator */
+  {
+    provide: ARTICLE_VALIDATOR_TOKEN,
+    useClass: ArticleValidator,
+  },
+  {
+    provide: CONTENT_VALIDATOR_TOKEN,
+    useClass: ContentValidator,
   },
   {
     provide: MENTION_VALIDATOR_TOKEN,
     useClass: MentionValidator,
   },
   {
-    provide: CONTENT_DOMAIN_SERVICE_TOKEN,
-    useClass: ContentDomainService,
+    provide: POST_VALIDATOR_TOKEN,
+    useClass: PostValidator,
+  },
+
+  /** Driven Mapper */
+  ContentMapper,
+  QuizParticipantMapper,
+  QuizQuestionMapper,
+  QuizMapper,
+
+  /** Driven Repository */
+  {
+    provide: CONTENT_REPOSITORY_TOKEN,
+    useClass: ContentRepository,
   },
 
   /** Library Repository */
@@ -166,63 +240,4 @@ export const postProvider = [
     provide: LIB_QUIZ_REPOSITORY_TOKEN,
     useClass: LibQuizRepository,
   },
-
-  /** Mapper */
-  ContentMapper,
-  QuizParticipantMapper,
-  QuizQuestionMapper,
-  QuizMapper,
-
-  /** CronService */
-  ArticleCron,
-
-  /** Application */
-  CreateDraftPostHandler,
-  PublishPostHandler,
-  AutoSavePostHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
-  CreateSeriesHandler,
-  UpdateSeriesHandler,
-  DeleteSeriesHandler,
-  ProcessSeriesPublishedHandler,
-  ProcessSeriesDeletedHandler,
-  ProcessSeriesUpdatedHandler,
-  SeriesCreatedEventHandler,
-  SeriesUpdatedEventHandler,
-  SeriesDeletedEventHandler,
-  FindPostHandler,
-  FindArticleHandler,
-  CreateDraftArticleHandler,
-  MarkReadImportantContentHandler,
-  ValidateSeriesTagsHandler,
-  UpdatePostHandler,
-  FindTimelineGroupHandler,
-  FindPostsByIdsHandler,
-  FindNewsfeedHandler,
-  FindSeriesHandler,
-  FindItemsBySeriesHandler,
-  AutoSaveArticleHandler,
-  PublishArticleHandler,
-  UpdateArticleHandler,
-  DeleteArticleHandler,
-  ScheduleArticleHandler,
-  ProcessScheduledArticlePublishingHandler,
-  ProcessArticlePublishedHandler,
-  ProcessArticleUpdatedHandler,
-  ProcessArticleDeletedHandler,
-  UpdateContentSettingHandler,
-  FindDraftContentsHandler,
-  GetScheduleContentHandler,
-  GetMenuSettingsHandler,
-  SearchContentsHandler,
-  SearchTagsHandler,
-
-  /** Event Handler */
-  ArticleDeletedEventHandler,
-  ArticlePublishedEventHandler,
-  ArticleUpdatedEventHandler,
-
-  /** Processor */
-  ArticleProcessor,
 ];

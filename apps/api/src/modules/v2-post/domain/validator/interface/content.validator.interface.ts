@@ -25,6 +25,8 @@ export interface IContentValidator {
   checkCanReadContent(post: ContentEntity, user: UserDto, postGroupsData?: GroupDto[]): void;
 
   validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): Promise<void>;
+
+  validateScheduleTime(scheduleAt: Date): void;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

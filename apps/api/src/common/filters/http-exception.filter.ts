@@ -42,19 +42,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const res = exception.getResponse();
 
-    let errors = null;
+    let errors = res['message'];
     if (res['errors']) {
       errors = snakecaseKeys(res['errors']);
     }
     if (res['cause']) {
       errors = snakecaseKeys(res['cause']);
     }
+    if (res['_response']) {
+      errors = snakecaseKeys(res['_response']);
+    }
 
     return response.status(status).json(
       new ResponseDto({
         code: res['code'] || this._getCommonErrorCodeByStatus(status),
         meta: {
-          message: exception.message,
+          message: response.responseMessage?.error || exception.message,
           errors,
           stack: this._getStack(exception),
         },
@@ -93,7 +96,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return new BadRequestException(error);
     }
 
-    error.message = 'Internal server error';
+    error.message = error.message || 'Internal server error';
     Sentry.captureException(error);
     return new InternalServerErrorException(error);
   }
