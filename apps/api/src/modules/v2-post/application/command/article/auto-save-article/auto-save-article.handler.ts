@@ -16,6 +16,7 @@ export class AutoSaveArticleHandler implements ICommandHandler<AutoSaveArticleCo
   ) {}
 
   public async execute(command: AutoSaveArticleCommand): Promise<void> {
-    await this._articleDomainService.autoSave(command.payload);
+    const { actor, ...payload } = command.payload;
+    await this._articleDomainService.autoSave({ payload, actor });
   }
 }

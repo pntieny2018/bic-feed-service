@@ -1,11 +1,5 @@
 import { UserDto } from '@libs/service/user';
 
-import {
-  AutoSaveArticleCommandPayload,
-  DeleteArticleCommandPayload,
-  PublishArticleCommandPayload,
-  UpdateArticleCommandPayload,
-} from '../../../application/command/article';
 import { MediaItemDto } from '../../../application/dto';
 import { ArticleEntity } from '../../model/content';
 
@@ -22,24 +16,34 @@ export type ArticlePayload = {
   wordCount?: number;
 };
 
-// TODO: refactor using ArticlePayload
-export type UpdateArticleProps = UpdateArticleCommandPayload;
+export type UpdateArticleProps = {
+  payload: ArticlePayload;
+  actor: UserDto;
+};
 
-// TODO: refactor using ArticlePayload
-export type PublishArticleProps = PublishArticleCommandPayload;
+export type PublishArticleProps = {
+  payload: ArticlePayload;
+  actor: UserDto;
+};
 
 export type ScheduleArticleProps = {
   payload: ArticlePayload & { scheduledAt: Date };
   actor: UserDto;
 };
 
-export type AutoSaveArticleProps = AutoSaveArticleCommandPayload;
+export type AutoSaveArticleProps = {
+  payload: ArticlePayload;
+  actor: UserDto;
+};
 
-export type DeleteArticleProps = DeleteArticleCommandPayload;
+export type DeleteArticleProps = {
+  id: string;
+  actor: UserDto;
+};
 
 export interface IArticleDomainService {
   getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
-  deleteArticle(props: DeleteArticleProps): Promise<void>;
+  delete(input: DeleteArticleProps): Promise<void>;
   update(input: UpdateArticleProps): Promise<ArticleEntity>;
   publish(input: PublishArticleProps): Promise<ArticleEntity>;
   schedule(input: ScheduleArticleProps): Promise<ArticleEntity>;

@@ -6,7 +6,6 @@ import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from 
 import {
   ArticleRequiredCoverException,
   ContentAccessDeniedException,
-  ContentEmptyContentException,
   ContentHasBeenPublishedException,
   ContentNoPublishYetException,
   ContentNotFoundException,
@@ -111,18 +110,12 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async deleteArticle(props: DeleteArticleProps): Promise<void> {
+  public async delete(props: DeleteArticleProps): Promise<void> {
     const { actor, id } = props;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
     });
 
     if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
@@ -144,17 +137,18 @@ export class ArticleDomainService implements IArticleDomainService {
     this.event.publish(new ArticleDeletedEvent(articleEntity, actor));
   }
 
-  public async publish(inputData: PublishArticleProps): Promise<ArticleEntity> {
-    const { actor, id } = inputData;
+  public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
+    const { payload, actor } = input;
+    const { id: articleId } = payload;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
       shouldIncludeGroup: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
     });
 
-    const isArticleNotFound = !articleEntity || !(articleEntity instanceof ArticleEntity);
-    if (isArticleNotFound || articleEntity.isHidden() || articleEntity.isInArchivedGroups()) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || articleEntity.isHidden()) {
       throw new ContentNotFoundException();
     }
 
@@ -162,22 +156,7 @@ export class ArticleDomainService implements IArticleDomainService {
       return articleEntity;
     }
 
-    await this._setArticleEntityAttributes(
-      articleEntity,
-      {
-        id: inputData.id,
-        title: inputData.title,
-        summary: inputData.summary,
-        content: inputData.content,
-        categoryIds: inputData.categories,
-        seriesIds: inputData.series,
-        tagIds: inputData.tags,
-        groupIds: inputData.groupIds,
-        coverMedia: inputData.coverMedia,
-        wordCount: inputData.wordCount,
-      },
-      actor
-    );
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
     articleEntity.setPublish();
 
     await this._articleValidator.validateArticle(articleEntity, actor);
@@ -232,28 +211,19 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async update(inputData: UpdateArticleProps): Promise<ArticleEntity> {
-    const { actor, id, coverMedia } = inputData;
+  public async update(input: UpdateArticleProps): Promise<ArticleEntity> {
+    const { payload, actor } = input;
+    const { id: articleId, coverMedia } = payload;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSeries: true,
-        shouldIncludeQuiz: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+      shouldIncludeGroup: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+      shouldIncludeQuiz: true,
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      (articleEntity.isHidden() && !articleEntity.isOwner(actor.id)) ||
-      articleEntity.isInArchivedGroups()
-    ) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || (articleEntity.isHidden() && !articleEntity.isOwner(actor.id))) {
       throw new ContentNotFoundException();
     }
 
@@ -265,57 +235,32 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(
-      articleEntity,
-      {
-        id: inputData.id,
-        title: inputData.title,
-        summary: inputData.summary,
-        content: inputData.content,
-        categoryIds: inputData.categories,
-        seriesIds: inputData.series,
-        tagIds: inputData.tags,
-        groupIds: inputData.groupIds,
-        coverMedia: inputData.coverMedia,
-        wordCount: inputData.wordCount,
-      },
-      actor
-    );
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
-
     await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
+    this._articleValidator.validateArticleToPublish(articleEntity);
 
-    if (!articleEntity.isValidArticleToPublish()) {
-      throw new ContentEmptyContentException();
+    if (articleEntity.isChanged()) {
+      await this._contentRepository.update(articleEntity);
+      this.event.publish(new ArticleUpdatedEvent(articleEntity, actor));
     }
-
-    if (!articleEntity.isChanged()) {
-      return;
-    }
-
-    await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticleUpdatedEvent(articleEntity, actor));
 
     return articleEntity;
   }
 
-  public async autoSave(inputData: AutoSaveArticleProps): Promise<void> {
-    const { actor, id, coverMedia } = inputData;
+  public async autoSave(input: AutoSaveArticleProps): Promise<void> {
+    const { payload, actor } = input;
+    const { id: articleId, coverMedia } = payload;
 
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSeries: true,
-      },
+    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+      shouldIncludeGroup: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
     });
 
-    if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle) {
       throw new ContentNotFoundException();
     }
 
@@ -331,24 +276,9 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(
-      articleEntity,
-      {
-        id: inputData.id,
-        title: inputData.title,
-        summary: inputData.summary,
-        content: inputData.content,
-        categoryIds: inputData.categories,
-        seriesIds: inputData.series,
-        tagIds: inputData.tags,
-        groupIds: inputData.groupIds,
-        coverMedia: inputData.coverMedia,
-        wordCount: inputData.wordCount,
-      },
-      inputData.actor
-    );
+    await this._setArticleEntityAttributes(articleEntity, payload, actor);
 
-    await this._articleValidator.validateArticle(articleEntity, inputData.actor);
+    await this._articleValidator.validateArticle(articleEntity, actor);
 
     if (!articleEntity.isChanged()) {
       return;
