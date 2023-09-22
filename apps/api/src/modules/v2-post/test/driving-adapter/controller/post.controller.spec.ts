@@ -143,7 +143,7 @@ describe('PostController', () => {
           tagIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
           seriesIds: undefined,
           media: undefined,
-          authUser: userMock,
+          actor: userMock,
         })
       );
       expect(plainToClass(PostDto, postMock)).toEqual(result);
