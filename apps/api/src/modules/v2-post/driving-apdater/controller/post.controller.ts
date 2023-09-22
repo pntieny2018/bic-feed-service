@@ -87,7 +87,6 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media,
         authUser,
       })
     );
@@ -147,7 +146,6 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media,
         authUser,
       })
     );
