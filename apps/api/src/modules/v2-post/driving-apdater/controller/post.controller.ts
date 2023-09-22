@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -86,13 +87,6 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
         authUser,
       })
     );
@@ -152,13 +146,6 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
         authUser,
       })
     );
