@@ -7,7 +7,7 @@ import { Cron } from '@nestjs/schedule';
 import { isBoolean } from 'class-validator';
 import moment from 'moment';
 
-import { CACHE_KEYS, CRON_RUN_SCHEDULED_ARTICLE } from '../../../../common/constants';
+import { CACHE_KEYS, CRON_RUN_SCHEDULED_CONTENT } from '../../../../common/constants';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   GetScheduledContentProps,
@@ -16,8 +16,8 @@ import {
 import { IQueueAdapter, QUEUE_ADAPTER } from '../../domain/infra-adapter-interface';
 
 @Injectable()
-export class ArticleCron {
-  private readonly _logger = new Logger(ArticleCron.name);
+export class ContentCron {
+  private readonly _logger = new Logger(ContentCron.name);
 
   private readonly LIMIT_DEFAULT = 100;
 
@@ -30,18 +30,18 @@ export class ArticleCron {
     private readonly _sentryService: SentryService
   ) {}
 
-  @Cron(CRON_RUN_SCHEDULED_ARTICLE)
-  public async handleJobScheduledArticle(): Promise<void> {
-    this._logger.log('[Cron Job] Scheduled Article');
+  @Cron(CRON_RUN_SCHEDULED_CONTENT)
+  public async handleJobScheduledContent(): Promise<void> {
+    this._logger.debug('[Cron Job] Scheduled Content');
 
     const bufferTimeInMinute = 1;
     const beforeDate = moment().add(bufferTimeInMinute, 'minute').toDate();
-    const canRunScheduleArticle = await this._redisService.setNxEx(
-      CACHE_KEYS.IS_RUNNING_ARTICLE_SCHEDULE,
+    const canRunScheduleContent = await this._redisService.setNxEx(
+      CACHE_KEYS.IS_RUNNING_CONTENT_SCHEDULE,
       true
     );
 
-    if (canRunScheduleArticle === 1) {
+    if (canRunScheduleContent === 1) {
       try {
         const payload: GetScheduledContentProps = {
           limit: this.LIMIT_DEFAULT,
@@ -52,9 +52,9 @@ export class ArticleCron {
       } catch (err) {
         this._logger.error(JSON.stringify(err?.stack));
         this._sentryService.captureException(err);
+      } finally {
+        await this._redisService.del(CACHE_KEYS.IS_RUNNING_CONTENT_SCHEDULE);
       }
-
-      await this._redisService.del(CACHE_KEYS.IS_RUNNING_ARTICLE_SCHEDULE);
     }
   }
 
@@ -78,11 +78,11 @@ export class ArticleCron {
     }
 
     const contentScheduledJobPayloads = rows.map((row) => ({
-      articleId: row.getId(),
-      articleOwnerId: row.getCreatedBy(),
+      contentId: row.getId(),
+      ownerId: row.getCreatedBy(),
     }));
 
-    await this._queueAdapter.addArticleScheduledJobs(contentScheduledJobPayloads);
+    await this._queueAdapter.addContentScheduledJobs(contentScheduledJobPayloads);
 
     await this._recursivelyHandleScheduledContent(payload, meta);
   }

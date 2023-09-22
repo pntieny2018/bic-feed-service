@@ -43,6 +43,7 @@ export const ERRORS = {
   CONTENT_NO_PUBLISH_YET: 'content.no_publish_yet',
   CONTENT_HAS_BEEN_PUBLISHED: 'content.has_been_published',
   CONTENT_QUIZ_EXISTED: 'content.quiz_existed',
+  CONTENT_INVALID_SCHEDULED_TIME: 'content.invalid_scheduled_time',
 
   // ARTICLE
   ARTICLE_INVALID_PARAMETER: 'article.invalid_parameter',
@@ -55,6 +56,7 @@ export const ERRORS = {
   POST_INVALID_PARAMETER: 'post.invalid_parameter',
   POST_STATUS_CONFLICTED: 'post.status_conflicted',
   POST_LIMIT_ATTACHED_SERIES: 'post.limit_attached_series',
+  POST_VIDEO_PROCESSING: 'post.video_processing',
 
   // SERIES
   SERIES_NOT_FOUND: 'series.not_found',

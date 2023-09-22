@@ -1,5 +1,6 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
+
 import { ERRORS } from '../../../../common/constants/errors';
 import { DomainForbiddenException, DomainNotFoundException } from '../../../../common/exceptions';
 
@@ -182,5 +183,15 @@ export class ContentHasQuizException extends DomainException {
     const i18n = I18nContext.current();
     message = message || i18n?.t(`error.content.has_quiz`) || '';
     super(ContentHasQuizException.code, message, error);
+  }
+}
+
+export class ContentInvalidScheduledTimeException extends DomainException {
+  public static code = ERRORS.CONTENT_INVALID_SCHEDULED_TIME;
+
+  public constructor(message: string = null, error: any = null) {
+    const i18n = I18nContext.current();
+    message = message || i18n?.t(`error.content.invalid_scheduled_time`) || '';
+    super(ContentInvalidScheduledTimeException.code, message, error);
   }
 }
