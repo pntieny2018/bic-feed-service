@@ -18,8 +18,7 @@ import {
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { ContentBinding, CONTENT_BINDING_TOKEN } from '../../../binding';
 import { PostDto } from '../../../dto';
 import { PostChangedMessagePayload } from '../../../dto/message';
 
@@ -40,7 +39,8 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
   ) {}
 
   public async execute(command: UpdatePostCommand): Promise<PostDto> {
-    const postEntity = await this._postDomainService.updatePost(command.payload);
+    const { authUser, ...payload } = command.payload;
+    const postEntity = await this._postDomainService.updatePost({ authUser, payload });
 
     if (postEntity.isImportant()) {
       await this._postDomainService.markReadImportant(

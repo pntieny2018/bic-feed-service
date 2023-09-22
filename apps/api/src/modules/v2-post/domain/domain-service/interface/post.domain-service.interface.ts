@@ -1,7 +1,6 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { UpdatePostCommandPayload } from '../../../application/command/post';
 import { LinkPreviewDto, MediaDto } from '../../../application/dto';
 import { PostEntity, ArticleEntity } from '../../model/content';
 
@@ -26,8 +25,10 @@ export type ArticleCreateProps = {
   userId: string;
 };
 
-// TODO: refactor using PostPayload
-export type UpdatePostProps = UpdatePostCommandPayload;
+export type UpdatePostProps = {
+  payload: PostPayload;
+  authUser: UserDto;
+};
 
 export type SchedulePostProps = {
   payload: PostPayload & { scheduledAt: Date };

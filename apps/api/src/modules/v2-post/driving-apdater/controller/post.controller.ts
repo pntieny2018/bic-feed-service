@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -19,7 +20,6 @@ import { Request } from 'express';
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PostStatus } from '../../../../database/models/post.model';
-import { UserDto } from '../../../v2-user/application';
 import {
   AutoSavePostCommand,
   CreateDraftPostCommand,
@@ -87,13 +87,7 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
+        media,
         authUser,
       })
     );
@@ -153,13 +147,7 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
+        media: media,
         authUser,
       })
     );
