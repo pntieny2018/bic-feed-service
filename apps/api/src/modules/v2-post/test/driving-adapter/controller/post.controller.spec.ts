@@ -60,17 +60,25 @@ describe('PostController', () => {
     jest.clearAllMocks();
   });
 
-  describe.skip('Create', () => {
+  describe('Create draft post', () => {
     const createPostRequestDto = new CreateDraftPostRequestDto({
       audience: {
         groupIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
       },
     });
 
-    it('Should create post successfully', async () => {
-      const commandExecute = jest.spyOn(command, 'execute').mockReturnThis();
-      await postController.createDraft(userMock, createPostRequestDto);
-      expect(1).toEqual(1);
+    it('Should create draft post successfully', async () => {
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(postMock);
+      const result = await postController.createDraft(userMock, createPostRequestDto);
+      expect(commandExecute).toBeCalledWith(
+        new CreateDraftPostCommand({
+          groupIds: createPostRequestDto.audience.groupIds,
+          authUser: userMock,
+        })
+      );
+      expect(
+        plainToInstance(PostDto, postMock, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
+      ).toEqual(result);
     });
   });
 

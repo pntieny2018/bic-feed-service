@@ -13,7 +13,7 @@ import {
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
 import { ContentNotFoundException } from '../../../domain/exception';
-import { ArticleEntity } from '../../../domain/model/content';
+import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -37,6 +37,7 @@ import {
 import { articleEntityMock } from '../../mock/article.entity.mock';
 import { postEntityMock } from '../../mock/post.entity.mock';
 import { userMock } from '../../mock/user.dto.mock';
+
 
 describe('Post domain service', () => {
   let domainService: IPostDomainService;
@@ -191,6 +192,36 @@ describe('Post domain service', () => {
       const result = await domainService.updatePost(updatePostProps);
 
       expect(result).toBeUndefined();
+  describe('createDraftPost', () => {
+    it('should create draft post successfully', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockResolvedValue();
+
+      jest.spyOn(PostEntity, 'create').mockReturnValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'setGroups').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(postEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      const result = await domainService.createDraftPost({
+        userId,
+        groups: [],
+      });
+      expect(PostEntity.create).toBeCalledWith({
+        userId,
+        groupIds: [],
+      });
+      expect(result).toEqual(postEntityMock);
+    });
+
+    it('should throw error when create draft post', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
+      await expect(
+        domainService.createDraftPost({
+          userId,
+          groups: [],
+        })
+      ).rejects.toThrow();
     });
   });
 });
