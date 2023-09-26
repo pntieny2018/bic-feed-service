@@ -12,6 +12,7 @@ import {
   UpdatePostProps,
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
+import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import { ContentNotFoundException } from '../../../domain/exception';
 import { ArticleEntity } from '../../../domain/model/content';
 import {
@@ -231,6 +232,39 @@ describe('Post domain service', () => {
       const result = await domainService.updatePost(updatePostProps);
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('createDraftPost', () => {
+    it('should create draft post successfully', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockResolvedValue();
+
+      jest.spyOn(PostEntity, 'create').mockReturnValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'setGroups').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(postEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      const result = await domainService.createDraftPost({
+        userId,
+        groups: [],
+      });
+      expect(PostEntity.create).toBeCalledWith({
+        userId,
+        groupIds: [],
+      });
+      expect(result).toEqual(postEntityMock);
+    });
+
+    it('should throw error when create draft post', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
+      await expect(
+        domainService.createDraftPost({
+          userId,
+          groups: [],
+        })
+      ).rejects.toThrow();
     });
   });
 });
