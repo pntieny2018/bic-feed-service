@@ -1,6 +1,10 @@
 import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
-import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { Inject, Logger } from '@nestjs/common';
+import {
+  CursorPaginationResult,
+  createCursor,
+  getLimitFromAfter,
+} from '@libs/database/postgres/common';
+import { Inject } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
 import { StringHelper } from '../../../../common/helpers';
@@ -14,12 +18,12 @@ import {
   GetContentIdsInTimelineProps,
   GetContentIdsScheduleProps,
   GetDraftsProps,
+  GetImportantContentIdsProps,
   GetScheduledContentProps,
   IContentDomainService,
 } from './interface';
 
 export class ContentDomainService implements IContentDomainService {
-  private readonly _logger = new Logger(ContentDomainService.name);
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository
@@ -123,6 +127,11 @@ export class ContentDomainService implements IContentDomainService {
       authUserId,
       order = ORDER.DESC,
     } = props;
+
+    if (isImportant) {
+      return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
+    }
+
     const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
         exclude: ['content'],
@@ -133,20 +142,13 @@ export class ContentDomainService implements IContentDomainService {
         inNewsfeedUserId: authUserId,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
-        isImportant,
         createdBy: isMine ? authUserId : undefined,
         savedByUserId: isSaved ? authUserId : undefined,
         type,
       },
-      include: {
-        shouldIncludeImportant: {
-          userId: authUserId,
-        },
-      },
       limit,
       order,
       orderOptions: {
-        isImportantFirst: isImportant,
         isPublishedByDesc: true,
       },
       before,
@@ -175,6 +177,10 @@ export class ContentDomainService implements IContentDomainService {
       order = ORDER.DESC,
     } = props;
 
+    if (isImportant) {
+      return this.getImportantContentIds(props);
+    }
+
     const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
         exclude: ['content'],
@@ -185,21 +191,16 @@ export class ContentDomainService implements IContentDomainService {
         groupIds,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
-        isImportant,
         createdBy: isMine ? authUserId : undefined,
         savedByUserId: isSaved ? authUserId : undefined,
         type,
       },
       include: {
         mustIncludeGroup: true,
-        shouldIncludeImportant: {
-          userId: authUserId,
-        },
       },
       limit,
       order,
       orderOptions: {
-        isImportantFirst: isImportant,
         isPublishedByDesc: true,
       },
       before,
@@ -294,6 +295,63 @@ export class ContentDomainService implements IContentDomainService {
     return {
       rows: rows.map((row) => row.getId()),
       meta,
+    };
+  }
+
+  public async getImportantContentIds(
+    props: GetImportantContentIdsProps
+  ): Promise<CursorPaginationResult<string>> {
+    const { authUserId, isOnNewsfeed, groupIds, isMine, type, isSaved, limit, after } = props;
+    const offset = getLimitFromAfter(after);
+
+    const rows = await this._contentRepository.findAll(
+      {
+        attributes: {
+          exclude: ['content'],
+        },
+        where: {
+          type,
+          groupIds,
+          isHidden: false,
+          isImportant: true,
+          groupArchived: false,
+          status: CONTENT_STATUS.PUBLISHED,
+          excludeReportedByUserId: authUserId,
+          createdBy: isMine ? authUserId : undefined,
+          savedByUserId: isSaved ? authUserId : undefined,
+          inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
+        },
+        include: {
+          ...(groupIds && {
+            mustIncludeGroup: true,
+          }),
+          shouldIncludeImportant: {
+            userId: authUserId,
+          },
+        },
+        orderOptions: {
+          isImportantFirst: true,
+          isPublishedByDesc: true,
+        },
+      },
+      {
+        offset,
+        limit: limit + 1,
+      }
+    );
+
+    const hasMore = rows.length > limit;
+
+    if (hasMore) {
+      rows.pop();
+    }
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta: {
+        hasNextPage: hasMore,
+        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
+      },
     };
   }
 }

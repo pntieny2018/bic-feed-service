@@ -4,7 +4,7 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaDto } from '../../application/dto';
-import { PostPublishedEvent } from '../event';
+import { PostPublishedEvent, PostScheduledEvent } from '../event';
 import {
   ContentAccessDeniedException,
   ContentHasBeenPublishedException,
@@ -186,6 +186,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
+      this.event.publish(new PostScheduledEvent({ postEntity, actor }));
     }
 
     return postEntity;
@@ -269,7 +270,7 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNotFoundException();
     }
 
-    if (!postEntity.isPublished()) {
+    if (postEntity.isDraft()) {
       throw new ContentNoPublishYetException();
     }
 
