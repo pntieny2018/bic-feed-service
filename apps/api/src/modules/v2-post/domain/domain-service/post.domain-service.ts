@@ -269,7 +269,7 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNotFoundException();
     }
 
-    if (!postEntity.isPublished()) {
+    if (postEntity.isDraft()) {
       throw new ContentNoPublishYetException();
     }
 
