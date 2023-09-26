@@ -1,8 +1,9 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { instanceToInstance } from 'class-transformer';
 
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
@@ -43,6 +44,6 @@ export class TimelineController {
         authUser,
       })
     );
-    return data;
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }
