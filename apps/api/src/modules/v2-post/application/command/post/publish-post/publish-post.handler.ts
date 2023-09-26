@@ -48,13 +48,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       withGroupJoined: true,
     });
 
-    const result = await this._contentBinding.postBinding(postEntity, {
+    return this._contentBinding.postBinding(postEntity, {
       groups,
       actor,
       authUser: actor,
       mentionUsers,
     });
-
-    return result;
   }
 }

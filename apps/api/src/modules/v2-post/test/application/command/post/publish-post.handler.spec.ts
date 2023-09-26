@@ -85,11 +85,11 @@ describe('PublishPostHandler', () => {
     const payload: PublishPostCommandPayload = {
       id: postEntityMock.get('id'),
       groupIds: postEntityMock.get('groupIds'),
-      authUser: userMock,
+      actor: userMock,
     };
 
     it('Should publish post successfully', async () => {
-      jest.spyOn(postDomainService, 'publishPost').mockResolvedValue(postEntityMock);
+      jest.spyOn(postDomainService, 'publish').mockResolvedValue(postEntityMock);
       jest.spyOn(postEntityMock, 'getSnapshot').mockReturnValue({
         ...postEntityMock.getSnapshot(),
         status: CONTENT_STATUS.PROCESSING,
@@ -118,15 +118,11 @@ describe('PublishPostHandler', () => {
       });
 
       expect(result).toEqual(postMock);
-      expect(postEntityMock.increaseTotalSeen).toBeCalledTimes(1);
       expect(postDomainService.markReadImportant).toBeCalledTimes(0);
-      expect(kafkaAdapter.emit).toBeCalledTimes(1);
     });
 
     it('Should throw ContentNotFoundException', async () => {
-      jest
-        .spyOn(postDomainService, 'publishPost')
-        .mockRejectedValue(new ContentNotFoundException());
+      jest.spyOn(postDomainService, 'publish').mockRejectedValue(new ContentNotFoundException());
 
       try {
         await publishPostHandler.execute({

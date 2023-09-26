@@ -10,11 +10,11 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
   UpdatePostProps,
+  PublishPostProps,
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
-import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import { ContentNotFoundException } from '../../../domain/exception';
-import { ArticleEntity } from '../../../domain/model/content';
+import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -140,10 +140,12 @@ describe('Post domain service', () => {
   });
 
   describe('publishPost', () => {
-    const props: UpdatePostProps = {
-      id: postEntityMock.getId(),
-      groupIds: postEntityMock.getGroupIds(),
-      authUser: userMock,
+    const props: PublishPostProps = {
+      payload: {
+        groupIds: postEntityMock.getGroupIds(),
+        id: postEntityMock.getId(),
+      },
+      actor: userMock,
     };
 
     it('should publish post successfully', async () => {
@@ -159,7 +161,7 @@ describe('Post domain service', () => {
 
       jest.spyOn(postEntityMock, 'isPublished').mockReturnValue(false);
 
-      const result = await domainService.publishPost(props);
+      const result = await domainService.publish(props);
       expect(result).toEqual(postEntityMock);
       expect(postEntityMock.setPublish).toBeCalledTimes(1);
     });
@@ -168,7 +170,7 @@ describe('Post domain service', () => {
       jest.spyOn(contentRepository, 'findOne').mockResolvedValue(articleEntityMock);
 
       try {
-        await domainService.publishPost(props);
+        await domainService.publish(props);
       } catch (error) {
         expect(error).toBeInstanceOf(ContentNotFoundException);
       }
