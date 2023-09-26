@@ -375,6 +375,7 @@ export class PostListener {
     const contentSeries = await this._postService.getPostsWithSeries(posts.map((post) => post.id));
     for (const post of posts) {
       if (post.status === PostStatus.SCHEDULE_FAILED) {
+        this._logger.debug(`[Event video processed]: Post ${post.id} has been scheduled failed`);
         continue;
       }
 
@@ -402,6 +403,7 @@ export class PostListener {
             images: [],
           },
         });
+        this._logger.debug(`[Event video processed]: Post ${post.id} has been published`);
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
@@ -521,6 +523,7 @@ export class PostListener {
     const posts = await this._postService.getsByMedia(videoId);
     for (const post of posts) {
       if (post.status === PostStatus.SCHEDULE_FAILED) {
+        this._logger.debug(`[Event video processed]: Post ${post.id} has been scheduled failed`);
         continue;
       }
 
