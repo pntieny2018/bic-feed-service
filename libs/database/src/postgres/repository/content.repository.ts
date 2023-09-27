@@ -95,10 +95,10 @@ export class LibContentRepository implements ILibContentRepository {
   }
 
   public async bulkCreatePostSeries(
-    postGroups: PostSeriesAttributes[],
+    postSeries: PostSeriesAttributes[],
     options?: BulkCreateOptions
   ): Promise<void> {
-    await this._postSeriesModel.bulkCreate(postGroups, options);
+    await this._postSeriesModel.bulkCreate(postSeries, options);
   }
 
   public async deletePostSeries(
