@@ -1,20 +1,22 @@
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Sequelize } from 'sequelize-typescript';
-import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../../domain/factory/interface';
 import { Transaction } from 'sequelize';
-import { CommentFactory } from '../../../domain/factory';
-import { CommentModel, IComment } from '../../../../../database/models/comment.model';
+import { Sequelize } from 'sequelize-typescript';
+
 import {
   CommentReactionModel,
   ICommentReaction,
 } from '../../../../../database/models/comment-reaction.model';
-import { commentRecord } from '../../mock/comment.model.mock';
+import { CommentModel, IComment } from '../../../../../database/models/comment.model';
+import { CommentFactory } from '../../../domain/factory';
+import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../../domain/factory/interface';
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
-import { commentEntityMock } from '../../mock/comment.entity.mock';
+import { createMockCommentEntity, createMockCommentRecord } from '../../mock/comment.mock';
 
 const transaction = createMock<Transaction>();
+const commentRecord = createMockCommentRecord();
+const commentEntityMock = createMockCommentEntity();
 
 describe('CommentRepository', () => {
   let repo;

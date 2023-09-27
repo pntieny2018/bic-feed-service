@@ -26,7 +26,9 @@ import {
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
-import { articleEntityMock } from '../../mock/article.entity.mock';
+import { createMockArticleEntity } from '../../mock/content.mock';
+
+const articleEntityMock = createMockArticleEntity();
 
 describe('Post domain service', () => {
   let domainService: IPostDomainService;

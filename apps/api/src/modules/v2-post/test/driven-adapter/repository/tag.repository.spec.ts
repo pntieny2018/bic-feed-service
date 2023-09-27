@@ -1,19 +1,21 @@
 import { createMock } from '@golevelup/ts-jest';
+import { HttpService } from '@nestjs/axios';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { v4 } from 'uuid';
+
 import { PostTagModel } from '../../../../../database/models/post-tag.model';
 import { TagModel } from '../../../../../database/models/tag.model';
+import { TagFactory } from '../../../domain/factory';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
 import { TagEntity } from '../../../domain/model/tag';
 import { TagRepository } from '../../../driven-adapter/repository';
-import { userMock } from '../../mock/user.dto.mock';
-import { Sequelize } from 'sequelize-typescript';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
-import { HttpService } from '@nestjs/axios';
-import { Transaction } from 'sequelize';
-import { TagFactory } from '../../../domain/factory';
+import { createMockUserDto } from '../../mock/user.mock';
 
 const transaction = createMock<Transaction>();
+const userMock = createMockUserDto();
 
 describe('TagRepository', () => {
   let repo, tagModel, postTagModel, sequelizeConnection;

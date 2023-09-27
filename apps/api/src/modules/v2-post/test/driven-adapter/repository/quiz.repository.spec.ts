@@ -19,10 +19,11 @@ import {
   IQuizRepository,
 } from '../../../domain/repositoty-interface';
 import { QuizRepository } from '../../../driven-adapter/repository/quiz.repository';
-import { quizEntityMock } from '../../mock/quiz.entity.mock';
-import { quizRecordMock } from '../../mock/quiz.model.mock';
+import { createMockQuizEntity, createMockQuizRecord } from '../../mock/quiz.mock';
 
 const transaction = createMock<Transaction>();
+const quizRecordMock = createMockQuizRecord();
+const quizEntityMock = createMockQuizEntity(quizRecordMock);
 
 describe('QuizRepository', () => {
   let repo: IQuizRepository;

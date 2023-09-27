@@ -1,17 +1,20 @@
-import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';
-import { Test, TestingModule } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
-import { RecentSearchModel } from '../../../../../database/models/recent-search.model';
+import { Test, TestingModule } from '@nestjs/testing';
+import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
+
+import { RecentSearchModel } from '../../../../../database/models/recent-search.model';
 import { RecentSearchType } from '../../../data-type/recent-search-type.enum';
-import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 import {
   IRecentSearchFactory,
   RECENT_SEARCH_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/recent-search.factory.interface';
 import { RecentSearchFactory } from '../../../domain/factory/recent-search.factory';
-import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
+import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
+import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';
+
+const userMock = createMockUserDto();
 
 describe('RecentSearchRepository', () => {
   let repo, recentSearchModel;
