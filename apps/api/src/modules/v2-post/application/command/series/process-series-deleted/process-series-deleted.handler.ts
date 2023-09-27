@@ -52,7 +52,7 @@ export class ProcessSeriesDeletedHandler
         },
       })) as (PostEntity | ArticleEntity)[];
 
-      await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
+      await this._postSearchService.updateAttachedSeriesForPost(itemIds);
 
       if (items.every((item) => item.isOwner(actor.id))) {
         return;

@@ -147,7 +147,9 @@ export class QuizDomainService implements IQuizDomainService {
       throw new QuizQuestionBelongsToQuizException();
     }
 
-    const quizEntity = await this._quizRepository.findQuizById(quizQuestionEntity.get('quizId'));
+    const quizEntity = await this._quizRepository.findQuizByIdWithQuestions(
+      quizQuestionEntity.get('quizId')
+    );
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }

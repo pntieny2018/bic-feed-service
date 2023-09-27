@@ -13,7 +13,6 @@ import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
-import { SeriesService } from '../../modules/series/series.service';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
@@ -33,7 +32,6 @@ export class SeriesListener {
     private readonly _groupAppService: IGroupApplicationService,
     private readonly _postSearchService: SearchService,
     private readonly _postService: PostService,
-    private readonly _seriesService: SeriesService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _seriesActivityService: SeriesActivityService
@@ -59,9 +57,7 @@ export class SeriesListener {
     const itemsSorted = series.items.sort(
       (a, b) => a['PostSeriesModel'].zindex - b['PostSeriesModel'].zindex
     );
-    await this._postSearchService.updateSeriesAtrributeForPostSearch(
-      itemsSorted.map((item) => item.id)
-    );
+    await this._postSearchService.updateAttachedSeriesForPost(itemsSorted.map((item) => item.id));
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
     if (items.every((item) => item.createdBy === series.createdBy)) {
       return;
