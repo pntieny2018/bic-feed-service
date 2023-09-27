@@ -234,9 +234,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
     as: 'ownerReactions',
     foreignKey: 'postId',
   })
-  public postReactions?: PostReactionModel[];
-
-  public reactionsCount?: string;
+  public ownerReactions?: PostReactionModel[];
 
   public markedReadPost?: boolean;
 
