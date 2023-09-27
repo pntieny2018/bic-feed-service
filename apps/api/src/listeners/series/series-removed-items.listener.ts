@@ -22,67 +22,67 @@ export class SeriesRemovedItemsListener {
 
   @On(SeriesRemovedItemsEvent)
   public async handler(event: SeriesRemovedItemsEvent): Promise<void> {
-    this._logger.debug(
-      `[SeriesRemovedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${JSON.stringify(
-        event.payload.items[0]
-      )}`
-    );
     const { seriesId, items, skipNotify } = event.payload;
+    this._logger.debug(
+      `[SeriesRemovedItemsListener] seriesId=${seriesId} -- itemId=${JSON.stringify(items[0])}`
+    );
+
+    const series = await this._seriesService.findSeriesById(seriesId, {
+      withItems: true,
+    });
+
+    const currentItems = series.items.map((item) => ({
+      id: item.id,
+      zindex: item['PostSeriesModel'].zindex,
+    }));
+    await this._postSearchService.updateAttributePostToSearch(series, {
+      items: currentItems.sort((a, b) => {
+        return a.zindex - b.zindex;
+      }),
+    });
 
     await this._postSearchService.updateAttachedSeriesForPost(items.map((item) => item.id));
 
-    const series = await this._seriesService.findSeriesById(seriesId, {
-      withItemId: true,
-    });
-
-    if (series) {
-      const items = series.items.map((item) => ({
-        id: item.id,
-        zindex: item['PostSeriesModel'].zindex,
-      }));
-      this._postSearchService.updateAttributePostToSearch(series, {
-        items,
-      });
-
-      if (skipNotify) {
-        return;
-      }
-
-      this._notifyDeletedItems(event).catch((ex) => this._logger.error(ex, ex?.stack));
+    if (!skipNotify) {
+      await this._notifyDeletedItems(event).catch((ex) => this._logger.error(ex, ex?.stack));
     }
   }
 
   private async _notifyDeletedItems(event: SeriesRemovedItemsEvent): Promise<void> {
     const { seriesId, items, actor, contentIsDeleted } = event.payload;
 
-    const series = await this._postService.getListWithGroupsByIds([seriesId], true);
-    if (items.length === 0 || series.length === 0) {
-      return;
-    }
-    if (series[0].createdBy === items[0].createdBy) {
-      return;
-    }
-    const isSendToArticleCreator = items[0].createdBy !== actor.id;
-    const activity = await this._seriesActivityService.getDeletingItemToSeriesActivity(
-      series[0],
-      items[0]
-    );
+    try {
+      const series = await this._postService.getListWithGroupsByIds([seriesId], true);
+      if (items.length === 0 || series.length === 0) {
+        return;
+      }
+      if (series[0].createdBy === items[0].createdBy) {
+        return;
+      }
+      const isSendToArticleCreator = items[0].createdBy !== actor.id;
+      const activity = this._seriesActivityService.getDeletingItemToSeriesActivity(
+        series[0],
+        items[0]
+      );
 
-    await this._notificationService.publishPostNotification({
-      key: `${series[0].id}`,
-      value: {
-        actor: {
-          id: actor.id,
-        },
-        event: event.getEventName(),
-        data: activity,
-        meta: {
-          series: {
-            isSendToContentCreator: isSendToArticleCreator,
-            contentIsDeleted,
+      await this._notificationService.publishPostNotification({
+        key: `${series[0].id}`,
+        value: {
+          actor: {
+            id: actor.id,
+          },
+          event: event.getEventName(),
+          data: activity,
+          meta: {
+            series: {
+              isSendToContentCreator: isSendToArticleCreator,
+              contentIsDeleted,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (ex) {
+      this._logger.error(ex, ex?.stack);
+    }
   }
 }

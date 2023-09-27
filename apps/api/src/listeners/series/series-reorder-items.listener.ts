@@ -19,15 +19,17 @@ export class SeriesReorderItemsListener {
     this._logger.debug(`[SeriesReorderItemsListener] ${JSON.stringify(event.payload)}`);
     const { seriesId } = event.payload;
     const series = await this._seriesService.findSeriesById(seriesId, {
-      withItemId: true,
+      withItems: true,
     });
     if (series) {
       const items = series.items.map((item) => ({
         id: item.id,
         zindex: item['PostSeriesModel'].zindex,
       }));
-      this._postSearchService.updateAttributePostToSearch(series, {
-        items,
+      await this._postSearchService.updateAttributePostToSearch(series, {
+        items: items.sort((a, b) => {
+          return a.zindex - b.zindex;
+        }),
       });
     }
   }
