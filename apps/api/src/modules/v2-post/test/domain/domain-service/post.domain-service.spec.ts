@@ -1,8 +1,8 @@
 import { createMock } from '@golevelup/ts-jest';
+import { EventBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
   IPostDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
@@ -10,6 +10,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
+import { ContentAccessDeniedException } from '../../../domain/exception';
 import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -17,7 +18,12 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../../../domain/service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -28,6 +34,7 @@ import {
 } from '../../../domain/validator/interface';
 import { articleEntityMock } from '../../mock/article.entity.mock';
 import { postEntityMock } from '../../mock/post.entity.mock';
+import { userMock } from '../../mock/user.dto.mock';
 
 describe('Post domain service', () => {
   let domainService: IPostDomainService;
@@ -37,6 +44,10 @@ describe('Post domain service', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostDomainService,
+        {
+          provide: EventBus,
+          useValue: createMock<EventBus>(),
+        },
         {
           provide: CONTENT_REPOSITORY_TOKEN,
           useValue: createMock<IContentRepository>(),
@@ -70,8 +81,8 @@ describe('Post domain service', () => {
           useValue: createMock<IGroupAdapter>(),
         },
         {
-          provide: USER_APPLICATION_TOKEN,
-          useValue: createMock<IUserApplicationService>(),
+          provide: USER_ADAPTER,
+          useValue: createMock<IUserAdapter>(),
         },
       ],
     }).compile();
@@ -145,6 +156,57 @@ describe('Post domain service', () => {
           groups: [],
         })
       ).rejects.toThrow();
+    });
+  });
+
+  describe('getPostById', () => {
+    it('should get post by id successfully', async () => {
+      const postId = postEntityMock.getId();
+      const authUserId = userMock.id;
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
+      const result = await domainService.getPostById(postId, authUserId);
+      expect(result).toEqual(postEntityMock);
+      expect(contentRepository.findOne).toBeCalledWith({
+        where: {
+          id: postId,
+          groupArchived: false,
+          excludeReportedByUserId: authUserId,
+        },
+        include: {
+          shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
+          shouldIncludeLinkPreview: true,
+          shouldIncludeQuiz: true,
+          shouldIncludeSaved: {
+            userId: authUserId,
+          },
+          shouldIncludeMarkReadImportant: {
+            userId: authUserId,
+          },
+          shouldIncludeReaction: {
+            userId: authUserId,
+          },
+        },
+      });
+    });
+
+    it('should throw error when get post by id', async () => {
+      const postId = postEntityMock.getId();
+      const authUserId = userMock.id;
+      jest.spyOn(contentRepository, 'findOne').mockRejectedValue(new Error());
+      await expect(domainService.getPostById(postId, authUserId)).rejects.toThrow();
+    });
+
+    it('should throw ContentAccessDeniedException when get post by id and post not found', async () => {
+      const postId = postEntityMock.getId();
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'isOpen').mockReturnValue(false);
+
+      try {
+        await domainService.getPostById(postId, null);
+      } catch (error) {
+        expect(error).toEqual(new ContentAccessDeniedException());
+      }
     });
   });
 });
