@@ -167,8 +167,8 @@ export class ContentMapper {
       videoIdProcessing: post.videoIdProcessing,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
-      ownerReactions: post.postReactions
-        ? post.postReactions.map((item) => ({
+      ownerReactions: post.ownerReactions
+        ? post.ownerReactions.map((item) => ({
             id: item.id,
             reactionName: item.reactionName,
           }))
@@ -229,8 +229,8 @@ export class ContentMapper {
       wordCount: post.wordCount,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
-      ownerReactions: post.postReactions
-        ? post.postReactions.map((item) => ({
+      ownerReactions: post.ownerReactions
+        ? post.ownerReactions.map((item) => ({
             id: item.id,
             reactionName: item.reactionName,
           }))
