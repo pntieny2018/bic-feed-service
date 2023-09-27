@@ -1,18 +1,13 @@
 import { Injectable } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
-import { SearchService } from '../../modules/search/search.service';
-import { SeriesService } from '../../modules/series/series.service';
-import { SeriesActivityService } from '../../notification/activities';
-import { NotificationService } from '../../notification';
-import { PostService } from '../../modules/post/post.service';
 import { SeriesChangedItemsEvent } from '../../events/series/series-changed-items.event';
+import { NotificationService } from '../../notification';
+import { SeriesActivityService } from '../../notification/activities';
 
 @Injectable()
 export class SeriesChangedItemsListener {
   public constructor(
-    private readonly _postService: PostService,
-    private readonly _seriesService: SeriesService,
-    private readonly _postSearchService: SearchService,
     private readonly _notificationService: NotificationService,
     private readonly _seriesActivityService: SeriesActivityService
   ) {}

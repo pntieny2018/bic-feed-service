@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
 import { SeriesAddedItemsEvent } from '../../events/series';
+import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
-import { SeriesActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
-import { PostService } from '../../modules/post/post.service';
+import { SeriesActivityService } from '../../notification/activities';
 
 @Injectable()
 export class SeriesAddedItemsListener {
@@ -21,73 +22,69 @@ export class SeriesAddedItemsListener {
 
   @On(SeriesAddedItemsEvent)
   public async handler(event: SeriesAddedItemsEvent): Promise<void> {
+    const { seriesId, itemIds, skipNotify, context } = event.payload;
     this._logger.debug(
-      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${JSON.stringify(
-        event.payload.itemIds[0]
-      )}`
+      `[SeriesAddedItemsListener] seriesId=${seriesId} -- itemId=${JSON.stringify(itemIds[0])}`
     );
 
-    const { seriesId, skipNotify } = event.payload;
-
-    await this._updateSeriesAtrribute(event);
-
     const series = await this._seriesService.findSeriesById(seriesId, {
-      withItemId: true,
+      withItems: true,
     });
 
-    if (series) {
-      const items = series.items.map((item) => ({
-        id: item.id,
-        zindex: item['PostSeriesModel'].zindex,
-      }));
+    const items = series.items.map((item) => ({
+      id: item.id,
+      zindex: item['PostSeriesModel'].zindex,
+    }));
+    await this._postSearchService.updateAttributePostToSearch(series, {
+      items: items.sort((a, b) => {
+        return a.zindex - b.zindex;
+      }),
+    });
 
-      this._postSearchService.updateAttributePostToSearch(series, {
-        items,
-      });
+    if (context !== 'publish') {
+      await this._postSearchService.updateAttachedSeriesForPost(itemIds);
     }
 
-    if (skipNotify) {
-      return;
+    if (!skipNotify) {
+      await this._notifyAddedItem(event);
     }
-
-    this._notifyAddedItem(event).catch((ex) => this._logger.error(ex, ex?.stack));
   }
 
   private async _notifyAddedItem(event: SeriesAddedItemsEvent): Promise<void> {
     const { seriesId, itemIds, actor, context } = event.payload;
 
-    const series = await this._postService.getListWithGroupsByIds([seriesId], true);
-    const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
-    if (items.length === 0 || series.length === 0) return;
-    if (series[0].createdBy === items[0].createdBy) return;
-    const isSendToArticleCreator = items[0].createdBy !== actor.id;
-    const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
-      series[0],
-      items[0]
-    );
-    await this._notificationService.publishPostNotification({
-      key: `${series[0].id}`,
-      value: {
-        actor: {
-          id: actor.id,
-        },
-        event: event.getEventName(),
-        data: activity,
-        meta: {
-          series: {
-            isSendToContentCreator: isSendToArticleCreator,
-            context,
+    try {
+      const series = await this._postService.getListWithGroupsByIds([seriesId], true);
+      const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
+      if (items.length === 0 || series.length === 0) {
+        return;
+      }
+      if (series[0].createdBy === items[0].createdBy) {
+        return;
+      }
+      const isSendToArticleCreator = items[0].createdBy !== actor.id;
+      const activity = this._seriesActivityService.getAddingItemToSeriesActivity(
+        series[0],
+        items[0]
+      );
+      await this._notificationService.publishPostNotification({
+        key: `${series[0].id}`,
+        value: {
+          actor: {
+            id: actor.id,
+          },
+          event: event.getEventName(),
+          data: activity,
+          meta: {
+            series: {
+              isSendToContentCreator: isSendToArticleCreator,
+              context,
+            },
           },
         },
-      },
-    });
-  }
-
-  private async _updateSeriesAtrribute(event: SeriesAddedItemsEvent): Promise<void> {
-    const { itemIds, context } = event.payload;
-
-    if (context === 'publish') return;
-
-    await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
+      });
+    } catch (ex) {
+      this._logger.error(ex, ex?.stack);
+    }
   }
 }
