@@ -36,7 +36,6 @@ export type QuizAttributes = {
 export class QuizEntity extends DomainAggregateRoot<QuizAttributes> {
   public constructor(props: QuizAttributes) {
     super(props);
-    this.validateNumberDisplay();
   }
 
   public static create(options: Partial<QuizAttributes>, userId: string): QuizEntity {
