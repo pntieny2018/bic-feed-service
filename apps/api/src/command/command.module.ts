@@ -43,6 +43,7 @@ import { ExportUserContentDataCommand } from './export-user-content-data.command
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
+import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { ExportReactionCountDataCommand } from './export-reaction-count.command'
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
     ExportReactionCountDataCommand,
+    ExportInvalidTagNameCommand,
   ],
 })
 export class CommandModule {}
