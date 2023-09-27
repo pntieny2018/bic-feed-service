@@ -1,4 +1,4 @@
-import { UserDto } from '../../../v2-user/application';
+import { UserDto } from '@libs/service/user';
 
 export const userMock: UserDto = {
   fullname: 'Admin EVOL',

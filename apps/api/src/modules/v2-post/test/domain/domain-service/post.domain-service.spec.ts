@@ -10,7 +10,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
-import { ArticleEntity } from '../../../domain/model/content';
+import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -27,6 +27,7 @@ import {
   POST_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
 import { articleEntityMock } from '../../mock/article.entity.mock';
+import { postEntityMock } from '../../mock/post.entity.mock';
 
 describe('Post domain service', () => {
   let domainService: IPostDomainService;
@@ -107,6 +108,39 @@ describe('Post domain service', () => {
       jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
       await expect(
         domainService.createDraftArticle({
+          userId,
+          groups: [],
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('createDraftPost', () => {
+    it('should create draft post successfully', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockResolvedValue();
+
+      jest.spyOn(PostEntity, 'create').mockReturnValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'setGroups').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(postEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      const result = await domainService.createDraftPost({
+        userId,
+        groups: [],
+      });
+      expect(PostEntity.create).toBeCalledWith({
+        userId,
+        groupIds: [],
+      });
+      expect(result).toEqual(postEntityMock);
+    });
+
+    it('should throw error when create draft post', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
+      await expect(
+        domainService.createDraftPost({
           userId,
           groups: [],
         })

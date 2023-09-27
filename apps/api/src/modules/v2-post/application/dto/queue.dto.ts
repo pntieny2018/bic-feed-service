@@ -6,11 +6,11 @@ export class QuizParticipantResultJobDto {
   }
 }
 
-export class ArticleScheduledJobDto {
-  public articleId: string;
-  public articleOwnerId: string;
+export class ContentScheduledJobDto {
+  public contentId: string;
+  public ownerId: string;
 
-  public constructor(data: Partial<ArticleScheduledJobDto>) {
+  public constructor(data: Partial<ContentScheduledJobDto>) {
     Object.assign(this, data);
   }
 }
