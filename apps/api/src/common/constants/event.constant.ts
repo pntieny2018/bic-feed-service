@@ -4,6 +4,7 @@ export const PostWillBeUpdated = 'post.will.be.updated';
 export const PostWillBeDeleted = 'post.will.be.deleted';
 
 export const PostHasBeenPublished = 'post.has.been.published';
+export const PostHasBeenScheduled = 'post.has.been.scheduled';
 export const PostHasBeenUpdated = 'post.has.been.updated';
 export const PostHasBeenDeleted = 'post.has.been.deleted';
 export const PostVideoHasBeenPublished = 'post_video.has.been.published';

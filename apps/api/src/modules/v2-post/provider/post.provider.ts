@@ -49,7 +49,10 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import { PostPublishedEventHandler } from '../application/event-handler/post';
+import {
+  PostPublishedEventHandler,
+  PostScheduledEventHandler,
+} from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
@@ -113,6 +116,7 @@ export const postProvider = [
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
   PostPublishedEventHandler,
+  PostScheduledEventHandler,
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,

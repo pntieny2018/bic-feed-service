@@ -9,6 +9,9 @@ import { I18nContext } from 'nestjs-i18n';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../common/constants';
 import { DomainModelException } from '../../../../../common/exceptions';
+import { CreateDraftPostCommand, PublishPostCommand } from '../../../application/command/post';
+import { CreateDraftPostDto, PostDto } from '../../../application/dto';
+import { FindPostQuery } from '../../../application/query/post';
 import {
   CreateDraftPostCommand,
   PublishPostCommand,
@@ -195,6 +198,19 @@ describe('PostController', () => {
           { ...postMock, status: CONTENT_STATUS.PROCESSING },
           { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] }
         )
+      ).toEqual(result);
+    });
+  });
+
+  describe('getPostDetail', () => {
+    it('Should get post detail successfully', async () => {
+      const queryExecute = jest.spyOn(query, 'execute').mockResolvedValue(postMock);
+      const result = await postController.getPostDetail(postMock.id, userMock);
+      expect(queryExecute).toBeCalledWith(
+        new FindPostQuery({ postId: postMock.id, authUser: userMock })
+      );
+      expect(
+        plainToClass(PostDto, postMock, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
       ).toEqual(result);
     });
   });

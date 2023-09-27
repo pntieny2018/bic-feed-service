@@ -134,6 +134,7 @@ export class LibCommentRepository implements ILibCommentRepository {
         authUser
           ? {
               model: CommentReactionModel,
+              as: 'ownerReactions',
               on: {
                 [Op.and]: {
                   comment_id: { [Op.eq]: col(`CommentModel.id`) },
@@ -181,6 +182,7 @@ export class LibCommentRepository implements ILibCommentRepository {
       findOptions.include = [
         {
           model: CommentReactionModel,
+          as: 'ownerReactions',
           on: {
             [Op.and]: {
               comment_id: { [Op.eq]: col(`CommentModel.id`) },
