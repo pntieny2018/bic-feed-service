@@ -255,20 +255,7 @@ export class SeriesService {
         where: {
           status: PostStatus.PUBLISHED,
         },
-        attributes: [
-          'id',
-          'title',
-          'summary',
-          'createdBy',
-          'canComment',
-          'canReact',
-          'status',
-          'type',
-          'content',
-          'createdAt',
-          'updated_at',
-          'importantExpiredAt',
-        ],
+        attributes: ['id'],
       });
     }
     const result = await this._postModel.findOne({
