@@ -111,6 +111,15 @@ export class LibContentRepository implements ILibContentRepository {
     });
   }
 
+  public async getMaxIndexOfPostSeries(seriesId: string): Promise<number> {
+    const maxIndex: number = await this._postSeriesModel.max('zindex', {
+      where: {
+        seriesId,
+      },
+    });
+    return maxIndex || 0;
+  }
+
   public async bulkCreatePostTag(
     postGroups: PostTagAttributes[],
     options?: BulkCreateOptions

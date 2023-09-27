@@ -92,6 +92,7 @@ export interface ILibContentRepository {
     where: WhereOptions<PostSeriesAttributes>,
     transaction?: Transaction
   ): Promise<void>;
+  getMaxIndexOfPostSeries(seriesId: string): Promise<number>;
 
   bulkCreatePostTag(postTags: PostTagAttributes[], options?: BulkCreateOptions): Promise<void>;
   deletePostTag(where: WhereOptions<PostTagAttributes>, transaction?: Transaction): Promise<void>;
