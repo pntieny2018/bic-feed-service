@@ -78,7 +78,7 @@ export class UserService implements IUserService {
     }
 
     const permissions = await this._getPermissionByUserId(userProfile.id);
-    const showingBadges = await this._getShowingBadgesByUserIdFromCache(userProfile.id);
+    const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
     const joinedGroups = await this._getJoinedGroupsByUserIdFromCache(userProfile.id);
 
     return new UserDto({ ...userProfile, permissions, showingBadges, groups: joinedGroups });
@@ -142,10 +142,11 @@ export class UserService implements IUserService {
   }
 
   private async _getJoinedGroupsByUserIdFromCache(userId: string): Promise<string[]> {
-    return this._store.get<string[]>(`${CACHE_KEYS.JOINED_GROUPS}:${userId}`);
+    return this._store.getSets(`${CACHE_KEYS.JOINED_GROUPS}:${userId}`);
   }
 
   private async _getPermissionByUserId(userId: string): Promise<UserPermissionDto> {
+    const versionPermissionCacheKey = 'version';
     const permissions: UserPermissionDto = {
       communities: {},
       groups: {},
@@ -153,12 +154,20 @@ export class UserService implements IUserService {
     const communityPermissionCacheKey = `${CACHE_KEYS.COMMUNITY_PERMISSION}:${userId}`;
     const groupPermissionCacheKey = `${CACHE_KEYS.GROUP_PERMISSION}:${userId}`;
 
-    const communityPermissions = await this._store.get<UserPermissionDto>(
+    const communityPermissions = await this._store.hgetall<Record<string, string[]>>(
       communityPermissionCacheKey
     );
-    const groupPermissions = await this._store.get<UserPermissionDto>(groupPermissionCacheKey);
-    permissions.communities = communityPermissions?.communities;
-    permissions.groups = groupPermissions?.groups;
+
+    const groupPermissions = await this._store.hgetall<Record<string, string[]>>(
+      groupPermissionCacheKey
+    );
+
+    // remove key version in communityPermissions and groupPermissions
+    delete communityPermissions[versionPermissionCacheKey];
+    delete groupPermissions[versionPermissionCacheKey];
+
+    permissions.communities = communityPermissions;
+    permissions.groups = groupPermissions;
 
     if (!communityPermissions || !groupPermissions) {
       const response = await this._groupHttpService.get(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, {
