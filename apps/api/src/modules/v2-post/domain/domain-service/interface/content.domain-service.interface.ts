@@ -37,6 +37,15 @@ export type GetContentIdsInTimelineProps = {
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
 
+export type GetImportantContentIdsProps = {
+  authUserId: string;
+  isOnNewsfeed?: boolean;
+  groupIds?: string[];
+  isMine?: boolean;
+  isSaved?: boolean;
+  type?: CONTENT_TYPE;
+} & CursorPaginationProps;
+
 export class GetContentIdsScheduleProps extends PaginatedArgs {
   public order: ORDER;
   public user: UserDto;
