@@ -20,7 +20,6 @@ import { CheckWrongMediaCommand } from './check-wrong-media.command';
 import { CleanArticleCommand } from './clean-article.command';
 import { CleanDraftPostCommand } from './clean-draft-posts.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
-import { ExportReactionCountDataCommand } from './export-reaction-count.command';
 import { ExportUserContentDataCommand } from './export-user-content-data.command';
 import { FixCommentCountCommand } from './fix-comment-count.command';
 import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.command';
@@ -36,6 +35,8 @@ import { MigrateMediaIdCommand } from './migrate-media-id.command';
 import { MigratePostMediaCommand } from './migrate-post-media.command';
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
+import { ExportReactionCountDataCommand } from './export-reaction-count.command';
+import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MoveMediaBucketCommand } from './move-media-bucket.command';
@@ -99,6 +100,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
     ExportReactionCountDataCommand,
+    ExportInvalidTagNameCommand,
   ],
 })
 export class CommandModule {}
