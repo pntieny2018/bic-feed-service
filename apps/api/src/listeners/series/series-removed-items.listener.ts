@@ -29,7 +29,7 @@ export class SeriesRemovedItemsListener {
     );
     const { seriesId, items, skipNotify } = event.payload;
 
-    await this._postSearchService.updateSeriesAtrributeForPostSearch(items.map((item) => item.id));
+    await this._postSearchService.updateAttachedSeriesForPost(items.map((item) => item.id));
 
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,

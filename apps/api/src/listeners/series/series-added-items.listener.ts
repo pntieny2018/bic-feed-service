@@ -95,6 +95,6 @@ export class SeriesAddedItemsListener {
       return;
     }
 
-    await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
+    await this._postSearchService.updateAttachedSeriesForPost(itemIds);
   }
 }
