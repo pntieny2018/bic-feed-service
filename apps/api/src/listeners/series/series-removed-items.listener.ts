@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
 import { SeriesRemovedItemsEvent } from '../../events/series';
+import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
-import { PostService } from '../../modules/post/post.service';
-import { SeriesActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
+import { SeriesActivityService } from '../../notification/activities';
 
 @Injectable()
 export class SeriesRemovedItemsListener {
@@ -55,8 +56,12 @@ export class SeriesRemovedItemsListener {
     const { seriesId, items, actor, contentIsDeleted } = event.payload;
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
-    if (items.length === 0 || series.length === 0) return;
-    if (series[0].createdBy === items[0].createdBy) return;
+    if (items.length === 0 || series.length === 0) {
+      return;
+    }
+    if (series[0].createdBy === items[0].createdBy) {
+      return;
+    }
     const isSendToArticleCreator = items[0].createdBy !== actor.id;
     const activity = await this._seriesActivityService.getDeletingItemToSeriesActivity(
       series[0],

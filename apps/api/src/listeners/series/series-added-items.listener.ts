@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
 import { SeriesAddedItemsEvent } from '../../events/series';
+import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
-import { SeriesActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
-import { PostService } from '../../modules/post/post.service';
+import { SeriesActivityService } from '../../notification/activities';
 
 @Injectable()
 export class SeriesAddedItemsListener {
@@ -58,8 +59,12 @@ export class SeriesAddedItemsListener {
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
-    if (items.length === 0 || series.length === 0) return;
-    if (series[0].createdBy === items[0].createdBy) return;
+    if (items.length === 0 || series.length === 0) {
+      return;
+    }
+    if (series[0].createdBy === items[0].createdBy) {
+      return;
+    }
     const isSendToArticleCreator = items[0].createdBy !== actor.id;
     const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
       series[0],
@@ -86,7 +91,9 @@ export class SeriesAddedItemsListener {
   private async _updateSeriesAtrribute(event: SeriesAddedItemsEvent): Promise<void> {
     const { itemIds, context } = event.payload;
 
-    if (context === 'publish') return;
+    if (context === 'publish') {
+      return;
+    }
 
     await this._postSearchService.updateSeriesAtrributeForPostSearch(itemIds);
   }

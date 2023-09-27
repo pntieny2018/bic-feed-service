@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
 import { SeriesReoderItemsEvent } from '../../events/series';
 import { SearchService } from '../../modules/search/search.service';
@@ -16,7 +17,7 @@ export class SeriesReorderItemsListener {
   @On(SeriesReoderItemsEvent)
   public async handler(event: SeriesReoderItemsEvent): Promise<void> {
     this._logger.debug(`[SeriesReorderItemsListener] ${JSON.stringify(event.payload)}`);
-    const { seriesId, itemIds } = event.payload;
+    const { seriesId } = event.payload;
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
     });
