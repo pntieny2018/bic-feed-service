@@ -110,7 +110,7 @@ export class FeedService {
         where: {
           postId: postId,
         },
-        order: [['createdAt', 'DESC']],
+        order: [['createdAt', 'ASC']],
         limit: getUserSeenPostDto?.limit || 20,
         offset: getUserSeenPostDto?.offset || 0,
       });
