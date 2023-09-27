@@ -4,9 +4,9 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import {
   IPostDomainService,
   ISeriesDomainService,
+  IReactionDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
-  IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { SeriesEntity } from '../../../../domain/model/content';

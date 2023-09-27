@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { instanceToInstance } from 'class-transformer';
 
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
 import { UserDto } from '../../../v2-user/application';
 import { FindNewsfeedQuery } from '../../application/query/content';
@@ -30,12 +31,12 @@ export class NewsFeedController {
         isSaved,
         isMine,
         isImportant,
-        limit: limit,
+        limit,
         after,
         before,
         authUser,
       })
     );
-    return data;
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

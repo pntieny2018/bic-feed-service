@@ -254,8 +254,8 @@ export class ContentRepository implements IContentRepository {
     findAllPostOptions: FindContentProps,
     offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const articles = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
-    return articles.map((article) => this._contentMapper.toDomain(article));
+    const contents = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
+    return contents.map((content) => this._contentMapper.toDomain(content));
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {

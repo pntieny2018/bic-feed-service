@@ -230,7 +230,7 @@ export class ContentValidator implements IContentValidator {
 
   public validateScheduleTime(scheduleAt: Date): void {
     const validScheduleTime = moment().add(30, 'minutes');
-    if (moment(scheduleAt).isBefore(validScheduleTime)) {
+    if (moment(scheduleAt).isBefore(validScheduleTime, 'minutes')) {
       throw new ContentInvalidScheduledTimeException();
     }
   }
