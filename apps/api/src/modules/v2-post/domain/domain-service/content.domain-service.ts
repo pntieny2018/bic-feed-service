@@ -355,7 +355,7 @@ export class ContentDomainService implements IContentDomainService {
     };
   }
 
-  public async viewSeries(contentId: string, authUserId: string): Promise<SeriesEntity[]> {
+  public async getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]> {
     const contentEntity = (await this._contentRepository.findOne({
       where: {
         id: contentId,
@@ -385,7 +385,7 @@ export class ContentDomainService implements IContentDomainService {
 
     const seriesEntites = (await this._contentRepository.findAll({
       where: {
-        ids: contentEntity.getSeriesIds(),
+        ids: seriesIds,
       },
     })) as SeriesEntity[];
 

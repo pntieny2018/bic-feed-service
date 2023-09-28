@@ -5,21 +5,26 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { ImageDto, SeriesDto, ViewSeriesResponseDto } from '../../../dto';
+import { ImageDto, SeriesDto, GetSeriesResponseDto } from '../../../dto';
 
-import { ViewSeriesQuery } from './view-series.query';
+import { FindSeriesInContentQuery } from './find-series-in-content.query';
 
-@QueryHandler(ViewSeriesQuery)
-export class ViewSeriesHandler implements IQueryHandler<ViewSeriesQuery, ViewSeriesResponseDto> {
+@QueryHandler(FindSeriesInContentQuery)
+export class FindSeriesInContentHandler
+  implements IQueryHandler<FindSeriesInContentQuery, GetSeriesResponseDto>
+{
   public constructor(
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(query: ViewSeriesQuery): Promise<ViewSeriesResponseDto> {
+  public async execute(query: FindSeriesInContentQuery): Promise<GetSeriesResponseDto> {
     const { contentId, authUser } = query.payload;
 
-    const seriesEntites = await this._contentDomainService.viewSeries(contentId, authUser.id);
+    const seriesEntites = await this._contentDomainService.getSeriesInContent(
+      contentId,
+      authUser.id
+    );
 
     const series = seriesEntites.map((seriesEntity) => {
       return new SeriesDto({
@@ -32,6 +37,6 @@ export class ViewSeriesHandler implements IQueryHandler<ViewSeriesQuery, ViewSer
       });
     });
 
-    return new ViewSeriesResponseDto(series);
+    return new GetSeriesResponseDto(series);
   }
 }

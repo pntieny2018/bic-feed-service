@@ -21,7 +21,7 @@ export class GetScheduleContentsResponseDto extends PaginatedResponse<ArticleDto
   }
 }
 
-export class ViewSeriesResponseDto {
+export class GetSeriesResponseDto {
   public list: SeriesDto[] = [];
 
   public constructor(list: SeriesDto[]) {

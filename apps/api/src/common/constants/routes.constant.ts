@@ -173,8 +173,8 @@ export const ROUTES = {
       PATH: '/schedule',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
-    VIEW_SERIES: {
-      PATH: '/:contentId/view-series',
+    GET_SERIES: {
+      PATH: '/:contentId/series',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },

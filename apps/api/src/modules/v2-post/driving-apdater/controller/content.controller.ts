@@ -31,13 +31,13 @@ import { GetScheduleContentsResponseDto, MenuSettingsDto } from '../../applicati
 import {
   FindDraftContentsDto,
   SearchContentsDto,
-  ViewSeriesResponseDto,
+  GetSeriesResponseDto,
 } from '../../application/dto/content.dto';
 import {
   FindDraftContentsQuery,
+  FindSeriesInContentQuery,
   GetMenuSettingsQuery,
   SearchContentsQuery,
-  ViewSeriesQuery,
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
@@ -122,19 +122,19 @@ export class ContentController {
     return instanceToInstance(contents, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
-  @ApiOperation({ summary: 'View series' })
+  @ApiOperation({ summary: 'Get series in contetnt' })
   @ApiOkResponse({
-    type: ViewSeriesResponseDto,
+    type: GetSeriesResponseDto,
     description: 'View series',
   })
-  @Get(ROUTES.CONTENT.VIEW_SERIES.PATH)
-  @Version(ROUTES.CONTENT.VIEW_SERIES.VERSIONS)
-  public async viewSeries(
+  @Get(ROUTES.CONTENT.GET_SERIES.PATH)
+  @Version(ROUTES.CONTENT.GET_SERIES.VERSIONS)
+  public async getSeries(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
-  ): Promise<ViewSeriesResponseDto> {
-    const contents = await this._queryBus.execute<ViewSeriesQuery, ViewSeriesResponseDto>(
-      new ViewSeriesQuery({
+  ): Promise<GetSeriesResponseDto> {
+    const contents = await this._queryBus.execute<FindSeriesInContentQuery, GetSeriesResponseDto>(
+      new FindSeriesInContentQuery({
         authUser,
         contentId,
       })

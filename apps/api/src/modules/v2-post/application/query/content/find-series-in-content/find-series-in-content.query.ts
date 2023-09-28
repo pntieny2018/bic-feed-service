@@ -6,6 +6,6 @@ type Props = {
   authUser: UserDto;
   contentId: string;
 };
-export class ViewSeriesQuery implements IQuery {
+export class FindSeriesInContentQuery implements IQuery {
   public constructor(public readonly payload: Props) {}
 }
