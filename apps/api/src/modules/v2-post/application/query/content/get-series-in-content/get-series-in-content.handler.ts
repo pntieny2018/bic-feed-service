@@ -7,18 +7,18 @@ import {
 } from '../../../../domain/domain-service/interface';
 import { ImageDto, SeriesDto, GetSeriesResponseDto } from '../../../dto';
 
-import { FindSeriesInContentQuery } from './find-series-in-content.query';
+import { GetSeriesInContentQuery } from './get-series-in-content.query';
 
-@QueryHandler(FindSeriesInContentQuery)
-export class FindSeriesInContentHandler
-  implements IQueryHandler<FindSeriesInContentQuery, GetSeriesResponseDto>
+@QueryHandler(GetSeriesInContentQuery)
+export class GetSeriesInContentHandler
+  implements IQueryHandler<GetSeriesInContentQuery, GetSeriesResponseDto>
 {
   public constructor(
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(query: FindSeriesInContentQuery): Promise<GetSeriesResponseDto> {
+  public async execute(query: GetSeriesInContentQuery): Promise<GetSeriesResponseDto> {
     const { contentId, authUser } = query.payload;
 
     const seriesEntites = await this._contentDomainService.getSeriesInContent(

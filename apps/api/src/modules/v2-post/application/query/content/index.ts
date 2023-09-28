@@ -3,4 +3,4 @@ export * from './find-newsfeed';
 export * from './find-timeline-group';
 export * from './get-menu-settings';
 export * from './search-contents';
-export * from './find-series-in-content';
+export * from './get-series-in-content';

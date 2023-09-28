@@ -35,7 +35,7 @@ import {
 } from '../../application/dto/content.dto';
 import {
   FindDraftContentsQuery,
-  FindSeriesInContentQuery,
+  GetSeriesInContentQuery,
   GetMenuSettingsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
@@ -133,8 +133,8 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<GetSeriesResponseDto> {
-    const contents = await this._queryBus.execute<FindSeriesInContentQuery, GetSeriesResponseDto>(
-      new FindSeriesInContentQuery({
+    const contents = await this._queryBus.execute<GetSeriesInContentQuery, GetSeriesResponseDto>(
+      new GetSeriesInContentQuery({
         authUser,
         contentId,
       })
