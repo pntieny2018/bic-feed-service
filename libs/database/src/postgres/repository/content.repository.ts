@@ -229,6 +229,12 @@ export class LibContentRepository implements ILibContentRepository {
     });
   }
 
+  public async countContent(where: WhereOptions<PostAttributes>): Promise<number> {
+    return this._postModel.count({
+      where,
+    });
+  }
+
   protected buildFindOptions(options: FindContentProps): FindOptions<PostAttributes> {
     const findOptions: FindOptions<PostAttributes> = {};
     const subSelect = this._buildSubSelect(options);

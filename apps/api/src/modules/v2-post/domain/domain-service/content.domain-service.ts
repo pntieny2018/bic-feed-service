@@ -354,4 +354,8 @@ export class ContentDomainService implements IContentDomainService {
       },
     };
   }
+
+  public getTotalDraft(userId: string): Promise<number> {
+    return this._contentRepository.countContentDraft(userId);
+  }
 }

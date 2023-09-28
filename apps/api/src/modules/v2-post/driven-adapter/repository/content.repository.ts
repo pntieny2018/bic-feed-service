@@ -1,4 +1,4 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TARGET } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
 import {
@@ -314,5 +314,12 @@ export class ContentRepository implements IContentRepository {
     const rows = await this._libContentRepository.getReportedContents(condition);
 
     return rows.map((row) => row.targetId);
+  }
+
+  public countContentDraft(userId: string): Promise<number> {
+    return this._libContentRepository.countContent({
+      createdBy: userId,
+      status: CONTENT_STATUS.DRAFT,
+    });
   }
 }
