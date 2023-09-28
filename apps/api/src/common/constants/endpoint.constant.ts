@@ -28,4 +28,9 @@ export const ENDPOINT = {
   LAMBDA: {
     COUNT_TOKEN: '/count-token',
   },
+  NOTIFICATION: {
+    INTERNAL: {
+      SPECIFIC_NOTIFICATION_SETTINGS: '/internal/settings/specific/:userId/:targetId',
+    },
+  },
 };
