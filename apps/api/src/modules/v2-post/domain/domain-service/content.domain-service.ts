@@ -354,4 +354,35 @@ export class ContentDomainService implements IContentDomainService {
       },
     };
   }
+
+  public async viewSeries(contentId: string, authUserId: string): Promise<SeriesEntity[]> {
+    const contentEntity = (await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+        groupArchived: false,
+        excludeReportedByUserId: authUserId,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+      },
+    })) as PostEntity | ArticleEntity;
+
+    if (
+      !contentEntity ||
+      (contentEntity.isDraft() && !contentEntity.isOwner(authUserId)) ||
+      (contentEntity.isHidden() && !contentEntity.isOwner(authUserId)) ||
+      contentEntity.isInArchivedGroups()
+    ) {
+      throw new ContentNotFoundException();
+    }
+
+    const seriesEntites = (await this._contentRepository.findAll({
+      where: {
+        ids: contentEntity.getSeriesIds(),
+      },
+    })) as SeriesEntity[];
+
+    return seriesEntites;
+  }
 }
