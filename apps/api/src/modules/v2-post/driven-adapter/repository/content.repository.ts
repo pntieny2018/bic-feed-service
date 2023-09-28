@@ -125,7 +125,7 @@ export class ContentRepository implements IContentRepository {
         state.attachSeriesIds.map(async (seriesId) => ({
           postId: contentEntity.getId(),
           seriesId,
-          zindex: await this._libContentRepository.getMaxIndexOfPostSeries(seriesId),
+          zindex: (await this._libContentRepository.getMaxIndexOfPostSeries(seriesId)) + 1,
         }))
       );
 
