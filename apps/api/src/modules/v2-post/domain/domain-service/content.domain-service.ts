@@ -377,6 +377,12 @@ export class ContentDomainService implements IContentDomainService {
       throw new ContentNotFoundException();
     }
 
+    const seriesIds = contentEntity.getSeriesIds();
+
+    if (seriesIds.length === 0) {
+      return [];
+    }
+
     const seriesEntites = (await this._contentRepository.findAll({
       where: {
         ids: contentEntity.getSeriesIds(),
