@@ -19,7 +19,7 @@ import {
 } from '../../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../../../binding';
-import { PostDto } from '../../../dto';
+import { PostDto, TagDto } from '../../../dto';
 import { PostChangedMessagePayload } from '../../../dto/message';
 
 import { UpdatePostCommand } from './update-post.command';
@@ -106,6 +106,8 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
           lang: postBefore.lang,
           isHidden: postBefore.isHidden,
           status: postBefore.status,
+          seriesIds: postBefore.seriesIds,
+          tags: postBefore.tags.map((tag) => new TagDto(tag.toObject())),
         },
         after: {
           id: postEntityAfter.get('id'),

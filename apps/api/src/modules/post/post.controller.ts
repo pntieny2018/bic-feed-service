@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
+import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Version } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { VERSIONS_SUPPORTED } from '../../common/constants';
@@ -34,6 +34,7 @@ export class PostController {
     success: 'message.post.deleted_success',
   })
   @Delete('/:id')
+  @Version([VERSIONS_SUPPORTED[0]])
   public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) postId: string

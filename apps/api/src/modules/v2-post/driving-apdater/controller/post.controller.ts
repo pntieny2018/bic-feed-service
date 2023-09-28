@@ -1,7 +1,9 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -19,10 +21,10 @@ import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { PostStatus } from '../../../../database/models/post.model';
 import {
   AutoSavePostCommand,
   CreateDraftPostCommand,
+  DeletePostCommand,
   PublishPostCommand,
   SchedulePostCommand,
   UpdatePostCommand,
@@ -91,7 +93,7 @@ export class PostController {
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -120,7 +122,7 @@ export class PostController {
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
 
@@ -187,5 +189,19 @@ export class PostController {
         actor: user,
       })
     );
+  }
+
+  @ApiOperation({ summary: 'Delete post' })
+  @ResponseMessages({
+    success: 'message.post.deleted_success',
+    error: 'message.post.deleted_fail',
+  })
+  @Delete(ROUTES.POST.DELETE.PATH)
+  @Version(ROUTES.POST.DELETE.VERSIONS)
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<void> {
+    await this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
   }
 }

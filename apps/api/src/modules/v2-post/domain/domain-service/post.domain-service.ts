@@ -4,7 +4,7 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaDto } from '../../application/dto';
-import { PostPublishedEvent, PostScheduledEvent } from '../event';
+import { PostDeletedEvent, PostPublishedEvent, PostScheduledEvent } from '../event';
 import {
   ContentAccessDeniedException,
   ContentHasBeenPublishedException,
@@ -417,13 +417,30 @@ export class PostDomainService implements IPostDomainService {
     return this._contentRepository.update(postEntity);
   }
 
-  public async delete(id: string): Promise<void> {
-    try {
-      await this._contentRepository.delete(id);
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+  public async delete(id: string, authUser: UserDto): Promise<void> {
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    if (!postEntity || !(postEntity instanceof PostEntity)) {
+      throw new ContentNotFoundException();
     }
+
+    if (!postEntity.isOwner(authUser.id)) {
+      throw new ContentAccessDeniedException();
+    }
+
+    if (postEntity.isPublished()) {
+      await this._contentValidator.checkCanCRUDContent(
+        authUser,
+        postEntity.get('groupIds'),
+        postEntity.get('type')
+      );
+    }
+
+    await this._contentRepository.delete(id);
+    this.event.publish(new PostDeletedEvent({ postEntity, actor: authUser }));
   }
 
   private async _validateAndSetPostAttributes(

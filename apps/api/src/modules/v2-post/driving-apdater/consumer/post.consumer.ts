@@ -7,6 +7,7 @@ import {
   ProcessPostPublishedCommand,
   ProcessPostUpdatedCommand,
 } from '../../application/command/post';
+import { ProcessPostDeletedCommand } from '../../application/command/post/process-post-deleted/process-post-deleted.command';
 import { PostChangedMessagePayload } from '../../application/dto/message';
 
 @Controller()
@@ -26,6 +27,12 @@ export class PostConsumer {
     if (payload.state === 'update') {
       await this._commandBus.execute<ProcessPostUpdatedCommand, void>(
         new ProcessPostUpdatedCommand(payload)
+      );
+    }
+
+    if (payload.state === 'delete') {
+      await this._commandBus.execute<ProcessPostDeletedCommand, void>(
+        new ProcessPostDeletedCommand(payload)
       );
     }
   }

@@ -58,6 +58,6 @@ export interface IPostDomainService {
   autoSavePost(input: UpdatePostProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
-  delete(id: string): Promise<void>;
+  delete(postId: string, authUser: UserDto): Promise<void>;
 }
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';
