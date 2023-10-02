@@ -77,6 +77,5 @@ export interface IContentDomainService {
   getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
   getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
-  getTotalDraft(userId: string): Promise<number>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

@@ -317,7 +317,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public countContentDraft(userId: string): Promise<number> {
-    return this._libContentRepository.countContent({
+    return this._libContentRepository.count({
       createdBy: userId,
       status: CONTENT_STATUS.DRAFT,
     });

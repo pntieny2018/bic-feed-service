@@ -355,10 +355,6 @@ export class ContentDomainService implements IContentDomainService {
     };
   }
 
-  public getTotalDraft(userId: string): Promise<number> {
-    return this._contentRepository.countContentDraft(userId);
-  }
-
   public async getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]> {
     const contentEntity = (await this._contentRepository.findContentByIdExcludeReportedByUserId(
       contentId,

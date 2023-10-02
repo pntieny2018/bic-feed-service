@@ -95,10 +95,10 @@ export class ContentController {
     return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
   }
 
-  @ApiOperation({ summary: 'Get total contents draft' })
+  @ApiOperation({ summary: 'Get total draft contents' })
   @ApiOkResponse({
     type: Number,
-    description: 'Get total contents draft',
+    description: 'Get total draft contents',
   })
   @Get(ROUTES.CONTENT.GET_TOTAL_DRAFT.PATH)
   @Version(ROUTES.CONTENT.GET_TOTAL_DRAFT.VERSIONS)

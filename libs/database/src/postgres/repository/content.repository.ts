@@ -229,7 +229,7 @@ export class LibContentRepository implements ILibContentRepository {
     });
   }
 
-  public async countContent(where: WhereOptions<PostAttributes>): Promise<number> {
+  public async count(where: WhereOptions<PostAttributes>): Promise<number> {
     return this._postModel.count({
       where,
     });

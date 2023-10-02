@@ -1,4 +1,4 @@
-import { AppHelper } from '../helpers/app.helper';
+import { AppHelper } from '../helpers';
 
 import {
   VERSION_1_10_0,
