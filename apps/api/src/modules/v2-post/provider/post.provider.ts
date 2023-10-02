@@ -62,6 +62,7 @@ import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
+  GetSeriesInContentHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
   SearchContentsHandler,
@@ -168,6 +169,7 @@ export const postProvider = [
   FindItemsBySeriesHandler,
   FindSeriesHandler,
   SearchTagsHandler,
+  GetSeriesInContentHandler,
 
   /** Domain Service */
   {
