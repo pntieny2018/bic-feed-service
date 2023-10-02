@@ -6,6 +6,7 @@ import {
   VERSION_1_6_0,
   VERSION_1_7_0,
   VERSION_1_8_0,
+  VERSION_1_9_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -176,6 +177,30 @@ export const ROUTES = {
     GET_SERIES: {
       PATH: '/:contentId/series',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    GET_DRAFTS: {
+      PATH: '/drafts',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_MENU_SETTINGS: {
+      PATH: '/:contentId/menu-settings',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
+    },
+    SEARCH_CONTENTS: {
+      PATH: '/',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
+    },
+    MARK_AS_READ: {
+      PATH: '/:contentId/mark-as-read',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    VALIDATE_SERIES_TAGS: {
+      PATH: '/validate-series-tags',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    UPDATE_SETTINGS: {
+      PATH: '/:contentId/setting',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
 };
