@@ -2,8 +2,8 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
-  IPostDomainService,
-  POST_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 
 import { UpdateContentSettingCommand } from './update-content-setting.command';
@@ -13,13 +13,14 @@ export class UpdateContentSettingHandler
   implements ICommandHandler<UpdateContentSettingCommand, void>
 {
   public constructor(
-    @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService
   ) {}
 
   public async execute(command: UpdateContentSettingCommand): Promise<void> {
     const { authUser, id, canComment, canReact, isImportant, importantExpiredAt } = command.payload;
 
-    return this._postDomainService.updateSetting({
+    return this._contentDomainService.updateSetting({
       contentId: id,
       authUser,
       canComment,

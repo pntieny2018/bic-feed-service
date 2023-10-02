@@ -13,7 +13,7 @@ import {
   InvalidResourceImageException,
   PostVideoProcessingException,
 } from '../exception';
-import { PostEntity, ArticleEntity, ContentEntity } from '../model/content';
+import { PostEntity } from '../model/content';
 import {
   IContentRepository,
   ITagRepository,
@@ -36,7 +36,6 @@ import {
 } from '../validator/interface';
 
 import {
-  ArticleCreateProps,
   IPostDomainService,
   PostCreateProps,
   PostPayload,
@@ -47,6 +46,8 @@ import {
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
 } from './interface';
 
 export class PostDomainService implements IPostDomainService {
@@ -57,6 +58,8 @@ export class PostDomainService implements IPostDomainService {
     private readonly _linkPreviewDomainService: ILinkPreviewDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
 
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
@@ -138,25 +141,6 @@ export class PostDomainService implements IPostDomainService {
     return postEntity;
   }
 
-  public async createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity> {
-    const { groups, userId } = input;
-
-    const articleEntity = ArticleEntity.create({
-      groupIds: groups.map((group) => group.id),
-      userId,
-    });
-
-    articleEntity.setGroups(groups.map((group) => group.id));
-    articleEntity.setPrivacyFromGroups(groups);
-    try {
-      await this._contentRepository.create(articleEntity);
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
-    return articleEntity;
-  }
-
   public async schedule(input: SchedulePostProps): Promise<PostEntity> {
     const { payload, actor } = input;
     const { id, scheduledAt } = payload;
@@ -223,12 +207,12 @@ export class PostDomainService implements IPostDomainService {
       await this._contentRepository.update(postEntity);
 
       if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
-        await this.markSeen(postId, actor.id);
+        await this._contentDomainService.markSeen(postId, actor.id);
         postEntity.increaseTotalSeen();
       }
 
       if (postEntity.isImportant()) {
-        await this.markReadImportant(postId, actor.id);
+        await this._contentDomainService.markReadImportant(postId, actor.id);
         postEntity.setMarkReadImportant();
       }
 
@@ -276,68 +260,6 @@ export class PostDomainService implements IPostDomainService {
     }
     await this._contentRepository.update(postEntity);
     return postEntity;
-  }
-
-  public async updateSetting(input: {
-    contentId: string;
-    authUser: UserDto;
-    canComment: boolean;
-    canReact: boolean;
-    isImportant: boolean;
-    importantExpiredAt: Date;
-  }): Promise<void> {
-    const { contentId, authUser, canReact, canComment, isImportant, importantExpiredAt } = input;
-
-    const contentEntity: ContentEntity = await this._contentRepository.findOne({
-      where: {
-        id: contentId,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-      },
-    });
-    if (!contentEntity || contentEntity.isHidden()) {
-      throw new ContentNotFoundException();
-    }
-
-    await this._postValidator.checkCanEditContentSetting(authUser, contentEntity.get('groupIds'));
-    contentEntity.setSetting({
-      canComment,
-      canReact,
-      isImportant,
-      importantExpiredAt,
-    });
-    await this._contentRepository.update(contentEntity);
-
-    if (isImportant) {
-      await this._contentRepository.markReadImportant(contentId, authUser.id);
-    }
-
-    contentEntity.commit();
-  }
-
-  public async markSeen(contentId: string, userId: string): Promise<void> {
-    await this._contentRepository.markSeen(contentId, userId);
-  }
-
-  public async markReadImportant(contentId: string, userId: string): Promise<void> {
-    const contentEntity = await this._contentRepository.findOne({
-      where: {
-        id: contentId,
-      },
-    });
-    if (!contentEntity || contentEntity.isHidden()) {
-      return;
-    }
-    if (contentEntity.isDraft()) {
-      return;
-    }
-    if (!contentEntity.isImportant()) {
-      return;
-    }
-
-    return this._contentRepository.markReadImportant(contentId, userId);
   }
 
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
