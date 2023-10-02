@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
@@ -13,13 +14,12 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ROUTES } from 'apps/api/src/common/constants/routes.constant';
 import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { PostStatus } from '../../../../database/models/post.model';
 import {
   AutoSavePostCommand,
   CreateDraftPostCommand,
@@ -77,21 +77,21 @@ export class PostController {
     @Body() updatePostRequestDto: UpdatePostRequestDto,
     @Req() req: Request
   ): Promise<PostDto> {
-    const { audience, tags, series, mentions, media } = updatePostRequestDto;
+    const { audience, tags, series, mentions } = updatePostRequestDto;
 
     const data = await this._commandBus.execute<UpdatePostCommand, PostDto>(
       new UpdatePostCommand({
         ...updatePostRequestDto,
-        id: postId,
         mentionUserIds: mentions,
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
+        id: postId,
         authUser,
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -120,7 +120,7 @@ export class PostController {
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
 

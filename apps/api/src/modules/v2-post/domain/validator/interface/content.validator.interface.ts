@@ -2,7 +2,6 @@ import { CONTENT_TYPE } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 
-import { PostType } from '../../../data-type';
 import { ContentEntity } from '../../model/content';
 import { TagEntity } from '../../model/tag';
 
@@ -10,7 +9,7 @@ export interface IContentValidator {
   checkCanCRUDContent(
     user: UserDto,
     groupAudienceIds: string[],
-    postType?: PostType | CONTENT_TYPE
+    postType?: CONTENT_TYPE
   ): Promise<void>;
 
   checkCanEditContentSetting(user: UserDto, groupAudienceIds: string[]): Promise<void>;
