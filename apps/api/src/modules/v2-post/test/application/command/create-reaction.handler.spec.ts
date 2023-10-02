@@ -24,7 +24,9 @@ import {
   IPostReactionRepository,
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('CreateReactionHandler', () => {
   let handler: CreateReactionHandler;

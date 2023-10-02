@@ -36,8 +36,11 @@ import {
   ICategoryValidator,
   IContentValidator,
 } from '../../../domain/validator/interface';
-import { articleEntityMock } from '../../mock/article.entity.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockArticleEntity } from '../../mock/content.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const articleEntityMock = createMockArticleEntity();
+const userMock = createMockUserDto();
 
 describe('Article domain service', () => {
   let domainService: IArticleDomainService;

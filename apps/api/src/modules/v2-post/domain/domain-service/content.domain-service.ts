@@ -8,7 +8,7 @@ import { Inject } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
 import { StringHelper } from '../../../../common/helpers';
-import { ContentNotFoundException } from '../exception';
+import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 
@@ -357,5 +357,41 @@ export class ContentDomainService implements IContentDomainService {
 
   public getTotalDraft(userId: string): Promise<number> {
     return this._contentRepository.countContentDraft(userId);
+  }
+
+  public async getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]> {
+    const contentEntity = (await this._contentRepository.findContentByIdExcludeReportedByUserId(
+      contentId,
+      authUserId,
+      {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+      }
+    )) as PostEntity | ArticleEntity;
+
+    if (!contentEntity || contentEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (
+      (contentEntity.isDraft() || contentEntity.isHidden()) &&
+      !contentEntity.isOwner(authUserId)
+    ) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const seriesIds = contentEntity.getSeriesIds();
+
+    if (seriesIds.length === 0) {
+      return [];
+    }
+
+    const seriesEntites = (await this._contentRepository.findAll({
+      where: {
+        ids: seriesIds,
+      },
+    })) as SeriesEntity[];
+
+    return seriesEntites;
   }
 }

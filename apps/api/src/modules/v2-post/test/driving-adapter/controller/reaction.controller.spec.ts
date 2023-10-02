@@ -1,11 +1,14 @@
-import { ReactionController } from '../../../driving-apdater/controller/reaction.controller';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { INestApplication } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
-import { userMock } from '../../mock/user.dto.mock';
+
 import { OrderEnum } from '../../../../../common/dto';
 import { REACTION_TARGET } from '../../../data-type/reaction.enum';
+import { ReactionController } from '../../../driving-apdater/controller/reaction.controller';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('ReactionController', () => {
   let reactionController: ReactionController;

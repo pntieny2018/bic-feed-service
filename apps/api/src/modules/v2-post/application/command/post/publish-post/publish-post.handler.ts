@@ -12,8 +12,7 @@ import {
   IUserAdapter,
   USER_ADAPTER,
 } from '../../../../domain/service-adapter-interface';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { PostDto } from '../../../dto';
 
 import { PublishPostCommand } from './publish-post.command';
@@ -24,7 +23,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding,
+    private readonly _contentBinding: IContentBinding,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
@@ -49,13 +48,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       withGroupJoined: true,
     });
 
-    const result = await this._contentBinding.postBinding(postEntity, {
+    return this._contentBinding.postBinding(postEntity, {
       groups,
       actor,
       authUser: actor,
       mentionUsers,
     });
-
-    return result;
   }
 }

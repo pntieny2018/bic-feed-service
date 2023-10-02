@@ -2,6 +2,7 @@ import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 
 import { PostAttributes } from '../../domain/model/content';
 
+// TODO: Remove this file
 export const postProps: PostAttributes = {
   id: '9bacb01c-deae-4d80-81d7-b619b26ef684',
   isReported: false,

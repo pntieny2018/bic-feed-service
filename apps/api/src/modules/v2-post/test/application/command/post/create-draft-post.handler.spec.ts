@@ -14,9 +14,7 @@ import {
 import { ContentNoCRUDPermissionAtGroupException } from '../../../../domain/exception';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
-import { groupDtoMock } from '../../../mock/group.dto.mock';
-import { postEntityMock } from '../../../mock/post.entity.mock';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockGroupDto, createMockPostEntity, createMockUserDto } from '../../../mock';
 
 describe('CreateDraftPostHandler', () => {
   let createDraftPostHandler: CreateDraftPostHandler;
@@ -54,6 +52,10 @@ describe('CreateDraftPostHandler', () => {
   });
 
   describe('execute', () => {
+    const userMock = createMockUserDto();
+    const groupDtoMock = createMockGroupDto();
+    const postEntityMock = createMockPostEntity();
+
     const mockCreateDraftPostDto: CreateDraftPostCommandPayload = {
       authUser: userMock,
       groupIds: [v4()],
