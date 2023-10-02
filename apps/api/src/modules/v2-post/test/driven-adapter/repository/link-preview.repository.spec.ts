@@ -1,16 +1,22 @@
-import { ILinkPreviewRepository } from '../../../domain/repositoty-interface';
 import { createMock } from '@golevelup/ts-jest';
-import { Transaction } from 'sequelize';
-import { Test, TestingModule } from '@nestjs/testing';
-import { LinkPreviewRepository } from '../../../driven-adapter/repository/link-preview.repository';
 import { getModelToken } from '@nestjs/sequelize';
-import { ILinkPreview, LinkPreviewModel } from '../../../../../database/models/link-preview.model';
-import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
-import { LINK_PREVIEW_FACTORY_TOKEN } from '../../../domain/factory/interface/link-preview.factory.interface';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { mockLinkPreviewEntity, mockLinkPreviewRecord } from '../../mock/link-preview.entity.mock';
+
+import { LinkPreviewModel } from '../../../../../database/models/link-preview.model';
+import { LINK_PREVIEW_FACTORY_TOKEN } from '../../../domain/factory/interface/link-preview.factory.interface';
+import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
+import { ILinkPreviewRepository } from '../../../domain/repositoty-interface';
+import { LinkPreviewRepository } from '../../../driven-adapter/repository/link-preview.repository';
+import {
+  createMockLinkPreviewEntity,
+  createMockLinkPreviewRecord,
+} from '../../mock/link-preview.mock';
 
 const transaction = createMock<Transaction>();
+const mockLinkPreviewRecord = createMockLinkPreviewRecord();
+const mockLinkPreviewEntity = createMockLinkPreviewEntity();
 
 describe('LinkPreviewRepository', () => {
   let repo: ILinkPreviewRepository;

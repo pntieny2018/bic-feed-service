@@ -10,8 +10,11 @@ import {
 } from '../../../../domain/domain-service/interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
-import { articleDtoMock, articleEntityMock } from '../../../mock/article.entity.mock';
-import { groupDtoMock } from '../../../mock/group.dto.mock';
+import { createMockArticleDto, createMockArticleEntity } from '../../../mock/content.mock';
+import { groupDtoMock } from '../../../mock/group.mock';
+
+const articleEntityMock = createMockArticleEntity();
+const articleDtoMock = createMockArticleDto();
 
 describe('Find article handler', () => {
   let handler: FindArticleHandler;

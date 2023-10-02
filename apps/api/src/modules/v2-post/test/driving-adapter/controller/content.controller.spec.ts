@@ -7,8 +7,11 @@ import { GetScheduleContentsResponseDto } from '../../../application/dto';
 import { GetScheduleContentQuery } from '../../../application/query/content/get-schedule-content';
 import { ContentController } from '../../../driving-apdater/controller/content.controller';
 import { GetScheduleContentsQueryDto } from '../../../driving-apdater/dto/request';
-import { postMock } from '../../mock/post.dto.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockPostDto } from '../../mock/content.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const postMock = createMockPostDto();
+const userMock = createMockUserDto();
 
 describe('ContentController', () => {
   let contentController: ContentController;

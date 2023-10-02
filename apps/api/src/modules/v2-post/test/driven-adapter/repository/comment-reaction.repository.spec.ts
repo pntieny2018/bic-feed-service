@@ -1,24 +1,26 @@
+import { createMock } from '@golevelup/ts-jest';
+import { getModelToken } from '@nestjs/sequelize';
 import { Test } from '@nestjs/testing';
 import { QueryTypes, Transaction, TransactionOptions } from 'sequelize';
-import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
+import { Sequelize } from 'sequelize-typescript';
+
+import { getDatabaseConfig } from '../../../../../config/database';
 import { CommentReactionModel } from '../../../../../database/models/comment-reaction.model';
 import {
   IReactionFactory,
   REACTION_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/reaction.factory.interface';
-import { createMock } from '@golevelup/ts-jest';
 import { ReactionFactory } from '../../../domain/factory/reaction.factory';
-import { getModelToken } from '@nestjs/sequelize';
 import {
   FindOnePostReactionProps,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
-import { Sequelize } from 'sequelize-typescript';
-import { getDatabaseConfig } from '../../../../../config/database';
-import {
-  commentReactionEntity,
-  commentReactionRecord,
-} from '../../mock/comment-reaction.entity.mock';
+import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
+import { createMockCommentReactionRecord } from '../../mock/comment.mock';
+import { createMockReactionEntity } from '../../mock/reaction.mock';
+
+const commentReactionRecord = createMockCommentReactionRecord();
+const commentReactionEntity = createMockReactionEntity();
 
 const transaction = createMock<Transaction>();
 

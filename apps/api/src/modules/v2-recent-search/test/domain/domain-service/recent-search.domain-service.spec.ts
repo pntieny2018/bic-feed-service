@@ -1,22 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';
 import { createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
+import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
-import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
+
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { IRecentSearchDomainService } from '../../../domain/domain-service/interface';
+import { RecentSearchDomainService } from '../../../domain/domain-service/recent-search.domain-service';
 import {
   IRecentSearchFactory,
   RECENT_SEARCH_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/recent-search.factory.interface';
 import { RecentSearchFactory } from '../../../domain/factory/recent-search.factory';
-import { RecentSearchDomainService } from '../../../domain/domain-service/recent-search.domain-service';
+import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 import {
   IRecentSearchRepository,
   RECENT_SEARCH_REPOSITORY_TOKEN,
 } from '../../../driven-adapter/repository/interface/recent-search.repository.interface';
-import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
+import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';
+
+const userMock = createMockUserDto();
 
 describe('RecentSearchDomainService', () => {
   let domainService: IRecentSearchDomainService;
