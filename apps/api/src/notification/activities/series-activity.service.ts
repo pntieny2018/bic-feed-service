@@ -1,4 +1,4 @@
-import { NotificationActivity } from '../dto/requests/notification-activity.dto';
+import { AudienceObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { IPost, PostType } from '../../database/models/post.model';
 import { StringHelper } from '../../common/helpers';
@@ -101,7 +101,7 @@ export class SeriesActivityService {
         contentType: item.type.toLowerCase(),
         actor: { id: item.createdBy },
         audience: {
-          groups: item.groupIds,
+          groups: (item.groupIds || []).map((groupId) => ({ id: groupId })),
         },
         content:
           item.type === PostType.POST ? StringHelper.removeMarkdownCharacter(item.content) : null,
@@ -150,4 +150,5 @@ export interface ISeriesState {
   id: string;
   title: string;
   state: 'add' | 'remove';
+  audience?: AudienceObject;
 }
