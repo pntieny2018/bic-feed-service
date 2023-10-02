@@ -1,10 +1,6 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
-import {
-  BadRequestException,
-  ForbiddenException,
-  INestApplication,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, INestApplication } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass, plainToInstance } from 'class-transformer';
@@ -13,19 +9,24 @@ import { I18nContext } from 'nestjs-i18n';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../common/constants';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { CreateDraftPostCommand, PublishPostCommand } from '../../../application/command/post';
-import { CreateDraftPostDto, PostDto } from '../../../application/dto';
 import {
-  ContentNoEditSettingPermissionException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
+  CreateDraftPostCommand,
+  PublishPostCommand,
+  UpdatePostCommand,
+} from '../../../application/command/post';
+import { CreateDraftPostDto, PostDto } from '../../../application/dto';
+import { FindPostQuery } from '../../../application/query/post';
+import { ContentNoEditSettingPermissionException } from '../../../domain/exception';
 import { PostController } from '../../../driving-apdater/controller/post.controller';
 import {
   CreateDraftPostRequestDto,
   PublishPostRequestDto,
+  UpdatePostRequestDto,
 } from '../../../driving-apdater/dto/request';
-import { postMock } from '../../mock/post.dto.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockPostDto, createMockUserDto } from '../../mock';
+
+const postMock = createMockPostDto();
+const userMock = createMockUserDto();
 
 describe('PostController', () => {
   let postController: PostController;
@@ -148,40 +149,69 @@ describe('PostController', () => {
       );
       expect(plainToClass(PostDto, postMock)).toEqual(result);
     });
+  });
 
-    it('Should catch NotFoundException', async () => {
-      const err = new ContentNotFoundException();
-      jest.spyOn(command, 'execute').mockRejectedValue(err);
+  describe('updatePost', () => {
+    const updatePostRequestDto: UpdatePostRequestDto = {
+      content: 'test',
+    };
+    it('Should update post successfully', async () => {
       const request = createMock<Request>({});
-
-      try {
-        await postController.publishPost(postMock.id, userMock, publishPostRequestDto, request);
-      } catch (e) {
-        expect(e).toEqual(new NotFoundException(err));
-      }
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(postMock);
+      const result = await postController.updatePost(
+        postMock.id,
+        userMock,
+        updatePostRequestDto,
+        request
+      );
+      expect(commandExecute).toBeCalledWith(
+        new UpdatePostCommand({
+          ...updatePostRequestDto,
+          mentionUserIds: updatePostRequestDto?.mentions,
+          groupIds: updatePostRequestDto?.audience?.groupIds,
+          tagIds: updatePostRequestDto?.tags,
+          seriesIds: updatePostRequestDto?.series,
+          id: postMock.id,
+          authUser: userMock,
+        })
+      );
+      expect(
+        plainToInstance(PostDto, postMock, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
+      ).toEqual(result);
     });
 
-    it('Should catch ForbiddenException', async () => {
-      const err = new ContentNoEditSettingPermissionException();
-      jest.spyOn(command, 'execute').mockRejectedValue(err);
+    it('should update post successfully with req.message', async () => {
       const request = createMock<Request>({});
-
-      try {
-        await postController.publishPost(postMock.id, userMock, publishPostRequestDto, request);
-      } catch (e) {
-        expect(e).toEqual(new ForbiddenException(err));
-      }
+      jest
+        .spyOn(command, 'execute')
+        .mockResolvedValue({ ...postMock, status: CONTENT_STATUS.PROCESSING });
+      const result = await postController.updatePost(
+        postMock.id,
+        userMock,
+        updatePostRequestDto,
+        request
+      );
+      expect(request.message).toEqual('message.post.published_success_with_video_waiting_process');
+      expect(
+        plainToInstance(
+          PostDto,
+          { ...postMock, status: CONTENT_STATUS.PROCESSING },
+          { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] }
+        )
+      ).toEqual(result);
     });
-    it('Should catch BadRequestException', async () => {
-      const err = new DomainModelException();
-      jest.spyOn(command, 'execute').mockRejectedValue(err);
-      const request = createMock<Request>({});
+  });
 
-      try {
-        await postController.publishPost(postMock.id, userMock, publishPostRequestDto, request);
-      } catch (e) {
-        expect(e).toEqual(new BadRequestException(err));
-      }
+  describe('getPostDetail', () => {
+    it('Should get post detail successfully', async () => {
+      const queryExecute = jest.spyOn(query, 'execute').mockResolvedValue(postMock);
+      const result = await postController.getPostDetail(postMock.id, userMock);
+      expect(queryExecute).toBeCalledWith(
+        new FindPostQuery({ postId: postMock.id, authUser: userMock })
+      );
+      expect(
+        plainToClass(PostDto, postMock, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
+      ).toEqual(result);
     });
   });
 });

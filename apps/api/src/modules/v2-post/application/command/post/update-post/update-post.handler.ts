@@ -4,10 +4,6 @@ import { uniq } from 'lodash';
 
 import { KAFKA_TOPIC } from '../../../../../../common/constants';
 import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
-import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
@@ -17,9 +13,14 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
-import { ContentBinding, CONTENT_BINDING_TOKEN } from '../../../binding';
-import { PostDto, TagDto } from '../../../dto';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
+import { PostDto } from '../../../dto';
 import { PostChangedMessagePayload } from '../../../dto/message';
 
 import { UpdatePostCommand } from './update-post.command';
@@ -29,11 +30,11 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: IContentBinding,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
@@ -53,12 +54,9 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
     const groups = await this._groupAdapter.getGroupsByIds(
       command.payload?.groupIds || postEntity.get('groupIds')
     );
-    const mentionUsers = await this._userApplicationService.findAllByIds(
-      command.payload.mentionUserIds,
-      {
-        withGroupJoined: true,
-      }
-    );
+    const mentionUsers = await this._userAdapter.getUsersByIds(command.payload.mentionUserIds, {
+      withGroupJoined: true,
+    });
 
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
@@ -76,15 +74,10 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       return;
     }
     if (postEntityAfter.isPublished()) {
-      const contentWithArchivedGroups = (await this._contentRepository.findOne({
-        where: {
-          id: postEntityAfter.getId(),
-          groupArchived: true,
-        },
-        include: {
+      const contentWithArchivedGroups =
+        (await this._contentRepository.findContentByIdInArchivedGroup(postEntityAfter.getId(), {
           shouldIncludeSeries: true,
-        },
-      })) as PostEntity;
+        })) as PostEntity;
 
       const seriesIds = uniq([
         ...postEntityAfter.getSeriesIds(),
@@ -144,14 +137,14 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
         },
       };
 
-      this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
+      await this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
         key: postEntityAfter.getId(),
         value: new PostChangedMessagePayload(payload),
       });
     }
 
     if (postEntityAfter.isProcessing() && postEntityAfter.getVideoIdProcessing()) {
-      this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+      await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: { videoIds: [postEntityAfter.getVideoIdProcessing()] },
       });

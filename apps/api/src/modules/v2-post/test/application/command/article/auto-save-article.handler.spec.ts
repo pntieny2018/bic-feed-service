@@ -6,7 +6,9 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockUserDto } from '../../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('AutoSaveArticleHandler', () => {
   let service: AutoSaveArticleHandler;

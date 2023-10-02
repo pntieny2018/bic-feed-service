@@ -12,7 +12,9 @@ import {
 } from '../../../domain/exception';
 import { TagController } from '../../../driving-apdater/controller/tag.controller';
 import { CreateTagRequestDto, UpdateTagRequestDto } from '../../../driving-apdater/dto/request';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('TagController', () => {
   let tagController: TagController;

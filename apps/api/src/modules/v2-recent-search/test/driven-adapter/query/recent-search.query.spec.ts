@@ -1,15 +1,18 @@
-import { RecentSearchModel } from '../../../../../database/models/recent-search.model';
-import { getModelToken } from '@nestjs/sequelize';
 import { createMock } from '@golevelup/ts-jest';
+import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
+
+import { RecentSearchModel } from '../../../../../database/models/recent-search.model';
 import {
   IRecentSearchFactory,
   RECENT_SEARCH_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/recent-search.factory.interface';
 import { RecentSearchFactory } from '../../../domain/factory/recent-search.factory';
 import { RecentSearchQuery } from '../../../driven-adapter/query/recent-search.query';
-import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
+
+const userMock = createMockUserDto();
 
 describe('RecentSearchQuery', () => {
   let query, recentSearchModel;

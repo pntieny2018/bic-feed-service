@@ -40,9 +40,12 @@ import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import { createCommentDto } from '../../mock/comment.dto.mock';
-import { createCommentEntity } from '../../mock/comment.entity.mock';
+import { createMockCommentEntity } from '../../mock/comment.mock';
 import { postProps } from '../../mock/post.props.mock';
-import { userMentions, userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
+const userMentions = [createMockUserDto()];
 
 describe('ReplyCommentHandler', () => {
   let handler: ReplyCommentHandler;
@@ -126,8 +129,8 @@ describe('ReplyCommentHandler', () => {
         actor: userMock,
       };
       const command = new ReplyCommentCommand(payload);
-      const parentCommentEntity = createCommentEntity(payload, postId);
-      const commentEntity = createCommentEntity(payload, postId, parentId);
+      const parentCommentEntity = createMockCommentEntity({ ...payload, postId });
+      const commentEntity = createMockCommentEntity({ ...payload, postId, parentId });
       const commentDto = createCommentDto(commentEntity);
       const postEntity = new PostEntity({ ...postProps, id: postId });
 
@@ -172,7 +175,7 @@ describe('ReplyCommentHandler', () => {
         mentions: [],
         actor: userMock,
       };
-      const parentCommentEntity = createCommentEntity(payload, postId);
+      const parentCommentEntity = createMockCommentEntity({ ...payload, postId });
       const command = new ReplyCommentCommand(payload);
 
       const spyCommentRepo = jest
@@ -205,7 +208,7 @@ describe('ReplyCommentHandler', () => {
       actor: userMock,
     };
     const command = new ReplyCommentCommand(payload);
-    const parentCommentEntity = createCommentEntity(payload, postId);
+    const parentCommentEntity = createMockCommentEntity({ ...payload, postId });
     const postEntity = new PostEntity({
       ...postProps,
       id: postId,

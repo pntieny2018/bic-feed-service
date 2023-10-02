@@ -1,12 +1,15 @@
-import { RecentSearchController } from '../../../driving-adapter/controller/recent-search.controller';
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
+import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { I18nContext } from 'nestjs-i18n';
+
 import { OrderEnum } from '../../../../../common/dto';
-import { BadRequestException } from '@nestjs/common';
-import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
 import { RecentSearchType } from '../../../data-type';
 import { RecentSearchNotFoundException } from '../../../domain/exception';
+import { RecentSearchController } from '../../../driving-adapter/controller/recent-search.controller';
+
+const userMock = createMockUserDto();
 
 describe('RecentSearchController', () => {
   let recentSearchController: RecentSearchController;
