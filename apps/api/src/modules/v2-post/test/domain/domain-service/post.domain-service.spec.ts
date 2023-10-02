@@ -10,6 +10,7 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
   UpdatePostProps,
+  PublishPostProps,
 } from '../../../domain/domain-service/interface';
 import { PostDomainService } from '../../../domain/domain-service/post.domain-service';
 import { ContentNotFoundException, ContentAccessDeniedException } from '../../../domain/exception';
@@ -44,6 +45,8 @@ describe('Post domain service', () => {
   let groupAdapter: IGroupAdapter;
   let userAdapter: IUserAdapter;
   let postValidator: IPostValidator;
+  let mentionValidator: IMentionValidator;
+  let contentValidator: IContentValidator;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -96,6 +99,8 @@ describe('Post domain service', () => {
     groupAdapter = module.get<IGroupAdapter>(GROUP_ADAPTER);
     userAdapter = module.get<IUserAdapter>(USER_ADAPTER);
     postValidator = module.get<IPostValidator>(POST_VALIDATOR_TOKEN);
+    mentionValidator = module.get<IMentionValidator>(MENTION_VALIDATOR_TOKEN);
+    contentValidator = module.get<IContentValidator>(CONTENT_VALIDATOR_TOKEN);
   });
 
   afterEach(() => {
@@ -131,6 +136,44 @@ describe('Post domain service', () => {
           groups: [],
         })
       ).rejects.toThrow();
+    });
+  });
+
+  describe('publishPost', () => {
+    const props: PublishPostProps = {
+      payload: {
+        groupIds: postEntityMock.getGroupIds(),
+        id: postEntityMock.getId(),
+      },
+      actor: userMock,
+    };
+
+    it('should publish post successfully', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'isPublished').mockReturnValue(false);
+      jest.spyOn(postEntityMock, 'setPublish').mockImplementation(jest.fn());
+
+      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
+      jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
+      jest.spyOn(postValidator, 'validatePublishContent').mockImplementation(jest.fn());
+      jest.spyOn(mentionValidator, 'validateMentionUsers').mockImplementation(jest.fn());
+      jest.spyOn(contentValidator, 'validateSeriesAndTags').mockImplementation(jest.fn());
+
+      jest.spyOn(postEntityMock, 'isPublished').mockReturnValue(false);
+
+      const result = await domainService.publish(props);
+      expect(result).toEqual(postEntityMock);
+      expect(postEntityMock.setPublish).toBeCalledTimes(1);
+    });
+
+    it('should throw error ContentNotFoundException when content is not post', async () => {
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(articleEntityMock);
+
+      try {
+        await domainService.publish(props);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ContentNotFoundException);
+      }
     });
   });
 
@@ -191,89 +234,90 @@ describe('Post domain service', () => {
       const result = await domainService.updatePost(updatePostProps);
 
       expect(result).toBeUndefined();
-      describe('createDraftPost', () => {
-        it('should create draft post successfully', async () => {
-          const userId = v4();
-          jest.spyOn(contentRepository, 'create').mockResolvedValue();
+    });
+  });
 
-          jest.spyOn(PostEntity, 'create').mockReturnValue(postEntityMock);
-          jest.spyOn(postEntityMock, 'setGroups').mockImplementation(jest.fn().mockReturnThis());
-          jest
-            .spyOn(postEntityMock, 'setPrivacyFromGroups')
-            .mockImplementation(jest.fn().mockReturnThis());
-          const result = await domainService.createDraftPost({
-            userId,
-            groups: [],
-          });
-          expect(PostEntity.create).toBeCalledWith({
-            userId,
-            groupIds: [],
-          });
-          expect(result).toEqual(postEntityMock);
-        });
+  describe('createDraftPost', () => {
+    it('should create draft post successfully', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockResolvedValue();
 
-        it('should throw error when create draft post', async () => {
-          const userId = v4();
-          jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
-          await expect(
-            domainService.createDraftPost({
-              userId,
-              groups: [],
-            })
-          ).rejects.toThrow();
-        });
+      jest.spyOn(PostEntity, 'create').mockReturnValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'setGroups').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(postEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      const result = await domainService.createDraftPost({
+        userId,
+        groups: [],
       });
-
-      describe('getPostById', () => {
-        it('should get post by id successfully', async () => {
-          const postId = postEntityMock.getId();
-          const authUserId = userMock.id;
-          jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
-          const result = await domainService.getPostById(postId, authUserId);
-          expect(result).toEqual(postEntityMock);
-          expect(contentRepository.findOne).toBeCalledWith({
-            where: {
-              id: postId,
-              groupArchived: false,
-              excludeReportedByUserId: authUserId,
-            },
-            include: {
-              shouldIncludeGroup: true,
-              shouldIncludeSeries: true,
-              shouldIncludeLinkPreview: true,
-              shouldIncludeQuiz: true,
-              shouldIncludeSaved: {
-                userId: authUserId,
-              },
-              shouldIncludeMarkReadImportant: {
-                userId: authUserId,
-              },
-              shouldIncludeReaction: {
-                userId: authUserId,
-              },
-            },
-          });
-        });
-
-        it('should throw error when get post by id', async () => {
-          const postId = postEntityMock.getId();
-          const authUserId = userMock.id;
-          jest.spyOn(contentRepository, 'findOne').mockRejectedValue(new Error());
-          await expect(domainService.getPostById(postId, authUserId)).rejects.toThrow();
-        });
-
-        it('should throw ContentAccessDeniedException when get post by id and post not found', async () => {
-          const postId = postEntityMock.getId();
-          jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
-          jest.spyOn(postEntityMock, 'isOpen').mockReturnValue(false);
-
-          try {
-            await domainService.getPostById(postId, null);
-          } catch (error) {
-            expect(error).toEqual(new ContentAccessDeniedException());
-          }
-        });
+      expect(PostEntity.create).toBeCalledWith({
+        userId,
+        groupIds: [],
       });
+      expect(result).toEqual(postEntityMock);
+    });
+
+    it('should throw error when create draft post', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
+      await expect(
+        domainService.createDraftPost({
+          userId,
+          groups: [],
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('getPostById', () => {
+    it('should get post by id successfully', async () => {
+      const postId = postEntityMock.getId();
+      const authUserId = userMock.id;
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
+      const result = await domainService.getPostById(postId, authUserId);
+      expect(result).toEqual(postEntityMock);
+      expect(contentRepository.findOne).toBeCalledWith({
+        where: {
+          id: postId,
+          groupArchived: false,
+          excludeReportedByUserId: authUserId,
+        },
+        include: {
+          shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
+          shouldIncludeLinkPreview: true,
+          shouldIncludeQuiz: true,
+          shouldIncludeSaved: {
+            userId: authUserId,
+          },
+          shouldIncludeMarkReadImportant: {
+            userId: authUserId,
+          },
+          shouldIncludeReaction: {
+            userId: authUserId,
+          },
+        },
+      });
+    });
+
+    it('should throw error when get post by id', async () => {
+      const postId = postEntityMock.getId();
+      const authUserId = userMock.id;
+      jest.spyOn(contentRepository, 'findOne').mockRejectedValue(new Error());
+      await expect(domainService.getPostById(postId, authUserId)).rejects.toThrow();
+    });
+
+    it('should throw ContentAccessDeniedException when get post by id and post not found', async () => {
+      const postId = postEntityMock.getId();
+      jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
+      jest.spyOn(postEntityMock, 'isOpen').mockReturnValue(false);
+
+      try {
+        await domainService.getPostById(postId, null);
+      } catch (error) {
+        expect(error).toEqual(new ContentAccessDeniedException());
+      }
     });
   });
 });

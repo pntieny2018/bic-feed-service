@@ -14,11 +14,11 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ROUTES } from 'apps/api/src/common/constants/routes.constant';
 import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   AutoSavePostCommand,

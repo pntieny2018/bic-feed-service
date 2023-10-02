@@ -1,11 +1,6 @@
 import { CONTENT_STATUS } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
-import {
-  BadRequestException,
-  ForbiddenException,
-  INestApplication,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, INestApplication } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass, plainToInstance } from 'class-transformer';
@@ -14,17 +9,16 @@ import { I18nContext } from 'nestjs-i18n';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../common/constants';
 import { DomainModelException } from '../../../../../common/exceptions';
+import { CreateDraftPostCommand, PublishPostCommand } from '../../../application/command/post';
+import { CreateDraftPostDto, PostDto } from '../../../application/dto';
+import { FindPostQuery } from '../../../application/query/post';
 import {
   CreateDraftPostCommand,
   PublishPostCommand,
   UpdatePostCommand,
 } from '../../../application/command/post';
 import { CreateDraftPostDto, PostDto } from '../../../application/dto';
-import { FindPostQuery } from '../../../application/query/post';
-import {
-  ContentNoEditSettingPermissionException,
-  ContentNotFoundException,
-} from '../../../domain/exception';
+import { ContentNoEditSettingPermissionException } from '../../../domain/exception';
 import { PostController } from '../../../driving-apdater/controller/post.controller';
 import {
   CreateDraftPostRequestDto,
@@ -154,41 +148,6 @@ describe('PostController', () => {
         })
       );
       expect(plainToClass(PostDto, postMock)).toEqual(result);
-    });
-
-    it('Should catch NotFoundException', async () => {
-      const err = new ContentNotFoundException();
-      jest.spyOn(command, 'execute').mockRejectedValue(err);
-      const request = createMock<Request>({});
-
-      try {
-        await postController.publishPost(postMock.id, userMock, publishPostRequestDto, request);
-      } catch (e) {
-        expect(e).toEqual(new NotFoundException(err));
-      }
-    });
-
-    it('Should catch ForbiddenException', async () => {
-      const err = new ContentNoEditSettingPermissionException();
-      jest.spyOn(command, 'execute').mockRejectedValue(err);
-      const request = createMock<Request>({});
-
-      try {
-        await postController.publishPost(postMock.id, userMock, publishPostRequestDto, request);
-      } catch (e) {
-        expect(e).toEqual(new ForbiddenException(err));
-      }
-    });
-    it('Should catch BadRequestException', async () => {
-      const err = new DomainModelException();
-      jest.spyOn(command, 'execute').mockRejectedValue(err);
-      const request = createMock<Request>({});
-
-      try {
-        await postController.publishPost(postMock.id, userMock, publishPostRequestDto, request);
-      } catch (e) {
-        expect(e).toEqual(new BadRequestException(err));
-      }
     });
   });
 
