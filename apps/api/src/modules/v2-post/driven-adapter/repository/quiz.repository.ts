@@ -16,8 +16,8 @@ export class QuizRepository implements IQuizRepository {
     @Inject(LIB_QUIZ_REPOSITORY_TOKEN)
     private readonly _libQuizRepo: ILibQuizRepository,
 
-    private readonly _quizQuestionMapper: QuizQuestionMapper,
-    private readonly _quizMapper: QuizMapper
+    private readonly _quizMapper: QuizMapper,
+    private readonly _quizQuestionMapper: QuizQuestionMapper
   ) {}
 
   public async createQuiz(quizEntity: QuizEntity): Promise<void> {
@@ -48,22 +48,24 @@ export class QuizRepository implements IQuizRepository {
       condition: { ids: [quizId] },
       include: { shouldIncludeQuestions: true },
     });
-    if (!quiz) {
-      return null;
-    }
-
     return this._quizMapper.toDomain(quiz);
   }
 
   public async findAllQuizzes(input: FindAllQuizProps): Promise<QuizEntity[]> {
-    const rows = await this._libQuizRepo.findAllQuizzes({
-      condition: {
-        status: input.where.status,
-        ids: input.where.ids,
-        contentIds: [input.where.contentId],
-        createdBy: input.where.createdBy,
-      },
-    });
+    const condition = {};
+    if (input.where.status) {
+      condition['status'] = input.where.status;
+    }
+    if (input.where.ids) {
+      condition['ids'] = input.where.ids;
+    }
+    if (input.where.contentId) {
+      condition['contentIds'] = [input.where.contentId];
+    }
+    if (input.where.createdBy) {
+      condition['createdBy'] = input.where.createdBy;
+    }
+    const rows = await this._libQuizRepo.findAllQuizzes({ condition });
     return rows.map((row) => this._quizMapper.toDomain(row));
   }
 

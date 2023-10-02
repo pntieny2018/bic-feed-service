@@ -1,6 +1,12 @@
 import { IEventPayload } from '@libs/infra/event';
 
-import { QuizParticipantStarted } from '../../../../common/constants';
+import {
+  QuizCreated,
+  QuizGenerated,
+  QuizParticipantFinished,
+  QuizParticipantStarted,
+  QuizRegenerate,
+} from '../../../../common/constants';
 
 interface QuizParticipantStartedEventPayload {
   quizParticipantId: string;
@@ -10,6 +16,10 @@ interface QuizParticipantStartedEventPayload {
 
 interface QuizParticipantFinishedEventPayload {
   quizParticipantId: string;
+}
+
+interface QuizEventPayload {
+  quizId: string;
 }
 
 export class QuizParticipantStartedEvent implements IEventPayload {
@@ -23,7 +33,7 @@ export class QuizParticipantStartedEvent implements IEventPayload {
 }
 
 export class QuizParticipantFinishedEvent implements IEventPayload {
-  public static event = QuizParticipantStarted;
+  public static event = QuizParticipantFinished;
 
   public payload: QuizParticipantFinishedEventPayload;
 
@@ -33,13 +43,31 @@ export class QuizParticipantFinishedEvent implements IEventPayload {
 }
 
 export class QuizCreatedEvent {
-  public constructor(public readonly quizId: string) {}
+  public static event = QuizCreated;
+
+  public payload: QuizEventPayload;
+
+  public constructor(data: QuizEventPayload) {
+    this.payload = data;
+  }
 }
 
 export class QuizGeneratedEvent {
-  public constructor(public readonly quizId: string) {}
+  public static event = QuizGenerated;
+
+  public payload: QuizEventPayload;
+
+  public constructor(data: QuizEventPayload) {
+    this.payload = data;
+  }
 }
 
 export class QuizRegenerateEvent {
-  public constructor(public readonly quizId: string) {}
+  public static event = QuizRegenerate;
+
+  public payload: QuizEventPayload;
+
+  public constructor(data: QuizEventPayload) {
+    this.payload = data;
+  }
 }
