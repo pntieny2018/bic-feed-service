@@ -42,6 +42,7 @@ export interface IContentRepository {
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getReportedContentIdsByUser(reportUser: string, target: CONTENT_TARGET[]): Promise<string[]>;
+  countContentDraft(userId: string): Promise<number>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

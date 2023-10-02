@@ -33,6 +33,7 @@ import {
   FindDraftContentsQuery,
   GetSeriesInContentQuery,
   GetMenuSettingsQuery,
+  GetTotalDraftQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
@@ -89,6 +90,17 @@ export class ContentController {
     @Param('contentId', ParseUUIDPipe) id: string
   ): Promise<MenuSettingsDto> {
     return this._queryBus.execute(new GetMenuSettingsQuery({ authUser: user, id }));
+  }
+
+  @ApiOperation({ summary: 'Get total draft contents' })
+  @ApiOkResponse({
+    type: Number,
+    description: 'Get total draft contents',
+  })
+  @Get(ROUTES.CONTENT.GET_TOTAL_DRAFT.PATH)
+  @Version(ROUTES.CONTENT.GET_TOTAL_DRAFT.VERSIONS)
+  public async getTotalDraft(@AuthUser() user: UserDto): Promise<number> {
+    return this._queryBus.execute(new GetTotalDraftQuery(user));
   }
 
   @ApiOperation({ summary: 'Get schedule contents' })

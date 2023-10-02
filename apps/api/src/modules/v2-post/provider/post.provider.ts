@@ -67,6 +67,7 @@ import {
   GetSeriesInContentHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  GetTotalDraftHandler,
   SearchContentsHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
@@ -179,6 +180,7 @@ export const postProvider = [
   FindItemsBySeriesHandler,
   FindSeriesHandler,
   SearchTagsHandler,
+  GetTotalDraftHandler,
   GetSeriesInContentHandler,
 
   /** Domain Service */

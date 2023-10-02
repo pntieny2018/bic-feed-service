@@ -1,4 +1,4 @@
-import { AppHelper } from '../helpers/app.helper';
+import { AppHelper } from '../helpers';
 
 import {
   VERSION_1_10_0,
@@ -176,6 +176,10 @@ export const ROUTES = {
   CONTENT: {
     GET_SCHEDULE: {
       PATH: '/schedule',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    GET_TOTAL_DRAFT: {
+      PATH: '/total-draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_SERIES: {
