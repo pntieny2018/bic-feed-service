@@ -5,10 +5,7 @@ import {
   FindContentIncludeOptions,
   FindContentProps,
   GetPaginationContentsProps,
-  ILibContentRepository,
-  LIB_CONTENT_REPOSITORY_TOKEN,
 } from '@libs/database/postgres/repository/interface';
-import { Inject } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
@@ -25,13 +22,29 @@ import {
 } from '../../domain/model/content';
 import { IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
+import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
+import { LibPostTagRepository } from '@libs/database/postgres/repository/post-tag.repository';
+import {
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSeenPostRepository,
+} from '@libs/database/postgres/repository';
 
 export class ContentRepository implements IContentRepository {
   public constructor(
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
-    @Inject(LIB_CONTENT_REPOSITORY_TOKEN)
-    private readonly _libContentRepository: ILibContentRepository,
+    private readonly _libContentRepository: LibContentRepository,
+    private readonly _libPostTagRepository: LibPostTagRepository,
+    private readonly _libPostSeriesRepository: LibPostSeriesRepository,
+    private readonly _libPostGroupRepository: LibPostGroupRepository,
+    private readonly _libPostCategoryRepository: LibPostCategoryRepository,
+    private readonly _libUserSeenPostRepository: LibUserSeenPostRepository,
+    private readonly _libUserMarkReadPostRepository: LibUserMarkReadPostRepository,
+    private readonly _libUserReportContentRepository: LibUserReportContentRepository,
     private readonly _contentMapper: ContentMapper
   ) {}
 
@@ -63,7 +76,12 @@ export class ContentRepository implements IContentRepository {
           (PostAttributes | SeriesAttributes | ArticleAttributes) & ContentAttributes
         >
       );
-      await this._libContentRepository.update(model.id, model, transaction);
+      await this._libContentRepository.update(model, {
+        where: {
+          id: model.id,
+        },
+        transaction,
+      });
 
       if (contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity) {
         await this._setSeries(contentEntity, transaction);
@@ -85,7 +103,7 @@ export class ContentRepository implements IContentRepository {
   private async _setGroups(postEntity: ContentEntity, transaction: Transaction): Promise<void> {
     const state = postEntity.getState();
     if (state.attachGroupIds?.length > 0) {
-      await this._libContentRepository.bulkCreatePostGroup(
+      await this._libPostGroupRepository.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
           postId: postEntity.getId(),
           groupId,
@@ -95,13 +113,13 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachGroupIds?.length > 0) {
-      await this._libContentRepository.deletePostGroup(
-        {
+      await this._libPostGroupRepository.delete({
+        where: {
           postId: postEntity.getId(),
           groupId: state.detachGroupIds,
         },
-        transaction
-      );
+        transaction,
+      });
     }
   }
 
@@ -111,7 +129,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachSeriesIds.length > 0) {
-      await this._libContentRepository.bulkCreatePostSeries(
+      await this._libPostSeriesRepository.bulkCreate(
         state.attachSeriesIds.map((seriesId) => ({
           postId: contentEntity.getId(),
           seriesId,
@@ -121,13 +139,13 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachSeriesIds.length > 0) {
-      await this._libContentRepository.deletePostSeries(
-        {
+      await this._libPostSeriesRepository.delete({
+        where: {
           postId: contentEntity.getId(),
           seriesId: state.detachSeriesIds,
         },
-        transaction
-      );
+        transaction,
+      });
     }
   }
 
@@ -137,7 +155,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachTagIds.length > 0) {
-      await this._libContentRepository.bulkCreatePostTag(
+      await this._libPostTagRepository.bulkCreate(
         state.attachTagIds.map((tagId) => ({
           postId: contentEntity.getId(),
           tagId,
@@ -147,13 +165,13 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachTagIds.length > 0) {
-      await this._libContentRepository.deletePostTag(
-        {
+      await this._libPostTagRepository.delete({
+        where: {
           postId: contentEntity.getId(),
           tagId: state.detachTagIds,
         },
-        transaction
-      );
+        transaction,
+      });
     }
   }
 
@@ -163,7 +181,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachCategoryIds.length > 0) {
-      await this._libContentRepository.bulkCreatePostCategory(
+      await this._libPostCategoryRepository.bulkCreate(
         state.attachCategoryIds.map((categoryId) => ({
           postId: contentEntity.getId(),
           categoryId,
@@ -173,18 +191,21 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachCategoryIds.length > 0) {
-      await this._libContentRepository.deletePostCategory(
-        {
+      await this._libPostCategoryRepository.delete({
+        where: {
           postId: contentEntity.getId(),
           categoryId: state.detachCategoryIds,
         },
-        transaction
-      );
+        transaction,
+      });
     }
   }
 
   public async delete(id: string): Promise<void> {
-    return this._libContentRepository.delete(id);
+    await this._libContentRepository.delete({
+      where: { id },
+    });
+    return;
   }
 
   public async findContentById(
@@ -259,7 +280,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {
-    return this._libContentRepository.bulkCreateSeenPost(
+    await this._libUserSeenPostRepository.bulkCreate(
       [
         {
           postId: postId,
@@ -271,7 +292,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async markReadImportant(postId: string, userId: string): Promise<void> {
-    return this._libContentRepository.bulkCreateReadImportantPost(
+    await this._libUserMarkReadPostRepository.bulkCreate(
       [
         {
           postId,
@@ -311,15 +332,19 @@ export class ContentRepository implements IContentRepository {
       ],
     };
 
-    const rows = await this._libContentRepository.getReportedContents(condition);
+    const rows = await this._libUserReportContentRepository.findMany({
+      where: condition,
+    });
 
     return rows.map((row) => row.targetId);
   }
 
   public countContentDraft(userId: string): Promise<number> {
     return this._libContentRepository.count({
-      createdBy: userId,
-      status: CONTENT_STATUS.DRAFT,
+      where: {
+        createdBy: userId,
+        status: CONTENT_STATUS.DRAFT,
+      },
     });
   }
 }

@@ -1,21 +1,8 @@
 import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
-import {
-  CursorPaginationProps,
-  CursorPaginationResult,
-  PaginationProps,
-} from '@libs/database/postgres/common';
-import { PostCategoryAttributes } from '@libs/database/postgres/model/post-category.model';
-import { PostGroupAttributes } from '@libs/database/postgres/model/post-group.model';
-import { PostSeriesAttributes } from '@libs/database/postgres/model/post-series.model';
-import { PostTagAttributes } from '@libs/database/postgres/model/post-tag.model';
-import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import {
-  ReportContentDetailAttributes,
-  ReportContentDetailModel,
-} from '@libs/database/postgres/model/report-content-detail.model';
-import { UserMarkedImportantPostAttributes } from '@libs/database/postgres/model/user-mark-read-post.model';
-import { UserSeenPostAttributes } from '@libs/database/postgres/model/user-seen-post.model';
-import { BulkCreateOptions, CreateOptions, Transaction, WhereOptions } from 'sequelize';
+import { PostAttributes } from '@libs/database/postgres/model/post.model';
+import { WhereOptions } from 'sequelize';
+import { CursorPaginationProps } from '@libs/database/postgres/common';
+import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
 
 export type FindContentConditionOptions = {
   type?: CONTENT_TYPE;
@@ -71,71 +58,3 @@ export type FindContentProps = {
 };
 
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
-
-export type GetReportContentDetailsProps = WhereOptions<ReportContentDetailAttributes>;
-
-export interface ILibContentRepository {
-  bulkCreatePostGroup(
-    postGroups: PostGroupAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void>;
-  deletePostGroup(
-    where: WhereOptions<PostGroupAttributes>,
-    transaction?: Transaction
-  ): Promise<void>;
-
-  bulkCreatePostSeries(
-    postGroups: PostSeriesAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void>;
-  deletePostSeries(
-    where: WhereOptions<PostSeriesAttributes>,
-    transaction?: Transaction
-  ): Promise<void>;
-
-  bulkCreatePostTag(postGroups: PostTagAttributes[], options?: BulkCreateOptions): Promise<void>;
-  deletePostTag(where: WhereOptions<PostTagAttributes>, transaction?: Transaction): Promise<void>;
-
-  bulkCreatePostCategory(
-    postGroups: PostCategoryAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void>;
-  deletePostCategory(
-    where: WhereOptions<PostCategoryAttributes>,
-    transaction?: Transaction
-  ): Promise<void>;
-
-  bulkCreateSeenPost(
-    seenPosts: UserSeenPostAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void>;
-
-  bulkCreateReadImportantPost(
-    readImportantPosts: UserMarkedImportantPostAttributes[],
-    options?: BulkCreateOptions
-  ): Promise<void>;
-
-  create(data: PostAttributes, options?: CreateOptions): Promise<void>;
-  update(
-    contentId: string,
-    data: Partial<PostAttributes>,
-    transaction?: Transaction
-  ): Promise<void>;
-  delete(id: string): Promise<void>;
-  findOne(findOnePostOptions: FindContentProps): Promise<PostModel>;
-  findAll(
-    findAllPostOptions: FindContentProps,
-    offsetPaginate?: PaginationProps
-  ): Promise<PostModel[]>;
-  getPagination(
-    getPaginationContentsProps: GetPaginationContentsProps
-  ): Promise<CursorPaginationResult<PostModel>>;
-
-  getReportedContents(
-    getReportedContentsProps: GetReportContentDetailsProps
-  ): Promise<ReportContentDetailModel[]>;
-
-  count(where: WhereOptions<PostAttributes>): Promise<number>;
-}
-
-export const LIB_CONTENT_REPOSITORY_TOKEN = 'LIB_CONTENT_REPOSITORY_TOKEN';
