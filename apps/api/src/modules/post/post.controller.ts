@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Version } from '@nestjs/common';
+import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { VERSIONS_SUPPORTED } from '../../common/constants';
@@ -23,23 +23,6 @@ export class PostController {
   @Get('/total-draft')
   public async getTotalDraft(@AuthUser() user: UserDto): Promise<any> {
     return this._postAppService.getTotalDraft(user);
-  }
-
-  @ApiOperation({ summary: 'Delete post' })
-  @ApiOkResponse({
-    type: Boolean,
-    description: 'Delete post successfully',
-  })
-  @ResponseMessages({
-    success: 'message.post.deleted_success',
-  })
-  @Delete('/:id')
-  @Version([VERSIONS_SUPPORTED[0]])
-  public async delete(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) postId: string
-  ): Promise<void> {
-    await this._postAppService.deletePost(user, postId);
   }
 
   @ApiOperation({ summary: 'Mark as read' })

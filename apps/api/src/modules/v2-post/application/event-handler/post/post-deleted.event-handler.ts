@@ -5,7 +5,6 @@ import { IEventHandler } from '@nestjs/cqrs';
 import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { PostDeletedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { TagDto } from '../../dto';
 import { PostChangedMessagePayload } from '../../dto/message';
 
 @EventsHandlerAndLog(PostDeletedEvent)
@@ -39,11 +38,6 @@ export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> 
         isHidden: postBefore.isHidden,
         status: postBefore.status,
         seriesIds: postBefore.seriesIds,
-        tags: postBefore.tags.map((tag) => new TagDto(tag.toObject())),
-      },
-      after: {
-        id: postEntity.get('id'),
-        actor: actor,
       },
     };
 

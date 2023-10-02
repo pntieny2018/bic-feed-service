@@ -139,7 +139,7 @@ export class PostController {
     @AuthUser() authUser: UserDto,
     @Body() autoSavePostRequestDto: AutoSavePostRequestDto
   ): Promise<void> {
-    const { audience, tags, series, mentions, media } = autoSavePostRequestDto;
+    const { audience, tags, series, mentions } = autoSavePostRequestDto;
     return this._commandBus.execute<AutoSavePostCommand, void>(
       new AutoSavePostCommand({
         ...autoSavePostRequestDto,

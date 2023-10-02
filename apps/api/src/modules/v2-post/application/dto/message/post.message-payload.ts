@@ -35,8 +35,8 @@ export class PostMessagePayload {
 
 export class PostChangedMessagePayload {
   public state: 'publish' | 'update' | 'delete';
-  public before: Omit<PostMessagePayload, 'media' | 'communityIds'>;
-  public after: Partial<PostMessagePayload> &
+  public before: Omit<PostMessagePayload, 'tags' | 'media' | 'communityIds'>;
+  public after?: Partial<PostMessagePayload> &
     Partial<{
       state: {
         attachSeriesIds: string[];

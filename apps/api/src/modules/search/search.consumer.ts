@@ -16,7 +16,7 @@ export class SearchConsumer {
 
   @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
   public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { after, state } = payload;
+    const { before, after, state } = payload;
     const {
       id,
       type,
@@ -78,7 +78,7 @@ export class SearchConsumer {
         ]);
         break;
       case 'delete':
-        await this._postSearchService.deletePostsToSearch([{ id }]);
+        await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
         break;
       default:
         break;

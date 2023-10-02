@@ -43,7 +43,7 @@ export class ArticleMessagePayload {
 
 export class ArticleChangedMessagePayload {
   public state: 'publish' | 'update' | 'delete';
-  public before?: ArticleMessagePayload;
+  public before?: Omit<ArticleMessagePayload, 'tags'>;
   public after?: ArticleMessagePayload & {
     state?: {
       attachGroupIds: string[];

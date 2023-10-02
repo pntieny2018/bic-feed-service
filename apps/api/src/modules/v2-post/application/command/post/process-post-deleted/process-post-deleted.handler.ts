@@ -1,7 +1,7 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
 import { UserDto } from '@libs/service/user';
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
@@ -9,7 +9,6 @@ import { PostHasBeenDeleted } from '../../../../../../common/constants';
 import { SeriesRemovedItemsEvent } from '../../../../../../events/series';
 import { NotificationService } from '../../../../../../notification';
 import { PostActivityService } from '../../../../../../notification/activities';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../../domain/repositoty-interface';
 import { PostMessagePayload } from '../../../dto/message';
 
 import { ProcessPostDeletedCommand } from './process-post-deleted.command';
@@ -18,8 +17,6 @@ import { ProcessPostDeletedCommand } from './process-post-deleted.command';
 export class ProcessPostDeletedHandler implements ICommandHandler<ProcessPostDeletedCommand, void> {
   public constructor(
     private readonly _sentryService: SentryService,
-    @Inject(TAG_REPOSITORY_TOKEN)
-    private readonly _tagRepository: ITagRepository,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService, //TODO improve interface later
     private readonly _postActivityService: PostActivityService //TODO improve interface later
@@ -29,7 +26,7 @@ export class ProcessPostDeletedHandler implements ICommandHandler<ProcessPostDel
 
   public async execute(command: ProcessPostDeletedCommand): Promise<void> {
     const { before } = command.payload;
-    const { id, actor, content, tags, type, groupIds, seriesIds, createdAt, updatedAt } = before;
+    const { id, actor, content, type, groupIds, seriesIds, createdAt, updatedAt } = before;
 
     for (const seriesId of seriesIds) {
       this._internalEventEmitter.emit(
@@ -54,15 +51,6 @@ export class ProcessPostDeletedHandler implements ICommandHandler<ProcessPostDel
     }
 
     try {
-      if (tags?.length) {
-        const tagEntities = await this._tagRepository.findAll({ ids: tags.map((tag) => tag.id) });
-        for (const tag of tagEntities) {
-          if (tag.get('totalUsed') > 0) {
-            tag.decreaseTotalUsed();
-            await this._tagRepository.update(tag);
-          }
-        }
-      }
       await this._processNotification(before, actor);
     } catch (err) {
       this._logger.error(JSON.stringify(err?.stack));
@@ -71,7 +59,7 @@ export class ProcessPostDeletedHandler implements ICommandHandler<ProcessPostDel
   }
 
   private async _processNotification(
-    post: Omit<PostMessagePayload, 'media' | 'communityIds'>,
+    post: Omit<PostMessagePayload, 'tags' | 'media' | 'communityIds'>,
     actor: UserDto
   ): Promise<void> {
     const activity = this._postActivityService.createPayload({

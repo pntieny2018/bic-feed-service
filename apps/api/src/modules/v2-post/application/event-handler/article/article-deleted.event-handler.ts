@@ -4,7 +4,6 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ArticleDeletedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { TagDto } from '../../dto';
 import { ArticleChangedMessagePayload } from '../../dto/message';
 
 @EventsHandler(ArticleDeletedEvent)
@@ -29,7 +28,6 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
         setting: articleEntity.get('setting'),
         groupIds: articleEntity.get('groupIds'),
         seriesIds: articleEntity.get('seriesIds'),
-        tags: (articleEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
         title: articleEntity.get('title'),
         summary: articleEntity.get('summary'),
         content: articleEntity.get('content'),
