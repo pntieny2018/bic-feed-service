@@ -370,8 +370,8 @@ export class ContentDomainService implements IContentDomainService {
     }
 
     if (
-      (contentEntity.isDraft() && !contentEntity.isOwner(authUserId)) ||
-      (contentEntity.isHidden() && !contentEntity.isOwner(authUserId))
+      (contentEntity.isDraft() || contentEntity.isHidden()) &&
+      !contentEntity.isOwner(authUserId)
     ) {
       throw new ContentAccessDeniedException();
     }
