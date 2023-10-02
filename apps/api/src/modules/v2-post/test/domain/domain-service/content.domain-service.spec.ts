@@ -4,9 +4,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { ContentDomainService } from '../../../domain/domain-service/content.domain-service';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { articleEntityMock } from '../../mock/article.entity.mock';
-import { postEntityMock } from '../../mock/post.entity.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockArticleEntity, createMockPostEntity } from '../../mock/content.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const postEntityMock = createMockPostEntity();
+const articleEntityMock = createMockArticleEntity();
+const userMock = createMockUserDto();
 
 describe('ContentDomainService', () => {
   let contentDomainService: ContentDomainService;

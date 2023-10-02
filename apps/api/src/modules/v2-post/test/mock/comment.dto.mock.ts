@@ -3,8 +3,12 @@ import { UserDto } from '../../../v2-user/application';
 import { CommentDto, FileDto, ImageDto, VideoDto } from '../../application/dto';
 import { CommentEntity } from '../../domain/model/comment';
 
-import { userMentions, userMock } from './user.dto.mock';
+import { createMockUserDto } from './user.mock';
 
+const userMock = createMockUserDto();
+const userMentions = [createMockUserDto()];
+
+// TODO: Remove this file
 export const createCommentDto = (commentEntity: CommentEntity): CommentDto => {
   return new CommentDto({
     id: commentEntity.get('id'),

@@ -1,6 +1,10 @@
 import { CreateCommentProps, UpdateCommentProps } from '../../domain/domain-service/interface';
-import { userMock } from './user.dto.mock';
 
+import { createMockUserDto } from './user.mock';
+
+const userMock = createMockUserDto();
+
+// TODO: Remove this file
 export const createCommentProps: CreateCommentProps = {
   userId: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
   postId: '9bacb01c-deae-4d80-81d7-b619b26ef684',

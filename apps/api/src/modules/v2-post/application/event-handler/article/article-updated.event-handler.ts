@@ -50,7 +50,6 @@ export class ArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedE
         setting: articleEntityBefore.get('setting'),
         groupIds: articleEntityBefore.get('groupIds'),
         seriesIds: articleEntityBefore.get('seriesIds'),
-        tags: (articleEntityBefore.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
         title: articleEntityBefore.get('title'),
         summary: articleEntityBefore.get('summary'),
         content: articleEntityBefore.get('content'),

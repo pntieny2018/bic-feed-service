@@ -7,8 +7,7 @@ import { LibContentRepository } from '@libs/database/postgres/repository/content
 import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
 import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
 
-import { ContentBinding } from '../application/binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
+import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
@@ -28,11 +27,13 @@ import {
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
+  DeletePostHandler,
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  ProcessPostDeletedHandler,
 } from '../application/command/post';
 import {
   CreateSeriesHandler,
@@ -52,6 +53,7 @@ import {
 import {
   PostPublishedEventHandler,
   PostScheduledEventHandler,
+  PostDeletedEventHandler,
 } from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
@@ -62,8 +64,10 @@ import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
+  GetSeriesInContentHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  GetTotalDraftHandler,
   SearchContentsHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
@@ -101,7 +105,7 @@ import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
-import { ContentRepository } from '../driven-adapter/repository/content.repository';
+import { ContentRepository } from '../driven-adapter/repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
@@ -115,8 +119,11 @@ export const postProvider = [
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
+
   PostPublishedEventHandler,
   PostScheduledEventHandler,
+  PostDeletedEventHandler,
+
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
@@ -138,8 +145,10 @@ export const postProvider = [
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
+
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
+
   AutoSavePostHandler,
   CreateDraftPostHandler,
   ProcessPostPublishedHandler,
@@ -147,6 +156,9 @@ export const postProvider = [
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  DeletePostHandler,
+  ProcessPostDeletedHandler,
+
   CreateSeriesHandler,
   DeleteSeriesHandler,
   ProcessSeriesDeletedHandler,
@@ -168,6 +180,8 @@ export const postProvider = [
   FindItemsBySeriesHandler,
   FindSeriesHandler,
   SearchTagsHandler,
+  GetTotalDraftHandler,
+  GetSeriesInContentHandler,
 
   /** Domain Service */
   {

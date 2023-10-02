@@ -374,39 +374,52 @@ export class PostListener {
     const posts = await this._postService.getsByMedia(videoId);
     const contentSeries = await this._postService.getPostsWithSeries(posts.map((post) => post.id));
     for (const post of posts) {
-      if (post.status === PostStatus.SCHEDULE_FAILED) {
-        this._logger.debug(`[Event video processed]: Post ${post.id} has been scheduled failed`);
-        continue;
-      }
+      const updateVideoData = {
+        videoIdProcessing: null,
+        mediaJson: {
+          videos: [
+            {
+              id: videoId,
+              url: hlsUrl,
+              mimeType: properties.mimeType,
+              size: properties.size,
+              width: properties.width,
+              height: properties.height,
+              duration: properties.duration,
+              thumbnails,
+              status: MediaStatus.COMPLETED,
+            },
+          ],
+          files: [],
+          images: [],
+        },
+      };
+
+      const isScheduledPost =
+        post.status === PostStatus.WAITING_SCHEDULE || post.status === PostStatus.SCHEDULE_FAILED;
 
       const publishedAt = new Date();
+      if (!isScheduledPost) {
+        updateVideoData['status'] = PostStatus.PUBLISHED;
+        updateVideoData['publishedAt'] = publishedAt;
+      }
+
       try {
-        await this._postService.updateData([post.id], {
-          videoIdProcessing: null,
-          status: PostStatus.PUBLISHED,
-          publishedAt,
-          mediaJson: {
-            videos: [
-              {
-                id: videoId,
-                url: hlsUrl,
-                mimeType: properties.mimeType,
-                size: properties.size,
-                width: properties.width,
-                height: properties.height,
-                duration: properties.duration,
-                thumbnails,
-                status: MediaStatus.COMPLETED,
-              },
-            ],
-            files: [],
-            images: [],
-          },
-        });
-        this._logger.debug(`[Event video processed]: Post ${post.id} has been published`);
+        await this._postService.updateData([post.id], updateVideoData);
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
+      }
+
+      if (isScheduledPost) {
+        this._logger.debug(
+          `[Event video processed]: Post ${post.id} is scheduled - ${post.status}}`
+        );
+        continue;
+      } else {
+        this._logger.debug(
+          `[Event video processed]: Post ${post.id} is published - ${post.status}}`
+        );
       }
 
       const postActivity = this._postActivityService.createPayload({
@@ -490,9 +503,12 @@ export class PostListener {
     }
 
     for (const post of contentSeries) {
-      if (post.status === PostStatus.SCHEDULE_FAILED) {
+      const isScheduledPost =
+        post.status === PostStatus.WAITING_SCHEDULE || post.status === PostStatus.SCHEDULE_FAILED;
+      if (isScheduledPost) {
         continue;
       }
+
       if (post['postSeries']?.length > 0) {
         for (const seriesItem of post['postSeries']) {
           this._internalEventEmitter.emit(
@@ -522,10 +538,8 @@ export class PostListener {
     const { videoId } = event.payload;
     const posts = await this._postService.getsByMedia(videoId);
     for (const post of posts) {
-      if (post.status === PostStatus.SCHEDULE_FAILED) {
-        this._logger.debug(`[Event video processed]: Post ${post.id} has been scheduled failed`);
-        continue;
-      }
+      const isScheduledPost =
+        post.status === PostStatus.WAITING_SCHEDULE || post.status === PostStatus.SCHEDULE_FAILED;
 
       await this._postService
         .updateData([post.id], {
@@ -540,13 +554,20 @@ export class PostListener {
               }),
             ],
           },
-          status: PostStatus.DRAFT,
+          status: isScheduledPost ? PostStatus.SCHEDULE_FAILED : PostStatus.DRAFT,
           videoIdProcessing: null,
         })
         .catch((e) => {
           this._logger.error(JSON.stringify(e?.stack));
           this._sentryService.captureException(e);
         });
+
+      if (isScheduledPost) {
+        this._logger.debug(`[Event video failed]: Post ${post.id} is scheduled fail`);
+        continue;
+      } else {
+        this._logger.debug(`[Event video failed]: Post ${post.id} is published fail`);
+      }
 
       const postActivity = this._postActivityService.createPayload({
         title: null,

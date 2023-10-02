@@ -20,3 +20,11 @@ export class GetScheduleContentsResponseDto extends PaginatedResponse<ArticleDto
     super(list, meta);
   }
 }
+
+export class GetSeriesResponseDto {
+  public list: SeriesDto[] = [];
+
+  public constructor(list: SeriesDto[]) {
+    this.list = list;
+  }
+}

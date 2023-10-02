@@ -134,6 +134,8 @@ export interface ILibContentRepository {
   getReportedContents(
     getReportedContentsProps: GetReportContentDetailsProps
   ): Promise<ReportContentDetailModel[]>;
+
+  count(where: WhereOptions<PostAttributes>): Promise<number>;
 }
 
 export const LIB_CONTENT_REPOSITORY_TOKEN = 'LIB_CONTENT_REPOSITORY_TOKEN';

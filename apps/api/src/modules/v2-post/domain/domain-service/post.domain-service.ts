@@ -4,7 +4,7 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaDto } from '../../application/dto';
-import { PostPublishedEvent, PostScheduledEvent } from '../event';
+import { PostDeletedEvent, PostPublishedEvent, PostScheduledEvent } from '../event';
 import {
   ContentAccessDeniedException,
   ContentHasBeenPublishedException,
@@ -239,22 +239,16 @@ export class PostDomainService implements IPostDomainService {
   }
 
   public async updatePost(props: UpdatePostProps): Promise<PostEntity> {
-    const { id, groupIds, mentionUserIds } = props.payload;
+    const { id } = props.payload;
     const authUser = props.authUser;
 
-    const postEntity = await this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
-        },
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+      shouldIncludeLinkPreview: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeMarkReadImportant: {
+        userId: authUser?.id,
       },
     });
 
@@ -271,56 +265,11 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNoPublishYetException();
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
-      withGroupJoined: true,
-    });
-
-    const newData = {
-      ...props.payload,
-      mentionUsers,
-      groups,
-    };
-
-    const { tagIds, linkPreview, media, ...restUpdate } = newData;
-
-    let newTagEntities = [];
-    if (tagIds) {
-      newTagEntities = await this._tagRepo.findAll({
-        ids: tagIds,
-      });
-      postEntity.setTags(newTagEntities);
-    }
-
-    if (media) {
-      await this._setNewMedia(postEntity, media);
-    }
-    if (linkPreview && linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
-      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
-      postEntity.setLinkPreview(linkPreviewEntity);
-    }
-
-    postEntity.updateAttribute(restUpdate, authUser.id);
-    postEntity.setPrivacyFromGroups(newData.groups);
+    await this._validateAndSetPostAttributes(postEntity, props.payload, authUser);
 
     if (postEntity.hasVideoProcessing()) {
       postEntity.setProcessing();
     }
-
-    await this._postValidator.validatePublishContent(
-      postEntity,
-      authUser,
-      postEntity.get('groupIds')
-    );
-    await this._mentionValidator.validateMentionUsers(newData.mentionUsers, newData.groups);
-
-    await this._postValidator.validateLimitedToAttachSeries(postEntity);
-
-    await this._contentValidator.validateSeriesAndTags(
-      newData.groups,
-      postEntity.get('seriesIds'),
-      postEntity.get('tags')
-    );
 
     if (!postEntity.isChanged()) {
       return;
@@ -417,13 +366,30 @@ export class PostDomainService implements IPostDomainService {
     return this._contentRepository.update(postEntity);
   }
 
-  public async delete(id: string): Promise<void> {
-    try {
-      await this._contentRepository.delete(id);
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+  public async delete(id: string, authUser: UserDto): Promise<void> {
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    if (!postEntity || !(postEntity instanceof PostEntity)) {
+      throw new ContentNotFoundException();
     }
+
+    if (!postEntity.isOwner(authUser.id)) {
+      throw new ContentAccessDeniedException();
+    }
+
+    if (postEntity.isPublished()) {
+      await this._contentValidator.checkCanCRUDContent(
+        authUser,
+        postEntity.get('groupIds'),
+        postEntity.get('type')
+      );
+    }
+
+    await this._contentRepository.delete(id);
+    this.event.publish(new PostDeletedEvent({ postEntity, actor: authUser }));
   }
 
   private async _validateAndSetPostAttributes(
