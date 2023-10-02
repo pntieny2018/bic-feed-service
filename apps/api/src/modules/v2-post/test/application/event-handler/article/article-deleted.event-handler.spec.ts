@@ -6,8 +6,11 @@ import { TagDto } from '../../../../application/dto';
 import { ArticleChangedMessagePayload } from '../../../../application/dto/message';
 import { ArticleDeletedEventHandler } from '../../../../application/event-handler/article';
 import { ArticleDeletedEvent } from '../../../../domain/event';
-import { articleEntityMock } from '../../../mock/article.entity.mock';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockArticleEntity } from '../../../mock/content.mock';
+import { createMockUserDto } from '../../../mock/user.mock';
+
+const articleEntityMock = createMockArticleEntity();
+const userMock = createMockUserDto();
 
 describe('ArticleDeletedEventHandler', () => {
   let eventHandler: ArticleDeletedEventHandler;

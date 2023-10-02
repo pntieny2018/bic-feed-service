@@ -173,5 +173,9 @@ export const ROUTES = {
       PATH: '/schedule',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
+    GET_SERIES: {
+      PATH: '/:contentId/series',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
   },
 };

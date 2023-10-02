@@ -11,8 +11,12 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
-import { articleDtoMock, articleEntityMock } from '../../../mock/article.entity.mock';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockArticleDto, createMockArticleEntity } from '../../../mock/content.mock';
+import { createMockUserDto } from '../../../mock/user.mock';
+
+const articleEntityMock = createMockArticleEntity();
+const articleDtoMock = createMockArticleDto();
+const userMock = createMockUserDto();
 
 describe('UpdateArticleHandler', () => {
   let handler: UpdateArticleHandler;

@@ -20,6 +20,7 @@ import { CheckWrongMediaCommand } from './check-wrong-media.command';
 import { CleanArticleCommand } from './clean-article.command';
 import { CleanDraftPostCommand } from './clean-draft-posts.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
+import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
 import { ExportUserContentDataCommand } from './export-user-content-data.command';
 import { FixCommentCountCommand } from './fix-comment-count.command';
@@ -99,6 +100,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigrateScheduledTimeArticlesCommand,
     MigratePublishedTimeContentCommand,
     ExportReactionCountDataCommand,
+    ExportInvalidTagNameCommand,
   ],
 })
 export class CommandModule {}

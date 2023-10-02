@@ -13,8 +13,11 @@ import {
 } from '../../../domain/exception';
 import { CommentController } from '../../../driving-apdater/controller/comment.controller';
 import { GetListCommentsDto } from '../../../driving-apdater/dto/request';
-import { commentMock } from '../../mock/comment.model.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockCommentRecord } from '../../mock/comment.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const commentMock = createMockCommentRecord();
+const userMock = createMockUserDto();
 
 describe('CommentController', () => {
   let commentController: CommentController;

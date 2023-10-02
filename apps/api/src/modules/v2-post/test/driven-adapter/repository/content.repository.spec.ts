@@ -1,18 +1,25 @@
+import { TestBed } from '@automock/jest';
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
-import { v4 } from 'uuid';
-import { Sequelize } from 'sequelize-typescript';
 import { Transaction } from 'sequelize';
-import { PostModel } from '../../../../../database/models/post.model';
+import { Sequelize } from 'sequelize-typescript';
+import { v4 } from 'uuid';
+
 import { PostGroupModel } from '../../../../../database/models/post-group.model';
+import { PostModel } from '../../../../../database/models/post.model';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
-import { postRecordMock } from '../../mock/post.model.mock';
-import { contentEntityMock } from '../../mock/content.entity.mock';
-import { postEntityMock } from '../../mock/post.entity.mock';
-import { seriesEntityMock } from '../../mock/series.entity.mock';
-import { TestBed } from '@automock/jest';
+import {
+  createMockContentEntity,
+  createMockPostEntity,
+  createMockPostRecord,
+  createMockSeriesEntity,
+} from '../../mock/content.mock';
 
 const transaction = createMock<Transaction>();
+const postRecordMock = createMockPostRecord();
+const postEntityMock = createMockPostEntity();
+const contentEntityMock = createMockContentEntity();
+const seriesEntityMock = createMockSeriesEntity();
 
 describe('ContentRepository', () => {
   let repo: ContentRepository;

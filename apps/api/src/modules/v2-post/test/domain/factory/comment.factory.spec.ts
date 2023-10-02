@@ -1,9 +1,12 @@
-import { CommentFactory } from '../../../domain/factory';
-import { Test } from '@nestjs/testing';
-import { commentRecord } from '../../mock/comment.model.mock';
-import { EventPublisher } from '@nestjs/cqrs';
 import { createMock } from '@golevelup/ts-jest';
+import { EventPublisher } from '@nestjs/cqrs';
+import { Test } from '@nestjs/testing';
+
+import { CommentFactory } from '../../../domain/factory';
 import { CommentEntity } from '../../../domain/model/comment';
+import { createMockCommentRecord } from '../../mock/comment.mock';
+
+const commentRecord = createMockCommentRecord();
 
 describe('CommentFactory', function () {
   let commentFactory: CommentFactory;

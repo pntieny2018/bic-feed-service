@@ -1,9 +1,16 @@
-import { Test } from '@nestjs/testing';
-import { EventPublisher } from '@nestjs/cqrs';
 import { createMock } from '@golevelup/ts-jest';
+import { EventPublisher } from '@nestjs/cqrs';
+import { Test } from '@nestjs/testing';
+
 import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
-import { mockLinkPreviewEntity, mockLinkPreviewRecord } from '../../mock/link-preview.entity.mock';
 import { LinkPreviewEntity } from '../../../domain/model/link-preview';
+import {
+  createMockLinkPreviewEntity,
+  createMockLinkPreviewRecord,
+} from '../../mock/link-preview.mock';
+
+const mockLinkPreviewRecord = createMockLinkPreviewRecord();
+const mockLinkPreviewEntity = createMockLinkPreviewEntity();
 
 describe('LinkPreviewFactory', function () {
   let linkPreviewFactory: LinkPreviewFactory;

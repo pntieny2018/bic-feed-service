@@ -321,6 +321,7 @@ export class ContentEntity<
     );
   }
 
+  //TODO: Need to refactor this function so that the purpose use matches the naming
   public isInArchivedGroups(): boolean {
     return this.isPublished() && !this.getGroupIds()?.length;
   }

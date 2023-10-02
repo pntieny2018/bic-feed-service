@@ -15,7 +15,9 @@ import {
   ScheduleArticleRequestDto,
   UpdateArticleRequestDto,
 } from '../../../driving-apdater/dto/request';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('ArticleController', () => {
   let articleController: ArticleController;

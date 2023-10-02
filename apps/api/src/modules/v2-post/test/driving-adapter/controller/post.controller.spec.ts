@@ -9,15 +9,13 @@ import { I18nContext } from 'nestjs-i18n';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../common/constants';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { CreateDraftPostCommand, PublishPostCommand } from '../../../application/command/post';
-import { CreateDraftPostDto, PostDto } from '../../../application/dto';
-import { FindPostQuery } from '../../../application/query/post';
 import {
   CreateDraftPostCommand,
   PublishPostCommand,
   UpdatePostCommand,
 } from '../../../application/command/post';
 import { CreateDraftPostDto, PostDto } from '../../../application/dto';
+import { FindPostQuery } from '../../../application/query/post';
 import { ContentNoEditSettingPermissionException } from '../../../domain/exception';
 import { PostController } from '../../../driving-apdater/controller/post.controller';
 import {
@@ -25,8 +23,10 @@ import {
   PublishPostRequestDto,
   UpdatePostRequestDto,
 } from '../../../driving-apdater/dto/request';
-import { postMock } from '../../mock/post.dto.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockPostDto, createMockUserDto } from '../../mock';
+
+const postMock = createMockPostDto();
+const userMock = createMockUserDto();
 
 describe('PostController', () => {
   let postController: PostController;

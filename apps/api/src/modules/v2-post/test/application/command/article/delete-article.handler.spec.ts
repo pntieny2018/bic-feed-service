@@ -8,7 +8,9 @@ import {
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
 import { ContentNotFoundException } from '../../../../domain/exception';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockUserDto } from '../../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('DeleteArticleHandler', () => {
   let handler: DeleteArticleHandler;

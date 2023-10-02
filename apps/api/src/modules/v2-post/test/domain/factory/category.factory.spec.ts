@@ -1,7 +1,10 @@
-import { CategoryFactory } from '../../../domain/factory';
 import { Test } from '@nestjs/testing';
-import { categoryRecord } from '../../mock/category.model.mock';
-import { categoryEntityMock } from '../../mock/category.entity.mock';
+
+import { CategoryFactory } from '../../../domain/factory';
+import { createMockCategoryEntity, createMockCategoryRecord } from '../../mock/category.mock';
+
+const categoryEntityMock = createMockCategoryEntity();
+const categoryRecord = createMockCategoryRecord();
 
 describe('CategoryFactory', () => {
   let categoryFactory: CategoryFactory;

@@ -1,17 +1,20 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
+
+import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { StringHelper } from '../../../../../common/helpers';
 import { TagDomainService } from '../../../domain/domain-service';
 import { ITagDomainService } from '../../../domain/domain-service/interface';
 import { TagFactory } from '../../../domain/factory';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
 import { TagEntity } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagRepository } from '../../../driven-adapter/repository';
-import { userMock } from '../../mock/user.dto.mock';
-import { DatabaseException } from '../../../../../common/exceptions/database.exception';
-import { I18nContext } from 'nestjs-i18n';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('TagDomainService', () => {
   let domainService: ITagDomainService;

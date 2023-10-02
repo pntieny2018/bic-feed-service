@@ -33,9 +33,12 @@ import { ContentValidator } from '../../../domain/validator/content.validator';
 import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import { createCommentDto } from '../../mock/comment.dto.mock';
-import { createCommentEntity } from '../../mock/comment.entity.mock';
+import { createMockCommentEntity } from '../../mock/comment.mock';
 import { postProps } from '../../mock/post.props.mock';
-import { userMentions, userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
+const userMentions = [createMockUserDto()];
 
 describe('CreateCommentHandler', () => {
   let handler: CreateCommentHandler;
@@ -111,7 +114,7 @@ describe('CreateCommentHandler', () => {
         actor: userMock,
       };
       const command = new CreateCommentCommand(payload);
-      const commentEntity = createCommentEntity(payload, postId);
+      const commentEntity = createMockCommentEntity(payload);
       const commentDto = createCommentDto(commentEntity);
       const postEntity = new PostEntity({ ...postProps, id: postId });
 
