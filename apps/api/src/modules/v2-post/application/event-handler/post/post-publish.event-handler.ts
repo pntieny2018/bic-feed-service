@@ -53,6 +53,7 @@ export class PostPublishedEventHandler implements IEventHandler<PostPublishedEve
         lang: postBefore.lang,
         isHidden: postBefore.isHidden,
         status: postBefore.status,
+        seriesIds: postBefore.seriesIds,
       },
       after: {
         id: postEntity.get('id'),

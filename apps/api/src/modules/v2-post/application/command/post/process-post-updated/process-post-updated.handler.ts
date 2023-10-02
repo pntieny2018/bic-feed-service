@@ -12,24 +12,21 @@ import {
 import { NotificationService } from '../../../../../../notification';
 import { ISeriesState, PostActivityService } from '../../../../../../notification/activities';
 import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
-import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface/media.domain-service.interface';
+} from '../../../../domain/domain-service/interface';
 import { PostEntity, SeriesEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
 } from '../../../../domain/repositoty-interface';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { ProcessPostPublishedCommand } from '../../post';
 
 import { ProcessPostUpdatedCommand } from './process-post-updated.command';
@@ -37,13 +34,16 @@ import { ProcessPostUpdatedCommand } from './process-post-updated.command';
 @CommandHandler(ProcessPostUpdatedCommand)
 export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpdatedCommand, void> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepository: IContentRepository,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupApplicationService: IGroupApplicationService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
-    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
+    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
+    private readonly _mediaDomainService: IMediaDomainService,
     private readonly _notificationService: NotificationService, //TODO improve interface later
     private readonly _postActivityService: PostActivityService, //TODO improve interface later
     private readonly _internalEventEmitter: InternalEventEmitterService //TODO improve interface later
@@ -80,8 +80,8 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
         ids: after.seriesIds,
       },
     });
-    const groups = await this._groupApplicationService.findAllByIds(after.groupIds);
-    const mentionUsers = await this._userApplicationService.findAllByIds(after.mentionUserIds);
+    const groups = await this._groupAdapter.getGroupsByIds(after.groupIds);
+    const mentionUsers = await this._userAdapter.getUsersByIds(after.mentionUserIds);
     const updatedActivity = this._postActivityService.createPayload({
       id: after.id,
       title: null,
@@ -97,9 +97,10 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     });
     let oldActivity = undefined;
 
-    const oldMentionUsers = await this._userApplicationService.findAllByIds(before.mentionUserIds);
+    const oldMentionUsers = await this._userAdapter.getUsersByIds(before.mentionUserIds);
     const oldMentions = this._contentBinding.mapMentionWithUserInfo(oldMentionUsers);
-    const oldGroups = await this._groupApplicationService.findAllByIds(before.groupIds);
+    const oldGroups = await this._groupAdapter.getGroupsByIds(before.groupIds);
+
     oldActivity = this._postActivityService.createPayload({
       id: before.id,
       title: null,

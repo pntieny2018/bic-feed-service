@@ -102,6 +102,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
           lang: postBefore.lang,
           isHidden: postBefore.isHidden,
           status: postBefore.status,
+          seriesIds: postBefore.seriesIds,
         },
         after: {
           id: postEntityAfter.get('id'),

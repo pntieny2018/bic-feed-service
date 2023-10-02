@@ -3,6 +3,7 @@ import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -23,6 +24,7 @@ import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   AutoSavePostCommand,
   CreateDraftPostCommand,
+  DeletePostCommand,
   PublishPostCommand,
   SchedulePostCommand,
   UpdatePostCommand,
@@ -137,7 +139,7 @@ export class PostController {
     @AuthUser() authUser: UserDto,
     @Body() autoSavePostRequestDto: AutoSavePostRequestDto
   ): Promise<void> {
-    const { audience, tags, series, mentions, media } = autoSavePostRequestDto;
+    const { audience, tags, series, mentions } = autoSavePostRequestDto;
     return this._commandBus.execute<AutoSavePostCommand, void>(
       new AutoSavePostCommand({
         ...autoSavePostRequestDto,
@@ -187,5 +189,19 @@ export class PostController {
         actor: user,
       })
     );
+  }
+
+  @ApiOperation({ summary: 'Delete post' })
+  @ResponseMessages({
+    success: 'message.post.deleted_success',
+    error: 'message.post.deleted_fail',
+  })
+  @Delete(ROUTES.POST.DELETE.PATH)
+  @Version(ROUTES.POST.DELETE.VERSIONS)
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<void> {
+    await this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
   }
 }

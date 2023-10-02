@@ -5,11 +5,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import moment from 'moment';
 
 import { PERMISSION_KEY } from '../../../../common/constants';
-import {
-  AUTHORITY_APP_SERVICE_TOKEN,
-  IAuthorityAppService,
-} from '../../../authority/application/authority.app-service.interface';
-import { PostType } from '../../data-type';
+import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
 import {
   ContentAccessDeniedException,
   ContentEmptyGroupException,
@@ -49,12 +45,12 @@ export class ContentValidator implements IContentValidator {
   public async checkCanCRUDContent(
     user: UserDto,
     groupAudienceIds: string[],
-    postType?: CONTENT_TYPE
+    contentType?: CONTENT_TYPE
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
     await this._authorityAppService.buildAbility(user);
-    const permissionKey = this._postTypeToPermissionKey(postType);
+    const permissionKey = this._postTypeToPermissionKey(contentType);
     for (const group of groups) {
       if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)) {
         notCreatableInGroups.push(group);
@@ -97,12 +93,12 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  private _postTypeToPermissionKey(postType: PostType | CONTENT_TYPE): string {
+  private _postTypeToPermissionKey(postType: CONTENT_TYPE): string {
     switch (postType) {
-      case PostType.SERIES:
+      case CONTENT_TYPE.SERIES:
         return PERMISSION_KEY.CRUD_SERIES;
-      case PostType.ARTICLE:
-      case PostType.POST:
+      case CONTENT_TYPE.ARTICLE:
+      case CONTENT_TYPE.POST:
       default:
         return PERMISSION_KEY.CRUD_POST_ARTICLE;
     }
