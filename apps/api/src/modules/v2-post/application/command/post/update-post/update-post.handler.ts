@@ -4,6 +4,8 @@ import { uniq } from 'lodash';
 
 import { KAFKA_TOPIC } from '../../../../../../common/constants';
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
@@ -32,6 +34,8 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
     private readonly _contentRepository: IContentRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
     @Inject(GROUP_ADAPTER)
@@ -47,7 +51,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
     const postEntity = await this._postDomainService.updatePost({ authUser, payload });
 
     if (postEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(
+      await this._contentDomainService.markReadImportant(
         postEntity.get('id'),
         command.payload.authUser.id
       );

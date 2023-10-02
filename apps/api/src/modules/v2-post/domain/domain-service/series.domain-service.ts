@@ -18,6 +18,8 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
   IPostDomainService,
   DeleteSeriesProps,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
 } from './interface';
 import {
   IMediaDomainService,
@@ -36,6 +38,8 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _mediaDomainService: IMediaDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
     @Inject(SERIES_FACTORY_TOKEN)
     private readonly _seriesFactory: ISeriesFactory,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -93,11 +97,11 @@ export class SeriesDomainService implements ISeriesDomainService {
     try {
       await this._contentRepository.create(seriesEntity);
 
-      await this._postDomainService.markSeen(seriesEntity.get('id'), actor.id);
+      await this._contentDomainService.markSeen(seriesEntity.get('id'), actor.id);
       seriesEntity.increaseTotalSeen();
 
       if (seriesEntity.isImportant()) {
-        await this._postDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
+        await this._contentDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
         seriesEntity.setMarkReadImportant();
       }
     } catch (e) {
@@ -189,7 +193,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentRepository.update(seriesEntity);
 
     if (!isImportantBefore && seriesEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
+      await this._contentDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
       seriesEntity.setMarkReadImportant();
     }
 
