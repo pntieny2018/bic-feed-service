@@ -1,3 +1,11 @@
+export class QuizGenerateJobDto {
+  public quizId: string;
+
+  public constructor(data: Partial<QuizGenerateJobDto>) {
+    Object.assign(this, data);
+  }
+}
+
 export class QuizParticipantResultJobDto {
   public quizParticipantId: string;
 
