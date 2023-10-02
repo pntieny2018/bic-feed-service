@@ -1,10 +1,11 @@
-import { Test } from '@nestjs/testing';
-import { EventPublisher } from '@nestjs/cqrs';
 import { createMock } from '@golevelup/ts-jest';
-import { ITagFactory } from '../../../domain/factory/interface';
+import { EventPublisher } from '@nestjs/cqrs';
+import { Test } from '@nestjs/testing';
+
 import { TagFactory } from '../../../domain/factory';
-import { mockTagEntity, mockTagRecord } from '../../mock/tag.entity.mock';
+import { ITagFactory } from '../../../domain/factory/interface';
 import { TagEntity } from '../../../domain/model/tag';
+import { createMockTagEntity, createMockTagRecord } from '../../mock/tag.mock';
 
 describe('TagFactory', function () {
   let tagFactory: ITagFactory;
@@ -44,9 +45,9 @@ describe('TagFactory', function () {
 
   describe('reconstitute', () => {
     it('should return a TagEntity success', () => {
-      const result = tagFactory.reconstitute(mockTagRecord);
+      const result = tagFactory.reconstitute(createMockTagRecord());
 
-      expect(result).toEqual(mockTagEntity);
+      expect(result).toEqual(createMockTagEntity());
     });
   });
 });

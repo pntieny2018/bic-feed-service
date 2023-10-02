@@ -18,22 +18,22 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { CategoryModel } from './category.model';
-import { CommentModel, IMediaJson } from './comment.model';
-import { FailedProcessPostModel } from './failed-process-post.model';
-import { LinkPreviewModel } from './link-preview.model';
-import { MediaModel } from './media.model';
-import { PostCategoryModel } from './post-category.model';
-import { PostGroupModel } from './post-group.model';
+import { CategoryAttributes, CategoryModel } from './category.model';
+import { CommentAttributes, CommentModel, IMediaJson } from './comment.model';
+import { FailedProcessPostAttributes, FailedProcessPostModel } from './failed-process-post.model';
+import { LinkPreviewAttributes, LinkPreviewModel } from './link-preview.model';
+import { MediaAttributes, MediaModel } from './media.model';
+import { PostCategoryAttributes, PostCategoryModel } from './post-category.model';
+import { PostGroupAttributes, PostGroupModel } from './post-group.model';
 import { PostMediaModel } from './post-media.model';
-import { PostReactionModel } from './post-reaction.model';
-import { PostSeriesModel } from './post-series.model';
-import { PostTagModel } from './post-tag.model';
-import { QuizParticipantModel } from './quiz-participant.model';
-import { QuizModel } from './quiz.model';
+import { PostReactionAttributes, PostReactionModel } from './post-reaction.model';
+import { PostSeriesAttributes, PostSeriesModel } from './post-series.model';
+import { PostTagAttributes, PostTagModel } from './post-tag.model';
+import { QuizParticipantAttributes, QuizParticipantModel } from './quiz-participant.model';
+import { QuizAttributes, QuizModel } from './quiz.model';
 import { TagAttributes, TagModel } from './tag.model';
-import { UserNewsFeedModel } from './user-newsfeed.model';
-import { UserSavePostModel } from './user-save-post.model';
+import { UserNewsFeedAttributes, UserNewsFeedModel } from './user-newsfeed.model';
+import { UserSavePostAttributes, UserSavePostModel } from './user-save-post.model';
 
 export type PostAttributes = InferAttributes<PostModel>;
 
@@ -173,62 +173,62 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public deletedAt?: Date;
 
   @HasMany(() => CommentModel)
-  public comments?: CommentModel[];
+  public comments?: CommentAttributes[];
 
   @BelongsToMany(() => MediaModel, () => PostMediaModel)
-  public media?: MediaModel[];
+  public media?: MediaAttributes[];
 
   @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
-  public categories?: CategoryModel[];
+  public categories?: CategoryAttributes[];
 
   @HasMany(() => PostCategoryModel)
-  public postCategories?: PostCategoryModel[];
+  public postCategories?: PostCategoryAttributes[];
 
   @BelongsToMany(() => TagModel, () => PostTagModel)
-  public tags?: TagModel[];
+  public tags?: TagAttributes[];
 
   @HasMany(() => PostTagModel)
-  public postTags?: PostTagModel[];
+  public postTags?: PostTagAttributes[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'postId', 'seriesId')
-  public series?: PostModel[];
+  public series?: PostAttributes[];
 
   @HasMany(() => PostSeriesModel, 'postId')
-  public postSeries?: PostSeriesModel[];
+  public postSeries?: PostSeriesAttributes[];
 
   @HasMany(() => PostSeriesModel, 'seriesId')
-  public itemIds?: PostSeriesModel[];
+  public itemIds?: PostSeriesAttributes[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
-  public items?: PostModel[];
+  public items?: PostAttributes[];
 
   @HasOne(() => QuizModel, {
     foreignKey: 'postId',
   })
-  public quiz?: QuizModel;
+  public quiz?: QuizAttributes;
 
   @HasMany(() => QuizParticipantModel, 'postId')
-  public quizResults?: QuizParticipantModel[];
+  public quizResults?: QuizParticipantAttributes[];
 
   @HasMany(() => PostGroupModel)
-  public groups?: PostGroupModel[];
+  public groups?: PostGroupAttributes[];
 
   @HasMany(() => UserNewsFeedModel)
-  public userNewsfeeds?: UserNewsFeedModel[];
+  public userNewsfeeds?: UserNewsFeedAttributes[];
 
   @HasMany(() => PostReactionModel)
-  public reactions?: PostReactionModel[];
+  public reactions?: PostReactionAttributes[];
 
   @HasMany(() => UserNewsFeedModel)
-  public userNewsFeeds?: UserNewsFeedModel[];
+  public userNewsFeeds?: UserNewsFeedAttributes[];
 
   @HasMany(() => UserSavePostModel)
-  public userSavePosts?: UserSavePostModel[];
+  public userSavePosts?: UserSavePostAttributes[];
 
   @BelongsTo(() => LinkPreviewModel, {
     foreignKey: 'linkPreviewId',
   })
-  public linkPreview?: LinkPreviewModel;
+  public linkPreview?: LinkPreviewAttributes;
 
   @HasMany(() => PostReactionModel, {
     as: 'ownerReactions',
@@ -245,11 +245,11 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @BelongsTo(() => MediaModel, {
     foreignKey: 'cover',
   })
-  public coverMedia?: MediaModel;
+  public coverMedia?: MediaAttributes;
 
   @HasMany(() => FailedProcessPostModel, {
     as: 'failedPostReasons',
     foreignKey: 'postId',
   })
-  public failedPostReasons?: FailedProcessPostModel[];
+  public failedPostReasons?: FailedProcessPostAttributes[];
 }

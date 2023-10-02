@@ -1,16 +1,19 @@
-import { Test } from '@nestjs/testing';
-import { CategoryRepository } from '../../../driven-adapter/repository/category.repository';
-import { getModelToken } from '@nestjs/sequelize';
-import { CategoryModel } from '../../../../../database/models/category.model';
 import { createMock } from '@golevelup/ts-jest';
-import { CATEGORY_FACTORY_TOKEN } from '../../../domain/factory/interface';
-import { CategoryFactory } from '../../../domain/factory';
-import { Sequelize } from 'sequelize-typescript';
-import { ICategoryRepository } from '../../../domain/repositoty-interface';
-import { CategoryEntity } from '../../../domain/model/category';
-import { categoryRecord } from '../../mock/category.model.mock';
-import { categoryEntityMock } from '../../mock/category.entity.mock';
+import { getModelToken } from '@nestjs/sequelize';
+import { Test } from '@nestjs/testing';
 import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+
+import { CategoryModel } from '../../../../../database/models/category.model';
+import { CategoryFactory } from '../../../domain/factory';
+import { CATEGORY_FACTORY_TOKEN } from '../../../domain/factory/interface';
+import { CategoryEntity } from '../../../domain/model/category';
+import { ICategoryRepository } from '../../../domain/repositoty-interface';
+import { CategoryRepository } from '../../../driven-adapter/repository/category.repository';
+import { createMockCategoryEntity, createMockCategoryRecord } from '../../mock/category.mock';
+
+const categoryEntityMock = createMockCategoryEntity();
+const categoryRecord = createMockCategoryRecord();
 
 describe('CategoryRepository', () => {
   let repo: ICategoryRepository;

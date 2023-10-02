@@ -20,14 +20,11 @@ import {
   IUserAdapter,
   USER_ADAPTER,
 } from '../../../../domain/service-adapter-interface';
-import { postMock } from '../../../mock/post.dto.mock';
-import { postEntityMock } from '../../../mock/post.entity.mock';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockPostDto, createMockPostEntity, createMockUserDto } from '../../../mock';
 
 describe('UpdatePostHandler', () => {
   let updatePostHandler: UpdatePostHandler;
   let postDomainService: IPostDomainService;
-  let contentRepository: IContentRepository;
   let contentBinding: IContentBinding;
   let groupAdapter: IGroupAdapter;
   let userAdapter: IUserAdapter;
@@ -66,7 +63,6 @@ describe('UpdatePostHandler', () => {
 
     updatePostHandler = moduleRef.get<UpdatePostHandler>(UpdatePostHandler);
     postDomainService = moduleRef.get<IPostDomainService>(POST_DOMAIN_SERVICE_TOKEN);
-    contentRepository = moduleRef.get<IContentRepository>(CONTENT_REPOSITORY_TOKEN);
     contentBinding = moduleRef.get<IContentBinding>(CONTENT_BINDING_TOKEN);
     groupAdapter = moduleRef.get<IGroupAdapter>(GROUP_ADAPTER);
     userAdapter = moduleRef.get<IUserAdapter>(USER_ADAPTER);
@@ -78,6 +74,10 @@ describe('UpdatePostHandler', () => {
   });
 
   describe('execute', () => {
+    const postEntityMock = createMockPostEntity();
+    const postDtoMock = createMockPostDto();
+    const userMock = createMockUserDto();
+
     const updatePostCommandPayload: UpdatePostCommandPayload = {
       id: postEntityMock.get('id'),
       groupIds: postEntityMock.get('groupIds'),
@@ -87,7 +87,9 @@ describe('UpdatePostHandler', () => {
       jest.spyOn(postDomainService, 'updatePost').mockResolvedValue(postEntityMock);
       jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
       jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
-      const postBindingSpy = jest.spyOn(contentBinding, 'postBinding').mockResolvedValue(postMock);
+      const postBindingSpy = jest
+        .spyOn(contentBinding, 'postBinding')
+        .mockResolvedValue(postDtoMock);
       jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(true);
 
       const result = await updatePostHandler.execute({
@@ -95,7 +97,7 @@ describe('UpdatePostHandler', () => {
       });
 
       expect(kafkaAdapter.emit).toBeCalledTimes(1);
-      expect(result).toEqual(postMock);
+      expect(result).toEqual(postDtoMock);
       expect(postBindingSpy).toBeCalledWith(postEntityMock, {
         groups: groupMock,
         actor: updatePostCommandPayload.authUser,

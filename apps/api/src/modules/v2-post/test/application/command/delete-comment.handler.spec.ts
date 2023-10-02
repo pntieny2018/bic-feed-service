@@ -39,9 +39,12 @@ import { ContentValidator } from '../../../domain/validator/content.validator';
 import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
-import { commentEntityMock } from '../../mock/comment.entity.mock';
+import { createMockCommentEntity } from '../../mock/comment.mock';
 import { postProps } from '../../mock/post.props.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const commentEntityMock = createMockCommentEntity();
+const userMock = createMockUserDto();
 
 describe('DeleteCommentHandler', () => {
   let handler: DeleteCommentHandler;

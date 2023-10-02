@@ -20,7 +20,7 @@ import {
 import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
 import { CommentReactionModel } from './comment-reaction.model';
-import { PostModel } from './post.model';
+import { PostAttributes, PostModel } from './post.model';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -141,7 +141,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   public mentions: string[];
 
   @BelongsTo(() => PostModel)
-  public post?: PostModel;
+  public post?: PostAttributes;
 
   @HasMany(() => CommentModel, {
     foreignKey: {

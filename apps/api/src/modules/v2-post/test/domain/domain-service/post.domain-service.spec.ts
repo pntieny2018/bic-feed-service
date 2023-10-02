@@ -35,9 +35,7 @@ import {
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
-import { articleEntityMock } from '../../mock/article.entity.mock';
-import { postEntityMock } from '../../mock/post.entity.mock';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockArticleEntity, createMockPostEntity, createMockUserDto } from '../../mock';
 
 describe('Post domain service', () => {
   let domainService: IPostDomainService;
@@ -108,6 +106,8 @@ describe('Post domain service', () => {
   });
 
   describe('createDraftArticle', () => {
+    const articleEntityMock = createMockArticleEntity();
+
     it('should create draft article successfully', async () => {
       const userId = v4();
       jest.spyOn(contentRepository, 'create').mockResolvedValue();
@@ -140,6 +140,9 @@ describe('Post domain service', () => {
   });
 
   describe('publishPost', () => {
+    const userMock = createMockUserDto();
+    const postEntityMock = createMockPostEntity();
+
     const props: PublishPostProps = {
       payload: {
         groupIds: postEntityMock.getGroupIds(),
@@ -167,6 +170,7 @@ describe('Post domain service', () => {
     });
 
     it('should throw error ContentNotFoundException when content is not post', async () => {
+      const articleEntityMock = createMockArticleEntity();
       jest.spyOn(contentRepository, 'findOne').mockResolvedValue(articleEntityMock);
 
       try {
@@ -178,6 +182,9 @@ describe('Post domain service', () => {
   });
 
   describe('updatePost', () => {
+    const userMock = createMockUserDto();
+    const postEntityMock = createMockPostEntity();
+
     const updatePostProps: UpdatePostProps = {
       payload: {
         id: postEntityMock.get('id'),
@@ -238,6 +245,9 @@ describe('Post domain service', () => {
   });
 
   describe('createDraftPost', () => {
+    const userMock = createMockUserDto();
+    const postEntityMock = createMockPostEntity();
+
     it('should create draft post successfully', async () => {
       const userId = v4();
       jest.spyOn(contentRepository, 'create').mockResolvedValue();
@@ -271,6 +281,9 @@ describe('Post domain service', () => {
   });
 
   describe('getPostById', () => {
+    const userMock = createMockUserDto();
+    const postEntityMock = createMockPostEntity();
+
     it('should get post by id successfully', async () => {
       const postId = postEntityMock.getId();
       const authUserId = userMock.id;

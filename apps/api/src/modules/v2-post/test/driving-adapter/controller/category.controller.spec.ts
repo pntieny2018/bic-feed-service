@@ -4,7 +4,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FindCategoriesPaginationDto } from '../../../application/dto/category.dto';
 import { FindCategoriesPaginationQuery } from '../../../application/query/category';
 import { CategoryController } from '../../../driving-apdater/controller/category.controller';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('CategoryController', () => {
   let controller: CategoryController;

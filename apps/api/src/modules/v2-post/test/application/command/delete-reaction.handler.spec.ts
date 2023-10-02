@@ -14,7 +14,9 @@ import {
 } from '../../../domain/domain-service/interface/reaction.domain-service.interface';
 import { ReactionDomainService } from '../../../domain/domain-service/reaction.domain-service';
 import { ReactionNotFoundException } from '../../../domain/exception';
-import { userMock } from '../../mock/user.dto.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('DeleteReactionHandler', () => {
   let handler: DeleteReactionHandler;

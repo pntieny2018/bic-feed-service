@@ -24,9 +24,7 @@ import {
   IUserAdapter,
   USER_ADAPTER,
 } from '../../../../domain/service-adapter-interface';
-import { postMock } from '../../../mock/post.dto.mock';
-import { postEntityMock } from '../../../mock/post.entity.mock';
-import { userMock } from '../../../mock/user.dto.mock';
+import { createMockPostDto, createMockPostEntity, createMockUserDto } from '../../../mock';
 
 describe('PublishPostHandler', () => {
   let publishPostHandler: PublishPostHandler;
@@ -82,6 +80,9 @@ describe('PublishPostHandler', () => {
   });
 
   describe('execute', () => {
+    const userMock = createMockUserDto();
+    const postEntityMock = createMockPostEntity();
+    const postDtoMock = createMockPostDto();
     const payload: PublishPostCommandPayload = {
       id: postEntityMock.get('id'),
       groupIds: postEntityMock.get('groupIds'),
@@ -109,7 +110,7 @@ describe('PublishPostHandler', () => {
       jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
       jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
 
-      jest.spyOn(contentBinding, 'postBinding').mockResolvedValue(postMock);
+      jest.spyOn(contentBinding, 'postBinding').mockResolvedValue(postDtoMock);
       jest.spyOn(contentRepository, 'findOne').mockResolvedValue(postEntityMock);
       jest.spyOn(kafkaAdapter, 'emit').mockImplementation(jest.fn());
 
@@ -117,7 +118,7 @@ describe('PublishPostHandler', () => {
         payload,
       });
 
-      expect(result).toEqual(postMock);
+      expect(result).toEqual(postDtoMock);
       expect(postDomainService.markReadImportant).toBeCalledTimes(0);
     });
 

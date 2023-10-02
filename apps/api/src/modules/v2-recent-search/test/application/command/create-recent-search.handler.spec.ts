@@ -1,13 +1,16 @@
-import { RecentSearchDomainService } from '../../../../v2-post/domain/domain-service';
-import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';
-import { CreateRecentSearchHandler } from '../../../aplication/command/create-recent-search/create-recent-search.handler';
-import { Test } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
+import { Test } from '@nestjs/testing';
+import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
-import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
+
+import { RecentSearchDomainService } from '../../../../v2-post/domain/domain-service';
+import { CreateRecentSearchHandler } from '../../../aplication/command/create-recent-search/create-recent-search.handler';
 import { RECENT_SEARCH_DOMAIN_SERVICE_TOKEN } from '../../../domain/domain-service/interface';
+import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 import { RECENT_SEARCH_REPOSITORY_TOKEN } from '../../../driven-adapter/repository/interface/recent-search.repository.interface';
-import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
+import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';
+
+const userMock = createMockUserDto();
 
 describe('CreateRecentSearchHandler', () => {
   let handler: CreateRecentSearchHandler;
