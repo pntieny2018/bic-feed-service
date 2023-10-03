@@ -1,13 +1,13 @@
 import { ORDER } from '@beincom/constants';
 import { InjectModel } from '@nestjs/sequelize';
 import {
-  Op,
-  FindOptions,
-  WhereOptions,
-  Includeable,
   FindAttributeOptions,
-  Order,
+  FindOptions,
   GroupOption,
+  Includeable,
+  Op,
+  Order,
+  WhereOptions,
 } from 'sequelize';
 
 import { CursorPaginationResult, CursorPaginator, PAGING_DEFAULT_LIMIT } from '../common';
@@ -16,16 +16,16 @@ import { QuizAnswerAttributes, QuizAnswerModel } from '../model/quiz-answer.mode
 import { QuizQuestionAttributes, QuizQuestionModel } from '../model/quiz-question.model';
 import { QuizAttributes, QuizModel } from '../model/quiz.model';
 import {
-  FindQuizProps,
-  GetPaginationQuizzesProps,
-  ILibQuizRepository,
+  FindQuizAttributeOptions,
   FindQuizConditionOptions,
   FindQuizIncludeOptions,
-  FindQuizAttributeOptions,
   FindQuizOrderOptions,
-  FindQuizQuestionProps,
+  FindQuizProps,
   FindQuizQuestionConditionOptions,
   FindQuizQuestionIncludeOptions,
+  FindQuizQuestionProps,
+  GetPaginationQuizzesProps,
+  ILibQuizRepository,
 } from '../repository/interface';
 
 export class LibQuizRepository implements ILibQuizRepository {

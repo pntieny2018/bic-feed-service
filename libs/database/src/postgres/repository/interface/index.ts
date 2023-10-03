@@ -1,4 +1,3 @@
-export * from './category.repository.interface';
 export * from './comment.repository.interface';
 export * from './comment-reaction.repository.interface';
 export * from './content.repository.interface';
@@ -7,3 +6,4 @@ export * from './post-reaction.repository.interface';
 export * from './quiz.repository.interface';
 export * from './quiz-participant.repository.interface';
 export * from './tag.repository.interface';
+export * from './base.repository.interface';
