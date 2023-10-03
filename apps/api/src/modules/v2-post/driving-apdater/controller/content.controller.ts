@@ -19,6 +19,7 @@ import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   MarkReadImportantContentCommand,
+  ReorderPinnedContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
@@ -223,6 +224,29 @@ export class ContentController {
         ...contentSettingRequestDto,
         id,
         authUser,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Reorder pinned conttent in group' })
+  @ApiOkResponse({
+    description: 'Reorder pinned content in group successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.reorder_pin_content_success',
+  })
+  @Version(ROUTES.CONTENT.REORDER_PIN_CONTENT.VERSIONS)
+  @Post(ROUTES.CONTENT.REORDER_PIN_CONTENT.PATH)
+  public async reorderItem(
+    @AuthUser() authUser: UserDto,
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Body() contentIds: string[]
+  ): Promise<void> {
+    await this._commandBus.execute<ReorderPinnedContentCommand, void>(
+      new ReorderPinnedContentCommand({
+        groupId,
+        authUser,
+        contentIds,
       })
     );
   }

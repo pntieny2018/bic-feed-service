@@ -1,8 +1,17 @@
 import {
-  LIB_CONTENT_REPOSITORY_TOKEN,
   LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
   LIB_QUIZ_REPOSITORY_TOKEN,
 } from '@libs/database/postgres';
+import {
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostTagRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
+  LibUserSeenPostRepository,
+} from '@libs/database/postgres/repository';
 import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
 import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
 import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
@@ -23,6 +32,7 @@ import {
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
   ProcessScheduledContentPublishingHandler,
+  ReorderPinnedContentHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
@@ -148,6 +158,7 @@ export const postProvider = [
 
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
+  ReorderPinnedContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -238,7 +249,15 @@ export const postProvider = [
   QuizParticipantMapper,
   QuizQuestionMapper,
   QuizMapper,
-
+  LibContentRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostCategoryRepository,
+  LibPostTagRepository,
+  LibUserSeenPostRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
   /** Driven Repository */
   {
     provide: CONTENT_REPOSITORY_TOKEN,
@@ -246,10 +265,6 @@ export const postProvider = [
   },
 
   /** Library Repository */
-  {
-    provide: LIB_CONTENT_REPOSITORY_TOKEN,
-    useClass: LibContentRepository,
-  },
   {
     provide: LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
     useClass: LibQuizParticipantRepository,
