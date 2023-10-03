@@ -242,9 +242,10 @@ export class SeriesDomainService implements ISeriesDomainService {
     return (await this._contentRepository.findAll({
       where: {
         ids: itemIds,
-        excludeReportedByUserId: authUserId,
         isHidden: false,
+        groupArchived: false,
         status: CONTENT_STATUS.PUBLISHED,
+        excludeReportedByUserId: authUserId,
       },
     })) as (PostEntity | ArticleEntity)[];
   }
