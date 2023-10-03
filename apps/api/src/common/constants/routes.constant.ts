@@ -210,5 +210,9 @@ export const ROUTES = {
       PATH: '/:contentId/setting',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    REORDER_PIN_CONTENT: {
+      PATH: '/:groupId/reorder',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
   },
 };

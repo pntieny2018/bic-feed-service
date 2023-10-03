@@ -3,6 +3,7 @@ import { PaginatedArgs } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
 import { CursorPaginationProps, CursorPaginationResult } from '../../../../../common/types';
+import { ReorderPinnedContentCommandPayload } from '../../../application/command/content';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
@@ -61,6 +62,8 @@ export type UpdateSettingsProps = {
   importantExpiredAt: Date;
 };
 
+export type ReorderContentProps = ReorderPinnedContentCommandPayload;
+
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
@@ -89,5 +92,6 @@ export interface IContentDomainService {
   updateSetting(props: UpdateSettingsProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
+  reorderPinned(props: ReorderContentProps): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

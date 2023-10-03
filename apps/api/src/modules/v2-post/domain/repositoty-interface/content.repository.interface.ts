@@ -1,5 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
 import {
   FindContentIncludeOptions,
   FindContentProps,
@@ -41,8 +42,10 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
-  getReportedContentIdsByUser(reportUser: string, target: CONTENT_TARGET[]): Promise<string[]>;
+  getReportedContentIdsByUser(reportUser: string, target?: CONTENT_TARGET[]): Promise<string[]>;
   countContentDraft(userId: string): Promise<number>;
+  findPinnedPostGroupsByGroupId(groupId: string): Promise<PostGroupModel[]>;
+  reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
