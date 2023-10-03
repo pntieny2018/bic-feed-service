@@ -177,7 +177,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
   ): Promise<CursorPaginationResult<QuizParticipantEntity>> {
     const { limit = PAGING_DEFAULT_LIMIT, before, after, order = ORDER.DESC } = paginationProps;
 
-    const { rows, meta } = await this._libQuizParticipantRepo.paginate(
+    const { rows, meta } = await this._libQuizParticipantRepo.cursorPaginate(
       {
         where: { postId: contentId, isHighest: true },
         whereRaw: this._libQuizParticipantRepo.getConditionIsFinished(),

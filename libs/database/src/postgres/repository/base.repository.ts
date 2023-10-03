@@ -161,7 +161,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     return include;
   }
 
-  public async paginate(
+  public async cursorPaginate(
     findOptions: FindOptions<M>,
     paginationProps: CursorPaginationProps
   ): Promise<CursorPaginationResult<M>> {

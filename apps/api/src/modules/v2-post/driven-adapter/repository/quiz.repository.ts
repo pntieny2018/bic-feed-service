@@ -137,7 +137,7 @@ export class QuizRepository implements IQuizRepository {
       whereOptions.createdBy = where.createdBy;
     }
 
-    const { rows, meta } = await this._libQuizRepo.paginate(
+    const { rows, meta } = await this._libQuizRepo.cursorPaginate(
       {
         where: {
           status: where.status,
