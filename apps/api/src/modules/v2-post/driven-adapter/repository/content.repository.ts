@@ -110,16 +110,6 @@ export class ContentRepository implements IContentRepository {
     transaction: Transaction
   ): Promise<void> {
     const state = contentEntity.getState();
-    if (state.attachSeriesIds.length > 0) {
-      await this._libContentRepository.bulkCreatePostSeries(
-        state.attachSeriesIds.map((seriesId) => ({
-          postId: contentEntity.getId(),
-          seriesId,
-        })),
-        { transaction, ignoreDuplicates: true }
-      );
-    }
-
     if (state.detachSeriesIds.length > 0) {
       await this._libContentRepository.deletePostSeries(
         {
@@ -128,6 +118,21 @@ export class ContentRepository implements IContentRepository {
         },
         transaction
       );
+    }
+
+    if (state.attachSeriesIds.length > 0) {
+      const dataInsert = await Promise.all(
+        state.attachSeriesIds.map(async (seriesId) => ({
+          postId: contentEntity.getId(),
+          seriesId,
+          zindex: (await this._libContentRepository.getMaxIndexOfPostSeries(seriesId)) + 1,
+        }))
+      );
+
+      await this._libContentRepository.bulkCreatePostSeries(dataInsert, {
+        transaction,
+        ignoreDuplicates: true,
+      });
     }
   }
 

@@ -85,19 +85,20 @@ export interface ILibContentRepository {
   ): Promise<void>;
 
   bulkCreatePostSeries(
-    postGroups: PostSeriesAttributes[],
+    postSeries: PostSeriesAttributes[],
     options?: BulkCreateOptions
   ): Promise<void>;
   deletePostSeries(
     where: WhereOptions<PostSeriesAttributes>,
     transaction?: Transaction
   ): Promise<void>;
+  getMaxIndexOfPostSeries(seriesId: string): Promise<number>;
 
-  bulkCreatePostTag(postGroups: PostTagAttributes[], options?: BulkCreateOptions): Promise<void>;
+  bulkCreatePostTag(postTags: PostTagAttributes[], options?: BulkCreateOptions): Promise<void>;
   deletePostTag(where: WhereOptions<PostTagAttributes>, transaction?: Transaction): Promise<void>;
 
   bulkCreatePostCategory(
-    postGroups: PostCategoryAttributes[],
+    postCategories: PostCategoryAttributes[],
     options?: BulkCreateOptions
   ): Promise<void>;
   deletePostCategory(

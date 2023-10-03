@@ -95,10 +95,10 @@ export class LibContentRepository implements ILibContentRepository {
   }
 
   public async bulkCreatePostSeries(
-    postGroups: PostSeriesAttributes[],
+    postSeries: PostSeriesAttributes[],
     options?: BulkCreateOptions
   ): Promise<void> {
-    await this._postSeriesModel.bulkCreate(postGroups, options);
+    await this._postSeriesModel.bulkCreate(postSeries, options);
   }
 
   public async deletePostSeries(
@@ -109,6 +109,15 @@ export class LibContentRepository implements ILibContentRepository {
       where,
       transaction,
     });
+  }
+
+  public async getMaxIndexOfPostSeries(seriesId: string): Promise<number> {
+    const maxIndex: number = await this._postSeriesModel.max('zindex', {
+      where: {
+        seriesId,
+      },
+    });
+    return maxIndex || 0;
   }
 
   public async bulkCreatePostTag(
