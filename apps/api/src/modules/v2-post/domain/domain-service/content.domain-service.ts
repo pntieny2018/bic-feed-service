@@ -11,6 +11,7 @@ import { StringHelper } from '../../../../common/helpers';
 import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { IPostValidator, POST_VALIDATOR_TOKEN } from '../validator/interface';
 
 import {
   GetContentByIdsProps,
@@ -21,12 +22,15 @@ import {
   GetImportantContentIdsProps,
   GetScheduledContentProps,
   IContentDomainService,
+  UpdateSettingsProps,
 } from './interface';
 
 export class ContentDomainService implements IContentDomainService {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository
+    private readonly _contentRepository: IContentRepository,
+    @Inject(POST_VALIDATOR_TOKEN)
+    private readonly _postValidator: IPostValidator
   ) {}
 
   public async getVisibleContent(
@@ -389,5 +393,55 @@ export class ContentDomainService implements IContentDomainService {
     })) as SeriesEntity[];
 
     return seriesEntites;
+  }
+
+  public async updateSetting(props: UpdateSettingsProps): Promise<void> {
+    const { contentId, authUser, canReact, canComment, isImportant, importantExpiredAt } = props;
+
+    const contentEntity: ContentEntity = await this._contentRepository.findContentByIdInActiveGroup(
+      contentId,
+      {
+        shouldIncludeGroup: true,
+      }
+    );
+    if (!contentEntity || contentEntity.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    await this._postValidator.checkCanEditContentSetting(authUser, contentEntity.get('groupIds'));
+    contentEntity.setSetting({
+      canComment,
+      canReact,
+      isImportant,
+      importantExpiredAt,
+    });
+    await this._contentRepository.update(contentEntity);
+
+    if (isImportant) {
+      await this._contentRepository.markReadImportant(contentId, authUser.id);
+    }
+  }
+
+  public async markSeen(contentId: string, userId: string): Promise<void> {
+    await this._contentRepository.markSeen(contentId, userId);
+  }
+
+  public async markReadImportant(contentId: string, userId: string): Promise<void> {
+    const contentEntity = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+      },
+    });
+    if (!contentEntity || contentEntity.isHidden()) {
+      return;
+    }
+    if (contentEntity.isDraft()) {
+      return;
+    }
+    if (!contentEntity.isImportant()) {
+      return;
+    }
+
+    return this._contentRepository.markReadImportant(contentId, userId);
   }
 }

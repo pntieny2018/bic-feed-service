@@ -1,7 +1,8 @@
 import { UserDto } from '@libs/service/user';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
+import { DatabaseException } from '../../../../common/exceptions';
 import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
 import {
   ArticleRequiredCoverException,
@@ -41,13 +42,20 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   IPostDomainService,
+  CreateArticleProps,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
 } from './interface';
 
 @Injectable()
 export class ArticleDomainService implements IArticleDomainService {
+  private _logger = new Logger(ArticleDomainService.name);
+
   public constructor(
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomainService: IContentDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
 
@@ -110,6 +118,25 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
+  public async createDraft(input: CreateArticleProps): Promise<ArticleEntity> {
+    const { groups, userId } = input;
+
+    const articleEntity = ArticleEntity.create({
+      groupIds: groups.map((group) => group.id),
+      userId,
+    });
+
+    articleEntity.setGroups(groups.map((group) => group.id));
+    articleEntity.setPrivacyFromGroups(groups);
+    try {
+      await this._contentRepository.create(articleEntity);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+    return articleEntity;
+  }
+
   public async delete(props: DeleteArticleProps): Promise<void> {
     const { actor, id } = props;
 
@@ -166,11 +193,11 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._contentRepository.update(articleEntity);
     this.event.publish(new ArticlePublishedEvent(articleEntity, actor));
 
-    await this._postDomainService.markSeen(articleEntity.get('id'), actor.id);
+    await this._contentDomainService.markSeen(articleEntity.get('id'), actor.id);
     articleEntity.increaseTotalSeen();
 
     if (articleEntity.isImportant()) {
-      await this._postDomainService.markReadImportant(articleEntity.get('id'), actor.id);
+      await this._contentDomainService.markReadImportant(articleEntity.get('id'), actor.id);
       articleEntity.setMarkReadImportant();
     }
 

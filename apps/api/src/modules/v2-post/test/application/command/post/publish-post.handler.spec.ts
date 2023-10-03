@@ -9,6 +9,8 @@ import {
   PublishPostHandler,
 } from '../../../../application/command/post';
 import {
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  IContentDomainService,
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
@@ -29,6 +31,7 @@ import { createMockPostDto, createMockPostEntity, createMockUserDto } from '../.
 describe('PublishPostHandler', () => {
   let publishPostHandler: PublishPostHandler;
   let postDomainService: IPostDomainService;
+  let contentDomainService: IContentDomainService;
   let groupAdapter: IGroupAdapter;
   let userAdapter: IUserAdapter;
   let kafkaAdapter: IKafkaAdapter;
@@ -46,6 +49,10 @@ describe('PublishPostHandler', () => {
         {
           provide: POST_DOMAIN_SERVICE_TOKEN,
           useValue: createMock<IPostDomainService>(),
+        },
+        {
+          provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+          useValue: createMock<IContentDomainService>(),
         },
         {
           provide: CONTENT_BINDING_TOKEN,
@@ -68,6 +75,7 @@ describe('PublishPostHandler', () => {
 
     publishPostHandler = module.get<PublishPostHandler>(PublishPostHandler);
     postDomainService = module.get<IPostDomainService>(POST_DOMAIN_SERVICE_TOKEN);
+    contentDomainService = module.get<IContentDomainService>(CONTENT_DOMAIN_SERVICE_TOKEN);
     groupAdapter = module.get<IGroupAdapter>(GROUP_ADAPTER);
     userAdapter = module.get<IUserAdapter>(USER_ADAPTER);
     kafkaAdapter = module.get<IKafkaAdapter>(KAFKA_ADAPTER);
@@ -103,7 +111,7 @@ describe('PublishPostHandler', () => {
       jest.spyOn(postEntityMock, 'isNotUsersSeen').mockReturnValue(true);
       jest.spyOn(postEntityMock, 'increaseTotalSeen').mockReturnThis();
 
-      jest.spyOn(postDomainService, 'markSeen').mockReturnThis();
+      jest.spyOn(contentDomainService, 'markSeen').mockReturnThis();
       jest.spyOn(postEntityMock, 'isImportant').mockReturnValue(false);
       jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(true);
 
@@ -119,7 +127,7 @@ describe('PublishPostHandler', () => {
       });
 
       expect(result).toEqual(postDtoMock);
-      expect(postDomainService.markReadImportant).toBeCalledTimes(0);
+      expect(contentDomainService.markReadImportant).toBeCalledTimes(0);
     });
 
     it('Should throw ContentNotFoundException', async () => {

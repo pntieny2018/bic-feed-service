@@ -52,6 +52,15 @@ export class GetContentIdsScheduleProps extends PaginatedArgs {
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
 }
 
+export type UpdateSettingsProps = {
+  contentId: string;
+  authUser: UserDto;
+  canComment: boolean;
+  canReact: boolean;
+  isImportant: boolean;
+  importantExpiredAt: Date;
+};
+
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
@@ -77,5 +86,8 @@ export interface IContentDomainService {
   getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
   getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
+  updateSetting(props: UpdateSettingsProps): Promise<void>;
+  markSeen(contentId: string, userId: string): Promise<void>;
+  markReadImportant(contentId: string, userId: string): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';
