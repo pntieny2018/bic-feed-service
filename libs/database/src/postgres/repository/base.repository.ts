@@ -10,6 +10,12 @@ import {
 import { Op, Sequelize, WhereOptions } from 'sequelize';
 import { IBaseRepository } from '@libs/database/postgres/repository/interface';
 import { FindOptions } from '@libs/database/postgres';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  CursorPaginator,
+  PAGING_DEFAULT_LIMIT,
+} from '@libs/database/postgres/common';
 
 export abstract class BaseRepository<M extends Model> implements IBaseRepository<M> {
   protected model: ModelCtor<M>;
@@ -17,7 +23,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     this.model = model;
   }
 
-  public async getModel(): Promise<ModelCtor<M>> {
+  public getModel(): ModelCtor<M> {
     return this.model;
   }
   public async create(data: CreationAttributes<M>, options?: CreateOptions): Promise<M> {
@@ -153,5 +159,20 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       });
     }
     return include;
+  }
+
+  public async paginate(
+    findOptions: FindOptions<M>,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<M>> {
+    const { after, before, limit = PAGING_DEFAULT_LIMIT, order, column } = paginationProps;
+
+    const paginator = new CursorPaginator(this.model, [column], { before, after, limit }, order);
+    const { rows, meta } = await paginator.paginate(findOptions);
+
+    return {
+      rows,
+      meta,
+    };
   }
 }

@@ -11,7 +11,7 @@ import {
 import { WhereOptions } from 'sequelize';
 
 export interface IBaseRepository<M extends Model> {
-  getModel(): Promise<ModelCtor<M>>;
+  getModel(): ModelCtor<M>;
   create(data: CreationAttributes<M>, options?: CreateOptions): Promise<M>;
 
   update(

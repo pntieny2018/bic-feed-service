@@ -1,36 +1,37 @@
-import {
-  ILibCommentReactionRepository,
-  LIB_COMMENT_REACTION_REPOSITORY_TOKEN,
-} from '@libs/database/postgres/repository/interface';
-import { Inject } from '@nestjs/common';
-
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
   FindOneCommentReactionProps,
   ICommentReactionRepository,
 } from '../../domain/repositoty-interface';
 import { CommentReactionMapper } from '../mapper/comment-reaction.mapper';
+import { LibCommentReactionRepository } from '@libs/database/postgres/repository';
 
 export class CommentReactionRepository implements ICommentReactionRepository {
   public constructor(
-    @Inject(LIB_COMMENT_REACTION_REPOSITORY_TOKEN)
-    private readonly _libCommentReactionRepository: ILibCommentReactionRepository,
+    private readonly _libCommentReactionRepo: LibCommentReactionRepository,
     private readonly _commentReactionMapper: CommentReactionMapper
   ) {}
 
   public async findOne(input: FindOneCommentReactionProps): Promise<ReactionEntity> {
-    return this._commentReactionMapper.toDomain(
-      await this._libCommentReactionRepository.findOne(input)
-    );
+    const model = await this._libCommentReactionRepo.first({
+      where: {
+        ...input,
+      },
+    });
+    return this._commentReactionMapper.toDomain(model);
   }
 
   public async create(data: ReactionEntity): Promise<void> {
-    return this._libCommentReactionRepository.create(
+    return this._libCommentReactionRepo.createCommentReactionByStore(
       this._commentReactionMapper.toPersistence(data)
     );
   }
 
   public async delete(id: string): Promise<void> {
-    return this._libCommentReactionRepository.delete(id);
+    await this._libCommentReactionRepo.delete({
+      where: {
+        id,
+      },
+    });
   }
 }

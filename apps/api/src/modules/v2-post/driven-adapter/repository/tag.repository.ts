@@ -1,15 +1,8 @@
 import { PaginationResult } from '@libs/database/postgres/common';
-import {
-  ILibTagRepository,
-  LIB_TAG_REPOSITORY_TOKEN,
-} from '@libs/database/postgres/repository/interface';
-import { Inject, Logger } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, Sequelize } from 'sequelize';
-
-import { PostTagModel } from '../../../../database/models/post-tag.model';
+import { Logger } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/sequelize';
+import { Op, Sequelize, WhereOptions } from 'sequelize';
 import { TagModel } from '../../../../database/models/tag.model';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
 import { TagEntity } from '../../domain/model/tag';
 import {
   FindAllTagsProps,
@@ -18,32 +11,30 @@ import {
   ITagRepository,
 } from '../../domain/repositoty-interface';
 import { TagMapper } from '../mapper/tag.mapper';
+import { LibPostTagRepository, LibTagRepository } from '@libs/database/postgres/repository';
 
 export class TagRepository implements ITagRepository {
   private _logger = new Logger(TagRepository.name);
 
   public constructor(
     @InjectConnection() private readonly _sequelizeConnection: Sequelize,
-    @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory,
-    @InjectModel(TagModel)
-    private readonly _tagModel: typeof TagModel,
-    @InjectModel(PostTagModel)
-    private readonly _postTagModel: typeof PostTagModel,
-    @Inject(LIB_TAG_REPOSITORY_TOKEN) private readonly _libTagRepository: ILibTagRepository,
+    private readonly _libPostTagRepo: LibPostTagRepository,
+    private readonly _libTagRepo: LibTagRepository,
     private readonly _tagMapper: TagMapper
   ) {}
 
   public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>> {
     const { offset, limit, name, groupIds } = input;
-    const conditions = {};
+    const conditions: WhereOptions<TagModel> = {};
     if (groupIds && groupIds.length) {
-      conditions['groupId'] = groupIds;
+      conditions.groupId = groupIds;
     }
     if (name) {
-      conditions['name'] = { [Op.iLike]: name + '%' };
+      conditions.name = { [Op.iLike]: name + '%' };
     }
-    const { rows, count } = await this._tagModel.findAndCountAll({
-      attributes: TagModel.loadAllAttributes(),
+    const { rows, count } = await this._libTagRepo.findAndCountAll({
+      select: ['id', 'name', 'slug', 'groupId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'],
+      selectRaw: [this._libTagRepo.loadTotalUsed()],
       where: conditions,
       offset,
       limit,
@@ -52,46 +43,28 @@ export class TagRepository implements ITagRepository {
         ['createdAt', 'DESC'],
       ],
     });
-    const result = rows.map((row) => this._factory.reconstitute(row));
+    const result = rows.map((row) => this._tagMapper.toDomain(row));
     return {
       rows: result,
       total: count,
     };
   }
 
-  public async create(data: TagEntity): Promise<void> {
-    await this._tagModel.create({
-      id: data.get('id'),
-      name: data.get('name'),
-      slug: data.get('slug'),
-      updatedBy: data.get('updatedBy'),
-      createdBy: data.get('createdBy'),
-      groupId: data.get('groupId'),
-      totalUsed: data.get('totalUsed'),
-    });
+  public async create(entity: TagEntity): Promise<void> {
+    await this._libTagRepo.create(this._tagMapper.toPersistence(entity));
   }
 
-  public async update(data: TagEntity): Promise<void> {
-    await this._tagModel.update(
-      {
-        name: data.get('name'),
-        slug: data.get('slug'),
-        updatedBy: data.get('updatedBy'),
-        createdBy: data.get('createdBy'),
-        groupId: data.get('groupId'),
-        totalUsed: data.get('totalUsed'),
-      },
-      {
-        where: { id: data.get('id') },
-      }
-    );
+  public async update(entity: TagEntity): Promise<void> {
+    await this._libTagRepo.update(this._tagMapper.toPersistence(entity), {
+      where: { id: entity.get('id') },
+    });
   }
 
   public async delete(id: string): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      await this._postTagModel.destroy({ where: { tagId: id }, transaction });
-      await this._tagModel.destroy({ where: { id: id }, transaction });
+      await this._libPostTagRepo.delete({ where: { tagId: id }, transaction });
+      await this._libTagRepo.delete({ where: { id: id }, transaction });
       await transaction.commit();
     } catch (e) {
       await transaction.rollback();
@@ -101,32 +74,28 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findOne(input: FindOneTagProps): Promise<TagEntity> {
-    const findOptions: FindOptions = {
-      attributes: TagModel.loadAllAttributes(),
-      where: {},
-    };
+    const conditions: WhereOptions<TagModel> = {};
     if (input.id) {
-      findOptions.where['id'] = input.id;
+      conditions.id = input.id;
     }
     if (input.name) {
-      findOptions.where['name'] = input.name;
+      conditions.name = input.name;
     }
     if (input.groupId) {
-      findOptions.where['groupId'] = input.groupId;
+      conditions.groupId = input.groupId;
     }
-    const entity = await this._tagModel.findOne(findOptions);
-    return this._modelToEntity(entity);
+    const entity = await this._libTagRepo.first({
+      select: ['id', 'name', 'slug', 'groupId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'],
+      selectRaw: [this._libTagRepo.loadTotalUsed()],
+      where: conditions,
+    });
+    return this._tagMapper.toDomain(entity);
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
-    const tags = await this._libTagRepository.findAll(input);
+    const tags = await this._libTagRepo.findMany({
+      where: input,
+    });
     return tags.map((tag) => this._tagMapper.toDomain(tag));
-  }
-
-  private _modelToEntity(tag: TagModel): TagEntity {
-    if (tag === null) {
-      return null;
-    }
-    return this._factory.reconstitute(tag.toJSON());
   }
 }

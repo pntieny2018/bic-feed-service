@@ -1,6 +1,3 @@
-import { ILibQuizRepository, LIB_QUIZ_REPOSITORY_TOKEN } from '@libs/database/postgres';
-import { Inject } from '@nestjs/common';
-
 import { CursorPaginationResult } from '../../../../common/types';
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import {
@@ -10,43 +7,102 @@ import {
 } from '../../domain/repositoty-interface';
 import { QuizQuestionMapper } from '../mapper/quiz-question.mapper';
 import { QuizMapper } from '../mapper/quiz.mapper';
+import {
+  LibQuizAnswerRepository,
+  LibQuizQuestionRepository,
+  LibQuizRepository,
+} from '@libs/database/postgres/repository';
+import { WhereOptions } from 'sequelize';
+import { QuizAttributes } from '@libs/database/postgres/model/quiz.model';
+import { PostModel } from '@libs/database/postgres/model/post.model';
 
 export class QuizRepository implements IQuizRepository {
   public constructor(
-    @Inject(LIB_QUIZ_REPOSITORY_TOKEN)
-    private readonly _libQuizRepo: ILibQuizRepository,
-
+    private readonly _libQuizRepo: LibQuizRepository,
+    private readonly _libQuizQuestionRepo: LibQuizQuestionRepository,
+    private readonly _libQuizAnswerRepo: LibQuizAnswerRepository,
     private readonly _quizQuestionMapper: QuizQuestionMapper,
     private readonly _quizMapper: QuizMapper
   ) {}
 
   public async createQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
-    await this._libQuizRepo.createQuiz(model);
+    await this._libQuizRepo.create(model);
   }
 
   public async updateQuiz(quizEntity: QuizEntity): Promise<void> {
-    const model = this._quizMapper.toPersistence(quizEntity);
-    await this._libQuizRepo.updateQuiz(quizEntity.get('id'), model);
+    const quiz = this._quizMapper.toPersistence(quizEntity);
+    await this._libQuizRepo.update(quiz, {
+      where: { id: quizEntity.get('id') },
+    });
+
+    if (quiz.questions !== undefined) {
+      await this._libQuizQuestionRepo.delete({ where: { quizId: quizEntity.get('id') } });
+
+      const questions = quiz.questions.map((question, index) => {
+        const createdAt = new Date();
+        createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+        return {
+          id: question.id,
+          quizId: question.quizId,
+          content: question.content,
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        };
+      });
+
+      const answers = quiz.questions.flatMap((question) =>
+        question.answers.map((answer, index) => {
+          const createdAt = new Date();
+          createdAt.setMilliseconds(createdAt.getMilliseconds() + index);
+          return {
+            id: answer.id,
+            questionId: question.id,
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          };
+        })
+      );
+
+      await this._libQuizQuestionRepo.bulkCreate(questions);
+      await this._libQuizAnswerRepo.bulkCreate(answers);
+    }
   }
 
   public async deleteQuiz(id: string): Promise<void> {
-    await this._libQuizRepo.deleteQuiz({
-      id,
+    await this._libQuizRepo.delete({
+      where: { id },
     });
   }
 
   public async findQuizById(quizId: string): Promise<QuizEntity> {
-    const model = await this._libQuizRepo.findQuiz({
-      condition: { ids: [quizId] },
+    const model = await this._libQuizRepo.first({
+      where: { id: quizId },
     });
     return this._quizMapper.toDomain(model);
   }
 
   public async findQuizByIdWithQuestions(quizId: string): Promise<QuizEntity> {
-    const quiz = await this._libQuizRepo.findQuiz({
-      condition: { ids: [quizId] },
-      include: { shouldIncludeQuestions: true },
+    const quiz = await this._libQuizRepo.first({
+      where: { id: quizId },
+      include: [
+        {
+          model: this._libQuizQuestionRepo.getModel(),
+          as: 'questions',
+          required: false,
+          order: [['createdAt', 'ASC']],
+          include: [
+            {
+              model: this._libQuizAnswerRepo.getModel(),
+              as: 'answers',
+              required: false,
+              order: [['createdAt', 'ASC']],
+            },
+          ],
+        },
+      ],
     });
     if (!quiz) {
       return null;
@@ -56,11 +112,11 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async findAllQuizzes(input: FindAllQuizProps): Promise<QuizEntity[]> {
-    const rows = await this._libQuizRepo.findAllQuizzes({
-      condition: {
+    const rows = await this._libQuizRepo.findMany({
+      where: {
         status: input.where.status,
-        ids: input.where.ids,
-        contentIds: [input.where.contentId],
+        id: input.where.ids,
+        postId: input.where.contentId,
         createdBy: input.where.createdBy,
       },
     });
@@ -72,21 +128,41 @@ export class QuizRepository implements IQuizRepository {
   ): Promise<CursorPaginationResult<QuizEntity>> {
     const { where, limit, before, after, order } = getPaginationQuizzesProps;
 
-    const { rows, meta } = await this._libQuizRepo.getQuizzesPagination({
-      condition: {
-        status: where.status,
-        createdBy: where.createdBy,
-      },
-      include: {
-        shouldIncludeContent: {
-          contentType: where.contentType,
+    const whereOptions: WhereOptions<QuizAttributes> = {};
+    if (where.status) {
+      whereOptions.status = where.status;
+    }
+
+    if (where.createdBy) {
+      whereOptions.createdBy = where.createdBy;
+    }
+
+    const { rows, meta } = await this._libQuizRepo.paginate(
+      {
+        where: {
+          status: where.status,
+          createdBy: where.createdBy,
         },
+        include: [
+          {
+            model: PostModel,
+            as: 'post',
+            required: true,
+            where: {
+              isHidden: false,
+              type: where.contentType,
+            },
+          },
+        ],
       },
-      limit,
-      before,
-      after,
-      order,
-    });
+      {
+        limit,
+        before,
+        after,
+        order,
+        column: 'createdAt',
+      }
+    );
 
     return {
       rows: rows.map((row) => this._quizMapper.toDomain(row)),
@@ -95,25 +171,36 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async createQuestion(questionEntity: QuizQuestionEntity): Promise<void> {
-    await this._libQuizRepo.bulkCreateQuizQuestions([
+    await this._libQuizQuestionRepo.bulkCreate([
       this._quizQuestionMapper.toPersistence(questionEntity),
     ]);
   }
 
   public async deleteQuestion(questionId: string): Promise<void> {
-    await this._libQuizRepo.deleteQuizQuestion({ id: questionId });
+    await this._libQuizQuestionRepo.delete({ where: { id: questionId } });
   }
 
   public async updateQuestion(questionEntity: QuizQuestionEntity): Promise<void> {
-    await this._libQuizRepo.updateQuizQuestion(questionEntity.get('id'), {
-      content: questionEntity.get('content'),
-    });
+    await this._libQuizQuestionRepo.update(
+      {
+        content: questionEntity.get('content'),
+      },
+      {
+        where: { id: questionEntity.get('id') },
+      }
+    );
   }
 
   public async findQuestionById(questionId: string): Promise<QuizQuestionEntity> {
-    const question = await this._libQuizRepo.findQuizQuestion({
-      condition: { ids: [questionId] },
-      include: { shouldIncludeAnswers: true },
+    const question = await this._libQuizQuestionRepo.first({
+      where: { id: questionId },
+      include: [
+        {
+          model: this._libQuizAnswerRepo.getModel(),
+          as: 'answers',
+          required: false,
+        },
+      ],
     });
 
     return this._quizQuestionMapper.toDomain(question);
@@ -132,10 +219,10 @@ export class QuizRepository implements IQuizRepository {
         updatedAt: createdAt,
       };
     });
-    await this._libQuizRepo.bulkCreateQuizAnswers(answers);
+    await this._libQuizAnswerRepo.bulkCreate(answers);
   }
 
   public async deleteAnswersByQuestionId(questionId: string): Promise<void> {
-    await this._libQuizRepo.deleteQuizAnswer({ questionId });
+    await this._libQuizAnswerRepo.delete({ where: { questionId } });
   }
 }
