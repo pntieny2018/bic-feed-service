@@ -1,14 +1,26 @@
 import { CONTENT_STATUS, CONTENT_TARGET } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
 import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
+import {
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSeenPostRepository,
+} from '@libs/database/postgres/repository';
+import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
 import {
   FindContentIncludeOptions,
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
+import { LibPostTagRepository } from '@libs/database/postgres/repository/post-tag.repository';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
+import { PostModel, PostStatus } from '../../../../database/models/post.model';
 import { ContentNotFoundException } from '../../domain/exception';
 import {
   PostEntity,
@@ -22,16 +34,6 @@ import {
 } from '../../domain/model/content';
 import { IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LibPostTagRepository } from '@libs/database/postgres/repository/post-tag.repository';
-import {
-  LibPostCategoryRepository,
-  LibPostGroupRepository,
-  LibPostSeriesRepository,
-  LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
-  LibUserSeenPostRepository,
-} from '@libs/database/postgres/repository';
 
 export class ContentRepository implements IContentRepository {
   public constructor(
@@ -318,7 +320,7 @@ export class ContentRepository implements IContentRepository {
 
   public async getReportedContentIdsByUser(
     createdBy: string,
-    target: CONTENT_TARGET[]
+    target?: CONTENT_TARGET[]
   ): Promise<string[]> {
     if (!createdBy) {
       return [];
@@ -327,7 +329,7 @@ export class ContentRepository implements IContentRepository {
       [Op.and]: [
         {
           createdBy,
-          targetType: target,
+          ...(target ? { targetType: target } : {}),
         },
       ],
     };
@@ -346,5 +348,47 @@ export class ContentRepository implements IContentRepository {
         status: CONTENT_STATUS.DRAFT,
       },
     });
+  }
+
+  public async findPinnedPostGroupsByGroupId(groupId: string): Promise<PostGroupModel[]> {
+    const postGroupModel = await this._libPostGroupRepository.getModel();
+    return postGroupModel.findAll({
+      where: {
+        groupId,
+        isPinned: true,
+      },
+      include: [
+        {
+          model: PostModel,
+          as: 'post',
+          required: true,
+          attributes: [],
+          where: {
+            status: PostStatus.PUBLISHED,
+            isHidden: false,
+          },
+        },
+      ],
+    });
+  }
+
+  public async reorderPinnedContent(contentIds: string[], groupId: string): Promise<void> {
+    const postGroupModel = await this._libPostGroupRepository.getModel();
+
+    const reorderExecute = contentIds.map((postId, index) => {
+      return postGroupModel.update(
+        {
+          pinnedIndex: index + 1,
+        },
+        {
+          where: {
+            groupId,
+            postId,
+          },
+        }
+      );
+    });
+
+    await Promise.all(reorderExecute);
   }
 }

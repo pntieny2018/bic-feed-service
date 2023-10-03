@@ -4,11 +4,18 @@ import {
   createCursor,
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 
 import { StringHelper } from '../../../../common/helpers';
-import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
+import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
+import {
+  ContentAccessDeniedException,
+  ContentNoPinPermissionException,
+  ContentNotFoundException,
+  ContentPinLackException,
+  ContentPinNotFoundException,
+} from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../validator/interface';
@@ -22,15 +29,20 @@ import {
   GetImportantContentIdsProps,
   GetScheduledContentProps,
   IContentDomainService,
+  ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
 
 export class ContentDomainService implements IContentDomainService {
+  private readonly _logger = new Logger(ContentDomainService.name);
+
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN)
-    private readonly _postValidator: IPostValidator
+    private readonly _postValidator: IPostValidator,
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    private readonly _authorityAppService: IAuthorityAppService
   ) {}
 
   public async getVisibleContent(
@@ -443,5 +455,43 @@ export class ContentDomainService implements IContentDomainService {
     }
 
     return this._contentRepository.markReadImportant(contentId, userId);
+  }
+
+  public async reorderPinned(props: ReorderContentProps): Promise<void> {
+    const { authUser, contentIds, groupId } = props;
+    await this._authorityAppService.buildAbility(authUser);
+
+    const canPinPermission = this._authorityAppService.canPinContent([groupId]);
+
+    if (!canPinPermission) {
+      throw new ContentNoPinPermissionException();
+    }
+
+    const postGroups = await this._contentRepository.findPinnedPostGroupsByGroupId(groupId);
+    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(
+      authUser.id
+    );
+
+    const pinnedContentIds = postGroups
+      .map((postGroup) => postGroup.postId)
+      .filter((id) => {
+        return !reportedContentIds.includes(id);
+      });
+
+    const contentIdsNotBelong = contentIds.filter(
+      (contentId) => !pinnedContentIds.includes(contentId)
+    );
+    if (contentIdsNotBelong.length > 0) {
+      throw new ContentPinNotFoundException(null, { contentsDenied: contentIdsNotBelong });
+    }
+
+    const contentIdsNotFound = pinnedContentIds.filter(
+      (contentId) => !contentIds.includes(contentId)
+    );
+    if (contentIdsNotFound.length > 0) {
+      throw new ContentPinLackException(null, { contentsLacked: contentIdsNotFound });
+    }
+
+    return this._contentRepository.reorderPinnedContent(contentIds, groupId);
   }
 }
