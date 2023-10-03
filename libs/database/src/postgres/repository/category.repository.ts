@@ -1,6 +1,6 @@
-import { CategoryModel } from '@libs/database/postgres/model/category.model';
+import { CategoryModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 
 @Injectable()
 export class LibCategoryRepository extends BaseRepository<CategoryModel> {

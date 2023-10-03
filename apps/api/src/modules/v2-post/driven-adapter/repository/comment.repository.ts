@@ -1,5 +1,5 @@
 import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { CommentAttributes } from '@libs/database/postgres/model/comment.model';
+import { CommentAttributes } from '@libs/database/postgres/model';
 import {
   ILibCommentRepository,
   LIB_COMMENT_REPOSITORY_TOKEN,

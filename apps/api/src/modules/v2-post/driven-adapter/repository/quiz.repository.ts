@@ -1,4 +1,7 @@
-import { ILibQuizRepository, LIB_QUIZ_REPOSITORY_TOKEN } from '@libs/database/postgres';
+import {
+  ILibQuizRepository,
+  LIB_QUIZ_REPOSITORY_TOKEN,
+} from '@libs/database/postgres/repository/interface';
 import { Inject } from '@nestjs/common';
 
 import { CursorPaginationResult } from '../../../../common/types';

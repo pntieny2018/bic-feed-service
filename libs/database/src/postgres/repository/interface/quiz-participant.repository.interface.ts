@@ -2,14 +2,12 @@ import { ORDER } from '@beincom/constants';
 import {
   QuizParticipantAttributes,
   QuizParticipantModel,
-} from '@libs/database/postgres/model/quiz-participant.model';
+  QuizParticipantAnswerAttributes,
+  QuizParticipantAnswerModel,
+} from '@libs/database/postgres/model';
 import { WhereOptions } from 'sequelize';
 
 import { CursorPaginationProps, CursorPaginationResult } from '../../common';
-import {
-  QuizParticipantAnswerAttributes,
-  QuizParticipantAnswerModel,
-} from '../../model/quiz-participant-answers.model';
 
 export type FindQuizParticipantConditionOptions = {
   ids?: string[];

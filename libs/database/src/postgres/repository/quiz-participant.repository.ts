@@ -14,11 +14,9 @@ import { Sequelize } from 'sequelize-typescript';
 import {
   QuizParticipantAnswerAttributes,
   QuizParticipantAnswerModel,
-} from '../../postgres/model/quiz-participant-answers.model';
-import {
   QuizParticipantAttributes,
   QuizParticipantModel,
-} from '../../postgres/model/quiz-participant.model';
+} from '../../postgres/model';
 import { CursorPaginationResult, CursorPaginator, PAGING_DEFAULT_LIMIT } from '../common';
 import {
   FindQuizParticipantAttributeOptions,

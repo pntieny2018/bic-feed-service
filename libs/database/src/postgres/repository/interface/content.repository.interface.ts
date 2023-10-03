@@ -1,8 +1,6 @@
 import { CONTENT_STATUS, CONTENT_TYPE, ORDER } from '@beincom/constants';
-import { PostAttributes } from '@libs/database/postgres/model/post.model';
-import { WhereOptions } from 'sequelize';
 import { CursorPaginationProps } from '@libs/database/postgres/common';
-import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
+import { PostAttributes } from '@libs/database/postgres/model';
 
 export type FindContentConditionOptions = {
   type?: CONTENT_TYPE;

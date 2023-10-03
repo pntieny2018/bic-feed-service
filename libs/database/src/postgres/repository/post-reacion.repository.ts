@@ -1,8 +1,5 @@
 import { getDatabaseConfig } from '@libs/database/postgres/common';
-import {
-  PostReactionAttributes,
-  PostReactionModel,
-} from '@libs/database/postgres/model/post-reaction.model';
+import { PostReactionAttributes, PostReactionModel } from '@libs/database/postgres/model';
 import {
   FindOnePostReactionProps,
   ILibPostReactionRepository,

@@ -1,10 +1,13 @@
 import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import {
+  QuizAttributes,
+  QuizAnswerAttributes,
+  QuizQuestionAttributes,
+  QuizQuestionModel,
+  QuizModel,
+} from '@libs/database/postgres/model';
 import { WhereOptions } from 'sequelize';
-
-import { CursorPaginationProps, CursorPaginationResult } from '../../common';
-import { QuizAnswerAttributes } from '../../model/quiz-answer.model';
-import { QuizQuestionAttributes, QuizQuestionModel } from '../../model/quiz-question.model';
-import { QuizAttributes, QuizModel } from '../../model/quiz.model';
 
 export type FindQuizConditionOptions = {
   ids?: string[];

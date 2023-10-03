@@ -1,20 +1,18 @@
 import { ORDER } from '@beincom/constants';
-import { InjectModel } from '@nestjs/sequelize';
 import {
-  FindAttributeOptions,
-  FindOptions,
-  GroupOption,
-  Includeable,
-  Op,
-  Order,
-  WhereOptions,
-} from 'sequelize';
-
-import { CursorPaginationResult, CursorPaginator, PAGING_DEFAULT_LIMIT } from '../common';
-import { PostModel } from '../model/post.model';
-import { QuizAnswerAttributes, QuizAnswerModel } from '../model/quiz-answer.model';
-import { QuizQuestionAttributes, QuizQuestionModel } from '../model/quiz-question.model';
-import { QuizAttributes, QuizModel } from '../model/quiz.model';
+  CursorPaginationResult,
+  CursorPaginator,
+  PAGING_DEFAULT_LIMIT,
+} from '@libs/database/postgres/common';
+import {
+  PostModel,
+  QuizAnswerAttributes,
+  QuizAnswerModel,
+  QuizQuestionAttributes,
+  QuizQuestionModel,
+  QuizAttributes,
+  QuizModel,
+} from '@libs/database/postgres/model';
 import {
   FindQuizAttributeOptions,
   FindQuizConditionOptions,
@@ -26,7 +24,17 @@ import {
   FindQuizQuestionProps,
   GetPaginationQuizzesProps,
   ILibQuizRepository,
-} from '../repository/interface';
+} from '@libs/database/postgres/repository/interface';
+import { InjectModel } from '@nestjs/sequelize';
+import {
+  FindAttributeOptions,
+  FindOptions,
+  GroupOption,
+  Includeable,
+  Op,
+  Order,
+  WhereOptions,
+} from 'sequelize';
 
 export class LibQuizRepository implements ILibQuizRepository {
   public constructor(

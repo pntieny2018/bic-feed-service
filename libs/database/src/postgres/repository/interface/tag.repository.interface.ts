@@ -1,5 +1,5 @@
 import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
-import { TagAttributes, TagModel } from '@libs/database/postgres/model/tag.model';
+import { TagAttributes, TagModel } from '@libs/database/postgres/model';
 
 export type FindOneTagProps = {
   name?: string;

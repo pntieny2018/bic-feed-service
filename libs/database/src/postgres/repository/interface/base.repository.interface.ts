@@ -1,4 +1,4 @@
-import { Model, ModelCtor } from 'sequelize-typescript';
+import { WhereOptions } from 'sequelize';
 import {
   Attributes,
   BulkCreateOptions,
@@ -8,7 +8,7 @@ import {
   IncludeOptions,
   UpdateOptions,
 } from 'sequelize/types/model';
-import { WhereOptions } from 'sequelize';
+import { Model, ModelCtor } from 'sequelize-typescript';
 
 export interface IBaseRepository<M extends Model> {
   getModel(): Promise<ModelCtor<M>>;

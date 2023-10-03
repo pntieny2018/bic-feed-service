@@ -1,7 +1,5 @@
 import { getDatabaseConfig, PaginationResult } from '@libs/database/postgres/common';
-import { PostTagModel } from '@libs/database/postgres/model/post-tag.model';
-import { PostModel } from '@libs/database/postgres/model/post.model';
-import { TagAttributes, TagModel } from '@libs/database/postgres/model/tag.model';
+import { PostTagModel, PostModel, TagAttributes, TagModel } from '@libs/database/postgres/model';
 import {
   FindAllTagsProps,
   FindOneTagProps,

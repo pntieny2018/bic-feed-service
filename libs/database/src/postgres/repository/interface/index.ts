@@ -7,3 +7,4 @@ export * from './quiz.repository.interface';
 export * from './quiz-participant.repository.interface';
 export * from './tag.repository.interface';
 export * from './base.repository.interface';
+export * from './reaction.repository.interface';

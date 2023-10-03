@@ -1,8 +1,5 @@
 import { getDatabaseConfig } from '@libs/database/postgres/common';
-import {
-  CommentReactionAttributes,
-  CommentReactionModel,
-} from '@libs/database/postgres/model/comment-reaction.model';
+import { CommentReactionAttributes, CommentReactionModel } from '@libs/database/postgres/model';
 import {
   FindOneCommentReactionProps,
   ILibCommentReactionRepository,

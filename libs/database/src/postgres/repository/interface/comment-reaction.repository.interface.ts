@@ -1,7 +1,4 @@
-import {
-  CommentReactionAttributes,
-  CommentReactionModel,
-} from '@libs/database/postgres/model/comment-reaction.model';
+import { CommentReactionAttributes, CommentReactionModel } from '@libs/database/postgres/model';
 
 export type FindOneCommentReactionProps = {
   reactionName?: string;

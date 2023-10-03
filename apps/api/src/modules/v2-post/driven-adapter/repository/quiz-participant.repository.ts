@@ -2,7 +2,7 @@ import { ORDER } from '@beincom/constants';
 import {
   ILibQuizParticipantRepository,
   LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '@libs/database/postgres';
+} from '@libs/database/postgres/repository/interface';
 import { Inject } from '@nestjs/common';
 import { difference } from 'lodash';
 import { Sequelize } from 'sequelize-typescript';

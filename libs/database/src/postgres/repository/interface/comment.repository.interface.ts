@@ -1,6 +1,6 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
-import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
+import { CommentAttributes, CommentModel } from '@libs/database/postgres/model';
 import { UserDto } from '@libs/service/user';
 import { WhereOptions } from 'sequelize/types';
 
