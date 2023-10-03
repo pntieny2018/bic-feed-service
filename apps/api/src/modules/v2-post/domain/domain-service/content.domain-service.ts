@@ -494,4 +494,23 @@ export class ContentDomainService implements IContentDomainService {
 
     return this._contentRepository.reorderPinnedContent(contentIds, groupId);
   }
+
+  public async findPinnedOrder(
+    groupId: string,
+    userId: string
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const postGroups = await this._contentRepository.findPinnedPostGroupsByGroupId(groupId);
+    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(userId);
+
+    const pinnedContentIds = postGroups
+      .map((postGroup) => postGroup.postId)
+      .filter((id) => {
+        return !reportedContentIds.includes(id);
+      });
+
+    return this.getContentByIds({
+      authUserId: userId,
+      ids: pinnedContentIds,
+    });
+  }
 }

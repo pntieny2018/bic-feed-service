@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
 import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
@@ -357,6 +357,7 @@ export class ContentRepository implements IContentRepository {
         groupId,
         isPinned: true,
       },
+      order: [['pinned_index', ORDER.ASC]],
       include: [
         {
           model: PostModel,

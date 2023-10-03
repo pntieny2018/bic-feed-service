@@ -80,6 +80,7 @@ import {
   GetTotalDraftHandler,
   SearchContentsHandler,
 } from '../application/query/content';
+import { FindPinnedContentHandler } from '../application/query/content/find-pinned-content/find-pinned-content.handler';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
@@ -193,6 +194,7 @@ export const postProvider = [
   SearchTagsHandler,
   GetTotalDraftHandler,
   GetSeriesInContentHandler,
+  FindPinnedContentHandler,
 
   /** Domain Service */
   {
