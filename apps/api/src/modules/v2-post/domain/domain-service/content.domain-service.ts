@@ -498,11 +498,13 @@ export class ContentDomainService implements IContentDomainService {
     groupId: string,
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const contentIds = await this._contentRepository.findPinnedPostIdsByGroupId(groupId);
+    if (contentIds.length === 0) {
+      return [];
+    }
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(userId);
 
-    const pinnedContentIds = (
-      await this._contentRepository.findPinnedPostIdsByGroupId(groupId)
-    ).filter((id) => {
+    const pinnedContentIds = contentIds.filter((id) => {
       return !reportedContentIds.includes(id);
     });
 
