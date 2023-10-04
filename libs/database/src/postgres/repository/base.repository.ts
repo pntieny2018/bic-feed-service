@@ -1,4 +1,12 @@
-import { Model, ModelCtor } from 'sequelize-typescript';
+import { FindOptions } from '@libs/database/postgres';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  CursorPaginator,
+  PAGING_DEFAULT_LIMIT,
+} from '@libs/database/postgres/common';
+import { IBaseRepository } from '@libs/database/postgres/repository/interface';
+import { Op, Sequelize, WhereOptions } from 'sequelize';
 import {
   Attributes,
   BulkCreateOptions,
@@ -7,15 +15,7 @@ import {
   DestroyOptions,
   UpdateOptions,
 } from 'sequelize/types/model';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
-import { IBaseRepository } from '@libs/database/postgres/repository/interface';
-import { FindOptions } from '@libs/database/postgres';
-import {
-  CursorPaginationProps,
-  CursorPaginationResult,
-  CursorPaginator,
-  PAGING_DEFAULT_LIMIT,
-} from '@libs/database/postgres/common';
+import { Model, ModelCtor } from 'sequelize-typescript';
 
 export abstract class BaseRepository<M extends Model> implements IBaseRepository<M> {
   protected model: ModelCtor<M>;

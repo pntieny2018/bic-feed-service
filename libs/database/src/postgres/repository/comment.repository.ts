@@ -4,9 +4,13 @@ import {
   CursorPaginationResult,
   CursorPaginator,
 } from '@libs/database/postgres/common';
-import { CommentReactionModel } from '@libs/database/postgres/model/comment-reaction.model';
-import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
+import {
+  CommentAttributes,
+  CommentModel,
+  CommentReactionModel,
+  ReportContentDetailModel,
+} from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 import { UserDto } from '@libs/service/user';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -19,7 +23,6 @@ import {
   GetAroundCommentResult,
   GetPaginationCommentProps,
 } from './interface';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 
 @Injectable()
 export class LibCommentRepository extends BaseRepository<CommentModel> {

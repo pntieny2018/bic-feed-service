@@ -1,6 +1,3 @@
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
-import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
@@ -12,8 +9,11 @@ import {
   LibUserReportContentRepository,
   LibUserSavePostRepository,
   LibUserSeenPostRepository,
+  LibContentRepository,
+  LibQuizParticipantAnswerRepository,
+  LibQuizParticipantRepository,
+  LibQuizRepository,
 } from '@libs/database/postgres/repository';
-import { LibQuizParticipantAnswerRepository } from '@libs/database/postgres/repository/quiz-participant-answer.repository';
 
 export const libRepositoryProvider = [
   LibContentRepository,
