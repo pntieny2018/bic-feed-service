@@ -1,3 +1,6 @@
+import { basename } from 'path';
+
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
@@ -9,10 +12,10 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { MediaStatus } from '../../../database/models/media.model';
-import { IDocumentMetadata } from './interfaces';
+
 import { ThumbnailDto } from '../../post/dto/responses/process-video-response.dto';
-import { basename } from 'path';
+
+import { IDocumentMetadata } from './interfaces';
 
 export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
@@ -25,7 +28,7 @@ export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
   @IsOptional()
   @Expose()
-  public status?: MediaStatus;
+  public status?: MEDIA_PROCESS_STATUS;
 
   @ApiProperty({
     required: true,
