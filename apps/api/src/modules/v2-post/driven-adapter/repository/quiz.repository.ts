@@ -1,3 +1,12 @@
+import { PostModel, QuizAttributes } from '@libs/database/postgres/model';
+import {
+  LibQuizAnswerRepository,
+  LibQuizQuestionRepository,
+  LibQuizRepository,
+} from '@libs/database/postgres/repository';
+import { Injectable } from '@nestjs/common';
+import { WhereOptions } from 'sequelize';
+
 import { CursorPaginationResult } from '../../../../common/types';
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import {
@@ -7,15 +16,6 @@ import {
 } from '../../domain/repositoty-interface';
 import { QuizQuestionMapper } from '../mapper/quiz-question.mapper';
 import { QuizMapper } from '../mapper/quiz.mapper';
-import {
-  LibQuizAnswerRepository,
-  LibQuizQuestionRepository,
-  LibQuizRepository,
-} from '@libs/database/postgres/repository';
-import { WhereOptions } from 'sequelize';
-import { QuizAttributes } from '@libs/database/postgres/model/quiz.model';
-import { PostModel } from '@libs/database/postgres/model/post.model';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class QuizRepository implements IQuizRepository {

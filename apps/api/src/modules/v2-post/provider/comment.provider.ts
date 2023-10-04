@@ -1,4 +1,4 @@
-import { LibCommentRepository } from '@libs/database/postgres/repository/comment.repository';
+import { LibCommentRepository } from '@libs/database/postgres/repository';
 
 import { CommentBinding, COMMENT_BINDING_TOKEN } from '../application/binding';
 import {

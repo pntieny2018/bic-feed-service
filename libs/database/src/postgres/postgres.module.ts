@@ -3,7 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 
-import models from './model';
+import { MODEL_CTORS } from './model';
 
 @Global()
 @Module({
@@ -19,7 +19,7 @@ import models from './model';
           database: databaseConfig.database,
           username: databaseConfig.username,
           password: databaseConfig.password,
-          models: models,
+          models: MODEL_CTORS,
           define: {
             underscored: true,
             timestamps: true,
@@ -34,7 +34,7 @@ import models from './model';
         };
       },
     }),
-    SequelizeModule.forFeature(models),
+    SequelizeModule.forFeature(MODEL_CTORS),
   ],
   exports: [SequelizeModule],
 })

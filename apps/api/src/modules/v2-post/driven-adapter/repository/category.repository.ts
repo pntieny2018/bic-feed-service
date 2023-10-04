@@ -1,5 +1,8 @@
 import { PaginationResult } from '@libs/database/postgres/common';
+import { CategoryAttributes } from '@libs/database/postgres/model';
+import { LibCategoryRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
+import { Op, WhereOptions } from 'sequelize';
 
 import { CategoryEntity } from '../../domain/model/category';
 import {
@@ -8,9 +11,6 @@ import {
   ICategoryRepository,
 } from '../../domain/repositoty-interface';
 import { CategoryMapper } from '../mapper/category.mapper';
-import { Op, WhereOptions } from 'sequelize';
-import { CategoryAttributes } from '@libs/database/postgres/model/category.model';
-import { LibCategoryRepository } from '@libs/database/postgres/repository/category.repository';
 
 @Injectable()
 export class CategoryRepository implements ICategoryRepository {

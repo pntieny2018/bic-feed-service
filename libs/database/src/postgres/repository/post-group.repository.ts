@@ -1,5 +1,5 @@
-import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
+import { PostGroupModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 
 export class LibPostGroupRepository extends BaseRepository<PostGroupModel> {
   public constructor() {

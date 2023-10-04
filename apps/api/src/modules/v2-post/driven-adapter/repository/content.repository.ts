@@ -1,6 +1,10 @@
 import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
-import { ReportContentDetailAttributes } from '@libs/database/postgres/model/report-content-detail.model';
+import {
+  PostModel,
+  PostGroupModel,
+  ReportContentDetailAttributes,
+} from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
@@ -8,18 +12,18 @@ import {
   LibUserMarkReadPostRepository,
   LibUserReportContentRepository,
   LibUserSeenPostRepository,
+  LibContentRepository,
+  LibPostTagRepository,
 } from '@libs/database/postgres/repository';
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
 import {
   FindContentIncludeOptions,
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
-import { LibPostTagRepository } from '@libs/database/postgres/repository/post-tag.repository';
+import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
-import { PostModel, PostStatus } from '../../../../database/models/post.model';
 import { ContentNotFoundException } from '../../domain/exception';
 import {
   PostEntity,
@@ -33,7 +37,6 @@ import {
 } from '../../domain/model/content';
 import { IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ContentRepository implements IContentRepository {
@@ -365,7 +368,7 @@ export class ContentRepository implements IContentRepository {
           required: true,
           select: [],
           where: {
-            status: PostStatus.PUBLISHED,
+            status: CONTENT_STATUS.PUBLISHED,
             isHidden: false,
           },
         },

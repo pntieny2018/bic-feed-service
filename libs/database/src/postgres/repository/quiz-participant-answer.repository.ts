@@ -1,9 +1,8 @@
-import { QuizParticipantAnswerModel } from '../../postgres/model/quiz-participant-answers.model';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
+import { QuizParticipantAnswerModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 
 export class LibQuizParticipantAnswerRepository extends BaseRepository<QuizParticipantAnswerModel> {
   public constructor() {
     super(QuizParticipantAnswerModel);
   }
-  ø;
 }

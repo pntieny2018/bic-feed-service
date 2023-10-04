@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { FindOptions, Include } from '@libs/database/postgres';
 import {
   CursorPaginationProps,
   CursorPaginationResult,
@@ -7,26 +8,25 @@ import {
   PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
-import { CategoryModel } from '@libs/database/postgres/model/category.model';
-import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
-import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
-import { PostReactionModel } from '@libs/database/postgres/model/post-reaction.model';
-import { PostSeriesModel } from '@libs/database/postgres/model/post-series.model';
-import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import { QuizModel } from '@libs/database/postgres/model/quiz.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
-import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
-import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.model';
-import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
+import {
+  CategoryModel,
+  LinkPreviewModel,
+  PostGroupModel,
+  PostReactionModel,
+  PostSeriesModel,
+  PostAttributes,
+  PostModel,
+  QuizModel,
+  ReportContentDetailModel,
+  UserMarkReadPostModel,
+  UserNewsFeedModel,
+  UserSavePostModel,
+} from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
+import { FindContentProps, OrderOptions } from '@libs/database/postgres/repository/interface';
 import { InjectConnection } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
-import {
-  FindContentProps,
-  OrderOptions,
-} from '@libs/database/postgres/repository/interface/content.repository.interface';
-import { FindOptions, Include } from '@libs/database/postgres';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {

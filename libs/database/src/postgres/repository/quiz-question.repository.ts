@@ -1,5 +1,5 @@
-import { QuizQuestionModel } from '../model/quiz-question.model';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
+import { QuizQuestionModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 
 export class LibQuizQuestionRepository extends BaseRepository<QuizQuestionModel> {
   public constructor() {

@@ -1,12 +1,8 @@
 import { getDatabaseConfig } from '@libs/database/postgres/common';
-import {
-  PostReactionAttributes,
-  PostReactionModel,
-} from '@libs/database/postgres/model/post-reaction.model';
-import { Logger } from '@nestjs/common';
+import { PostReactionAttributes, PostReactionModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 import { InjectConnection } from '@nestjs/sequelize';
 import { QueryTypes, Sequelize, Transaction } from 'sequelize';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 
 export class LibPostReactionRepository extends BaseRepository<PostReactionModel> {
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {

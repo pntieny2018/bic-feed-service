@@ -1,8 +1,9 @@
+import { LibLinkPreviewRepository } from '@libs/database/postgres/repository';
+import { Injectable } from '@nestjs/common';
+
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { ILinkPreviewRepository } from '../../domain/repositoty-interface';
 import { LinkPreviewMapper } from '../mapper/link-preview.mapper';
-import { LibLinkPreviewRepository } from '@libs/database/postgres/repository';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class LinkPreviewRepository implements ILinkPreviewRepository {

@@ -1,12 +1,9 @@
 import { getDatabaseConfig } from '@libs/database/postgres/common';
-import {
-  CommentReactionAttributes,
-  CommentReactionModel,
-} from '@libs/database/postgres/model/comment-reaction.model';
+import { CommentReactionAttributes, CommentReactionModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 import { Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { QueryTypes, Sequelize, Transaction } from 'sequelize';
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 
 export class LibCommentReactionRepository extends BaseRepository<CommentReactionModel> {
   private _logger = new Logger(LibCommentReactionRepository.name);
