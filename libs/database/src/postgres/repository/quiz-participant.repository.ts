@@ -134,7 +134,7 @@ export class LibQuizParticipantRepository implements ILibQuizParticipantReposito
         });
       } else {
         conditions.push({
-          [Op.or]: [
+          [Op.and]: [
             { finishedAt: null },
             Sequelize.literal(`started_at + time_limit * interval '1 second' > NOW()`),
           ],
