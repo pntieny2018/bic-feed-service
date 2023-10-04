@@ -35,7 +35,7 @@ export class TagRepository implements ITagRepository {
     }
     const { rows, count } = await this._libTagRepo.findAndCountAll({
       select: ['id', 'name', 'slug', 'groupId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'],
-      //selectRaw: [this._libTagRepo.loadTotalUsed()],
+      selectRaw: [this._libTagRepo.loadTotalUsed()],
       where: conditions,
       offset,
       limit,
@@ -44,6 +44,7 @@ export class TagRepository implements ITagRepository {
         ['createdAt', 'DESC'],
       ],
     });
+    //console.log(JSON.stringify(rows, null, 4));
     const result = rows.map((row) => this._tagMapper.toDomain(row));
     return {
       rows: result,
@@ -87,7 +88,7 @@ export class TagRepository implements ITagRepository {
     }
     const entity = await this._libTagRepo.first({
       select: ['id', 'name', 'slug', 'groupId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'],
-      //selectRaw: [this._libTagRepo.loadTotalUsed()],
+      selectRaw: [this._libTagRepo.loadTotalUsed()],
       where: conditions,
     });
     return this._tagMapper.toDomain(entity);

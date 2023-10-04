@@ -44,7 +44,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
     return await this.model.findOne({
-      attributes: !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+      attributes,
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
@@ -57,7 +57,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
     return this.model.findAll({
-      attributes: !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+      attributes,
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
@@ -74,7 +74,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
     return this.model.findAndCountAll({
-      attributes: !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+      attributes,
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
@@ -105,26 +105,27 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     return this.model.bulkCreate(records, options);
   }
 
-  protected _buildSelect(options: Pick<FindOptions<M>, 'select' | 'selectRaw' | 'selectExclude'>): {
-    include: string[];
-    exclude: string[];
-  } {
-    const attributes = {
-      include: [],
-      exclude: [],
-    };
+  protected _buildSelect(
+    options: Pick<FindOptions<M>, 'select' | 'selectRaw' | 'selectExclude'>
+  ): string[] {
+    let attributes = [];
     if (options.select) {
-      attributes.include.push(...options.select);
+      attributes.push(...options.select);
     }
+
     if (options.selectRaw) {
       options.selectRaw.forEach((item) => {
-        attributes.include.push([Sequelize.literal(item[0]), item[1]]);
+        attributes.push([Sequelize.literal(item[0]), item[1]]);
       });
     }
-    if (options.selectExclude) {
-      attributes.exclude.push(...options.selectExclude);
+
+    const exclude = options.selectExclude || [];
+
+    const attributesModel = this.model.getAttributes();
+    if (attributes.length === 0) {
+      attributes = Object.keys(attributesModel);
     }
-    return attributes;
+    return attributes.filter((item) => !exclude.includes(item));
   }
 
   protected _buildWhere(
@@ -151,8 +152,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
         const attributes = this._buildSelect(item);
         const where = this._buildWhere(item);
         include.push({
-          attributes:
-            !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+          attributes,
           where,
           ...item,
         });
