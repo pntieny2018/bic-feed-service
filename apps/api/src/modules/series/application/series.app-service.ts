@@ -1,9 +1,6 @@
-import { CONTENT_TYPE } from '@beincom/constants';
 import { Injectable } from '@nestjs/common';
-import { ClassTransformer } from 'class-transformer';
 
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { PageDto } from '../../../common/dto';
 import { DomainForbiddenException } from '../../../common/exceptions';
 import {
   SeriesAddedItemsEvent,
@@ -11,10 +8,7 @@ import {
   SeriesRemovedItemsEvent,
 } from '../../../events/series';
 import { AuthorityService } from '../../authority';
-import { PostBindingService } from '../../post/post-binding.service';
 import { PostService } from '../../post/post.service';
-import { IPostElasticsearch } from '../../search/interfaces';
-import { SearchService } from '../../search/search.service';
 import { RULES } from '../../v2-post/constant';
 import {
   ArticleLimitAttachedSeriesException,
@@ -23,76 +17,16 @@ import {
   ValidationException,
 } from '../../v2-post/domain/exception';
 import { UserDto } from '../../v2-user/application';
-import { SearchSeriesDto } from '../dto/requests/search-series.dto';
-import { SeriesSearchResponseDto } from '../dto/responses/series-search.response.dto';
 import { SeriesService } from '../series.service';
 
 @Injectable()
 export class SeriesAppService {
-  private _classTransformer = new ClassTransformer();
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _searchService: SearchService,
-    private _postService: PostService,
-    private _postBindingService: PostBindingService
+    private _postService: PostService
   ) {}
-
-  /*
-    Search series in article detail
-  */
-  public async searchSeries(
-    user: UserDto,
-    searchDto: SearchSeriesDto
-  ): Promise<PageDto<SeriesSearchResponseDto>> {
-    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<SeriesSearchResponseDto>([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-
-    let filterGroupIds = [];
-    if (groupIds && groupIds.length) {
-      filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
-    }
-
-    const response = await this._searchService.searchContents<IPostElasticsearch>({
-      keyword: contentSearch,
-      contentTypes: [CONTENT_TYPE.SERIES],
-      groupIds: filterGroupIds,
-      itemIds,
-      from: offset,
-      size: limit,
-    });
-
-    const { source, total } = response;
-    const series = source.map((item) => {
-      const seriesItem = {
-        id: item.id,
-        groupIds: item.groupIds,
-        coverMedia: item.coverMedia,
-        title: item.title || null,
-        summary: item.summary,
-      };
-      return seriesItem;
-    });
-
-    await this._postBindingService.bindAudience(series);
-
-    const result = this._classTransformer.plainToInstance(SeriesSearchResponseDto, series, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<SeriesSearchResponseDto>(result, {
-      total,
-      limit,
-      offset,
-    });
-  }
 
   public async removeItems(seriesId: string, itemIds: string[], user: UserDto): Promise<void> {
     const series = await this._postService.getListWithGroupsByIds([seriesId], false);
