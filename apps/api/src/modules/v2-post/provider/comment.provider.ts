@@ -1,5 +1,4 @@
-import { LibCommentRepository } from '@libs/database/postgres/repository/comment.repository';
-import { LIB_COMMENT_REPOSITORY_TOKEN } from '@libs/database/postgres/repository/interface';
+import { LibCommentRepository } from '@libs/database/postgres/repository';
 
 import { CommentBinding, COMMENT_BINDING_TOKEN } from '../application/binding';
 import {
@@ -43,10 +42,7 @@ export const commentProvider = [
     provide: COMMENT_BINDING_TOKEN,
     useClass: CommentBinding,
   },
-  {
-    provide: LIB_COMMENT_REPOSITORY_TOKEN,
-    useClass: LibCommentRepository,
-  },
+  LibCommentRepository,
   /** Application */
   CreateCommentHandler,
   ReplyCommentHandler,

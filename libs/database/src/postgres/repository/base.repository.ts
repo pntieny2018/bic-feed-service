@@ -1,4 +1,10 @@
 import { FindOptions } from '@libs/database/postgres';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  CursorPaginator,
+  PAGING_DEFAULT_LIMIT,
+} from '@libs/database/postgres/common';
 import { IBaseRepository } from '@libs/database/postgres/repository/interface';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
 import {
@@ -17,7 +23,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     this.model = model;
   }
 
-  public async getModel(): Promise<ModelCtor<M>> {
+  public getModel(): ModelCtor<M> {
     return this.model;
   }
   public async create(data: CreationAttributes<M>, options?: CreateOptions): Promise<M> {
@@ -56,7 +62,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       include: include.length > 0 ? include : undefined,
       order: options.order,
       group: options.group,
-      limit: options.limit,
+      limit: options.limit || 10,
       offset: options.offset || undefined,
     });
   }
@@ -72,7 +78,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
-      limit: options.limit,
+      limit: options.limit || 10,
       offset: options.offset || undefined,
     });
   }
@@ -153,5 +159,20 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       });
     }
     return include;
+  }
+
+  public async cursorPaginate(
+    findOptions: FindOptions<M>,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<M>> {
+    const { after, before, limit = PAGING_DEFAULT_LIMIT, order, column } = paginationProps;
+
+    const paginator = new CursorPaginator(this.model, [column], { before, after, limit }, order);
+    const { rows, meta } = await paginator.paginate(findOptions);
+
+    return {
+      rows,
+      meta,
+    };
   }
 }

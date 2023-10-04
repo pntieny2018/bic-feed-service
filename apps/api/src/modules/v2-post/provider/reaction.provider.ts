@@ -1,9 +1,7 @@
-import { LibCommentReactionRepository } from '@libs/database/postgres/repository/comment-reaction.repository';
 import {
-  LIB_COMMENT_REACTION_REPOSITORY_TOKEN,
-  LIB_POST_REACTION_REPOSITORY_TOKEN,
-} from '@libs/database/postgres/repository/interface';
-import { LibPostReactionRepository } from '@libs/database/postgres/repository/post-reacion.repository';
+  LibCommentReactionRepository,
+  LibPostReactionRepository,
+} from '@libs/database/postgres/repository';
 
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
@@ -43,6 +41,9 @@ export const reactionProvider = [
   /* Application Event handler */
   ReactionNotifyEventHandler,
 
+  LibCommentReactionRepository,
+  LibPostReactionRepository,
+
   /* Domain Service */
   {
     provide: REACTION_DOMAIN_SERVICE_TOKEN,
@@ -65,14 +66,6 @@ export const reactionProvider = [
   {
     provide: COMMENT_REACTION_REPOSITORY_TOKEN,
     useClass: CommentReactionRepository,
-  },
-  {
-    provide: LIB_COMMENT_REACTION_REPOSITORY_TOKEN,
-    useClass: LibCommentReactionRepository,
-  },
-  {
-    provide: LIB_POST_REACTION_REPOSITORY_TOKEN,
-    useClass: LibPostReactionRepository,
   },
 
   /* Mapper */

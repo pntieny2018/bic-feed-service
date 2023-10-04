@@ -45,6 +45,7 @@ import {
   mediaProvider,
   reactionProvider,
   adapterProvider,
+  libRepositoryProvider,
 } from './provider';
 import { quizProvider } from './provider/quiz.provider';
 
@@ -94,6 +95,7 @@ import { quizProvider } from './provider/quiz.provider';
     ...sharedProvider,
     ...reactionProvider,
     ...quizProvider,
+    ...libRepositoryProvider,
     QuizProcessor,
   ],
   exports: [

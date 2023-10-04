@@ -1,30 +1,8 @@
-import { LinkPreviewAttributes, LinkPreviewModel } from '@libs/database/postgres/model';
-import { ILibLinkPreviewRepository } from '@libs/database/postgres/repository/interface';
-import { InjectModel } from '@nestjs/sequelize';
+import { LinkPreviewModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 
-export class LibLinkPreviewRepository implements ILibLinkPreviewRepository {
-  public constructor(
-    @InjectModel(LinkPreviewModel)
-    private readonly _linkPreviewModel: typeof LinkPreviewModel
-  ) {}
-
-  public async create(data: LinkPreviewAttributes): Promise<void> {
-    await this._linkPreviewModel.create(data);
-  }
-
-  public async update(linkPreviewId: string, data: Partial<LinkPreviewAttributes>): Promise<void> {
-    await this._linkPreviewModel.update(data, {
-      where: {
-        id: linkPreviewId,
-      },
-    });
-  }
-
-  public async findByUrl(url: string): Promise<LinkPreviewModel> {
-    return this._linkPreviewModel.findOne({
-      where: {
-        url,
-      },
-    });
+export class LibLinkPreviewRepository extends BaseRepository<LinkPreviewModel> {
+  public constructor() {
+    super(LinkPreviewModel);
   }
 }

@@ -13,13 +13,14 @@ import {
   LibUserReportContentRepository,
   LibUserSeenPostRepository,
   LibContentRepository,
+  LibPostTagRepository,
 } from '@libs/database/postgres/repository';
 import {
   FindContentIncludeOptions,
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
-import { LibPostTagRepository } from '@libs/database/postgres/repository/post-tag.repository';
+import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
@@ -37,6 +38,7 @@ import {
 import { IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
+@Injectable()
 export class ContentRepository implements IContentRepository {
   public constructor(
     @InjectConnection()
