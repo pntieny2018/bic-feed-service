@@ -1,17 +1,3 @@
-import {
-  LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-  LIB_QUIZ_REPOSITORY_TOKEN,
-} from '@libs/database/postgres';
-import {
-  LibPostCategoryRepository,
-  LibPostGroupRepository,
-  LibPostSeriesRepository,
-  LibPostTagRepository,
-  LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
-  LibUserSavePostRepository,
-  LibUserSeenPostRepository,
-} from '@libs/database/postgres/repository';
 import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
 import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
 import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
@@ -118,6 +104,16 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
+import {
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostTagRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
+  LibUserSeenPostRepository,
+} from '@libs/database/postgres/repository';
 
 export const postProvider = [
   /** Processor */
@@ -260,19 +256,11 @@ export const postProvider = [
   LibUserMarkReadPostRepository,
   LibUserReportContentRepository,
   LibUserSavePostRepository,
+  LibQuizRepository,
+  LibQuizParticipantRepository,
   /** Driven Repository */
   {
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
-  },
-
-  /** Library Repository */
-  {
-    provide: LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-    useClass: LibQuizParticipantRepository,
-  },
-  {
-    provide: LIB_QUIZ_REPOSITORY_TOKEN,
-    useClass: LibQuizRepository,
   },
 ];
