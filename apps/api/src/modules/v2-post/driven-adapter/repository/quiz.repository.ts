@@ -15,7 +15,9 @@ import {
 import { WhereOptions } from 'sequelize';
 import { QuizAttributes } from '@libs/database/postgres/model/quiz.model';
 import { PostModel } from '@libs/database/postgres/model/post.model';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class QuizRepository implements IQuizRepository {
   public constructor(
     private readonly _libQuizRepo: LibQuizRepository,

@@ -9,7 +9,11 @@ import { IQuizParticipantRepository } from '../../domain/repositoty-interface';
 import { QuizParticipantMapper } from '../mapper/quiz-participant.mapper';
 import { LibQuizParticipantRepository } from '@libs/database/postgres/repository';
 import { LibQuizParticipantAnswerRepository } from '@libs/database/postgres/repository/quiz-participant-answer.repository';
+import { InjectConnection } from '@nestjs/sequelize';
+import { Sequelize } from 'sequelize';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class QuizParticipantRepository implements IQuizParticipantRepository {
   public constructor(
     private readonly _libQuizParticipantRepo: LibQuizParticipantRepository,

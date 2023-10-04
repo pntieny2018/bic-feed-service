@@ -1,8 +1,4 @@
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
-import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
-
-import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
+import { CONTENT_BINDING_TOKEN, ContentBinding } from '../application/binding';
 import {
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
@@ -16,20 +12,20 @@ import {
 } from '../application/command/article';
 import {
   MarkReadImportantContentHandler,
-  UpdateContentSettingHandler,
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
+  UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
+  ProcessPostDeletedHandler,
   ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
-  ProcessPostDeletedHandler,
 } from '../application/command/post';
 import {
   CreateSeriesHandler,
@@ -47,22 +43,22 @@ import {
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
 import {
+  PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
-  PostDeletedEventHandler,
 } from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
-  SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
+  SeriesUpdatedEventHandler,
 } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
-  GetSeriesInContentHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  GetSeriesInContentHandler,
   GetTotalDraftHandler,
   SearchContentsHandler,
 } from '../application/query/content';
@@ -73,14 +69,14 @@ import { SearchTagsHandler } from '../application/query/tag';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
   ARTICLE_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
-import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
+import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
 import {
   ARTICLE_FACTORY_TOKEN,
   POST_FACTORY_TOKEN,
@@ -90,8 +86,8 @@ import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
 import {
-  CONTENT_VALIDATOR_TOKEN,
   ARTICLE_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
@@ -103,16 +99,6 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
-import {
-  LibPostCategoryRepository,
-  LibPostGroupRepository,
-  LibPostSeriesRepository,
-  LibPostTagRepository,
-  LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
-  LibUserSavePostRepository,
-  LibUserSeenPostRepository,
-} from '@libs/database/postgres/repository';
 
 export const postProvider = [
   /** Processor */
@@ -245,17 +231,6 @@ export const postProvider = [
   QuizParticipantMapper,
   QuizQuestionMapper,
   QuizMapper,
-  LibContentRepository,
-  LibPostGroupRepository,
-  LibPostSeriesRepository,
-  LibPostCategoryRepository,
-  LibPostTagRepository,
-  LibUserSeenPostRepository,
-  LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
-  LibUserSavePostRepository,
-  LibQuizRepository,
-  LibQuizParticipantRepository,
   /** Driven Repository */
   {
     provide: CONTENT_REPOSITORY_TOKEN,
