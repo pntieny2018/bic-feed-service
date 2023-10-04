@@ -116,6 +116,7 @@ export class ContentMapper {
       content: post.content,
       mentionUserIds: post.mentions || [],
       groupIds: post.groups?.map((group) => group.groupId),
+      postGroups: post.groups || [],
       seriesIds: post.postSeries?.map((series) => series.seriesId),
       quiz: post.quiz
         ? new QuizEntity({
@@ -206,6 +207,7 @@ export class ContentMapper {
       scheduledAt: post.scheduledAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
       groupIds: post.groups?.map((group) => group.groupId),
+      postGroups: post.groups || [],
       seriesIds: post.postSeries?.map((series) => series.seriesId),
       quiz: post.quiz
         ? new QuizEntity({
@@ -265,6 +267,7 @@ export class ContentMapper {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       groupIds: post.groups?.map((group) => group.groupId),
+      postGroups: post.groups || [],
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,

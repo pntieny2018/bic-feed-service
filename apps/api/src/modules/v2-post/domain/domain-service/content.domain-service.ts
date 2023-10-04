@@ -10,6 +10,7 @@ import { isEmpty } from 'class-validator';
 import { StringHelper } from '../../../../common/helpers';
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
 import {
+  AudienceNoBelongContentException,
   ContentAccessDeniedException,
   ContentNoPinPermissionException,
   ContentNotFoundException,
@@ -29,6 +30,7 @@ import {
   GetImportantContentIdsProps,
   GetScheduledContentProps,
   IContentDomainService,
+  PinContentProps,
   ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
@@ -493,5 +495,64 @@ export class ContentDomainService implements IContentDomainService {
     }
 
     return this._contentRepository.reorderPinnedContent(contentIds, groupId);
+  }
+
+  public async updatePinnedContent(props: PinContentProps): Promise<void> {
+    const { authUser, contentId, unpinGroupIds, pinGroupIds } = props;
+
+    const content = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+        isHidden: false,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
+    });
+
+    if (!content || content.getGroupIds().length === 0) {
+      throw new ContentNotFoundException();
+    }
+
+    const postGroups = content.getPostGroups();
+    const currentGroupIds = [];
+    const currentPinGroupIds = [];
+    const currentUnpinGroupIds = [];
+
+    for (const postGroup of postGroups) {
+      if (postGroup.isPinned) {
+        currentPinGroupIds.push(postGroup.groupId);
+      }
+      if (!postGroup.isPinned) {
+        currentUnpinGroupIds.push(postGroup.groupId);
+      }
+      currentGroupIds.push(postGroup.groupId);
+    }
+
+    const newGroupIdsPinAndUnpin = [...unpinGroupIds, ...pinGroupIds];
+
+    const groupIdsNotBelong = newGroupIdsPinAndUnpin.filter(
+      (groupId) => !currentGroupIds.includes(groupId)
+    );
+    if (groupIdsNotBelong.length) {
+      throw new AudienceNoBelongContentException(null, { groupsDenied: groupIdsNotBelong });
+    }
+
+    await this._authorityAppService.buildAbility(authUser);
+
+    const canPinPermission = this._authorityAppService.canPinContent(newGroupIdsPinAndUnpin);
+
+    if (!canPinPermission) {
+      throw new ContentNoPinPermissionException();
+    }
+
+    const addPinGroupIds = pinGroupIds.filter((groupId) => !currentPinGroupIds.includes(groupId));
+    const addUnpinGroupIds = unpinGroupIds.filter(
+      (groupId) => !currentUnpinGroupIds.includes(groupId)
+    );
+
+    await this._contentRepository.pinContent(contentId, addPinGroupIds);
+    await this._contentRepository.unpinContent(contentId, addUnpinGroupIds);
   }
 }

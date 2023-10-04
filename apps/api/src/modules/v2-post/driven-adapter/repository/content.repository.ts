@@ -24,6 +24,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
+import { getDatabaseConfig } from '../../../../config/database';
 import { ContentNotFoundException } from '../../domain/exception';
 import {
   PostEntity,
@@ -394,5 +395,52 @@ export class ContentRepository implements IContentRepository {
     });
 
     await Promise.all(reorderExecute);
+  }
+
+  public async pinContent(contentId: string, groupIds: string[]): Promise<void> {
+    if (groupIds.length === 0) {
+      return;
+    }
+
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = this._libPostGroupRepository.getModel().tableName;
+
+    await this._libPostGroupRepository.getModel().sequelize.query(
+      `
+        UPDATE ${schema}.${postGroupTableName} t1 
+        SET is_pinned = TRUE, 
+        pinned_index = (select MAX(pinned_index) FROM ${schema}.${postGroupTableName} t2 where t2.group_id = t1.group_id) + 1
+        WHERE post_id = :contentId AND group_id IN(:groupIds)
+    `,
+      {
+        replacements: {
+          contentId,
+          groupIds,
+        },
+      }
+    );
+  }
+
+  public async unpinContent(contentId: string, groupIds: string[]): Promise<void> {
+    if (groupIds.length === 0) {
+      return;
+    }
+
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = this._libPostGroupRepository.getModel().tableName;
+
+    await this._libPostGroupRepository.getModel().sequelize.query(
+      `
+        UPDATE ${schema}.${postGroupTableName} t1 
+        SET is_pinned = FALSE, pinned_index = 0
+        WHERE post_id = :contentId AND group_id IN(:groupIds)
+    `,
+      {
+        replacements: {
+          contentId,
+          groupIds,
+        },
+      }
+    );
   }
 }

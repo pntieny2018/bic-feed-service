@@ -46,6 +46,8 @@ export interface IContentRepository {
   countContentDraft(userId: string): Promise<number>;
   findPinnedPostGroupsByGroupId(groupId: string): Promise<PostGroupModel[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
+  pinContent(contentId: string, groupIds: string[]): Promise<void>;
+  unpinContent(contentId: string, groupIds: string[]): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
