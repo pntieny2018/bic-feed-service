@@ -5,7 +5,9 @@ import {
 } from '../../domain/repositoty-interface';
 import { PostReactionMapper } from '../mapper/post-reaction.mapper';
 import { LibPostReactionRepository } from '@libs/database/postgres/repository';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class PostReactionRepository implements IPostReactionRepository {
   public constructor(
     private readonly _libPostReactionRepo: LibPostReactionRepository,

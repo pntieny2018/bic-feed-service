@@ -33,7 +33,9 @@ import {
 } from '../../domain/model/content';
 import { IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class ContentRepository implements IContentRepository {
   public constructor(
     @InjectConnection()

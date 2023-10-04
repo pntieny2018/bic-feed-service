@@ -5,7 +5,9 @@ import {
 } from '../../domain/repositoty-interface';
 import { CommentReactionMapper } from '../mapper/comment-reaction.mapper';
 import { LibCommentReactionRepository } from '@libs/database/postgres/repository';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class CommentReactionRepository implements ICommentReactionRepository {
   public constructor(
     private readonly _libCommentReactionRepo: LibCommentReactionRepository,

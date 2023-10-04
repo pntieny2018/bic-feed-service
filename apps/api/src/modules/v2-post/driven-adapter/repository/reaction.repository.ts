@@ -1,5 +1,5 @@
 import { ORDER } from '@beincom/constants';
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
@@ -16,6 +16,7 @@ import {
 import { ReactionEntity } from '../../domain/model/reaction';
 import { GetReactionProps, IReactionRepository } from '../../domain/repositoty-interface';
 
+@Injectable()
 export class ReactionRepository implements IReactionRepository {
   public constructor(
     @Inject(REACTION_FACTORY_TOKEN)
