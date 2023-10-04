@@ -1,13 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
-import { UserDto } from '../../../../../v2-user/application';
-import { PostEntity, SeriesEntity } from '../../../../domain/model/content';
-import { ArticleEntity } from '../../../../domain/model/content/article.entity';
 import {
-  CONTENT_REPOSITORY_TOKEN,
-  IContentRepository,
-} from '../../../../domain/repositoty-interface';
+  ISeriesDomainService,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+} from '../../../../domain/domain-service/interface';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../../../../domain/model/content';
 import { FindItemsBySeriesDto } from '../../../dto';
 
 import { FindItemsBySeriesQuery } from './find-items-by-series.query';
@@ -17,37 +16,33 @@ export class FindItemsBySeriesHandler
   implements IQueryHandler<FindItemsBySeriesQuery, FindItemsBySeriesDto>
 {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
+    private _seriesDomainService: ISeriesDomainService
   ) {}
 
   public async execute(query: FindItemsBySeriesQuery): Promise<FindItemsBySeriesDto> {
     const { seriesIds, authUser } = query.payload;
-    const seriesEntities = (await this._contentRepo.findAll({
-      where: {
-        ids: seriesIds,
-        groupArchived: false,
-        excludeReportedByUserId: authUser.id,
-      },
-      include: {
-        mustIncludeGroup: true,
-        shouldIncludeItems: true,
-      },
-    })) as SeriesEntity[];
+
+    const seriesEntities = await this._seriesDomainService.findSeriesByIds(seriesIds, true);
+
     if (seriesEntities.length === 0) {
       return new FindItemsBySeriesDto({ series: [] });
     }
 
     const ids = this._getItemIds(seriesEntities);
-
-    const entities = await this._getItems(ids, authUser);
+    const entities = await this._seriesDomainService.findItemsInSeries(ids, authUser.id);
+    const entityMapper = new Map<string, PostEntity | ArticleEntity>(
+      entities.map((item) => {
+        return [item.getId(), item];
+      })
+    );
 
     const series = [];
     seriesEntities.forEach((seriesEntity) => {
       const items = [];
       seriesEntity.get('itemIds').forEach((id) => {
-        if (entities.has(id)) {
-          const item = entities.get(id);
+        if (entityMapper.has(id)) {
+          const item = entityMapper.get(id);
           items.push({
             id: item.getId(),
             title: item instanceof PostEntity ? item.get('content') : item.get('title'),
@@ -74,30 +69,6 @@ export class FindItemsBySeriesHandler
       ids.push(...series.get('itemIds'));
     });
 
-    return ids;
-  }
-
-  private async _getItems(
-    ids: string[],
-    authUser: UserDto
-  ): Promise<Map<string, PostEntity | ArticleEntity>> {
-    const items = (await this._contentRepo.findAll({
-      where: {
-        ids,
-        groupArchived: false,
-        excludeReportedByUserId: authUser.id,
-      },
-      include: {
-        mustIncludeGroup: true,
-      },
-    })) as (PostEntity | ArticleEntity)[];
-
-    return new Map<string, PostEntity | ArticleEntity>(
-      items
-        .filter((item) => !item.isHidden() && item.isPublished())
-        .map((item) => {
-          return [item.getId(), item];
-        })
-    );
+    return uniq(ids);
   }
 }
