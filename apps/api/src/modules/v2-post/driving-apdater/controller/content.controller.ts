@@ -39,8 +39,8 @@ import {
   GetMenuSettingsQuery,
   GetTotalDraftQuery,
   SearchContentsQuery,
+  FindPinnedContentQuery,
 } from '../../application/query/content';
-import { FindPinnedContentQuery } from '../../application/query/content/find-pinned-content/find-pinned-content.query';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
   GetDraftContentsRequestDto,

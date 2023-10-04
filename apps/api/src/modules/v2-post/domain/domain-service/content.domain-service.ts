@@ -467,16 +467,15 @@ export class ContentDomainService implements IContentDomainService {
       throw new ContentNoPinPermissionException();
     }
 
-    const postGroups = await this._contentRepository.findPinnedPostGroupsByGroupId(groupId);
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(
       authUser.id
     );
 
-    const pinnedContentIds = postGroups
-      .map((postGroup) => postGroup.postId)
-      .filter((id) => {
-        return !reportedContentIds.includes(id);
-      });
+    const pinnedContentIds = (
+      await this._contentRepository.findPinnedPostIdsByGroupId(groupId)
+    ).filter((id) => {
+      return !reportedContentIds.includes(id);
+    });
 
     const contentIdsNotBelong = contentIds.filter(
       (contentId) => !pinnedContentIds.includes(contentId)
@@ -499,14 +498,13 @@ export class ContentDomainService implements IContentDomainService {
     groupId: string,
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const postGroups = await this._contentRepository.findPinnedPostGroupsByGroupId(groupId);
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(userId);
 
-    const pinnedContentIds = postGroups
-      .map((postGroup) => postGroup.postId)
-      .filter((id) => {
-        return !reportedContentIds.includes(id);
-      });
+    const pinnedContentIds = (
+      await this._contentRepository.findPinnedPostIdsByGroupId(groupId)
+    ).filter((id) => {
+      return !reportedContentIds.includes(id);
+    });
 
     return this.getContentByIds({
       authUserId: userId,
