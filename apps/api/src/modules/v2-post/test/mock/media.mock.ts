@@ -1,7 +1,7 @@
+import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { IFile, IImage, IVideo } from '@libs/database/postgres/model/comment.model';
 import { v4 } from 'uuid';
 
-import { ImageResource } from '../../data-type';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 
 export function createMockFileEntity(data: Partial<IFile> = {}): FileEntity {
@@ -29,10 +29,10 @@ export function createMockImageEntity(data: Partial<IImage> = {}): ImageEntity {
     src: `/image/variants/comment/content/${imageId}`,
     createdBy: userId,
     mimeType: 'image/jpeg',
-    resource: ImageResource.COMMENT_CONTENT,
+    resource: IMAGE_RESOURCE.COMMENT_CONTENT,
     width: 275,
     height: 183,
-    status: 'DONE',
+    status: MEDIA_PROCESS_STATUS.COMPLETED,
     ...data,
   });
 }
@@ -50,7 +50,7 @@ export function createMockVideoEntity(data: Partial<IVideo> = {}): VideoEntity {
     size: 1000,
     width: 100,
     height: 100,
-    status: 'DONE',
+    status: MEDIA_PROCESS_STATUS.COMPLETED,
     thumbnails: [],
     ...data,
   });

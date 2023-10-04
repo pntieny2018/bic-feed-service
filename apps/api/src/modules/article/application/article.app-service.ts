@@ -1,10 +1,10 @@
 import { CONTENT_TYPE } from '@beincom/constants';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { IMediaService, MEDIA_SERVICE_TOKEN } from '@libs/service/media/src/interface';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { uniq } from 'lodash';
 
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { ExternalService } from '../../../app/external.service';
 import { PageDto } from '../../../common/dto';
 import { PostStatus } from '../../../database/models/post.model';
 import {
@@ -49,7 +49,8 @@ export class ArticleAppService {
     private _postService: PostService,
     private _searchService: SearchService,
     private _tagService: TagService,
-    private _externalService: ExternalService
+    @Inject(MEDIA_SERVICE_TOKEN)
+    private readonly _mediaService: IMediaService
   ) {}
 
   public async getRelatedById(
@@ -134,7 +135,7 @@ export class ArticleAppService {
       updateArticleDto.coverMedia?.id &&
       updateArticleDto.coverMedia.id !== articleBefore.coverMedia?.id
     ) {
-      const images = await this._externalService.getImageIds([updateArticleDto.coverMedia.id]);
+      const images = await this._mediaService.findImagesByIds([updateArticleDto.coverMedia.id]);
       if (images.length === 0) {
         throw new BadRequestException('Invalid cover image');
       }

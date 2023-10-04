@@ -1,4 +1,4 @@
-import { IMAGE_RESOURCE } from '@beincom/constants';
+import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes, Sequelize } from 'sequelize';
 import {
@@ -45,7 +45,7 @@ export interface IImage {
   resource: IMAGE_RESOURCE;
   width: number;
   height: number;
-  status: string;
+  status: MEDIA_PROCESS_STATUS;
 }
 
 export interface IVideoThumbnail {
@@ -63,7 +63,7 @@ export interface IVideo {
   size: number;
   width: number;
   height: number;
-  status: string;
+  status: MEDIA_PROCESS_STATUS;
   thumbnails: IVideoThumbnail[];
 }
 
