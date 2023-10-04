@@ -17,6 +17,7 @@ import { instanceToInstance, plainToInstance } from 'class-transformer';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
+import { PageDto } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
 import {
   CreateSeriesCommand,
@@ -26,11 +27,18 @@ import {
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/series';
-import { CreateSeriesDto, FindItemsBySeriesDto, SeriesDto } from '../../application/dto';
+import {
+  CreateSeriesDto,
+  FindItemsBySeriesDto,
+  SearchSeriesDto,
+  SeriesDto,
+} from '../../application/dto';
+import { SearchContentsQuery } from '../../application/query/content';
 import { FindItemsBySeriesQuery, FindSeriesQuery } from '../../application/query/series';
 import {
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,
+  SearchSeriesRequestDto,
   UpdateSeriesRequestDto,
 } from '../dto/request';
 
@@ -119,6 +127,22 @@ export class SeriesController {
   ): Promise<SeriesDto> {
     const data = await this._queryBus.execute(new FindSeriesQuery({ seriesId: id, authUser }));
     return plainToInstance(SeriesDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Search series' })
+  @ApiOkResponse({
+    type: PageDto<SearchSeriesDto>,
+  })
+  @ResponseMessages({
+    success: 'Search series successfully',
+  })
+  @Version(ROUTES.SERIES.SEARCH_SERIES.VERSIONS)
+  @Get(ROUTES.SERIES.SEARCH_SERIES.PATH)
+  public async searchSeries(
+    @AuthUser() authUser: UserDto,
+    @Query() searchSeriesRequestDto: SearchSeriesRequestDto
+  ): Promise<PageDto<SearchSeriesDto>> {
+    return this._queryBus.execute(new SearchContentsQuery({ authUser, ...searchSeriesRequestDto }));
   }
 
   @ApiOperation({ summary: 'Delete series' })
