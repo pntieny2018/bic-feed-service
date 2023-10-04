@@ -5,10 +5,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { FindDraftContentsDto } from '../../../dto';
 
 import { FindDraftContentsQuery } from './find-draft-contents.query';
