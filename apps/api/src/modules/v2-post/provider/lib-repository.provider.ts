@@ -1,0 +1,33 @@
+import {
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostTagRepository,
+  LibQuizAnswerRepository,
+  LibQuizQuestionRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
+  LibUserSeenPostRepository,
+  LibContentRepository,
+  LibQuizParticipantAnswerRepository,
+  LibQuizParticipantRepository,
+  LibQuizRepository,
+} from '@libs/database/postgres/repository';
+
+export const libRepositoryProvider = [
+  LibContentRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostCategoryRepository,
+  LibPostTagRepository,
+  LibUserSeenPostRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
+  LibQuizRepository,
+  LibQuizParticipantRepository,
+  LibQuizParticipantAnswerRepository,
+  LibQuizQuestionRepository,
+  LibQuizAnswerRepository,
+];

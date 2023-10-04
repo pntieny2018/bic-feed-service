@@ -7,3 +7,4 @@ export * from './shared.provider';
 export * from './reaction.provider';
 export * from './media.provider';
 export * from './post.provider';
+export * from './lib-repository.provider';

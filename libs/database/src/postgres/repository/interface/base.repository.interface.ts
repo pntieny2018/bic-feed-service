@@ -1,4 +1,5 @@
-import { Model, ModelCtor } from 'sequelize-typescript';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { WhereOptions } from 'sequelize';
 import {
   Attributes,
   BulkCreateOptions,
@@ -8,10 +9,10 @@ import {
   IncludeOptions,
   UpdateOptions,
 } from 'sequelize/types/model';
-import { WhereOptions } from 'sequelize';
+import { Model, ModelCtor } from 'sequelize-typescript';
 
 export interface IBaseRepository<M extends Model> {
-  getModel(): Promise<ModelCtor<M>>;
+  getModel(): ModelCtor<M>;
   create(data: CreationAttributes<M>, options?: CreateOptions): Promise<M>;
 
   update(
@@ -37,6 +38,11 @@ export interface IBaseRepository<M extends Model> {
     records: ReadonlyArray<CreationAttributes<M>>,
     options?: BulkCreateOptions<Attributes<M>>
   ): Promise<M[]>;
+
+  cursorPaginate(
+    findOptions: FindOptions<M>,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<M>>;
 }
 
 export type FindOptions<M extends Model> = {

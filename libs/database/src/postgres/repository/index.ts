@@ -17,3 +17,6 @@ export * from './user-report-content.repository';
 export * from './user-save-post.repository';
 export * from './user-seen-post.repository';
 export * from './post-group.repository';
+export * from './quiz-answer.repository';
+export * from './quiz-question.repository';
+export * from './quiz-participant-answer.repository';

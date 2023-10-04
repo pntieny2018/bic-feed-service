@@ -1,17 +1,18 @@
+import { HttpService } from '@nestjs/axios';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/sequelize';
+import { lastValueFrom } from 'rxjs';
+
+import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
+import { IAxiosConfig } from '../../../../config/axios';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import {
   ILinkPreviewFactory,
   LINK_PREVIEW_FACTORY_TOKEN,
 } from '../../domain/factory/interface/link-preview.factory.interface';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IMediaRepository } from '../../domain/repositoty-interface/media.repository.interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
-import { lastValueFrom } from 'rxjs';
-import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
-import { HttpService } from '@nestjs/axios';
-import { IAxiosConfig } from '../../../../config/axios';
-import { ConfigService } from '@nestjs/config';
+import { IMediaRepository } from '../../domain/repositoty-interface/media.repository.interface';
 
 @Injectable()
 export class MediaRepository implements IMediaRepository {
@@ -28,7 +29,9 @@ export class MediaRepository implements IMediaRepository {
 
   public async findFiles(ids: string[]): Promise<FileEntity[]> {
     try {
-      if (ids.length === 0) return [];
+      if (ids.length === 0) {
+        return [];
+      }
 
       const axiosConfig = this._config.get<IAxiosConfig>('axios');
       const response = await lastValueFrom(
@@ -58,7 +61,9 @@ export class MediaRepository implements IMediaRepository {
 
   public async findImages(ids: string[]): Promise<ImageEntity[]> {
     try {
-      if (ids.length === 0) return [];
+      if (ids.length === 0) {
+        return [];
+      }
       const axiosConfig = this._config.get<IAxiosConfig>('axios');
       const response = await lastValueFrom(
         this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, ids, {
@@ -90,7 +95,9 @@ export class MediaRepository implements IMediaRepository {
 
   public async findVideos(ids: string[]): Promise<VideoEntity[]> {
     try {
-      if (ids.length === 0) return [];
+      if (ids.length === 0) {
+        return [];
+      }
       const axiosConfig = this._config.get<IAxiosConfig>('axios');
       const response = await lastValueFrom(
         this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, ids, {

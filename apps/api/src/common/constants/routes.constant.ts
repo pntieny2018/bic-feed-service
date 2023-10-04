@@ -191,7 +191,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_DRAFTS: {
-      PATH: '/drafts',
+      PATH: '/draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     GET_MENU_SETTINGS: {
