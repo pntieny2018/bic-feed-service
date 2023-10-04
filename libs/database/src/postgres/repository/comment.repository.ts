@@ -18,18 +18,18 @@ import {
   GetAroundCommentProps,
   GetAroundCommentResult,
   GetPaginationCommentProps,
-  ILibCommentRepository,
 } from './interface';
+import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 
 @Injectable()
-export class LibCommentRepository implements ILibCommentRepository {
+export class LibCommentRepository extends BaseRepository<CommentModel> {
   public constructor(
-    @InjectModel(CommentModel)
-    private readonly _commentModel: typeof CommentModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
-  ) {}
+  ) {
+    super(CommentModel);
+  }
 
   public async getPagination(
     input: GetPaginationCommentProps
@@ -66,7 +66,7 @@ export class LibCommentRepository implements ILibCommentRepository {
     };
 
     const paginator = new CursorPaginator(
-      this._commentModel,
+      this.model,
       ['createdAt'],
       { before, after, limit },
       order
@@ -88,7 +88,9 @@ export class LibCommentRepository implements ILibCommentRepository {
     const first = Math.ceil(limitExcludeTarget / 2);
     const last = limitExcludeTarget - first;
 
-    const targetComment = await this._commentModel.findByPk(commentId);
+    const targetComment = await this.first({
+      where: { id: commentId },
+    });
     const cursor = createCursor({ createdAt: targetComment.get('createdAt') });
     const postId = targetComment.get('postId');
     const parentId = targetComment.get('parentId');
@@ -149,11 +151,7 @@ export class LibCommentRepository implements ILibCommentRepository {
         isHidden: false,
       },
     };
-    return this._commentModel.findOne(findOptions);
-  }
-
-  public async createComment(data: CommentAttributes): Promise<CommentModel> {
-    return this._commentModel.create(data);
+    return this.model.findOne(findOptions);
   }
 
   public async findOne(
@@ -193,20 +191,12 @@ export class LibCommentRepository implements ILibCommentRepository {
       ];
     }
 
-    return this._commentModel.findOne(findOptions);
-  }
-
-  public async update(commentId: string, attributes: Partial<CommentAttributes>): Promise<void> {
-    await this._commentModel.update(attributes, {
-      where: {
-        id: commentId,
-      },
-    });
+    return this.model.findOne(findOptions);
   }
 
   public async destroyComment(id: string): Promise<void> {
-    const comment = await this._commentModel.findOne({ where: { id } });
-    const childComments = await this._commentModel.findAll({
+    const comment = await this.model.findOne({ where: { id } });
+    const childComments = await this.model.findAll({
       attributes: ['id'],
       where: {
         parentId: id,
@@ -221,7 +211,7 @@ export class LibCommentRepository implements ILibCommentRepository {
         },
         transaction: transaction,
       });
-      await this._commentModel.destroy({
+      await this.model.destroy({
         where: {
           parentId: id,
         },

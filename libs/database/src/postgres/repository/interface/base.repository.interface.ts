@@ -9,9 +9,10 @@ import {
   UpdateOptions,
 } from 'sequelize/types/model';
 import { WhereOptions } from 'sequelize';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 
 export interface IBaseRepository<M extends Model> {
-  getModel(): Promise<ModelCtor<M>>;
+  getModel(): ModelCtor<M>;
   create(data: CreationAttributes<M>, options?: CreateOptions): Promise<M>;
 
   update(
@@ -37,6 +38,11 @@ export interface IBaseRepository<M extends Model> {
     records: ReadonlyArray<CreationAttributes<M>>,
     options?: BulkCreateOptions<Attributes<M>>
   ): Promise<M[]>;
+
+  cursorPaginate(
+    findOptions: FindOptions<M>,
+    paginationProps: CursorPaginationProps
+  ): Promise<CursorPaginationResult<M>>;
 }
 
 export type FindOptions<M extends Model> = {
