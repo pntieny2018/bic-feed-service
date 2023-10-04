@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
-import { SeriesService } from './series.service';
-import { SeriesController } from './series.controller';
+
 import { AuthorityModule } from '../authority';
 import { CommentModule } from '../comment';
 import { PostModule } from '../post';
-import { SeriesAppService } from './application/series.app-service';
-import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
 
+import { SeriesAppService } from './application/series.app-service';
+import { SeriesController } from './series.controller';
+import { SeriesService } from './series.service';
+
 @Module({
-  imports: [AuthorityModule, PostModule, GroupModuleV2, SearchModule, CommentModule],
+  imports: [AuthorityModule, PostModule, GroupModuleV2, CommentModule],
   controllers: [SeriesController],
   providers: [SeriesService, SeriesAppService],
   exports: [SeriesService],
