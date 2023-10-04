@@ -44,7 +44,6 @@ export class TagRepository implements ITagRepository {
         ['createdAt', 'DESC'],
       ],
     });
-    //console.log(JSON.stringify(rows, null, 4));
     const result = rows.map((row) => this._tagMapper.toDomain(row));
     return {
       rows: result,
