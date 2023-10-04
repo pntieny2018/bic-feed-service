@@ -92,6 +92,9 @@ export class SearchSeriesDto {
   public title: string;
   public summary: string;
   public coverMedia?: ImageDto;
+  public audience: {
+    groups: GroupDto[];
+  };
 
   public constructor(data: Partial<SearchSeriesDto>) {
     Object.assign(this, data);

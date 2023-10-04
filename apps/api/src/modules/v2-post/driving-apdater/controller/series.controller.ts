@@ -33,8 +33,11 @@ import {
   SearchSeriesDto,
   SeriesDto,
 } from '../../application/dto';
-import { SearchContentsQuery } from '../../application/query/content';
-import { FindItemsBySeriesQuery, FindSeriesQuery } from '../../application/query/series';
+import {
+  FindItemsBySeriesQuery,
+  FindSeriesQuery,
+  SearchSeriesQuery,
+} from '../../application/query/series';
 import {
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,
@@ -142,7 +145,10 @@ export class SeriesController {
     @AuthUser() authUser: UserDto,
     @Query() searchSeriesRequestDto: SearchSeriesRequestDto
   ): Promise<PageDto<SearchSeriesDto>> {
-    return this._queryBus.execute(new SearchContentsQuery({ authUser, ...searchSeriesRequestDto }));
+    const data = this._queryBus.execute(
+      new SearchSeriesQuery({ authUser, ...searchSeriesRequestDto })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Delete series' })
