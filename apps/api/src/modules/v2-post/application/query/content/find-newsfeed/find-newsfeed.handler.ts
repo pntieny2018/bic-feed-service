@@ -28,7 +28,6 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       authUserId,
     });
 
-    console.log('=========ids=', ids.length);
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids,
       authUserId,

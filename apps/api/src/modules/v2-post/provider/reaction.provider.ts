@@ -1,8 +1,3 @@
-import {
-  LibCommentReactionRepository,
-  LibPostReactionRepository,
-} from '@libs/database/postgres/repository';
-
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
 import { ReactionNotifyEventHandler } from '../application/event-handler/reaction';
@@ -35,9 +30,6 @@ export const reactionProvider = [
 
   /* Application Event handler */
   ReactionNotifyEventHandler,
-
-  LibCommentReactionRepository,
-  LibPostReactionRepository,
 
   /* Domain Service */
   {
