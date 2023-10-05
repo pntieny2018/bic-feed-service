@@ -25,6 +25,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
   AddSeriesItemsProps,
+  RemoveSeriesItemsProps,
 } from './interface';
 import {
   IMediaDomainService,
@@ -308,6 +309,42 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     try {
       await this._contentRepository.createPostsSeries(seriesEntity.getId(), itemIds);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
+
+  public async removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void> {
+    const { id, authUser, itemIds } = input;
+
+    const seriesEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+      },
+    });
+
+    if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!seriesEntity.isOwner(authUser.id)) {
+      throw new ContentAccessDeniedException();
+    }
+
+    await this._contentValidator.checkCanCRUDContent(
+      authUser,
+      seriesEntity.get('groupIds'),
+      seriesEntity.get('type')
+    );
+
+    try {
+      await this._contentRepository.deletePostsSeries(seriesEntity.getId(), itemIds);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

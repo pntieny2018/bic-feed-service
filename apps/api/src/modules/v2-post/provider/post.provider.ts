@@ -34,6 +34,7 @@ import {
   ProcessSeriesDeletedHandler,
   ProcessSeriesPublishedHandler,
   ProcessSeriesUpdatedHandler,
+  RemoveSeriesItemsHandler,
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
@@ -161,6 +162,7 @@ export const postProvider = [
   CreateSeriesHandler,
   DeleteSeriesHandler,
   AddSeriesItemsHandler,
+  RemoveSeriesItemsHandler,
   ProcessSeriesDeletedHandler,
   ProcessSeriesPublishedHandler,
   ProcessSeriesUpdatedHandler,

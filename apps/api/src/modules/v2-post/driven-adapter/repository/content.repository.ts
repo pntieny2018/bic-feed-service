@@ -429,4 +429,23 @@ export class ContentRepository implements IContentRepository {
       throw error;
     }
   }
+
+  public async deletePostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      for (const itemId of itemIds) {
+        await this._libPostSeriesRepository.delete({
+          where: {
+            seriesId,
+            postId: itemId,
+          },
+          transaction,
+        });
+      }
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }

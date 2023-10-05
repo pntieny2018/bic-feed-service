@@ -61,6 +61,10 @@ export const ROUTES = {
       PATH: '/series/:seriesId/items',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    REMOVE_ITEMS: {
+      PATH: '/series/:seriesId/items',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
   POST: {
     CREATE: {
