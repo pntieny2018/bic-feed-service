@@ -49,6 +49,7 @@ export type OrderOptions = {
 };
 
 export type FindContentProps = {
+  select?: (keyof PostAttributes)[];
   where: FindContentConditionOptions;
   include?: FindContentIncludeOptions;
   attributes?: { exclude?: (keyof PostAttributes)[] };

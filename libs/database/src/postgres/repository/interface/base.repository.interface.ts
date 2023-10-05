@@ -10,6 +10,7 @@ import {
 } from 'sequelize/types/model';
 import { WhereOptions } from 'sequelize';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { Literal } from 'sequelize/types/utils';
 
 export interface IBaseRepository<M extends Model> {
   getModel(): ModelCtor<M>;
@@ -55,7 +56,7 @@ export type FindOptions<M extends Model> = {
   include?: Include<M>[];
   limit?: number;
   offset?: number;
-  order?: [string, 'ASC' | 'DESC'][];
+  order?: [string | Literal, 'ASC' | 'DESC'][];
   group?: string[];
 };
 export type Include<M extends Model> = Omit<IncludeOptions, 'attributes'> & {

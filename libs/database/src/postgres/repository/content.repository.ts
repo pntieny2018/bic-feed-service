@@ -1,4 +1,4 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
 import {
   CursorPaginationProps,
   CursorPaginationResult,
@@ -20,13 +20,16 @@ import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.m
 import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
 import { InjectConnection } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { DataTypes, Op, Sequelize, WhereOptions } from 'sequelize';
 import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 import {
   FindContentProps,
   OrderOptions,
 } from '@libs/database/postgres/repository/interface/content.repository.interface';
 import { FindOptions, Include } from '@libs/database/postgres';
+import { AllowNull, Column, CreatedAt, Default, UpdatedAt } from 'sequelize-typescript';
+import { TagAttributes } from '@libs/database/postgres/model/tag.model';
+import { IMediaJson } from '@libs/database/postgres/model/comment.model';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {
@@ -44,11 +47,16 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   ): Promise<PostModel[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
+    console.log('offsetPaginate=', offsetPaginate);
     if (offsetPaginate) {
       findOption.limit = offsetPaginate.limit;
       findOption.offset = offsetPaginate.offset;
     }
-    return this.findMany(findOption);
+    const a = await this.findMany(findOption);
+
+    //const a = await this.model.findAll(findOption);
+    //console.log(JSON.stringify(a, null, 4));
+    return a;
   }
 
   public async getPagination(
@@ -82,6 +90,39 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     findOptions.include = this._buildRelationOptions(options);
 
     const { exclude = [] } = options.attributes || {};
+    findOptions.select = options.select || [
+      'id',
+      'commentsCount',
+      'totalUsersSeen',
+      'wordCount',
+      'isImportant',
+      'importantExpiredAt',
+      'canComment',
+      'canReact',
+      'isHidden',
+      'isReported',
+      'content',
+      'title',
+      'mentions',
+      'type',
+      'summary',
+      'lang',
+      'privacy',
+      'tagsJson',
+      'createdBy',
+      'updatedBy',
+      'linkPreviewId',
+      'videoIdProcessing',
+      'cover',
+      'status',
+      'publishedAt',
+      'scheduledAt',
+      'errorLog',
+      'coverJson',
+      'mediaJson',
+      'createdAt',
+      'updatedAt',
+    ];
     if (subSelect) {
       findOptions.selectRaw = [...subSelect];
     }
