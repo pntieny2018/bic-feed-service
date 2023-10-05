@@ -79,7 +79,11 @@ import {
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
-import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
+import {
+  FindItemsBySeriesHandler,
+  FindSeriesHandler,
+  SearchSeriesHandler,
+} from '../application/query/series';
 import { SearchTagsHandler } from '../application/query/tag';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
@@ -191,6 +195,7 @@ export const postProvider = [
   GetTotalDraftHandler,
   GetSeriesInContentHandler,
   FindPinnedContentHandler,
+  SearchSeriesHandler,
 
   /** Domain Service */
   {

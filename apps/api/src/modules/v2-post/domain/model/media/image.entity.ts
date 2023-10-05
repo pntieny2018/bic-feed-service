@@ -1,9 +1,8 @@
-import { IMAGE_RESOURCE } from '@beincom/constants';
+import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { ImageResource } from '../../../data-type';
 
 export type ImageAttributes = {
   id: string;
@@ -11,10 +10,10 @@ export type ImageAttributes = {
   src?: string;
   createdBy: string;
   mimeType: string;
-  resource: ImageResource | IMAGE_RESOURCE;
+  resource: IMAGE_RESOURCE;
   width: number;
   height: number;
-  status: string;
+  status: MEDIA_PROCESS_STATUS;
 };
 
 export class ImageEntity extends DomainAggregateRoot<ImageAttributes> {
@@ -33,26 +32,26 @@ export class ImageEntity extends DomainAggregateRoot<ImageAttributes> {
   }
 
   public isReady(): boolean {
-    return this._props.status === 'DONE';
+    return this._props.status === MEDIA_PROCESS_STATUS.COMPLETED;
   }
 
   public isPostContentResource(): boolean {
-    return this._props.resource === ImageResource.POST_CONTENT;
+    return this._props.resource === IMAGE_RESOURCE.POST_CONTENT;
   }
 
   public isArticleContentResource(): boolean {
-    return this._props.resource === ImageResource.ARTICLE_CONTENT;
+    return this._props.resource === IMAGE_RESOURCE.ARTICLE_CONTENT;
   }
 
   public isArticleCoverResource(): boolean {
-    return this._props.resource === ImageResource.ARTICLE_COVER;
+    return this._props.resource === IMAGE_RESOURCE.ARTICLE_COVER;
   }
 
   public isSeriesCoverResource(): boolean {
-    return this._props.resource === ImageResource.SERIES_COVER;
+    return this._props.resource === IMAGE_RESOURCE.SERIES_COVER;
   }
 
   public isCommentContentResource(): boolean {
-    return this._props.resource === ImageResource.COMMENT_CONTENT;
+    return this._props.resource === IMAGE_RESOURCE.COMMENT_CONTENT;
   }
 }

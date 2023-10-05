@@ -53,6 +53,10 @@ export const ROUTES = {
       PATH: '/series/items',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    SEARCH_SERIES: {
+      PATH: '/series',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
   POST: {
     CREATE: {

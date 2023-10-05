@@ -1,5 +1,7 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
 export interface VideoThumbnailAttributes {
@@ -17,7 +19,7 @@ export type VideoAttributes = {
   size: number;
   width: number;
   height: number;
-  status: string;
+  status: MEDIA_PROCESS_STATUS;
   thumbnails: VideoThumbnailAttributes[];
 };
 
