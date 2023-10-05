@@ -145,7 +145,7 @@ export class SeriesController {
     @AuthUser() authUser: UserDto,
     @Query() searchSeriesRequestDto: SearchSeriesRequestDto
   ): Promise<PageDto<SearchSeriesDto>> {
-    const data = this._queryBus.execute(
+    const data = await this._queryBus.execute(
       new SearchSeriesQuery({ authUser, ...searchSeriesRequestDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
