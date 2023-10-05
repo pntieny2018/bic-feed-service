@@ -1,10 +1,11 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { IArticleFactory } from './interface';
-import { ArticleEntity, ArticleProps } from '../model/content/article.entity';
 import { v4 } from 'uuid';
-import { PostType } from '../../data-type';
-import { PostStatus } from '../../data-type/post-status.enum';
+
+import { ArticleEntity, ArticleAttributes } from '../model/content';
+
+import { IArticleFactory } from './interface';
 
 export class ArticleFactory implements IArticleFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
@@ -29,8 +30,8 @@ export class ArticleFactory implements IArticleFactory {
         commentsCount: 0,
         totalUsersSeen: 0,
       },
-      type: PostType.ARTICLE,
-      status: PostStatus.DRAFT,
+      type: CONTENT_TYPE.ARTICLE,
+      status: CONTENT_STATUS.DRAFT,
       isHidden: false,
       isReported: false,
       privacy: null,
@@ -52,7 +53,7 @@ export class ArticleFactory implements IArticleFactory {
     return this._eventPublisher.mergeObjectContext(entity);
   }
 
-  public reconstitute(properties: ArticleProps): ArticleEntity {
+  public reconstitute(properties: ArticleAttributes): ArticleEntity {
     return this._eventPublisher.mergeObjectContext(new ArticleEntity(properties));
   }
 }

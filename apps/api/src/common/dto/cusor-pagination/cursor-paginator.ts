@@ -1,10 +1,12 @@
-import { OrderEnum } from '../pagination';
-import { createCursor, parseCursor } from './utils';
-import { CursorPaginationResult } from '../../types/cursor-pagination-result.type';
+import { ORDER } from '@beincom/constants';
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
+
+import { InvalidCursorParamsException } from '../../../modules/v2-post/domain/exception';
+import { CursorPaginationResult } from '../../types/cursor-pagination-result.type';
+
 import { PaginatedArgs } from './paginated.args';
 import { CursorParam } from './paginated.interface';
-import { InvalidCursorParamsException } from '../../../modules/v2-post/domain/exception';
+import { createCursor, parseCursor } from './utils';
 
 export class CursorPaginator<T extends Model> {
   public modelClass: ModelStatic<T>;
@@ -17,13 +19,13 @@ export class CursorPaginator<T extends Model> {
 
   public limit = 10;
 
-  public order: OrderEnum = OrderEnum.DESC;
+  public order: ORDER = ORDER.DESC;
 
   public constructor(
     modelClass: ModelStatic<T>,
     cursorColumns: (keyof Attributes<T>)[],
     paginationParameters: PaginatedArgs,
-    order: OrderEnum
+    order: ORDER
   ) {
     this.modelClass = modelClass;
     this.cursorColumns = cursorColumns;
@@ -51,7 +53,9 @@ export class CursorPaginator<T extends Model> {
 
     const hasMore = rows.length > this.limit;
 
-    if (hasMore) rows.pop();
+    if (hasMore) {
+      rows.pop();
+    }
 
     if (!this.after && this.before) {
       rows.reverse();
@@ -74,13 +78,21 @@ export class CursorPaginator<T extends Model> {
     let cursors: CursorParam;
     let paginationQuery: WhereOptions | undefined;
 
-    if (!this.after && !this.before) return paginationQuery;
+    if (!this.after && !this.before) {
+      return paginationQuery;
+    }
 
-    if (this.after) cursors = parseCursor(this.after);
+    if (this.after) {
+      cursors = parseCursor(this.after);
+    }
 
-    if (this.before) cursors = parseCursor(this.before);
+    if (this.before) {
+      cursors = parseCursor(this.before);
+    }
 
-    if (cursors && !this._isValidCursor(cursors)) throw new InvalidCursorParamsException();
+    if (cursors && !this._isValidCursor(cursors)) {
+      throw new InvalidCursorParamsException();
+    }
 
     const operator = this._getOperator();
 
@@ -105,18 +117,23 @@ export class CursorPaginator<T extends Model> {
   private _buildOrder(): Order {
     let { order } = this;
 
-    if (!this.after && this.before) order = this._reverseOrder(order);
+    if (!this.after && this.before) {
+      order = this._reverseOrder(order);
+    }
 
     return this.cursorColumns.map((column) => [column as string, order]);
   }
 
   private _getOperator(): symbol {
-    if (this.after) return this.order === OrderEnum.ASC ? Op.gt : Op.lt;
-    else if (this.before) return this.order === OrderEnum.ASC ? Op.lt : Op.gt;
+    if (this.after) {
+      return this.order === ORDER.ASC ? Op.gt : Op.lt;
+    } else if (this.before) {
+      return this.order === ORDER.ASC ? Op.lt : Op.gt;
+    }
   }
 
-  private _reverseOrder(order: OrderEnum): OrderEnum {
-    return order === OrderEnum.ASC ? OrderEnum.DESC : OrderEnum.ASC;
+  private _reverseOrder(order: ORDER): ORDER {
+    return order === ORDER.ASC ? ORDER.DESC : ORDER.ASC;
   }
 
   private _isValidCursor(cursors: CursorParam): boolean {

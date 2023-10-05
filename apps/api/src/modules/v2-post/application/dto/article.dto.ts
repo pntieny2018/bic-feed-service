@@ -1,12 +1,12 @@
-import { PostSettingDto } from './post-setting.dto';
-import { GroupDto } from '../../../v2-group/application';
-import { PostStatus } from '../../data-type/post-status.enum';
-import { UserDto } from '../../../v2-user/application';
-import { PostPrivacy, PostType } from '../../data-type';
-import { UserMentionDto } from './user-mention.dto';
-import { TagDto } from './tag.dto';
-import { ImageDto } from './image.dto';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
+
+import { ImageDto } from './media.dto';
+import { PostSettingDto } from './post.dto';
 import { QuizDto } from './quiz.dto';
+import { TagDto } from './tag.dto';
+import { UserMentionDto } from './user-mention.dto';
 
 export class ArticleDto {
   public id: string;
@@ -29,9 +29,9 @@ export class ArticleDto {
   public quiz?: QuizDto;
   public setting: PostSettingDto;
   public actor: UserDto;
-  public status: PostStatus;
-  public privacy: PostPrivacy;
-  public type: PostType;
+  public status: CONTENT_STATUS;
+  public privacy: PRIVACY;
+  public type: CONTENT_TYPE;
   public markedReadPost: boolean;
   public isSaved: boolean;
   public isReported: boolean;
@@ -56,6 +56,9 @@ export class ArticleDto {
   public quizDoing?: {
     quizParticipantId: string;
   };
+  public highlight?: string;
+  public titleHighlight?: string;
+  public summaryHighlight?: string;
 
   public constructor(data: Partial<ArticleDto>) {
     Object.assign(this, data);

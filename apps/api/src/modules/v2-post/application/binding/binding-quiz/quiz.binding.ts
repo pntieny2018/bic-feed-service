@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { QuizDto } from '../../dto';
+
 import { QuizEntity, QuizQuestionEntity } from '../../../domain/model/quiz';
-import { IQuizBinding } from './quiz.interface';
 import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
-import { QuizParticipantDto } from '../../dto/quiz-participant.dto';
-import { QuizQuestionDto } from '../../dto/quiz-question.dto';
+import { QuestionDto, QuizDto, QuizParticipantDto } from '../../dto';
+
+import { IQuizBinding } from './quiz.interface';
 
 @Injectable()
 export class QuizBinding implements IQuizBinding {
@@ -67,8 +67,8 @@ export class QuizBinding implements IQuizBinding {
     }));
   }
 
-  public async bindQuizQuestion(question: QuizQuestionEntity): Promise<QuizQuestionDto> {
-    return new QuizQuestionDto({
+  public async bindQuizQuestion(question: QuizQuestionEntity): Promise<QuestionDto> {
+    return new QuestionDto({
       id: question.get('id'),
       content: question.get('content'),
       answers: question.get('answers').map((answer) => ({

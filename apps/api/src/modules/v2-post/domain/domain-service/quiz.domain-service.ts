@@ -1,8 +1,43 @@
-import { cloneDeep } from 'lodash';
-import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
+import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
-import { IQuizRepository, QUIZ_REPOSITORY_TOKEN } from '../repositoty-interface';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+
+import { ERRORS } from '../../../../common/constants';
+import { DatabaseException } from '../../../../common/exceptions';
+import { CursorPaginationResult } from '../../../../common/types';
+import { AnswerUserDto } from '../../application/dto';
+import { RULES } from '../../constant';
+import {
+  QuizParticipantFinishedEvent,
+  QuizParticipantStartedEvent,
+  QuizCreatedEvent,
+  QuizGeneratedEvent,
+  QuizRegenerateEvent,
+} from '../event';
+import {
+  ContentAccessDeniedException,
+  ContentHasQuizException,
+  QuizNotFoundException,
+  QuizOverTimeException,
+  QuizParticipantNotFinishedException,
+  QuizQuestionBelongsToQuizException,
+  QuizQuestionLimitExceededException,
+  QuizQuestionNotFoundException,
+} from '../exception';
+import { EVENT_ADAPTER, IEventAdapter } from '../infra-adapter-interface';
+import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
+import { QuizParticipantEntity } from '../model/quiz-participant';
+import {
+  IQuizRepository,
+  QUIZ_REPOSITORY_TOKEN,
+  IQuizParticipantRepository,
+  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
+import {
+  IOpenAIAdapter,
+  OPEN_AI_ADAPTER,
+} from '../service-adapter-interface/openai-adapter.interface';
+import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
+
 import {
   AddQuestionProps,
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -13,56 +48,43 @@ import {
   QuizUpdateProps,
   UpdateQuestionProps,
 } from './interface';
-import { IQuizFactory, QUIZ_FACTORY_TOKEN } from '../factory/interface/quiz.factory.interface';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { ERRORS } from '../../../../common/constants/errors';
-import { EventBus } from '@nestjs/cqrs';
-import { QuizCreatedEvent } from '../event/quiz-created.event';
-import { QuizGeneratedEvent } from '../event/quiz-generated.event';
-import { QuizRegenerateEvent } from '../event/quiz-regenerate.event';
-import {
-  ContentHasQuizException,
-  QuizNotFoundException,
-  QuizOverTimeException,
-  QuizParticipantNotFoundException,
-} from '../exception';
-import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
-import { UserDto } from '../../../v2-user/application';
-import { QuizParticipantEntity } from '../model/quiz-participant';
-import {
-  IQuizParticipantRepository,
-  QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '../repositoty-interface/quiz-participant.repository.interface';
-import { QuizQuestionNotFoundException } from '../exception/quiz-question-not-found.exception';
-import { QuizParticipantNotFinishedException } from '../exception/quiz-participant-not-finished.exception';
-import { QuizParticipantFinishedEvent, QuizParticipantStartedEvent } from '../event';
-import { AnswerUserDto } from '../../application/dto/quiz-participant.dto';
-import { RULES } from '../../constant';
-import { QuizQuestionLimitExceededException } from '../exception/quiz-question-limit-exceeded.exception';
 
 export class QuizDomainService implements IQuizDomainService {
   private readonly _logger = new Logger(QuizDomainService.name);
 
   public constructor(
-    @Inject(QUIZ_REPOSITORY_TOKEN)
-    private readonly _quizRepository: IQuizRepository,
-    @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
-    private readonly _quizParticipantRepository: IQuizParticipantRepository,
-    @Inject(QUIZ_FACTORY_TOKEN)
-    private readonly _quizFactory: IQuizFactory,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
+    private readonly _contentDomain: IContentDomainService,
+
+    @Inject(QUIZ_REPOSITORY_TOKEN)
+    private readonly _quizRepo: IQuizRepository,
+    @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
+    private readonly _quizParticipantRepo: IQuizParticipantRepository,
+
     @Inject(QUIZ_VALIDATOR_TOKEN)
     private readonly _quizValidator: IQuizValidator,
-    private readonly event: EventBus
+
+    @Inject(EVENT_ADAPTER)
+    private readonly _eventAdapter: IEventAdapter,
+    @Inject(OPEN_AI_ADAPTER)
+    private readonly _openAiAdapter: IOpenAIAdapter
   ) {}
 
   public async create(input: QuizCreateProps): Promise<QuizEntity> {
-    const { authUser, contentId } = input;
+    const {
+      authUser,
+      contentId,
+      title,
+      description,
+      isRandom,
+      numberOfAnswers,
+      numberOfQuestions,
+      numberOfQuestionsDisplay,
+    } = input;
 
     await this._quizValidator.checkCanCUDQuizInContent(contentId, authUser);
 
-    const quizEntitiesInContent = await this._quizRepository.findAll({
+    const quizEntitiesInContent = await this._quizRepo.findAllQuizzes({
       where: {
         contentId,
       },
@@ -71,22 +93,32 @@ export class QuizDomainService implements IQuizDomainService {
       throw new ContentHasQuizException();
     }
 
-    const quizEntity = this._quizFactory.createQuiz(input);
+    const quizEntity = QuizEntity.create(
+      {
+        title,
+        description,
+        contentId,
+        isRandom,
+        numberOfAnswers,
+        numberOfQuestions,
+        numberOfQuestionsDisplay,
+      },
+      authUser.id
+    );
     try {
-      await this._quizRepository.create(quizEntity);
-      quizEntity.commit();
+      await this._quizRepo.createQuiz(quizEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-    this.event.publish(new QuizCreatedEvent(quizEntity.get('id')));
+    this._eventAdapter.publish(new QuizCreatedEvent({ quizId: quizEntity.get('id') }));
     return quizEntity;
   }
 
   public async update(input: QuizUpdateProps): Promise<QuizEntity> {
     const { authUser, quizId, ...quizUpdateProps } = input;
 
-    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
+    const quizEntity = await this._quizRepo.findQuizByIdWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -95,7 +127,7 @@ export class QuizDomainService implements IQuizDomainService {
 
     quizEntity.updateAttribute(quizUpdateProps);
     try {
-      await this._quizRepository.update(quizEntity);
+      await this._quizRepo.updateQuiz(quizEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -106,14 +138,19 @@ export class QuizDomainService implements IQuizDomainService {
   public async updateQuestion(
     updateQuestionProps: UpdateQuestionProps
   ): Promise<QuizQuestionEntity> {
-    const { authUser, questionId, content, answers } = updateQuestionProps;
-    const quizQuestionEntity = await this._quizRepository.findQuizQuestion(questionId);
+    const { quizId, questionId, content, answers, authUser } = updateQuestionProps;
+    const quizQuestionEntity = await this._quizRepo.findQuestionById(questionId);
     if (!quizQuestionEntity) {
       throw new QuizQuestionNotFoundException();
     }
 
-    const quizEntity = await this._quizRepository.findOne(quizQuestionEntity.get('quizId'));
+    if (quizQuestionEntity.get('quizId') !== quizId) {
+      throw new QuizQuestionBelongsToQuizException();
+    }
 
+    const quizEntity = await this._quizRepo.findQuizByIdWithQuestions(
+      quizQuestionEntity.get('quizId')
+    );
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -127,10 +164,12 @@ export class QuizDomainService implements IQuizDomainService {
     quizQuestionEntity.validateAnswers();
     if (quizQuestionEntity.isChanged()) {
       try {
-        await this._quizRepository.updateQuestion(quizQuestionEntity);
+        await this._quizRepo.updateQuestion(quizQuestionEntity);
+        await this._quizRepo.deleteAnswersByQuestionId(quizQuestionEntity.get('id'));
+        await this._quizRepo.createAnswers(quizQuestionEntity);
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
-        throw new DatabaseException();
+        throw new DatabaseException(e.message);
       }
     }
 
@@ -138,58 +177,67 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async addQuestion(addQuestionProps: AddQuestionProps): Promise<QuizQuestionEntity> {
-    const { authUser, quizId } = addQuestionProps;
-    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
+    const { quizId, authUser } = addQuestionProps;
+
+    const quizEntity = await this._quizRepo.findQuizByIdWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
+
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
+
     if (quizEntity.get('questions')?.length >= RULES.QUIZ_MAX_QUESTION) {
       throw new QuizQuestionLimitExceededException();
     }
-    const quizQuestionEntity = this._quizFactory.createQuizQuestion(addQuestionProps);
 
-    quizQuestionEntity.validateAnswers();
+    const quizQuestionEntity = QuizQuestionEntity.create(addQuestionProps);
+
     try {
-      await this._quizRepository.addQuestion(quizQuestionEntity);
+      await this._quizRepo.createQuestion(quizQuestionEntity);
+      await this._quizRepo.createAnswers(quizQuestionEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+      throw new DatabaseException(e.message);
     }
 
     return quizQuestionEntity;
   }
 
-  public async deleteQuestion(id: string, authUser: UserDto): Promise<void> {
-    const quizQuestionEntity = await this._quizRepository.findQuizQuestion(id);
-
+  public async deleteQuestion(
+    questionId: string,
+    quizId: string,
+    authUser: UserDto
+  ): Promise<void> {
+    const quizQuestionEntity = await this._quizRepo.findQuestionById(questionId);
     if (!quizQuestionEntity) {
-      throw new QuizNotFoundException();
+      throw new QuizQuestionNotFoundException();
     }
 
-    const quizEntity = await this._quizRepository.findQuizWithQuestions(
+    if (quizQuestionEntity.get('quizId') !== quizId) {
+      throw new QuizQuestionBelongsToQuizException();
+    }
+
+    const quizEntity = await this._quizRepo.findQuizByIdWithQuestions(
       quizQuestionEntity.get('quizId')
     );
-
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
 
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
-    quizEntity.deleteQuestion(id);
+    quizEntity.deleteQuestion(questionId);
 
     try {
-      await this._quizRepository.deleteQuestion(id);
-      await this._quizRepository.update(quizEntity);
+      await this._quizRepo.updateQuiz(quizEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+      throw new DatabaseException(e.message);
     }
   }
 
   public async getQuiz(quizId: string, authUser: UserDto): Promise<QuizEntity> {
-    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
+    const quizEntity = await this._quizRepo.findQuizByIdWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -199,14 +247,14 @@ export class QuizDomainService implements IQuizDomainService {
   }
 
   public async delete(quizId: string, authUser: UserDto): Promise<void> {
-    const quizEntity = await this._quizRepository.findOne(quizId);
+    const quizEntity = await this._quizRepo.findQuizById(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
     try {
-      await this._quizRepository.delete(quizId);
+      await this._quizRepo.deleteQuiz(quizId);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -217,26 +265,28 @@ export class QuizDomainService implements IQuizDomainService {
     quizEntity: QuizEntity,
     authUser: UserDto
   ): Promise<QuizParticipantEntity> {
-    const quizParticipant = this._quizFactory.createTakeQuiz(authUser.id, quizEntity);
+    const quizParticipantEntity = QuizParticipantEntity.createFromQuiz(quizEntity, authUser.id);
+
     if (quizEntity.isRandomQuestion()) {
-      quizParticipant.shuffleQuestions();
+      quizParticipantEntity.shuffleQuestions();
     }
-    quizParticipant.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
+    quizParticipantEntity.filterQuestionDisplay(quizEntity.get('numberOfQuestionsDisplay'));
+
     try {
-      await this._quizParticipantRepository.create(quizParticipant);
-      this.event.publish(
+      await this._quizParticipantRepo.create(quizParticipantEntity);
+      this._eventAdapter.publish(
         new QuizParticipantStartedEvent({
-          quizParticipantId: quizParticipant.get('id'),
-          startedAt: quizParticipant.get('startedAt'),
-          timeLimit: quizParticipant.get('timeLimit'),
+          quizParticipantId: quizParticipantEntity.get('id'),
+          startedAt: quizParticipantEntity.get('startedAt'),
+          timeLimit: quizParticipantEntity.get('timeLimit'),
         })
       );
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
+      throw new DatabaseException(e.message);
     }
 
-    return quizParticipant;
+    return quizParticipantEntity;
   }
 
   public async updateQuizAnswers(
@@ -249,13 +299,15 @@ export class QuizDomainService implements IQuizDomainService {
     }
 
     quizParticipantEntity.updateAnswers(answers);
-    if (isFinished) quizParticipantEntity.setFinishedAt();
+    if (isFinished) {
+      quizParticipantEntity.setFinishedAt();
+    }
 
     try {
-      await this._quizParticipantRepository.update(quizParticipantEntity);
+      await this._quizParticipantRepo.update(quizParticipantEntity);
 
       if (isFinished) {
-        this.event.publish(
+        this._eventAdapter.publish(
           new QuizParticipantFinishedEvent({
             quizParticipantId: quizParticipantEntity.get('id'),
           })
@@ -269,19 +321,19 @@ export class QuizDomainService implements IQuizDomainService {
 
   public async getQuizzes(input: GetQuizzesProps): Promise<CursorPaginationResult<QuizEntity>> {
     const { authUser, type, status } = input;
-    return this._quizRepository.getPagination({
+    return this._quizRepo.getPagination({
       ...input,
       where: {
         createdBy: authUser.id,
         status,
+        contentType: type,
       },
-      contentType: type,
       attributes: ['id', 'postId', 'createdAt'],
     });
   }
 
   public async reGenerate(quizId: string, authUser: UserDto): Promise<QuizEntity> {
-    const quizEntity = await this._quizRepository.findQuizWithQuestions(quizId);
+    const quizEntity = await this._quizRepo.findQuizByIdWithQuestions(quizId);
     if (!quizEntity) {
       throw new QuizNotFoundException();
     }
@@ -289,8 +341,8 @@ export class QuizDomainService implements IQuizDomainService {
 
     quizEntity.setPending();
     try {
-      await this._quizRepository.update(quizEntity);
-      this.event.publish(new QuizRegenerateEvent(quizEntity.get('id')));
+      await this._quizRepo.updateQuiz(quizEntity);
+      this._eventAdapter.publish(new QuizRegenerateEvent({ quizId: quizEntity.get('id') }));
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -299,70 +351,92 @@ export class QuizDomainService implements IQuizDomainService {
     return quizEntity;
   }
 
-  public async generateQuestions(quizEntity: QuizEntity): Promise<void> {
-    const cloneQuizEntity = cloneDeep(quizEntity);
-    if (cloneQuizEntity.isProcessing()) return;
+  public async generateQuestions(quizId: string): Promise<void> {
+    const quizEntity = await this._quizRepo.findQuizById(quizId);
+    if (!quizEntity) {
+      return;
+    }
 
-    const contentEntity = await this._contentDomainService.getVisibleContent(
-      cloneQuizEntity.get('contentId')
-    );
-    const rawContent = this._contentDomainService.getRawContent(contentEntity);
+    if (quizEntity.isProcessing()) {
+      return;
+    }
+
+    const contentEntity = await this._contentDomain.getVisibleContent(quizEntity.get('contentId'));
+    const rawContent = this._contentDomain.getRawContent(contentEntity);
     if (!rawContent) {
-      cloneQuizEntity.setFail({
-        code: ERRORS.CONTENT.CONTENT_NOT_FOUND,
+      quizEntity.setFail({
+        code: ERRORS.CONTENT_NOT_FOUND,
         message: 'Content not found',
       });
-      await this._quizRepository.update(cloneQuizEntity);
-      this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
+      await this._quizRepo.updateQuiz(quizEntity);
+      this._eventAdapter.publish(new QuizGeneratedEvent({ quizId: quizEntity.get('id') }));
       return;
     }
 
     try {
-      cloneQuizEntity.setProcessing();
-      await this._quizRepository.update(cloneQuizEntity);
-
-      await this._quizRepository.genQuestions(cloneQuizEntity, rawContent);
-      if (cloneQuizEntity.get('questions')?.length === 0) {
-        cloneQuizEntity.setFail({
-          code: ERRORS.QUIZ.GENERATE_FAIL,
+      quizEntity.setProcessing();
+      await this._quizRepo.updateQuiz(quizEntity);
+      const { questions, usage, model, maxTokens, completion } =
+        await this._openAiAdapter.generateQuestions({
+          content: rawContent,
+          numberOfQuestions: quizEntity.get('numberOfQuestions'),
+          numberOfAnswers: quizEntity.get('numberOfAnswers'),
+        });
+      if (questions.length === 0) {
+        quizEntity.setFail({
+          code: ERRORS.QUIZ_GENERATE_FAIL,
           message: 'No questions generated',
         });
-        await this._quizRepository.update(cloneQuizEntity);
-        this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
+        await this._quizRepo.updateQuiz(quizEntity);
+        this._eventAdapter.publish(new QuizGeneratedEvent({ quizId: quizEntity.get('id') }));
         return;
       }
 
-      cloneQuizEntity.setProcessed();
-    } catch (e) {
-      cloneQuizEntity.setFail({
-        code: ERRORS.QUIZ.GENERATE_FAIL,
-        message: e.response?.data?.error?.message || '',
+      quizEntity.updateAttribute({
+        questions: questions.map(
+          (question) =>
+            new QuizQuestionEntity({
+              ...question,
+              quizId: quizEntity.get('id'),
+            })
+        ),
+        meta: {
+          usage,
+          model,
+          maxTokens,
+          completion,
+        },
       });
-      /*await this._quizRepository.update(cloneQuizEntity);
-      if (e.response?.status === 429) {
-        throw new QuizGenerationLimitException();
-      }*/
+
+      quizEntity.setProcessed();
+      await this._quizRepo.updateQuiz(quizEntity);
+    } catch (e) {
+      let message = e.message || '';
+      if (e.response?.data?.error?.message) {
+        message = e.response?.data?.error?.message;
+      }
+      quizEntity.setFail({
+        code: ERRORS.QUIZ_GENERATE_FAIL,
+        message,
+      });
     }
-    await this._quizRepository.update(cloneQuizEntity);
-    this.event.publish(new QuizGeneratedEvent(quizEntity.get('id')));
+    await this._quizRepo.updateQuiz(quizEntity);
+    this._eventAdapter.publish(new QuizGeneratedEvent({ quizId: quizEntity.get('id') }));
   }
 
   public async getQuizParticipant(
     quizParticipantId: string,
     authUserId: string
   ): Promise<QuizParticipantEntity> {
-    const quizParticipantEntity = await this._quizParticipantRepository.findQuizParticipantById(
+    const quizParticipantEntity = await this._quizParticipantRepo.getQuizParticipantById(
       quizParticipantId
     );
-    if (!quizParticipantEntity) {
-      throw new QuizParticipantNotFoundException();
-    }
 
     if (!quizParticipantEntity.isOwner(authUserId)) {
-      throw new QuizParticipantNotFoundException();
+      throw new ContentAccessDeniedException();
     }
 
-    if (!quizParticipantEntity.isOverTimeLimit() && !quizParticipantEntity.isFinished()) {
+    if (!quizParticipantEntity.isFinishedOrOverTimeLimit()) {
       quizParticipantEntity.hideResult();
     }
 
@@ -378,7 +452,7 @@ export class QuizDomainService implements IQuizDomainService {
     const userId = quizParticipantEntity.get('createdBy');
 
     const currentHighestScoreQuizParticipantEntity =
-      await this._quizParticipantRepository.findQuizParticipantHighestScoreByContentIdAndUserId(
+      await this._quizParticipantRepo.findQuizParticipantHighestScoreByContentIdAndUserId(
         contentId,
         userId
       );
@@ -395,14 +469,14 @@ export class QuizDomainService implements IQuizDomainService {
       newScore >= currentHighestScore
     ) {
       quizParticipantEntity.setHighest(true);
-      await this._quizParticipantRepository.updateIsHighest(quizParticipantEntity.get('id'), true);
+      await this._quizParticipantRepo.updateIsHighest(quizParticipantEntity.get('id'), true);
       this._logger.debug(
         `New highest score: ${quizParticipantId} - ${newScore} for contentId: ${contentId} and userId: ${userId}`
       );
 
       if (currentHighestScoreQuizParticipantEntity) {
         currentHighestScoreQuizParticipantEntity.setHighest(false);
-        await this._quizParticipantRepository.updateIsHighest(
+        await this._quizParticipantRepo.updateIsHighest(
           currentHighestScoreQuizParticipantEntity.get('id'),
           false
         );

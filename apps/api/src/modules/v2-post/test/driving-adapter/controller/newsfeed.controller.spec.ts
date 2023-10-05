@@ -1,9 +1,12 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
-import { userMock } from '../../mock/user.dto.mock';
-import { GetNewsfeedRequestDto } from '../../../driving-apdater/dto/request';
+
 import { NewsFeedController } from '../../../driving-apdater/controller/newsfeed.controller';
-import { newsfeedDtoMock } from '../../mock/newsfeed.dto.mock';
+import { NewsfeedRequestDto } from '../../../driving-apdater/dto/request';
+import { newsfeedDtoMock } from '../../mock/newsfeed.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('NewsFeedController', () => {
   let newsfeedController: NewsFeedController;
@@ -36,7 +39,7 @@ describe('NewsFeedController', () => {
 
       const result = await newsfeedController.getNewsfeed(userMock, {
         limit: 1,
-      } as GetNewsfeedRequestDto);
+      } as NewsfeedRequestDto);
       expect(result).toEqual({
         list: [newsfeedDtoMock],
         meta: {
@@ -62,7 +65,7 @@ describe('NewsFeedController', () => {
       });
       const result = await newsfeedController.getNewsfeed(null, {
         isMine: true,
-      } as GetNewsfeedRequestDto);
+      } as NewsfeedRequestDto);
       expect(queryExecute).toBeCalledWith({
         payload: {
           authUser: null,
@@ -84,7 +87,7 @@ describe('NewsFeedController', () => {
         .mockRejectedValue(new Error('mock test error'));
 
       await expect(
-        newsfeedController.getNewsfeed(userMock, { limit: 1 } as GetNewsfeedRequestDto)
+        newsfeedController.getNewsfeed(userMock, { limit: 1 } as NewsfeedRequestDto)
       ).rejects.toThrowError('mock test error');
 
       expect(queryExecute).toBeCalledWith({

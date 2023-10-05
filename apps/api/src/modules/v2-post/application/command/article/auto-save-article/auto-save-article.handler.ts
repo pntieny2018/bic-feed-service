@@ -1,0 +1,22 @@
+import { Inject } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
+import {
+  ARTICLE_DOMAIN_SERVICE_TOKEN,
+  IArticleDomainService,
+} from '../../../../domain/domain-service/interface';
+
+import { AutoSaveArticleCommand } from './auto-save-article.command';
+
+@CommandHandler(AutoSaveArticleCommand)
+export class AutoSaveArticleHandler implements ICommandHandler<AutoSaveArticleCommand, void> {
+  public constructor(
+    @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
+    private readonly _articleDomainService: IArticleDomainService
+  ) {}
+
+  public async execute(command: AutoSaveArticleCommand): Promise<void> {
+    const { actor, ...payload } = command.payload;
+    await this._articleDomainService.autoSave({ payload, actor });
+  }
+}

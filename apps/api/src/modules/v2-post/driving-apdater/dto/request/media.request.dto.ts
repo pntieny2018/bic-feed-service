@@ -1,15 +1,8 @@
-import {
-  IsArray,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 
+// TODO: Remove this class and use MediaItemDto instead from apps/api/src/modules/v2-post/application/dto/media.dto.ts
 export class MediaDto {
   @ApiProperty()
   @Type(() => String)
@@ -19,6 +12,7 @@ export class MediaDto {
   public id: string;
 }
 
+// TODO: Remove this class and use MediaDto instead from apps/api/src/modules/v2-post/application/dto/media.dto.ts
 export class MediaRequestDto {
   @ApiProperty({ required: false, type: [MediaDto] })
   @IsArray()

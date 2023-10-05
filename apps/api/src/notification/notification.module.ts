@@ -1,9 +1,11 @@
-import { PostModule } from '../modules/post';
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CommentNotificationService, ContentNotificationService } from './services';
-import { CommentDissociationService } from './dissociations';
-import { NotificationService } from './notification.service';
+import { ConfigService } from '@nestjs/config';
+
+import { IAxiosConfig } from '../config/axios';
 import { CommentModule } from '../modules/comment';
+import { PostModule } from '../modules/post';
+
 import {
   CommentActivityService,
   PostActivityService,
@@ -11,9 +13,9 @@ import {
   ReportActivityService,
   SeriesActivityService,
 } from './activities';
-import { HttpModule } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { IAxiosConfig } from '../config/axios';
+import { CommentDissociationService } from './dissociations';
+import { NotificationService } from './notification.service';
+import { CommentNotificationService, ContentNotificationService } from './services';
 
 @Module({
   imports: [

@@ -1,11 +1,8 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
-  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -15,29 +12,24 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ClassTransformer } from 'class-transformer';
-import { ResponseMessages } from '../../../../common/decorators';
-import { PageDto } from '../../../../common/dto';
-import { AuthUser } from '../../../auth';
-import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
-import { UserDto } from '../../../v2-user/application';
-import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
-import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
-import { UpdateTagCommand } from '../../application/command/update-tag/update-tag.command';
-import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
-import {
-  TagDuplicateNameException,
-  TagNoCreatePermissionException,
-  TagNoDeletePermissionException,
-  TagNotFoundException,
-  TagNoUpdatePermissionException,
-  TagUsedException,
-} from '../../domain/exception';
-import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
-import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
-import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
-import { TagDto } from '../../application/dto';
+
 import { ROUTES } from '../../../../common/constants/routes.constant';
+import { AuthUser, ResponseMessages } from '../../../../common/decorators';
+import { PageDto } from '../../../../common/dto';
+import { UserDto } from '../../../v2-user/application';
+import {
+  CreateTagCommand,
+  DeleteTagCommand,
+  UpdateTagCommand,
+} from '../../application/command/tag';
+import { FindTagsPaginationDto, SearchTagsDto, TagDto } from '../../application/dto';
+import { FindTagsPaginationQuery, SearchTagsQuery } from '../../application/query/tag';
+import {
+  CreateTagRequestDto,
+  GetTagRequestDto,
+  SearchTagRequestDto,
+  UpdateTagRequestDto,
+} from '../dto/request';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -47,7 +39,21 @@ export class TagController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
-  private _classTransformer = new ClassTransformer();
+
+  @ApiOperation({ summary: 'Search and group tags' })
+  @ApiOkResponse({
+    type: SearchTagsDto,
+    description: 'Search and group tags successfully',
+  })
+  @Get(ROUTES.TAG.SEARCH_TAGS.PATH)
+  public async searchAndGroup(
+    @AuthUser() _user: UserDto,
+    @Query() searchTagDto: SearchTagRequestDto
+  ): Promise<SearchTagsDto> {
+    const { keyword } = searchTagDto;
+    return this._queryBus.execute(new SearchTagsQuery({ keyword }));
+  }
+
   @ApiOperation({ summary: 'Get tags' })
   @Get(ROUTES.TAG.GET_TAGS.PATH)
   public async get(
@@ -68,7 +74,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Create new tag' })
   @ApiOkResponse({
-    type: CreateTagDto,
+    type: TagDto,
     description: 'Create tag successfully',
   })
   @ResponseMessages({
@@ -79,29 +85,13 @@ export class TagController {
   public async create(
     @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagRequestDto
-  ): Promise<CreateTagDto> {
+  ): Promise<TagDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
-    try {
-      const tag = await this._commandBus.execute<CreateTagCommand, CreateTagDto>(
-        new CreateTagCommand({ groupId, name, userId })
-      );
 
-      return tag;
-    } catch (e) {
-      switch (e.constructor) {
-        case TagNotFoundException:
-          throw new NotFoundException(e);
-        case TagDuplicateNameException:
-          throw new BadRequestException(e);
-        case TagNoCreatePermissionException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    return this._commandBus.execute<CreateTagCommand, TagDto>(
+      new CreateTagCommand({ groupId, name, userId })
+    );
   }
 
   @ApiOperation({ summary: 'Update tag' })
@@ -118,26 +108,11 @@ export class TagController {
     @Body() updateTagDto: UpdateTagRequestDto
   ): Promise<TagDto> {
     const { name } = updateTagDto;
-    try {
-      const tag = await this._commandBus.execute<UpdateTagCommand, TagDto>(
-        new UpdateTagCommand({ id: tagId, name, userId: user.id })
-      );
-      return tag;
-    } catch (e) {
-      switch (e.constructor) {
-        case TagNotFoundException:
-          throw new NotFoundException(e);
-        case TagDuplicateNameException:
-        case TagUsedException:
-          throw new BadRequestException(e);
-        case TagNoUpdatePermissionException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+
+    const tag = await this._commandBus.execute<UpdateTagCommand, TagDto>(
+      new UpdateTagCommand({ id: tagId, name, userId: user.id })
+    );
+    return tag;
   }
 
   @ApiOperation({ summary: 'Delete tag' })
@@ -152,21 +127,6 @@ export class TagController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<void> {
-    try {
-      await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
-    } catch (e) {
-      switch (e.constructor) {
-        case TagNotFoundException:
-          throw new BadRequestException(e);
-        case TagUsedException:
-          throw new BadRequestException(e);
-        case TagNoDeletePermissionException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
+    await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
   }
 }

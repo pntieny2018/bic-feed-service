@@ -8,11 +8,10 @@ import { ClassTransformer } from 'class-transformer';
 import { UserDto } from '../v2-user/application';
 import { PostService } from '../post/post.service';
 import { PostBindingService } from '../post/post-binding.service';
-import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { InjectModel } from '@nestjs/sequelize';
 import { SeriesService } from '../series/series.service';
 import { ArticleService } from '../article/article.service';
+import { ContentNotFoundException } from '../v2-post/domain/exception';
 
 @Injectable()
 export class AdminService {
@@ -90,7 +89,7 @@ export class AdminService {
     });
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     if (post.type === PostType.POST) {
       return this._postService.get(postId, user, {

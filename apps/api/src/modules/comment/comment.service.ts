@@ -3,10 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto } from '../../common/dto';
-import { LogicException } from '../../common/exceptions';
-import { ExceptionHelper } from '../../common/helpers';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { AuthorityService } from '../authority';
@@ -19,6 +16,7 @@ import { TargetType } from '../report-content/contstants';
 import { GetCommentsDto } from './dto/requests';
 import { CommentResponseDto } from './dto/response';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { CommentNotFoundException } from '../v2-post/domain/exception';
 
 @Injectable()
 export class CommentService {
@@ -64,7 +62,7 @@ export class CommentService {
     });
 
     if (!response) {
-      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+      throw new CommentNotFoundException();
     }
     const rawComment = response.toJSON();
     await Promise.all([
@@ -97,7 +95,7 @@ export class CommentService {
     });
 
     if (!responses) {
-      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+      throw new CommentNotFoundException();
     }
     const rawComment = responses.map((r) => r.toJSON());
     await Promise.all([
@@ -280,7 +278,7 @@ export class CommentService {
     const response = await get(commentId);
 
     if (!response) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+      throw new CommentNotFoundException();
     }
     const rawComment = response.toJSON();
 

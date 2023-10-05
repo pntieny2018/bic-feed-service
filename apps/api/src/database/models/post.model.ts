@@ -1,5 +1,6 @@
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
+import { Literal } from 'sequelize/types/utils';
 import {
   AllowNull,
   BelongsTo,
@@ -16,10 +17,12 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
+
 import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
+import { PostLang } from '../../modules/v2-post/data-type';
+
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
@@ -31,14 +34,13 @@ import { PostMediaModel } from './post-media.model';
 import { IPostReaction, PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
 import { IPostTag, PostTagModel } from './post-tag.model';
+import { IQuizParticipant, QuizParticipantModel } from './quiz-participant.model';
+import { IQuiz, QuizModel } from './quiz.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
 import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
-import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
-import { IQuiz, QuizModel } from './quiz.model';
-import { IQuizParticipant, QuizParticipantModel } from './quiz-participant.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -314,7 +316,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     as: 'ownerReactions',
     foreignKey: 'postId',
   })
-  public postReactions: PostReactionModel[];
+  public ownerReactions: PostReactionModel[];
 
   public reactionsCount: string;
 
@@ -435,7 +437,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       type?: TargetType[];
     }
   ): Literal {
-    if (!userId) return Sequelize.literal(`1 = 1`);
+    if (!userId) {
+      return Sequelize.literal(`1 = 1`);
+    }
     const { mainTableAlias, type } = options ?? {
       mainTableAlias: 'PostModel',
       type: [],

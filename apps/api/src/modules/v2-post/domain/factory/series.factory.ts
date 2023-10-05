@@ -1,14 +1,16 @@
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { BasedSeriesAttribute, ISeriesFactory } from './interface';
-import { SeriesEntity, SeriesProps } from '../model/content/series.entity';
 import { v4 } from 'uuid';
-import { PostStatus, PostType } from '../../data-type';
+
+import { SeriesEntity, SeriesAttributes } from '../model/content';
+
+import { BasedSeriesProps, ISeriesFactory } from './interface';
 
 export class SeriesFactory implements ISeriesFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public createSeries(props: BasedSeriesAttribute): SeriesEntity {
+  public createSeries(props: BasedSeriesProps): SeriesEntity {
     const { userId, title, summary } = props;
     const now = new Date();
     const entity = new SeriesEntity({
@@ -17,8 +19,8 @@ export class SeriesFactory implements ISeriesFactory {
       summary,
       createdBy: userId,
       updatedBy: userId,
-      status: PostStatus.PUBLISHED,
-      type: PostType.SERIES,
+      status: CONTENT_STATUS.PUBLISHED,
+      type: CONTENT_TYPE.SERIES,
       setting: {
         canComment: true,
         canReact: true,
@@ -42,7 +44,7 @@ export class SeriesFactory implements ISeriesFactory {
     return this._eventPublisher.mergeObjectContext(entity);
   }
 
-  public reconstitute(properties: SeriesProps): SeriesEntity {
+  public reconstitute(properties: SeriesAttributes): SeriesEntity {
     return this._eventPublisher.mergeObjectContext(new SeriesEntity(properties));
   }
 }

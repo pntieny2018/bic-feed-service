@@ -1,37 +1,38 @@
-import { CreateReactionHandler } from '../../../application/command/create-reaction/create-reaction.handler';
+import { createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
+import { I18nContext } from 'nestjs-i18n';
+import { v4 } from 'uuid';
+
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { CreateReactionHandler } from '../../../application/command/reaction';
+import { PostPrivacy, PostStatus, PostType, REACTION_TARGET } from '../../../data-type';
+import {
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+  IContentDomainService,
+} from '../../../domain/domain-service/interface';
+import {
+  IReactionDomainService,
+  REACTION_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/reaction.domain-service.interface';
+import { ReactionDuplicateException } from '../../../domain/exception';
+import { ReactionEntity } from '../../../domain/model/reaction';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
   IPostReactionRepository,
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserApplicationService,
-} from '../../../../v2-user/application';
-import { Test, TestingModule } from '@nestjs/testing';
-import { v4 } from 'uuid';
-import { ReactionEntity } from '../../../domain/model/reaction';
-import { createMock } from '@golevelup/ts-jest';
-import { PostReactionRepository } from '../../../driven-adapter/repository/post-reaction.repository';
-import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
-import { I18nContext } from 'nestjs-i18n';
-import { userMock } from '../../mock/user.dto.mock';
-import { ReactionDuplicateException } from '../../../domain/exception';
-import {
-  IReactionDomainService,
-  REACTION_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/reaction.domain-service.interface';
-import { ReactionDomainService } from '../../../domain/domain-service/interface/reaction.domain-service';
-import { REACTION_TARGET } from '../../../data-type/reaction-target.enum';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('CreateReactionHandler', () => {
   let handler: CreateReactionHandler;
-  let postReactionRepository: IPostReactionRepository;
-  let commentReactionRepository: ICommentReactionRepository;
   let reactionDomainService: IReactionDomainService;
   let userAppService: IUserApplicationService;
+  let postReactionRepository: IPostReactionRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -39,34 +40,41 @@ describe('CreateReactionHandler', () => {
         CreateReactionHandler,
         {
           provide: POST_REACTION_REPOSITORY_TOKEN,
-          useValue: createMock<PostReactionRepository>(),
+          useValue: createMock<IPostReactionRepository>(),
         },
         {
           provide: COMMENT_REACTION_REPOSITORY_TOKEN,
-          useValue: createMock<CommentReactionRepository>(),
+          useValue: createMock<ICommentReactionRepository>(),
         },
         {
           provide: REACTION_DOMAIN_SERVICE_TOKEN,
-          useValue: createMock<ReactionDomainService>(),
+          useValue: createMock<IReactionDomainService>(),
         },
         {
           provide: USER_APPLICATION_TOKEN,
-          useValue: createMock<UserApplicationService>(),
+          useValue: createMock<IUserApplicationService>(),
+        },
+        {
+          provide: COMMENT_DOMAIN_SERVICE_TOKEN,
+          useValue: createMock<ICommentDomainService>(),
+        },
+        {
+          provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+          useValue: createMock<IContentDomainService>(),
         },
       ],
     }).compile();
 
     handler = module.get<CreateReactionHandler>(CreateReactionHandler);
-    postReactionRepository = module.get<IPostReactionRepository>(POST_REACTION_REPOSITORY_TOKEN);
-    commentReactionRepository = module.get<ICommentReactionRepository>(
-      COMMENT_REACTION_REPOSITORY_TOKEN
-    );
-    reactionDomainService = module.get<IReactionDomainService>(REACTION_DOMAIN_SERVICE_TOKEN);
-    userAppService = module.get<IUserApplicationService>(USER_APPLICATION_TOKEN);
+
+    reactionDomainService = module.get(REACTION_DOMAIN_SERVICE_TOKEN);
+    userAppService = module.get(USER_APPLICATION_TOKEN);
+    postReactionRepository = module.get(POST_REACTION_REPOSITORY_TOKEN);
 
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           t: (...args) => {},
         } as any)
     );
@@ -89,6 +97,31 @@ describe('CreateReactionHandler', () => {
       reactionName: command.payload.reactionName,
       createdBy: command.payload.createdBy,
     };
+    const postRecord = {
+      id: v4(),
+      isReported: false,
+      isHidden: false,
+      createdBy: v4(),
+      updatedBy: v4(),
+      privacy: PostPrivacy.PRIVATE,
+      status: PostStatus.PUBLISHED,
+      type: PostType.POST,
+      setting: {
+        isImportant: false,
+        canReact: true,
+        canComment: true,
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      media: {
+        files: [],
+        images: [],
+        videos: [],
+      },
+      content: '',
+      seriesIds: [],
+      tags: [],
+    };
 
     const reactionEntity = new ReactionEntity(reactionRecord);
 
@@ -101,6 +134,8 @@ describe('CreateReactionHandler', () => {
         actor: userMock,
         id: reactionRecord.id,
         reactionName: reactionRecord.reactionName,
+        target: reactionRecord.target,
+        targetId: reactionRecord.targetId,
       });
     });
 

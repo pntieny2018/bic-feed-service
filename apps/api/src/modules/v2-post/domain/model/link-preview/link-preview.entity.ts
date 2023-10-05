@@ -1,9 +1,17 @@
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { validate as isUUID, v4 } from 'uuid';
+
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
-import { LinkPreviewDto } from '../../../application/dto';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
 export type LinkPreviewProps = {
+  url: string;
+  domain: string;
+  image: string;
+  title: string;
+  description: string;
+};
+
+export type LinkPreviewAttributes = {
   id: string;
   url: string;
   domain?: string;
@@ -14,9 +22,24 @@ export type LinkPreviewProps = {
   updatedAt: Date;
 };
 
-export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewProps> {
-  public constructor(props: LinkPreviewProps) {
+export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewAttributes> {
+  public constructor(props: LinkPreviewAttributes) {
     super(props);
+  }
+
+  public static create(options: Partial<LinkPreviewAttributes>): LinkPreviewEntity {
+    const { title, description, domain, url, image } = options;
+    const now = new Date();
+    return new LinkPreviewEntity({
+      id: v4(),
+      title,
+      description,
+      domain,
+      image,
+      url,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public validate(): void {
@@ -25,7 +48,7 @@ export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewProps> {
     }
   }
 
-  public update(data: LinkPreviewDto): void {
+  public update(data: LinkPreviewProps): void {
     this._props = {
       ...this._props,
       ...data,

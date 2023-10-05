@@ -1,10 +1,12 @@
-import { CategoryController } from '../../../driving-apdater/controller/category.controller';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { userMock } from '../../mock/user.dto.mock';
-import { FindCategoriesPaginationDto } from '../../../application/query/find-categories/find-categories-pagination.dto';
-import { FindCategoriesPaginationQuery } from '../../../application/query/find-categories/find-categories-pagination.query';
-import { GetCategoryDto } from '../../../driving-apdater/dto/request/get-category.dto';
+
+import { FindCategoriesPaginationDto } from '../../../application/dto/category.dto';
+import { FindCategoriesPaginationQuery } from '../../../application/query/category';
+import { CategoryController } from '../../../driving-apdater/controller/category.controller';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('CategoryController', () => {
   let controller: CategoryController;
@@ -50,7 +52,7 @@ describe('CategoryController', () => {
 
   describe('Get', () => {
     it('Should get categories successfully', async () => {
-      const getCategoryDto: GetCategoryDto = {
+      const getCategoryDto = {
         name: 'Outdoors',
         level: 1,
         isCreatedByMe: true,

@@ -1,19 +1,29 @@
-import { GroupDto } from '../../../../v2-group/application/group.dto';
-import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
-import { CreateCommentProps } from '../../factory/interface/comment.factory.interface';
+import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { BasedCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
-import { UserDto } from '../../../../v2-user/application/user.dto';
 
-export type UpdateCommentProps = {
-  commentEntity: CommentEntity;
-  groups: GroupDto[];
-  mentionUsers: UserDto[];
-  newData: UpdateCommentCommandPayload;
+export type CreateCommentProps = BasedCommentProps;
+
+export type UpdateCommentProps = BasedCommentProps & { id: string };
+
+export type GetCommentsAroundIdProps = {
+  userId?: string;
+  limit: number;
+  targetChildLimit: number;
 };
 
 export interface ICommentDomainService {
+  getVisibleComment(id: string, excludeReportedByUserId?: string): Promise<CommentEntity>;
+
+  getCommentsAroundId(
+    id: string,
+    props: GetCommentsAroundIdProps
+  ): Promise<CursorPaginationResult<CommentEntity>>;
+
   create(data: CreateCommentProps): Promise<CommentEntity>;
 
   update(input: UpdateCommentProps): Promise<void>;
+
+  delete(id: string): Promise<void>;
 }
 export const COMMENT_DOMAIN_SERVICE_TOKEN = 'COMMENT_DOMAIN_SERVICE_TOKEN';

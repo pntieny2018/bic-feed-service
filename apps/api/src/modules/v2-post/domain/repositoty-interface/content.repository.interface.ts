@@ -1,69 +1,38 @@
-import { PostEntity } from '../model/content';
-import { PostStatus, PostType } from '../../data-type';
-import { IPost } from '../../../../database/models/post.model';
-import { ArticleEntity } from '../model/content/article.entity';
-import { SeriesEntity } from '../model/content/series.entity';
-import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
-import { ContentEntity } from '../model/content/content.entity';
+import { CONTENT_TARGET } from '@beincom/constants';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import {
+  FindContentIncludeOptions,
+  FindContentProps,
+  GetPaginationContentsProps,
+} from '@libs/database/postgres/repository/interface';
 
-export type OrderOptions = {
-  isImportantFirst?: boolean;
-  isPublishedByDesc?: boolean;
-};
-
-export type FindContentOptions = {
-  where: {
-    type?: PostType;
-    id?: string;
-    ids?: string[];
-    groupArchived?: boolean;
-    excludeReportedByUserId?: string;
-    groupIds?: string[];
-    createdBy?: string;
-    isImportant?: boolean;
-    scheduledAt?: Date;
-    isHidden?: boolean;
-    savedByUserId?: string;
-    status?: PostStatus;
-    inNewsfeedUserId?: string;
-  };
-  include?: {
-    mustIncludeGroup?: boolean;
-    shouldIncludeGroup?: boolean;
-    shouldIncludeSeries?: boolean;
-    shouldIncludeItems?: boolean;
-    shouldIncludeCategory?: boolean;
-    shouldIncludeQuiz?: boolean;
-    shouldIncludeLinkPreview?: boolean;
-    shouldIncludeReaction?: {
-      userId?: string;
-    };
-    shouldIncludeSaved?: {
-      userId?: string;
-    };
-    shouldIncludeMarkReadImportant?: {
-      userId: string;
-    };
-    shouldIncludeImportant?: {
-      userId: string;
-    };
-  };
-  attributes?: { exclude?: (keyof IPost)[] };
-  orderOptions?: OrderOptions;
-};
-
-export type GetPaginationContentsProps = FindContentOptions & CursorPaginationProps;
+import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
-  findOne(
-    findOnePostOptions: FindContentOptions
+  findContentById(
+    contentId: string,
+    options?: FindContentIncludeOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentByIdInActiveGroup(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentByIdInArchivedGroup(
+    contentId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentByIdExcludeReportedByUserId(
+    contentId: string,
+    userId: string,
+    options?: FindContentIncludeOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
-    findAllPostOptions: FindContentOptions
+    findAllPostOptions: FindContentProps,
+    offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   delete(id: string): Promise<void>;
@@ -72,6 +41,7 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getReportedContentIdsByUser(reportUser: string, target: CONTENT_TARGET[]): Promise<string[]>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

@@ -1,21 +1,11 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { v4 } from 'uuid';
-import { RULES } from '../../../constant';
-import { ArrayHelper } from '../../../../../common/helpers';
 
-type QuestionAttribute = {
-  id: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  answers: {
-    id: string;
-    content: string;
-    isCorrect: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
-};
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { ArrayHelper } from '../../../../../common/helpers';
+import { RULES } from '../../../constant';
+import { QuizQuestionAttributes } from '../quiz/quiz-question.entity';
+import { QuizEntity } from '../quiz/quiz.entity';
+
 export type QuizParticipantProps = {
   id: string;
   contentId: string;
@@ -23,7 +13,7 @@ export type QuizParticipantProps = {
   quizSnapshot: {
     title: string;
     description: string;
-    questions: QuestionAttribute[];
+    questions: QuizQuestionAttributes[];
   };
   answers: {
     id: string;
@@ -53,6 +43,51 @@ export class QuizParticipantEntity extends DomainAggregateRoot<QuizParticipantPr
 
   public validate(): void {
     //
+  }
+
+  public static create(props: QuizParticipantProps): QuizParticipantEntity {
+    return new QuizParticipantEntity({
+      id: v4(),
+      ...props,
+    });
+  }
+
+  public static createFromQuiz(quizEntity: QuizEntity, userId: string): QuizParticipantEntity {
+    const now = new Date();
+    return new QuizParticipantEntity({
+      id: v4(),
+      quizId: quizEntity.get('id'),
+      contentId: quizEntity.get('contentId'),
+      quizSnapshot: {
+        title: quizEntity.get('title'),
+        description: quizEntity.get('description'),
+        questions: quizEntity.get('questions').map((question) => ({
+          id: question.get('id'),
+          content: question.get('content'),
+          createdAt: question.get('createdAt'),
+          updatedAt: question.get('updatedAt'),
+          answers: question.get('answers').map((answer) => ({
+            id: answer.id,
+            content: answer.content,
+            isCorrect: answer.isCorrect,
+            createdAt: answer.createdAt,
+            updatedAt: answer.updatedAt,
+          })),
+        })),
+      },
+      answers: [],
+      score: 0,
+      isHighest: false,
+      timeLimit: quizEntity.get('timeLimit'),
+      totalAnswers: 0,
+      totalCorrectAnswers: 0,
+      startedAt: now,
+      finishedAt: null,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   public isOverTimeLimit(): boolean {

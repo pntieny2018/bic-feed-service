@@ -1,5 +1,5 @@
-import { UserDto } from '../../../../v2-user/application';
-import { GroupDto } from '../../../../v2-group/application';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
 
 export interface IMentionValidator {
   validateMentionUsers(users: UserDto[], groups: GroupDto[]): Promise<void>;

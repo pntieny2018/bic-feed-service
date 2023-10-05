@@ -1,6 +1,9 @@
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
+
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
-import { UserDto } from '../../../v2-user/application';
-import { GroupDto } from '../../../v2-group/application';
+
 import { ArticleDto, ImageDto, PostDto, PostSettingDto, QuizDto } from '.';
 
 export class SeriesDto {
@@ -16,7 +19,7 @@ export class SeriesDto {
 
   public communities?: GroupDto[];
 
-  public items?: Partial<PostDto | ArticleDto>[] = [];
+  public items?: Partial<PostDto | ArticleDto>[];
 
   public setting: PostSettingDto;
 
@@ -28,11 +31,11 @@ export class SeriesDto {
 
   public actor: UserDto;
 
-  public status: PostStatus;
+  public status: PostStatus | CONTENT_STATUS;
 
-  public privacy: PostPrivacy;
+  public privacy: PostPrivacy | PRIVACY;
 
-  public type: PostType;
+  public type: PostType | CONTENT_TYPE;
 
   public markedReadPost?: boolean;
 
@@ -51,7 +54,35 @@ export class SeriesDto {
 
   public createdBy: string;
 
+  public highlight?: string;
+
+  public titleHighlight?: string;
+
+  public summaryHighlight?: string;
+
   public constructor(data: Partial<SeriesDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class CreateSeriesDto extends SeriesDto {
+  public constructor(data: Partial<CreateSeriesDto>) {
+    super(data);
+  }
+}
+
+export class FindItemsBySeriesDto {
+  public series: {
+    id: string;
+    title: string;
+    summary: string;
+    items: {
+      id: string;
+      title: string;
+      type: PostType;
+    }[];
+  }[];
+  public constructor(data: FindItemsBySeriesDto) {
     Object.assign(this, data);
   }
 }

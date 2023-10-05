@@ -1,47 +1,45 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
-import { RULES } from '../../constant';
-import {
-  CONTENT_REPOSITORY_TOKEN,
-  IContentRepository,
-  IMediaRepository,
-  ITagRepository,
-  MEDIA_REPOSITORY_TOKEN,
-  TAG_REPOSITORY_TOKEN,
-} from '../repositoty-interface';
-import { IPostValidator } from './interface';
-import { ContentValidator } from './content.validator';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
+
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
+import { UserDto } from '../../../v2-user/application';
+import { RULES } from '../../constant';
+import { ContentEmptyContentException, PostLimitAttachedSeriesException } from '../exception';
 import { PostEntity } from '../model/content';
 import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../v2-user/application';
-import { ContentEmptyException } from '../exception/content-empty.exception';
-import { PostLimitAttachedSeriesException } from '../exception';
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IMediaRepository,
+  MEDIA_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
+import {
+  IUserAdapter,
+  USER_ADAPTER,
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '../service-adapter-interface';
+
+import { ContentValidator } from './content.validator';
+import { IPostValidator } from './interface';
 
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected _groupAppService: IGroupApplicationService,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected readonly _userApplicationService: IUserApplicationService,
+    @Inject(GROUP_ADAPTER)
+    protected _groupAdapter: IGroupAdapter,
+    @Inject(USER_ADAPTER)
+    protected readonly _userAdapter: IUserAdapter,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     protected readonly _contentRepository: IContentRepository,
-    @Inject(TAG_REPOSITORY_TOKEN)
-    private readonly _tagRepository: ITagRepository,
     @Inject(MEDIA_REPOSITORY_TOKEN)
     private readonly _mediaRepo: IMediaRepository
   ) {
-    super(_groupAppService, _userApplicationService, _authorityAppService, _contentRepository);
+    super(_groupAdapter, _userAdapter, _authorityAppService, _contentRepository);
   }
 
   public async validatePublishContent(
@@ -56,7 +54,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       postEntity.get('media')?.videos.length === 0 &&
       postEntity.get('media')?.images.length === 0
     ) {
-      throw new ContentEmptyException();
+      throw new ContentEmptyContentException();
     }
   }
 
@@ -68,7 +66,9 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       videosIds?: string[];
     }
   ): Promise<void> {
-    if (!media) return;
+    if (!media) {
+      return;
+    }
     const mediaEntity = {
       files: [],
       images: [],
@@ -130,8 +130,8 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     postEntity.setMedia(mediaEntity);
   }
 
-  public async validateLimtedToAttachSeries(postEntity: PostEntity): Promise<void> {
-    if (postEntity.isOverLimtedToAttachSeries()) {
+  public async validateLimitedToAttachSeries(postEntity: PostEntity): Promise<void> {
+    if (postEntity.isOverLimitedToAttachSeries()) {
       throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
@@ -145,7 +145,9 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       },
     })) as PostEntity;
 
-    if (!contentWithArchivedGroups) return;
+    if (!contentWithArchivedGroups) {
+      return;
+    }
 
     const series = uniq([
       ...postEntity.getSeriesIds(),

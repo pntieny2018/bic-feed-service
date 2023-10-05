@@ -1,47 +1,51 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NIL, v4 } from 'uuid';
-import { I18nContext } from 'nestjs-i18n';
-import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import {
-  COMMENT_DOMAIN_SERVICE_TOKEN,
-  ICommentDomainService,
-} from '../../../domain/domain-service/interface';
 import { createMock } from '@golevelup/ts-jest';
-import { ContentValidator } from '../../../domain/validator/content.validator';
-import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Test, TestingModule } from '@nestjs/testing';
+import { I18nContext } from 'nestjs-i18n';
+import { NIL, v4 } from 'uuid';
+
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserApplicationService,
 } from '../../../../v2-user/application';
-import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import { ContentBinding } from '../../../application/binding/binding-post/content.binding';
-import { PostEntity } from '../../../domain/model/content';
-import { postProps } from '../../mock/post.props.mock';
+import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
-} from '../../../application/command/reply-comment/reply-comment.command';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
+  ReplyCommentHandler,
+} from '../../../application/command/comment';
+import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
+import {
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+} from '../../../domain/domain-service/interface';
 import {
   CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
-import { userMentions, userMock } from '../../mock/user.dto.mock';
-import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
+import { PostEntity } from '../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
 } from '../../../domain/repositoty-interface';
-import { ReplyCommentHandler } from '../../../application/command/reply-comment/reply-comment.handler';
+import { ContentValidator } from '../../../domain/validator/content.validator';
+import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
+import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import { createCommentDto } from '../../mock/comment.dto.mock';
-import { createCommentEntity } from '../../mock/comment.entity.mock';
+import { createMockCommentEntity } from '../../mock/comment.mock';
+import { postProps } from '../../mock/post.props.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
+const userMentions = [createMockUserDto()];
 
 describe('ReplyCommentHandler', () => {
   let handler: ReplyCommentHandler;
@@ -125,8 +129,8 @@ describe('ReplyCommentHandler', () => {
         actor: userMock,
       };
       const command = new ReplyCommentCommand(payload);
-      const parentCommentEntity = createCommentEntity(payload, postId);
-      const commentEntity = createCommentEntity(payload, postId, parentId);
+      const parentCommentEntity = createMockCommentEntity({ ...payload, postId });
+      const commentEntity = createMockCommentEntity({ ...payload, postId, parentId });
       const commentDto = createCommentDto(commentEntity);
       const postEntity = new PostEntity({ ...postProps, id: postId });
 
@@ -171,7 +175,7 @@ describe('ReplyCommentHandler', () => {
         mentions: [],
         actor: userMock,
       };
-      const parentCommentEntity = createCommentEntity(payload, postId);
+      const parentCommentEntity = createMockCommentEntity({ ...payload, postId });
       const command = new ReplyCommentCommand(payload);
 
       const spyCommentRepo = jest
@@ -204,7 +208,7 @@ describe('ReplyCommentHandler', () => {
       actor: userMock,
     };
     const command = new ReplyCommentCommand(payload);
-    const parentCommentEntity = createCommentEntity(payload, postId);
+    const parentCommentEntity = createMockCommentEntity({ ...payload, postId });
     const postEntity = new PostEntity({
       ...postProps,
       id: postId,

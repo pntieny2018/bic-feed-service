@@ -1,54 +1,42 @@
-import { Op, WhereOptions } from 'sequelize';
+import { PaginationResult } from '@libs/database/postgres/common';
+import {
+  ILibCategoryRepository,
+  LIB_CATEGORY_REPOSITORY_TOKEN,
+} from '@libs/database/postgres/repository/interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { CategoryModel, ICategory } from '../../../../database/models/category.model';
-import { FindCategoryOptions, ICategoryRepository } from '../../domain/repositoty-interface';
+
 import { CategoryEntity } from '../../domain/model/category';
-import { CATEGORY_FACTORY_TOKEN, ICategoryFactory } from '../../domain/factory/interface';
+import {
+  FindCategoryProps,
+  GetPaginationCategoryProps,
+  ICategoryRepository,
+} from '../../domain/repositoty-interface';
+import { CategoryMapper } from '../mapper/category.mapper';
 
 @Injectable()
 export class CategoryRepository implements ICategoryRepository {
   public constructor(
-    @InjectModel(CategoryModel)
-    private readonly _categoryModel: typeof CategoryModel,
-    @Inject(CATEGORY_FACTORY_TOKEN)
-    private readonly _categoryFactory: ICategoryFactory
+    @Inject(LIB_CATEGORY_REPOSITORY_TOKEN)
+    private readonly _libCategoryRepository: ILibCategoryRepository,
+    private readonly _categoryMapper: CategoryMapper
   ) {}
 
-  public async count(options: FindCategoryOptions): Promise<number> {
-    const where = this._getCondition(options);
-    return this._categoryModel.count({ where });
+  public async getPagination(
+    input: GetPaginationCategoryProps
+  ): Promise<PaginationResult<CategoryEntity>> {
+    const { rows, total } = await this._libCategoryRepository.getPagination(input);
+    return {
+      rows: rows.map((row) => this._categoryMapper.toDomain(row)),
+      total,
+    };
   }
 
-  public async findAll(options: FindCategoryOptions): Promise<CategoryEntity[]> {
-    const where = this._getCondition(options);
-    const rows = await this._categoryModel.findAll({ where });
-    return rows.map((row) => this._categoryFactory.reconstitute(row));
+  public async count(options: FindCategoryProps): Promise<number> {
+    return this._libCategoryRepository.count(options);
   }
 
-  private _getCondition(options: FindCategoryOptions): WhereOptions<ICategory> {
-    let whereOptions: WhereOptions<ICategory> = {};
-    if (options.where) {
-      if (options.where['id']) {
-        whereOptions.id = options.where['id'];
-      } else if (options.where['ids']) {
-        whereOptions.id = options.where['ids'];
-      }
-
-      if (options.where['createdBy']) {
-        if (options.where['shouldDisjunctionLevel']) {
-          whereOptions = {
-            ...whereOptions,
-            [Op.or]: {
-              level: 1,
-              createdBy: options.where['createdBy'],
-            },
-          };
-        } else {
-          whereOptions.createdBy = options.where['createdBy'];
-        }
-      }
-    }
-    return whereOptions;
+  public async findAll(options: FindCategoryProps): Promise<CategoryEntity[]> {
+    const categories = await this._libCategoryRepository.findAll(options);
+    return categories.map((category) => this._categoryMapper.toDomain(category));
   }
 }

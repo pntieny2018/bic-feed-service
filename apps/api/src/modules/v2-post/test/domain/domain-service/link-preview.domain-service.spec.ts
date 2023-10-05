@@ -1,21 +1,24 @@
+import { createMock } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
+import { I18nContext } from 'nestjs-i18n';
+
+import { DatabaseException } from '../../../../../common/exceptions/database.exception';
+import { LinkPreviewDto } from '../../../application/dto';
 import { ILinkPreviewDomainService } from '../../../domain/domain-service/interface/link-preview.domain-service.interface';
-import {
-  ILinkPreviewRepository,
-  LINK_PREVIEW_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface';
+import { LinkPreviewDomainService } from '../../../domain/domain-service/link-preview.domain-service';
 import {
   ILinkPreviewFactory,
   LINK_PREVIEW_FACTORY_TOKEN,
 } from '../../../domain/factory/interface/link-preview.factory.interface';
-import { Test, TestingModule } from '@nestjs/testing';
-import { LinkPreviewDomainService } from '../../../domain/domain-service/link-preview.domain-service';
 import { LinkPreviewFactory } from '../../../domain/factory/link-preview.factory';
-import { createMock } from '@golevelup/ts-jest';
+import {
+  ILinkPreviewRepository,
+  LINK_PREVIEW_REPOSITORY_TOKEN,
+} from '../../../domain/repositoty-interface';
 import { LinkPreviewRepository } from '../../../driven-adapter/repository/link-preview.repository';
-import { I18nContext } from 'nestjs-i18n';
-import { LinkPreviewDto } from '../../../application/dto';
-import { mockLinkPreviewEntity } from '../../mock/link-preview.entity.mock';
-import { DatabaseException } from '../../../../../common/exceptions/database.exception';
+import { createMockLinkPreviewEntity } from '../../mock/link-preview.mock';
+
+const mockLinkPreviewEntity = createMockLinkPreviewEntity();
 
 describe('LinkPreviewDomainService', () => {
   let linkPreviewDomainService: ILinkPreviewDomainService;

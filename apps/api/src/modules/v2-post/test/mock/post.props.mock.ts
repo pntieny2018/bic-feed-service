@@ -1,16 +1,17 @@
-import { PostPrivacy, PostType } from '../../data-type';
-import { PostStatus } from '../../data-type/post-status.enum';
-import { PostProps } from '../../domain/model/content';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 
-export const postProps: PostProps = {
+import { PostAttributes } from '../../domain/model/content';
+
+// TODO: Remove this file
+export const postProps: PostAttributes = {
   id: '9bacb01c-deae-4d80-81d7-b619b26ef684',
   isReported: false,
   isHidden: false,
   createdBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
   updatedBy: '001072e1-d214-4d3d-beab-8a5bb8784cc4',
-  privacy: PostPrivacy.PRIVATE,
-  status: PostStatus.DRAFT,
-  type: PostType.POST,
+  privacy: PRIVACY.PRIVATE,
+  status: CONTENT_STATUS.DRAFT,
+  type: CONTENT_TYPE.POST,
   createdAt: new Date(),
   updatedAt: new Date(),
   setting: {

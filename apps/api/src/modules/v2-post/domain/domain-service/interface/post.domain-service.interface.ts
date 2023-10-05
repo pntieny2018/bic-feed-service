@@ -1,9 +1,20 @@
-import { PostEntity } from '../../model/content';
-import { GroupDto } from '../../../../v2-group/application';
-import { UserDto } from '../../../../v2-user/application';
-import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
-import { ContentEntity } from '../../model/content/content.entity';
-import { ArticleEntity } from '../../model/content/article.entity';
+import { GroupDto } from '@libs/service/group/src/group.dto';
+import { UserDto } from '@libs/service/user';
+
+import { UpdatePostCommandPayload } from '../../../application/command/post';
+import { LinkPreviewDto, MediaDto } from '../../../application/dto';
+import { PostEntity, ArticleEntity } from '../../model/content';
+
+export type PostPayload = {
+  id: string;
+  content?: string;
+  seriesIds?: string[];
+  tagIds?: string[];
+  groupIds?: string[];
+  media?: MediaDto;
+  mentionUserIds?: string[];
+  linkPreview?: LinkPreviewDto;
+};
 
 export type PostCreateProps = {
   groups: GroupDto[];
@@ -15,29 +26,37 @@ export type ArticleCreateProps = {
   userId: string;
 };
 
-export type PostPublishProps = {
-  postEntity: PostEntity;
-  newData: PublishPostCommandPayload & {
-    groups?: GroupDto[];
-    mentionUsers: UserDto[];
-  };
+// TODO: refactor using PostPayload
+export type UpdatePostProps = UpdatePostCommandPayload;
+
+export type SchedulePostProps = {
+  payload: PostPayload & { scheduledAt: Date };
+  actor: UserDto;
 };
+
+export type PublishPostProps = {
+  payload: PostPayload;
+  actor: UserDto;
+};
+
 export interface IPostDomainService {
+  getPostById(postId: string, authUserId: string): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   createDraftArticle(input: ArticleCreateProps): Promise<ArticleEntity>;
-  publishPost(input: PostPublishProps): Promise<void>;
-  updatePost(input: PostPublishProps): Promise<void>;
+  schedule(input: SchedulePostProps): Promise<PostEntity>;
+  publish(input: PublishPostProps): Promise<PostEntity>;
+  updatePost(props: UpdatePostProps): Promise<PostEntity>;
   updateSetting(input: {
-    entity: ContentEntity;
+    contentId: string;
     authUser: UserDto;
     canComment: boolean;
     canReact: boolean;
     isImportant: boolean;
     importantExpiredAt: Date;
   }): Promise<void>;
-  autoSavePost(input: PostPublishProps): Promise<void>;
-  markSeen(contentEntity: ContentEntity, userId: string): Promise<void>;
-  markReadImportant(contentEntity: ContentEntity, userId: string): Promise<void>;
+  autoSavePost(input: UpdatePostProps): Promise<void>;
+  markSeen(contentId: string, userId: string): Promise<void>;
+  markReadImportant(contentId: string, userId: string): Promise<void>;
   delete(id: string): Promise<void>;
 }
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';

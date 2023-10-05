@@ -1,8 +1,9 @@
-import { NIL } from 'uuid';
-import { OrderEnum } from '../../../../common/dto';
+import { ORDER } from '@beincom/constants';
 import { Injectable, PipeTransform } from '@nestjs/common';
+import { NIL } from 'uuid';
+
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { GetListCommentsDto } from '../dto/request/get-list-comments.dto';
+import { GetListCommentsDto } from '../dto/request';
 
 @Injectable()
 export class GetCommentsPipe implements PipeTransform {
@@ -11,7 +12,7 @@ export class GetCommentsPipe implements PipeTransform {
       getCommentDto.limit = PAGING_DEFAULT_LIMIT;
     }
     if (!getCommentDto.order) {
-      getCommentDto.order = OrderEnum.DESC;
+      getCommentDto.order = ORDER.DESC;
     }
     if (!getCommentDto.parentId) {
       getCommentDto.parentId = NIL;
