@@ -1,4 +1,18 @@
-import { CONTENT_BINDING_TOKEN, ContentBinding } from '../application/binding';
+import {
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostTagRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
+  LibUserSeenPostRepository,
+} from '@libs/database/postgres/repository';
+import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
+import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
+import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
+
+import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
@@ -61,6 +75,7 @@ import {
   GetSeriesInContentHandler,
   GetTotalDraftHandler,
   SearchContentsHandler,
+  FindPinnedContentHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
@@ -179,6 +194,7 @@ export const postProvider = [
   SearchTagsHandler,
   GetTotalDraftHandler,
   GetSeriesInContentHandler,
+  FindPinnedContentHandler,
   SearchSeriesHandler,
 
   /** Domain Service */

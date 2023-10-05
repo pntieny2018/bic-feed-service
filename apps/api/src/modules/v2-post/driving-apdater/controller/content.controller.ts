@@ -29,6 +29,9 @@ import {
   FindDraftContentsDto,
   SearchContentsDto,
   GetSeriesResponseDto,
+  ArticleDto,
+  PostDto,
+  SeriesDto,
 } from '../../application/dto';
 import {
   FindDraftContentsQuery,
@@ -36,6 +39,7 @@ import {
   GetMenuSettingsQuery,
   GetTotalDraftQuery,
   SearchContentsQuery,
+  FindPinnedContentQuery,
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
@@ -147,6 +151,23 @@ export class ContentController {
       new GetSeriesInContentQuery({
         authUser,
         contentId,
+      })
+    );
+    return instanceToInstance(contents, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get pinned contents in group' })
+  @ApiOkResponse({})
+  @Get(ROUTES.CONTENT.GET_PINNED_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.GET_PINNED_CONTENT.VERSIONS)
+  public async getPinnedContent(
+    @AuthUser() authUser: UserDto,
+    @Param('groupId', ParseUUIDPipe) groupId: string
+  ): Promise<(ArticleDto | PostDto | SeriesDto)[]> {
+    const contents = await this._queryBus.execute<FindPinnedContentQuery>(
+      new FindPinnedContentQuery({
+        authUser,
+        groupId,
       })
     );
     return instanceToInstance(contents, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

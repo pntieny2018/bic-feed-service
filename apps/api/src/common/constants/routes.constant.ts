@@ -215,7 +215,11 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     REORDER_PIN_CONTENT: {
-      PATH: '/:groupId/reorder',
+      PATH: '/pinned-content/groups/:groupId/order',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    GET_PINNED_CONTENT: {
+      PATH: '/pinned-content/groups/:groupId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },
