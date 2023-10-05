@@ -1,13 +1,17 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+
+import { PageOptionsDto } from '../../../../../common/dto';
+
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from './media.request.dto';
 import { PostSettingRequestDto } from './post.request.dto';
@@ -179,4 +183,40 @@ export class GetItemsBySeriesRequestDto {
   })
   @IsNotEmpty()
   public seriesIds: string[];
+}
+
+export class SearchSeriesRequestDto extends PageOptionsDto {
+  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'content_search',
+  })
+  public contentSearch?: string;
+
+  @ApiProperty({
+    description: 'Group IDs',
+    required: false,
+    name: 'group_ids',
+  })
+  @Expose({
+    name: 'group_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public groupIds?: string[];
+
+  @ApiProperty({
+    description: 'Item IDs',
+    required: false,
+    name: 'item_ids',
+  })
+  @Expose({
+    name: 'item_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public itemIds?: string[];
 }

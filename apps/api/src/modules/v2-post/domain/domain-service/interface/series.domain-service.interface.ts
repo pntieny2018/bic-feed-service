@@ -3,7 +3,7 @@ import {
   DeleteSeriesCommandPayload,
   UpdateSeriesCommandPayload,
 } from '../../../application/command/series';
-import { SeriesEntity } from '../../model/content';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../../model/content';
 
 export type CreateSeriesProps = CreateSeriesCommandPayload;
 
@@ -12,7 +12,8 @@ export type UpdateSeriesProps = UpdateSeriesCommandPayload;
 export type DeleteSeriesProps = DeleteSeriesCommandPayload;
 
 export interface ISeriesDomainService {
-  findSeriesByIds(seriesId: string[]): Promise<SeriesEntity[]>;
+  findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]>;
+  findItemsInSeries(itemIds: string[], authUserId: string): Promise<(PostEntity | ArticleEntity)[]>;
   create(data: CreateSeriesProps): Promise<SeriesEntity>;
   update(input: UpdateSeriesProps): Promise<SeriesEntity>;
   delete(input: DeleteSeriesProps): Promise<void>;

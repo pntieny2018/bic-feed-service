@@ -1,5 +1,5 @@
-import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
-import { PostTagModel } from '@libs/database/postgres/model/post-tag.model';
+import { PostTagModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 
 export class LibPostTagRepository extends BaseRepository<PostTagModel> {
   public constructor() {

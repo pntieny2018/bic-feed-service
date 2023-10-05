@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
@@ -6,7 +7,7 @@ import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../e
 import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
 import { InvalidResourceImageException } from '../exception/media.exception';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
-import { SeriesEntity } from '../model/content';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
@@ -48,17 +49,18 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async findSeriesByIds(seriesId: string[]): Promise<SeriesEntity[]> {
+  public async findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]> {
     return (await this._contentRepository.findAll({
       attributes: {
         exclude: ['content'],
       },
       where: {
         groupArchived: false,
-        ids: seriesId,
+        ids: seriesIds,
       },
       include: {
         mustIncludeGroup: true,
+        shouldIncludeItems: withItems,
       },
     })) as SeriesEntity[];
   }
@@ -235,5 +237,20 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentRepository.delete(seriesEntity.get('id'));
 
     this.event.publish(new SeriesDeletedEvent(seriesEntity));
+  }
+
+  public async findItemsInSeries(
+    itemIds: string[],
+    authUserId: string
+  ): Promise<(PostEntity | ArticleEntity)[]> {
+    return (await this._contentRepository.findAll({
+      where: {
+        ids: itemIds,
+        isHidden: false,
+        groupArchived: false,
+        status: CONTENT_STATUS.PUBLISHED,
+        excludeReportedByUserId: authUserId,
+      },
+    })) as (PostEntity | ArticleEntity)[];
   }
 }

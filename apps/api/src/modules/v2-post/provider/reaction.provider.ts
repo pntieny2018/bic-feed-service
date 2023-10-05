@@ -1,5 +1,7 @@
-import { LibCommentReactionRepository } from '@libs/database/postgres/repository/comment-reaction.repository';
-import { LibPostReactionRepository } from '@libs/database/postgres/repository/post-reacion.repository';
+import {
+  LibCommentReactionRepository,
+  LibPostReactionRepository,
+} from '@libs/database/postgres/repository';
 
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';

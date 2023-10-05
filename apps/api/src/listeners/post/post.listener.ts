@@ -1,10 +1,11 @@
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
-import { MediaMarkAction, MediaStatus, MediaType } from '../../database/models/media.model';
+import { MediaMarkAction, MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
@@ -387,7 +388,7 @@ export class PostListener {
               height: properties.height,
               duration: properties.duration,
               thumbnails,
-              status: MediaStatus.COMPLETED,
+              status: MEDIA_PROCESS_STATUS.COMPLETED,
             },
           ],
           files: [],
@@ -548,7 +549,7 @@ export class PostListener {
             videos: [
               ...post.media?.videos?.map((video) => {
                 if (video.id === videoId) {
-                  return { ...video, status: MediaStatus.FAILED };
+                  return { ...video, status: MEDIA_PROCESS_STATUS.FAILED };
                 }
                 return video;
               }),

@@ -86,3 +86,17 @@ export class FindItemsBySeriesDto {
     Object.assign(this, data);
   }
 }
+
+export class SearchSeriesDto {
+  public id: string;
+  public title: string;
+  public summary: string;
+  public coverMedia?: ImageDto;
+  public audience: {
+    groups: GroupDto[];
+  };
+
+  public constructor(data: Partial<SearchSeriesDto>) {
+    Object.assign(this, data);
+  }
+}

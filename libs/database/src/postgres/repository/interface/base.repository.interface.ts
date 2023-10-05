@@ -1,4 +1,5 @@
-import { Model, ModelCtor } from 'sequelize-typescript';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { WhereOptions } from 'sequelize';
 import {
   Attributes,
   BulkCreateOptions,
@@ -8,9 +9,8 @@ import {
   IncludeOptions,
   UpdateOptions,
 } from 'sequelize/types/model';
-import { WhereOptions } from 'sequelize';
-import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 import { Literal } from 'sequelize/types/utils';
+import { Model, ModelCtor } from 'sequelize-typescript';
 
 export interface IBaseRepository<M extends Model> {
   getModel(): ModelCtor<M>;

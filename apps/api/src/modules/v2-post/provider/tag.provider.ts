@@ -1,4 +1,4 @@
-import { LibTagRepository } from '@libs/database/postgres/repository/tag.repository';
+import { LibTagRepository } from '@libs/database/postgres/repository';
 
 import { CreateTagHandler, DeleteTagHandler, UpdateTagHandler } from '../application/command/tag';
 import { FindTagsPaginationHandler } from '../application/query/tag';

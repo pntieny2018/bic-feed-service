@@ -20,7 +20,6 @@ import { IRedisConfig } from '../config/redis';
 import { ISentryConfig } from '../config/sentry';
 
 import { InternalEventEmitterModule } from './custom/event-emitter';
-import { ExternalService } from './external.service';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -138,7 +137,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     LibHttpModule.forRoot(),
     LogModule,
   ],
-  providers: [ExternalService],
-  exports: [ElasticsearchModule, ClientsModule, ExternalService],
+  providers: [],
+  exports: [ElasticsearchModule, ClientsModule],
 })
 export class LibModule {}

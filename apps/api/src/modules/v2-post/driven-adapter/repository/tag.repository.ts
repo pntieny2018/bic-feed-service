@@ -1,7 +1,9 @@
 import { PaginationResult } from '@libs/database/postgres/common';
+import { LibPostTagRepository, LibTagRepository } from '@libs/database/postgres/repository';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
+
 import { TagModel } from '../../../../database/models/tag.model';
 import { TagEntity } from '../../domain/model/tag';
 import {
@@ -11,7 +13,6 @@ import {
   ITagRepository,
 } from '../../domain/repositoty-interface';
 import { TagMapper } from '../mapper/tag.mapper';
-import { LibPostTagRepository, LibTagRepository } from '@libs/database/postgres/repository';
 
 @Injectable()
 export class TagRepository implements ITagRepository {

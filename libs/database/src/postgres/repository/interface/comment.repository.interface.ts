@@ -1,6 +1,6 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
-import { CommentModel } from '@libs/database/postgres/model/comment.model';
+import { CommentModel } from '@libs/database/postgres/model';
 
 export type FindOneOptions = {
   excludeReportedByUserId?: string;

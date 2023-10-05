@@ -1,5 +1,6 @@
 import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { CommentAttributes } from '@libs/database/postgres/model/comment.model';
+import { CommentAttributes } from '@libs/database/postgres/model';
+import { LibCommentRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { WhereOptions } from 'sequelize';
 
@@ -12,7 +13,6 @@ import {
   ICommentRepository,
 } from '../../domain/repositoty-interface';
 import { CommentMapper } from '../mapper/comment.mapper';
-import { LibCommentRepository } from '@libs/database/postgres/repository';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
