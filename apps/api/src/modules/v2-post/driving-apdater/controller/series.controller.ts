@@ -20,6 +20,7 @@ import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
 import {
+  AddSeriesItemsCommand,
   CreateSeriesCommand,
   CreateSeriesCommandPayload,
   DeleteSeriesCommand,
@@ -39,6 +40,7 @@ import {
   SearchSeriesQuery,
 } from '../../application/query/series';
 import {
+  ChangeItemsInSeriesRequestDto,
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,
   SearchSeriesRequestDto,
@@ -76,6 +78,25 @@ export class SeriesController {
       } as CreateSeriesCommandPayload)
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Add item into series' })
+  @ApiOkResponse({
+    description: 'Add article/posts successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.added_success',
+  })
+  @Put(ROUTES.SERIES.ADD_ITEMS.PATH)
+  @Version(ROUTES.SERIES.ADD_ITEMS.VERSIONS)
+  public async addArticle(
+    @AuthUser() authUser: UserDto,
+    @Param('seriesId', ParseUUIDPipe) id: string,
+    @Body() addItemsInSeriesDto: ChangeItemsInSeriesRequestDto
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new AddSeriesItemsCommand({ authUser, ...addItemsInSeriesDto, id })
+    );
   }
 
   @ApiOperation({ summary: 'Update series' })

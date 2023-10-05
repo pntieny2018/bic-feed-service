@@ -1,10 +1,15 @@
 import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event';
-import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
+import {
+  ContentAccessDeniedException,
+  ContentNoCRUDPermissionException,
+  ContentNotFoundException,
+} from '../exception';
 import { InvalidResourceImageException } from '../exception/media.exception';
 import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
@@ -16,11 +21,10 @@ import {
   CreateSeriesProps,
   UpdateSeriesProps,
   ISeriesDomainService,
-  POST_DOMAIN_SERVICE_TOKEN,
-  IPostDomainService,
   DeleteSeriesProps,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
+  AddSeriesItemsProps,
 } from './interface';
 import {
   IMediaDomainService,
@@ -37,8 +41,6 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(POST_DOMAIN_SERVICE_TOKEN)
-    private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(SERIES_FACTORY_TOKEN)
@@ -252,5 +254,63 @@ export class SeriesDomainService implements ISeriesDomainService {
         excludeReportedByUserId: authUserId,
       },
     })) as (PostEntity | ArticleEntity)[];
+  }
+
+  public async addSeriesItems(input: AddSeriesItemsProps): Promise<void> {
+    const { id, authUser, itemIds } = input;
+
+    const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeItems: true,
+    });
+
+    if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!seriesEntity.isOwner(authUser.id)) {
+      throw new ContentAccessDeniedException();
+    }
+
+    await this._contentValidator.checkCanCRUDContent(
+      authUser,
+      seriesEntity.get('groupIds'),
+      seriesEntity.get('type')
+    );
+
+    const contents = (await this._contentRepository.findAll({
+      where: {
+        ids: itemIds,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeSeries: true,
+      },
+    })) as (ArticleEntity | PostEntity)[];
+
+    if (itemIds.length !== contents.length) {
+      throw new ContentNotFoundException();
+    }
+
+    for (const content of contents) {
+      const isValid = content
+        .getGroupIds()
+        .some((groupId) => seriesEntity.getGroupIds().includes(groupId));
+
+      if (!isValid) {
+        throw new ContentNoCRUDPermissionException();
+      }
+
+      content.setSeriesIds(uniq([...content.getSeriesIds(), seriesEntity.getId()]));
+      await this._contentValidator.validateLimitedToAttachSeries(content);
+    }
+
+    try {
+      await this._contentRepository.createPostsSeries(seriesEntity.getId(), itemIds);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
   }
 }

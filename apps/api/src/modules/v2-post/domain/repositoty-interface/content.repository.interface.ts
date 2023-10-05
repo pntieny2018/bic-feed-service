@@ -45,6 +45,7 @@ export interface IContentRepository {
   countContentDraft(userId: string): Promise<number>;
   findPinnedPostIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
+  createPostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

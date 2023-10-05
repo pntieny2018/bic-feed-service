@@ -24,7 +24,8 @@
     "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}",
     "no_publish_yet": "Content has not been published yet",
     "has_been_published": "Content has been published",
-    "invalid_scheduled_time": "The scheduled time is invalid"
+    "invalid_scheduled_time": "The scheduled time is invalid",
+    "limit_attached_series": "Content can only be attached to a maximum of {limit} series"
   },
   "post": {
     "not_found": "Post not found",
@@ -32,8 +33,7 @@
     "no_create_permission": "Failed to create post: you don't have permission",
     "no_update_permission": "Failed to update post: you don't have permission",
     "no_delete_permission": "Failed to delete post: you don't have permission",
-    "no_read_permission": "You do not have permission to read this post",
-    "limit_attached_series": "Post can only be attached to a maximum of {limit} series"
+    "no_read_permission": "You do not have permission to read this post"
   },
   "article": {
     "not_found": "Article not found",
@@ -43,7 +43,6 @@
     "no_delete_permission": "Failed to delete article: you don't have permission",
     "no_read_permission": "You do not have permission to read this article",
     "required_cover": "You have not selected any cover",
-    "limit_attached_series": "Article can only be attached to a maximum of {limit} series",
     "invalid_scheduled_time": "The scheduled time is invalid"
   },
   "series": {

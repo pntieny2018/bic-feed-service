@@ -1,10 +1,6 @@
 import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
-import {
-  PostModel,
-  PostGroupModel,
-  ReportContentDetailAttributes,
-} from '@libs/database/postgres/model';
+import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
@@ -134,16 +130,6 @@ export class ContentRepository implements IContentRepository {
     transaction: Transaction
   ): Promise<void> {
     const state = contentEntity.getState();
-    if (state.attachSeriesIds.length > 0) {
-      await this._libPostSeriesRepository.bulkCreate(
-        state.attachSeriesIds.map((seriesId) => ({
-          postId: contentEntity.getId(),
-          seriesId,
-        })),
-        { transaction, ignoreDuplicates: true }
-      );
-    }
-
     if (state.detachSeriesIds.length > 0) {
       await this._libPostSeriesRepository.delete({
         where: {
@@ -151,6 +137,26 @@ export class ContentRepository implements IContentRepository {
           seriesId: state.detachSeriesIds,
         },
         transaction,
+      });
+    }
+
+    if (state.attachSeriesIds.length > 0) {
+      const dataInsert = await Promise.all(
+        state.attachSeriesIds.map(async (seriesId) => ({
+          postId: contentEntity.getId(),
+          seriesId,
+          zindex:
+            (await this._libPostSeriesRepository.max('zindex', {
+              where: {
+                seriesId,
+              },
+            })) || 0 + 1,
+        }))
+      );
+
+      await this._libPostSeriesRepository.bulkCreate(dataInsert, {
+        transaction,
+        ignoreDuplicates: true,
       });
     }
   }
@@ -394,5 +400,33 @@ export class ContentRepository implements IContentRepository {
     });
 
     await Promise.all(reorderExecute);
+  }
+
+  public async createPostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      let maxIndex =
+        (await this._libPostSeriesRepository.max('zindex', {
+          where: {
+            seriesId,
+          },
+        })) || 0;
+
+      const dataInsert = itemIds.map((itemId) => ({
+        seriesId,
+        postId: itemId,
+        zindex: ++maxIndex,
+      }));
+
+      await this._libPostSeriesRepository.bulkCreate(dataInsert, {
+        transaction,
+        ignoreDuplicates: true,
+      });
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }

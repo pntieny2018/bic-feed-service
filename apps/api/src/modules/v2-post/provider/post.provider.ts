@@ -28,6 +28,7 @@ import {
   UpdatePostHandler,
 } from '../application/command/post';
 import {
+  AddSeriesItemsHandler,
   CreateSeriesHandler,
   DeleteSeriesHandler,
   ProcessSeriesDeletedHandler,
@@ -159,6 +160,7 @@ export const postProvider = [
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
+  AddSeriesItemsHandler,
   ProcessSeriesDeletedHandler,
   ProcessSeriesPublishedHandler,
   ProcessSeriesUpdatedHandler,

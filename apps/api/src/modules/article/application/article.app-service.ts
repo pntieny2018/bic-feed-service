@@ -25,7 +25,7 @@ import { TagService } from '../../tag/tag.service';
 import { RULES } from '../../v2-post/constant';
 import {
   ArticleInvalidParameterException,
-  ArticleLimitAttachedSeriesException,
+  ContentLimitAttachedSeriesException,
   ContentNotFoundException,
 } from '../../v2-post/domain/exception';
 import { UserDto } from '../../v2-user/application';
@@ -433,7 +433,7 @@ export class ArticleAppService {
 
   public async validateUpdateSeriesData(articleId: string, series: string[]): Promise<void> {
     if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     const article = (await this._postService.getPostsWithSeries([articleId], true))[0];
@@ -442,7 +442,7 @@ export class ArticleAppService {
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimitedToAttachSeries) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

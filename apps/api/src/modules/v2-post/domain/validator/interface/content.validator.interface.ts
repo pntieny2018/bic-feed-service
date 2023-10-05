@@ -2,7 +2,7 @@ import { CONTENT_TYPE } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 
-import { ContentEntity } from '../../model/content';
+import { ArticleEntity, ContentEntity, PostEntity } from '../../model/content';
 import { TagEntity } from '../../model/tag';
 
 export interface IContentValidator {
@@ -27,6 +27,8 @@ export interface IContentValidator {
   validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): Promise<void>;
 
   validateScheduleTime(scheduleAt: Date): void;
+
+  validateLimitedToAttachSeries(contentEntity: ArticleEntity | PostEntity): Promise<void>;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

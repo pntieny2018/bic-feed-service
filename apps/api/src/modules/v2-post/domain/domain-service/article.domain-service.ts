@@ -40,8 +40,6 @@ import {
   AutoSaveArticleProps,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-  POST_DOMAIN_SERVICE_TOKEN,
-  IPostDomainService,
   CreateArticleProps,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
@@ -52,8 +50,6 @@ export class ArticleDomainService implements IArticleDomainService {
   private _logger = new Logger(ArticleDomainService.name);
 
   public constructor(
-    @Inject(POST_DOMAIN_SERVICE_TOKEN)
-    private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
@@ -187,7 +183,7 @@ export class ArticleDomainService implements IArticleDomainService {
     articleEntity.setPublish();
 
     await this._articleValidator.validateArticle(articleEntity, actor);
-    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
+    await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
     this._articleValidator.validateArticleToPublish(articleEntity);
 
     await this._contentRepository.update(articleEntity);
@@ -228,7 +224,7 @@ export class ArticleDomainService implements IArticleDomainService {
     articleEntity.setWaitingSchedule(scheduledAt);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
-    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
+    await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
     this._articleValidator.validateArticleToPublish(articleEntity);
 
     if (articleEntity.isChanged()) {
@@ -265,7 +261,7 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._setArticleEntityAttributes(articleEntity, payload, actor);
 
     await this._articleValidator.validateArticle(articleEntity, actor);
-    await this._articleValidator.validateLimitedToAttachSeries(articleEntity);
+    await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
     this._articleValidator.validateArticleToPublish(articleEntity);
 
     if (articleEntity.isChanged()) {
