@@ -13,6 +13,8 @@ import {
   LibQuizParticipantAnswerRepository,
   LibQuizParticipantRepository,
   LibQuizRepository,
+  LibCommentReactionRepository,
+  LibPostReactionRepository,
 } from '@libs/database/postgres/repository';
 
 export const libRepositoryProvider = [
@@ -30,4 +32,6 @@ export const libRepositoryProvider = [
   LibQuizParticipantAnswerRepository,
   LibQuizQuestionRepository,
   LibQuizAnswerRepository,
+  LibCommentReactionRepository,
+  LibPostReactionRepository,
 ];

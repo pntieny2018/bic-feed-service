@@ -9,6 +9,7 @@ import {
   IncludeOptions,
   UpdateOptions,
 } from 'sequelize/types/model';
+import { Literal } from 'sequelize/types/utils';
 import { Model, ModelCtor } from 'sequelize-typescript';
 
 export interface IBaseRepository<M extends Model> {
@@ -55,7 +56,7 @@ export type FindOptions<M extends Model> = {
   include?: Include<M>[];
   limit?: number;
   offset?: number;
-  order?: [string, 'ASC' | 'DESC'][];
+  order?: [string | Literal, 'ASC' | 'DESC'][];
   group?: string[];
 };
 export type Include<M extends Model> = Omit<IncludeOptions, 'attributes'> & {
