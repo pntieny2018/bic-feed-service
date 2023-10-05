@@ -16,7 +16,6 @@ import { UploadModule } from '../modules/upload';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 
-import { CheckWrongMediaCommand } from './check-wrong-media.command';
 import { CleanArticleCommand } from './clean-article.command';
 import { CleanDraftPostCommand } from './clean-draft-posts.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
@@ -31,10 +30,7 @@ import { FixProcessingStatusPostCommand } from './fix-processing-status-post.com
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
-import { MigrateLinkPreviewCommand } from './migrate-link-preview.command';
 import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-important-post.command';
-import { MigrateMediaIdCommand } from './migrate-media-id.command';
-import { MigratePostMediaCommand } from './migrate-post-media.command';
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
@@ -86,10 +82,6 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     FeedPublisherService,
     UpdateContentTypeImageCommand,
     FixTotalUsersSeenCommand,
-    MigrateMediaIdCommand,
-    MigratePostMediaCommand,
-    CheckWrongMediaCommand,
-    MigrateLinkPreviewCommand,
     MigrateCommentMentionsCommand,
     MigratePostMentionsCommand,
     MigrateWordCountCommand,
