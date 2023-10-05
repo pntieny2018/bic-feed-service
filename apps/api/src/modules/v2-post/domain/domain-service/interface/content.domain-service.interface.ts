@@ -97,6 +97,10 @@ export interface IContentDomainService {
   markSeen(contentId: string, userId: string): Promise<void>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
   reorderPinned(props: ReorderContentProps): Promise<void>;
+  findPinnedOrder(
+    groupId: string,
+    userId: string
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

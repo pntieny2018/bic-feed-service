@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   PostModel,
@@ -355,19 +355,19 @@ export class ContentRepository implements IContentRepository {
     });
   }
 
-  public async findPinnedPostGroupsByGroupId(groupId: string): Promise<PostGroupModel[]> {
-    const postGroupModel = await this._libPostGroupRepository.getModel();
-    return postGroupModel.findAll({
+  public async findPinnedPostIdsByGroupId(groupId: string): Promise<string[]> {
+    const postGroups = await this._libPostGroupRepository.findMany({
       where: {
         groupId,
         isPinned: true,
       },
+      order: [['pinned_index', ORDER.ASC]],
       include: [
         {
           model: PostModel,
           as: 'post',
           required: true,
-          attributes: [],
+          select: [],
           where: {
             status: CONTENT_STATUS.PUBLISHED,
             isHidden: false,
@@ -375,13 +375,13 @@ export class ContentRepository implements IContentRepository {
         },
       ],
     });
+
+    return postGroups.map((postGroup) => postGroup.postId);
   }
 
   public async reorderPinnedContent(contentIds: string[], groupId: string): Promise<void> {
-    const postGroupModel = await this._libPostGroupRepository.getModel();
-
     const reorderExecute = contentIds.map((postId, index) => {
-      return postGroupModel.update(
+      return this._libPostGroupRepository.update(
         {
           pinnedIndex: index + 1,
         },

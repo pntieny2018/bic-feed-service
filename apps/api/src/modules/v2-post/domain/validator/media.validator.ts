@@ -1,6 +1,8 @@
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { BadRequestException, Injectable } from '@nestjs/common';
+
 import { UserDto } from '../../../v2-user/application';
-import { MediaStatus } from '../../data-type';
+
 import { ImageProps, IMediaValidator } from './interface';
 
 @Injectable()
@@ -19,7 +21,7 @@ export class MediaValidator implements IMediaValidator {
     if (images[0]['createdBy'] !== actor.id) {
       throw new BadRequestException('You must be owner this image');
     }
-    if (images[0]['status'] !== MediaStatus.DONE) {
+    if (images[0]['status'] !== MEDIA_PROCESS_STATUS.COMPLETED) {
       throw new BadRequestException('Image is not ready to use');
     }
   }

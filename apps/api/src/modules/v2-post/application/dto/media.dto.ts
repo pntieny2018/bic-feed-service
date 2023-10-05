@@ -1,9 +1,7 @@
-import { IMAGE_RESOURCE } from '@beincom/constants';
+import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
-
-import { ImageResource } from '../../data-type';
 
 export class MediaItemDto {
   @ApiProperty()
@@ -60,10 +58,10 @@ export class ImageDto {
   public source: string;
   public createdBy: string;
   public mimeType: string;
-  public resource: ImageResource | IMAGE_RESOURCE;
+  public resource: IMAGE_RESOURCE;
   public width: number;
   public height: number;
-  public status: string;
+  public status: MEDIA_PROCESS_STATUS;
 
   public constructor(data: Partial<ImageDto>) {
     Object.assign(this, data);
@@ -80,7 +78,7 @@ export class VideoDto {
   public width: number;
   public height: number;
   public createdBy: string;
-  public status: string;
+  public status: MEDIA_PROCESS_STATUS;
   public thumbnails: {
     url: string;
     width: number;
