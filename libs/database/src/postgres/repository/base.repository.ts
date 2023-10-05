@@ -175,4 +175,11 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       meta,
     };
   }
+
+  public async max(
+    field: keyof Attributes<M>,
+    options: Omit<FindOptions<M>, 'group'> = {}
+  ): Promise<number> {
+    return this.model.max(field, options);
+  }
 }

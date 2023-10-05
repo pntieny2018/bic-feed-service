@@ -1,10 +1,6 @@
 import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
-import {
-  PostModel,
-  PostGroupModel,
-  ReportContentDetailAttributes,
-} from '@libs/database/postgres/model';
+import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
@@ -24,7 +20,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
-import { getDatabaseConfig } from '../../../../config/database';
 import { ContentNotFoundException } from '../../domain/exception';
 import {
   PostEntity,
@@ -264,6 +259,7 @@ export class ContentRepository implements IContentRepository {
     findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const content = await this._libContentRepository.findOne(findOnePostOptions);
+
     return this._contentMapper.toDomain(content);
   }
 
@@ -398,27 +394,29 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async pinContent(contentId: string, groupIds: string[]): Promise<void> {
-    if (groupIds.length === 0) {
-      return;
+    if (groupIds.length > 0) {
+      await Promise.all(
+        groupIds.map(async (groupId) => {
+          return this._libPostGroupRepository.update(
+            {
+              isPinned: true,
+              pinnedIndex:
+                (await this._libPostGroupRepository.max('pinnedIndex', {
+                  where: {
+                    groupId,
+                  },
+                })) + 1,
+            },
+            {
+              where: {
+                postId: contentId,
+                groupId,
+              },
+            }
+          );
+        })
+      );
     }
-
-    const { schema } = getDatabaseConfig();
-    const postGroupTableName = this._libPostGroupRepository.getModel().tableName;
-
-    await this._libPostGroupRepository.getModel().sequelize.query(
-      `
-        UPDATE ${schema}.${postGroupTableName} t1 
-        SET is_pinned = TRUE, 
-        pinned_index = (select MAX(pinned_index) FROM ${schema}.${postGroupTableName} t2 where t2.group_id = t1.group_id) + 1
-        WHERE post_id = :contentId AND group_id IN(:groupIds)
-    `,
-      {
-        replacements: {
-          contentId,
-          groupIds,
-        },
-      }
-    );
   }
 
   public async unpinContent(contentId: string, groupIds: string[]): Promise<void> {
@@ -426,19 +424,15 @@ export class ContentRepository implements IContentRepository {
       return;
     }
 
-    const { schema } = getDatabaseConfig();
-    const postGroupTableName = this._libPostGroupRepository.getModel().tableName;
-
-    await this._libPostGroupRepository.getModel().sequelize.query(
-      `
-        UPDATE ${schema}.${postGroupTableName} t1 
-        SET is_pinned = FALSE, pinned_index = 0
-        WHERE post_id = :contentId AND group_id IN(:groupIds)
-    `,
+    await this._libPostGroupRepository.update(
       {
-        replacements: {
-          contentId,
-          groupIds,
+        isPinned: false,
+        pinnedIndex: 0,
+      },
+      {
+        where: {
+          postId: contentId,
+          groupId: groupIds,
         },
       }
     );

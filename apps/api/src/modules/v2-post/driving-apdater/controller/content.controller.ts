@@ -251,7 +251,7 @@ export class ContentController {
     );
   }
 
-  @ApiOperation({ summary: 'Reorder pinned conttent in group' })
+  @ApiOperation({ summary: 'Reorder pinned content in group' })
   @ApiOkResponse({
     description: 'Reorder pinned content in group successfully',
   })

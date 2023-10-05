@@ -43,6 +43,8 @@ export interface IBaseRepository<M extends Model> {
     findOptions: FindOptions<M>,
     paginationProps: CursorPaginationProps
   ): Promise<CursorPaginationResult<M>>;
+
+  max(field: keyof Attributes<M>, options: Omit<FindOptions<M>, 'group'>): Promise<number>;
 }
 
 export type FindOptions<M extends Model> = {
