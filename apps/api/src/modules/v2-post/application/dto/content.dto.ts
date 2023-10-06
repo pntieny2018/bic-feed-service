@@ -1,4 +1,5 @@
 import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
+import { GroupAudience } from '../../domain/domain-service/interface';
 
 import { ArticleDto } from './article.dto';
 import { PostDto } from './post.dto';
@@ -26,5 +27,13 @@ export class GetSeriesResponseDto {
 
   public constructor(list: SeriesDto[]) {
     this.list = list;
+  }
+}
+
+export class GetAudienceResponseDto {
+  public groups: GroupAudience[];
+
+  public constructor(groups: GroupAudience[]) {
+    this.groups = groups;
   }
 }

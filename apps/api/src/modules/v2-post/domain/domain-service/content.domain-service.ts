@@ -19,6 +19,7 @@ import {
 } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -27,6 +28,7 @@ import {
 } from '../validator/interface';
 
 import {
+  GetAudienceProps,
   GetContentByIdsProps,
   GetContentIdsInNewsFeedProps,
   GetContentIdsInTimelineProps,
@@ -34,6 +36,7 @@ import {
   GetDraftsProps,
   GetImportantContentIdsProps,
   GetScheduledContentProps,
+  GroupAudience,
   IContentDomainService,
   PinContentProps,
   ReorderContentProps,
@@ -50,6 +53,8 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     private readonly _authorityAppService: IAuthorityAppService
   ) {}
@@ -585,5 +590,38 @@ export class ContentDomainService implements IContentDomainService {
 
     await this._contentRepository.pinContent(contentId, addPinGroupIds);
     await this._contentRepository.unpinContent(contentId, addUnpinGroupIds);
+  }
+
+  public async getAudience(props: GetAudienceProps): Promise<GroupAudience[]> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(props.contentId, {
+      mustIncludeGroup: true,
+    });
+
+    if (!content || content.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    const groups = content.getPostGroups() || [];
+
+    const listPinnedContentIds = {};
+    const groupIds = [];
+    groups.forEach((group) => {
+      groupIds.push(group.groupId);
+      listPinnedContentIds[group.groupId] = group.isPinned;
+    });
+
+    let dataGroups = await this._groupAdapter.getGroupsByIds(groupIds);
+
+    if (props.pinnable) {
+      dataGroups = await this._authorityAppService.getAudienceCanPin(dataGroups);
+    }
+
+    return dataGroups.map(
+      (group): GroupAudience => ({
+        id: group.id,
+        name: group.name,
+        isPinned: listPinnedContentIds[group.id],
+      })
+    );
   }
 }

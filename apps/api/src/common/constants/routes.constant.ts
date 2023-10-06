@@ -226,5 +226,9 @@ export const ROUTES = {
       PATH: '/pinned-content/:contentId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
+    GET_AUDIENCE: {
+      PATH: '/:contentId/audience',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
 };
