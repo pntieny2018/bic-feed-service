@@ -20,6 +20,7 @@ import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   MarkReadImportantContentCommand,
   ReorderPinnedContentCommand,
+  SeenContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
@@ -268,6 +269,27 @@ export class ContentController {
         groupId,
         authUser,
         contentIds,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Mark content as seen' })
+  @ApiOkResponse({
+    description: 'Mark content as seen successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.mark_as_seen_success',
+  })
+  @Version(ROUTES.CONTENT.SEEN_CONTENT.VERSIONS)
+  @Put(ROUTES.CONTENT.SEEN_CONTENT.PATH)
+  public async seenContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string
+  ): Promise<void> {
+    await this._commandBus.execute(
+      new SeenContentCommand({
+        authUser,
+        contentId,
       })
     );
   }

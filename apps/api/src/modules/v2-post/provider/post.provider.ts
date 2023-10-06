@@ -1,17 +1,3 @@
-import {
-  LibPostCategoryRepository,
-  LibPostGroupRepository,
-  LibPostSeriesRepository,
-  LibPostTagRepository,
-  LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
-  LibUserSavePostRepository,
-  LibUserSeenPostRepository,
-} from '@libs/database/postgres/repository';
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
-import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
-
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
@@ -28,6 +14,7 @@ import {
   MarkReadImportantContentHandler,
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
   UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
@@ -160,6 +147,7 @@ export const postProvider = [
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
