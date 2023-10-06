@@ -15,9 +15,7 @@ import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
   IPostReactionRepository,
-  IReactionRepository,
   POST_REACTION_REPOSITORY_TOKEN,
-  REACTION_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 
 import {
@@ -26,11 +24,11 @@ import {
   IReactionDomainService,
   ReactionCreateProps,
 } from './interface';
+
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
 
   public constructor(
-    @Inject(REACTION_REPOSITORY_TOKEN) private readonly _reactionRepository: IReactionRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepository: IPostReactionRepository,
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
@@ -41,13 +39,19 @@ export class ReactionDomainService implements IReactionDomainService {
   ) {}
 
   public async getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>> {
-    return this._reactionRepository.getPagination(props);
+    if (props.target === REACTION_TARGET.COMMENT) {
+      return this._commentReactionRepository.getPagination(props);
+    }
+
+    if (props.target === REACTION_TARGET.POST || props.target === REACTION_TARGET.ARTICLE) {
+      return this._postReactionRepository.getPagination(props);
+    }
   }
 
   public async getAndCountReactionByContentIds(
     contentIds: string[]
   ): Promise<Map<string, Record<string, number>[]>> {
-    return this._reactionRepository.getAndCountReactionByContents(contentIds);
+    return this._postReactionRepository.getAndCountReactionByContents(contentIds);
   }
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
