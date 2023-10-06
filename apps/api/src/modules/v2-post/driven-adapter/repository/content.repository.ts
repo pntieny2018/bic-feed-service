@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
@@ -31,7 +31,7 @@ import {
   ArticleAttributes,
   ContentAttributes,
 } from '../../domain/model/content';
-import { IContentRepository } from '../../domain/repositoty-interface';
+import { GetReportContentIdsProps, IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
 @Injectable()
@@ -319,18 +319,16 @@ export class ContentRepository implements IContentRepository {
     };
   }
 
-  public async getReportedContentIdsByUser(
-    createdBy: string,
-    target?: CONTENT_TARGET[]
-  ): Promise<string[]> {
-    if (!createdBy) {
+  public async getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]> {
+    if (!props.reportUser) {
       return [];
     }
     const condition: WhereOptions<ReportContentDetailAttributes> = {
       [Op.and]: [
         {
-          createdBy,
-          ...(target ? { targetType: target } : {}),
+          createdBy: props.reportUser,
+          ...(props.target && { targetType: props.target }),
+          ...(props.groupId && { targetId: props.groupId }),
         },
       ],
     };

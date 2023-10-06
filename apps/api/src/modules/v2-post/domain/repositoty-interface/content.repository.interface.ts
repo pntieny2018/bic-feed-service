@@ -8,6 +8,12 @@ import {
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
+export type GetReportContentIdsProps = {
+  reportUser: string;
+  target?: CONTENT_TARGET[];
+  groupId?: string;
+};
+
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
@@ -41,7 +47,7 @@ export interface IContentRepository {
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
-  getReportedContentIdsByUser(reportUser: string, target?: CONTENT_TARGET[]): Promise<string[]>;
+  getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]>;
   countContentDraft(userId: string): Promise<number>;
   findPinnedPostIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
