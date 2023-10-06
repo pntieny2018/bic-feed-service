@@ -10,7 +10,6 @@ export * from './post-series.repository';
 export * from './post-tag.repository';
 export * from './quiz.repository';
 export * from './quiz-participant.repository';
-export * from './reaction.repository';
 export * from './tag.repository';
 export * from './user-mark-read-post.repository';
 export * from './user-report-content.repository';

@@ -95,8 +95,21 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
+    const conditions: WhereOptions<TagModel> = {};
+    if (input.ids) {
+      conditions.id = input.ids;
+    }
+    if (input.name) {
+      conditions.name = input.name;
+    }
+    if (input.groupIds) {
+      conditions.groupId = input.groupIds;
+    }
+    if (input.keyword) {
+      conditions.name = { [Op.iLike]: `%${input.keyword}%` };
+    }
     const tags = await this._libTagRepo.findMany({
-      where: input,
+      where: conditions,
     });
     return tags.map((tag) => this._tagMapper.toDomain(tag));
   }

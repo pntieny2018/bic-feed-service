@@ -9,22 +9,22 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { CommentEntity } from '../../../domain/model/comment';
-import {
-  IReactionRepository,
-  REACTION_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface';
 import { CommentResponseDto } from '../../../driving-apdater/dto/response';
 import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
 
 import { ICommentBinding } from './comment.interface';
+import {
+  COMMENT_REACTION_REPOSITORY_TOKEN,
+  ICommentReactionRepository,
+} from '../../../domain/repositoty-interface';
 
 @Injectable()
 export class CommentBinding implements ICommentBinding {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(REACTION_REPOSITORY_TOKEN)
-    private readonly _reactionRepository: IReactionRepository
+    @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
+    private readonly _commentReactionRepo: ICommentReactionRepository
   ) {}
   public async commentsBinding(
     rows: CommentEntity[],
@@ -46,7 +46,7 @@ export class CommentBinding implements ICommentBinding {
       })
     );
 
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByComments(
+    const reactionsCount = await this._commentReactionRepo.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
     );
 

@@ -6,5 +6,4 @@ export * from './link-preview.repository';
 export * from './post-reaction.repository';
 export * from './quiz.repository';
 export * from './quiz-participant.repository';
-export * from './reaction.repository';
 export * from './tag.repository';

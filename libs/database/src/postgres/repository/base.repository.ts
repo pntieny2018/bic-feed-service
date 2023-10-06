@@ -1,3 +1,15 @@
+import { Model, ModelCtor, ModelType } from 'sequelize-typescript';
+import {
+  Attributes,
+  BulkCreateOptions,
+  CreateOptions,
+  CreationAttributes,
+  DestroyOptions,
+  IncludeOptions,
+  UpdateOptions,
+} from 'sequelize/types/model';
+import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { IBaseRepository } from '@libs/database/postgres/repository/interface';
 import { FindOptions } from '@libs/database/postgres';
 import {
   CursorPaginationProps,
@@ -5,17 +17,7 @@ import {
   CursorPaginator,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
-import { IBaseRepository } from '@libs/database/postgres/repository/interface';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
-import {
-  Attributes,
-  BulkCreateOptions,
-  CreateOptions,
-  CreationAttributes,
-  DestroyOptions,
-  UpdateOptions,
-} from 'sequelize/types/model';
-import { Model, ModelCtor } from 'sequelize-typescript';
+import { cloneDeep } from 'lodash';
 
 export abstract class BaseRepository<M extends Model> implements IBaseRepository<M> {
   protected model: ModelCtor<M>;
@@ -44,7 +46,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
     return await this.model.findOne({
-      attributes: !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+      attributes,
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
@@ -57,7 +59,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
     return this.model.findAll({
-      attributes: !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+      attributes,
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
@@ -74,11 +76,11 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
     return this.model.findAndCountAll({
-      attributes: !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
+      attributes,
       where,
       include: include.length > 0 ? include : undefined,
       order: options.order,
-      limit: options.limit || 10,
+      limit: options.limit || undefined,
       offset: options.offset || undefined,
     });
   }
@@ -105,26 +107,32 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     return this.model.bulkCreate(records, options);
   }
 
-  protected _buildSelect(options: Pick<FindOptions<M>, 'select' | 'selectRaw' | 'selectExclude'>): {
-    include: string[];
-    exclude: string[];
-  } {
-    const attributes = {
-      include: [],
-      exclude: [],
-    };
+  protected _buildSelect(
+    options: Pick<FindOptions<M>, 'select' | 'selectRaw' | 'selectExclude'>,
+    relation?: ModelCtor<Model>
+  ): string[] {
+    let attributes = [];
     if (options.select) {
-      attributes.include.push(...options.select);
+      attributes.push(...options.select);
     }
+
     if (options.selectRaw) {
       options.selectRaw.forEach((item) => {
-        attributes.include.push([Sequelize.literal(item[0]), item[1]]);
+        attributes.push([Sequelize.literal(item[0]), item[1]]);
       });
     }
-    if (options.selectExclude) {
-      attributes.exclude.push(...options.selectExclude);
+    const exclude = options.selectExclude || [];
+
+    if (attributes.length === 0) {
+      let attributesModel;
+      if (relation) {
+        attributesModel = relation.getAttributes();
+      } else {
+        attributesModel = this.model.getAttributes();
+      }
+      attributes = Object.keys(attributesModel);
     }
-    return attributes;
+    return attributes.filter((item) => !exclude.includes(item));
   }
 
   protected _buildWhere(
@@ -144,18 +152,16 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     return whereOptions;
   }
 
-  protected _buildInclude(options: Pick<FindOptions<M>, 'include'>): string[] {
-    const include = [];
+  protected _buildInclude(options: Pick<FindOptions<M>, 'include'>): IncludeOptions[] {
+    const include: IncludeOptions[] = [];
     if (options.include) {
       options.include.forEach((item) => {
-        const attributes = this._buildSelect(item);
-        const where = this._buildWhere(item);
-        include.push({
-          attributes:
-            !attributes.include.length && !attributes.exclude.length ? undefined : attributes,
-          where,
-          ...item,
-        });
+        const includeItem: IncludeOptions = cloneDeep(item);
+        includeItem.attributes = this._buildSelect(item, item.model as ModelCtor);
+        includeItem.where = this._buildWhere(item);
+        delete includeItem['select'];
+        delete includeItem['selectRaw'];
+        include.push(includeItem);
       });
     }
     return include;

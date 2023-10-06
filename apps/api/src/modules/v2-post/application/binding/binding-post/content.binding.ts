@@ -11,9 +11,9 @@ import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
-  IReactionRepository,
-  REACTION_REPOSITORY_TOKEN,
+  IPostReactionRepository,
   IQuizParticipantRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import {
@@ -45,7 +45,8 @@ export class ContentBinding implements IContentBinding {
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
-    @Inject(REACTION_REPOSITORY_TOKEN) private readonly _reactionRepository: IReactionRepository
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepo: IPostReactionRepository
   ) {}
   public async postBinding(
     postEntity: PostEntity,
@@ -235,7 +236,7 @@ export class ContentBinding implements IContentBinding {
       });
     }
 
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents([
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
       articleEntity.getId(),
     ]);
 
@@ -854,7 +855,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents(contentIds);
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(contentIds);
 
     let series = new Map<string, SeriesEntity | PostEntity | ArticleEntity>();
     if (seriesIds.length > 0) {
