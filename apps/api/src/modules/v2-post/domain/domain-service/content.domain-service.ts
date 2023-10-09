@@ -256,20 +256,14 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    return this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId,
-        },
+    return this._contentRepository.findContentByIdInActiveGroup(contentId, {
+      shouldIncludeGroup: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeSaved: {
+        userId,
       },
     });
   }
