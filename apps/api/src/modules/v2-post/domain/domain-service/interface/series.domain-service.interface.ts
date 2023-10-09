@@ -24,6 +24,6 @@ export interface ISeriesDomainService {
   update(input: UpdateSeriesProps): Promise<SeriesEntity>;
   delete(input: DeleteSeriesProps): Promise<void>;
   addSeriesItems(input: AddSeriesItemsProps): Promise<void>;
-  removeSeriesItems(input: AddSeriesItemsProps): Promise<void>;
+  removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void>;
 }
 export const SERIES_DOMAIN_SERVICE_TOKEN = 'SERIES_DOMAIN_SERVICE_TOKEN';
