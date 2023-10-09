@@ -19,7 +19,7 @@ export class GetContentAudienceHandler
   ) {}
 
   public async execute(query: GetContentAudienceQuery): Promise<GetAudienceResponseDto> {
-    const audience = await this._contentDomainService.getAudience(query.payload);
-    return new GetAudienceResponseDto(audience);
+    const audiences = await this._contentDomainService.getAudiences(query.payload);
+    return new GetAudienceResponseDto(audiences);
   }
 }

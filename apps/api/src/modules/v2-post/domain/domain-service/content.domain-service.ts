@@ -1,7 +1,7 @@
 import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import {
-  CursorPaginationResult,
   createCursor,
+  CursorPaginationResult,
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
 import { Inject, Logger } from '@nestjs/common';
@@ -17,7 +17,7 @@ import {
   ContentPinLackException,
   ContentPinNotFoundException,
 } from '../exception';
-import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
+import { ArticleEntity, ContentEntity, PostEntity, SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
@@ -28,7 +28,7 @@ import {
 } from '../validator/interface';
 
 import {
-  GetAudienceProps,
+  GetAudiencesProps,
   GetContentByIdsProps,
   GetContentIdsInNewsFeedProps,
   GetContentIdsInTimelineProps,
@@ -596,7 +596,7 @@ export class ContentDomainService implements IContentDomainService {
     await this._contentRepository.unpinContent(contentId, addUnpinGroupIds);
   }
 
-  public async getAudience(props: GetAudienceProps): Promise<GroupAudience[]> {
+  public async getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]> {
     const content = await this._contentRepository.findContentByIdInActiveGroup(props.contentId, {
       mustIncludeGroup: true,
     });
@@ -617,7 +617,10 @@ export class ContentDomainService implements IContentDomainService {
     let dataGroups = await this._groupAdapter.getGroupsByIds(groupIds);
 
     if (props.pinnable) {
-      dataGroups = await this._authorityAppService.getAudienceCanPin(dataGroups);
+      await this._authorityAppService.buildAbility(props.authUser);
+      dataGroups = dataGroups.filter((group) =>
+        this._authorityAppService.canPinContent([group.id])
+      );
     }
 
     return dataGroups.map(

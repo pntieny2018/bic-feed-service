@@ -74,7 +74,8 @@ export type GroupAudience = {
   isPinned: boolean;
 };
 
-export type GetAudienceProps = GetContentAudienceProps;
+export type GetAudiencesProps = GetContentAudienceProps;
+
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
@@ -109,6 +110,6 @@ export interface IContentDomainService {
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
-  getAudience(props: GetAudienceProps): Promise<GroupAudience[]>;
+  getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

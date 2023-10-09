@@ -1,6 +1,5 @@
 import { Ability, subject } from '@casl/ability';
 import { SentryService } from '@libs/infra/sentry';
-import { GroupDto } from '@libs/service/group';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 import { PERMISSION_KEY, SUBJECT } from '../../../common/constants/casl.constant';
@@ -89,19 +88,5 @@ export class AuthorityAppService implements IAuthorityAppService {
 
   public canDoActionOnGroup(permissionKey: string, groupId: string): boolean {
     return this._abilities.can(permissionKey, subject(SUBJECT.GROUP, { id: groupId }));
-  }
-
-  public async getAudienceCanPin(groups: GroupDto[]): Promise<GroupDto[]> {
-    const groupsCanPin = [];
-    for (const group of groups) {
-      const canPin = this._abilities.can(
-        PERMISSION_KEY.PIN_CONTENT,
-        subject(SUBJECT.GROUP, { id: group.id })
-      );
-      if (canPin) {
-        groupsCanPin.push(group);
-      }
-    }
-    return groupsCanPin;
   }
 }
