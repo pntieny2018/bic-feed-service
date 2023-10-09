@@ -16,6 +16,7 @@ import {
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
+  ContentNoPinPermissionException,
   ContentRequireGroupException,
   TagSeriesInvalidException,
   UserNoBelongGroupException,
@@ -231,6 +232,16 @@ export class ContentValidator implements IContentValidator {
     const validScheduleTime = moment().add(30, 'minutes');
     if (moment(scheduleAt).isBefore(validScheduleTime, 'minutes')) {
       throw new ContentInvalidScheduledTimeException();
+    }
+  }
+
+  public async checkCanPinContent(user: UserDto, groupIds: string[]): Promise<void> {
+    await this._authorityAppService.buildAbility(user);
+
+    const canPinPermission = this._authorityAppService.canPinContent(groupIds);
+
+    if (!canPinPermission) {
+      throw new ContentNoPinPermissionException();
     }
   }
 

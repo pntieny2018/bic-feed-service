@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
@@ -31,7 +31,7 @@ import {
   ArticleAttributes,
   ContentAttributes,
 } from '../../domain/model/content';
-import { IContentRepository } from '../../domain/repositoty-interface';
+import { GetReportContentIdsProps, IContentRepository } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
 @Injectable()
@@ -269,6 +269,7 @@ export class ContentRepository implements IContentRepository {
     findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const content = await this._libContentRepository.findOne(findOnePostOptions);
+
     return this._contentMapper.toDomain(content);
   }
 
@@ -328,18 +329,16 @@ export class ContentRepository implements IContentRepository {
     };
   }
 
-  public async getReportedContentIdsByUser(
-    createdBy: string,
-    target?: CONTENT_TARGET[]
-  ): Promise<string[]> {
-    if (!createdBy) {
+  public async getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]> {
+    if (!props.reportUser) {
       return [];
     }
     const condition: WhereOptions<ReportContentDetailAttributes> = {
       [Op.and]: [
         {
-          createdBy,
-          ...(target ? { targetType: target } : {}),
+          createdBy: props.reportUser,
+          ...(props.target && { targetType: props.target }),
+          ...(props.groupId && { targetId: props.groupId }),
         },
       ],
     };
@@ -400,6 +399,51 @@ export class ContentRepository implements IContentRepository {
     });
 
     await Promise.all(reorderExecute);
+  }
+
+  public async pinContent(contentId: string, groupIds: string[]): Promise<void> {
+    if (groupIds.length > 0) {
+      await Promise.all(
+        groupIds.map(async (groupId) => {
+          return this._libPostGroupRepository.update(
+            {
+              isPinned: true,
+              pinnedIndex:
+                (await this._libPostGroupRepository.max('pinnedIndex', {
+                  where: {
+                    groupId,
+                  },
+                })) + 1,
+            },
+            {
+              where: {
+                postId: contentId,
+                groupId,
+              },
+            }
+          );
+        })
+      );
+    }
+  }
+
+  public async unpinContent(contentId: string, groupIds: string[]): Promise<void> {
+    if (groupIds.length === 0) {
+      return;
+    }
+
+    await this._libPostGroupRepository.update(
+      {
+        isPinned: false,
+        pinnedIndex: 0,
+      },
+      {
+        where: {
+          postId: contentId,
+          groupId: groupIds,
+        },
+      }
+    );
   }
 
   public async createPostsSeries(seriesId: string, itemIds: string[]): Promise<void> {

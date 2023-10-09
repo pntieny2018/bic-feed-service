@@ -6,19 +6,25 @@ import {
 } from '@libs/database/postgres/common';
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
+import { uniq } from 'lodash';
 
 import { StringHelper } from '../../../../common/helpers';
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
 import {
+  AudienceNoBelongContentException,
   ContentAccessDeniedException,
-  ContentNoPinPermissionException,
   ContentNotFoundException,
   ContentPinLackException,
   ContentPinNotFoundException,
 } from '../exception';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../validator/interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
+  IPostValidator,
+  POST_VALIDATOR_TOKEN,
+} from '../validator/interface';
 
 import {
   GetContentByIdsProps,
@@ -29,6 +35,7 @@ import {
   GetImportantContentIdsProps,
   GetScheduledContentProps,
   IContentDomainService,
+  PinContentProps,
   ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
@@ -41,6 +48,8 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _contentRepository: IContentRepository,
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     private readonly _authorityAppService: IAuthorityAppService
   ) {}
@@ -270,10 +279,10 @@ export class ContentDomainService implements IContentDomainService {
     postTypes?: CONTENT_TYPE[]
   ): Promise<string[]> {
     if (!postTypes) {
-      return this._contentRepository.getReportedContentIdsByUser(reportUser, [
-        CONTENT_TARGET.ARTICLE,
-        CONTENT_TARGET.POST,
-      ]);
+      return this._contentRepository.getReportedContentIdsByUser({
+        reportUser,
+        target: [CONTENT_TARGET.ARTICLE, CONTENT_TARGET.POST],
+      });
     }
 
     const target: CONTENT_TARGET[] = [];
@@ -284,7 +293,7 @@ export class ContentDomainService implements IContentDomainService {
       target.push(CONTENT_TARGET.ARTICLE);
     }
 
-    return this._contentRepository.getReportedContentIdsByUser(reportUser, target);
+    return this._contentRepository.getReportedContentIdsByUser({ reportUser, target });
   }
 
   public async getScheduleContentIds(
@@ -459,37 +468,49 @@ export class ContentDomainService implements IContentDomainService {
 
   public async reorderPinned(props: ReorderContentProps): Promise<void> {
     const { authUser, contentIds, groupId } = props;
-    await this._authorityAppService.buildAbility(authUser);
 
-    const canPinPermission = this._authorityAppService.canPinContent([groupId]);
-
-    if (!canPinPermission) {
-      throw new ContentNoPinPermissionException();
+    await this._contentValidator.checkCanPinContent(authUser, [groupId]);
+    const pinnedContentIds = await this._contentRepository.findPinnedPostIdsByGroupId(groupId);
+    if (pinnedContentIds.length === 0) {
+      throw new ContentPinNotFoundException();
     }
 
-    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(
-      authUser.id
-    );
+    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
+      reportUser: authUser.id,
+      groupId,
+    });
 
-    const pinnedContentIds = (
-      await this._contentRepository.findPinnedPostIdsByGroupId(groupId)
-    ).filter((id) => {
+    const reportedContentIdsInPinned = pinnedContentIds.filter((id) => {
+      return reportedContentIds.includes(id);
+    });
+
+    const pinnedContentIdsExcludeReported = pinnedContentIds.filter((id) => {
       return !reportedContentIds.includes(id);
     });
 
     const contentIdsNotBelong = contentIds.filter(
-      (contentId) => !pinnedContentIds.includes(contentId)
+      (contentId) => !pinnedContentIdsExcludeReported.includes(contentId)
     );
     if (contentIdsNotBelong.length > 0) {
       throw new ContentPinNotFoundException(null, { contentsDenied: contentIdsNotBelong });
     }
 
-    const contentIdsNotFound = pinnedContentIds.filter(
+    const contentIdsNotFound = pinnedContentIdsExcludeReported.filter(
       (contentId) => !contentIds.includes(contentId)
     );
     if (contentIdsNotFound.length > 0) {
       throw new ContentPinLackException(null, { contentsLacked: contentIdsNotFound });
     }
+
+    // get index of each reportedContentIds in pinnedContentIds
+    const reportedContentIdsIndexInPinned = reportedContentIdsInPinned.map((id) => {
+      return pinnedContentIdsExcludeReported.indexOf(id);
+    });
+
+    reportedContentIdsInPinned.forEach((id, index) => {
+      // insert id into contentIds at index reportedContentIdsIndexInPinned[index]
+      contentIds.splice(reportedContentIdsIndexInPinned[index], 0, id);
+    });
 
     return this._contentRepository.reorderPinnedContent(contentIds, groupId);
   }
@@ -502,7 +523,10 @@ export class ContentDomainService implements IContentDomainService {
     if (contentIds.length === 0) {
       return [];
     }
-    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser(userId);
+    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
+      reportUser: userId,
+      groupId,
+    });
 
     const pinnedContentIds = contentIds.filter((id) => {
       return !reportedContentIds.includes(id);
@@ -512,5 +536,58 @@ export class ContentDomainService implements IContentDomainService {
       authUserId: userId,
       ids: pinnedContentIds,
     });
+  }
+
+  public async updatePinnedContent(props: PinContentProps): Promise<void> {
+    const { authUser, contentId, unpinGroupIds, pinGroupIds } = props;
+
+    const content = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+        isHidden: false,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
+    });
+
+    if (!content) {
+      throw new ContentNotFoundException();
+    }
+
+    const postGroups = content.getPostGroups();
+    const currentGroupIds = content.getGroupIds();
+    const currentPinGroupIds = [];
+    const currentUnpinGroupIds = [];
+
+    for (const postGroup of postGroups) {
+      if (postGroup.isPinned) {
+        currentPinGroupIds.push(postGroup.groupId);
+      }
+      if (!postGroup.isPinned) {
+        currentUnpinGroupIds.push(postGroup.groupId);
+      }
+    }
+
+    const newGroupIdsPinAndUnpin = uniq([...unpinGroupIds, ...pinGroupIds]);
+
+    const groupIdsNotBelong = newGroupIdsPinAndUnpin.every((groupId) =>
+      currentGroupIds.includes(groupId)
+    );
+
+    if (!groupIdsNotBelong) {
+      throw new AudienceNoBelongContentException();
+    }
+
+    await this._contentValidator.checkCanPinContent(authUser, newGroupIdsPinAndUnpin);
+
+    const addPinGroupIds = pinGroupIds.filter((groupId) => !currentPinGroupIds.includes(groupId));
+    const addUnpinGroupIds = unpinGroupIds.filter(
+      (groupId) => !currentUnpinGroupIds.includes(groupId)
+    );
+
+    await this._contentRepository.pinContent(contentId, addPinGroupIds);
+    await this._contentRepository.unpinContent(contentId, addUnpinGroupIds);
   }
 }

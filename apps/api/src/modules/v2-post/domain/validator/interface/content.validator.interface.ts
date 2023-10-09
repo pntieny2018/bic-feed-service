@@ -28,6 +28,8 @@ export interface IContentValidator {
 
   validateScheduleTime(scheduleAt: Date): void;
 
+  checkCanPinContent(user: UserDto, groupIds: string[]): Promise<void>;
+
   validateLimitedToAttachSeries(contentEntity: ArticleEntity | PostEntity): Promise<void>;
 }
 

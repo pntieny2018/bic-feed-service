@@ -96,13 +96,6 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     return this.model.sum(field, options);
   }
 
-  public async max(
-    field: keyof Attributes<M>,
-    options: Omit<FindOptions<M>, 'group'> = {}
-  ): Promise<number> {
-    return this.model.max(field, options);
-  }
-
   public async delete(options: DestroyOptions<M>): Promise<number> {
     return this.model.destroy(options);
   }
@@ -187,5 +180,12 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       rows,
       meta,
     };
+  }
+
+  public async max(
+    field: keyof Attributes<M>,
+    options: Omit<FindOptions<M>, 'group'> = {}
+  ): Promise<number> {
+    return this.model.max(field, options);
   }
 }

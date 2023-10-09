@@ -3,7 +3,10 @@ import { PaginatedArgs } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
 import { CursorPaginationProps, CursorPaginationResult } from '../../../../../common/types';
-import { ReorderPinnedContentCommandPayload } from '../../../application/command/content';
+import {
+  PinContentCommandProps,
+  ReorderPinnedContentCommandPayload,
+} from '../../../application/command/content';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
@@ -63,6 +66,7 @@ export type UpdateSettingsProps = {
 };
 
 export type ReorderContentProps = ReorderPinnedContentCommandPayload;
+export type PinContentProps = PinContentCommandProps;
 
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
@@ -97,5 +101,6 @@ export interface IContentDomainService {
     groupId: string,
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+  updatePinnedContent(props: PinContentProps): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';
