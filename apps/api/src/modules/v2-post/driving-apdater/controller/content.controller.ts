@@ -14,7 +14,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
@@ -54,10 +54,7 @@ import {
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
-@Controller({
-  path: 'content',
-  version: VERSIONS_SUPPORTED,
-})
+@Controller()
 export class ContentController {
   public constructor(
     private readonly _commandBus: CommandBus,

@@ -179,51 +179,51 @@ export const ROUTES = {
   },
   CONTENT: {
     GET_SCHEDULE: {
-      PATH: '/schedule',
+      PATH: 'content/schedule',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_TOTAL_DRAFT: {
-      PATH: '/total-draft',
+      PATH: 'content/total-draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_SERIES: {
-      PATH: '/:contentId/series',
+      PATH: 'content/:contentId/series',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_DRAFTS: {
-      PATH: '/draft',
+      PATH: 'content/draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     GET_MENU_SETTINGS: {
-      PATH: '/:contentId/menu-settings',
+      PATH: 'content/:contentId/menu-settings',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
     },
     SEARCH_CONTENTS: {
-      PATH: '/',
+      PATH: 'content/',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
     },
     MARK_AS_READ: {
-      PATH: '/:contentId/mark-as-read',
+      PATH: 'content/:contentId/mark-as-read',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     VALIDATE_SERIES_TAGS: {
-      PATH: '/validate-series-tags',
+      PATH: 'content/validate-series-tags',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UPDATE_SETTINGS: {
-      PATH: '/:contentId/setting',
+      PATH: 'content/:contentId/setting',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     REORDER_PIN_CONTENT: {
-      PATH: '/pinned-content/groups/:groupId/order',
+      PATH: 'content/pinned-content/groups/:groupId/order',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_PINNED_CONTENT: {
-      PATH: '/pinned-content/groups/:groupId',
+      PATH: 'content/pinned-content/groups/:groupId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     PIN_CONTENT: {
-      PATH: '/pinned-content/:contentId',
+      PATH: 'content/pinned-content/:contentId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },
