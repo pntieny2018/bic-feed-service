@@ -4,6 +4,7 @@ import {
   createCursor,
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 import { uniq } from 'lodash';
@@ -589,5 +590,15 @@ export class ContentDomainService implements IContentDomainService {
 
     await this._contentRepository.pinContent(contentId, addPinGroupIds);
     await this._contentRepository.unpinContent(contentId, addUnpinGroupIds);
+  }
+
+  public async saveContent(contentId: string, authUser: UserDto): Promise<void> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(contentId);
+
+    if (!content || !content.isPublished()) {
+      throw new ContentNotFoundException();
+    }
+
+    return this._contentRepository.saveContent(authUser.id, contentId);
   }
 }

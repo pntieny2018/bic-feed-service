@@ -21,6 +21,7 @@ import {
   MarkReadImportantContentCommand,
   PinContentCommand,
   ReorderPinnedContentCommand,
+  SaveContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
@@ -291,6 +292,27 @@ export class ContentController {
         contentId,
         pinGroupIds: pinContentDto.pinGroupIds,
         unpinGroupIds: pinContentDto.unpinGroupIds,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Save content' })
+  @ApiOkResponse({
+    description: 'Save content successfully',
+  })
+  @ResponseMessages({
+    success: 'Save content successfully',
+  })
+  @Post(ROUTES.CONTENT.SAVE_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.SAVE_CONTENT.VERSIONS)
+  public async saveContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new SaveContentCommand({
+        authUser,
+        contentId,
       })
     );
   }

@@ -102,5 +102,6 @@ export interface IContentDomainService {
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
+  saveContent(contentId: string, authUser: UserDto): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';
