@@ -26,6 +26,7 @@ import {
 } from '../application/command/article';
 import {
   MarkReadImportantContentHandler,
+  PinContentHandler,
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
   UpdateContentSettingHandler,
@@ -160,6 +161,7 @@ export const postProvider = [
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
   ReorderPinnedContentHandler,
+  PinContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
