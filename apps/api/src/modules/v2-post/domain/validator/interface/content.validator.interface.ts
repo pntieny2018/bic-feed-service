@@ -27,6 +27,8 @@ export interface IContentValidator {
   validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): Promise<void>;
 
   validateScheduleTime(scheduleAt: Date): void;
+
+  checkCanPinContent(user: UserDto, groupIds: string[]): Promise<void>;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

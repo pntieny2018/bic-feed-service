@@ -1,9 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
-
-import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
-import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
+import {
+  KAFKA_TOPIC,
+  ReactionHasBeenCreated,
+  ReactionHasBeenRemoved,
+} from '../../../../../common/constants';
 import { TypeActivity, VerbActivity } from '../../../../../notification';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -21,12 +23,14 @@ import { CommentEntity } from '../../../domain/model/comment';
 import { ArticleEntity, ContentEntity, PostEntity } from '../../../domain/model/content';
 import { ReactionEntity } from '../../../domain/model/reaction';
 import {
+  COMMENT_REACTION_REPOSITORY_TOKEN,
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
+  ICommentReactionRepository,
   ICommentRepository,
   IContentRepository,
-  IReactionRepository,
-  REACTION_REPOSITORY_TOKEN,
+  IPostReactionRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import { IReactionBinding, REACTION_BINDING_TOKEN } from '../../binding';
 import {
@@ -48,8 +52,10 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    @Inject(REACTION_REPOSITORY_TOKEN)
-    private readonly _reactionRepository: IReactionRepository,
+    @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
+    private readonly _commentReactionRepo: ICommentReactionRepository,
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepo: IPostReactionRepository,
     @Inject(REACTION_BINDING_TOKEN)
     private readonly _reactionBinding: IReactionBinding,
     @Inject(KAFKA_ADAPTER)
@@ -190,7 +196,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
 
     let mentionUsersComment = {};
     const commentActor = users.find((user) => user.id === commentEntity.get('createdBy'));
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByComments([
+    const reactionsCount = await this._commentReactionRepo.getAndCountReactionByComments([
       commentEntity.get('id'),
     ]);
     if (commentEntity.get('mentions') && users.length) {
@@ -320,7 +326,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     }
 
     const contentActor = users.find((user) => user.id === contentEntity.get('createdBy'));
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents([
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
       contentEntity.get('id'),
     ]);
     const groups = await this._groupAppService.findAllByIds(contentEntity.get('groupIds'));
