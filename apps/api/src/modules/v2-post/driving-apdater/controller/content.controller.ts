@@ -177,7 +177,7 @@ export class ContentController {
 
   @ApiOperation({ summary: 'Search contents' })
   @ApiOkResponse({
-    type: FindDraftContentsDto,
+    type: SearchContentsDto,
   })
   @ResponseMessages({
     success: 'Search contents successfully',
