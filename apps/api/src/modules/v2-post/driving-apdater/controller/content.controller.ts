@@ -19,6 +19,7 @@ import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   MarkReadImportantContentCommand,
+  PinContentCommand,
   ReorderPinnedContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
@@ -45,6 +46,7 @@ import { GetScheduleContentQuery } from '../../application/query/content/get-sch
 import {
   GetDraftContentsRequestDto,
   GetScheduleContentsQueryDto,
+  PinContentDto,
   PostSettingRequestDto,
   SearchContentsRequestDto,
   ValidateSeriesTagDto,
@@ -249,7 +251,7 @@ export class ContentController {
     );
   }
 
-  @ApiOperation({ summary: 'Reorder pinned conttent in group' })
+  @ApiOperation({ summary: 'Reorder pinned content in group' })
   @ApiOkResponse({
     description: 'Reorder pinned content in group successfully',
   })
@@ -268,6 +270,30 @@ export class ContentController {
         groupId,
         authUser,
         contentIds,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Pin/ Unpin content' })
+  @ApiOkResponse({
+    description: 'Pin/ Unpin content successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.pin_content_success',
+  })
+  @Put(ROUTES.CONTENT.PIN_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.PIN_CONTENT.VERSIONS)
+  public async pinItem(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @Body() pinContentDto: PinContentDto
+  ): Promise<void> {
+    await this._commandBus.execute<PinContentCommand, void>(
+      new PinContentCommand({
+        authUser,
+        contentId,
+        pinGroupIds: pinContentDto.pinGroupIds,
+        unpinGroupIds: pinContentDto.unpinGroupIds,
       })
     );
   }

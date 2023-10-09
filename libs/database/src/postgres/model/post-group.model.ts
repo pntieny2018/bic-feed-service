@@ -11,7 +11,7 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 
-import { PostModel } from './post.model';
+import { PostAttributes, PostModel } from './post.model';
 
 export type PostGroupAttributes = InferAttributes<PostGroupModel>;
 
@@ -33,7 +33,7 @@ export class PostGroupModel extends Model<
   public groupId: string;
 
   @BelongsTo(() => PostModel)
-  public post?: PostModel;
+  public post?: PostAttributes;
 
   @CreatedAt
   @Column
