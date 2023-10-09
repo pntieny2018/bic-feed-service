@@ -6,3 +6,4 @@ export * from './process-series-published';
 export * from './process-series-updated';
 export * from './update-series';
 export * from './remove-series-items';
+export * from './reorder-series-items';

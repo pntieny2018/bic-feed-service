@@ -26,6 +26,7 @@ import {
   DeleteSeriesCommand,
   DeleteSeriesCommandPayload,
   RemoveSeriesItemsCommand,
+  ReorderSeriesItemsCommand,
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/series';
@@ -79,6 +80,23 @@ export class SeriesController {
       } as CreateSeriesCommandPayload)
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Reorder items in series' })
+  @ApiOkResponse({
+    description: 'Reorder article/posts into series successfully',
+  })
+  @ResponseMessages({ success: 'Reorder successful.' })
+  @Put(ROUTES.SERIES.REORDER_ITEMS.PATH)
+  @Version(ROUTES.SERIES.REORDER_ITEMS.VERSIONS)
+  public async reorder(
+    @AuthUser() authUser: UserDto,
+    @Param('seriesId', ParseUUIDPipe) id: string,
+    @Body() reorderItemsDto: ChangeItemsInSeriesRequestDto
+  ): Promise<boolean> {
+    return this._commandBus.execute(
+      new ReorderSeriesItemsCommand({ authUser, ...reorderItemsDto, id })
+    );
   }
 
   @ApiOperation({ summary: 'Add article or post into serie' })

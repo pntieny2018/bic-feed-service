@@ -492,4 +492,29 @@ export class ContentRepository implements IContentRepository {
       throw error;
     }
   }
+
+  public async updatePostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      let zindex = 0;
+      for (const itemId of itemIds) {
+        await this._libPostSeriesRepository.update(
+          {
+            zindex,
+          },
+          {
+            where: {
+              postId: itemId,
+              seriesId,
+            },
+          }
+        );
+        zindex++;
+      }
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }

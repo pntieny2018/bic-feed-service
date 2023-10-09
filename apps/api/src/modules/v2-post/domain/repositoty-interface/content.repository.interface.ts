@@ -55,6 +55,7 @@ export interface IContentRepository {
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
   createPostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
   deletePostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
+  updatePostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
