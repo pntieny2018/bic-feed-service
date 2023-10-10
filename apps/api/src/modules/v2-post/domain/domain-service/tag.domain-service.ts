@@ -48,7 +48,6 @@ export class TagDomainService implements ITagDomainService {
     });
     try {
       await this._tagRepository.create(tagEntity);
-      tagEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

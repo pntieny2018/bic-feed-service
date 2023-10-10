@@ -7,6 +7,7 @@ export interface IAuthorityAppService {
   canEditSetting(groupIds: string[]): boolean;
   canPinContent(groupIds: string[]): boolean;
   canDoActionOnGroup(permissionKey: string, groupId: string): boolean;
+  canCudTags(groupId: string): boolean;
 }
 
 export const AUTHORITY_APP_SERVICE_TOKEN = 'AUTHORITY_APP_SERVICE_TOKEN';

@@ -1,10 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
+import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../../../authority';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
@@ -18,13 +15,14 @@ import { CreateTagCommand } from './create-tag.command';
 export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagDto> {
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
-  @Inject(USER_APPLICATION_TOKEN)
-  private readonly _userAppService: IUserApplicationService;
+  @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+  private readonly _authorityAppService: IAuthorityAppService;
 
   public async execute(command: CreateTagCommand): Promise<TagDto> {
-    const { name, groupId, userId } = command.payload;
+    const { name, groupId, user } = command.payload;
 
-    const canCreateTag = await this._userAppService.canCudTagInCommunityByUserId(userId, groupId);
+    await this._authorityAppService.buildAbility(user);
+    const canCreateTag = this._authorityAppService.canCudTags(groupId);
     if (!canCreateTag) {
       throw new TagNoCreatePermissionException();
     }
@@ -32,7 +30,7 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagDt
     const tagEntity = await this._tagDomainService.createTag({
       name,
       groupId,
-      userId,
+      userId: user.id,
     });
 
     return new TagDto({

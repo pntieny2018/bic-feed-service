@@ -5,6 +5,7 @@ export const PERMISSION_KEY = {
   MANAGE: 'manage',
   PIN_CONTENT: 'pin_content',
   CUD_QUIZ: 'cud_quiz',
+  CUD_TAGS: 'cud_tags',
 };
 
 export const SUBJECT = {
