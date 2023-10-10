@@ -3,10 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import {
-  ProcessArticleDeletedCommand,
-  ProcessArticleUpdatedCommand,
-} from '../../application/command/article';
+import { ProcessArticleUpdatedCommand } from '../../application/command/article';
 import { ArticleChangedMessagePayload } from '../../application/dto/message';
 
 @Controller()
@@ -23,11 +20,7 @@ export class ArticleConsumer {
           new ProcessArticleUpdatedCommand(payload)
         );
         break;
-      case 'delete':
-        await this._commandBus.execute<ProcessArticleDeletedCommand, void>(
-          new ProcessArticleDeletedCommand(payload)
-        );
-        break;
+
       default:
         break;
     }
