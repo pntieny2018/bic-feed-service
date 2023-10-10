@@ -6,7 +6,6 @@ import { KAFKA_TOPIC } from '../../../../common/constants';
 import {
   ProcessPostPublishedCommand,
   ProcessPostUpdatedCommand,
-  ProcessPostDeletedCommand,
 } from '../../application/command/post';
 import { PostChangedMessagePayload } from '../../application/dto/message';
 
@@ -25,11 +24,6 @@ export class PostConsumer {
       case 'update':
         await this._commandBus.execute<ProcessPostUpdatedCommand, void>(
           new ProcessPostUpdatedCommand(payload)
-        );
-        break;
-      case 'delete':
-        await this._commandBus.execute<ProcessPostDeletedCommand, void>(
-          new ProcessPostDeletedCommand(payload)
         );
         break;
       default:

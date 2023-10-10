@@ -76,9 +76,6 @@ export class SearchConsumer {
           },
         ]);
         break;
-      case 'delete':
-        await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
-        break;
       default:
         break;
     }
