@@ -8,7 +8,9 @@
     "saved_success": "Saved content successfully",
     "unsaved_success": "Unsaved content successfully",
     "reported_success": "Reported content successfully",
-    "edited_setting_success": "Edited setting successfully"
+    "edited_setting_success": "Edited setting successfully",
+    "reorder_pin_content_success": "Reordered pinned content successfully",
+    "pin_content_success": "Pinned content successfully"
   },
   "post": {
     "created_success": "Created post successfully",
