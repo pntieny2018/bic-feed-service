@@ -33,21 +33,6 @@ import { PostResponseDto } from './dto/responses';
 export class ContentController {
   public constructor(private _postAppService: PostAppService) {}
 
-  // @ApiOperation({ summary: 'Save post' })
-  // @ApiOkResponse({
-  //   type: Boolean,
-  // })
-  // @ResponseMessages({
-  //   success: 'message.content.saved_success',
-  // })
-  // @Post('/:postId/save')
-  // public async save(
-  //   @AuthUser() user: UserDto,
-  //   @Param('postId', ParseUUIDPipe) postId: string
-  // ): Promise<boolean> {
-  //   return this._postAppService.savePost(user, postId);
-  // }
-
   @ApiOperation({ summary: 'unsave post' })
   @ApiOkResponse({
     type: Boolean,

@@ -7,11 +7,7 @@ import { uniq } from 'lodash';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
 import { PostStatus } from '../../../database/models/post.model';
-import {
-  ArticleHasBeenDeletedEvent,
-  ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent,
-} from '../../../events/article';
+import { ArticleHasBeenPublishedEvent, ArticleHasBeenUpdatedEvent } from '../../../events/article';
 import { AuthorityService } from '../../authority';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
 import { PostBindingService } from '../../post/post-binding.service';
@@ -286,35 +282,6 @@ export class ArticleAppService {
     article.status = PostStatus.WAITING_SCHEDULE;
     article.publishedAt = scheduleArticleDto.publishedAt;
     return article;
-  }
-
-  public async delete(user: UserDto, articleId: string): Promise<boolean> {
-    const articles = await this._postService.getListWithGroupsByIds([articleId], false);
-
-    if (articles.length === 0) {
-      throw new ContentNotFoundException();
-    }
-    const article = articles[0];
-    await this._authorityService.checkPostOwner(article, user.id);
-
-    if (article.status === PostStatus.PUBLISHED) {
-      await this._authorityService.checkCanDeletePost(
-        user,
-        article.groups.map((g) => g.groupId)
-      );
-    }
-
-    const articleDeleted = await this._postService.delete(article, user);
-    if (articleDeleted) {
-      this._eventEmitter.emit(
-        new ArticleHasBeenDeletedEvent({
-          article: articleDeleted,
-          actor: user,
-        })
-      );
-      return true;
-    }
-    return false;
   }
 
   /*

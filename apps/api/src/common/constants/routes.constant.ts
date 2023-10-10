@@ -226,6 +226,10 @@ export const ROUTES = {
       PATH: 'content/pinned-content/:contentId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
+    GET_AUDIENCE: {
+      PATH: 'content/:contentId/audiences',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
     SAVE_CONTENT: {
       PATH: 'content/:contentId/save',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
