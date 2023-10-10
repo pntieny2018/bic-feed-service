@@ -5,7 +5,6 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import {
   ProcessArticleDeletedCommand,
-  ProcessArticlePublishedCommand,
   ProcessArticleUpdatedCommand,
 } from '../../application/command/article';
 import { ArticleChangedMessagePayload } from '../../application/dto/message';
@@ -19,11 +18,6 @@ export class ArticleConsumer {
     @Payload('value') payload: ArticleChangedMessagePayload
   ): Promise<any> {
     switch (payload.state) {
-      case 'publish':
-        await this._commandBus.execute<ProcessArticlePublishedCommand, void>(
-          new ProcessArticlePublishedCommand(payload)
-        );
-        break;
       case 'update':
         await this._commandBus.execute<ProcessArticleUpdatedCommand, void>(
           new ProcessArticleUpdatedCommand(payload)

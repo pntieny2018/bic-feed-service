@@ -1,22 +1,22 @@
-import { Inject } from '@nestjs/common';
+import { SentryService } from '@libs/infra/sentry';
+import { Inject, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { uniq } from 'lodash';
+import { InternalEventEmitterService } from 'apps/api/src/app/custom/event-emitter';
+import { SeriesAddedItemsEvent } from 'apps/api/src/events/series';
 
-import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
 import { ArticlePublishedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { ArticleEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ImageDto, TagDto } from '../../dto';
-import { ArticleChangedMessagePayload } from '../../dto/message';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 
 @EventsHandler(ArticlePublishedEvent)
 export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublishedEvent> {
+  private readonly _logger = new Logger(ArticlePublishedEventHandler.name);
+
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepository: ITagRepository,
+    private readonly _sentryService: SentryService,
+    // TODO: call domain and using event bus
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
@@ -25,52 +25,27 @@ export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublis
       return;
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findOne({
-      where: {
-        id: articleEntity.getId(),
-        groupArchived: true,
-      },
-      include: {
-        shouldIncludeSeries: true,
-      },
-    })) as ArticleEntity;
+    const seriesIds = articleEntity.getSeriesIds() || [];
+    for (const seriesId of seriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesAddedItemsEvent({
+          itemIds: [articleEntity.getId()],
+          seriesId: seriesId,
+          actor,
+          context: 'publish',
+        })
+      );
+    }
 
-    const seriesIds = uniq([
-      ...articleEntity.getSeriesIds(),
-      ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
-    ]);
-
-    const payload: ArticleChangedMessagePayload = {
-      state: 'publish',
-      after: {
-        id: articleEntity.get('id'),
-        actor,
-        type: articleEntity.get('type'),
-        setting: articleEntity.get('setting'),
-        groupIds: articleEntity.get('groupIds'),
-        communityIds: articleEntity.get('communityIds'),
-        seriesIds,
-        tags: (articleEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
-        categories: (articleEntity.get('categories') || []).map((item) => ({
-          id: item.get('id'),
-          name: item.get('name'),
-        })),
-        title: articleEntity.get('title'),
-        summary: articleEntity.get('summary'),
-        content: articleEntity.get('content'),
-        lang: articleEntity.get('lang'),
-        isHidden: articleEntity.get('isHidden'),
-        coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
-        status: articleEntity.get('status'),
-        createdAt: articleEntity.get('createdAt'),
-        updatedAt: articleEntity.get('updatedAt'),
-        publishedAt: articleEntity.get('publishedAt'),
-      },
-    };
-
-    this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
-      key: articleEntity.getId(),
-      value: new ArticleChangedMessagePayload(payload),
-    });
+    try {
+      const tagEntities = articleEntity.get('tags') || [];
+      for (const tag of tagEntities) {
+        tag.increaseTotalUsed();
+        await this._tagRepository.update(tag);
+      }
+    } catch (err) {
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
+    }
   }
 }

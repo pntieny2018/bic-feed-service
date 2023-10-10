@@ -179,28 +179,6 @@ export class SearchConsumer {
     } = after || {};
 
     switch (state) {
-      case 'publish':
-        await this._postSearchService.addPostsToSearch([
-          {
-            id,
-            type,
-            content,
-            isHidden,
-            groupIds,
-            communityIds,
-            seriesIds,
-            createdBy: actor.id,
-            updatedAt,
-            createdAt,
-            publishedAt,
-            title,
-            summary,
-            coverMedia,
-            categories,
-            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
-          },
-        ]);
-        break;
       case 'update':
         await this._postSearchService.updatePostsToSearch([
           {

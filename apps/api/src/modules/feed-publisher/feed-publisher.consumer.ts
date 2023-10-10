@@ -1,12 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+
 import { KAFKA_TOPIC } from '../../common/constants';
-import { FeedPublisherService } from './feed-publisher.service';
 import {
   ArticleChangedMessagePayload,
   SeriesChangedMessagePayload,
   PostChangedMessagePayload,
 } from '../v2-post/application/dto/message';
+
+import { FeedPublisherService } from './feed-publisher.service';
 
 @Controller()
 export class FeedConsumer {
@@ -28,7 +30,9 @@ export class FeedConsumer {
     @Payload('value') payload: SeriesChangedMessagePayload
   ): Promise<void> {
     const { before, after, state } = payload;
-    if (state === 'delete') return;
+    if (state === 'delete') {
+      return;
+    }
 
     await this._feedPublisherService.fanoutOnWrite(
       after.id,
@@ -42,12 +46,11 @@ export class FeedConsumer {
     @Payload('value') payload: ArticleChangedMessagePayload
   ): Promise<void> {
     const { before, after, state } = payload;
-    if (state === 'delete') return;
+    // state = publish has been handled in article-publish.event-handler.ts
+    if (state === 'delete' || state === 'publish') {
+      return;
+    }
 
-    await this._feedPublisherService.fanoutOnWrite(
-      after.id,
-      after.groupIds,
-      state === 'publish' ? [] : before.groupIds
-    );
+    await this._feedPublisherService.fanoutOnWrite(after.id, after.groupIds, before.groupIds);
   }
 }

@@ -12,6 +12,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../../database';
 import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
+import { FeedModule } from '../feed';
 import { MediaModule } from '../media';
 import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
@@ -37,18 +38,21 @@ import { TagController } from './driving-apdater/controller/tag.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
 import {
+  adapterProvider,
   categoryProvider,
   commentProvider,
+  feedProvider,
+  libRepositoryProvider,
   linkPreviewProvider,
+  mediaProvider,
+  notificationProvider,
+  postProvider,
+  quizProvider,
+  reactionProvider,
+  searchProvider,
   sharedProvider,
   tagProvider,
-  postProvider,
-  mediaProvider,
-  reactionProvider,
-  adapterProvider,
-  libRepositoryProvider,
 } from './provider';
-import { quizProvider } from './provider/quiz.provider';
 
 @Module({
   imports: [
@@ -69,6 +73,7 @@ import { quizProvider } from './provider/quiz.provider';
     GroupModule,
     LibMediaModule,
     OpenaiModule,
+    FeedModule,
   ],
   controllers: [
     TagController,
@@ -88,16 +93,19 @@ import { quizProvider } from './provider/quiz.provider';
   ],
   providers: [
     ...adapterProvider,
-    ...tagProvider,
     ...categoryProvider,
-    ...postProvider,
+    ...commentProvider,
+    ...feedProvider,
+    ...libRepositoryProvider,
     ...linkPreviewProvider,
     ...mediaProvider,
-    ...commentProvider,
-    ...sharedProvider,
-    ...reactionProvider,
+    ...notificationProvider,
+    ...postProvider,
     ...quizProvider,
-    ...libRepositoryProvider,
+    ...reactionProvider,
+    ...searchProvider,
+    ...sharedProvider,
+    ...tagProvider,
     QuizProcessor,
   ],
   exports: [

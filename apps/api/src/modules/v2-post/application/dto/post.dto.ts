@@ -19,6 +19,7 @@ export class PostDto {
   public series: {
     title: string;
     id: string;
+    createdBy?: string;
   }[];
   public quiz?: QuizDto;
   public setting: PostSettingDto;
