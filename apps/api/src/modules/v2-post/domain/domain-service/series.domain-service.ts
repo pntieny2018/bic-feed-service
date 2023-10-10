@@ -4,7 +4,12 @@ import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event';
+import {
+  SeriesCreatedEvent,
+  SeriesUpdatedEvent,
+  SeriesDeletedEvent,
+  SeriesItemsReoderedEvent,
+} from '../event';
 import {
   ContentAccessDeniedException,
   ContentNoCRUDPermissionException,
@@ -304,12 +309,12 @@ export class SeriesDomainService implements ISeriesDomainService {
         throw new ContentNoCRUDPermissionException();
       }
 
-      content.setSeriesIds(uniq([...content.getSeriesIds(), seriesEntity.getId()]));
+      content.setSeriesIds(uniq([...content.getSeriesIds(), id]));
       await this._contentValidator.validateLimitedToAttachSeries(content);
     }
 
     try {
-      await this._contentRepository.createPostsSeries(seriesEntity.getId(), itemIds);
+      await this._contentRepository.createPostsSeries(id, itemIds);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -338,7 +343,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     );
 
     try {
-      await this._contentRepository.deletePostsSeries(seriesEntity.getId(), itemIds);
+      await this._contentRepository.deletePostsSeries(id, itemIds);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -367,7 +372,8 @@ export class SeriesDomainService implements ISeriesDomainService {
     );
 
     try {
-      await this._contentRepository.updatePostsSeries(seriesEntity.getId(), itemIds);
+      await this._contentRepository.updatePostsSeries(id, itemIds);
+      this.event.publish(new SeriesItemsReoderedEvent(id));
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

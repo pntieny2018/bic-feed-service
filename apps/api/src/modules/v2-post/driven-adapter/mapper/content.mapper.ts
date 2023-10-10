@@ -277,6 +277,12 @@ export class ContentMapper {
             return a.zindex - b.zindex;
           })
           .map((item) => item.postId) || [],
+      items:
+        post.itemIds
+          ?.sort((a, b) => {
+            return a.zindex - b.zindex;
+          })
+          .map((item) => ({ postId: item.postId, zindex: item.zindex })) || [],
     });
   }
 }
