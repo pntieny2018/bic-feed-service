@@ -1,8 +1,12 @@
-import { NotiArticlePublishedEventHandler } from '../application/event-handler/notification';
-import { NotiArticleDeletedEventHandler } from '../application/event-handler/notification/article-delete.event-handler';
+import {
+  NotiArticleDeletedEventHandler,
+  NotiArticlePublishedEventHandler,
+  NotiArticleUpdatedEventHandler,
+} from '../application/event-handler/notification';
 
 export const notificationProvider = [
   /** Application Event Handler */
   NotiArticleDeletedEventHandler,
   NotiArticlePublishedEventHandler,
+  NotiArticleUpdatedEventHandler,
 ];

@@ -1,6 +1,10 @@
-import { FeedArticlePublishedEventHandler } from '../application/event-handler/feed';
+import {
+  FeedArticlePublishedEventHandler,
+  FeedArticleUpdatedEventHandler,
+} from '../application/event-handler/feed';
 
 export const feedProvider = [
   /** Application Event Handler */
   FeedArticlePublishedEventHandler,
+  FeedArticleUpdatedEventHandler,
 ];

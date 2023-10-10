@@ -3,7 +3,6 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 
 import { KAFKA_TOPIC } from '../../common/constants';
 import {
-  ArticleChangedMessagePayload,
   SeriesChangedMessagePayload,
   PostChangedMessagePayload,
 } from '../v2-post/application/dto/message';
@@ -39,18 +38,5 @@ export class FeedConsumer {
       after.groupIds,
       state === 'publish' ? [] : before.groupIds
     );
-  }
-
-  @EventPattern(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED)
-  public async articleChanged(
-    @Payload('value') payload: ArticleChangedMessagePayload
-  ): Promise<void> {
-    const { before, after, state } = payload;
-    // state = publish has been handled in article-publish.event-handler.ts
-    if (state === 'delete' || state === 'publish') {
-      return;
-    }
-
-    await this._feedPublisherService.fanoutOnWrite(after.id, after.groupIds, before.groupIds);
   }
 }

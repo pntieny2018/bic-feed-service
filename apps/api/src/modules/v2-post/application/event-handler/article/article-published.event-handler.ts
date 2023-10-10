@@ -1,13 +1,14 @@
+import { EventsHandlerAndLog } from '@libs/infra/log';
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler } from '@nestjs/cqrs';
 import { InternalEventEmitterService } from 'apps/api/src/app/custom/event-emitter';
 import { SeriesAddedItemsEvent } from 'apps/api/src/events/series';
 
 import { ArticlePublishedEvent } from '../../../domain/event';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 
-@EventsHandler(ArticlePublishedEvent)
+@EventsHandlerAndLog(ArticlePublishedEvent)
 export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublishedEvent> {
   private readonly _logger = new Logger(ArticlePublishedEventHandler.name);
 

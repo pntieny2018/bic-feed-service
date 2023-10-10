@@ -1,13 +1,14 @@
+import { EventsHandlerAndLog } from '@libs/infra/log';
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { InternalEventEmitterService } from 'apps/api/src/app/custom/event-emitter';
+import { IEventHandler } from '@nestjs/cqrs';
 
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
 import { SeriesRemovedItemsEvent } from '../../../../../events/series';
 import { ArticleDeletedEvent } from '../../../domain/event';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 
-@EventsHandler(ArticleDeletedEvent)
+@EventsHandlerAndLog(ArticleDeletedEvent)
 export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
   private readonly _logger = new Logger(ArticleDeletedEventHandler.name);
 
