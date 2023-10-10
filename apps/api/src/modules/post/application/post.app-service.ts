@@ -5,8 +5,7 @@ import { uniq } from 'lodash';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
 import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PostModel, PostStatus } from '../../../database/models/post.model';
-import { PostHasBeenDeletedEvent } from '../../../events/post';
+import { PostModel } from '../../../database/models/post.model';
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { AuthorityService } from '../../authority';
 import { TagService } from '../../tag/tag.service';
@@ -60,34 +59,6 @@ export class PostAppService {
 
   public async getTotalDraft(user: UserDto): Promise<any> {
     return this._postService.getTotalDraft(user);
-  }
-
-  public async deletePost(user: UserDto, postId: string): Promise<boolean> {
-    const posts = await this._postService.getListWithGroupsByIds([postId], false);
-
-    if (posts.length === 0) {
-      throw new ContentNotFoundException();
-    }
-    await this._authorityService.checkPostOwner(posts[0], user.id);
-
-    if (posts[0].status === PostStatus.PUBLISHED) {
-      await this._authorityService.checkCanDeletePost(
-        user,
-        posts[0].groups.map((g) => g.groupId)
-      );
-    }
-
-    const postDeleted = await this._postService.delete(posts[0], user);
-    if (postDeleted) {
-      this._eventEmitter.emit(
-        new PostHasBeenDeletedEvent({
-          post: postDeleted,
-          actor: user,
-        })
-      );
-      return true;
-    }
-    return false;
   }
 
   public async markReadPost(user: UserDto, postId: string): Promise<boolean> {
