@@ -1,5 +1,12 @@
 import { SeriesEntity } from '../model/content';
 
+export type SeriesItemsAddedPayload = {
+  seriesId: string;
+  itemId: string;
+  skipNotify?: boolean;
+  context: 'publish' | 'add'; // publish: when publish post,article edit post, article; add when series add item
+};
+
 export class SeriesCreatedEvent {
   public constructor(public readonly seriesEntity: SeriesEntity) {}
 }
@@ -14,4 +21,8 @@ export class SeriesDeletedEvent {
 
 export class SeriesItemsReoderedEvent {
   public constructor(public readonly seriesId: string) {}
+}
+
+export class SeriesItemsAddedEvent {
+  public constructor(public readonly payload: SeriesItemsAddedPayload) {}
 }

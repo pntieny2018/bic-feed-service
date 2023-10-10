@@ -56,6 +56,7 @@ import {
   SeriesDeletedEventHandler,
   SeriesUpdatedEventHandler,
   SeriesItemsReorderedEventHandler,
+  SeriesItemsAddedEventHandler,
 } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
 import {
@@ -131,6 +132,7 @@ export const postProvider = [
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
   SeriesItemsReorderedEventHandler,
+  SeriesItemsAddedEventHandler,
 
   /** Application Binding */
   {
