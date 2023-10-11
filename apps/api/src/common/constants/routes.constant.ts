@@ -128,7 +128,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     GENERATE: {
-      PATH: '/quizzes/:id/generate',
+      PATH: '/quizzes/:quizId/generate',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     GET_QUIZ_SUMMARY: {
@@ -140,28 +140,28 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     UPDATE: {
-      PATH: '/quizzes/:id',
+      PATH: '/quizzes/:quizId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     DELETE: {
-      PATH: '/quizzes/:id',
+      PATH: '/quizzes/:quizId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     GET_QUIZ_DETAIL: {
-      PATH: '/quizzes/:id',
+      PATH: '/quizzes/:quizId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
 
     START_QUIZ: {
-      PATH: '/quiz-participant/:id/start',
+      PATH: '/quiz-participant/:quizId/start',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     UPDATE_QUIZ_ANSWER: {
-      PATH: '/quiz-participant/:id/answers',
+      PATH: '/quiz-participant/:quizParticipantId/answers',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     GET_QUIZ_RESULT: {
-      PATH: '/quiz-participant/:id',
+      PATH: '/quiz-participant/:quizParticipantId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_8_0),
     },
     ADD_QUIZ_QUESTION: {

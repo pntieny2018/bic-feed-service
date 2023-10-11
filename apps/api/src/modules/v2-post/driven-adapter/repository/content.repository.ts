@@ -296,6 +296,16 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
+  public async hasSeen(postId: string, userId: string): Promise<boolean> {
+    const content = await this._libUserSeenPostRepository.first({
+      where: {
+        postId: postId,
+        userId: userId,
+      },
+    });
+    return Boolean(content);
+  }
+
   public async markReadImportant(postId: string, userId: string): Promise<void> {
     await this._libUserMarkReadPostRepository.bulkCreate(
       [

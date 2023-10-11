@@ -51,5 +51,8 @@ export const OnWebSocketConnect = 'on.websocket.connect';
 export const OnWebSocketDisconnect = 'on.websocket.disconnect';
 
 // quiz
+export const QuizCreated = 'quiz.created';
+export const QuizGenerated = 'quiz.generated';
+export const QuizRegenerate = 'quiz.regenerate';
 export const QuizParticipantStarted = 'quiz.participant.started';
 export const QuizParticipantFinished = 'quiz.participant.finished';

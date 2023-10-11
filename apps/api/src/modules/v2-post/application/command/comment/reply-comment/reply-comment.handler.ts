@@ -1,6 +1,6 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
 import { CommentHasBeenCreatedEvent } from '../../../../../../events/comment';
@@ -14,6 +14,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
+import { ContentHasSeenEvent } from '../../../../domain/event';
 import { ContentNoCommentPermissionException } from '../../../../domain/exception';
 import {
   CONTENT_VALIDATOR_TOKEN,
@@ -32,6 +33,7 @@ import { ReplyCommentCommand } from './reply-comment.command';
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, CommentDto> {
   public constructor(
+    private readonly _event: EventBus,
     private readonly _eventEmitter: InternalEventEmitterService,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
@@ -71,6 +73,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       userId: actor.id,
       parentId,
     });
+
+    this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: actor.id }));
 
     this._eventEmitter.emit(
       new CommentHasBeenCreatedEvent({
