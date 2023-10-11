@@ -8,7 +8,9 @@
     "saved_success": "Lưu nội dung thành công",
     "unsaved_success": "Bỏ lưu nội dung thành công",
     "reported_success": "Báo cáo nội dung thành công",
-    "edited_setting_success": "Cập nhật cài đặt bài viết thành công"
+    "edited_setting_success": "Cập nhật cài đặt bài viết thành công",
+    "reorder_pin_content_success": "Đổi vị trí bài viết thành công",
+    "pin_content_success": "Ghim bài viết thành công"
   },
   "post": {
     "created_success": "Tạo bài viết thành công",

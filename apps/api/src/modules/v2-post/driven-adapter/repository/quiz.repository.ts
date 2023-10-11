@@ -106,10 +106,6 @@ export class QuizRepository implements IQuizRepository {
         },
       ],
     });
-    if (!quiz) {
-      return null;
-    }
-
     return this._quizMapper.toDomain(quiz);
   }
 

@@ -7,6 +7,7 @@ import {
   PinContentCommandProps,
   ReorderPinnedContentCommandPayload,
 } from '../../../application/command/content';
+import { GetContentAudienceProps } from '../../../application/query/content';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
@@ -67,6 +68,13 @@ export type UpdateSettingsProps = {
 
 export type ReorderContentProps = ReorderPinnedContentCommandPayload;
 export type PinContentProps = PinContentCommandProps;
+export type GroupAudience = {
+  id: string;
+  name: string;
+  isPinned: boolean;
+};
+
+export type GetAudiencesProps = GetContentAudienceProps;
 
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
@@ -95,6 +103,7 @@ export interface IContentDomainService {
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
+  hasSeen(contentId: string, userId: string): Promise<boolean>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
   reorderPinned(props: ReorderContentProps): Promise<void>;
   findPinnedOrder(
@@ -102,5 +111,7 @@ export interface IContentDomainService {
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
+  getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
+  saveContent(contentId: string, authUser: UserDto): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

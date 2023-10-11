@@ -1,10 +1,10 @@
 import { PaginationResult } from '@libs/database/postgres/common';
+import { TagModel } from '@libs/database/postgres/model';
 import { LibPostTagRepository, LibTagRepository } from '@libs/database/postgres/repository';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
 
-import { TagModel } from '../../../../database/models/tag.model';
 import { TagEntity } from '../../domain/model/tag';
 import {
   FindAllTagsProps,

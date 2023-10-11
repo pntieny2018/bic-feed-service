@@ -10,6 +10,7 @@ import {
   LibUserSeenPostRepository,
   LibContentRepository,
   LibPostTagRepository,
+  LibUserSavePostRepository,
 } from '@libs/database/postgres/repository';
 import {
   FindContentIncludeOptions,
@@ -47,6 +48,7 @@ export class ContentRepository implements IContentRepository {
     private readonly _libUserSeenPostRepository: LibUserSeenPostRepository,
     private readonly _libUserMarkReadPostRepository: LibUserMarkReadPostRepository,
     private readonly _libUserReportContentRepository: LibUserReportContentRepository,
+    private readonly _libUserSavePostRepository: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper
   ) {}
 
@@ -294,6 +296,16 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
+  public async hasSeen(postId: string, userId: string): Promise<boolean> {
+    const content = await this._libUserSeenPostRepository.first({
+      where: {
+        postId: postId,
+        userId: userId,
+      },
+    });
+    return Boolean(content);
+  }
+
   public async markReadImportant(postId: string, userId: string): Promise<void> {
     await this._libUserMarkReadPostRepository.bulkCreate(
       [
@@ -432,6 +444,20 @@ export class ContentRepository implements IContentRepository {
           postId: contentId,
           groupId: groupIds,
         },
+      }
+    );
+  }
+
+  public async saveContent(userId: string, contentId: string): Promise<void> {
+    await this._libUserSavePostRepository.bulkCreate(
+      [
+        {
+          userId,
+          postId: contentId,
+        },
+      ],
+      {
+        ignoreDuplicates: true,
       }
     );
   }

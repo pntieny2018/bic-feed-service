@@ -1,17 +1,3 @@
-import {
-  LibPostCategoryRepository,
-  LibPostGroupRepository,
-  LibPostSeriesRepository,
-  LibPostTagRepository,
-  LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
-  LibUserSavePostRepository,
-  LibUserSeenPostRepository,
-} from '@libs/database/postgres/repository';
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
-import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
-
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
@@ -29,6 +15,8 @@ import {
   PinContentHandler,
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
+  SaveContentHandler,
   UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
@@ -57,6 +45,7 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
+import { ContentHasSeenEventHandler } from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -77,6 +66,7 @@ import {
   GetTotalDraftHandler,
   SearchContentsHandler,
   FindPinnedContentHandler,
+  GetContentAudienceHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
@@ -140,6 +130,8 @@ export const postProvider = [
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
 
+  ContentHasSeenEventHandler,
+
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -161,7 +153,9 @@ export const postProvider = [
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
   PinContentHandler,
+  SaveContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -198,6 +192,7 @@ export const postProvider = [
   GetSeriesInContentHandler,
   FindPinnedContentHandler,
   SearchSeriesHandler,
+  GetContentAudienceHandler,
 
   /** Domain Service */
   {

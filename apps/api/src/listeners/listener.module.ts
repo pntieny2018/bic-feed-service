@@ -18,11 +18,9 @@ import { NotificationModule } from '../notification';
 import { ArticleListener } from './article';
 import { CommentListener } from './comment';
 import { PostListener } from './post';
-import { ReactionListener } from './reaction';
 import { ReportContentListener } from './report';
 import {
   SeriesAddedItemsListener,
-  SeriesListener,
   SeriesRemovedItemsListener,
   SeriesReorderItemsListener,
 } from './series';
@@ -48,9 +46,7 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
   providers: [
     PostListener,
     CommentListener,
-    ReactionListener,
     ArticleListener,
-    SeriesListener,
     SeriesAddedItemsListener,
     SeriesRemovedItemsListener,
     SeriesReorderItemsListener,
