@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { EventBus, IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import {
   IPostDomainService,
@@ -9,6 +9,7 @@ import {
   SERIES_DOMAIN_SERVICE_TOKEN,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
+import { ContentHasSeenEvent } from '../../../../domain/event';
 import { SeriesEntity } from '../../../../domain/model/content';
 import {
   GROUP_ADAPTER,
@@ -25,6 +26,7 @@ import { FindPostQuery } from './find-post.query';
 @QueryHandler(FindPostQuery)
 export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
   public constructor(
+    private readonly _event: EventBus,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
@@ -36,7 +38,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
     private readonly _reactionDomainService: IReactionDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
-    private _postDomainService: IPostDomainService,
+    private readonly _postDomainService: IPostDomainService,
     @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
     private _seriesDomainService: ISeriesDomainService
   ) {}
@@ -60,6 +62,10 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([
       postEntity.getId(),
     ]);
+
+    if (postEntity.isPublished()) {
+      this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUser.id }));
+    }
 
     return this._contentBinding.postBinding(postEntity, {
       groups,

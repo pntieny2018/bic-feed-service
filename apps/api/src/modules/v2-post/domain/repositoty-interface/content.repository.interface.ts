@@ -43,6 +43,7 @@ export interface IContentRepository {
 
   delete(id: string): Promise<void>;
   markSeen(postId: string, userId: string): Promise<void>;
+  hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
