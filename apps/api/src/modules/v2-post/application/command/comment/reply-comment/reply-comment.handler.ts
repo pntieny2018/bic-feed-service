@@ -14,6 +14,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
+import { ContentHasSeenEvent } from '../../../../domain/event';
 import { ContentNoCommentPermissionException } from '../../../../domain/exception';
 import {
   CONTENT_VALIDATOR_TOKEN,
@@ -28,7 +29,6 @@ import {
 import { CommentDto } from '../../../dto';
 
 import { ReplyCommentCommand } from './reply-comment.command';
-import { ContentHasSeenEvent } from '../../../../domain/event';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, CommentDto> {
