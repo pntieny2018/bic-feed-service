@@ -15,6 +15,8 @@ import {
   PinContentHandler,
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
+  SaveContentHandler,
   UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
@@ -43,6 +45,7 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
+import { ContentHasSeenEventHandler } from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -127,6 +130,8 @@ export const postProvider = [
   SeriesUpdatedEventHandler,
   SeriesDeletedEventHandler,
 
+  ContentHasSeenEventHandler,
+
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -148,7 +153,9 @@ export const postProvider = [
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
   PinContentHandler,
+  SaveContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,

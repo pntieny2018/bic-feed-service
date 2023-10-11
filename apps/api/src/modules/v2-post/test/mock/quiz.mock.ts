@@ -1,10 +1,12 @@
 import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { QuizAnswerAttributes } from '@libs/database/postgres/model/quiz-answer.model';
+import { QuizParticipantAttributes } from '@libs/database/postgres/model/quiz-participant.model';
 import { QuizQuestionAttributes } from '@libs/database/postgres/model/quiz-question.model';
 import { QuizAttributes } from '@libs/database/postgres/model/quiz.model';
 import { v4 } from 'uuid';
 
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
+import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 
 export function createMockQuizRecord(data: Partial<QuizAttributes> = {}): QuizAttributes {
   const quizId = v4();
@@ -70,6 +72,30 @@ export function createMockQuizAnswerRecord(
   };
 }
 
+export function createMockQuizParticipationRecord(
+  data: Partial<QuizParticipantAttributes> = {}
+): QuizParticipantAttributes {
+  return {
+    id: v4(),
+    quizId: v4(),
+    postId: v4(),
+    score: 0,
+    isHighest: false,
+    timeLimit: 1800,
+    totalAnswers: 0,
+    totalCorrectAnswers: 0,
+    startedAt: new Date(),
+    finishedAt: null,
+    quizSnapshot: {},
+    createdBy: v4(),
+    updatedBy: v4(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    answers: [],
+    ...data,
+  };
+}
+
 export function createMockQuizEntity(data: Partial<QuizAttributes> = {}): QuizEntity {
   const quiz = createMockQuizRecord(data);
   return new QuizEntity({
@@ -84,4 +110,12 @@ export function createMockQuizQuestionEntity(
 ): QuizQuestionEntity {
   const question = createMockQuizQuestionRecord(data);
   return new QuizQuestionEntity(question);
+}
+
+export function createMockQuizParticipantEntity(
+  data: Partial<QuizParticipantAttributes> = {}
+): QuizParticipantEntity {
+  const participant = createMockQuizParticipationRecord(data);
+  const { postId, ...rest } = participant;
+  return new QuizParticipantEntity({ ...rest, contentId: postId });
 }

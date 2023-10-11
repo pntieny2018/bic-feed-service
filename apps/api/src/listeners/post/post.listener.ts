@@ -86,6 +86,8 @@ export class PostListener {
         );
       }
 
+      await this._postService.markSeenPost(post.id, post.createdBy);
+
       const postActivity = this._postActivityService.createPayload({
         id: post.id,
         title: null,
