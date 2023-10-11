@@ -222,6 +222,10 @@ export const ROUTES = {
       PATH: 'content/pinned-content/groups/:groupId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
+    SEEN_CONTENT: {
+      PATH: '/:contentId/seen',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
     PIN_CONTENT: {
       PATH: 'content/pinned-content/:contentId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
