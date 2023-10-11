@@ -4,3 +4,4 @@ export * from './update-content-setting';
 export * from './reorder-pinned-content';
 export * from './seen-content';
 export * from './pin-content';
+export * from './save-content';

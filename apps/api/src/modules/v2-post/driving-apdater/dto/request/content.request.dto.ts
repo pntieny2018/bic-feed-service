@@ -168,6 +168,14 @@ export class ScheduleContentRequestDto extends PublishArticleRequestDto {
   }
 }
 
+export class GetAudienceContentDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => BooleanHelper.convertStringToBoolean(value))
+  public pinnable?: boolean;
+}
+
 export class PinContentDto {
   @ApiProperty({
     name: 'pin_group_ids',

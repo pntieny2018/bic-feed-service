@@ -16,6 +16,7 @@ import {
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
   SeenContentHandler,
+  SaveContentHandler,
   UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
@@ -64,6 +65,7 @@ import {
   GetTotalDraftHandler,
   SearchContentsHandler,
   FindPinnedContentHandler,
+  GetContentAudienceHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
@@ -150,6 +152,7 @@ export const postProvider = [
   ReorderPinnedContentHandler,
   SeenContentHandler,
   PinContentHandler,
+  SaveContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -186,6 +189,7 @@ export const postProvider = [
   GetSeriesInContentHandler,
   FindPinnedContentHandler,
   SearchSeriesHandler,
+  GetContentAudienceHandler,
 
   /** Domain Service */
   {
