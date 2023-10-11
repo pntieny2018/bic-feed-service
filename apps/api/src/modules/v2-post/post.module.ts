@@ -15,6 +15,7 @@ import { AuthorityModule } from '../authority';
 import { MediaModule } from '../media';
 import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
+import { NotificationModuleV2 } from '../v2-notification/notification.module';
 import { UserModuleV2 } from '../v2-user/user.module';
 
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
@@ -61,6 +62,7 @@ import { quizProvider } from './provider/quiz.provider';
     KafkaModule,
     forwardRef(() => SearchModule),
     NotificationModule,
+    NotificationModuleV2,
     QueueModule,
     EventModule,
     UserModule,
