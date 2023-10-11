@@ -447,6 +447,10 @@ export class ContentDomainService implements IContentDomainService {
     await this._contentRepository.markSeen(contentId, userId);
   }
 
+  public async hasSeen(contentId: string, userId: string): Promise<boolean> {
+    return this._contentRepository.hasSeen(contentId, userId);
+  }
+
   public async markReadImportant(contentId: string, userId: string): Promise<void> {
     const contentEntity = await this._contentRepository.findOne({
       where: {
