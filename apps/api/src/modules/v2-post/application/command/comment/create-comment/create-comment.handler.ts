@@ -1,6 +1,6 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
@@ -29,10 +29,12 @@ import {
 import { CommentDto } from '../../../dto';
 
 import { CreateCommentCommand } from './create-comment.command';
+import { ContentHasSeenEvent } from '../../../../domain/event';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler implements ICommandHandler<CreateCommentCommand, CommentDto> {
   public constructor(
+    private readonly _event: EventBus,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
     @Inject(MENTION_VALIDATOR_TOKEN)
@@ -72,6 +74,8 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
       userId: actor.id,
       parentId: NIL,
     });
+
+    this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: actor.id }));
 
     this._eventEmitter.emit(
       new CommentHasBeenCreatedEvent({

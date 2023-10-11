@@ -1,6 +1,6 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
 import { CommentHasBeenCreatedEvent } from '../../../../../../events/comment';
@@ -28,10 +28,12 @@ import {
 import { CommentDto } from '../../../dto';
 
 import { ReplyCommentCommand } from './reply-comment.command';
+import { ContentHasSeenEvent } from '../../../../domain/event';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, CommentDto> {
   public constructor(
+    private readonly _event: EventBus,
     private readonly _eventEmitter: InternalEventEmitterService,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
@@ -71,6 +73,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       userId: actor.id,
       parentId,
     });
+
+    this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: actor.id }));
 
     this._eventEmitter.emit(
       new CommentHasBeenCreatedEvent({
