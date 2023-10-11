@@ -111,5 +111,6 @@ export interface IContentDomainService {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
   getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
+  saveContent(contentId: string, authUser: UserDto): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

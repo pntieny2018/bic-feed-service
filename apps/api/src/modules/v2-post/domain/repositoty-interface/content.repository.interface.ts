@@ -53,6 +53,7 @@ export interface IContentRepository {
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
   pinContent(contentId: string, groupIds: string[]): Promise<void>;
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
+  saveContent(userId: string, contentId: string): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
