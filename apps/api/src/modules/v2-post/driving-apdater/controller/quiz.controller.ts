@@ -115,7 +115,7 @@ export class QuizController {
   @Put(ROUTES.QUIZ.GENERATE.PATH)
   @Version(ROUTES.QUIZ.GENERATE.VERSIONS)
   public async regenerate(
-    @Param('id', ParseUUIDPipe) quizId: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto,
     @Body() generateQuizDto: GenerateQuizRequestDto
   ): Promise<QuizDto> {
@@ -170,7 +170,7 @@ export class QuizController {
   @Put(ROUTES.QUIZ.UPDATE.PATH)
   @Version(ROUTES.QUIZ.UPDATE.VERSIONS)
   public async update(
-    @Param('id', ParseUUIDPipe) quizId: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto,
     @Body() updateQuizDto: UpdateQuizRequestDto,
     @Req() req: Request
@@ -188,9 +188,9 @@ export class QuizController {
 
   @ApiOperation({ summary: 'Get quiz' })
   @Get(ROUTES.QUIZ.GET_QUIZ_DETAIL.PATH)
-  @Version(ROUTES.QUIZ.UPDATE.VERSIONS)
+  @Version(ROUTES.QUIZ.GET_QUIZ_DETAIL.VERSIONS)
   public async getQuizDetail(
-    @Param('id', ParseUUIDPipe) quizId: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizDto> {
     const data = await this._queryBus.execute(new FindQuizQuery({ authUser, quizId }));
@@ -204,7 +204,7 @@ export class QuizController {
   @Delete(ROUTES.QUIZ.DELETE.PATH)
   @Version(ROUTES.QUIZ.DELETE.VERSIONS)
   public async delete(
-    @Param('id', ParseUUIDPipe) quizId: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
     await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
@@ -286,7 +286,7 @@ export class QuizController {
   @Post(ROUTES.QUIZ.START_QUIZ.PATH)
   @Version(ROUTES.QUIZ.START_QUIZ.VERSIONS)
   public async startQuiz(
-    @Param('id', ParseUUIDPipe) quizId: string,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<string> {
     const quizParticipantId = await this._commandBus.execute<StartQuizCommand, string>(
@@ -299,13 +299,13 @@ export class QuizController {
   @Put(ROUTES.QUIZ.UPDATE_QUIZ_ANSWER.PATH)
   @Version(ROUTES.QUIZ.UPDATE_QUIZ_ANSWER.VERSIONS)
   public async updateQuizAnswers(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('quizParticipantId', ParseUUIDPipe) quizParticipantId: string,
     @Body() updateQuizAnswersDto: UpdateQuizAnswersRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
     await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
       new UpdateQuizAnswerCommand({
-        quizParticipantId: id,
+        quizParticipantId,
         isFinished: updateQuizAnswersDto.isFinished,
         answers: updateQuizAnswersDto.answers,
         authUser,
@@ -317,11 +317,11 @@ export class QuizController {
   @Get(ROUTES.QUIZ.GET_QUIZ_RESULT.PATH)
   @Version(ROUTES.QUIZ.GET_QUIZ_RESULT.VERSIONS)
   public async getTakeQuiz(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('quizParticipantId', ParseUUIDPipe) quizParticipantId: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizParticipantDto> {
     const data = await this._queryBus.execute(
-      new FindQuizParticipantQuery({ authUser, quizParticipantId: id })
+      new FindQuizParticipantQuery({ authUser, quizParticipantId })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
