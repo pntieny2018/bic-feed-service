@@ -35,14 +35,6 @@ export class PostGroupModel extends Model<
   @BelongsTo(() => PostModel)
   public post?: PostAttributes;
 
-  @CreatedAt
-  @Column
-  public createdAt?: Date;
-
-  @UpdatedAt
-  @Column
-  public updatedAt?: Date;
-
   @Column
   public isArchived?: boolean;
 
@@ -51,4 +43,12 @@ export class PostGroupModel extends Model<
 
   @Column
   public pinnedIndex?: number;
+
+  @CreatedAt
+  @Column
+  public createdAt?: Date;
+
+  @UpdatedAt
+  @Column
+  public updatedAt?: Date;
 }
