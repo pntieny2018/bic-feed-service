@@ -36,8 +36,9 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     if (authUser) {
       this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
     }
-
-    this._event.publish(new ContentHasSeenEvent({ contentId: articleId, userId: authUser.id }));
+    if (articleEntity.isPublished()) {
+      this._event.publish(new ContentHasSeenEvent({ contentId: articleId, userId: authUser.id }));
+    }
 
     return this._contentBinding.articleBinding(articleEntity, {
       groups,

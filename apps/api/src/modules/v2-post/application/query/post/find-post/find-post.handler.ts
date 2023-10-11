@@ -63,7 +63,9 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
       postEntity.getId(),
     ]);
 
-    this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUser.id }));
+    if (postEntity.isPublished()) {
+      this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUser.id }));
+    }
 
     return this._contentBinding.postBinding(postEntity, {
       groups,

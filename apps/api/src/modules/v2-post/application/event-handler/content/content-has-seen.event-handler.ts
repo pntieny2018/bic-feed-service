@@ -18,18 +18,6 @@ export class ContentHasSeenEventHandler implements IEventHandler<ContentHasSeenE
   public async handle(event: ContentHasSeenEvent): Promise<void> {
     const { contentId, userId } = event.payload;
 
-    const contentEntity = await this._contentDomainService.getVisibleContent(contentId, userId);
-
-    if (!contentEntity || !contentEntity.isPublished()) {
-      return;
-    }
-
-    const hasAlreadySeen = await this._contentDomainService.hasSeen(contentId, userId);
-
-    if (hasAlreadySeen) {
-      return;
-    }
-
     await this._contentDomainService.markSeen(contentId, userId);
   }
 }
