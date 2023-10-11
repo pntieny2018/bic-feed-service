@@ -7,6 +7,8 @@ export interface IAuthorityAppService {
   canEditSetting(groupIds: string[]): boolean;
   canPinContent(groupIds: string[]): boolean;
   canDoActionOnGroup(permissionKey: string, groupId: string): boolean;
+
+  // TODO: need to wait the group squad updated build cache permission
   canCudTags(groupId: string): boolean;
 }
 
