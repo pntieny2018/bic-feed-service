@@ -1,4 +1,4 @@
-import { KAFKA_ADAPTER, QUEUE_ADAPTER } from '../domain/infra-adapter-interface';
+import { KAFKA_ADAPTER, QUEUE_ADAPTER, EVENT_ADAPTER } from '../domain/infra-adapter-interface';
 import {
   USER_ADAPTER,
   GROUP_ADAPTER,
@@ -6,7 +6,7 @@ import {
   NOTIFICATION_ADAPTER,
 } from '../domain/service-adapter-interface';
 import { OPEN_AI_ADAPTER } from '../domain/service-adapter-interface/openai-adapter.interface';
-import { KafkaAdapter, QueueAdapter } from '../driven-adapter/infra';
+import { KafkaAdapter, QueueAdapter, EventAdapter } from '../driven-adapter/infra';
 import {
   GroupAdapter,
   MediaAdapter,
@@ -16,6 +16,10 @@ import {
 } from '../driven-adapter/service';
 
 export const adapterProvider = [
+  {
+    provide: EVENT_ADAPTER,
+    useClass: EventAdapter,
+  },
   {
     provide: KAFKA_ADAPTER,
     useClass: KafkaAdapter,
