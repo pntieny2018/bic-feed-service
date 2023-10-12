@@ -330,7 +330,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const currentLinkPreviewUrl = postEntity.get('linkPreview')?.get('url');
-    if (linkPreview?.url !== currentLinkPreviewUrl) {
+    if (linkPreview && linkPreview.url !== currentLinkPreviewUrl) {
       await this._setNewLinkPreview(postEntity, linkPreview);
     }
 
