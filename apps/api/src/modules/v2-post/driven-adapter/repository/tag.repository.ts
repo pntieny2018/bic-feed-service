@@ -109,6 +109,8 @@ export class TagRepository implements ITagRepository {
       conditions.name = { [Op.iLike]: `%${input.keyword}%` };
     }
     const tags = await this._libTagRepo.findMany({
+      select: ['id', 'name', 'slug', 'groupId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'],
+      selectRaw: [this._libTagRepo.loadTotalUsed()],
       where: conditions,
     });
     return tags.map((tag) => this._tagMapper.toDomain(tag));
