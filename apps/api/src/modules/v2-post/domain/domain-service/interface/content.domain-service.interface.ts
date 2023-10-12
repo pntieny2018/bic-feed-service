@@ -95,7 +95,7 @@ export interface IContentDomainService {
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;

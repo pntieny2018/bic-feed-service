@@ -223,7 +223,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     SEEN_CONTENT: {
-      PATH: '/:contentId/seen',
+      PATH: 'content/:contentId/seen',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     PIN_CONTENT: {
