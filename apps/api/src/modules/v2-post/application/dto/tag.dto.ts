@@ -1,6 +1,5 @@
+import { GroupDto } from '@libs/service/group';
 import { IQueryResult } from '@nestjs/cqrs';
-
-import { GroupDto } from '../../../v2-group/application';
 
 export class TagDto {
   public id: string;

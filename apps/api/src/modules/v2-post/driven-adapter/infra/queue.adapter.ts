@@ -1,8 +1,13 @@
 import { QUEUES } from '@libs/common/constants';
-import { IQueueService, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
+import { IQueueService, Job, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
 import { Inject } from '@nestjs/common';
+import { JobId } from 'bull';
 
-import { ContentScheduledJobDto, QuizParticipantResultJobDto } from '../../application/dto';
+import {
+  ContentScheduledJobDto,
+  QuizGenerateJobDto,
+  QuizParticipantResultJobDto,
+} from '../../application/dto';
 import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
@@ -10,6 +15,25 @@ export class QueueAdapter implements IQueueAdapter {
     @Inject(QUEUE_SERVICE_TOKEN)
     private readonly _queueService: IQueueService
   ) {}
+
+  public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
+    return this._queueService.getJobById(queueName, jobId);
+  }
+
+  public async killJob(queueName: string, jobId: JobId): Promise<void> {
+    await this._queueService.killJob(queueName, jobId);
+  }
+
+  public async addQuizGenerateJob(quizId: string): Promise<void> {
+    await this._queueService.addBulkJobs<QuizGenerateJobDto>([
+      {
+        name: QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING,
+        data: { quizId },
+        opts: {},
+        queue: { name: QUEUES.QUIZ_PENDING.QUEUE_NAME },
+      },
+    ]);
+  }
 
   public async addQuizParticipantStartedJob(
     quizParticipantId: string,

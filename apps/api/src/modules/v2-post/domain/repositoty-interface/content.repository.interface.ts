@@ -43,6 +43,7 @@ export interface IContentRepository {
 
   delete(id: string): Promise<void>;
   markSeen(postId: string, userId: string): Promise<void>;
+  hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
@@ -53,6 +54,7 @@ export interface IContentRepository {
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
   pinContent(contentId: string, groupIds: string[]): Promise<void>;
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
+  saveContent(userId: string, contentId: string): Promise<void>;
   createPostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
   deletePostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
   updatePostsSeries(seriesId: string, itemIds: string[]): Promise<void>;

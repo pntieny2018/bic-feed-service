@@ -1,12 +1,9 @@
+import { GroupDto } from '@libs/service/group';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../../domain/repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { FindTagsPaginationDto } from '../../../dto';
 
 import { FindTagsPaginationQuery } from './find-tags-pagination.query';
@@ -16,7 +13,7 @@ export class FindTagsPaginationHandler
   implements IQueryHandler<FindTagsPaginationQuery, FindTagsPaginationDto>
 {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER) private readonly _groupAdapter: IGroupAdapter,
     @Inject(TAG_REPOSITORY_TOKEN) private readonly _tagRepository: ITagRepository
   ) {}
 
@@ -58,7 +55,7 @@ export class FindTagsPaginationHandler
   ): Promise<Record<string, Omit<GroupDto, 'child'>[]>> {
     const groups = {};
     const groupIdMap = {};
-    const rootGroups = await this._groupAppService.findAllByIds(groupIds);
+    const rootGroups = await this._groupAdapter.getGroupsByIds(groupIds);
     const childGroupIds = rootGroups.reduce<string[]>((ids, rootGroupInfo) => {
       const childIds = [
         ...rootGroupInfo.child.private,
@@ -70,7 +67,7 @@ export class FindTagsPaginationHandler
       return ids.concat(childIds);
     }, []);
 
-    const childGroupInfos = await this._groupAppService.findAllByIds(childGroupIds);
+    const childGroupInfos = await this._groupAdapter.getGroupsByIds(childGroupIds);
     for (const rootGroupInfo of rootGroups) {
       delete rootGroupInfo.child;
       groups[rootGroupInfo.id] = [rootGroupInfo];

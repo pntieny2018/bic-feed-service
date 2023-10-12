@@ -4,6 +4,7 @@ import {
   CursorPaginationResult,
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 import { uniq } from 'lodash';
@@ -452,6 +453,10 @@ export class ContentDomainService implements IContentDomainService {
     await this._contentRepository.markSeen(contentId, userId);
   }
 
+  public async hasSeen(contentId: string, userId: string): Promise<boolean> {
+    return this._contentRepository.hasSeen(contentId, userId);
+  }
+
   public async markReadImportant(contentId: string, userId: string): Promise<void> {
     const contentEntity = await this._contentRepository.findOne({
       where: {
@@ -630,5 +635,15 @@ export class ContentDomainService implements IContentDomainService {
         isPinned: listPinnedContentIds[group.id],
       })
     );
+  }
+
+  public async saveContent(contentId: string, authUser: UserDto): Promise<void> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(contentId);
+
+    if (!content || !content.isPublished()) {
+      throw new ContentNotFoundException();
+    }
+
+    return this._contentRepository.saveContent(authUser.id, contentId);
   }
 }

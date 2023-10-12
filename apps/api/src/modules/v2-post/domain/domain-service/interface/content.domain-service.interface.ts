@@ -103,6 +103,7 @@ export interface IContentDomainService {
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
+  hasSeen(contentId: string, userId: string): Promise<boolean>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
   reorderPinned(props: ReorderContentProps): Promise<void>;
   findPinnedOrder(
@@ -111,5 +112,6 @@ export interface IContentDomainService {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
   getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
+  saveContent(contentId: string, authUser: UserDto): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';
