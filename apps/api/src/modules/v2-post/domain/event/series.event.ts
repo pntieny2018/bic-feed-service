@@ -1,6 +1,9 @@
+import { UserDto } from '@libs/service/user';
+
 import { SeriesEntity } from '../model/content';
 
 export type SeriesItemsAddedPayload = {
+  authUser: UserDto;
   seriesId: string;
   itemId: string;
   skipNotify?: boolean;
