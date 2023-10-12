@@ -1,5 +1,5 @@
-import { CursorPaginationProps } from '../../../../common/types/cursor-pagination-props.type';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+
 import { QuizParticipantEntity } from '../model/quiz-participant';
 
 export interface IQuizParticipantRepository {
