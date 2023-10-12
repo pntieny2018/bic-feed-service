@@ -1,10 +1,21 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { TestBed } from '@automock/jest';
-import { CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
-import { ILibContentRepository, LIB_CONTENT_REPOSITORY_TOKEN } from '@libs/database/postgres';
+import { PostGroupModel } from '@libs/database/postgres/model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
+import {
+  LibContentRepository,
+  LibPostCategoryRepository,
+  LibPostGroupRepository,
+  LibPostSeriesRepository,
+  LibPostTagRepository,
+  LibUserMarkReadPostRepository,
+  LibUserReportContentRepository,
+  LibUserSavePostRepository,
+  LibUserSeenPostRepository,
+} from '@libs/database/postgres/repository';
 import { Transaction, Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { v4 } from 'uuid';
@@ -16,11 +27,9 @@ import {
   PostEntity,
   SeriesEntity,
 } from '../../../domain/model/content';
-import { IContentRepository } from '../../../domain/repositoty-interface';
 import { ContentMapper } from '../../../driven-adapter/mapper/content.mapper';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import {
-  MockClass,
   createMockCategoryEntity,
   createMockReportContentDetailRecord,
   createMockTagEntity,
@@ -30,15 +39,25 @@ import {
   createMockArticleRecord,
   createMockContentEntity,
   createMockPostEntity,
+  createMockPostGroupRecord,
   createMockPostRecord,
   createMockSeriesEntity,
   createMockSeriesRecord,
 } from '../../mock/content.mock';
 
 describe('ContentRepository', () => {
-  let _contentRepo: IContentRepository;
-  let _libContentRepository: MockClass<ILibContentRepository>;
+  let _contentRepo: ContentRepository;
+  let _libContentRepo: jest.Mocked<LibContentRepository>;
+  let _libPostTagRepo: jest.Mocked<LibPostTagRepository>;
+  let _libPostSeriesRepo: jest.Mocked<LibPostSeriesRepository>;
+  let _libPostGroupRepo: jest.Mocked<LibPostGroupRepository>;
+  let _libPostCategoryRepo: jest.Mocked<LibPostCategoryRepository>;
+  let _libUserSeenPostRepo: jest.Mocked<LibUserSeenPostRepository>;
+  let _libUserMarkReadPostRepo: jest.Mocked<LibUserMarkReadPostRepository>;
+  let _libUserReportContentRepo: jest.Mocked<LibUserReportContentRepository>;
+  let _libUserSavePostRepo: jest.Mocked<LibUserSavePostRepository>;
   let _contentMapper: jest.Mocked<ContentMapper>;
+
   let _sequelizeConnection: Sequelize;
   let transaction: Transaction;
 
@@ -54,8 +73,17 @@ describe('ContentRepository', () => {
     const { unit, unitRef } = TestBed.create(ContentRepository).compile();
 
     _contentRepo = unit;
-    _libContentRepository = unitRef.get(LIB_CONTENT_REPOSITORY_TOKEN);
+    _libContentRepo = unitRef.get(LibContentRepository);
+    _libPostTagRepo = unitRef.get(LibPostTagRepository);
+    _libPostSeriesRepo = unitRef.get(LibPostSeriesRepository);
+    _libPostGroupRepo = unitRef.get(LibPostGroupRepository);
+    _libPostCategoryRepo = unitRef.get(LibPostCategoryRepository);
+    _libUserSeenPostRepo = unitRef.get(LibUserSeenPostRepository);
+    _libUserMarkReadPostRepo = unitRef.get(LibUserMarkReadPostRepository);
+    _libUserReportContentRepo = unitRef.get(LibUserReportContentRepository);
+    _libUserSavePostRepo = unitRef.get(LibUserSavePostRepository);
     _contentMapper = unitRef.get(ContentMapper);
+
     _sequelizeConnection = unitRef.get(Sequelize);
     transaction = createMock<Transaction>();
 
@@ -87,7 +115,7 @@ describe('ContentRepository', () => {
       await _contentRepo.create(mockPostEntity);
 
       expect(_contentMapper.toPersistence).toBeCalledWith(mockPostEntity);
-      expect(_libContentRepository.create).toBeCalledWith(mockPostRecord, { transaction });
+      expect(_libContentRepo.create).toBeCalledWith(mockPostRecord, { transaction });
       expect(_contentRepo['_setSeries']).toBeCalledWith(mockPostEntity, transaction);
       expect(_contentRepo['_setTags']).toBeCalledWith(mockPostEntity, transaction);
       expect(_contentRepo['_setGroups']).toBeCalledWith(mockPostEntity, transaction);
@@ -101,7 +129,7 @@ describe('ContentRepository', () => {
       await _contentRepo.create(mockArticleEntity);
 
       expect(_contentMapper.toPersistence).toBeCalledWith(mockArticleEntity);
-      expect(_libContentRepository.create).toBeCalledWith(mockArticleRecord, { transaction });
+      expect(_libContentRepo.create).toBeCalledWith(mockArticleRecord, { transaction });
       expect(_contentRepo['_setSeries']).toBeCalledWith(mockArticleEntity, transaction);
       expect(_contentRepo['_setTags']).toBeCalledWith(mockArticleEntity, transaction);
       expect(_contentRepo['_setGroups']).toBeCalledWith(mockArticleEntity, transaction);
@@ -115,7 +143,7 @@ describe('ContentRepository', () => {
       await _contentRepo.create(mockSeriesEntity);
 
       expect(_contentMapper.toPersistence).toBeCalledWith(mockSeriesEntity);
-      expect(_libContentRepository.create).toBeCalledWith(mockSeriesRecord, { transaction });
+      expect(_libContentRepo.create).toBeCalledWith(mockSeriesRecord, { transaction });
       expect(_contentRepo['_setSeries']).not.toBeCalled();
       expect(_contentRepo['_setTags']).not.toBeCalled();
       expect(_contentRepo['_setGroups']).toBeCalledWith(mockSeriesEntity, transaction);
@@ -125,13 +153,13 @@ describe('ContentRepository', () => {
 
     it('Should rollback success', async () => {
       _contentMapper.toPersistence.mockReturnValue(mockPostRecord);
-      _libContentRepository.create.mockRejectedValue(new Error());
+      _libContentRepo.create.mockRejectedValue(new Error());
 
       try {
         await _contentRepo.create(mockPostEntity);
       } catch (e) {
         expect(_contentMapper.toPersistence).toBeCalledWith(mockPostEntity);
-        expect(_libContentRepository.create).toBeCalledWith(mockPostRecord, { transaction });
+        expect(_libContentRepo.create).toBeCalledWith(mockPostRecord, { transaction });
         expect(_contentRepo['_setSeries']).not.toBeCalled();
         expect(_contentRepo['_setTags']).not.toBeCalled();
         expect(_contentRepo['_setGroups']).not.toBeCalled();
@@ -155,11 +183,10 @@ describe('ContentRepository', () => {
       await _contentRepo.update(mockPostEntity);
 
       expect(_contentMapper.toPersistence).toBeCalledWith(mockPostEntity);
-      expect(_libContentRepository.update).toBeCalledWith(
-        mockPostRecord.id,
-        mockPostRecord,
-        transaction
-      );
+      expect(_libContentRepo.update).toBeCalledWith(mockPostRecord, {
+        where: { id: mockPostRecord.id },
+        transaction,
+      });
       expect(_contentRepo['_setSeries']).toBeCalledWith(mockPostEntity, transaction);
       expect(_contentRepo['_setTags']).toBeCalledWith(mockPostEntity, transaction);
       expect(_contentRepo['_setCategories']).not.toBeCalled();
@@ -174,11 +201,10 @@ describe('ContentRepository', () => {
       await _contentRepo.update(mockArticleEntity);
 
       expect(_contentMapper.toPersistence).toBeCalledWith(mockArticleEntity);
-      expect(_libContentRepository.update).toBeCalledWith(
-        mockArticleRecord.id,
-        mockArticleRecord,
-        transaction
-      );
+      expect(_libContentRepo.update).toBeCalledWith(mockArticleRecord, {
+        where: { id: mockArticleRecord.id },
+        transaction,
+      });
       expect(_contentRepo['_setSeries']).toBeCalledWith(mockArticleEntity, transaction);
       expect(_contentRepo['_setTags']).toBeCalledWith(mockArticleEntity, transaction);
       expect(_contentRepo['_setCategories']).toBeCalledWith(mockArticleEntity, transaction);
@@ -193,11 +219,10 @@ describe('ContentRepository', () => {
       await _contentRepo.update(mockSeriesEntity);
 
       expect(_contentMapper.toPersistence).toBeCalledWith(mockSeriesEntity);
-      expect(_libContentRepository.update).toBeCalledWith(
-        mockSeriesRecord.id,
-        mockSeriesRecord,
-        transaction
-      );
+      expect(_libContentRepo.update).toBeCalledWith(mockSeriesRecord, {
+        where: { id: mockSeriesRecord.id },
+        transaction,
+      });
       expect(_contentRepo['_setSeries']).not.toBeCalled();
       expect(_contentRepo['_setTags']).not.toBeCalled();
       expect(_contentRepo['_setCategories']).not.toBeCalled();
@@ -208,17 +233,16 @@ describe('ContentRepository', () => {
 
     it('Should rollback success', async () => {
       _contentMapper.toPersistence.mockReturnValue(mockPostRecord);
-      _libContentRepository.update.mockRejectedValue(new Error());
+      _libContentRepo.update.mockRejectedValue(new Error());
 
       try {
         await _contentRepo.update(mockPostEntity);
       } catch (e) {
         expect(_contentMapper.toPersistence).toBeCalledWith(mockPostEntity);
-        expect(_libContentRepository.update).toBeCalledWith(
-          mockPostRecord.id,
-          mockPostRecord,
-          transaction
-        );
+        expect(_libContentRepo.update).toBeCalledWith(mockPostRecord, {
+          where: { id: mockPostRecord.id },
+          transaction,
+        });
         expect(_contentRepo['_setSeries']).not.toBeCalled();
         expect(_contentRepo['_setTags']).not.toBeCalled();
         expect(_contentRepo['_setCategories']).not.toBeCalled();
@@ -238,14 +262,14 @@ describe('ContentRepository', () => {
 
       await _contentRepo['_setGroups'](mockContentEntity, transaction);
 
-      expect(_libContentRepository.bulkCreatePostGroup).toBeCalledWith(
+      expect(_libPostGroupRepo.bulkCreate).toBeCalledWith(
         mockAttachGroupIds.map((groupId) => ({ postId: mockContentEntity.getId(), groupId })),
         { transaction, ignoreDuplicates: true }
       );
-      expect(_libContentRepository.deletePostGroup).toBeCalledWith(
-        { postId: mockContentEntity.getId(), groupId: mockDetachGroupIds },
-        transaction
-      );
+      expect(_libPostGroupRepo.delete).toBeCalledWith({
+        where: { postId: mockContentEntity.getId(), groupId: mockDetachGroupIds },
+        transaction,
+      });
     });
   });
 
@@ -258,14 +282,14 @@ describe('ContentRepository', () => {
 
       await _contentRepo['_setSeries'](mockPostEntity, transaction);
 
-      expect(_libContentRepository.bulkCreatePostSeries).toBeCalledWith(
+      expect(_libPostSeriesRepo.bulkCreate).toBeCalledWith(
         mockAttachSeriesIds.map((seriesId) => ({ postId: mockPostEntity.getId(), seriesId })),
         { transaction, ignoreDuplicates: true }
       );
-      expect(_libContentRepository.deletePostSeries).toBeCalledWith(
-        { postId: mockPostEntity.getId(), seriesId: mockDetachSeriesIds },
-        transaction
-      );
+      expect(_libPostSeriesRepo.delete).toBeCalledWith({
+        where: { postId: mockPostEntity.getId(), seriesId: mockDetachSeriesIds },
+        transaction,
+      });
     });
   });
 
@@ -280,14 +304,14 @@ describe('ContentRepository', () => {
 
       await _contentRepo['_setTags'](mockArticleEntity, transaction);
 
-      expect(_libContentRepository.bulkCreatePostTag).toBeCalledWith(
+      expect(_libPostTagRepo.bulkCreate).toBeCalledWith(
         mockAttachTagIds.map((tagId) => ({ postId: mockArticleEntity.getId(), tagId })),
         { transaction, ignoreDuplicates: true }
       );
-      expect(_libContentRepository.deletePostTag).toBeCalledWith(
-        { postId: mockArticleEntity.getId(), tagId: mockDetachTagIds },
-        transaction
-      );
+      expect(_libPostTagRepo.delete).toBeCalledWith({
+        where: { postId: mockArticleEntity.getId(), tagId: mockDetachTagIds },
+        transaction,
+      });
     });
   });
 
@@ -304,17 +328,20 @@ describe('ContentRepository', () => {
 
       await _contentRepo['_setCategories'](mockArticleEntity, transaction);
 
-      expect(_libContentRepository.bulkCreatePostCategory).toBeCalledWith(
+      expect(_libPostCategoryRepo.bulkCreate).toBeCalledWith(
         mockAttachCategoryIds.map((categoryId) => ({
           postId: mockArticleEntity.getId(),
           categoryId,
         })),
         { transaction, ignoreDuplicates: true }
       );
-      expect(_libContentRepository.deletePostCategory).toBeCalledWith(
-        { postId: mockArticleEntity.getId(), categoryId: mockDetachCategoryIds },
-        transaction
-      );
+      expect(_libPostCategoryRepo.delete).toBeCalledWith({
+        where: {
+          postId: mockArticleEntity.getId(),
+          categoryId: mockDetachCategoryIds,
+        },
+        transaction,
+      });
     });
   });
 
@@ -323,31 +350,31 @@ describe('ContentRepository', () => {
       const mockContentId = v4();
       await _contentRepo.delete(mockContentId);
 
-      expect(_libContentRepository.delete).toBeCalledWith(mockContentId);
+      expect(_libContentRepo.delete).toBeCalledWith({ where: { id: mockContentId } });
     });
   });
 
   describe('findContentById', () => {
     it('Should find content without option success', async () => {
       const mockPostId = mockPostRecord.id;
-      _libContentRepository.findOne.mockResolvedValue(mockPostRecord as PostModel);
+      _libContentRepo.findOne.mockResolvedValue(mockPostRecord as PostModel);
       _contentMapper.toDomain.mockReturnValue(mockPostEntity);
 
       const post = await _contentRepo.findContentById(mockPostId);
 
-      expect(_libContentRepository.findOne).toBeCalledWith({ where: { id: mockPostId } });
+      expect(_libContentRepo.findOne).toBeCalledWith({ where: { id: mockPostId } });
       expect(_contentMapper.toDomain).toBeCalledWith(mockPostRecord);
       expect(post).toEqual(mockPostEntity);
     });
 
     it('Should find content with option success', async () => {
       const mockPostId = mockPostRecord.id;
-      _libContentRepository.findOne.mockResolvedValue(mockPostRecord as PostModel);
+      _libContentRepo.findOne.mockResolvedValue(mockPostRecord as PostModel);
       _contentMapper.toDomain.mockReturnValue(mockPostEntity);
 
       const post = await _contentRepo.findContentById(mockPostId, { mustIncludeGroup: true });
 
-      expect(_libContentRepository.findOne).toBeCalledWith({
+      expect(_libContentRepo.findOne).toBeCalledWith({
         where: { id: mockPostId },
         include: { mustIncludeGroup: true },
       });
@@ -359,12 +386,12 @@ describe('ContentRepository', () => {
   describe('findContentByIdInActiveGroup', () => {
     it('Should find content in active group success', async () => {
       const mockPostId = mockPostRecord.id;
-      _libContentRepository.findOne.mockResolvedValue(mockPostRecord as PostModel);
+      _libContentRepo.findOne.mockResolvedValue(mockPostRecord as PostModel);
       _contentMapper.toDomain.mockReturnValue(mockPostEntity);
 
       const post = await _contentRepo.findContentByIdInActiveGroup(mockPostId);
 
-      expect(_libContentRepository.findOne).toBeCalledWith({
+      expect(_libContentRepo.findOne).toBeCalledWith({
         where: { id: mockPostId, groupArchived: false },
       });
       expect(_contentMapper.toDomain).toBeCalledWith(mockPostRecord);
@@ -375,12 +402,12 @@ describe('ContentRepository', () => {
   describe('findContentByIdInArchivedGroup', () => {
     it('Should find content in archived group success', async () => {
       const mockPostId = mockPostRecord.id;
-      _libContentRepository.findOne.mockResolvedValue(mockPostRecord as PostModel);
+      _libContentRepo.findOne.mockResolvedValue(mockPostRecord as PostModel);
       _contentMapper.toDomain.mockReturnValue(mockPostEntity);
 
       const post = await _contentRepo.findContentByIdInArchivedGroup(mockPostId);
 
-      expect(_libContentRepository.findOne).toBeCalledWith({
+      expect(_libContentRepo.findOne).toBeCalledWith({
         where: { id: mockPostId, groupArchived: true },
       });
       expect(_contentMapper.toDomain).toBeCalledWith(mockPostRecord);
@@ -392,7 +419,7 @@ describe('ContentRepository', () => {
     it('Should find content exclude reported by user success', async () => {
       const mockPostId = mockPostRecord.id;
       const mockUserId = v4();
-      _libContentRepository.findOne.mockResolvedValue(mockPostRecord as PostModel);
+      _libContentRepo.findOne.mockResolvedValue(mockPostRecord as PostModel);
       _contentMapper.toDomain.mockReturnValue(mockPostEntity);
 
       const post = await _contentRepo.findContentByIdExcludeReportedByUserId(
@@ -400,7 +427,7 @@ describe('ContentRepository', () => {
         mockUserId
       );
 
-      expect(_libContentRepository.findOne).toBeCalledWith({
+      expect(_libContentRepo.findOne).toBeCalledWith({
         where: { id: mockPostId, groupArchived: false, excludeReportedByUserId: mockUserId },
       });
       expect(_contentMapper.toDomain).toBeCalledWith(mockPostRecord);
@@ -438,16 +465,13 @@ describe('ContentRepository', () => {
       const mockPostRecords = mockPostIds.map((id) => createMockPostRecord({ id }));
       const mockPostEntities = mockPostRecords.map((post) => createMockPostEntity(post));
 
-      _libContentRepository.findAll.mockResolvedValue(mockPostRecords as PostModel[]);
+      _libContentRepo.findAll.mockResolvedValue(mockPostRecords as PostModel[]);
       _contentMapper.toDomain.mockReturnValueOnce(mockPostEntities[0]);
       _contentMapper.toDomain.mockReturnValueOnce(mockPostEntities[1]);
 
       const posts = await _contentRepo.findAll({ where: { ids: mockPostIds } });
 
-      expect(_libContentRepository.findAll).toBeCalledWith(
-        { where: { ids: mockPostIds } },
-        undefined
-      );
+      expect(_libContentRepo.findAll).toBeCalledWith({ where: { ids: mockPostIds } }, undefined);
       expect(_contentMapper.toDomain).toBeCalledTimes(2);
       expect(posts).toEqual(mockPostEntities);
     });
@@ -457,7 +481,7 @@ describe('ContentRepository', () => {
       const mockPostRecords = mockPostIds.map((id) => createMockPostRecord({ id }));
       const mockPostEntities = mockPostRecords.map((post) => createMockPostEntity(post));
 
-      _libContentRepository.findAll.mockResolvedValue(mockPostRecords as PostModel[]);
+      _libContentRepo.findAll.mockResolvedValue(mockPostRecords as PostModel[]);
       _contentMapper.toDomain.mockReturnValueOnce(mockPostEntities[0]);
       _contentMapper.toDomain.mockReturnValueOnce(mockPostEntities[1]);
 
@@ -466,7 +490,7 @@ describe('ContentRepository', () => {
         { limit: 10, offset: 1 }
       );
 
-      expect(_libContentRepository.findAll).toBeCalledWith(
+      expect(_libContentRepo.findAll).toBeCalledWith(
         { where: { ids: mockPostIds } },
         { limit: 10, offset: 1 }
       );
@@ -481,20 +505,36 @@ describe('ContentRepository', () => {
       const mockUserId = v4();
       await _contentRepo.markSeen(mockContentId, mockUserId);
 
-      expect(_libContentRepository.bulkCreateSeenPost).toBeCalledWith(
+      expect(_libUserSeenPostRepo.bulkCreate).toBeCalledWith(
         [{ postId: mockContentId, userId: mockUserId }],
         { ignoreDuplicates: true }
       );
     });
   });
 
-  describe('markSeen', () => {
+  describe('hasSeen', () => {
+    it('Should get has seen content success', async () => {
+      const mockContentId = v4();
+      const mockUserId = v4();
+
+      _libUserSeenPostRepo.first.mockResolvedValue(null);
+
+      const hasSeen = await _contentRepo.hasSeen(mockContentId, mockUserId);
+
+      expect(_libUserSeenPostRepo.first).toBeCalledWith({
+        where: { postId: mockContentId, userId: mockUserId },
+      });
+      expect(hasSeen).toEqual(false);
+    });
+  });
+
+  describe('markReadImportant', () => {
     it('Should mark read important content success', async () => {
       const mockContentId = v4();
       const mockUserId = v4();
       await _contentRepo.markReadImportant(mockContentId, mockUserId);
 
-      expect(_libContentRepository.bulkCreateReadImportantPost).toBeCalledWith(
+      expect(_libUserMarkReadPostRepo.bulkCreate).toBeCalledWith(
         [{ postId: mockContentId, userId: mockUserId }],
         { ignoreDuplicates: true }
       );
@@ -503,7 +543,7 @@ describe('ContentRepository', () => {
 
   describe('getPagination', () => {
     it('Should get contents with pagination success', async () => {
-      _libContentRepository.getPagination.mockResolvedValue({
+      _libContentRepo.getPagination.mockResolvedValue({
         rows: [mockPostRecord] as PostModel[],
         meta: { hasNextPage: false, hasPreviousPage: false },
       });
@@ -514,7 +554,7 @@ describe('ContentRepository', () => {
         limit: 10,
       });
 
-      expect(_libContentRepository.getPagination).toBeCalledWith({
+      expect(_libContentRepo.getPagination).toBeCalledWith({
         where: { type: CONTENT_TYPE.POST },
         limit: 10,
       });
@@ -533,18 +573,149 @@ describe('ContentRepository', () => {
         createMockReportContentDetailRecord({ targetId, createdBy: mockUserId })
       );
 
-      _libContentRepository.getReportedContents.mockResolvedValue(
+      _libUserReportContentRepo.findMany.mockResolvedValue(
         mockReportContents as ReportContentDetailModel[]
       );
 
-      const targetIds = await _contentRepo.getReportedContentIdsByUser(mockUserId, [
-        CONTENT_TARGET.POST,
-      ]);
+      const targetIds = await _contentRepo.getReportedContentIdsByUser({
+        reportUser: mockUserId,
+        target: [CONTENT_TARGET.POST],
+      });
 
-      expect(_libContentRepository.getReportedContents).toBeCalledWith({
-        [Op.and]: [{ createdBy: mockUserId, targetType: [CONTENT_TARGET.POST] }],
+      expect(_libUserReportContentRepo.findMany).toBeCalledWith({
+        where: {
+          [Op.and]: [{ createdBy: mockUserId, targetType: [CONTENT_TARGET.POST] }],
+        },
       });
       expect(targetIds).toEqual(mockTargetIds);
+    });
+  });
+
+  describe('countDraftContentByUserId', () => {
+    it('Should count draft content success', async () => {
+      const mockUserId = v4();
+
+      _libContentRepo.count.mockResolvedValue(10);
+
+      const totalDraftContent = await _contentRepo.countDraftContentByUserId(mockUserId);
+
+      expect(_libContentRepo.count).toBeCalledWith({
+        where: { createdBy: mockUserId, status: CONTENT_STATUS.DRAFT },
+      });
+      expect(totalDraftContent).toEqual(10);
+    });
+  });
+
+  describe('findPinnedContentIdsByGroupId', () => {
+    it('Should find pined content ids success', async () => {
+      const mockGroupId = v4();
+      const mockPinedContentIds = [v4(), v4()];
+      const mockPostGroupRecords = mockPinedContentIds.map((contentId, index) =>
+        createMockPostGroupRecord({
+          postId: contentId,
+          groupId: mockGroupId,
+          isPinned: true,
+          pinnedIndex: index,
+        })
+      );
+
+      _libPostGroupRepo.findMany.mockResolvedValue(mockPostGroupRecords as PostGroupModel[]);
+
+      const contentIds = await _contentRepo.findPinnedContentIdsByGroupId(mockGroupId);
+
+      expect(_libPostGroupRepo.findMany).toBeCalledWith({
+        where: { groupId: mockGroupId, isPinned: true },
+        order: [['pinned_index', 'ASC']],
+        include: [
+          {
+            model: PostModel,
+            as: 'post',
+            required: true,
+            select: [],
+            where: {
+              status: CONTENT_STATUS.PUBLISHED,
+              isHidden: false,
+            },
+          },
+        ],
+      });
+      expect(contentIds).toEqual(mockPinedContentIds);
+    });
+  });
+
+  describe('reorderPinnedContent', () => {
+    it('Should reorder pinned content success', async () => {
+      const mockGroupId = v4();
+      const mockContentIds = [v4(), v4()];
+
+      await _contentRepo.reorderPinnedContent(mockContentIds, mockGroupId);
+
+      expect(_libPostGroupRepo.update).toBeCalledWith(
+        { pinnedIndex: 1 },
+        { where: { groupId: mockGroupId, postId: mockContentIds[0] } }
+      );
+      expect(_libPostGroupRepo.update).toBeCalledWith(
+        { pinnedIndex: 2 },
+        { where: { groupId: mockGroupId, postId: mockContentIds[1] } }
+      );
+    });
+  });
+
+  describe('pinContent', () => {
+    it('Should pin content success', async () => {
+      const mockContentId = v4();
+      const mockGroupIds = [v4(), v4()];
+
+      _libPostGroupRepo.max.mockResolvedValue(5);
+
+      await _contentRepo.pinContent(mockContentId, mockGroupIds);
+
+      expect(_libPostGroupRepo.max).toBeCalledTimes(mockGroupIds.length);
+      expect(_libPostGroupRepo.update).toBeCalledWith(
+        { isPinned: true, pinnedIndex: 6 },
+        { where: { postId: mockContentId, groupId: mockGroupIds[0] } }
+      );
+      expect(_libPostGroupRepo.update).toBeCalledWith(
+        { isPinned: true, pinnedIndex: 6 },
+        { where: { postId: mockContentId, groupId: mockGroupIds[1] } }
+      );
+    });
+  });
+
+  describe('unpinContent', () => {
+    it('Should unpin content success', async () => {
+      const mockContentId = v4();
+      const mockGroupIds = [v4(), v4()];
+
+      await _contentRepo.unpinContent(mockContentId, mockGroupIds);
+
+      expect(_libPostGroupRepo.update).toBeCalledWith(
+        { isPinned: false, pinnedIndex: 0 },
+        { where: { postId: mockContentId, groupId: mockGroupIds } }
+      );
+    });
+
+    it('Should not update pinned if groupId is empty', async () => {
+      const mockContentId = v4();
+      const mockGroupIds = [];
+
+      await _contentRepo.unpinContent(mockContentId, mockGroupIds);
+
+      expect(_libPostGroupRepo.update).not.toBeCalled();
+    });
+  });
+
+  describe('saveContent', () => {
+    it('Should save content success', async () => {
+      const mockUserId = v4();
+      const mockContentId = v4();
+
+      await _contentRepo.saveContent(mockUserId, mockContentId);
+
+      expect(_libUserSavePostRepo.bulkCreate).toBeCalledWith(
+        [{ userId: mockUserId, postId: mockContentId }],
+        { ignoreDuplicates: true }
+      );
     });
   });
 });

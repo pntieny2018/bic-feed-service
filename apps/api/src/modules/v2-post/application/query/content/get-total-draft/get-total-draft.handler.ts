@@ -16,6 +16,6 @@ export class GetTotalDraftHandler implements IQueryHandler<GetTotalDraftQuery, n
   ) {}
 
   public async execute(query: GetTotalDraftQuery): Promise<number> {
-    return this._contentRepository.countContentDraft(query.user.id);
+    return this._contentRepository.countDraftContentByUserId(query.user.id);
   }
 }

@@ -474,7 +474,7 @@ export class ContentDomainService implements IContentDomainService {
     const { authUser, contentIds, groupId } = props;
 
     await this._contentValidator.checkCanPinContent(authUser, [groupId]);
-    const pinnedContentIds = await this._contentRepository.findPinnedPostIdsByGroupId(groupId);
+    const pinnedContentIds = await this._contentRepository.findPinnedContentIdsByGroupId(groupId);
     if (pinnedContentIds.length === 0) {
       throw new ContentPinNotFoundException();
     }
@@ -523,7 +523,7 @@ export class ContentDomainService implements IContentDomainService {
     groupId: string,
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const contentIds = await this._contentRepository.findPinnedPostIdsByGroupId(groupId);
+    const contentIds = await this._contentRepository.findPinnedContentIdsByGroupId(groupId);
     if (contentIds.length === 0) {
       return [];
     }
