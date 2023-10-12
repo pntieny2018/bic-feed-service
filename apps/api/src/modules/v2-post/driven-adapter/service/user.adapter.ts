@@ -45,4 +45,8 @@ export class UserAdapter implements IUserAdapter {
     }
     return this._userService.findAllByIdsWithAuthUser(userIds, authUserId);
   }
+
+  public async canCudTags(userId: string, groupId: string): Promise<boolean> {
+    return this._userService.canCudTags(userId, groupId);
+  }
 }
