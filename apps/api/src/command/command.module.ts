@@ -28,6 +28,7 @@ import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.comma
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
 import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
+import { FixSetActorHasSeenPostCommand } from './fix-set-actor-has-seen-post.command';
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
@@ -101,6 +102,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigratePublishedTimeContentCommand,
     ExportReactionCountDataCommand,
     ExportInvalidTagNameCommand,
+    FixSetActorHasSeenPostCommand,
   ],
 })
 export class CommandModule {}
