@@ -1,3 +1,4 @@
+import { CommentReactionAttributes } from '@libs/database/postgres/model';
 import { v4 } from 'uuid';
 
 import { REACTION_TARGET } from '../../data-type/reaction.enum';
@@ -12,5 +13,29 @@ export function createMockReactionEntity(data: Partial<ReactionAttributes> = {})
     createdBy: v4(),
     createdAt: new Date(),
     ...data,
+  });
+}
+
+export function createMockCommentReactionRecord(
+  data: Partial<CommentReactionAttributes> = {}
+): CommentReactionAttributes {
+  return {
+    id: v4(),
+    commentId: v4(),
+    reactionName: 'bic_check_mark',
+    createdBy: v4(),
+    createdAt: new Date(),
+    ...data,
+  };
+}
+
+export function createMockCommentReactionEntity(
+  data: Partial<CommentReactionAttributes> = {}
+): ReactionEntity {
+  const commentReaction = createMockCommentReactionRecord(data);
+  return new ReactionEntity({
+    ...commentReaction,
+    target: REACTION_TARGET.COMMENT,
+    targetId: commentReaction.commentId,
   });
 }

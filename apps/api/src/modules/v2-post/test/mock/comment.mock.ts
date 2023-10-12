@@ -1,5 +1,4 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { CommentReactionAttributes } from '@libs/database/postgres/model/comment-reaction.model';
 import { CommentAttributes } from '@libs/database/postgres/model/comment.model';
 import { v4 } from 'uuid';
 
@@ -55,17 +54,4 @@ export function createMockCommentEntity(data: Partial<CommentAttributes> = {}): 
         })
     ),
   });
-}
-
-export function createMockCommentReactionRecord(
-  data: Partial<CommentReactionAttributes> = {}
-): CommentReactionAttributes {
-  return {
-    id: v4(),
-    commentId: v4(),
-    reactionName: 'bic_check_mark',
-    createdBy: v4(),
-    createdAt: new Date(),
-    ...data,
-  };
 }
