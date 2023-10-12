@@ -61,7 +61,7 @@ export class ContentNotificationApplicationService
   private _createPostActivityObject(post: PostDto): PostActivityObjectDto {
     return new PostActivityObjectDto({
       id: post.id,
-      actor: { id: post.actor.id },
+      actor: { id: post.createdBy },
       title: null,
       contentType: post.type.toLowerCase(),
       setting: post.setting,
@@ -123,7 +123,7 @@ export class ContentNotificationApplicationService
   private _createArticleActivityObject(article: ArticleDto): ArticleActivityObjectDto {
     return new ArticleActivityObjectDto({
       id: article.id,
-      actor: article.actor,
+      actor: { id: article.createdBy },
       title: article.title,
       contentType: article.type.toLowerCase(),
       setting: article.setting,
@@ -208,7 +208,7 @@ export class ContentNotificationApplicationService
   ): SeriesActivityObjectDto {
     return new SeriesActivityObjectDto({
       id: series.id,
-      actor: { id: series.actor.id },
+      actor: { id: series.createdBy },
       title: series.title,
       contentType: series.type.toLowerCase(),
       setting: series.setting,
