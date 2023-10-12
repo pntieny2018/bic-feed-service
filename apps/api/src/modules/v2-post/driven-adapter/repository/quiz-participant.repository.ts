@@ -165,7 +165,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]> {
     const rows = await this._libQuizParticipantRepo.findMany({
-      where: { post: contentId },
+      where: { postId: contentId },
       whereRaw: this._libQuizParticipantRepo.getConditionIsFinished(),
       select: ['createdBy'],
       selectRaw: [['MAX(score)', 'score']],
