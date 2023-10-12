@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -8,15 +9,15 @@ import {
   Post,
   Put,
   Query,
+  Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { UserDto } from '../../../v2-user/application/user.dto';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
@@ -49,10 +50,7 @@ import { GetCommentsPipe } from '../pipes/get-comments.pipe';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
-@Controller({
-  version: VERSIONS_SUPPORTED,
-  path: 'comments',
-})
+@Controller()
 export class CommentController {
   public constructor(
     private readonly _commandBus: CommandBus,
@@ -66,7 +64,8 @@ export class CommentController {
   @ResponseMessages({
     success: 'Get comments successfully',
   })
-  @Get('/')
+  @Version(ROUTES.COMMENT.GET_LIST.VERSIONS)
+  @Get(ROUTES.COMMENT.GET_LIST.PATH)
   public async getList(
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
@@ -83,7 +82,8 @@ export class CommentController {
   @ResponseMessages({
     success: 'Get comments around a comment successfully',
   })
-  @Get('/:commentId')
+  @Version(ROUTES.COMMENT.GET_AROUND_COMMENT.VERSIONS)
+  @Get(ROUTES.COMMENT.GET_AROUND_COMMENT.PATH)
   public async getCommentsAroundId(
     @AuthUser(false) user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
@@ -105,7 +105,8 @@ export class CommentController {
   @ResponseMessages({
     success: 'message.comment.created_success',
   })
-  @Post('/')
+  @Version(ROUTES.COMMENT.CREATE.VERSIONS)
+  @Post(ROUTES.COMMENT.CREATE.PATH)
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentRequestDto
@@ -134,7 +135,8 @@ export class CommentController {
   @ResponseMessages({
     success: 'message.comment.replied_success',
   })
-  @Post('/:commentId/reply')
+  @Version(ROUTES.COMMENT.REPLY.VERSIONS)
+  @Post(ROUTES.COMMENT.REPLY.PATH)
   public async reply(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
@@ -165,7 +167,8 @@ export class CommentController {
   @ResponseMessages({
     success: 'message.comment.updated_success',
   })
-  @Put('/:commentId')
+  @Version(ROUTES.COMMENT.UPDATE.VERSIONS)
+  @Put(ROUTES.COMMENT.UPDATE.PATH)
   public async update(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
@@ -195,7 +198,8 @@ export class CommentController {
   @ResponseMessages({
     success: 'message.comment.deleted_success',
   })
-  @Delete('/:commentId')
+  @Version(ROUTES.COMMENT.DELETE.VERSIONS)
+  @Delete(ROUTES.COMMENT.DELETE.PATH)
   public async destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string

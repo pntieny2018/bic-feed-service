@@ -239,4 +239,30 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
+  COMMENT: {
+    GET_LIST: {
+      PATH: '/comments',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    CREATE: {
+      PATH: '/comments',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    GET_AROUND_COMMENT: {
+      PATH: '/comments/:commentId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    UPDATE: {
+      PATH: '/comments/:commentId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    DELETE: {
+      PATH: '/comments/:commentId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    REPLY: {
+      PATH: '/comments/:commentId/reply',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
 };
