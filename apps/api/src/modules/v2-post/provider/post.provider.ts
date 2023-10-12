@@ -48,7 +48,10 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import { ContentHasSeenEventHandler } from '../application/event-handler/content';
+import {
+  ContentChangedSeriesEventHandler,
+  ContentHasSeenEventHandler,
+} from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -138,6 +141,7 @@ export const postProvider = [
   SeriesItemsAddedEventHandler,
 
   ContentHasSeenEventHandler,
+  ContentChangedSeriesEventHandler,
 
   /** Application Binding */
   {

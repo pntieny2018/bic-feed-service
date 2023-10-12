@@ -232,9 +232,10 @@ export class ContentEntity<
     return Boolean(this._props.isSaved);
   }
 
-  /**
-   * Note: Need to override createdAt when publishing
-   */
+  public getLang(): LANGUAGE {
+    return this._props.lang;
+  }
+
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
