@@ -24,7 +24,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupported(),
     },
     UPDATE_TAG: {
-      PATH: '/tags/:id',
+      PATH: '/tags/:tagId',
       VERSIONS: AppHelper.getVersionsSupported(),
     },
     DELETE_TAG: {

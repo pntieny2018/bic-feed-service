@@ -103,15 +103,14 @@ export class TagController {
   @Version(ROUTES.TAG.UPDATE_TAG.VERSIONS)
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) tagId: string,
+    @Param('tagId', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagRequestDto
   ): Promise<TagDto> {
     const { name } = updateTagDto;
 
-    const tag = await this._commandBus.execute<UpdateTagCommand, TagDto>(
-      new UpdateTagCommand({ id: tagId, name, userId: user.id })
+    return this._commandBus.execute<UpdateTagCommand, TagDto>(
+      new UpdateTagCommand({ id: tagId, name, actor: user })
     );
-    return tag;
   }
 
   @ApiOperation({ summary: 'Delete tag' })
