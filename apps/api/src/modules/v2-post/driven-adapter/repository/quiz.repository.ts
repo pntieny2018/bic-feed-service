@@ -110,13 +110,25 @@ export class QuizRepository implements IQuizRepository {
   }
 
   public async findAllQuizzes(input: FindAllQuizProps): Promise<QuizEntity[]> {
+    const condition: WhereOptions<QuizAttributes> = {};
+    if (input.where?.ids) {
+      condition.id = input.where.ids;
+    }
+    if (input.where?.status) {
+      condition.status = input.where.status;
+    }
+    if (input.where?.contentId) {
+      condition.postId = input.where.contentId;
+    }
+    if (input.where?.contentIds) {
+      condition.postId = input.where.contentIds;
+    }
+    if (input.where?.createdBy) {
+      condition.createdBy = input.where.createdBy;
+    }
+
     const rows = await this._libQuizRepo.findMany({
-      where: {
-        status: input.where.status,
-        id: input.where.ids,
-        postId: input.where.contentId,
-        createdBy: input.where.createdBy,
-      },
+      where: condition,
     });
     return rows.map((row) => this._quizMapper.toDomain(row));
   }
@@ -126,21 +138,17 @@ export class QuizRepository implements IQuizRepository {
   ): Promise<CursorPaginationResult<QuizEntity>> {
     const { where, limit, before, after, order } = getPaginationQuizzesProps;
 
-    const whereOptions: WhereOptions<QuizAttributes> = {};
+    const condition: WhereOptions<QuizAttributes> = {};
     if (where.status) {
-      whereOptions.status = where.status;
+      condition.status = where.status;
     }
-
     if (where.createdBy) {
-      whereOptions.createdBy = where.createdBy;
+      condition.createdBy = where.createdBy;
     }
 
     const { rows, meta } = await this._libQuizRepo.cursorPaginate(
       {
-        where: {
-          status: where.status,
-          createdBy: where.createdBy,
-        },
+        where: condition,
         include: [
           {
             model: PostModel,
@@ -148,7 +156,7 @@ export class QuizRepository implements IQuizRepository {
             required: true,
             where: {
               isHidden: false,
-              type: where.contentType,
+              ...(where?.contentType && { type: where.contentType }),
             },
           },
         ],
