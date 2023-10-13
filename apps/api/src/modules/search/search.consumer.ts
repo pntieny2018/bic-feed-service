@@ -2,64 +2,13 @@ import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 
 import { KAFKA_TOPIC } from '../../common/constants';
-import {
-  PostChangedMessagePayload,
-  SeriesChangedMessagePayload,
-} from '../v2-post/application/dto/message';
+import { SeriesChangedMessagePayload } from '../v2-post/application/dto/message';
 
 import { SearchService } from './search.service';
 
 @Controller()
 export class SearchConsumer {
   public constructor(private readonly _postSearchService: SearchService) {}
-
-  @EventPattern(KAFKA_TOPIC.CONTENT.POST_CHANGED)
-  public async postChanged(@Payload('value') payload: PostChangedMessagePayload): Promise<void> {
-    const { before, after, state } = payload;
-    const {
-      id,
-      type,
-      content,
-      media,
-      mentionUserIds,
-      groupIds,
-      communityIds,
-      seriesIds,
-      tags,
-      actor,
-      createdAt,
-      updatedAt,
-      publishedAt,
-      lang,
-      isHidden,
-    } = after;
-
-    switch (state) {
-      case 'update':
-        await this._postSearchService.updatePostsToSearch([
-          {
-            id,
-            type,
-            content,
-            media,
-            isHidden,
-            mentionUserIds,
-            groupIds,
-            communityIds,
-            seriesIds,
-            tags,
-            createdBy: actor.id,
-            createdAt,
-            updatedAt,
-            publishedAt,
-            lang,
-          },
-        ]);
-        break;
-      default:
-        break;
-    }
-  }
 
   @EventPattern(KAFKA_TOPIC.CONTENT.SERIES_CHANGED)
   public async seriesChanged(

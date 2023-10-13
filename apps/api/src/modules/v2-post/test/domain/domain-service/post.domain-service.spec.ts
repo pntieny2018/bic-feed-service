@@ -157,7 +157,7 @@ describe('Post domain service', () => {
         groupIds: postEntityMock.get('groupIds'),
         content: 'test',
       },
-      authUser: userMock,
+      actor: userMock,
     };
 
     it('should update post successfully', async () => {
@@ -175,7 +175,7 @@ describe('Post domain service', () => {
       jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(true);
       jest.spyOn(contentRepository, 'update').mockResolvedValue();
 
-      const result = await domainService.updatePost(updatePostProps);
+      const result = await domainService.update(updatePostProps);
 
       expect(result).toEqual(postEntityMock);
     });
@@ -184,7 +184,7 @@ describe('Post domain service', () => {
       jest.spyOn(contentRepository, 'findContentByIdInActiveGroup').mockResolvedValue(null);
 
       try {
-        await domainService.updatePost(updatePostProps);
+        await domainService.update(updatePostProps);
       } catch (error) {
         expect(error).toBeInstanceOf(ContentNotFoundException);
       }
@@ -204,7 +204,7 @@ describe('Post domain service', () => {
 
       jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(false);
 
-      const result = await domainService.updatePost(updatePostProps);
+      const result = await domainService.update(updatePostProps);
 
       expect(result).toBeUndefined();
     });
