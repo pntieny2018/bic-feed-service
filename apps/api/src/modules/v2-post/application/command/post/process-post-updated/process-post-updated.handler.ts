@@ -1,9 +1,9 @@
+import { MEDIA_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
 import { PostHasBeenUpdated } from '../../../../../../common/constants';
-import { MediaType } from '../../../../../../database/models/media.model';
 import {
   SeriesAddedItemsEvent,
   SeriesChangedItemsEvent,
@@ -27,7 +27,6 @@ import {
   USER_ADAPTER,
 } from '../../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
-import { ProcessPostPublishedCommand } from '../../post';
 
 import { ProcessPostUpdatedCommand } from './process-post-updated.command';
 
@@ -266,18 +265,18 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
     }
   }
 
-  private async _processMedia(command: ProcessPostPublishedCommand): Promise<void> {
+  private async _processMedia(command: ProcessPostUpdatedCommand): Promise<void> {
     const { after } = command.payload;
     if (after.state.attachVideoIds.length) {
       await this._mediaDomainService.setMediaUsed(
-        MediaType.VIDEO,
+        MEDIA_TYPE.VIDEO,
         after.state.attachVideoIds,
         after.actor.id
       );
     }
     if (after.state.attachFileIds.length) {
       await this._mediaDomainService.setMediaUsed(
-        MediaType.FILE,
+        MEDIA_TYPE.FILE,
         after.state.attachFileIds,
         after.actor.id
       );
@@ -285,7 +284,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
 
     if (after.state.detachVideoIds.length) {
       await this._mediaDomainService.setMediaDelete(
-        MediaType.VIDEO,
+        MEDIA_TYPE.VIDEO,
         after.state.detachVideoIds,
         after.actor.id
       );
@@ -293,7 +292,7 @@ export class ProcessPostUpdatedHandler implements ICommandHandler<ProcessPostUpd
 
     if (after.state.detachFileIds.length) {
       await this._mediaDomainService.setMediaDelete(
-        MediaType.FILE,
+        MEDIA_TYPE.FILE,
         after.state.detachFileIds,
         after.actor.id
       );

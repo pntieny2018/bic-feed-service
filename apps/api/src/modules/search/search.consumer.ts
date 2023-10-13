@@ -35,26 +35,6 @@ export class SearchConsumer {
     } = after;
 
     switch (state) {
-      case 'publish':
-        await this._postSearchService.addPostsToSearch([
-          {
-            id,
-            type,
-            content,
-            media,
-            isHidden,
-            mentionUserIds,
-            groupIds,
-            communityIds,
-            seriesIds,
-            tags,
-            createdBy: actor.id,
-            createdAt,
-            updatedAt,
-            publishedAt,
-          },
-        ]);
-        break;
       case 'update':
         await this._postSearchService.updatePostsToSearch([
           {

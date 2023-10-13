@@ -20,7 +20,6 @@ import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
-  ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
@@ -152,7 +151,6 @@ export const postProvider = [
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
-  ProcessPostPublishedHandler,
   ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
