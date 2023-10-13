@@ -14,17 +14,15 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import {
-  TRANSFORMER_VISIBLE_ONLY,
-  VERSION_1_10_0,
-  VERSIONS_SUPPORTED,
-} from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   MarkReadImportantContentCommand,
   PinContentCommand,
   ReorderPinnedContentCommand,
+  SeenContentCommand,
+  SaveContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
@@ -61,10 +59,7 @@ import {
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
-@Controller({
-  path: 'content',
-  version: VERSIONS_SUPPORTED,
-})
+@Controller()
 export class ContentController {
   public constructor(
     private readonly _commandBus: CommandBus,
@@ -330,6 +325,27 @@ export class ContentController {
     );
   }
 
+  @ApiOperation({ summary: 'Mark content as seen' })
+  @ApiOkResponse({
+    description: 'Mark content as seen successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.mark_as_seen_success',
+  })
+  @Version(ROUTES.CONTENT.SEEN_CONTENT.VERSIONS)
+  @Put(ROUTES.CONTENT.SEEN_CONTENT.PATH)
+  public async seenContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string
+  ): Promise<void> {
+    await this._commandBus.execute(
+      new SeenContentCommand({
+        authUser,
+        contentId,
+      })
+    );
+  }
+
   @ApiOperation({ summary: 'Pin/ Unpin content' })
   @ApiOkResponse({
     description: 'Pin/ Unpin content successfully',
@@ -350,6 +366,27 @@ export class ContentController {
         contentId,
         pinGroupIds: pinContentDto.pinGroupIds,
         unpinGroupIds: pinContentDto.unpinGroupIds,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Save content' })
+  @ApiOkResponse({
+    description: 'Save content successfully',
+  })
+  @ResponseMessages({
+    success: 'Save content successfully',
+  })
+  @Post(ROUTES.CONTENT.SAVE_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.SAVE_CONTENT.VERSIONS)
+  public async saveContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new SaveContentCommand({
+        authUser,
+        contentId,
       })
     );
   }
