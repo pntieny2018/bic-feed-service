@@ -3,7 +3,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { ArticleDeletedEvent, ArticlePublishedEvent, ArticleUpdatedEvent } from '../event';
+import {
+  ArticleDeletedEvent,
+  ArticlePublishedEvent,
+  ArticleUpdatedEvent,
+  ContentHasSeenEvent,
+} from '../event';
 import {
   ArticleRequiredCoverException,
   ContentAccessDeniedException,
@@ -113,6 +118,10 @@ export class ArticleDomainService implements IArticleDomainService {
 
     if (!authUser && !articleEntity.isOpen()) {
       throw new ContentAccessDeniedException();
+    }
+
+    if (articleEntity.isPublished()) {
+      this.event.publish(new ContentHasSeenEvent({ contentId: articleId, userId: authUser.id }));
     }
 
     return articleEntity;

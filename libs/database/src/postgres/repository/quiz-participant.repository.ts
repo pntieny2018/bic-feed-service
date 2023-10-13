@@ -7,9 +7,9 @@ export class LibQuizParticipantRepository extends BaseRepository<QuizParticipant
   }
 
   public getConditionIsFinished(): string {
-    return "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()";
+    return "(finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW())";
   }
   public getConditionIsNotFinished(): string {
-    return "finished_at IS NULL AND started_at + time_limit * interval '1 second' > NOW()";
+    return "(finished_at IS NULL AND started_at + time_limit * interval '1 second' > NOW())";
   }
 }
