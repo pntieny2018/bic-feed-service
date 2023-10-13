@@ -148,6 +148,26 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
   @IsOptional()
   @IsEnum([CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST])
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+
+  @ApiPropertyOptional({
+    description: 'Filter by creator',
+    type: Boolean,
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  public isMine?: boolean;
+
+  @ApiProperty({
+    type: String,
+    example: '40dc4093-1bd0-4105-869f-8504e1986145',
+    name: 'group_id',
+  })
+  @IsOptional()
+  @IsUUID()
+  @Expose({
+    name: 'group_id',
+  })
+  public groupId?: string;
 }
 
 export class ScheduleContentRequestDto extends PublishArticleRequestDto {

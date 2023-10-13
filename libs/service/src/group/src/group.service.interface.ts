@@ -1,6 +1,19 @@
 import { GroupDto, GroupMember } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
+import { ROLE_TYPE } from '@beincom/constants';
 
+export type UserRoleInGroup = {
+  GROUP_ADMIN: ROLE_TYPE.GROUP_ADMIN;
+  COMMUNITY_ADMIN: ROLE_TYPE.COMMUNITY_ADMIN;
+  OWNER: ROLE_TYPE.OWNER;
+  MEMBER: ROLE_TYPE.MEMBER;
+};
+
+export type GetUserRoleInGroupsResult = {
+  [key in 'community_admins' | 'owners' | 'group_admins' | 'members']: {
+    [key: string]: string[];
+  };
+};
 export interface IGroupService {
   findById(groupId: string): Promise<GroupDto>;
 
@@ -19,6 +32,13 @@ export interface IGroupService {
     admins: Record<string, string[]>;
     owners: Record<string, string[]>;
   }>;
+
+  getUserRoleInGroups(
+    groupIds: string[],
+    roles: ROLE_TYPE[]
+  ): Promise<GetUserRoleInGroupsResult | null>;
+
+  isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
 }
 
 export const GROUP_SERVICE_TOKEN = 'GROUP_SERVICE_TOKEN';

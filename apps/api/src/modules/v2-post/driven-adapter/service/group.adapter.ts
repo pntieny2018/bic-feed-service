@@ -29,6 +29,10 @@ export class GroupAdapter implements IGroupAdapter {
     return this._groupService.findAllByIds(groupIds);
   }
 
+  public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
+    return this._groupService.isAdminInAnyGroups(userId, groupIds);
+  }
+
   public getGroupIdsAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[] {
     const childGroupIds = [
       ...group.child.open,
@@ -36,16 +40,18 @@ export class GroupAdapter implements IGroupAdapter {
       ...group.child.private,
       ...group.child.secret,
     ];
-    const filterGroupIdsUserJoined = [group.id, ...childGroupIds].filter((groupId) =>
+    const groupAndChildIdsUserJoined = [group.id, ...childGroupIds].filter((groupId) =>
       groupIdsUserJoined.includes(groupId)
     );
 
     if (group.privacy === PRIVACY.OPEN) {
-      filterGroupIdsUserJoined.push(group.id);
+      groupAndChildIdsUserJoined.push(group.id);
     }
-    if (group.privacy === PRIVACY.CLOSED && groupIdsUserJoined.includes(group.rootGroupId)) {
-      filterGroupIdsUserJoined.push(group.id);
+
+    const hasJoinedCommunity = groupIdsUserJoined.includes(group.rootGroupId);
+    if (group.privacy === PRIVACY.CLOSED && hasJoinedCommunity) {
+      groupAndChildIdsUserJoined.push(group.id);
     }
-    return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
+    return ArrayHelper.arrayUnique(groupAndChildIdsUserJoined);
   }
 }

@@ -43,6 +43,7 @@ import {
   ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
+import { GetPaginationContentsProps } from '@libs/database/postgres';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -120,6 +121,9 @@ export class ContentDomainService implements IContentDomainService {
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const { ids, authUserId } = input;
+    if (!ids.length) {
+      return [];
+    }
     const contentEntities = await this._contentRepository.findAll({
       where: {
         ids,
@@ -299,11 +303,9 @@ export class ContentDomainService implements IContentDomainService {
   public async getScheduleContentIds(
     params: GetContentIdsScheduleProps
   ): Promise<CursorPaginationResult<string>> {
-    const { user, limit, before, after, type, order } = params;
-
-    const { rows, meta } = await this._contentRepository.getPagination({
+    const { userId, groupId, limit, before, after, type, order } = params;
+    const findOption: GetPaginationContentsProps = {
       where: {
-        createdBy: user.id,
         type,
         statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
       },
@@ -315,7 +317,20 @@ export class ContentDomainService implements IContentDomainService {
       before,
       after,
       order,
-    });
+    };
+
+    if (userId) {
+      findOption.where.createdBy = userId;
+    }
+
+    if (groupId) {
+      findOption.where.groupIds = [groupId];
+      findOption.include = {
+        mustIncludeGroup: true,
+      };
+    }
+
+    const { rows, meta } = await this._contentRepository.getPagination(findOption);
 
     return {
       rows: rows.map((row) => row.getId()),

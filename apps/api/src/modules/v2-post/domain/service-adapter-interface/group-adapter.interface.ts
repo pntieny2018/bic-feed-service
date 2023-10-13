@@ -5,5 +5,6 @@ export const GROUP_ADAPTER = 'GROUP_ADAPTER';
 export interface IGroupAdapter {
   getGroupById(groupId: string): Promise<GroupDto>;
   getGroupsByIds(groupIds: string[]): Promise<GroupDto[]>;
-  getGroupIdsAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[];
+  isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
+  getGroupIdsAndChildIdsUserJoined(group: GroupDto, userGroupIds: string[]): string[];
 }
