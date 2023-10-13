@@ -95,7 +95,6 @@ export interface IContentDomainService {
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
-  hasSeen(contentId: string, userId: string): Promise<boolean>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
   reorderPinned(props: ReorderContentProps): Promise<void>;
   findPinnedOrder(
