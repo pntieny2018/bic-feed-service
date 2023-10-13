@@ -4,7 +4,12 @@ import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaDto } from '../../application/dto';
-import { PostDeletedEvent, PostPublishedEvent, PostScheduledEvent } from '../event';
+import {
+  ContentHasSeenEvent,
+  PostDeletedEvent,
+  PostPublishedEvent,
+  PostScheduledEvent,
+} from '../event';
 import {
   ContentAccessDeniedException,
   ContentHasBeenPublishedException,
@@ -117,6 +122,10 @@ export class PostDomainService implements IPostDomainService {
 
     if (!authUserId && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
+    }
+
+    if (postEntity.isPublished()) {
+      this.event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUserId }));
     }
 
     return postEntity;
@@ -330,7 +339,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const currentLinkPreviewUrl = postEntity.get('linkPreview')?.get('url');
-    if (linkPreview?.url !== currentLinkPreviewUrl) {
+    if (linkPreview && linkPreview.url !== currentLinkPreviewUrl) {
       await this._setNewLinkPreview(postEntity, linkPreview);
     }
 

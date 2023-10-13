@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
   IUserApplicationService,
@@ -16,7 +16,6 @@ import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
-import { ContentHasSeenEvent } from '../../../../domain/event';
 import { ReactionDuplicateException } from '../../../../domain/exception';
 import { ReactionEntity } from '../../../../domain/model/reaction';
 import {
@@ -32,7 +31,6 @@ import { CreateReactionCommand } from './create-reaction.command';
 @CommandHandler(CreateReactionCommand)
 export class CreateReactionHandler implements ICommandHandler<CreateReactionCommand, ReactionDto> {
   public constructor(
-    private readonly _event: EventBus,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepository: IPostReactionRepository,
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
@@ -56,15 +54,6 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
     );
 
     const actor = await this._userAppService.findOne(newReactionEntity.get('createdBy'));
-
-    if (newReactionEntity.get('target') === REACTION_TARGET.POST) {
-      this._event.publish(
-        new ContentHasSeenEvent({
-          contentId: newReactionEntity.get('targetId'),
-          userId: newReactionEntity.get('createdBy'),
-        })
-      );
-    }
 
     return new ReactionDto({
       id: newReactionEntity.get('id'),
