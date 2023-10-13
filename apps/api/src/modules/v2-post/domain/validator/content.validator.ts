@@ -170,7 +170,7 @@ export class ContentValidator implements IContentValidator {
     const groupAudienceIds = post.get('groupIds') ?? [];
 
     const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
-    if (isAdmin) {
+    if (isAdmin && !post.isDraft()) {
       return;
     }
 
