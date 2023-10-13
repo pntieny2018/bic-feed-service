@@ -266,20 +266,14 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    return this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId,
-        },
+    return this._contentRepository.findContentByIdInActiveGroup(contentId, {
+      shouldIncludeGroup: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeSaved: {
+        userId,
       },
     });
   }
@@ -468,6 +462,10 @@ export class ContentDomainService implements IContentDomainService {
     await this._contentRepository.markSeen(contentId, userId);
   }
 
+  public async hasSeen(contentId: string, userId: string): Promise<boolean> {
+    return this._contentRepository.hasSeen(contentId, userId);
+  }
+
   public async markReadImportant(contentId: string, userId: string): Promise<void> {
     const contentEntity = await this._contentRepository.findOne({
       where: {
@@ -491,7 +489,7 @@ export class ContentDomainService implements IContentDomainService {
     const { authUser, contentIds, groupId } = props;
 
     await this._contentValidator.checkCanPinContent(authUser, [groupId]);
-    const pinnedContentIds = await this._contentRepository.findPinnedPostIdsByGroupId(groupId);
+    const pinnedContentIds = await this._contentRepository.findPinnedContentIdsByGroupId(groupId);
     if (pinnedContentIds.length === 0) {
       throw new ContentPinNotFoundException();
     }
@@ -540,7 +538,7 @@ export class ContentDomainService implements IContentDomainService {
     groupId: string,
     userId: string
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const contentIds = await this._contentRepository.findPinnedPostIdsByGroupId(groupId);
+    const contentIds = await this._contentRepository.findPinnedContentIdsByGroupId(groupId);
     if (contentIds.length === 0) {
       return [];
     }

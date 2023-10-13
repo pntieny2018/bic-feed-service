@@ -96,7 +96,7 @@ export interface IContentDomainService {
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
@@ -104,6 +104,7 @@ export interface IContentDomainService {
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;
   markSeen(contentId: string, userId: string): Promise<void>;
+  hasSeen(contentId: string, userId: string): Promise<boolean>;
   markReadImportant(contentId: string, userId: string): Promise<void>;
   reorderPinned(props: ReorderContentProps): Promise<void>;
   findPinnedOrder(

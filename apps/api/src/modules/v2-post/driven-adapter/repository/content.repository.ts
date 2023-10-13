@@ -40,15 +40,15 @@ export class ContentRepository implements IContentRepository {
   public constructor(
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
-    private readonly _libContentRepository: LibContentRepository,
-    private readonly _libPostTagRepository: LibPostTagRepository,
-    private readonly _libPostSeriesRepository: LibPostSeriesRepository,
-    private readonly _libPostGroupRepository: LibPostGroupRepository,
-    private readonly _libPostCategoryRepository: LibPostCategoryRepository,
-    private readonly _libUserSeenPostRepository: LibUserSeenPostRepository,
-    private readonly _libUserMarkReadPostRepository: LibUserMarkReadPostRepository,
-    private readonly _libUserReportContentRepository: LibUserReportContentRepository,
-    private readonly _libUserSavePostRepository: LibUserSavePostRepository,
+    private readonly _libContentRepo: LibContentRepository,
+    private readonly _libPostTagRepo: LibPostTagRepository,
+    private readonly _libPostSeriesRepo: LibPostSeriesRepository,
+    private readonly _libPostGroupRepo: LibPostGroupRepository,
+    private readonly _libPostCategoryRepo: LibPostCategoryRepository,
+    private readonly _libUserSeenPostRepo: LibUserSeenPostRepository,
+    private readonly _libUserMarkReadPostRepo: LibUserMarkReadPostRepository,
+    private readonly _libUserReportContentRepo: LibUserReportContentRepository,
+    private readonly _libUserSavePostRepo: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper
   ) {}
 
@@ -56,7 +56,7 @@ export class ContentRepository implements IContentRepository {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const model = this._contentMapper.toPersistence(contentEntity);
-      await this._libContentRepository.create(model, {
+      await this._libContentRepo.create(model, {
         transaction,
       });
 
@@ -80,7 +80,7 @@ export class ContentRepository implements IContentRepository {
           (PostAttributes | SeriesAttributes | ArticleAttributes) & ContentAttributes
         >
       );
-      await this._libContentRepository.update(model, {
+      await this._libContentRepo.update(model, {
         where: {
           id: model.id,
         },
@@ -107,7 +107,7 @@ export class ContentRepository implements IContentRepository {
   private async _setGroups(postEntity: ContentEntity, transaction: Transaction): Promise<void> {
     const state = postEntity.getState();
     if (state.attachGroupIds?.length > 0) {
-      await this._libPostGroupRepository.bulkCreate(
+      await this._libPostGroupRepo.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
           postId: postEntity.getId(),
           groupId,
@@ -117,7 +117,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachGroupIds?.length > 0) {
-      await this._libPostGroupRepository.delete({
+      await this._libPostGroupRepo.delete({
         where: {
           postId: postEntity.getId(),
           groupId: state.detachGroupIds,
@@ -133,7 +133,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachSeriesIds.length > 0) {
-      await this._libPostSeriesRepository.bulkCreate(
+      await this._libPostSeriesRepo.bulkCreate(
         state.attachSeriesIds.map((seriesId) => ({
           postId: contentEntity.getId(),
           seriesId,
@@ -143,7 +143,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachSeriesIds.length > 0) {
-      await this._libPostSeriesRepository.delete({
+      await this._libPostSeriesRepo.delete({
         where: {
           postId: contentEntity.getId(),
           seriesId: state.detachSeriesIds,
@@ -159,7 +159,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachTagIds.length > 0) {
-      await this._libPostTagRepository.bulkCreate(
+      await this._libPostTagRepo.bulkCreate(
         state.attachTagIds.map((tagId) => ({
           postId: contentEntity.getId(),
           tagId,
@@ -169,7 +169,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachTagIds.length > 0) {
-      await this._libPostTagRepository.delete({
+      await this._libPostTagRepo.delete({
         where: {
           postId: contentEntity.getId(),
           tagId: state.detachTagIds,
@@ -185,7 +185,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<void> {
     const state = contentEntity.getState();
     if (state.attachCategoryIds.length > 0) {
-      await this._libPostCategoryRepository.bulkCreate(
+      await this._libPostCategoryRepo.bulkCreate(
         state.attachCategoryIds.map((categoryId) => ({
           postId: contentEntity.getId(),
           categoryId,
@@ -195,7 +195,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     if (state.detachCategoryIds.length > 0) {
-      await this._libPostCategoryRepository.delete({
+      await this._libPostCategoryRepo.delete({
         where: {
           postId: contentEntity.getId(),
           categoryId: state.detachCategoryIds,
@@ -206,7 +206,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async delete(id: string): Promise<void> {
-    await this._libContentRepository.delete({
+    await this._libContentRepo.delete({
       where: { id },
     });
     return;
@@ -216,7 +216,7 @@ export class ContentRepository implements IContentRepository {
     contentId: string,
     options?: FindContentIncludeOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._libContentRepository.findOne({
+    const content = await this._libContentRepo.findOne({
       where: { id: contentId },
       include: options,
     });
@@ -227,7 +227,7 @@ export class ContentRepository implements IContentRepository {
     contentId: string,
     options?: FindContentIncludeOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._libContentRepository.findOne({
+    const content = await this._libContentRepo.findOne({
       where: { id: contentId, groupArchived: false },
       include: options,
     });
@@ -238,7 +238,7 @@ export class ContentRepository implements IContentRepository {
     contentId: string,
     options?: FindContentIncludeOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._libContentRepository.findOne({
+    const content = await this._libContentRepo.findOne({
       where: { id: contentId, groupArchived: true },
       include: options,
     });
@@ -250,7 +250,7 @@ export class ContentRepository implements IContentRepository {
     userId: string,
     options?: FindContentIncludeOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._libContentRepository.findOne({
+    const content = await this._libContentRepo.findOne({
       where: { id: contentId, groupArchived: false, excludeReportedByUserId: userId },
       include: options,
     });
@@ -260,7 +260,7 @@ export class ContentRepository implements IContentRepository {
   public async findOne(
     findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._libContentRepository.findOne(findOnePostOptions);
+    const content = await this._libContentRepo.findOne(findOnePostOptions);
 
     return this._contentMapper.toDomain(content);
   }
@@ -280,12 +280,12 @@ export class ContentRepository implements IContentRepository {
     findAllPostOptions: FindContentProps,
     offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const contents = await this._libContentRepository.findAll(findAllPostOptions, offsetPaginate);
+    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
     return contents.map((content) => this._contentMapper.toDomain(content));
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {
-    await this._libUserSeenPostRepository.bulkCreate(
+    await this._libUserSeenPostRepo.bulkCreate(
       [
         {
           postId: postId,
@@ -296,8 +296,18 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
+  public async hasSeen(postId: string, userId: string): Promise<boolean> {
+    const content = await this._libUserSeenPostRepo.first({
+      where: {
+        postId: postId,
+        userId: userId,
+      },
+    });
+    return Boolean(content);
+  }
+
   public async markReadImportant(postId: string, userId: string): Promise<void> {
-    await this._libUserMarkReadPostRepository.bulkCreate(
+    await this._libUserMarkReadPostRepo.bulkCreate(
       [
         {
           postId,
@@ -311,9 +321,7 @@ export class ContentRepository implements IContentRepository {
   public async getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { rows, meta } = await this._libContentRepository.getPagination(
-      getPaginationContentsProps
-    );
+    const { rows, meta } = await this._libContentRepo.getPagination(getPaginationContentsProps);
 
     return {
       rows: rows.map((row) => this._contentMapper.toDomain(row)),
@@ -335,15 +343,15 @@ export class ContentRepository implements IContentRepository {
       ],
     };
 
-    const rows = await this._libUserReportContentRepository.findMany({
+    const rows = await this._libUserReportContentRepo.findMany({
       where: condition,
     });
 
     return rows.map((row) => row.targetId);
   }
 
-  public countContentDraft(userId: string): Promise<number> {
-    return this._libContentRepository.count({
+  public async countDraftContentByUserId(userId: string): Promise<number> {
+    return this._libContentRepo.count({
       where: {
         createdBy: userId,
         status: CONTENT_STATUS.DRAFT,
@@ -351,8 +359,8 @@ export class ContentRepository implements IContentRepository {
     });
   }
 
-  public async findPinnedPostIdsByGroupId(groupId: string): Promise<string[]> {
-    const postGroups = await this._libPostGroupRepository.findMany({
+  public async findPinnedContentIdsByGroupId(groupId: string): Promise<string[]> {
+    const postGroups = await this._libPostGroupRepo.findMany({
       where: {
         groupId,
         isPinned: true,
@@ -377,7 +385,7 @@ export class ContentRepository implements IContentRepository {
 
   public async reorderPinnedContent(contentIds: string[], groupId: string): Promise<void> {
     const reorderExecute = contentIds.map((postId, index) => {
-      return this._libPostGroupRepository.update(
+      return this._libPostGroupRepo.update(
         {
           pinnedIndex: index + 1,
         },
@@ -397,11 +405,11 @@ export class ContentRepository implements IContentRepository {
     if (groupIds.length > 0) {
       await Promise.all(
         groupIds.map(async (groupId) => {
-          return this._libPostGroupRepository.update(
+          return this._libPostGroupRepo.update(
             {
               isPinned: true,
               pinnedIndex:
-                (await this._libPostGroupRepository.max('pinnedIndex', {
+                (await this._libPostGroupRepo.max('pinnedIndex', {
                   where: {
                     groupId,
                   },
@@ -424,7 +432,7 @@ export class ContentRepository implements IContentRepository {
       return;
     }
 
-    await this._libPostGroupRepository.update(
+    await this._libPostGroupRepo.update(
       {
         isPinned: false,
         pinnedIndex: 0,
@@ -439,7 +447,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async saveContent(userId: string, contentId: string): Promise<void> {
-    await this._libUserSavePostRepository.bulkCreate(
+    await this._libUserSavePostRepo.bulkCreate(
       [
         {
           userId,

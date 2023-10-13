@@ -1,3 +1,4 @@
+import { PRIVACY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import {
   GROUP_SERVICE_TOKEN,
@@ -5,10 +6,9 @@ import {
 } from '@libs/service/group/src/group.service.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { IGroupAdapter } from '../../domain/service-adapter-interface';
-import { GroupPrivacy } from '../../../v2-group/data-type';
 import { ArrayHelper } from '../../../../common/helpers';
-import { PRIVACY } from '@beincom/constants';
+import { GroupNotFoundException } from '../../domain/exception';
+import { IGroupAdapter } from '../../domain/service-adapter-interface';
 
 @Injectable()
 export class GroupAdapter implements IGroupAdapter {
@@ -16,6 +16,14 @@ export class GroupAdapter implements IGroupAdapter {
     @Inject(GROUP_SERVICE_TOKEN)
     private readonly _groupService: IGroupService
   ) {}
+
+  public async getGroupById(groupId: string): Promise<GroupDto> {
+    const group = await this._groupService.findById(groupId);
+    if (!group) {
+      throw new GroupNotFoundException();
+    }
+    return group;
+  }
 
   public async getGroupsByIds(groupIds: string[]): Promise<GroupDto[]> {
     return this._groupService.findAllByIds(groupIds);
@@ -25,7 +33,7 @@ export class GroupAdapter implements IGroupAdapter {
     return this._groupService.isAdminInAnyGroups(userId, groupIds);
   }
 
-  public getGroupIdAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[] {
+  public getGroupIdsAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[] {
     const childGroupIds = [
       ...group.child.open,
       ...group.child.closed,

@@ -4,12 +4,12 @@ import { AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
+import { IUserService } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
-import { IUserService } from '@libs/service/user';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -208,5 +208,20 @@ export class UserService implements IUserService {
 
     const permissionApi = await this._getUserPermissionFromApi(userId);
     return permissionApi;
+  }
+
+  public async canCudTags(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await this._groupHttpService.get(
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.CHECK_CUD_TAG, {
+          userId,
+          rootGroupId,
+        })
+      );
+      return response.data.data;
+    } catch (e) {
+      this._logger.error(`[canCudTags] ${e.message}`);
+      return false;
+    }
   }
 }

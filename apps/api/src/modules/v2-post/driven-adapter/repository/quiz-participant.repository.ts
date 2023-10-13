@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 import {
   LibQuizParticipantRepository,
   LibQuizParticipantAnswerRepository,
@@ -7,7 +8,6 @@ import { Injectable } from '@nestjs/common';
 import { difference } from 'lodash';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { CursorPaginationProps, CursorPaginationResult } from '../../../../common/types';
 import { QuizParticipantNotFoundException } from '../../domain/exception';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface';
@@ -165,7 +165,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]> {
     const rows = await this._libQuizParticipantRepo.findMany({
-      where: { post: contentId },
+      where: { postId: contentId },
       whereRaw: this._libQuizParticipantRepo.getConditionIsFinished(),
       select: ['createdBy'],
       selectRaw: [['MAX(score)', 'score']],

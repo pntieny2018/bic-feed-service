@@ -81,10 +81,4 @@ export class QueueService implements IQueueService {
     await this.queues[queueName].removeJobs(jobId.toString());
     this.logger.debug(`Ended kill job in queue ${queueName}, jobId: ${jobId}, time: ${new Date()}`);
   }
-
-  // TODO: remove this method
-  public async addQuizJob(data: unknown): Promise<void> {
-    const jobName: string = QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING;
-    await this._quizPendingQueue.add(jobName, data);
-  }
 }

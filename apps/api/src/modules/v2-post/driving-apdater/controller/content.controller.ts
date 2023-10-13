@@ -14,37 +14,37 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY, VERSION_1_10_0 } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
   MarkReadImportantContentCommand,
   PinContentCommand,
   ReorderPinnedContentCommand,
-  SeenContentCommand,
   SaveContentCommand,
+  SeenContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
 import {
-  GetScheduleContentsResponseDto,
-  MenuSettingsDto,
-  FindDraftContentsDto,
-  SearchContentsDto,
-  GetSeriesResponseDto,
   ArticleDto,
-  PostDto,
-  SeriesDto,
+  FindDraftContentsDto,
   GetAudienceResponseDto,
+  GetScheduleContentsResponseDto,
+  GetSeriesResponseDto,
+  MenuSettingsDto,
+  PostDto,
+  SearchContentsDto,
+  SeriesDto,
 } from '../../application/dto';
 import {
   FindDraftContentsQuery,
-  GetSeriesInContentQuery,
-  GetMenuSettingsQuery,
-  GetTotalDraftQuery,
-  SearchContentsQuery,
   FindPinnedContentQuery,
   GetContentAudienceQuery,
+  GetMenuSettingsQuery,
+  GetSeriesInContentQuery,
+  GetTotalDraftQuery,
+  SearchContentsQuery,
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
@@ -228,7 +228,7 @@ export class ContentController {
 
   @ApiOperation({ summary: 'Search contents' })
   @ApiOkResponse({
-    type: FindDraftContentsDto,
+    type: SearchContentsDto,
   })
   @ResponseMessages({
     success: 'Search contents successfully',

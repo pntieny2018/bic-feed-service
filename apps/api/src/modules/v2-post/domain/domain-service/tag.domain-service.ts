@@ -41,14 +41,15 @@ export class TagDomainService implements ITagDomainService {
       throw new TagDuplicateNameException();
     }
 
-    const tagEntity = this._tagFactory.create({
-      name,
-      groupId,
-      userId,
-    });
+    const tagEntity = TagEntity.create(
+      {
+        name,
+        groupId,
+      },
+      userId
+    );
     try {
       await this._tagRepository.create(tagEntity);
-      tagEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -100,9 +101,5 @@ export class TagDomainService implements ITagDomainService {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-  }
-
-  public async findTagsByKeyword(keyword: string): Promise<TagEntity[]> {
-    return this._tagRepository.findAll({ keyword });
   }
 }
