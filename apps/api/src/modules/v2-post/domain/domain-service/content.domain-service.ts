@@ -42,6 +42,7 @@ import {
   ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
+import { GetPaginationContentsProps } from '@libs/database/postgres';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -162,18 +163,14 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
-    const { rows, meta } = await this._contentRepository.getPagination({
-      attributes: {
-        exclude: ['content'],
-      },
+    const getPaginationProps: GetPaginationContentsProps = {
+      select: ['id'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
         inNewsfeedUserId: authUserId,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
-        createdBy: isMine ? authUserId : undefined,
-        savedByUserId: isSaved ? authUserId : undefined,
         type,
       },
       limit,
@@ -183,7 +180,22 @@ export class ContentDomainService implements IContentDomainService {
       },
       before,
       after,
-    });
+    };
+
+    if (isMine) {
+      getPaginationProps.where.createdBy = authUserId;
+    }
+
+    if (isSaved) {
+      getPaginationProps.orderOptions.isSavedDateByDesc = true;
+      getPaginationProps.include = {
+        mustIncludeSaved: {
+          userId: authUserId,
+        },
+      };
+    }
+
+    const { rows, meta } = await this._contentRepository.getPagination(getPaginationProps);
 
     return {
       rows: rows.map((row) => row.getId()),
