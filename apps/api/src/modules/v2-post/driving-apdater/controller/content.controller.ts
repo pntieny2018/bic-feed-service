@@ -14,7 +14,11 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import {
+  TRANSFORMER_VISIBLE_ONLY,
+  VERSION_1_10_0,
+  VERSIONS_SUPPORTED,
+} from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import {
@@ -113,14 +117,15 @@ export class ContentController {
     return this._queryBus.execute(new GetTotalDraftQuery(user));
   }
 
+  /*TODO: Will remove from version 1.11.0*/
   @ApiOperation({ summary: 'Get schedule contents' })
   @ApiOkResponse({
     type: GetScheduleContentsResponseDto,
     description: 'Get schedule contents',
   })
   @Get(ROUTES.CONTENT.GET_SCHEDULE.PATH)
-  @Version(ROUTES.CONTENT.GET_SCHEDULE.VERSIONS)
-  public async getScheduleContents(
+  @Version([VERSION_1_10_0])
+  public async getScheduleContentsForUser(
     @AuthUser() user: UserDto,
     @Query() query: GetScheduleContentsQueryDto
   ): Promise<GetScheduleContentsResponseDto> {
@@ -136,6 +141,37 @@ export class ContentController {
         order,
         type,
         user,
+        isMine: true,
+      })
+    );
+    return instanceToInstance(contents, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get schedule contents' })
+  @ApiOkResponse({
+    type: GetScheduleContentsResponseDto,
+    description: 'Get schedule contents for user and admin',
+  })
+  @Get(ROUTES.CONTENT.GET_SCHEDULE.PATH)
+  @Version(ROUTES.CONTENT.GET_SCHEDULE.VERSIONS)
+  public async getScheduleContents(
+    @AuthUser() user: UserDto,
+    @Query() query: GetScheduleContentsQueryDto
+  ): Promise<GetScheduleContentsResponseDto> {
+    const { limit, isMine, groupId, before, after, order, type } = query;
+    const contents = await this._queryBus.execute<
+      GetScheduleContentQuery,
+      GetScheduleContentsResponseDto
+    >(
+      new GetScheduleContentQuery({
+        limit,
+        before,
+        after,
+        order,
+        type,
+        user,
+        isMine,
+        groupId,
       })
     );
     return instanceToInstance(contents, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

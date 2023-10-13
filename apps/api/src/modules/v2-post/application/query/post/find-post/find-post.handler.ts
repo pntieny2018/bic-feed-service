@@ -46,9 +46,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     const postEntity = await this._postDomainService.getPostById(postId, authUser.id);
 
     const groups = await this._groupAdapter.getGroupsByIds(postEntity.get('groupIds'));
-    if (authUser) {
-      this._postValidator.checkCanReadContent(postEntity, authUser, groups);
-    }
+    await this._postValidator.checkCanReadContent(postEntity, authUser, groups);
 
     const mentionUsers = await this._userAdapter.getUsersByIds(postEntity.get('mentionUserIds'));
 

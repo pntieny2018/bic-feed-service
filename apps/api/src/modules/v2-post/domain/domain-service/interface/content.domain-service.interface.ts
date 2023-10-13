@@ -53,7 +53,8 @@ export type GetImportantContentIdsProps = {
 
 export class GetContentIdsScheduleProps extends PaginatedArgs {
   public order: ORDER;
-  public user: UserDto;
+  public userId: string;
+  public groupId?: string;
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
 }
 

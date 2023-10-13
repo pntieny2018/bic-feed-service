@@ -7,7 +7,8 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
-import { IGroupService } from './group.service.interface';
+import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
+import { ROLE_TYPE } from '@beincom/constants';
 
 @Injectable()
 export class GroupService implements IGroupService {
@@ -136,5 +137,57 @@ export class GroupService implements IGroupService {
         owners: {},
       };
     }
+  }
+
+  public async getUserRoleInGroups(
+    groupIds: string[],
+    roles: ROLE_TYPE[]
+  ): Promise<GetUserRoleInGroupsResult> {
+    const defaultResult: GetUserRoleInGroupsResult = {
+      community_admins: {},
+      group_admins: {},
+      owners: {},
+      members: {},
+    };
+    try {
+      const response = await this._httpService.post(
+        `${GROUP_ENDPOINT.INTERNAL.USER_ROLE_IN_GROUPS}`,
+        {
+          group_ids: groupIds,
+          roles,
+        }
+      );
+
+      if (response.status !== HttpStatus.OK) {
+        return defaultResult;
+      }
+      return response.data['data'];
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex));
+      return defaultResult;
+    }
+  }
+
+  public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
+    const adminRoleInclude = [ROLE_TYPE.COMMUNITY_ADMIN, ROLE_TYPE.GROUP_ADMIN, ROLE_TYPE.OWNER];
+    const data = await this.getUserRoleInGroups(groupIds, adminRoleInclude);
+
+    const userIds = [];
+
+    for (const groupId of groupIds) {
+      if (data.community_admins[groupId]) {
+        userIds.push(...data.community_admins[groupId]);
+      }
+
+      if (data.group_admins[groupId]) {
+        userIds.push(...data.group_admins[groupId]);
+      }
+
+      if (data.owners[groupId]) {
+        userIds.push(...data.owners[groupId]);
+      }
+    }
+
+    return userIds.includes(userId);
   }
 }
