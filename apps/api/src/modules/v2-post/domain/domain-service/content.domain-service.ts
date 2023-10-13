@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { GetPaginationContentsProps } from '@libs/database/postgres';
 import {
   createCursor,
   CursorPaginationResult,
@@ -44,7 +45,6 @@ import {
   ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
-import { GetPaginationContentsProps } from '@libs/database/postgres';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -676,8 +676,7 @@ export class ContentDomainService implements IContentDomainService {
       throw new ContentNotFoundException();
     }
 
-    const groups = content.getPostGroups() || [];
-
+    const groups = content.getPostGroups();
     const listPinnedContentIds = {};
     const groupIds = [];
     groups.forEach((group) => {

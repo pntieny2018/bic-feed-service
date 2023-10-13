@@ -19,7 +19,7 @@ import {
 } from 'sequelize-typescript';
 import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
-import { CommentReactionModel } from './comment-reaction.model';
+import { CommentReactionAttributes, CommentReactionModel } from './comment-reaction.model';
 import { PostAttributes, PostModel } from './post.model';
 
 export enum ActionEnum {
@@ -151,7 +151,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   public child?: CommentModel[];
 
   @HasMany(() => CommentReactionModel)
-  public ownerReactions?: CommentReactionModel[];
+  public ownerReactions?: CommentReactionAttributes[];
 
   @AfterCreate
   public static async onCommentCreated(comment: CommentModel): Promise<void> {
