@@ -87,10 +87,9 @@ export class TagController {
     @Body() createTagDto: CreateTagRequestDto
   ): Promise<TagDto> {
     const { groupId, name } = createTagDto;
-    const userId = user.id;
 
     return this._commandBus.execute<CreateTagCommand, TagDto>(
-      new CreateTagCommand({ groupId, name, userId })
+      new CreateTagCommand({ groupId, name, user })
     );
   }
 

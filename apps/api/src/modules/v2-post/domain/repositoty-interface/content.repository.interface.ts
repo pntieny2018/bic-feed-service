@@ -49,8 +49,8 @@ export interface IContentRepository {
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]>;
-  countContentDraft(userId: string): Promise<number>;
-  findPinnedPostIdsByGroupId(groupId: string): Promise<string[]>;
+  countDraftContentByUserId(userId: string): Promise<number>;
+  findPinnedContentIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
   pinContent(contentId: string, groupIds: string[]): Promise<void>;
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;

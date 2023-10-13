@@ -2,10 +2,7 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { groupBy } from 'lodash';
 
-import {
-  ITagDomainService,
-  TAG_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../../domain/repositoty-interface';
 import { SearchTagsDto } from '../../../dto';
 
 import { SearchTagsQuery } from './search-tags.query';
@@ -13,14 +10,14 @@ import { SearchTagsQuery } from './search-tags.query';
 @QueryHandler(SearchTagsQuery)
 export class SearchTagsHandler implements IQueryHandler<SearchTagsQuery, SearchTagsDto> {
   public constructor(
-    @Inject(TAG_DOMAIN_SERVICE_TOKEN)
-    private readonly _tagDomainService: ITagDomainService
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepo: ITagRepository
   ) {}
 
   public async execute(query: SearchTagsQuery): Promise<SearchTagsDto> {
     const { keyword } = query.payload;
 
-    const tagEntities = await this._tagDomainService.findTagsByKeyword(keyword);
+    const tagEntities = await this._tagRepo.findAll({ keyword });
 
     if (!tagEntities || !tagEntities.length) {
       return new SearchTagsDto([]);

@@ -1,4 +1,3 @@
-import { MentionableType } from 'apps/api/src/common/constants';
 import { IsUUID } from 'class-validator';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
 import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
@@ -6,6 +5,11 @@ import { v4 as uuid_v4 } from 'uuid';
 
 import { CommentModel } from './comment.model';
 import { PostModel } from './post.model';
+
+export enum MentionableType {
+  POST = 'post',
+  COMMENT = 'comment',
+}
 
 export type MentionAttributes = InferAttributes<MentionModel>;
 

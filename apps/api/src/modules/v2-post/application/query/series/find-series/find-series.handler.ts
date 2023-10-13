@@ -12,8 +12,7 @@ import {
 } from '../../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { ContentBinding, CONTENT_BINDING_TOKEN } from '../../../binding';
 import { SeriesDto } from '../../../dto';
 
 import { FindSeriesQuery } from './find-series.query';
@@ -61,9 +60,7 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
       throw new ContentAccessDeniedException();
     }
     const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
-    if (authUser) {
-      this._postValidator.checkCanReadContent(seriesEntity, authUser, groups);
-    }
+    await this._postValidator.checkCanReadContent(seriesEntity, authUser, groups);
 
     return this._contentBinding.seriesBinding(seriesEntity, {
       groups,

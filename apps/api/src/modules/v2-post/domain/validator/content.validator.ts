@@ -159,7 +159,11 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public checkCanReadContent(post: ContentEntity, user: UserDto, groups?: GroupDto[]): void {
+  public async checkCanReadContent(
+    post: ContentEntity,
+    user: UserDto,
+    groups?: GroupDto[]
+  ): Promise<void> {
     if (!post.isPublished() && post.isOwner(user.id)) {
       return;
     }
@@ -167,6 +171,12 @@ export class ContentValidator implements IContentValidator {
       return;
     }
     const groupAudienceIds = post.get('groupIds') ?? [];
+
+    const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
+    if (isAdmin && !post.isDraft()) {
+      return;
+    }
+
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {

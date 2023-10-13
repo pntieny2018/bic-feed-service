@@ -19,7 +19,5 @@ export interface ITagDomainService {
   updateTag(tag: TagEntity, data: TagUpdateProps): Promise<TagEntity>;
 
   deleteTag(tag: TagEntity): Promise<void>;
-
-  findTagsByKeyword(keyword: string): Promise<TagEntity[]>;
 }
 export const TAG_DOMAIN_SERVICE_TOKEN = 'TAG_DOMAIN_SERVICE_TOKEN';

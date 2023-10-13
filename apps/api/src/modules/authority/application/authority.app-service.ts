@@ -42,13 +42,13 @@ export class AuthorityAppService implements IAuthorityAppService {
       });
     }
 
-    for (const groupid in userPermission.groups) {
-      const groupPermissions = userPermission.groups[groupid];
+    for (const groupId in userPermission.groups) {
+      const groupPermissions = userPermission.groups[groupId];
       groupPermissions.forEach((permission) => {
         abilities.push({
           action: permission,
           subject: SUBJECT.GROUP,
-          conditions: { id: groupid },
+          conditions: { id: groupId },
         });
       });
     }
@@ -88,5 +88,9 @@ export class AuthorityAppService implements IAuthorityAppService {
 
   public canDoActionOnGroup(permissionKey: string, groupId: string): boolean {
     return this._abilities.can(permissionKey, subject(SUBJECT.GROUP, { id: groupId }));
+  }
+
+  public canCudTags(groupId: string): boolean {
+    return this._abilities.can(PERMISSION_KEY.CUD_TAGS, subject(SUBJECT.GROUP, { id: groupId }));
   }
 }

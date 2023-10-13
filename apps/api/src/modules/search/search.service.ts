@@ -10,12 +10,14 @@ import { IPost, PostType } from '../../database/models/post.model';
 import { PostService } from '../post/post.service';
 
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
-import { IPaginationSearchResult, IPostSearchQuery, ISearchPaginationQuery } from './interfaces';
 import {
+  IPaginationSearchResult,
+  IPostSearchQuery,
+  ISearchPaginationQuery,
   IDataPostToAdd,
   IDataPostToDelete,
   IDataPostToUpdate,
-} from './interfaces/post-elasticsearch.interface';
+} from './interfaces';
 
 @Injectable()
 export class SearchService {

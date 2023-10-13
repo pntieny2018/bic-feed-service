@@ -33,9 +33,7 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     const articleEntity = await this._articleDomainService.getArticleById(articleId, authUser);
     const groups = await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds'));
 
-    if (authUser) {
-      this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
-    }
+    await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
     if (articleEntity.isPublished()) {
       this._event.publish(new ContentHasSeenEvent({ contentId: articleId, userId: authUser.id }));
     }
