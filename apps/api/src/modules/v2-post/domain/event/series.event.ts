@@ -1,14 +1,22 @@
 import { UserDto } from '@libs/service/user';
 
-import { SeriesEntity } from '../model/content';
+import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
 
 export type SeriesItemsAddedPayload = {
   authUser: UserDto;
   seriesId: string;
-  itemId: string;
+  item: PostEntity | ArticleEntity;
   skipNotify?: boolean;
-  context: 'publish' | 'add'; // publish: when publish post,article edit post, article; add when series add item
+  context: 'publish' | 'add'; // publish: when publishd or edited content || add: when content is added into series
 };
+
+export interface SeriesItemsRemovedPayload {
+  authUser: UserDto;
+  seriesId: string;
+  item: PostEntity | ArticleEntity;
+  skipNotify?: boolean;
+  contentIsDeleted: boolean; // true: when content is deleted || false: when content is removed from series
+}
 
 export class SeriesCreatedEvent {
   public constructor(public readonly seriesEntity: SeriesEntity) {}
@@ -28,4 +36,8 @@ export class SeriesItemsReoderedEvent {
 
 export class SeriesItemsAddedEvent {
   public constructor(public readonly payload: SeriesItemsAddedPayload) {}
+}
+
+export class SeriesItemsRemovedEvent {
+  public constructor(public readonly payload: SeriesItemsRemovedPayload) {}
 }

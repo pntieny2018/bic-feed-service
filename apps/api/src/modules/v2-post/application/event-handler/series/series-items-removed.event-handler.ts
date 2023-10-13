@@ -1,11 +1,11 @@
 import { Inject, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesAddItem } from '../../../../../common/constants';
+import { SeriesRemoveItem } from '../../../../../common/constants';
 import { SearchService } from '../../../../search/search.service';
 import { SeriesNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
 import { VerbActivity } from '../../../../v2-notification/data-type';
-import { SeriesItemsAddedEvent } from '../../../domain/event';
+import { SeriesItemsRemovedEvent } from '../../../domain/event';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
@@ -14,9 +14,9 @@ import {
 } from '../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding/binding-post';
 
-@EventsHandler(SeriesItemsAddedEvent)
-export class SeriesItemsAddedEventHandler implements IEventHandler<SeriesItemsAddedEvent> {
-  private _logger = new Logger(SeriesItemsAddedEventHandler.name);
+@EventsHandler(SeriesItemsRemovedEvent)
+export class SeriesItemsRemovedEventHandler implements IEventHandler<SeriesItemsRemovedEvent> {
+  private _logger = new Logger(SeriesItemsRemovedEventHandler.name);
 
   public constructor(
     private readonly _postSearchService: SearchService,
@@ -28,7 +28,7 @@ export class SeriesItemsAddedEventHandler implements IEventHandler<SeriesItemsAd
     private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: SeriesItemsAddedEvent): Promise<void> {
+  public async handle(event: SeriesItemsRemovedEvent): Promise<void> {
     const { seriesId, skipNotify } = event.payload;
     const seriesEntity = (await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
       shouldIncludeItems: true,
@@ -50,8 +50,8 @@ export class SeriesItemsAddedEventHandler implements IEventHandler<SeriesItemsAd
     }
   }
 
-  private async _notificationHandler(event: SeriesItemsAddedEvent): Promise<void> {
-    const { seriesId, authUser, item: contentEntity, context } = event.payload;
+  private async _notificationHandler(event: SeriesItemsRemovedEvent): Promise<void> {
+    const { seriesId, authUser, item: contentEntity, contentIsDeleted } = event.payload;
 
     const seriesEntity = (await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
       mustIncludeGroup: true,
@@ -73,12 +73,12 @@ export class SeriesItemsAddedEventHandler implements IEventHandler<SeriesItemsAd
     const isSendToContentCreator = contentEntity.getCreatedBy() !== authUser.id;
 
     const payload: SeriesNotificationPayload = {
-      event: SeriesAddItem,
+      event: SeriesRemoveItem,
       actor: authUser,
       series,
       item,
-      context,
-      verb: VerbActivity.ADD,
+      contentIsDeleted,
+      verb: VerbActivity.REMOVE,
       isSendToContentCreator,
     };
 

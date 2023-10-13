@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
@@ -21,6 +22,7 @@ export class ContentChangedSeriesEventHandler implements IEventHandler<ContentCh
     const contents = (await this._contentRepository.findAll({
       where: {
         ids: contentIds,
+        status: CONTENT_STATUS.PUBLISHED,
       },
       include: {
         shouldIncludeSeries: true,
