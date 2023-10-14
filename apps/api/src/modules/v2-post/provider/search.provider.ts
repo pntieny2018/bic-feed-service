@@ -2,6 +2,10 @@ import {
   SearchArticleDeletedEventHandler,
   SearchArticlePublishedEventHandler,
   SearchArticleUpdatedEventHandler,
+  SearchContentChangedAttachedSeriesEventHandler,
+  SearchSeriesItemsAddedEventHandler,
+  SearchSeriesItemsRemovedEventHandler,
+  SearchSeriesItemsReorderedEventHandler,
 } from '../application/event-handler/search';
 
 export const searchProvider = [
@@ -9,4 +13,10 @@ export const searchProvider = [
   SearchArticleDeletedEventHandler,
   SearchArticlePublishedEventHandler,
   SearchArticleUpdatedEventHandler,
+
+  SearchContentChangedAttachedSeriesEventHandler,
+
+  SearchSeriesItemsReorderedEventHandler,
+  SearchSeriesItemsAddedEventHandler,
+  SearchSeriesItemsRemovedEventHandler,
 ];
