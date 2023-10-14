@@ -4,6 +4,7 @@ import {
   NotiArticleUpdatedEventHandler,
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,
+  NotiSeriesSameOwnerChangedEventHandler,
 } from '../application/event-handler/notification';
 
 export const notificationProvider = [
@@ -14,4 +15,5 @@ export const notificationProvider = [
 
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,
+  NotiSeriesSameOwnerChangedEventHandler,
 ];

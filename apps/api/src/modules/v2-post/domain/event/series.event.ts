@@ -18,6 +18,12 @@ export interface SeriesItemsRemovedPayload {
   contentIsDeleted: boolean; // true: when content is deleted || false: when content is removed from series
 }
 
+export interface SeriesSameOwnerChangedPayload {
+  authUser: UserDto;
+  series: { item: SeriesEntity; state: 'add' | 'remove' }[];
+  content: PostEntity | ArticleEntity;
+}
+
 export class SeriesCreatedEvent {
   public constructor(public readonly seriesEntity: SeriesEntity) {}
 }
@@ -40,4 +46,8 @@ export class SeriesItemsAddedEvent {
 
 export class SeriesItemsRemovedEvent {
   public constructor(public readonly payload: SeriesItemsRemovedPayload) {}
+}
+
+export class SeriesSameOwnerChangedEvent {
+  public constructor(public readonly payload: SeriesSameOwnerChangedPayload) {}
 }
