@@ -2,7 +2,7 @@ import {
   SearchArticleDeletedEventHandler,
   SearchArticlePublishedEventHandler,
   SearchArticleUpdatedEventHandler,
-  SearchContentChangedAttachedSeriesEventHandler,
+  SearchContentAttachedSeriesEventHandler,
   SearchSeriesItemsAddedEventHandler,
   SearchSeriesItemsRemovedEventHandler,
   SearchSeriesItemsReorderedEventHandler,
@@ -14,7 +14,7 @@ export const searchProvider = [
   SearchArticlePublishedEventHandler,
   SearchArticleUpdatedEventHandler,
 
-  SearchContentChangedAttachedSeriesEventHandler,
+  SearchContentAttachedSeriesEventHandler,
 
   SearchSeriesItemsReorderedEventHandler,
   SearchSeriesItemsAddedEventHandler,

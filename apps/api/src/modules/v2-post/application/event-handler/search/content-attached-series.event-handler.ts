@@ -4,13 +4,13 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 import { SearchService } from '../../../../search/search.service';
-import { ContentChangedAttachedSeriesEvent } from '../../../domain/event';
+import { ContentAttachedSeriesEvent } from '../../../domain/event';
 import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 
-@EventsHandlerAndLog(ContentChangedAttachedSeriesEvent)
-export class SearchContentChangedAttachedSeriesEventHandler
-  implements IEventHandler<ContentChangedAttachedSeriesEvent>
+@EventsHandlerAndLog(ContentAttachedSeriesEvent)
+export class SearchContentAttachedSeriesEventHandler
+  implements IEventHandler<ContentAttachedSeriesEvent>
 {
   public constructor(
     private readonly _postSearchService: SearchService,
@@ -18,7 +18,7 @@ export class SearchContentChangedAttachedSeriesEventHandler
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async handle(event: ContentChangedAttachedSeriesEvent): Promise<void> {
+  public async handle(event: ContentAttachedSeriesEvent): Promise<void> {
     const { contentIds } = event.payload;
 
     const contents = (await this._contentRepository.findAll({

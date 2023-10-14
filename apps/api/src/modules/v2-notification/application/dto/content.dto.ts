@@ -47,8 +47,23 @@ export class ArticleActivityObjectDto extends ContentActivityObjectDto {
   }
 }
 
+export class AttachedSeriesWithStateObjectDto {
+  public actor: {
+    id: string;
+  };
+  public id: string;
+  public title: string;
+  public state: 'add' | 'remove';
+  public audience?: AudienceObjectDto;
+
+  public constructor(data: AttachedSeriesWithStateObjectDto) {
+    Object.assign(this, data);
+  }
+}
+
 export class SeriesActivityObjectDto extends ContentActivityObjectDto {
-  public item: PostActivityObjectDto | ArticleActivityObjectDto;
+  public item?: PostActivityObjectDto | ArticleActivityObjectDto;
+  public items?: AttachedSeriesWithStateObjectDto;
 
   public constructor(data: SeriesActivityObjectDto) {
     super(data);

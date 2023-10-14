@@ -3,7 +3,7 @@ type ContentHasSeenEventPayload = {
   userId: string;
 };
 
-type ContentChangedAttachedSeriesPayload = {
+type ContentAttachedSeriesEventPayload = {
   contentIds: string[];
 };
 
@@ -11,6 +11,6 @@ export class ContentHasSeenEvent {
   public constructor(public readonly payload: ContentHasSeenEventPayload) {}
 }
 
-export class ContentChangedAttachedSeriesEvent {
-  public constructor(public readonly payload: ContentChangedAttachedSeriesPayload) {}
+export class ContentAttachedSeriesEvent {
+  public constructor(public readonly payload: ContentAttachedSeriesEventPayload) {}
 }

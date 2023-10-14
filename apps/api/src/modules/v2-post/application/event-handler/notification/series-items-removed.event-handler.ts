@@ -1,5 +1,6 @@
+import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject, Logger } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler } from '@nestjs/cqrs';
 
 import { SeriesRemoveItem } from '../../../../../common/constants';
 import { VerbActivity } from '../../../../v2-notification/data-type';
@@ -12,7 +13,7 @@ import {
 } from '../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding/binding-post';
 
-@EventsHandler(SeriesItemsRemovedEvent)
+@EventsHandlerAndLog(SeriesItemsRemovedEvent)
 export class NotiSeriesItemsRemovedEventHandler implements IEventHandler<SeriesItemsRemovedEvent> {
   private _logger = new Logger(NotiSeriesItemsRemovedEventHandler.name);
 
