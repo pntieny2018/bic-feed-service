@@ -2,15 +2,15 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
+import { InternalEventEmitterService } from 'apps/api/src/app/custom/event-emitter';
+import { SeriesAddedItemsEvent } from 'apps/api/src/events/series';
 
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesRemovedItemsEvent } from '../../../../../events/series';
-import { ArticleDeletedEvent } from '../../../domain/event';
+import { ArticlePublishedEvent } from '../../../domain/event';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 
-@EventsHandlerAndLog(ArticleDeletedEvent)
-export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
-  private readonly _logger = new Logger(ArticleDeletedEventHandler.name);
+@EventsHandlerAndLog(ArticlePublishedEvent)
+export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublishedEvent> {
+  private readonly _logger = new Logger(ArticlePublishedEventHandler.name);
 
   public constructor(
     @Inject(TAG_REPOSITORY_TOKEN)
@@ -20,9 +20,8 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
     private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
-  public async handle(event: ArticleDeletedEvent): Promise<void> {
+  public async handle(event: ArticlePublishedEvent): Promise<void> {
     const { articleEntity, actor } = event;
-
     if (!articleEntity.isPublished()) {
       return;
     }
@@ -30,22 +29,11 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
     const seriesIds = articleEntity.getSeriesIds() || [];
     for (const seriesId of seriesIds) {
       this._internalEventEmitter.emit(
-        new SeriesRemovedItemsEvent({
-          items: [
-            {
-              id: articleEntity.getId(),
-              title: articleEntity.getTitle(),
-              content: articleEntity.get('content'),
-              type: articleEntity.getType(),
-              createdBy: articleEntity.getCreatedBy(),
-              groupIds: articleEntity.getGroupIds(),
-              createdAt: articleEntity.get('createdAt'),
-              updatedAt: articleEntity.get('updatedAt'),
-            },
-          ],
+        new SeriesAddedItemsEvent({
+          itemIds: [articleEntity.getId()],
           seriesId: seriesId,
           actor,
-          contentIsDeleted: true,
+          context: 'publish',
         })
       );
     }

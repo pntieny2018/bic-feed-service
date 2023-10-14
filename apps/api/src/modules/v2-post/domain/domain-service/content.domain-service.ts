@@ -459,11 +459,11 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async markSeen(contentId: string, userId: string): Promise<void> {
-    await this._contentRepository.markSeen(contentId, userId);
-  }
-
-  public async hasSeen(contentId: string, userId: string): Promise<boolean> {
-    return this._contentRepository.hasSeen(contentId, userId);
+    const hasSeen = await this._contentRepository.hasSeen(contentId, userId);
+    if (hasSeen) {
+      return;
+    }
+    return this._contentRepository.markSeen(contentId, userId);
   }
 
   public async markReadImportant(contentId: string, userId: string): Promise<void> {

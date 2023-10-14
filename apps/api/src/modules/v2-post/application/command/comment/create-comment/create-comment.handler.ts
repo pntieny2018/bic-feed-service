@@ -15,7 +15,6 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { ContentHasSeenEvent } from '../../../../domain/event';
 import { ContentNoCommentPermissionException } from '../../../../domain/exception';
 import {
   CONTENT_VALIDATOR_TOKEN,
@@ -74,8 +73,6 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
       userId: actor.id,
       parentId: NIL,
     });
-
-    this._event.publish(new ContentHasSeenEvent({ contentId: postId, userId: actor.id }));
 
     this._eventEmitter.emit(
       new CommentHasBeenCreatedEvent({

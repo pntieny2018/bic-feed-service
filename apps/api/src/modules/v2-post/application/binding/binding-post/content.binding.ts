@@ -133,6 +133,7 @@ export class ContentBinding implements IContentBinding {
         ? dataBinding.series.map((series) => ({
             id: series.get('id'),
             title: series.get('title'),
+            createdBy: series.get('createdBy'),
           }))
         : undefined,
       quiz:
@@ -279,6 +280,7 @@ export class ContentBinding implements IContentBinding {
         ? series.map((series) => ({
             id: series.get('id'),
             title: series.get('title'),
+            createdBy: series.get('createdBy'),
           }))
         : undefined,
       quiz:
