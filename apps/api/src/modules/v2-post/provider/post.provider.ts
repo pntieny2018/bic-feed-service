@@ -54,7 +54,7 @@ import {
   SeriesDeletedEventHandler,
   SeriesUpdatedEventHandler,
 } from '../application/event-handler/series';
-import { FindArticleHandler } from '../application/query/article';
+import { FindArticleHandler, SearchArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -187,6 +187,7 @@ export const postProvider = [
   GetSeriesInContentHandler,
   FindPinnedContentHandler,
   SearchSeriesHandler,
+  SearchArticleHandler,
 
   /** Domain Service */
   {

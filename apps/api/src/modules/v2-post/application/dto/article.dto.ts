@@ -2,7 +2,7 @@ import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { ImageDto } from './media.dto';
+import { FileDto, ImageDto, VideoDto } from './media.dto';
 import { PostSettingDto } from './post.dto';
 import { QuizDto } from './quiz.dto';
 import { TagDto } from './tag.dto';
@@ -61,6 +61,32 @@ export class ArticleDto {
   public summaryHighlight?: string;
 
   public constructor(data: Partial<ArticleDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class SearchArticleDto {
+  public id: string;
+  public title: string;
+  public content: string;
+  public summary: string;
+  public type: CONTENT_TYPE;
+  public actor: UserDto;
+  public audience: {
+    groups: GroupDto[];
+  };
+  public coverMedia?: ImageDto;
+  public media?: {
+    files: FileDto[];
+    images: ImageDto[];
+    videos: VideoDto[];
+  };
+  public categories?: {
+    id: string;
+    name: string;
+  }[];
+
+  public constructor(data: Partial<SearchArticleDto>) {
     Object.assign(this, data);
   }
 }

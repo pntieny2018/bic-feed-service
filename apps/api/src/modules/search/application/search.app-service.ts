@@ -73,7 +73,10 @@ export class SearchAppService {
 
     const notIncludeIds = await this._contentDomainService.getReportedContentIdsByUser(
       authUser.id,
-      [CONTENT_TYPE.POST]
+      {
+        postTypes: [CONTENT_TYPE.POST],
+        groupIds,
+      }
     );
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({

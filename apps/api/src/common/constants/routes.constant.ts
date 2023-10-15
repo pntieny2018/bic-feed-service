@@ -117,6 +117,10 @@ export const ROUTES = {
       PATH: '/articles/:articleId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    SEARCH_ARTICLE: {
+      PATH: '/articles',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
   QUIZ: {
     GET_QUIZZES: {

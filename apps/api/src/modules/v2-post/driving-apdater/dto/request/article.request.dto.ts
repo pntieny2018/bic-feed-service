@@ -1,15 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
 
+import { PageOptionsDto } from '../../../../../common/dto';
 import { MediaDto, MediaItemDto } from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
@@ -86,4 +89,54 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
     super(data);
     Object.assign(this, data);
   }
+}
+
+export class SearchArticleRequestDto extends PageOptionsDto {
+  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'content_search',
+  })
+  public contentSearch?: string;
+
+  @ApiProperty({
+    description: 'Group IDs',
+    required: false,
+    name: 'group_ids',
+  })
+  @Expose({
+    name: 'group_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public groupIds?: string[];
+
+  @ApiProperty({
+    description: 'Category IDs',
+    required: false,
+    name: 'category_ids',
+  })
+  @Expose({
+    name: 'category_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public categoryIds?: string[];
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    name: 'limit_series',
+  })
+  @Expose({
+    name: 'limit_series',
+  })
+  @Transform(({ value }) => value == 'true')
+  @IsOptional()
+  @IsBoolean()
+  public limitSeries?: boolean;
 }
