@@ -39,9 +39,9 @@ export class SearchArticleHandler
   public async execute(query: SearchArticleQuery): Promise<PaginatedResponse<SearchArticleDto>> {
     const {
       authUser,
-      limitSeries,
+      isLimitSeries,
       groupIds,
-      contentSearch,
+      keyword,
       categoryIds,
       limit = ELASTICSEARCH_DEFAULT_SIZE_PAGE,
       after,
@@ -65,12 +65,12 @@ export class SearchArticleHandler
     });
 
     const response = await this._postSearchService.searchContents<IPostElasticsearch>({
-      keyword: contentSearch,
+      keyword,
       filterEmptyContent: true,
       contentTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
       groupIds: filterGroupIds,
       excludeByIds,
-      isLimitSeries: limitSeries,
+      isLimitSeries,
       topics: categoryIds,
       size: limit,
       searchAfter: after ? parseCursor(after) : undefined,

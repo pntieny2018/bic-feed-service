@@ -193,9 +193,9 @@ export class ElasticsearchQueryBuilder {
 
   private _getSort(textSearch: string): any {
     if (textSearch) {
-      return [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
+      return [{ ['_score']: 'desc' }, { publishedAt: 'desc' }];
     } else {
-      return [{ createdAt: 'desc' }];
+      return [{ publishedAt: 'desc' }];
     }
   }
 

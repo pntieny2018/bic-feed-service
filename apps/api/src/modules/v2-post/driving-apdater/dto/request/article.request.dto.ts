@@ -92,13 +92,17 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
 }
 
 export class SearchArticleRequestDto extends PaginatedArgs {
-  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
+  @ApiPropertyOptional({
+    description: 'Filter by keyword',
+    required: false,
+    name: 'keyword',
+  })
   @IsOptional()
   @IsString()
   @Expose({
-    name: 'content_search',
+    name: 'keyword',
   })
-  public contentSearch?: string;
+  public keyword?: string;
 
   @ApiProperty({
     description: 'Group IDs',
@@ -130,13 +134,13 @@ export class SearchArticleRequestDto extends PaginatedArgs {
     type: Boolean,
     required: false,
     default: false,
-    name: 'limit_series',
+    name: 'is_limit_series',
   })
   @Expose({
-    name: 'limit_series',
+    name: 'is_limit_series',
   })
   @Transform(({ value }) => value == 'true')
   @IsOptional()
   @IsBoolean()
-  public limitSeries?: boolean;
+  public isLimitSeries?: boolean;
 }

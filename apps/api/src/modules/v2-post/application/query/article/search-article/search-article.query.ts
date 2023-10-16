@@ -5,13 +5,13 @@ import { UserDto } from '../../../../../v2-user/application';
 type Props = {
   authUser: UserDto;
 
-  contentSearch?: string;
+  keyword?: string;
 
   categoryIds?: string[];
 
   groupIds?: string[];
 
-  limitSeries?: boolean;
+  isLimitSeries?: boolean;
 
   limit?: number;
 
