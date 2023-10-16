@@ -280,15 +280,19 @@ export class ContentDomainService implements IContentDomainService {
 
   public async getReportedContentIdsByUser(
     reportUser: string,
-    postTypes?: CONTENT_TYPE[]
+    options?: {
+      postTypes?: CONTENT_TYPE[];
+      groupIds?: string[];
+    }
   ): Promise<string[]> {
-    if (!postTypes) {
+    if (!options) {
       return this._contentRepository.getReportedContentIdsByUser({
         reportUser,
         target: [CONTENT_TARGET.ARTICLE, CONTENT_TARGET.POST],
       });
     }
 
+    const { postTypes = [], groupIds } = options;
     const target: CONTENT_TARGET[] = [];
     if (postTypes.includes(CONTENT_TYPE.POST)) {
       target.push(CONTENT_TARGET.POST);
@@ -297,7 +301,7 @@ export class ContentDomainService implements IContentDomainService {
       target.push(CONTENT_TARGET.ARTICLE);
     }
 
-    return this._contentRepository.getReportedContentIdsByUser({ reportUser, target });
+    return this._contentRepository.getReportedContentIdsByUser({ reportUser, target, groupIds });
   }
 
   public async getScheduleContentIds(
@@ -496,7 +500,7 @@ export class ContentDomainService implements IContentDomainService {
 
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
       reportUser: authUser.id,
-      groupId,
+      groupIds: [groupId],
     });
 
     const reportedContentIdsInPinned = pinnedContentIds.filter((id) => {
@@ -544,7 +548,7 @@ export class ContentDomainService implements IContentDomainService {
     }
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
       reportUser: userId,
-      groupId,
+      groupIds: [groupId],
     });
 
     const pinnedContentIds = contentIds.filter((id) => {

@@ -243,6 +243,9 @@ export class PostDomainService implements IPostDomainService {
       shouldIncludeMarkReadImportant: {
         userId: authUser?.id,
       },
+      shouldIncludeReaction: {
+        userId: authUser?.id,
+      },
     });
 
     if (
