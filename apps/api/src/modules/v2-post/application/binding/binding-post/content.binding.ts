@@ -446,6 +446,9 @@ export class ContentBinding implements IContentBinding {
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
   ): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
+    if (!contentEntities.length) {
+      return [];
+    }
     const {
       users,
       groups,

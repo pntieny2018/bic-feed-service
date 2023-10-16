@@ -227,6 +227,10 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentIds: string[],
     userId: string
   ): Promise<Map<string, QuizParticipantEntity>> {
+    if (!contentIds.length) {
+      return new Map<string, QuizParticipantEntity>();
+    }
+
     const rows = await this._libQuizParticipantRepo.findMany({
       where: {
         postId: contentIds,
