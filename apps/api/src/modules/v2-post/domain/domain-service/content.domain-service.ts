@@ -343,7 +343,7 @@ export class ContentDomainService implements IContentDomainService {
   public async getImportantContentIds(
     props: GetImportantContentIdsProps
   ): Promise<CursorPaginationResult<string>> {
-    const { authUserId, isOnNewsfeed, groupIds, isMine, type, isSaved, limit, after } = props;
+    const { authUserId, isOnNewsfeed, groupIds, type, limit, after } = props;
     const offset = getLimitFromAfter(after);
 
     const rows = await this._contentRepository.findAll(
@@ -359,8 +359,6 @@ export class ContentDomainService implements IContentDomainService {
           groupArchived: false,
           status: CONTENT_STATUS.PUBLISHED,
           excludeReportedByUserId: authUserId,
-          createdBy: isMine ? authUserId : undefined,
-          savedByUserId: isSaved ? authUserId : undefined,
           inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
         },
         include: {
