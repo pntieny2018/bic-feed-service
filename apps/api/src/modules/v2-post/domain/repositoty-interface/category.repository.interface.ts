@@ -1,6 +1,8 @@
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
+
 import { CategoryEntity } from '../model/category';
 
-export type FindCategoryOptions = {
+export type FindCategoryProps = {
   where: {
     id?: string;
     ids?: string[];
@@ -9,10 +11,18 @@ export type FindCategoryOptions = {
   };
 };
 
-export interface ICategoryRepository {
-  count(whereOptions: FindCategoryOptions): Promise<number>;
+export type GetPaginationCategoryProps = PaginationProps & {
+  name?: string;
+  level?: number;
+  createdBy?: string;
+};
 
-  findAll(input: FindCategoryOptions): Promise<CategoryEntity[]>;
+export interface ICategoryRepository {
+  getPagination(input: GetPaginationCategoryProps): Promise<PaginationResult<CategoryEntity>>;
+
+  count(whereOptions: FindCategoryProps): Promise<number>;
+
+  findAll(input: FindCategoryProps): Promise<CategoryEntity[]>;
 }
 
 export const CATEGORY_REPOSITORY_TOKEN = 'CATEGORY_REPOSITORY_TOKEN';

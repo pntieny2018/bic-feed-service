@@ -1,40 +1,44 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { v4 } from 'uuid';
-import { I18nContext } from 'nestjs-i18n';
-import { CreateCommentHandler } from '../../../application/command/create-comment/create-comment.handler';
-import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import {
-  COMMENT_DOMAIN_SERVICE_TOKEN,
-  ICommentDomainService,
-} from '../../../domain/domain-service/interface';
 import { createMock } from '@golevelup/ts-jest';
-import { ContentValidator } from '../../../domain/validator/content.validator';
-import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Test, TestingModule } from '@nestjs/testing';
+import { I18nContext } from 'nestjs-i18n';
+import { v4 } from 'uuid';
+
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserApplicationService,
 } from '../../../../v2-user/application';
-import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import { ContentBinding } from '../../../application/binding/binding-post/content.binding';
-import { PostEntity } from '../../../domain/model/content';
-import { postProps } from '../../mock/post.props.mock';
+import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import {
   CreateCommentCommand,
   CreateCommentCommandPayload,
-} from '../../../application/command/create-comment/create-comment.command';
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../events/comment';
+  CreateCommentHandler,
+} from '../../../application/command/comment';
+import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
+import {
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+} from '../../../domain/domain-service/interface';
 import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
-import { userMentions, userMock } from '../../mock/user.dto.mock';
-import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
+import { PostEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { createCommentEntity } from '../../mock/comment.entity.mock';
+import { ContentValidator } from '../../../domain/validator/content.validator';
+import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
+import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import { createCommentDto } from '../../mock/comment.dto.mock';
+import { createMockCommentEntity } from '../../mock/comment.mock';
+import { postProps } from '../../mock/post.props.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
+const userMentions = [createMockUserDto()];
 
 describe('CreateCommentHandler', () => {
   let handler: CreateCommentHandler;
@@ -110,7 +114,7 @@ describe('CreateCommentHandler', () => {
         actor: userMock,
       };
       const command = new CreateCommentCommand(payload);
-      const commentEntity = createCommentEntity(payload, postId);
+      const commentEntity = createMockCommentEntity(payload);
       const commentDto = createCommentDto(commentEntity);
       const postEntity = new PostEntity({ ...postProps, id: postId });
 

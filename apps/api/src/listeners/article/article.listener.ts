@@ -1,5 +1,6 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
+
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
@@ -15,17 +16,17 @@ import {
   SeriesRemovedItemsEvent,
 } from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
-import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
+import { FeedPublisherService } from '../../modules/feed-publisher';
 import { MediaService } from '../../modules/media';
+import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
 import { PostHistoryService } from '../../modules/post/post-history.service';
+import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
 import { ISeriesState, PostActivityService } from '../../notification/activities';
-import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
-import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class ArticleListener {
@@ -50,7 +51,9 @@ export class ArticleListener {
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     const { article, actor } = event.payload;
-    if (article.status !== PostStatus.PUBLISHED) return;
+    if (article.status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -148,7 +151,9 @@ export class ArticleListener {
       isHidden,
     } = article;
 
-    if (status !== PostStatus.PUBLISHED) return;
+    if (status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
     this._postSearchService
@@ -268,7 +273,9 @@ export class ArticleListener {
       }
     }
 
-    if (status !== PostStatus.PUBLISHED) return;
+    if (status !== PostStatus.PUBLISHED) {
+      return;
+    }
 
     const contentSeries = (await this._postService.getPostsWithSeries([id]))[0];
 

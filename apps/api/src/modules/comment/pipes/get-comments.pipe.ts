@@ -1,7 +1,8 @@
-import { GetCommentsDto } from '../dto/requests';
+import { ORDER } from '@beincom/constants';
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { OrderEnum } from '../../../common/dto';
 import { NIL as NIL_UUID } from 'uuid';
+
+import { GetCommentsDto } from '../dto/requests';
 
 @Injectable()
 export class GetCommentsPipe implements PipeTransform {
@@ -10,10 +11,10 @@ export class GetCommentsPipe implements PipeTransform {
       getCommentDto.limit = 25;
     }
     if (!getCommentDto.order) {
-      getCommentDto.order = OrderEnum.DESC;
+      getCommentDto.order = ORDER.DESC;
     }
     if (!getCommentDto.childOrder) {
-      getCommentDto.childOrder = OrderEnum.DESC;
+      getCommentDto.childOrder = ORDER.DESC;
     }
     if (!getCommentDto.childLimit) {
       getCommentDto.childLimit = 0;

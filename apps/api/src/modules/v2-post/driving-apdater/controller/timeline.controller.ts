@@ -1,12 +1,14 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AuthUser } from '../../../auth';
-import { UserDto } from '../../../v2-user/application';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
-import { GetTimelineRequestDto } from '../dto/request';
+import { instanceToInstance } from 'class-transformer';
+
+import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { FindTimelineGroupQuery } from '../../application/query/find-timeline-group/find-timeline-group.query';
+import { UserDto } from '../../../v2-user/application';
+import { FindTimelineGroupQuery } from '../../application/query/content';
+import { GetTimelineRequestDto } from '../dto/request';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')
@@ -42,6 +44,6 @@ export class TimelineController {
         authUser,
       })
     );
-    return data;
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

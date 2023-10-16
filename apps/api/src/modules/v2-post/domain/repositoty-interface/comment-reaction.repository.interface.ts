@@ -8,8 +8,6 @@ export type FindOneCommentReactionProps = {
 };
 
 export interface ICommentReactionRepository {
-  // findAll(input: FindAllReactionsProps): Promise<ReactionEntity[]>;
-
   findOne(input: FindOneCommentReactionProps): Promise<ReactionEntity>;
 
   create(data: ReactionEntity): Promise<void>;

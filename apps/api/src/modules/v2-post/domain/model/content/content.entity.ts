@@ -1,26 +1,30 @@
-import { PostLang } from '../../../data-type/post-lang.enum';
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group/src/group.dto';
 import { validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { PostStatus } from '../../../data-type/post-status.enum';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainModelException } from '../../../../../common/exceptions';
+import { PostType } from '../../../data-type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { PostSettingAttributes } from './attributes/post-setting.entity';
-import { PostPrivacy, PostType } from '../../../data-type';
-import { GroupDto } from '../../../../v2-group/application';
-import { GroupPrivacy } from '../../../../v2-group/data-type';
-import { PostSettingDto } from '../../../application/dto';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
 
-export type ContentProps = {
+export type PostSettingAttributes = {
+  isImportant: boolean;
+  importantExpiredAt?: Date;
+  canReact: boolean;
+  canComment: boolean;
+};
+
+export type ContentAttributes = {
   id: string;
   isReported: boolean;
   isHidden: boolean;
   createdBy: string;
   updatedBy: string;
-  privacy: PostPrivacy;
-  status: PostStatus;
-  type: PostType;
+  privacy: PRIVACY;
+  status: CONTENT_STATUS;
+  type: CONTENT_TYPE;
   setting: PostSettingAttributes;
   media?: {
     files: FileEntity[];
@@ -35,7 +39,7 @@ export type ContentProps = {
   errorLog?: any;
   publishedAt?: Date;
   scheduledAt?: Date;
-  lang?: PostLang;
+  lang?: LANGUAGE;
   groupIds?: string[];
   communityIds?: string[];
   quiz?: QuizEntity;
@@ -65,7 +69,7 @@ export type ContentState = {
   isChangeStatus?: boolean;
 };
 export class ContentEntity<
-  Props extends ContentProps = ContentProps
+  Props extends ContentAttributes = ContentAttributes
 > extends DomainAggregateRoot<Props> {
   protected _state: ContentState;
   public constructor(props: Props) {
@@ -117,18 +121,37 @@ export class ContentEntity<
     let totalPrivate = 0;
     let totalClosed = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.OPEN) {
-        this._props.privacy = PostPrivacy.OPEN;
+      if (group.privacy === PRIVACY.OPEN) {
+        this._props.privacy = PRIVACY.OPEN;
         return;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalClosed++;
-      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+      if (group.privacy === PRIVACY.CLOSED) {
+        totalClosed++;
+      }
+      if (group.privacy === PRIVACY.PRIVATE) {
+        totalPrivate++;
+      }
     }
 
-    if (totalClosed > 0) this._props.privacy = PostPrivacy.CLOSED;
-    if (totalPrivate > 0) this._props.privacy = PostPrivacy.PRIVATE;
+    if (totalClosed > 0) {
+      this._props.privacy = PRIVACY.CLOSED;
+    }
+    if (totalPrivate > 0) {
+      this._props.privacy = PRIVACY.PRIVATE;
+    }
 
-    if (totalClosed === 0 && totalPrivate === 0) this._props.privacy = PostPrivacy.SECRET;
+    if (totalClosed === 0 && totalPrivate === 0) {
+      this._props.privacy = PRIVACY.SECRET;
+    }
+  }
+
+  public setWaitingSchedule(scheduledAt: Date): void {
+    if (this.isPublished()) {
+      return;
+    }
+    this._state.isChangeStatus = true;
+    this._props.scheduledAt = scheduledAt;
+    this._props.status = CONTENT_STATUS.WAITING_SCHEDULE;
   }
 
   public getId(): string {
@@ -143,7 +166,7 @@ export class ContentEntity<
     return this._props.aggregation.totalUsersSeen === 0;
   }
 
-  public getType(): PostType {
+  public getType(): PostType | CONTENT_TYPE {
     return this._props.type;
   }
 
@@ -168,15 +191,19 @@ export class ContentEntity<
   }
 
   public isPublished(): boolean {
-    return this._props.status === PostStatus.PUBLISHED;
+    return this._props.status === CONTENT_STATUS.PUBLISHED;
   }
 
   public isWaitingSchedule(): boolean {
-    return this._props.status === PostStatus.WAITING_SCHEDULE;
+    return this._props.status === CONTENT_STATUS.WAITING_SCHEDULE;
+  }
+
+  public isScheduleFailed(): boolean {
+    return this._props.status === CONTENT_STATUS.SCHEDULE_FAILED;
   }
 
   public isProcessing(): boolean {
-    return this._props.status === PostStatus.PROCESSING;
+    return this._props.status === CONTENT_STATUS.PROCESSING;
   }
 
   public isVisible(): boolean {
@@ -188,11 +215,11 @@ export class ContentEntity<
   }
 
   public isOpen(): boolean {
-    return this._props.privacy === PostPrivacy.OPEN;
+    return this._props.privacy === PRIVACY.OPEN;
   }
 
   public isClosed(): boolean {
-    return this._props.privacy === PostPrivacy.CLOSED;
+    return this._props.privacy === PRIVACY.CLOSED;
   }
 
   public isSaved(): boolean {
@@ -207,19 +234,19 @@ export class ContentEntity<
       this._state.isChangeStatus = true;
       this._props.publishedAt = new Date();
     }
-    this._props.status = PostStatus.PUBLISHED;
+    this._props.status = CONTENT_STATUS.PUBLISHED;
   }
 
   public isDraft(): boolean {
-    return this._props.status === PostStatus.DRAFT;
+    return this._props.status === CONTENT_STATUS.DRAFT;
   }
 
   public setProcessing(): void {
-    this._props.status = PostStatus.PROCESSING;
+    this._props.status = CONTENT_STATUS.PROCESSING;
   }
 
   public setScheduleFailed(): void {
-    this._props.status = PostStatus.SCHEDULE_FAILED;
+    this._props.status = CONTENT_STATUS.SCHEDULE_FAILED;
   }
 
   public setErrorLog(errorLog: unknown): void {
@@ -235,7 +262,7 @@ export class ContentEntity<
   }
 
   public setDraft(): void {
-    this._props.status = PostStatus.DRAFT;
+    this._props.status = CONTENT_STATUS.DRAFT;
   }
 
   public setGroups(groupIds: string[]): void {
@@ -253,7 +280,7 @@ export class ContentEntity<
     this._props.communityIds = communityIds;
   }
 
-  public setSetting(setting: PostSettingDto): void {
+  public setSetting(setting: PostSettingAttributes): void {
     let isEnableSetting = false;
     if (
       setting &&
@@ -272,7 +299,9 @@ export class ContentEntity<
 
   public update(data: { authUser: { id: string }; groupIds?: string[] }): void {
     const { authUser, groupIds } = data;
-    if (groupIds) this.setGroups(groupIds);
+    if (groupIds) {
+      this.setGroups(groupIds);
+    }
     this._props.updatedAt = new Date();
     this._props.updatedBy = authUser.id;
   }
@@ -292,6 +321,7 @@ export class ContentEntity<
     );
   }
 
+  //TODO: Need to refactor this function so that the purpose use matches the naming
   public isInArchivedGroups(): boolean {
     return this.isPublished() && !this.getGroupIds()?.length;
   }

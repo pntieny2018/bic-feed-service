@@ -5,11 +5,11 @@ import {
   IRecentSearchDomainService,
   RECENT_SEARCH_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { RecentSearchNotFoundException } from '../../../exeption/recent-search-not-found.exception';
 import {
   IRecentSearchRepository,
   RECENT_SEARCH_REPOSITORY_TOKEN,
 } from '../../../driven-adapter/repository/interface/recent-search.repository.interface';
+import { RecentSearchNotFoundException } from '../../../domain/exception';
 
 @CommandHandler(DeleteRecentSearchCommand)
 export class DeleteRecentSearchHandler {

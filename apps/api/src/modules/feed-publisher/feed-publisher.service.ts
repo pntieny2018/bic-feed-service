@@ -1,14 +1,15 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
+
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { FollowService } from '../follow';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { PostModel, PostStatus } from '../../database/models/post.model';
 
 @Injectable()
 export class FeedPublisherService {
@@ -146,7 +147,9 @@ export class FeedPublisherService {
             `[fanoutOnWrite]: attached post: ${postId} to users(${userIds.length}): ${userIds}`
           );
         }
-        if (userIds.length === 0 || userIds.length < 1000) break;
+        if (userIds.length === 0 || userIds.length < 1000) {
+          break;
+        }
         latestFollowId = lastId;
       }
     }
@@ -172,7 +175,9 @@ export class FeedPublisherService {
         this._logger.debug(
           `[fanoutOnWrite]: dettached post: ${postId} to users(${userIds.length}): ${userIds}`
         );
-        if (userIds.length === 0 || userIds.length < 1000) break;
+        if (userIds.length === 0 || userIds.length < 1000) {
+          break;
+        }
         latestFollowId = lastId;
       }
     }

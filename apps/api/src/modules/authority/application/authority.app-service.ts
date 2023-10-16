@@ -1,9 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Ability, subject } from '@casl/ability';
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+
 import { PERMISSION_KEY, SUBJECT } from '../../../common/constants/casl.constant';
-import { UserPermission } from '../../v2-user/domain/model/user';
 import { UserDto } from '../../v2-user/application';
+import { UserPermission } from '../../v2-user/domain/model/user';
+
 import { IAuthorityAppService } from './authority.app-service.interface';
 
 @Injectable()
@@ -16,6 +18,7 @@ export class AuthorityAppService implements IAuthorityAppService {
     try {
       const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {
+        this._abilities = new Ability([]);
         return;
       }
       const permissions = AuthorityAppService.extractAbilitiesFromPermission(cachedPermissions);

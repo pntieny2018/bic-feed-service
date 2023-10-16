@@ -1,9 +1,13 @@
-import { LINK_PREVIEW_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { LinkPreviewRepository } from '../driven-adapter/repository/link-preview.repository';
+import { LIB_LINK_PREVIEW_REPOSITORY_TOKEN } from '@libs/database/postgres/repository/interface';
+import { LibLinkPreviewRepository } from '@libs/database/postgres/repository/link-preview.repository';
+
+import { LINK_PREVIEW_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
+import { LinkPreviewDomainService } from '../domain/domain-service/link-preview.domain-service';
 import { LINK_PREVIEW_FACTORY_TOKEN } from '../domain/factory/interface/link-preview.factory.interface';
 import { LinkPreviewFactory } from '../domain/factory/link-preview.factory';
-import { LINK_PREVIEW_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/link-preview.domain-service.interface';
-import { LinkPreviewDomainService } from '../domain/domain-service/link-preview.domain-service';
+import { LINK_PREVIEW_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import { LinkPreviewMapper } from '../driven-adapter/mapper/link-preview.mapper';
+import { LinkPreviewRepository } from '../driven-adapter/repository';
 
 export const linkPreviewProvider = [
   {
@@ -18,4 +22,9 @@ export const linkPreviewProvider = [
     provide: LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
     useClass: LinkPreviewDomainService,
   },
+  {
+    provide: LIB_LINK_PREVIEW_REPOSITORY_TOKEN,
+    useClass: LibLinkPreviewRepository,
+  },
+  LinkPreviewMapper,
 ];

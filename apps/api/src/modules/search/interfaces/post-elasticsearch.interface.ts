@@ -1,3 +1,5 @@
+import { CONTENT_TYPE } from '@beincom/constants';
+
 import { MediaType } from '../../../database/models/media.model';
 import { PostType } from '../../../database/models/post.model';
 
@@ -21,8 +23,8 @@ export interface IPostElasticsearch {
   groupIds: string[];
   communityIds: string[];
   seriesIds?: string[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   publishedAt: Date;
   createdBy: string;
   mentionUserIds: string[];
@@ -43,6 +45,7 @@ export interface IPostElasticsearch {
     id: string;
     zindex: number;
   }[];
+  highlight?: Record<string, string[]>;
 }
 
 export interface IDataPostToAdd {
@@ -54,7 +57,7 @@ export interface IDataPostToAdd {
   updatedAt: Date;
   publishedAt: Date;
   createdBy: string;
-  type: PostType;
+  type: PostType | CONTENT_TYPE;
   isHidden: boolean;
   title?: string;
   summary?: string;

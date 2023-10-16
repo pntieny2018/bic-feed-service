@@ -1,31 +1,36 @@
+import { IMAGE_RESOURCE } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ICommentDomainService } from '../../../domain/domain-service/interface';
-import { CommentFactory } from '../../../domain/factory';
-import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
+import { cloneDeep, omit } from 'lodash';
 import { I18nContext } from 'nestjs-i18n';
-import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../../domain/factory/interface';
+import { v4 } from 'uuid';
+
+import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
-import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
-import { MediaDomainService } from '../../../domain/domain-service/media.domain-service';
+import { ICommentDomainService } from '../../../domain/domain-service/interface';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/media.domain-service.interface';
+import { MediaDomainService } from '../../../domain/domain-service/media.domain-service';
+import { CommentNotEmptyException } from '../../../domain/exception';
+import { InvalidResourceImageException } from '../../../domain/exception/media.exception';
+import { CommentFactory } from '../../../domain/factory';
+import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../../domain/factory/interface';
+import { CommentAttributes, CommentEntity } from '../../../domain/model/comment';
+import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { MentionValidator } from '../../../domain/validator/mention.validator';
+import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
 import {
   createCommentProps,
   notChangedCommentProps,
   updateCommentProps,
 } from '../../mock/comment.props.mock';
-import { CommentEntity } from '../../../domain/model/comment';
-import { v4 } from 'uuid';
-import { imageEntites, invalidImageComment } from '../../mock/media.entity.mock';
-import { cloneDeep, omit } from 'lodash';
-import { InvalidResourceImageException } from '../../../domain/exception/invalid-resource-image.exception';
-import { DatabaseException } from '../../../../../common/exceptions/database.exception';
-import { CommentNotEmptyException } from '../../../domain/exception';
+import { createMockImageEntity } from '../../mock/media.mock';
+
+const imageEntites = [createMockImageEntity()];
+const invalidImageComment = [createMockImageEntity({ resource: IMAGE_RESOURCE.POST_CONTENT })];
 
 describe('CommentDomainService', () => {
   let domainService: ICommentDomainService;
@@ -209,7 +214,10 @@ describe('CommentDomainService', () => {
         images: imageEntites,
         videos: props.commentEntity.get('media').videos,
       });
-      commentEntityWithMedia.updateAttribute(props.newData);
+      commentEntityWithMedia.updateAttribute(
+        props.newData as unknown as CommentAttributes,
+        props.actor.id
+      );
       await domainService.update(props);
 
       expect(mentionValidator.validateMentionUsers).toBeCalledWith(

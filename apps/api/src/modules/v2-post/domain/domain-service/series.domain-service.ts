@@ -1,23 +1,41 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
+
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { SeriesCreatedEvent, SeriesUpdatedEvent, SeriesDeletedEvent } from '../event';
+import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
+import { InvalidResourceImageException } from '../exception/media.exception';
+import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
+import { SeriesEntity } from '../model/content';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
+
+import {
+  CreateSeriesProps,
+  UpdateSeriesProps,
+  ISeriesDomainService,
+  POST_DOMAIN_SERVICE_TOKEN,
+  IPostDomainService,
+  DeleteSeriesProps,
+} from './interface';
 import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
-import { CreateSeriesProps, UpdateSeriesProps, ISeriesDomainService } from './interface';
-import { SeriesEntity } from '../model/content/series.entity';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
-import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
   private readonly _logger = new Logger(SeriesDomainService.name);
 
   public constructor(
+    private readonly event: EventBus,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
     @Inject(SERIES_FACTORY_TOKEN)
     private readonly _seriesFactory: ISeriesFactory,
     @Inject(CONTENT_VALIDATOR_TOKEN)
@@ -26,8 +44,23 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
+  public async findSeriesByIds(seriesId: string[]): Promise<SeriesEntity[]> {
+    return (await this._contentRepository.findAll({
+      attributes: {
+        exclude: ['content'],
+      },
+      where: {
+        groupArchived: false,
+        ids: seriesId,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
+    })) as SeriesEntity[];
+  }
+
   public async create(input: CreateSeriesProps): Promise<SeriesEntity> {
-    const { actor, title, summary, groupIds, coverMedia, setting, groups } = input.data;
+    const { actor, title, summary, groupIds, coverMedia, setting } = input;
     const seriesEntity = this._seriesFactory.createSeries({
       userId: actor.id,
       title,
@@ -43,6 +76,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
@@ -58,16 +92,53 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     try {
       await this._contentRepository.create(seriesEntity);
-      return seriesEntity;
+
+      await this._postDomainService.markSeen(seriesEntity.get('id'), actor.id);
+      seriesEntity.increaseTotalSeen();
+
+      if (seriesEntity.isImportant()) {
+        await this._postDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
+        seriesEntity.setMarkReadImportant();
+      }
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
+
+    this.event.publish(new SeriesCreatedEvent(seriesEntity));
+
+    return seriesEntity;
   }
 
-  public async update(input: UpdateSeriesProps): Promise<void> {
-    const { seriesEntity, groups, newData } = input;
-    const { actor, groupIds, coverMedia } = newData;
+  public async update(input: UpdateSeriesProps): Promise<SeriesEntity> {
+    const { id, actor, groupIds, coverMedia } = input;
+
+    const seriesEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+        shouldIncludeMarkReadImportant: {
+          userId: actor?.id,
+        },
+        shouldIncludeSaved: {
+          userId: actor.id,
+        },
+      },
+    });
+
+    if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!seriesEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const isImportantBefore = seriesEntity.isImportant();
     const isEnableSetting = seriesEntity.isEnableSetting();
 
     if (coverMedia) {
@@ -82,18 +153,17 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setCover(images[0]);
     }
 
-    if (groupIds) {
-      this._contentValidator.checkCanReadContent(seriesEntity, actor);
+    this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
-      const oldGroupIds = seriesEntity.get('groupIds');
-      await this._contentValidator.checkCanCRUDContent(
-        actor,
-        oldGroupIds,
-        seriesEntity.get('type')
-      );
+    const oldGroupIds = seriesEntity.get('groupIds');
+    await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
+
+    if (groupIds) {
+      const groups = await this._groupAdapter.getGroupsByIds(groupIds);
 
       seriesEntity.setGroups(groupIds);
       seriesEntity.setPrivacyFromGroups(groups);
+
       const state = seriesEntity.getState();
       const { attachGroupIds, detachGroupIds } = state;
 
@@ -110,10 +180,56 @@ export class SeriesDomainService implements ISeriesDomainService {
       }
     }
 
-    seriesEntity.updateAttribute(newData);
+    seriesEntity.updateAttribute(input, actor.id);
 
-    if (!seriesEntity.isChanged()) return;
+    if (!seriesEntity.isChanged()) {
+      return seriesEntity;
+    }
 
     await this._contentRepository.update(seriesEntity);
+
+    if (!isImportantBefore && seriesEntity.isImportant()) {
+      await this._postDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
+      seriesEntity.setMarkReadImportant();
+    }
+
+    this.event.publish(new SeriesUpdatedEvent(seriesEntity));
+
+    return seriesEntity;
+  }
+
+  public async delete(input: DeleteSeriesProps): Promise<void> {
+    const { actor, id } = input;
+
+    const seriesEntity = await this._contentRepository.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+      },
+    });
+
+    if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!seriesEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
+
+    this._contentValidator.checkCanReadContent(seriesEntity, actor);
+
+    await this._contentValidator.checkCanCRUDContent(
+      actor,
+      seriesEntity.get('groupIds'),
+      seriesEntity.get('type')
+    );
+
+    await this._contentRepository.delete(seriesEntity.get('id'));
+
+    this.event.publish(new SeriesDeletedEvent(seriesEntity));
   }
 }

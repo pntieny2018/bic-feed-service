@@ -4,14 +4,14 @@ module.exports = {
     project: 'tsconfig.json',
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint/eslint-plugin', 'spellcheck', 'unused-imports'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'spellcheck', 'unused-imports', 'import'],
   extends: ['plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
   root: true,
   env: {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', '*.js', 'data', '*.spec.ts', '*.input.ts'],
+  ignorePatterns: ['.eslintrc.js', '*.js', 'data'],
   rules: {
     'prettier/prettier': [
       'error',
@@ -21,6 +21,7 @@ module.exports = {
         singleQuote: true,
         printWidth: 100,
         tabWidth: 2,
+        endOfLine: 'auto',
       },
     ],
     'no-console': 'error',
@@ -40,8 +41,19 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'warn',
-    "@typescript-eslint/no-unused-vars": "off",
-    "unused-imports/no-unused-imports": "error",
-    "unused-imports/no-unused-vars": "warn",
+    '@typescript-eslint/no-unused-vars': 'off',
+    'unused-imports/no-unused-imports': 'error',
+    'unused-imports/no-unused-vars': 'warn',
+    curly: 'error',
+    'import/no-duplicates': 'error',
+    'import/order': [
+      'warn',
+      {
+        'newlines-between': 'always',
+        alphabetize: {
+          order: 'asc',
+        },
+      },
+    ],
   },
 };

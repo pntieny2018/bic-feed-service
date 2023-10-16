@@ -1,8 +1,12 @@
 import { Inject, Logger } from '@nestjs/common';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { cloneDeep } from 'lodash';
+
+import { DatabaseException } from '../../../../common/exceptions';
+import { TagDuplicateNameException, TagUsedException } from '../exception';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory/interface';
 import { TagEntity } from '../model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
+
 import { ITagDomainService, TagCreateProps, TagUpdateProps } from './interface';
 
 export class TagDomainService implements ITagDomainService {
@@ -13,8 +17,30 @@ export class TagDomainService implements ITagDomainService {
   @Inject(TAG_FACTORY_TOKEN)
   private readonly _tagFactory: ITagFactory;
 
+  public async findByIds(ids: string[]): Promise<TagEntity[]> {
+    if (!ids?.length) {
+      return [];
+    }
+    try {
+      return await this._tagRepository.findAll({
+        ids,
+      });
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
+
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;
+    const findTagNameInGroup = await this._tagRepository.findOne({
+      groupId,
+      name,
+    });
+    if (findTagNameInGroup) {
+      throw new TagDuplicateNameException();
+    }
+
     const tagEntity = this._tagFactory.create({
       name,
       groupId,
@@ -31,30 +57,52 @@ export class TagDomainService implements ITagDomainService {
   }
 
   public async updateTag(tag: TagEntity, input: TagUpdateProps): Promise<TagEntity> {
+    const cloneTagEntity = cloneDeep(tag);
     const { name, userId } = input;
-    tag.update({
+
+    if (cloneTagEntity.get('totalUsed') > 0) {
+      throw new TagUsedException();
+    }
+
+    const findTagNameInGroup = await this._tagRepository.findOne({
+      groupId: cloneTagEntity.get('groupId'),
+      name,
+    });
+
+    if (findTagNameInGroup && findTagNameInGroup.get('id') !== cloneTagEntity.get('id')) {
+      throw new TagDuplicateNameException();
+    }
+
+    cloneTagEntity.update({
       name,
       updatedBy: userId,
     });
 
-    if (tag.isChanged()) {
+    if (cloneTagEntity.isChanged()) {
       try {
-        await this._tagRepository.update(tag);
-        tag.commit();
+        await this._tagRepository.update(cloneTagEntity);
+        cloneTagEntity.commit();
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
         throw new DatabaseException();
       }
     }
-    return tag;
+    return cloneTagEntity;
   }
 
-  public async deleteTag(tagId: string): Promise<void> {
+  public async deleteTag(tagEntity: TagEntity): Promise<void> {
+    if (tagEntity.get('totalUsed') > 0) {
+      throw new TagUsedException();
+    }
     try {
-      await this._tagRepository.delete(tagId);
+      await this._tagRepository.delete(tagEntity.get('id'));
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
+  }
+
+  public async findTagsByKeyword(keyword: string): Promise<TagEntity[]> {
+    return this._tagRepository.findAll({ keyword });
   }
 }

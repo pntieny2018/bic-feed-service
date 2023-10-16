@@ -1,7 +1,8 @@
+import { RedisService } from '@libs/infra/redis';
+import { SentryService } from '@libs/infra/sentry';
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { ReactionCountService } from '../reaction-count.service';
-import { RedisService } from '@app/redis';
-import { SentryService } from '@app/sentry';
 
 describe('ReactionCountService', () => {
   let service: ReactionCountService;

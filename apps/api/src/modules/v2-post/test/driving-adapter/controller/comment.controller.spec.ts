@@ -1,20 +1,23 @@
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
-import { userMock } from '../../mock/user.dto.mock';
+
 import { OrderEnum } from '../../../../../common/dto';
-import { CommentController } from '../../../driving-apdater/controller/comment.controller';
-import { GetListCommentsDto } from '../../../driving-apdater/dto/request';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import {
   CommentNotFoundException,
   CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
-  InvalidCursorParamsException,
 } from '../../../domain/exception';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { commentMock } from '../../mock/comment.model.mock';
+import { CommentController } from '../../../driving-apdater/controller/comment.controller';
+import { GetListCommentsDto } from '../../../driving-apdater/dto/request';
+import { createMockCommentRecord } from '../../mock/comment.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const commentMock = createMockCommentRecord();
+const userMock = createMockUserDto();
 
 describe('CommentController', () => {
   let commentController: CommentController;
@@ -83,21 +86,6 @@ describe('CommentController', () => {
       );
     });
 
-    it('should throw BadRequestException when case invalid cursor params ', async () => {
-      const listCommentDto = {
-        postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-        order: OrderEnum.DESC,
-        before: '1',
-      } as GetListCommentsDto;
-      jest
-        .spyOn(query, 'execute')
-        .mockImplementation(() => Promise.reject(new InvalidCursorParamsException()));
-
-      await expect(commentController.getList(userMock, listCommentDto)).rejects.toThrow(
-        new BadRequestException('Invalid Cursor Params Exception')
-      );
-    });
-
     it('should throw error', async () => {
       const listCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
@@ -112,7 +100,7 @@ describe('CommentController', () => {
     });
   });
 
-  describe('getCommentsArroundId', () => {
+  describe('getCommentsAroundId', () => {
     it('should get comments around a comment successfully', async () => {
       jest.spyOn(query, 'execute').mockImplementation(() =>
         Promise.resolve({
@@ -134,7 +122,7 @@ describe('CommentController', () => {
         })
       );
 
-      const res = await commentController.getCommentsArroundId(
+      const res = await commentController.getCommentsAroundId(
         userMock,
         '7a821691-64cb-4846-9933-d31cbe5ce558',
         {
@@ -175,7 +163,7 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.getCommentsArroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
+        commentController.getCommentsAroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
           limit: 10,
         })
       ).rejects.toThrow(new NotFoundException('Comment Not Found Exception'));
@@ -189,7 +177,7 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.getCommentsArroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
+        commentController.getCommentsAroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
           limit: 10,
         })
       ).rejects.toThrow(new BadRequestException('Domain model exception'));
@@ -199,7 +187,7 @@ describe('CommentController', () => {
       jest.spyOn(query, 'execute').mockImplementation(() => Promise.reject(new Error()));
 
       await expect(
-        commentController.getCommentsArroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
+        commentController.getCommentsAroundId(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', {
           limit: 10,
         })
       ).rejects.toThrow(new Error());

@@ -82,7 +82,7 @@ describe('UserApplicationService', () => {
         withPermission: true,
       });
       expect(repo.findOne).toBeCalledWith(userMocked.id);
-      expect(result).toEqual(new UserDto({ ...userDtoWithoutGroup, permissions: userPermissions }));
+      expect(result).toEqual(new UserDto({ ...userDtoWithoutGroup }));
     });
 
     it('Should returned a MediaDto with group', async () => {
@@ -94,7 +94,7 @@ describe('UserApplicationService', () => {
         withPermission: true,
       });
       expect(repo.findOne).toBeCalledWith(userMocked.id);
-      expect(result).toEqual(new UserDto({ ...userDto, permissions: userPermissions }));
+      expect(result).toEqual(new UserDto({ ...userDto }));
     });
 
     it('Should returned a MediaDto without permission', async () => {

@@ -1,11 +1,14 @@
-import { RECENT_SEARCH_QUERY_TOKEN } from '../../../driven-adapter/query/interface/recent-search.query.interface';
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FindRecentSearchesPaginationHandler } from '../../../aplication/query/find-recent-searches/find-recent-searches-pagination.handler';
+import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
+
+import { FindRecentSearchesPaginationHandler } from '../../../aplication/query/find-recent-searches/find-recent-searches-pagination.handler';
 import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
+import { RECENT_SEARCH_QUERY_TOKEN } from '../../../driven-adapter/query/interface/recent-search.query.interface';
 import { RecentSearchQuery } from '../../../driven-adapter/query/recent-search.query';
-import { userMock } from '../../../../v2-post/test/mock/user.dto.mock';
+
+const userMock = createMockUserDto();
 
 describe('FindRecentSearchesPaginationHandler', () => {
   let handler, recentSearchQuery;

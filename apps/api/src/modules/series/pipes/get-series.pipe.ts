@@ -1,15 +1,16 @@
-import { GetSeriesDto } from '../dto/requests';
+import { ORDER } from '@beincom/constants';
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { OrderEnum } from '../../../common/dto';
+
+import { GetSeriesDto } from '../dto/requests';
 
 @Injectable()
 export class GetSeriesPipe implements PipeTransform {
   public transform(getSeriesDto: GetSeriesDto): GetSeriesDto {
     if (!getSeriesDto.commentOrder) {
-      getSeriesDto.commentOrder = OrderEnum.DESC;
+      getSeriesDto.commentOrder = ORDER.DESC;
     }
     if (!getSeriesDto.childCommentOrder) {
-      getSeriesDto.childCommentOrder = OrderEnum.DESC;
+      getSeriesDto.childCommentOrder = ORDER.DESC;
     }
 
     if (!getSeriesDto.commentLimit) {

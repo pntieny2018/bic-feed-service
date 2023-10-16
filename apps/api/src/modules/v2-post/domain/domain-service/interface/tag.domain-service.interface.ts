@@ -8,15 +8,18 @@ export type TagCreateProps = {
 
 export type TagUpdateProps = {
   name: string;
-  id: string;
   userId: string;
 };
 
 export interface ITagDomainService {
+  findByIds(ids: string[]): Promise<TagEntity[]>;
+
   createTag(data: TagCreateProps): Promise<TagEntity>;
 
   updateTag(tag: TagEntity, data: TagUpdateProps): Promise<TagEntity>;
 
-  deleteTag(id: string): Promise<void>;
+  deleteTag(tag: TagEntity): Promise<void>;
+
+  findTagsByKeyword(keyword: string): Promise<TagEntity[]>;
 }
 export const TAG_DOMAIN_SERVICE_TOKEN = 'TAG_DOMAIN_SERVICE_TOKEN';

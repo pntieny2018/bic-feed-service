@@ -1,15 +1,15 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL as NIL_UUID } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
-import { ExceptionHelper } from '../../common/helpers';
+
 import { getDatabaseConfig } from '../../config/database';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { FollowModel } from '../../database/models/follow.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
+import { CommentNotFoundException } from '../../modules/v2-post/domain/exception';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class CommentDissociationService {
         },
       });
       if (!comment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+        throw new CommentNotFoundException();
       }
 
       comment = comment.toJSON();
@@ -196,7 +196,7 @@ export class CommentDissociationService {
       });
 
       if (!parentComment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+        throw new CommentNotFoundException();
       }
       parentComment = parentComment.toJSON();
 

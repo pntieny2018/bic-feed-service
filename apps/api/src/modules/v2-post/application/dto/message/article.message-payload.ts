@@ -1,17 +1,16 @@
-import { PostSettingDto } from '../post-setting.dto';
-import { PostType } from '../../../data-type';
-import { TagDto } from '../tag.dto';
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+
 import { UserDto } from '../../../../v2-user/application';
-import { FileDto } from '../file.dto';
-import { ImageDto } from '../image.dto';
-import { VideoDto } from '../video.dto';
-import { PostStatus } from '../../../data-type/post-status.enum';
+import { PostStatus, PostType } from '../../../data-type';
+import { FileDto, ImageDto, VideoDto } from '../media.dto';
+import { PostSettingDto } from '../post.dto';
+import { TagDto } from '../tag.dto';
 
 export class ArticleMessagePayload {
   public id: string;
   public actor: UserDto;
   public setting: PostSettingDto;
-  public type: PostType;
+  public type: PostType | CONTENT_TYPE;
   public groupIds: string[];
   public communityIds?: string[];
   public media?: {
@@ -32,12 +31,31 @@ export class ArticleMessagePayload {
   public summary: string;
   public lang: string;
   public isHidden: boolean;
-  public status: PostStatus;
+  public status: PostStatus | CONTENT_STATUS;
   public createdAt: Date;
   public updatedAt: Date;
   public publishedAt: Date;
 
   public constructor(data: Partial<ArticleMessagePayload>) {
+    Object.assign(this, data);
+  }
+}
+
+export class ArticleChangedMessagePayload {
+  public state: 'publish' | 'update' | 'delete';
+  public before?: ArticleMessagePayload;
+  public after?: ArticleMessagePayload & {
+    state?: {
+      attachGroupIds: string[];
+      detachGroupIds: string[];
+      attachTagIds?: string[];
+      detachTagIds?: string[];
+      attachSeriesIds?: string[];
+      detachSeriesIds?: string[];
+    };
+  };
+
+  public constructor(data: Partial<ArticleChangedMessagePayload>) {
     Object.assign(this, data);
   }
 }

@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
 import { NIL } from 'uuid';
-import { HTTP_STATUS_ID } from '../../common/constants';
-import { LogicException } from '../../common/exceptions';
+
 import { ArrayHelper } from '../../common/helpers';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -12,11 +11,14 @@ import { PostSeriesModel } from '../../database/models/post-series.model';
 import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { CommentService } from '../comment';
 import { PostBindingService } from '../post/post-binding.service';
-import { GetSeriesDto } from './dto/requests';
-import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
+import { PostStatus } from '../v2-post/data-type';
+import { ContentNotFoundException } from '../v2-post/domain/exception';
 import { UserDto } from '../v2-user/application';
+
+import { GetSeriesDto } from './dto/requests';
+import { SeriesResponseDto } from './dto/responses';
 
 @Injectable()
 export class SeriesService {
@@ -81,7 +83,7 @@ export class SeriesService {
     );
 
     if (!series) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+      throw new ContentNotFoundException();
     }
     let comments = null;
     if (getSeriesDto.withComment) {
@@ -227,7 +229,7 @@ export class SeriesService {
     id: string,
     options: {
       withGroups?: boolean;
-      withItemId?: boolean;
+      withItems?: boolean;
     }
   ): Promise<IPost> {
     const include = [];
@@ -242,7 +244,7 @@ export class SeriesService {
         attributes: ['groupId'],
       });
     }
-    if (options.withItemId) {
+    if (options.withItems) {
       include.push({
         model: PostModel,
         as: 'items',
@@ -250,20 +252,10 @@ export class SeriesService {
         through: {
           attributes: ['zindex', 'createdAt'],
         },
-        attributes: [
-          'id',
-          'title',
-          'summary',
-          'createdBy',
-          'canComment',
-          'canReact',
-          'status',
-          'type',
-          'content',
-          'createdAt',
-          'updated_at',
-          'importantExpiredAt',
-        ],
+        where: {
+          status: PostStatus.PUBLISHED,
+        },
+        attributes: ['id'],
       });
     }
     const result = await this._postModel.findOne({

@@ -23,7 +23,8 @@
     "no_crud_permission_at_group": "You don't have CRUD permission at group {groups}",
     "no_edit_setting_permission_at_group": "You don't have edit setting permission at group {groups}",
     "no_publish_yet": "Content has not been published yet",
-    "has_been_published": "Content has been published"
+    "has_been_published": "Content has been published",
+    "invalid_scheduled_time": "The scheduled time is invalid"
   },
   "post": {
     "not_found": "Post not found",
@@ -87,7 +88,8 @@
     "quiz_question_limit_exceeded": "Quiz question limit exceeded"
   },
   "quiz_question": {
-    "not_found": "Session ID not found"
+    "not_found": "Question is not found",
+    "not_belongs_to_quiz": "Question does not belong to quiz"
   },
   "quiz_participant": {
     "not_found": "Session ID not found",

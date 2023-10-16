@@ -1,6 +1,7 @@
-import { SentryService } from '@app/sentry';
+import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
+
 import { On } from '../../common/decorators';
 import {
   CommentHasBeenCreatedEvent,
@@ -8,8 +9,8 @@ import {
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
 import { CommentService } from '../../modules/comment';
-import { CommentNotificationService } from '../../notification/services';
 import { PostService } from '../../modules/post/post.service';
+import { CommentNotificationService } from '../../notification/services';
 
 @Injectable()
 export class CommentListener {

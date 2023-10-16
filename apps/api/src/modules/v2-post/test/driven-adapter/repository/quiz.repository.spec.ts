@@ -1,303 +1,276 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+import { TestBed } from '@automock/jest';
+import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
+import { ILibQuizRepository, LIB_QUIZ_REPOSITORY_TOKEN } from '@libs/database/postgres';
 import {
-  FindAllQuizProps,
-  FindOneQuizProps,
-  GetPaginationQuizzesProps,
-  IQuizRepository,
-} from '../../../domain/repositoty-interface';
-import { Test, TestingModule } from '@nestjs/testing';
-import { QuizRepository } from '../../../driven-adapter/repository/quiz.repository';
-import { Sequelize } from 'sequelize-typescript';
-import { createMock } from '@golevelup/ts-jest';
-import { FindOptions, Transaction } from 'sequelize';
-import { getModelToken } from '@nestjs/sequelize';
-import { IQuiz, QuizModel } from '../../../../../database/models/quiz.model';
-import {
-  IQuizFactory,
-  QUIZ_FACTORY_TOKEN,
-} from '../../../domain/factory/interface/quiz.factory.interface';
-import { QuizFactory } from '../../../domain/factory/quiz.factory';
-import { quizEntityMock } from '../../mock/quiz.entity.mock';
-import { quizRecordMock } from '../../mock/quiz.model.mock';
-import { QuizEntity } from '../../../domain/model/quiz';
-import { PostType } from '../../../data-type';
-import { CursorPaginator, OrderEnum } from '../../../../../common/dto';
-import { PostModel } from '../../../../../database/models/post.model';
+  QuizQuestionAttributes,
+  QuizQuestionModel,
+} from '@libs/database/postgres/model/quiz-question.model';
+import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
+import { v4 } from 'uuid';
 
-const transaction = createMock<Transaction>();
+import { QuizEntity, QuizQuestionEntity } from '../../../domain/model/quiz';
+import { GetPaginationQuizzesProps, IQuizRepository } from '../../../domain/repositoty-interface';
+import { QuizQuestionMapper } from '../../../driven-adapter/mapper/quiz-question.mapper';
+import { QuizMapper } from '../../../driven-adapter/mapper/quiz.mapper';
+import { QuizRepository } from '../../../driven-adapter/repository/quiz.repository';
+import { MockClass } from '../../mock';
+import {
+  createMockQuizEntity,
+  createMockQuizQuestionEntity,
+  createMockQuizQuestionRecord,
+  createMockQuizRecord,
+} from '../../mock/quiz.mock';
+
+jest.useFakeTimers();
 
 describe('QuizRepository', () => {
-  let repo: IQuizRepository;
-  let factory;
-  let quizModel;
-  let sequelizeConnection;
+  let _quizRepo: IQuizRepository;
+  let _libQuizRepo: MockClass<ILibQuizRepository>;
+  let _quizMapper: jest.Mocked<QuizMapper>;
+  let _quizQuestionMapper: jest.Mocked<QuizQuestionMapper>;
+
+  let mockQuizRecord: QuizAttributes;
+  let mockQuestionRecord: QuizQuestionAttributes;
+  let mockQuizEntity: QuizEntity;
+  let mockQuestionEntity: QuizQuestionEntity;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        QuizRepository,
-        {
-          provide: Sequelize,
-          useValue: createMock<Sequelize>(),
-        },
-        {
-          provide: getModelToken(QuizModel),
-          useValue: createMock<QuizModel>(),
-        },
-        {
-          provide: QUIZ_FACTORY_TOKEN,
-          useValue: createMock<QuizFactory>(),
-        },
-      ],
-    }).compile();
-    repo = module.get<IQuizRepository>(QuizRepository);
-    factory = module.get<IQuizFactory>(QUIZ_FACTORY_TOKEN);
-    quizModel = module.get<QuizModel>(getModelToken(QuizModel));
-    sequelizeConnection = module.get<Sequelize>(Sequelize);
-    sequelizeConnection.transaction.mockResolvedValue(transaction);
+    const { unit, unitRef } = TestBed.create(QuizRepository).compile();
+
+    _quizRepo = unit;
+    _libQuizRepo = unitRef.get(LIB_QUIZ_REPOSITORY_TOKEN);
+    _quizMapper = unitRef.get(QuizMapper);
+    _quizQuestionMapper = unitRef.get(QuizQuestionMapper);
+
+    mockQuizRecord = createMockQuizRecord();
+    mockQuestionRecord = createMockQuizQuestionRecord();
+    mockQuizEntity = createMockQuizEntity(mockQuizRecord);
+    mockQuestionEntity = createMockQuizQuestionEntity(mockQuestionRecord);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('create', () => {
+  describe('createQuiz', () => {
     it('Should create quiz successfully', async () => {
-      const spyOnModelCreate = jest.spyOn(quizModel, 'create').mockResolvedValue(quizEntityMock);
+      _quizMapper.toPersistence.mockReturnValue(mockQuizRecord);
 
-      await repo.create(quizEntityMock);
-      expect(spyOnModelCreate).toBeCalledTimes(1);
-      expect(spyOnModelCreate).toBeCalledWith({
-        id: quizEntityMock.get('id'),
-        title: quizEntityMock.get('title'),
-        contentId: quizEntityMock.get('contentId'),
-        description: quizEntityMock.get('description'),
-        numberOfQuestions: quizEntityMock.get('numberOfQuestions'),
-        numberOfAnswers: quizEntityMock.get('numberOfAnswers'),
-        numberOfQuestionsDisplay: quizEntityMock.get('numberOfQuestionsDisplay'),
-        status: quizEntityMock.get('status'),
-        genStatus: quizEntityMock.get('genStatus'),
-        error: quizEntityMock.get('error'),
-        isRandom: quizEntityMock.get('isRandom'),
-        questions: quizEntityMock.get('questions'),
-        createdBy: quizEntityMock.get('createdBy'),
-        updatedBy: quizEntityMock.get('updatedBy'),
-        createdAt: quizEntityMock.get('createdAt'),
-        updatedAt: quizEntityMock.get('updatedAt'),
-        meta: quizEntityMock.get('meta'),
-      });
+      await _quizRepo.createQuiz(mockQuizEntity);
+
+      expect(_quizMapper.toPersistence).toBeCalledWith(mockQuizEntity);
+      expect(_libQuizRepo.createQuiz).toBeCalledWith(mockQuizRecord);
     });
   });
 
-  describe('update', () => {
+  describe('updateQuiz', () => {
     it('Should update quiz successfully', async () => {
-      const spyOnModelUpdate = jest.spyOn(quizModel, 'update').mockResolvedValue(quizEntityMock);
+      _quizMapper.toPersistence.mockReturnValue(mockQuizRecord);
 
-      await repo.update(quizEntityMock);
-      expect(spyOnModelUpdate).toBeCalledTimes(1);
-      expect(spyOnModelUpdate).toBeCalledWith(
-        {
-          title: quizEntityMock.get('title'),
-          description: quizEntityMock.get('description'),
-          numberOfQuestions: quizEntityMock.get('numberOfQuestions'),
-          numberOfAnswers: quizEntityMock.get('numberOfAnswers'),
-          numberOfQuestionsDisplay: quizEntityMock.get('numberOfQuestionsDisplay'),
-          status: quizEntityMock.get('status'),
-          error: quizEntityMock.get('error'),
-          genStatus: quizEntityMock.get('genStatus'),
-          isRandom: quizEntityMock.get('isRandom'),
-          questions: quizEntityMock.get('questions'),
-          updatedBy: quizEntityMock.get('updatedBy'),
-          updatedAt: quizEntityMock.get('updatedAt'),
-          meta: quizEntityMock.get('meta'),
-        },
-        { where: { id: quizEntityMock.get('id') } }
-      );
+      await _quizRepo.updateQuiz(mockQuizEntity);
+
+      expect(_quizMapper.toPersistence).toBeCalledWith(mockQuizEntity);
+      expect(_libQuizRepo.updateQuiz).toBeCalledWith(mockQuizRecord.id, mockQuizRecord);
     });
   });
 
-  describe('delete', () => {
+  describe('deleteQuiz', () => {
     it('Should delete quiz successfully', async () => {
-      const spyOnModelDelete = jest.spyOn(quizModel, 'destroy').mockResolvedValue(quizEntityMock);
-
-      await repo.delete(quizEntityMock.get('id'));
-      expect(spyOnModelDelete).toBeCalledTimes(1);
-      expect(spyOnModelDelete).toBeCalledWith({ where: { id: quizEntityMock.get('id') } });
+      const mockQuizId = v4();
+      await _quizRepo.deleteQuiz(mockQuizId);
+      expect(_libQuizRepo.deleteQuiz).toBeCalledWith({ id: mockQuizId });
     });
   });
 
-  describe('find quiz', () => {
-    it('Should findOne quiz successfully', async () => {
-      const findOneOptions: FindOneQuizProps = {
-        where: { id: quizEntityMock.get('id') },
-        attributes: ['id'],
-      };
+  describe('findQuizById', () => {
+    it('Should find quiz successfully', async () => {
+      const mockQuizId = mockQuizRecord.id;
 
-      const spyOnModelFindOne = jest.spyOn(quizModel, 'findOne').mockResolvedValue({
-        toJSON: () => quizRecordMock,
-      });
-      jest.spyOn(factory, 'reconstitute').mockReturnValue(quizEntityMock);
+      _libQuizRepo.findQuiz.mockResolvedValue(mockQuizRecord as QuizModel);
+      _quizMapper.toDomain.mockReturnValue(mockQuizEntity);
 
-      const result = await repo.findOne(findOneOptions);
+      const quiz = await _quizRepo.findQuizById(mockQuizId);
 
-      expect(spyOnModelFindOne).toBeCalledWith(findOneOptions);
-
-      expect(result).toEqual(quizEntityMock);
+      expect(_libQuizRepo.findQuiz).toBeCalledWith({ condition: { ids: [mockQuizId] } });
+      expect(_quizMapper.toDomain).toBeCalledWith(mockQuizRecord);
+      expect(quiz).toEqual(mockQuizEntity);
     });
 
     it('should return null if quiz not found', async () => {
-      const findOneOptions: FindOneQuizProps = {
-        where: { id: quizEntityMock.get('id') },
-        attributes: ['id'],
-      };
+      const mockQuizId = mockQuizRecord.id;
 
-      const spyOnModelFindOne = jest.spyOn(quizModel, 'findOne').mockResolvedValue(null);
+      _libQuizRepo.findQuiz.mockResolvedValue(null);
+      _quizMapper.toDomain.mockReturnValue(null);
 
-      const result = await repo.findOne(findOneOptions);
+      const quiz = await _quizRepo.findQuizById(mockQuizId);
 
-      expect(spyOnModelFindOne).toBeCalledWith(findOneOptions);
-      expect(result).toBeNull();
-    });
-
-    it('should find all quiz successfully', async () => {
-      const findAllOptions: FindAllQuizProps = {
-        where: {
-          ids: [quizEntityMock.get('id')],
-          status: quizEntityMock.get('status'),
-          contentIds: [quizEntityMock.get('contentId')],
-        },
-        attributes: ['id'],
-      };
-      const spyOnModelFindAll = jest.spyOn(quizModel, 'findAll').mockResolvedValue([
-        {
-          toJSON: () => quizRecordMock,
-        },
-      ]);
-      jest.spyOn(factory, 'reconstitute').mockReturnValue(new QuizEntity(quizRecordMock));
-
-      const result = await repo.findAll(findAllOptions);
-
-      expect(spyOnModelFindAll).toBeCalledTimes(1);
-      expect(spyOnModelFindAll).toBeCalledWith({
-        where: {
-          id: [quizEntityMock.get('id')],
-          status: quizEntityMock.get('status'),
-          contentId: [quizEntityMock.get('contentId')],
-        },
-        attributes: ['id'],
-      });
-      expect(result).toEqual([new QuizEntity(quizRecordMock)]);
+      expect(_libQuizRepo.findQuiz).toBeCalledWith({ condition: { ids: [mockQuizId] } });
+      expect(_quizMapper.toDomain).toBeCalledWith(null);
+      expect(quiz).toBeNull();
     });
   });
 
-  it('should find all quiz successfully with contentId', async () => {
-    const findAllOptions: FindAllQuizProps = {
-      where: {
-        ids: [quizEntityMock.get('id')],
-        status: quizEntityMock.get('status'),
-        contentId: quizEntityMock.get('contentId'),
-      },
-      attributes: ['id'],
-    };
-    const spyOnModelFindAll = jest.spyOn(quizModel, 'findAll').mockResolvedValue([
-      {
-        toJSON: () => quizRecordMock,
-      },
-    ]);
-    jest.spyOn(factory, 'reconstitute').mockReturnValue(new QuizEntity(quizRecordMock));
+  describe('findQuizByIdWithQuestions', () => {
+    it('Should find quiz with questions successfully', async () => {
+      const mockQuizId = mockQuizRecord.id;
 
-    const result = await repo.findAll(findAllOptions);
+      _libQuizRepo.findQuiz.mockResolvedValue(mockQuizRecord as QuizModel);
+      _quizMapper.toDomain.mockReturnValue(mockQuizEntity);
 
-    expect(spyOnModelFindAll).toBeCalledTimes(1);
-    expect(spyOnModelFindAll).toBeCalledWith({
-      where: {
-        id: [quizEntityMock.get('id')],
-        status: quizEntityMock.get('status'),
-        contentId: quizEntityMock.get('contentId'),
-      },
-      attributes: ['id'],
+      const quiz = await _quizRepo.findQuizByIdWithQuestions(mockQuizId);
+
+      expect(_libQuizRepo.findQuiz).toBeCalledWith({
+        condition: { ids: [mockQuizId] },
+        include: { shouldIncludeQuestions: true },
+      });
+      expect(_quizMapper.toDomain).toBeCalledWith(mockQuizRecord);
+      expect(quiz).toEqual(mockQuizEntity);
+      expect(quiz.get('questions')).not.toBeNull();
     });
-    expect(result).toEqual([new QuizEntity(quizRecordMock)]);
+  });
+
+  describe('findAllQuizzes', () => {
+    it('Should find all quizzes successfully', async () => {
+      const mockQuizRecords = [createMockQuizRecord(), createMockQuizRecord()];
+      const mockQuizEntities = mockQuizRecords.map((record) => createMockQuizEntity(record));
+
+      _libQuizRepo.findAllQuizzes.mockResolvedValue(mockQuizRecords as QuizModel[]);
+      _quizMapper.toDomain.mockReturnValueOnce(mockQuizEntities[0]);
+      _quizMapper.toDomain.mockReturnValueOnce(mockQuizEntities[1]);
+
+      const quizzes = await _quizRepo.findAllQuizzes({ where: { status: QUIZ_STATUS.PUBLISHED } });
+
+      expect(_libQuizRepo.findAllQuizzes).toBeCalledWith({
+        condition: { status: QUIZ_STATUS.PUBLISHED },
+      });
+      expect(_quizMapper.toDomain).toBeCalledTimes(2);
+      expect(quizzes).toEqual(mockQuizEntities);
+    });
   });
 
   describe('getPagination', () => {
     it('should return a CursorPaginationResult object', async () => {
       const getPaginationQuizzesProps: GetPaginationQuizzesProps = {
-        where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
-        contentType: PostType.POST,
-        attributes: ['id', 'postId', 'createdAt'],
-        limit: 10,
-        order: OrderEnum.DESC,
-      };
-      const findOptions: FindOptions<IQuiz> = {
-        where: getPaginationQuizzesProps.where,
-        attributes: getPaginationQuizzesProps.attributes,
-        include: [
-          {
-            model: PostModel,
-            attributes: ['id'],
-            as: 'post',
-            required: true,
-            where: {
-              isHidden: false,
-              type: PostType.POST,
-            },
-          },
-        ],
-      };
-
-      jest.spyOn(factory, 'reconstitute').mockReturnValue(quizEntityMock);
-      jest.spyOn(quizModel, 'findAll').mockResolvedValue([
-        {
-          toJSON: () => quizRecordMock,
+        where: {
+          status: mockQuizRecord.status,
+          createdBy: mockQuizRecord.createdBy,
+          contentType: CONTENT_TYPE.POST,
         },
-      ]);
+        attributes: ['id', 'createdAt'],
+        limit: 10,
+        order: ORDER.DESC,
+      };
 
-      const paginator = new CursorPaginator(
-        quizModel,
-        ['createdAt'],
-        { limit: getPaginationQuizzesProps.limit },
-        getPaginationQuizzesProps.order
-      );
-      const { rows, meta } = await paginator.paginate(findOptions);
+      _libQuizRepo.getQuizzesPagination.mockResolvedValue({
+        rows: [mockQuizRecord] as QuizModel[],
+        meta: { hasNextPage: false, hasPreviousPage: false },
+      });
+      _quizMapper.toDomain.mockReturnValue(mockQuizEntity);
 
-      const result = await repo.getPagination(getPaginationQuizzesProps);
+      const result = await _quizRepo.getPagination(getPaginationQuizzesProps);
 
-      expect(result.rows).toEqual(rows.map((row) => new QuizEntity(row.toJSON())));
-      expect(result.meta).toEqual(meta);
+      expect(_libQuizRepo.getQuizzesPagination).toBeCalledWith({
+        condition: { status: mockQuizRecord.status, createdBy: mockQuizRecord.createdBy },
+        include: {
+          shouldIncludeContent: {
+            contentType: CONTENT_TYPE.POST,
+          },
+        },
+        limit: 10,
+        order: ORDER.DESC,
+      });
+      expect(_quizMapper.toDomain).toBeCalledWith(mockQuizRecord);
+      expect(result).toEqual({
+        rows: [mockQuizEntity],
+        meta: { hasNextPage: false, hasPreviousPage: false },
+      });
+    });
+  });
+
+  describe('createQuestion', () => {
+    it('Should create quiz question successfully', async () => {
+      _quizQuestionMapper.toPersistence.mockReturnValue(mockQuestionRecord);
+
+      await _quizRepo.createQuestion(mockQuestionEntity);
+
+      expect(_quizQuestionMapper.toPersistence).toBeCalledWith(mockQuestionEntity);
+      expect(_libQuizRepo.bulkCreateQuizQuestions).toBeCalledWith([mockQuestionRecord]);
+    });
+  });
+
+  describe('deleteQuestion', () => {
+    it('Should delete quiz question successfully', async () => {
+      const mockQuestionId = v4();
+      await _quizRepo.deleteQuestion(mockQuestionId);
+      expect(_libQuizRepo.deleteQuizQuestion).toBeCalledWith({ id: mockQuestionId });
+    });
+  });
+
+  describe('updateQuestion', () => {
+    it('Should update quiz question successfully', async () => {
+      await _quizRepo.updateQuestion(mockQuestionEntity);
+
+      expect(_libQuizRepo.updateQuizQuestion).toBeCalledWith(mockQuestionRecord.id, {
+        content: mockQuestionRecord.content,
+      });
+    });
+  });
+
+  describe('findQuestionById', () => {
+    it('Should find quiz question successfully', async () => {
+      const mockQuestionId = mockQuestionRecord.id;
+
+      _libQuizRepo.findQuizQuestion.mockResolvedValue(mockQuestionRecord as QuizQuestionModel);
+      _quizQuestionMapper.toDomain.mockReturnValue(mockQuestionEntity);
+
+      const question = await _quizRepo.findQuestionById(mockQuestionId);
+
+      expect(_libQuizRepo.findQuizQuestion).toBeCalledWith({
+        condition: { ids: [mockQuestionId] },
+        include: { shouldIncludeAnswers: true },
+      });
+      expect(_quizQuestionMapper.toDomain).toBeCalledWith(mockQuestionRecord);
+      expect(question).toEqual(mockQuestionEntity);
     });
 
-    it('should limit to be default if not provided', async () => {
-      const props = {
-        where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
-        contentType: PostType.POST,
-        attributes: ['id', 'contentId', 'createdAt'],
-        order: OrderEnum.DESC,
-      };
-      jest.spyOn(quizModel, 'findAll').mockResolvedValue([
-        {
-          toJSON: () => quizRecordMock,
-        },
-      ]);
-      const result = await repo.getPagination(props as GetPaginationQuizzesProps);
+    it('should return null if quiz question not found', async () => {
+      const mockQuestionId = mockQuestionRecord.id;
 
-      expect(quizModel.findAll).toBeCalledWith({
-        where: { status: quizRecordMock.status, createdBy: quizRecordMock.createdBy },
-        attributes: props.attributes,
-        include: [
-          {
-            model: PostModel,
-            attributes: ['id'],
-            as: 'post',
-            required: true,
-            where: {
-              isHidden: false,
-              type: PostType.POST,
-            },
-          },
-        ],
-        order: [['createdAt', 'DESC']],
-        limit: 11,
+      _libQuizRepo.findQuizQuestion.mockResolvedValue(null);
+      _quizQuestionMapper.toDomain.mockReturnValue(null);
+
+      const question = await _quizRepo.findQuestionById(mockQuestionId);
+
+      expect(_libQuizRepo.findQuizQuestion).toBeCalledWith({
+        condition: { ids: [mockQuestionId] },
+        include: { shouldIncludeAnswers: true },
       });
+      expect(_quizQuestionMapper.toDomain).toBeCalledWith(null);
+      expect(question).toBeNull();
+    });
+  });
+
+  describe('createAnswers', () => {
+    it('Should create quiz answer successfully', async () => {
+      const mockAnswers = mockQuestionRecord.answers.map((answer, index) => ({
+        ...answer,
+        updatedAt: new Date(
+          answer.createdAt.setMilliseconds(answer.createdAt.getMilliseconds() + index)
+        ),
+      }));
+
+      await _quizRepo.createAnswers(mockQuestionEntity);
+
+      expect(_libQuizRepo.bulkCreateQuizAnswers).toBeCalledWith(mockAnswers);
+    });
+  });
+
+  describe('deleteAnswersByQuestionId', () => {
+    it('Should delete quiz answer successfully', async () => {
+      const mockQuestionId = v4();
+      await _quizRepo.deleteAnswersByQuestionId(mockQuestionId);
+      expect(_libQuizRepo.deleteQuizAnswer).toBeCalledWith({ questionId: mockQuestionId });
     });
   });
 });

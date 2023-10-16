@@ -1,9 +1,12 @@
-import { TimelineController } from '../../../driving-apdater/controller/timeline.controller';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
-import { userMock } from '../../mock/user.dto.mock';
+
+import { TimelineController } from '../../../driving-apdater/controller/timeline.controller';
 import { GetTimelineRequestDto } from '../../../driving-apdater/dto/request';
-import { timelineMock } from '../../mock/timeline.dto.mock';
+import { timelineMock } from '../../mock/timeline.mock';
+import { createMockUserDto } from '../../mock/user.mock';
+
+const userMock = createMockUserDto();
 
 describe('TimelineController', () => {
   let timelineController: TimelineController;

@@ -1,13 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
+import { RedisService } from '@libs/infra/redis';
 import { HttpService } from '@nestjs/axios';
+import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as rxjs from 'rxjs';
+
+import { GroupEntity, GroupProps } from '../../../domain/model/group';
 import { IGroupRepository } from '../../../domain/repositoty-interface/group.repository.interface';
 import { GroupRepository } from '../../../driven-adapter/repository/group.repository';
-import { RedisService } from '@app/redis';
-import * as rxjs from 'rxjs';
-import { GroupEntity, GroupProps } from '../../../domain/model/group';
 import { userMocked } from '../../mocks/group.mock';
-import { NotFoundException } from '@nestjs/common';
 
 describe('GroupRepository', () => {
   let repo: IGroupRepository;
