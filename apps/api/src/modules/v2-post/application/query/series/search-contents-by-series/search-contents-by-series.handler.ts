@@ -55,7 +55,7 @@ export class SearchContentsBySeriesHandler
       mustIncludeGroup: true,
     });
 
-    if (!seriesEntity) {
+    if (!seriesEntity || !seriesEntity.getGroupIds().length) {
       return new SearchContentsBySeriesDto([], {
         total: 0,
         hasNextPage: false,
@@ -63,13 +63,6 @@ export class SearchContentsBySeriesHandler
     }
 
     const groupIds = seriesEntity.getGroupIds();
-    if (!groupIds.length) {
-      return new SearchContentsBySeriesDto([], {
-        total: 0,
-        hasNextPage: false,
-      });
-    }
-
     const filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
 
     const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(authUser.id, {
