@@ -3,7 +3,7 @@ import { ICommand } from '@nestjs/cqrs';
 
 export type AddSeriesItemsCommandPayload = {
   authUser: UserDto;
-  itemIds: string[];
+  itemId: string;
   id: string;
 };
 

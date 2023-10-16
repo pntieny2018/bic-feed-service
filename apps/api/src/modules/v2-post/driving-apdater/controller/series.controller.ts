@@ -45,6 +45,7 @@ import {
 } from '../../application/query/series';
 import {
   ChangeItemsInSeriesRequestDto,
+  ReorderItemsInSeriesRequestDto,
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,
   SearchContentsBySeriesRequestDto,
@@ -95,7 +96,7 @@ export class SeriesController {
   public async reorder(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
-    @Body() reorderItemsDto: ChangeItemsInSeriesRequestDto
+    @Body() reorderItemsDto: ReorderItemsInSeriesRequestDto
   ): Promise<boolean> {
     return this._commandBus.execute(
       new ReorderSeriesItemsCommand({ authUser, ...reorderItemsDto, id })

@@ -239,6 +239,20 @@ export class SearchContentsBySeriesRequestDto extends PaginatedArgs {
 
 export class ChangeItemsInSeriesRequestDto {
   @ApiProperty({
+    type: String,
+    name: 'item_id',
+    example: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
+  })
+  @IsNotEmpty()
+  @IsUUID('4')
+  @Expose({
+    name: 'item_id',
+  })
+  public itemId: string;
+}
+
+export class ReorderItemsInSeriesRequestDto {
+  @ApiProperty({
     type: [String],
     name: 'item_ids',
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8'],

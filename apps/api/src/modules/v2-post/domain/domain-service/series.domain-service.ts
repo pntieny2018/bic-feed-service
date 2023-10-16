@@ -9,6 +9,8 @@ import {
   SeriesUpdatedEvent,
   SeriesDeletedEvent,
   SeriesItemsReoderedEvent,
+  SeriesItemsAddedEvent,
+  SeriesItemsRemovedEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -264,7 +266,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   }
 
   public async addSeriesItems(input: AddSeriesItemsProps): Promise<void> {
-    const { id, authUser, itemIds } = input;
+    const { id, authUser, itemId } = input;
 
     const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
@@ -285,36 +287,36 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.get('type')
     );
 
-    const contents = (await this._contentRepository.findAll({
-      where: {
-        ids: itemIds,
-        groupArchived: false,
-      },
-      include: {
-        mustIncludeGroup: true,
-        shouldIncludeSeries: true,
-      },
-    })) as (ArticleEntity | PostEntity)[];
+    const content = (await this._contentRepository.findContentByIdInActiveGroup(itemId, {
+      mustIncludeGroup: true,
+      shouldIncludeSeries: true,
+    })) as ArticleEntity | PostEntity;
 
-    if (itemIds.length !== contents.length) {
+    if (!content) {
       throw new ContentNotFoundException();
     }
 
-    for (const content of contents) {
-      const isValid = content
-        .getGroupIds()
-        .some((groupId) => seriesEntity.getGroupIds().includes(groupId));
+    const isValid = content
+      .getGroupIds()
+      .some((groupId) => seriesEntity.getGroupIds().includes(groupId));
 
-      if (!isValid) {
-        throw new ContentNoCRUDPermissionException();
-      }
-
-      content.setSeriesIds(uniq([...content.getSeriesIds(), id]));
-      await this._contentValidator.validateLimitedToAttachSeries(content);
+    if (!isValid) {
+      throw new ContentNoCRUDPermissionException();
     }
 
+    content.setSeriesIds(uniq([...content.getSeriesIds(), id]));
+    await this._contentValidator.validateLimitedToAttachSeries(content);
+
     try {
-      await this._contentRepository.createPostsSeries(id, itemIds);
+      await this._contentRepository.createPostsSeries(id, [itemId]);
+      this.event.publish(
+        new SeriesItemsAddedEvent({
+          authUser,
+          seriesId: id,
+          item: content,
+          context: 'add',
+        })
+      );
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -322,7 +324,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   }
 
   public async removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void> {
-    const { id, authUser, itemIds } = input;
+    const { id, authUser, itemId } = input;
 
     const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
       mustIncludeGroup: true,
@@ -342,8 +344,24 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.get('type')
     );
 
+    const content = (await this._contentRepository.findContentByIdInActiveGroup(itemId, {
+      mustIncludeGroup: true,
+    })) as ArticleEntity | PostEntity;
+
+    if (!content) {
+      throw new ContentNotFoundException();
+    }
+
     try {
-      await this._contentRepository.deletePostsSeries(id, itemIds);
+      await this._contentRepository.deletePostsSeries(id, [itemId]);
+      this.event.publish(
+        new SeriesItemsRemovedEvent({
+          authUser,
+          seriesId: id,
+          item: content,
+          contentIsDeleted: false,
+        })
+      );
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

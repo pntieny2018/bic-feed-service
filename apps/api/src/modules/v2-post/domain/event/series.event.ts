@@ -7,7 +7,7 @@ export type SeriesItemsAddedPayload = {
   seriesId: string;
   item: PostEntity | ArticleEntity;
   skipNotify?: boolean;
-  context: 'publish' | 'add'; // publish: when publishd or edited content || add: when content is added into series
+  context: 'publish' | 'add'; // publish: when publish or edited content || add: when content is added into series
 };
 
 export interface SeriesItemsRemovedPayload {
