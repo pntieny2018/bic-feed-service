@@ -1,4 +1,5 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BooleanHelper } from 'apps/api/src/common/helpers';
 import { Expose, Transform, Type } from 'class-transformer';
@@ -13,8 +14,6 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
-
-import { PaginatedArgs } from '../../../../../common/dto';
 
 import { PublishArticleRequestDto } from './article.request.dto';
 
@@ -37,7 +36,7 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
   public type?: CONTENT_TYPE;
 }
 
-export class SearchContentsRequestDto {
+export class SearchContentsRequestDto extends PaginatedArgs {
   @ApiPropertyOptional({ description: 'List of creator' })
   @IsOptional()
   @IsNotEmpty()

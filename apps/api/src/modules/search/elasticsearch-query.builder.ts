@@ -25,13 +25,17 @@ export class ElasticsearchQueryBuilder {
       excludeByIds,
       groupIds,
       isLimitSeries,
+      filterEmptyContent,
       shouldHighlight,
     } = query;
     const body: BodyES = {
       query: {
         bool: {
-          must: [],
-          must_not: [...this._getNotIncludeIds(excludeByIds)],
+          must: [...this._getContentNullFilter(filterEmptyContent)],
+          must_not: [
+            ...this._getContentEmptyStringFilter(filterEmptyContent),
+            ...this._getNotIncludeIds(excludeByIds),
+          ],
           filter: [
             ...this._getActorFilter(actors),
             ...this._getContentTypesFilter(contentTypes),
@@ -189,9 +193,9 @@ export class ElasticsearchQueryBuilder {
 
   private _getSort(textSearch: string): any {
     if (textSearch) {
-      return [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
+      return [{ ['_score']: 'desc' }, { publishedAt: 'desc' }];
     } else {
-      return [{ createdAt: 'desc' }];
+      return [{ publishedAt: 'desc' }];
     }
   }
 
@@ -266,6 +270,30 @@ export class ElasticsearchQueryBuilder {
           },
         },
       ];
+    }
+    return [];
+  }
+
+  private _getContentNullFilter(filterEmptyContent?: boolean): any {
+    const { content } = ELASTIC_POST_MAPPING_PATH;
+    if (filterEmptyContent) {
+      return Object.values(content).map((code) => ({
+        exists: {
+          field: code,
+        },
+      }));
+    }
+    return [];
+  }
+
+  private _getContentEmptyStringFilter(filterEmptyContent?: boolean): any {
+    const { content } = ELASTIC_POST_MAPPING_PATH;
+    if (filterEmptyContent) {
+      return Object.values(content).map((code) => ({
+        term: {
+          [code]: '',
+        },
+      }));
     }
     return [];
   }

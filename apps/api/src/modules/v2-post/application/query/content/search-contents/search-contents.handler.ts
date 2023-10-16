@@ -67,10 +67,10 @@ export class SearchContentsHandler
       }
     }
 
-    const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(
-      authUser.id,
-      contentTypes
-    );
+    const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(authUser.id, {
+      postTypes: contentTypes,
+      groupIds,
+    });
 
     const response = await this._postSearchService.searchContents<IPostElasticsearch>({
       keyword,
