@@ -76,6 +76,7 @@ import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/pos
 import {
   FindItemsBySeriesHandler,
   FindSeriesHandler,
+  SearchContentsBySeriesHandler,
   SearchSeriesHandler,
 } from '../application/query/series';
 import { SearchTagsHandler } from '../application/query/tag';
@@ -197,6 +198,7 @@ export const postProvider = [
   FindPinnedContentHandler,
   SearchSeriesHandler,
   GetContentAudienceHandler,
+  SearchContentsBySeriesHandler,
 
   /** Domain Service */
   {

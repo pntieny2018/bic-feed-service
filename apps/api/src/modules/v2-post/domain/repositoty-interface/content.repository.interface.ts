@@ -11,7 +11,7 @@ import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model
 export type GetReportContentIdsProps = {
   reportUser: string;
   target?: CONTENT_TARGET[];
-  groupId?: string;
+  groupIds?: string[];
 };
 
 export interface IContentRepository {

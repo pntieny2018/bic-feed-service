@@ -144,10 +144,10 @@ export class GroupService implements IGroupService {
     roles: ROLE_TYPE[]
   ): Promise<GetUserRoleInGroupsResult> {
     const defaultResult: GetUserRoleInGroupsResult = {
-      community_admins: {},
-      group_admins: {},
-      owners: {},
-      members: {},
+      communityAdmin: {},
+      groupAdmin: {},
+      owner: {},
+      member: {},
     };
     try {
       const response = await this._httpService.post(
@@ -157,10 +157,6 @@ export class GroupService implements IGroupService {
           roles,
         }
       );
-
-      if (response.status !== HttpStatus.OK) {
-        return defaultResult;
-      }
       return response.data['data'];
     } catch (ex) {
       this._logger.error(JSON.stringify(ex));
@@ -170,24 +166,23 @@ export class GroupService implements IGroupService {
 
   public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
     const adminRoleInclude = [ROLE_TYPE.COMMUNITY_ADMIN, ROLE_TYPE.GROUP_ADMIN, ROLE_TYPE.OWNER];
-    const data = await this.getUserRoleInGroups(groupIds, adminRoleInclude);
 
+    const data = await this.getUserRoleInGroups(groupIds, adminRoleInclude);
     const userIds = [];
 
     for (const groupId of groupIds) {
-      if (data.community_admins[groupId]) {
-        userIds.push(...data.community_admins[groupId]);
+      if (data.communityAdmin[groupId]) {
+        userIds.push(...data.communityAdmin[groupId]);
       }
 
-      if (data.group_admins[groupId]) {
-        userIds.push(...data.group_admins[groupId]);
+      if (data.groupAdmin[groupId]) {
+        userIds.push(...data.groupAdmin[groupId]);
       }
 
-      if (data.owners[groupId]) {
-        userIds.push(...data.owners[groupId]);
+      if (data.owner[groupId]) {
+        userIds.push(...data.owner[groupId]);
       }
     }
-
     return userIds.includes(userId);
   }
 }

@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 
-import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
+import { CACHE_KEYS } from '../../../../common/constants';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
 import { UserDto } from '../../../v2-user/application';

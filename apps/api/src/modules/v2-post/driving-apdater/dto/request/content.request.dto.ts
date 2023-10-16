@@ -1,4 +1,5 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BooleanHelper } from 'apps/api/src/common/helpers';
 import { Expose, Transform, Type } from 'class-transformer';
@@ -13,8 +14,6 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
-
-import { PaginatedArgs } from '../../../../../common/dto';
 
 import { PublishArticleRequestDto } from './article.request.dto';
 
@@ -37,7 +36,7 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
   public type?: CONTENT_TYPE;
 }
 
-export class SearchContentsRequestDto {
+export class SearchContentsRequestDto extends PaginatedArgs {
   @ApiPropertyOptional({ description: 'List of creator' })
   @IsOptional()
   @IsNotEmpty()
@@ -153,8 +152,12 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
     description: 'Filter by creator',
     type: Boolean,
   })
-  @IsOptional()
+  @IsNotEmpty()
   @Type(() => Boolean)
+  @ValidateIf((input) => input.groupId == undefined)
+  @Expose({
+    name: 'is_mine',
+  })
   public isMine?: boolean;
 
   @ApiProperty({
@@ -162,11 +165,12 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
     example: '40dc4093-1bd0-4105-869f-8504e1986145',
     name: 'group_id',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsUUID()
   @Expose({
     name: 'group_id',
   })
+  @ValidateIf((input) => input.isMine == undefined)
   public groupId?: string;
 }
 
