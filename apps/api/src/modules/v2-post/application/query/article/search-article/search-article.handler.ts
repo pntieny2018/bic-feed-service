@@ -1,8 +1,9 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { flatten } from 'lodash';
+import { flatten, uniq } from 'lodash';
 
 import { PageDto } from '../../../../../../common/dto';
 import { IPostElasticsearch } from '../../../../../search';
@@ -11,7 +12,12 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../../../../domain/service-adapter-interface';
 import { ImageDto, SearchArticleDto } from '../../../dto';
 
 import { SearchArticleQuery } from './search-article.query';
@@ -21,6 +27,8 @@ export class SearchArticleHandler
   implements IQueryHandler<SearchArticleQuery, PageDto<SearchArticleDto>>
 {
   public constructor(
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
@@ -86,6 +94,16 @@ export class SearchArticleHandler
       })
     );
 
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      uniq(source.map((item) => item.createdBy)),
+      authUser.id
+    );
+    const usersMapper = new Map<string, UserDto>(
+      users.map((user) => {
+        return [user.id, user];
+      })
+    );
+
     const series = source.map((item) => {
       return new SearchArticleDto({
         id: item.id,
@@ -101,7 +119,7 @@ export class SearchArticleHandler
             .map((groupId) => audienceMapper.get(groupId)),
         },
         type: item.type as unknown as CONTENT_TYPE,
-        // createdBy: item.createdBy,
+        actor: usersMapper.get(item.createdBy),
       });
     });
 
