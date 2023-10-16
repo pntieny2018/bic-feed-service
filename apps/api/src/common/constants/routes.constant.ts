@@ -1,12 +1,13 @@
 import { AppHelper } from '../helpers';
 
 import {
-  VERSION_1_10_0,
   VERSION_1_5_0,
   VERSION_1_6_0,
   VERSION_1_7_0,
   VERSION_1_8_0,
   VERSION_1_9_0,
+  VERSION_1_10_0,
+  VERSION_1_11_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -119,7 +120,7 @@ export const ROUTES = {
     },
     SEARCH_ARTICLE: {
       PATH: '/articles',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },
   QUIZ: {

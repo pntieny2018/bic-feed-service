@@ -11,19 +11,22 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { VERSIONS_SUPPORTED } from '../../common/constants';
+import { VERSIONS_SUPPORTED, VERSION_1_10_0 } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
+import { AppHelper } from '../../common/helpers';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { UserDto } from '../v2-user/application';
 
 import { ArticleAppService } from './application/article.app-service';
+import { SearchArticlesDto } from './dto/requests';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
+import { ArticleSearchResponseDto } from './dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 
 @ApiSecurity('authorization')
@@ -34,6 +37,19 @@ import { ArticleResponseDto } from './dto/responses/article.response.dto';
 })
 export class ArticleController {
   public constructor(private _articleAppService: ArticleAppService) {}
+
+  @ApiOperation({ summary: 'Search articles' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/')
+  @Version(AppHelper.getVersionsSupportedTo(VERSION_1_10_0))
+  public searchArticles(
+    @AuthUser() user: UserDto,
+    @Query() searchDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleSearchResponseDto>> {
+    return this._articleAppService.searchArticles(user, searchDto);
+  }
 
   @ApiOperation({ summary: 'Validate series and tags' })
   @ApiOkResponse({
