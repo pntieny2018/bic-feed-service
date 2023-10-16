@@ -13,6 +13,10 @@ import {
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
+import {
   GROUP_ADAPTER,
   IGroupAdapter,
   IUserAdapter,
@@ -32,6 +36,8 @@ export class SearchContentsBySeriesHandler
     private readonly _userAdapter: IUserAdapter,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService
   ) {}
@@ -45,7 +51,9 @@ export class SearchContentsBySeriesHandler
       after,
     } = query.payload;
 
-    const seriesEntity = await this._contentDomainService.getVisibleContent(seriesId, authUser.id);
+    const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
+      mustIncludeGroup: true,
+    });
     const groupIds = seriesEntity.getGroupIds();
 
     if (!seriesEntity || !groupIds.length) {
