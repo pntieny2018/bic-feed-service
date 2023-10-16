@@ -54,9 +54,16 @@ export class SearchContentsBySeriesHandler
     const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
       mustIncludeGroup: true,
     });
-    const groupIds = seriesEntity.getGroupIds();
 
-    if (!seriesEntity || !groupIds.length) {
+    if (!seriesEntity) {
+      return new SearchContentsBySeriesDto([], {
+        total: 0,
+        hasNextPage: false,
+      });
+    }
+
+    const groupIds = seriesEntity.getGroupIds();
+    if (!groupIds.length) {
       return new SearchContentsBySeriesDto([], {
         total: 0,
         hasNextPage: false,

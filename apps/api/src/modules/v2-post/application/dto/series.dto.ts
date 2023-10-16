@@ -5,7 +5,7 @@ import { UserDto } from '@libs/service/user';
 
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 
-import { ArticleDto, FileDto, ImageDto, PostDto, PostSettingDto, QuizDto, VideoDto } from '.';
+import { ArticleDto, ImageDto, MediaDto, PostDto, PostSettingDto, QuizDto } from '.';
 
 export class SeriesDto {
   public id: string;
@@ -113,11 +113,7 @@ export class ContentsInSeriesDto {
     groups: GroupDto[];
   };
   public coverMedia?: ImageDto;
-  public media?: {
-    files: FileDto[];
-    images: ImageDto[];
-    videos: VideoDto[];
-  };
+  public media?: MediaDto;
   public categories?: {
     id: string;
     name: string;
