@@ -1,4 +1,4 @@
-import { IFile, IImage, IVideo } from '@libs/database/postgres/model/comment.model';
+import { File, Image, Video } from '@libs/common/dtos';
 import { IHttpService, MEDIA_HTTP_TOKEN } from '@libs/infra/http';
 import { MEDIA_ENDPOINT } from '@libs/service/media/src/endpoint.constant';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -10,7 +10,7 @@ export class MediaService implements IMediaService {
   private _logger = new Logger(MediaService.name);
   public constructor(@Inject(MEDIA_HTTP_TOKEN) private readonly _httpService: IHttpService) {}
 
-  public async findFilesByIds(ids: string[]): Promise<IFile[]> {
+  public async findFilesByIds(ids: string[]): Promise<File[]> {
     try {
       if (ids.length === 0) {
         return [];
@@ -20,13 +20,14 @@ export class MediaService implements IMediaService {
 
       return response.data.data
         ? response.data.data.map(
-            (i: any): IFile => ({
+            (i: any): File => ({
               id: i.id,
               url: i.originUrl,
               name: i.properties.name,
               mimeType: i.properties.mimeType,
               size: i.properties.size,
               createdBy: i.userId,
+              status: i.status,
             })
           )
         : [];
@@ -36,7 +37,7 @@ export class MediaService implements IMediaService {
     }
   }
 
-  public async findImagesByIds(ids: string[]): Promise<IImage[]> {
+  public async findImagesByIds(ids: string[]): Promise<Image[]> {
     try {
       if (ids.length === 0) {
         return [];
@@ -45,7 +46,7 @@ export class MediaService implements IMediaService {
 
       return response.data.data
         ? response.data.data.map(
-            (i: any): IImage => ({
+            (i: any): Image => ({
               id: i.id,
               url: i.url,
               src: i.src,
@@ -64,7 +65,7 @@ export class MediaService implements IMediaService {
     }
   }
 
-  public async findVideosByIds(ids: string[]): Promise<IVideo[]> {
+  public async findVideosByIds(ids: string[]): Promise<Video[]> {
     try {
       if (ids.length === 0) {
         return [];
@@ -72,7 +73,7 @@ export class MediaService implements IMediaService {
       const response = await this._httpService.post(MEDIA_ENDPOINT.INTERNAL.GET_VIDEOS, ids);
 
       return response.data.data
-        ? response.data.data.map((i: any): IVideo => {
+        ? response.data.data.map((i: any): Video => {
             return {
               id: i.id,
               url: i.originUrl,
