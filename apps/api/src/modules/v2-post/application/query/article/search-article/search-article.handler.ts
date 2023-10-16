@@ -90,7 +90,7 @@ export class SearchArticleHandler
       return new SearchArticleDto({
         id: item.id,
         coverMedia: new ImageDto(item.coverMedia),
-        title: item.title || '',
+        title: item.title,
         summary: item.summary,
         categories: item.categories,
         media: item.media,
@@ -109,6 +109,7 @@ export class SearchArticleHandler
       total,
       limit,
       offset,
+      hasNextPage: limit + offset < total,
     });
   }
 }
