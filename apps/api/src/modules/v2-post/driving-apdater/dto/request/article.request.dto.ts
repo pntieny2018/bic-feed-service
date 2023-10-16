@@ -1,3 +1,4 @@
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
@@ -12,7 +13,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { PageOptionsDto } from '../../../../../common/dto';
 import { MediaDto, MediaItemDto } from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
@@ -91,7 +91,7 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
   }
 }
 
-export class SearchArticleRequestDto extends PageOptionsDto {
+export class SearchArticleRequestDto extends PaginatedArgs {
   @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
   @IsOptional()
   @IsString()
