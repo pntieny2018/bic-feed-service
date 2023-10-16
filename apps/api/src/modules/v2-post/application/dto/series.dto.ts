@@ -1,10 +1,11 @@
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 
-import { ArticleDto, ImageDto, PostDto, PostSettingDto, QuizDto } from '.';
+import { ArticleDto, FileDto, ImageDto, PostDto, PostSettingDto, QuizDto, VideoDto } from '.';
 
 export class SeriesDto {
   public id: string;
@@ -98,5 +99,37 @@ export class SearchSeriesDto {
 
   public constructor(data: Partial<SearchSeriesDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class ContentsInSeriesDto {
+  public id: string;
+  public title: string;
+  public content: string;
+  public summary: string;
+  public type: CONTENT_TYPE;
+  public actor: UserDto;
+  public audience: {
+    groups: GroupDto[];
+  };
+  public coverMedia?: ImageDto;
+  public media?: {
+    files: FileDto[];
+    images: ImageDto[];
+    videos: VideoDto[];
+  };
+  public categories?: {
+    id: string;
+    name: string;
+  }[];
+
+  public constructor(data: Partial<ContentsInSeriesDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class SearchContentsBySeriesDto extends PaginatedResponse<ContentsInSeriesDto> {
+  public constructor(list: ContentsInSeriesDto[], meta?: IPaginatedInfo) {
+    super(list, meta);
   }
 }

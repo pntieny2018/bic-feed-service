@@ -1,14 +1,11 @@
-import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
   IsDateString,
   IsInt,
   IsNotEmpty,
   IsOptional,
-  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
@@ -89,58 +86,4 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
     super(data);
     Object.assign(this, data);
   }
-}
-
-export class SearchArticleRequestDto extends PaginatedArgs {
-  @ApiPropertyOptional({
-    description: 'Filter by keyword',
-    required: false,
-    name: 'keyword',
-  })
-  @IsOptional()
-  @IsString()
-  @Expose({
-    name: 'keyword',
-  })
-  public keyword?: string;
-
-  @ApiProperty({
-    description: 'Group IDs',
-    required: false,
-    name: 'group_ids',
-  })
-  @Expose({
-    name: 'group_ids',
-  })
-  @IsArray()
-  @IsOptional()
-  @IsUUID('4', { each: true })
-  public groupIds?: string[];
-
-  @ApiProperty({
-    description: 'Category IDs',
-    required: false,
-    name: 'category_ids',
-  })
-  @Expose({
-    name: 'category_ids',
-  })
-  @IsArray()
-  @IsOptional()
-  @IsUUID('4', { each: true })
-  public categoryIds?: string[];
-
-  @ApiProperty({
-    type: Boolean,
-    required: false,
-    default: false,
-    name: 'is_limit_series',
-  })
-  @Expose({
-    name: 'is_limit_series',
-  })
-  @Transform(({ value }) => value == 'true')
-  @IsOptional()
-  @IsBoolean()
-  public isLimitSeries?: boolean;
 }

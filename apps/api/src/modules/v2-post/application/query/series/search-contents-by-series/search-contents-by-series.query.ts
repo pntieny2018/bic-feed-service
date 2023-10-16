@@ -5,19 +5,15 @@ import { UserDto } from '../../../../../v2-user/application';
 type Props = {
   authUser: UserDto;
 
+  seriesId: string;
+
   keyword?: string;
-
-  categoryIds?: string[];
-
-  groupIds?: string[];
-
-  isLimitSeries?: boolean;
 
   limit?: number;
 
   after?: string;
 };
 
-export class SearchArticleQuery implements IQuery {
+export class SearchContentsBySeriesQuery implements IQuery {
   public constructor(public readonly payload: Props) {}
 }

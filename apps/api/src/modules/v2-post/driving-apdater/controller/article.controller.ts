@@ -9,7 +9,6 @@ import {
   Patch,
   Post,
   Put,
-  Query,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -20,7 +19,6 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
-import { PageDto } from '../../../../common/dto';
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import {
   AutoSaveArticleCommand,
@@ -31,13 +29,12 @@ import {
   ScheduleArticleCommand,
   UpdateArticleCommand,
 } from '../../application/command/article';
-import { ArticleDto, CreateDraftPostDto, SearchArticleDto } from '../../application/dto';
-import { FindArticleQuery, SearchArticleQuery } from '../../application/query/article';
+import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
+import { FindArticleQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,
   ScheduleArticleRequestDto,
-  SearchArticleRequestDto,
 } from '../dto/request';
 
 @ApiTags('v2 Articles')
@@ -58,25 +55,6 @@ export class ArticleController {
   ): Promise<ArticleDto> {
     const data = await this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
     return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-  }
-
-  @ApiOperation({ summary: 'Search post/article to add into series' })
-  @ApiOkResponse({
-    type: PageDto<SearchArticleDto>,
-  })
-  @ResponseMessages({
-    success: 'Search post/article successfully',
-  })
-  @Version(ROUTES.ARTICLE.SEARCH_ARTICLE.VERSIONS)
-  @Get(ROUTES.ARTICLE.SEARCH_ARTICLE.PATH)
-  public async searchSeries(
-    @AuthUser() authUser: UserDto,
-    @Query() searchArticleRequestDto: SearchArticleRequestDto
-  ): Promise<PageDto<SearchArticleDto>> {
-    const data = await this._queryBus.execute(
-      new SearchArticleQuery({ authUser, ...searchArticleRequestDto })
-    );
-    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Create draft article' })

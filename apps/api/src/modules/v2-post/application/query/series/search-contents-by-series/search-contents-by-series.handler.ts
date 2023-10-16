@@ -1,5 +1,5 @@
 import { CONTENT_TYPE } from '@beincom/constants';
-import { PaginatedResponse, createCursor, parseCursor } from '@libs/database/postgres/common';
+import { createCursor, parseCursor } from '@libs/database/postgres/common';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
@@ -18,46 +18,44 @@ import {
   IUserAdapter,
   USER_ADAPTER,
 } from '../../../../domain/service-adapter-interface';
-import { ImageDto, SearchArticleDto } from '../../../dto';
+import { ContentsInSeriesDto, ImageDto, SearchContentsBySeriesDto } from '../../../dto';
 
-import { SearchArticleQuery } from './search-article.query';
+import { SearchContentsBySeriesQuery } from './search-contents-by-series.query';
 
-@QueryHandler(SearchArticleQuery)
-export class SearchArticleHandler
-  implements IQueryHandler<SearchArticleQuery, PaginatedResponse<SearchArticleDto>>
+@QueryHandler(SearchContentsBySeriesQuery)
+export class SearchContentsBySeriesHandler
+  implements IQueryHandler<SearchContentsBySeriesQuery, SearchContentsBySeriesDto>
 {
   public constructor(
+    private readonly _postSearchService: SearchService,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
-    private readonly _postSearchService: SearchService
+    private readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(query: SearchArticleQuery): Promise<PaginatedResponse<SearchArticleDto>> {
+  public async execute(query: SearchContentsBySeriesQuery): Promise<SearchContentsBySeriesDto> {
     const {
       authUser,
-      isLimitSeries,
-      groupIds,
+      seriesId,
       keyword,
-      categoryIds,
       limit = ELASTICSEARCH_DEFAULT_SIZE_PAGE,
       after,
     } = query.payload;
 
-    if (!groupIds && !categoryIds) {
-      return new PaginatedResponse<SearchArticleDto>([], {
+    const seriesEntity = await this._contentDomainService.getVisibleContent(seriesId, authUser.id);
+    const groupIds = seriesEntity.getGroupIds();
+
+    if (!seriesEntity || !groupIds.length) {
+      return new SearchContentsBySeriesDto([], {
         total: 0,
         hasNextPage: false,
       });
     }
 
-    let filterGroupIds = [];
-    if (groupIds && groupIds.length) {
-      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
-    }
+    const filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
 
     const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(authUser.id, {
       postTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
@@ -70,8 +68,7 @@ export class SearchArticleHandler
       contentTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
       groupIds: filterGroupIds,
       excludeByIds,
-      isLimitSeries,
-      topics: categoryIds,
+      isLimitSeries: true,
       size: limit,
       searchAfter: after ? parseCursor(after) : undefined,
     });
@@ -79,7 +76,7 @@ export class SearchArticleHandler
     const { source, total, cursor } = response;
 
     if (!source || !source.length) {
-      return new PaginatedResponse<SearchArticleDto>([], {
+      return new SearchContentsBySeriesDto([], {
         total: 0,
         hasNextPage: false,
       });
@@ -108,7 +105,7 @@ export class SearchArticleHandler
     );
 
     const series = source.map((item) => {
-      return new SearchArticleDto({
+      return new ContentsInSeriesDto({
         id: item.id,
         coverMedia: new ImageDto(item.coverMedia),
         title: item.title,
@@ -126,7 +123,7 @@ export class SearchArticleHandler
       });
     });
 
-    return new PaginatedResponse<SearchArticleDto>(series, {
+    return new SearchContentsBySeriesDto(series, {
       total,
       hasNextPage: limit <= source.length,
       endCursor: cursor ? createCursor(cursor) : '',

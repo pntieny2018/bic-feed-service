@@ -11,11 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { VERSIONS_SUPPORTED, VERSION_1_10_0 } from '../../common/constants';
+import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
-import { AppHelper } from '../../common/helpers';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { UserDto } from '../v2-user/application';
@@ -43,7 +42,6 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/')
-  @Version(AppHelper.getVersionsSupportedTo(VERSION_1_10_0))
   public searchArticles(
     @AuthUser() user: UserDto,
     @Query() searchDto: SearchArticlesDto

@@ -7,7 +7,6 @@ import {
   VERSION_1_8_0,
   VERSION_1_9_0,
   VERSION_1_10_0,
-  VERSION_1_11_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -56,6 +55,10 @@ export const ROUTES = {
     },
     SEARCH_SERIES: {
       PATH: '/series',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    SEARCH_CONTENTS_BY_SERIES: {
+      PATH: '/series/:seriesId/content',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
@@ -117,10 +120,6 @@ export const ROUTES = {
     DELETE: {
       PATH: '/articles/:articleId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
-    },
-    SEARCH_ARTICLE: {
-      PATH: '/articles',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },
   QUIZ: {
