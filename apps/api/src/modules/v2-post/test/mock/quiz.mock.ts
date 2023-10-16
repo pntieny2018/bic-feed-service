@@ -118,7 +118,10 @@ export function createMockQuizQuestionEntity(
   data: Partial<QuizQuestionAttributes> = {}
 ): QuizQuestionEntity {
   const question = createMockQuizQuestionRecord(data);
-  return new QuizQuestionEntity(question);
+  return new QuizQuestionEntity({
+    ...question,
+    answers: question.answers.map(({ questionId, ...answer }) => answer),
+  });
 }
 
 export function createMockQuizParticipantEntity(
