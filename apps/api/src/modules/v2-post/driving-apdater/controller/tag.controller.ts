@@ -123,8 +123,8 @@ export class TagController {
   @ResponseMessages({ success: 'message.tag.deleted_success' })
   public async delete(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('tagId', ParseUUIDPipe) tagId: string
   ): Promise<void> {
-    await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
+    await this._commandBus.execute(new DeleteTagCommand({ id: tagId, actor: user }));
   }
 }
