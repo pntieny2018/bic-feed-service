@@ -51,6 +51,7 @@ export type OrderOptions = {
   isSavedDateByDesc?: boolean;
   sortColumn?: keyof PostAttributes;
   orderBy?: ORDER;
+  createdAtDesc?: boolean;
 };
 
 export type FindContentProps = {

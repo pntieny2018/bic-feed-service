@@ -133,16 +133,17 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       order.push([this._sequelizeConnection.literal('"isReadImportant"'), ORDER.DESC]);
     }
     if (orderOptions.isPublishedByDesc) {
-      // order.push(['publishedAt', ORDER.DESC]);
+      order.push(['publishedAt', ORDER.DESC]);
     }
     if (orderOptions.sortColumn && orderOptions.orderBy) {
       order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
-
     if (orderOptions.isSavedDateByDesc) {
-      order.push(['userSavePosts', `created_at`, ORDER.DESC]);
+      order.push(['userSavePosts', 'createdAt', ORDER.DESC]);
     }
-    //order.push(['createdAt', ORDER.DESC]);
+    if (orderOptions.createdAtDesc) {
+      order.push(['createdAt', ORDER.DESC]);
+    }
     return order;
   }
 

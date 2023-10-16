@@ -49,6 +49,13 @@ export type GetImportantContentIdsProps = {
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
 
+export type GetPostsSaved = {
+  authUserId: string;
+  isOnNewsfeed?: boolean;
+  groupIds?: string[];
+  type?: CONTENT_TYPE;
+} & CursorPaginationProps;
+
 export class GetContentIdsScheduleProps extends PaginatedArgs {
   public order: ORDER;
   public userId: string;
