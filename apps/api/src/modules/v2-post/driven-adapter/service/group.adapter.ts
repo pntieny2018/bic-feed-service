@@ -1,3 +1,4 @@
+import { PRIVACY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import {
   GROUP_SERVICE_TOKEN,
@@ -5,6 +6,8 @@ import {
 } from '@libs/service/group/src/group.service.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
+import { ArrayHelper } from '../../../../common/helpers';
+import { GroupNotFoundException } from '../../domain/exception';
 import { IGroupAdapter } from '../../domain/service-adapter-interface';
 
 @Injectable()
@@ -14,7 +17,41 @@ export class GroupAdapter implements IGroupAdapter {
     private readonly _groupService: IGroupService
   ) {}
 
+  public async getGroupById(groupId: string): Promise<GroupDto> {
+    const group = await this._groupService.findById(groupId);
+    if (!group) {
+      throw new GroupNotFoundException();
+    }
+    return group;
+  }
+
   public async getGroupsByIds(groupIds: string[]): Promise<GroupDto[]> {
     return this._groupService.findAllByIds(groupIds);
+  }
+
+  public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
+    return this._groupService.isAdminInAnyGroups(userId, groupIds);
+  }
+
+  public getGroupIdsAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[] {
+    const childGroupIds = [
+      ...group.child.open,
+      ...group.child.closed,
+      ...group.child.private,
+      ...group.child.secret,
+    ];
+    const groupAndChildIdsUserJoined = [group.id, ...childGroupIds].filter((groupId) =>
+      groupIdsUserJoined.includes(groupId)
+    );
+
+    if (group.privacy === PRIVACY.OPEN) {
+      groupAndChildIdsUserJoined.push(group.id);
+    }
+
+    const hasJoinedCommunity = groupIdsUserJoined.includes(group.rootGroupId);
+    if (group.privacy === PRIVACY.CLOSED && hasJoinedCommunity) {
+      groupAndChildIdsUserJoined.push(group.id);
+    }
+    return ArrayHelper.arrayUnique(groupAndChildIdsUserJoined);
   }
 }

@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { PostGroupAttributes } from '@libs/database/postgres/model';
 import { PostAttributes } from '@libs/database/postgres/model/post.model';
 import { v4 } from 'uuid';
 
@@ -355,4 +356,19 @@ export function createMockSeriesEntity(data: Partial<PostAttributes> = {}): Seri
     createdAt: series.createdAt,
     updatedAt: series.updatedAt,
   });
+}
+
+export function createMockPostGroupRecord(
+  data: Partial<PostGroupAttributes> = {}
+): PostGroupAttributes {
+  return {
+    postId: v4(),
+    groupId: v4(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isArchived: false,
+    isPinned: false,
+    pinnedIndex: 0,
+    ...data,
+  };
 }

@@ -51,7 +51,8 @@ export type GetImportantContentIdsProps = {
 
 export class GetContentIdsScheduleProps extends PaginatedArgs {
   public order: ORDER;
-  public user: UserDto;
+  public userId: string;
+  public groupId?: string;
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
 }
 
@@ -93,7 +94,7 @@ export interface IContentDomainService {
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
@@ -109,5 +110,6 @@ export interface IContentDomainService {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   updatePinnedContent(props: PinContentProps): Promise<void>;
   getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
+  saveContent(contentId: string, authUser: UserDto): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

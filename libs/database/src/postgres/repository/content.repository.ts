@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { FindOptions, Include } from '@libs/database/postgres';
 import {
   CursorPaginationProps,
   CursorPaginationResult,
@@ -18,15 +19,14 @@ import { ReportContentDetailModel } from '@libs/database/postgres/model/report-c
 import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.model';
 import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
-import { InjectConnection } from '@nestjs/sequelize';
-import { isBoolean } from 'lodash';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
 import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 import {
   FindContentProps,
   OrderOptions,
 } from '@libs/database/postgres/repository/interface/content.repository.interface';
-import { FindOptions, Include } from '@libs/database/postgres';
+import { InjectConnection } from '@nestjs/sequelize';
+import { isBoolean } from 'lodash';
+import { Op, Sequelize, WhereOptions } from 'sequelize';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {

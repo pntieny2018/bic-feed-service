@@ -1,5 +1,6 @@
-import { Inject, Logger } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { Inject } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
 
 import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { QuizGeneratedEvent } from '../../../domain/event';
@@ -11,9 +12,8 @@ import {
   QUIZ_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 
-@EventsHandler(QuizGeneratedEvent)
+@EventsHandlerAndLog(QuizGeneratedEvent)
 export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEvent> {
-  private readonly _logger = new Logger(QuizGeneratedEventHandler.name);
   public constructor(
     @Inject(QUIZ_REPOSITORY_TOKEN)
     private readonly _quizRepository: IQuizRepository,
@@ -24,16 +24,15 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
   ) {}
 
   public async handle(event: QuizGeneratedEvent): Promise<void> {
-    this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
-    const { quizId } = event;
+    const { quizId } = event.payload;
     const quizEntity = await this._quizRepository.findQuizById(quizId);
     if (!quizEntity) {
       return;
     }
 
-    const contentEntity = await this._contentRepository.findOne({
-      where: { id: quizEntity.get('contentId') },
-    });
+    const contentEntity = await this._contentRepository.findContentById(
+      quizEntity.get('contentId')
+    );
 
     if (!contentEntity) {
       return;

@@ -1,24 +1,19 @@
-import { IQueueService, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
-import { Inject, Logger } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { Inject } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
 
 import { QuizRegenerateEvent } from '../../../domain/event';
+import { IQueueAdapter, QUEUE_ADAPTER } from '../../../domain/infra-adapter-interface';
 
-import { QuizGeneratedEventHandler } from './quiz-generated.event-handler';
-
-@EventsHandler(QuizRegenerateEvent)
+@EventsHandlerAndLog(QuizRegenerateEvent)
 export class QuizRegenerateEventHandler implements IEventHandler<QuizRegenerateEvent> {
-  private readonly _logger = new Logger(QuizGeneratedEventHandler.name);
   public constructor(
-    @Inject(QUEUE_SERVICE_TOKEN)
-    private readonly _queueService: IQueueService
+    @Inject(QUEUE_ADAPTER)
+    private readonly _queueAdapter: IQueueAdapter
   ) {}
 
   public async handle(event: QuizRegenerateEvent): Promise<void> {
-    this._logger.log(`EventHandler: ${JSON.stringify(event)}`);
-    const { quizId } = event;
-    await this._queueService.addQuizJob({
-      quizId,
-    });
+    const { quizId } = event.payload;
+    await this._queueAdapter.addQuizGenerateJob(quizId);
   }
 }

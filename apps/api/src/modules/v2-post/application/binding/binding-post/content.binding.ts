@@ -132,6 +132,7 @@ export class ContentBinding implements IContentBinding {
         ? dataBinding.series.map((series) => ({
             id: series.get('id'),
             title: series.get('title'),
+            createdBy: series.get('createdBy'),
           }))
         : undefined,
       quiz:
@@ -277,6 +278,7 @@ export class ContentBinding implements IContentBinding {
         ? series.map((series) => ({
             id: series.get('id'),
             title: series.get('title'),
+            createdBy: series.get('createdBy'),
           }))
         : undefined,
       quiz:
@@ -446,6 +448,9 @@ export class ContentBinding implements IContentBinding {
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
   ): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
+    if (!contentEntities.length) {
+      return [];
+    }
     const {
       users,
       groups,

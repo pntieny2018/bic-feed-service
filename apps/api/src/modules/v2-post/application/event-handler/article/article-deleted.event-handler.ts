@@ -1,16 +1,23 @@
-import { Inject } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { SentryService } from '@libs/infra/sentry';
+import { Inject, Logger } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { SeriesRemovedItemsEvent } from '../../../../../events/series';
 import { ArticleDeletedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { ArticleChangedMessagePayload } from '../../dto/message';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 
-@EventsHandler(ArticleDeletedEvent)
+@EventsHandlerAndLog(ArticleDeletedEvent)
 export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
+  private readonly _logger = new Logger(ArticleDeletedEventHandler.name);
+
   public constructor(
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepository: ITagRepository,
+    private readonly _sentryService: SentryService,
+    // TODO: call domain and using event bus
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   public async handle(event: ArticleDeletedEvent): Promise<void> {
@@ -19,30 +26,39 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
     if (!articleEntity.isPublished()) {
       return;
     }
-    const payload: ArticleChangedMessagePayload = {
-      state: 'delete',
-      before: {
-        id: articleEntity.get('id'),
-        actor,
-        type: articleEntity.get('type'),
-        setting: articleEntity.get('setting'),
-        groupIds: articleEntity.get('groupIds'),
-        seriesIds: articleEntity.get('seriesIds'),
-        title: articleEntity.get('title'),
-        summary: articleEntity.get('summary'),
-        content: articleEntity.get('content'),
-        lang: articleEntity.get('lang'),
-        isHidden: articleEntity.get('isHidden'),
-        status: articleEntity.get('status'),
-        createdAt: articleEntity.get('createdAt'),
-        updatedAt: articleEntity.get('updatedAt'),
-        publishedAt: articleEntity.get('publishedAt'),
-      },
-    };
 
-    return this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
-      key: articleEntity.getId(),
-      value: new ArticleChangedMessagePayload(payload),
-    });
+    const seriesIds = articleEntity.getSeriesIds() || [];
+    for (const seriesId of seriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesRemovedItemsEvent({
+          items: [
+            {
+              id: articleEntity.getId(),
+              title: articleEntity.getTitle(),
+              content: articleEntity.get('content'),
+              type: articleEntity.getType(),
+              createdBy: articleEntity.getCreatedBy(),
+              groupIds: articleEntity.getGroupIds(),
+              createdAt: articleEntity.get('createdAt'),
+              updatedAt: articleEntity.get('updatedAt'),
+            },
+          ],
+          seriesId: seriesId,
+          actor,
+          contentIsDeleted: true,
+        })
+      );
+    }
+
+    try {
+      const tagEntities = articleEntity.get('tags') || [];
+      for (const tag of tagEntities) {
+        tag.increaseTotalUsed();
+        await this._tagRepository.update(tag);
+      }
+    } catch (err) {
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
+    }
   }
 }

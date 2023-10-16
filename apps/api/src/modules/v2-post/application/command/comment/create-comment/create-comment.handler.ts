@@ -1,6 +1,6 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
@@ -33,6 +33,7 @@ import { CreateCommentCommand } from './create-comment.command';
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler implements ICommandHandler<CreateCommentCommand, CommentDto> {
   public constructor(
+    private readonly _event: EventBus,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
     @Inject(MENTION_VALIDATOR_TOKEN)

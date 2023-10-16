@@ -43,16 +43,18 @@ export interface IContentRepository {
 
   delete(id: string): Promise<void>;
   markSeen(postId: string, userId: string): Promise<void>;
+  hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
   getPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]>;
-  countContentDraft(userId: string): Promise<number>;
-  findPinnedPostIdsByGroupId(groupId: string): Promise<string[]>;
+  countDraftContentByUserId(userId: string): Promise<number>;
+  findPinnedContentIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
   pinContent(contentId: string, groupIds: string[]): Promise<void>;
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
+  saveContent(userId: string, contentId: string): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

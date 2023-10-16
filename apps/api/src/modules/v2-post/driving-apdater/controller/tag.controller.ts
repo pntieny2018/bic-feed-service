@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -16,7 +17,6 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { UserDto } from '../../../v2-user/application';
 import {
   CreateTagCommand,
   DeleteTagCommand,
@@ -87,10 +87,9 @@ export class TagController {
     @Body() createTagDto: CreateTagRequestDto
   ): Promise<TagDto> {
     const { groupId, name } = createTagDto;
-    const userId = user.id;
 
     return this._commandBus.execute<CreateTagCommand, TagDto>(
-      new CreateTagCommand({ groupId, name, userId })
+      new CreateTagCommand({ groupId, name, user })
     );
   }
 

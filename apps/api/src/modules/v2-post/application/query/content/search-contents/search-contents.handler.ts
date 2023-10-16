@@ -1,21 +1,15 @@
+import { createCursor, parseCursor } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { createCursor, parseCursor } from '../../../../../../common/dto/cusor-pagination';
 import { ELASTICSEARCH_DEFAULT_SIZE_PAGE, IPostElasticsearch } from '../../../../../search';
 import { SearchService } from '../../../../../search/search.service';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import {
   ArticleDto,
   ContentHighlightDto,
@@ -32,8 +26,8 @@ export class SearchContentsHandler
 {
   public constructor(
     private readonly _postSearchService: SearchService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
@@ -60,8 +54,8 @@ export class SearchContentsHandler
     let groupIds: string[] = authUser.groups;
     if (groupId) {
       if (isIncludedInnerGroups) {
-        const group = await this._groupAppService.findOne(groupId);
-        groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+        const group = await this._groupAdapter.getGroupById(groupId);
+        groupIds = this._groupAdapter.getGroupIdsAndChildIdsUserJoined(group, authUser.groups);
       } else {
         groupIds = [groupId];
       }
@@ -104,10 +98,10 @@ export class SearchContentsHandler
 
     let result = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
-    const sourceHasHightlight = source.filter((item) => item?.highlight);
+    const sourceHasHighlight = source.filter((item) => item?.highlight);
 
-    if (keyword && sourceHasHightlight.length) {
-      const highlightMapper = this._buildHighlightMapper(sourceHasHightlight);
+    if (keyword && sourceHasHighlight.length) {
+      const highlightMapper = this._buildHighlightMapper(sourceHasHighlight);
       result = this._bindingHighlight(result, highlightMapper);
     }
 

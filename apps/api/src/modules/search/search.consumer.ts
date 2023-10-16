@@ -5,7 +5,6 @@ import { KAFKA_TOPIC } from '../../common/constants';
 import {
   PostChangedMessagePayload,
   SeriesChangedMessagePayload,
-  ArticleChangedMessagePayload,
 } from '../v2-post/application/dto/message';
 
 import { SearchService } from './search.service';
@@ -142,85 +141,6 @@ export class SearchConsumer {
             title,
             type,
             coverMedia,
-          },
-        ]);
-        break;
-      case 'delete':
-        await this._postSearchService.deletePostsToSearch([{ id: before.id }]);
-        break;
-      default:
-        break;
-    }
-  }
-
-  @EventPattern(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED)
-  public async articleChanged(
-    @Payload('value') payload: ArticleChangedMessagePayload
-  ): Promise<void> {
-    const { before, after, state } = payload;
-    const {
-      id,
-      type,
-      content,
-      title,
-      summary,
-      lang,
-      groupIds,
-      communityIds,
-      seriesIds,
-      actor,
-      createdAt,
-      updatedAt,
-      publishedAt,
-      isHidden,
-      coverMedia,
-      tags,
-      categories,
-    } = after || {};
-
-    switch (state) {
-      case 'publish':
-        await this._postSearchService.addPostsToSearch([
-          {
-            id,
-            type,
-            content,
-            isHidden,
-            groupIds,
-            communityIds,
-            seriesIds,
-            createdBy: actor.id,
-            updatedAt,
-            createdAt,
-            publishedAt,
-            title,
-            summary,
-            coverMedia,
-            categories,
-            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
-          },
-        ]);
-        break;
-      case 'update':
-        await this._postSearchService.updatePostsToSearch([
-          {
-            id,
-            type,
-            content,
-            isHidden,
-            groupIds,
-            communityIds,
-            seriesIds,
-            createdBy: actor.id,
-            lang,
-            updatedAt,
-            createdAt,
-            publishedAt,
-            title,
-            summary,
-            coverMedia,
-            categories,
-            tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
           },
         ]);
         break;
