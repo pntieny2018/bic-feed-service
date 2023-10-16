@@ -15,7 +15,7 @@ type Props = {
 
   limit?: number;
 
-  offset?: number;
+  after?: string;
 };
 
 export class SearchArticleQuery implements IQuery {

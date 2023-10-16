@@ -1,12 +1,12 @@
 import { CONTENT_TYPE } from '@beincom/constants';
+import { PaginatedResponse, createCursor, parseCursor } from '@libs/database/postgres/common';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { flatten, uniq } from 'lodash';
 
-import { PageDto } from '../../../../../../common/dto';
-import { IPostElasticsearch } from '../../../../../search';
+import { ELASTICSEARCH_DEFAULT_SIZE_PAGE, IPostElasticsearch } from '../../../../../search';
 import { SearchService } from '../../../../../search/search.service';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -24,7 +24,7 @@ import { SearchArticleQuery } from './search-article.query';
 
 @QueryHandler(SearchArticleQuery)
 export class SearchArticleHandler
-  implements IQueryHandler<SearchArticleQuery, PageDto<SearchArticleDto>>
+  implements IQueryHandler<SearchArticleQuery, PaginatedResponse<SearchArticleDto>>
 {
   public constructor(
     @Inject(USER_ADAPTER)
@@ -36,15 +36,20 @@ export class SearchArticleHandler
     private readonly _postSearchService: SearchService
   ) {}
 
-  public async execute(query: SearchArticleQuery): Promise<PageDto<SearchArticleDto>> {
-    const { authUser, limitSeries, groupIds, contentSearch, categoryIds, limit, offset } =
-      query.payload;
+  public async execute(query: SearchArticleQuery): Promise<PaginatedResponse<SearchArticleDto>> {
+    const {
+      authUser,
+      limitSeries,
+      groupIds,
+      contentSearch,
+      categoryIds,
+      limit = ELASTICSEARCH_DEFAULT_SIZE_PAGE,
+      after,
+    } = query.payload;
 
     if (!groupIds && !categoryIds) {
-      return new PageDto<SearchArticleDto>([], {
+      return new PaginatedResponse<SearchArticleDto>([], {
         total: 0,
-        limit,
-        offset,
         hasNextPage: false,
       });
     }
@@ -67,17 +72,15 @@ export class SearchArticleHandler
       excludeByIds,
       isLimitSeries: limitSeries,
       topics: categoryIds,
-      from: offset,
       size: limit,
+      searchAfter: after ? parseCursor(after) : undefined,
     });
 
-    const { source, total } = response;
+    const { source, total, cursor } = response;
 
     if (!source || !source.length) {
-      return new PageDto<SearchArticleDto>([], {
+      return new PaginatedResponse<SearchArticleDto>([], {
         total: 0,
-        limit,
-        offset,
         hasNextPage: false,
       });
     }
@@ -123,11 +126,10 @@ export class SearchArticleHandler
       });
     });
 
-    return new PageDto<SearchArticleDto>(series, {
+    return new PaginatedResponse<SearchArticleDto>(series, {
       total,
-      limit,
-      offset,
-      hasNextPage: limit + offset < total,
+      hasNextPage: limit <= source.length,
+      endCursor: cursor ? createCursor(cursor) : '',
     });
   }
 }
