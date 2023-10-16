@@ -7,7 +7,9 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
   IPostDomainService,
+  IReactionDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
+  REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
 import { PostEntity } from '../../../../domain/model/content';
@@ -32,6 +34,8 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
+    @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
+    private readonly _reactionDomainService: IReactionDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
@@ -65,10 +69,15 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       withGroupJoined: true,
     });
 
+    const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([
+      postEntity.getId(),
+    ]);
+
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
       actor: command.payload.authUser,
       authUser: command.payload.authUser,
+      reactionsCount: reactionsCount.get(postEntity.getId()),
       mentionUsers,
     });
     await this._sendEvent(postEntity, result);
