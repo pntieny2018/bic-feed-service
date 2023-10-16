@@ -58,7 +58,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     SEARCH_CONTENTS_BY_SERIES: {
-      PATH: '/series/:seriesId/content',
+      PATH: '/series/:seriesId/contents',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
