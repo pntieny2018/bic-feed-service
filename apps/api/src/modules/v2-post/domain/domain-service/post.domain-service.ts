@@ -244,7 +244,7 @@ export class PostDomainService implements IPostDomainService {
         userId: actor?.id,
       },
       shouldIncludeReaction: {
-        userId: authUser?.id,
+        userId: actor?.id,
       },
     });
 

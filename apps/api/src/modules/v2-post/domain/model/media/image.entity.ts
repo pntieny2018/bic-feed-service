@@ -1,20 +1,11 @@
 import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
+import { Image } from '@libs/common/dtos';
 import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
 
-export type ImageAttributes = {
-  id: string;
-  url: string;
-  src?: string;
-  createdBy: string;
-  mimeType: string;
-  resource: IMAGE_RESOURCE;
-  width: number;
-  height: number;
-  status: MEDIA_PROCESS_STATUS;
-};
+export type ImageAttributes = Image;
 
 export class ImageEntity extends DomainAggregateRoot<ImageAttributes> {
   public constructor(props: ImageAttributes) {
