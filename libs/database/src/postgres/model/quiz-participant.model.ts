@@ -15,7 +15,10 @@ import {
 import { v4 as uuid_v4 } from 'uuid';
 
 import { PostModel } from './post.model';
-import { QuizParticipantAnswerModel } from './quiz-participant-answers.model';
+import {
+  QuizParticipantAnswerAttributes,
+  QuizParticipantAnswerModel,
+} from './quiz-participant-answers.model';
 import { QuizModel } from './quiz.model';
 
 export type QuizParticipantAttributes = InferAttributes<QuizParticipantModel>;
@@ -95,5 +98,5 @@ export class QuizParticipantModel extends Model<
   @HasMany(() => QuizParticipantAnswerModel, {
     foreignKey: 'quizParticipantId',
   })
-  public answers: QuizParticipantAnswerModel[];
+  public answers: QuizParticipantAnswerAttributes[];
 }

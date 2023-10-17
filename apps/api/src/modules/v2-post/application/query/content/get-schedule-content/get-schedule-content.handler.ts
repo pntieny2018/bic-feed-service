@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { BadRequestException, Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import {
@@ -26,7 +26,9 @@ export class GetScheduleContentHandler
 
   public async execute(query: GetScheduleContentQuery): Promise<GetScheduleContentsResponseDto> {
     const { user, groupId, isMine, type, order, before, limit, after } = query.payload;
-
+    if (!groupId && !isMine) {
+      throw new BadRequestException();
+    }
     if (groupId && !isMine) {
       const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, [groupId]);
       if (!isAdmin) {
@@ -38,7 +40,7 @@ export class GetScheduleContentHandler
       type,
       order,
       groupId,
-      userId: user.id,
+      userId: isMine ? user.id : undefined,
       before,
       limit,
       after,

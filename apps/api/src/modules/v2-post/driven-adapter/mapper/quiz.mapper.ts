@@ -39,6 +39,7 @@ export class QuizMapper {
           })
       ),
       meta: model.meta,
+      error: model.error,
       createdBy: model.createdBy,
       updatedBy: model.updatedBy,
       createdAt: model.createdAt,

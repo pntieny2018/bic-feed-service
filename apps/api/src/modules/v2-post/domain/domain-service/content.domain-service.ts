@@ -37,6 +37,7 @@ import {
   GetContentIdsScheduleProps,
   GetDraftsProps,
   GetImportantContentIdsProps,
+  GetPostsSaved,
   GetScheduledContentProps,
   GroupAudience,
   IContentDomainService,
@@ -194,19 +195,20 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
+    if (isSaved) {
+      return this.getContentsSaved({ ...props, isOnNewsfeed: true });
+    }
+
     const { rows, meta } = await this._contentRepository.getPagination({
-      attributes: {
-        exclude: ['content'],
-      },
+      select: ['id'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
         inNewsfeedUserId: authUserId,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
-        createdBy: isMine ? authUserId : undefined,
-        savedByUserId: isSaved ? authUserId : undefined,
         type,
+        createdBy: isMine ? authUserId : undefined,
       },
       limit,
       order,
@@ -241,6 +243,10 @@ export class ContentDomainService implements IContentDomainService {
 
     if (isImportant) {
       return this.getImportantContentIds(props);
+    }
+
+    if (isSaved) {
+      return this.getContentsSaved({ ...props });
     }
 
     const { rows, meta } = await this._contentRepository.getPagination({
@@ -307,15 +313,19 @@ export class ContentDomainService implements IContentDomainService {
 
   public async getReportedContentIdsByUser(
     reportUser: string,
-    postTypes?: CONTENT_TYPE[]
+    options?: {
+      postTypes?: CONTENT_TYPE[];
+      groupIds?: string[];
+    }
   ): Promise<string[]> {
-    if (!postTypes) {
+    if (!options) {
       return this._contentRepository.getReportedContentIdsByUser({
         reportUser,
         target: [CONTENT_TARGET.ARTICLE, CONTENT_TARGET.POST],
       });
     }
 
+    const { postTypes = [], groupIds } = options;
     const target: CONTENT_TARGET[] = [];
     if (postTypes.includes(CONTENT_TYPE.POST)) {
       target.push(CONTENT_TARGET.POST);
@@ -324,7 +334,7 @@ export class ContentDomainService implements IContentDomainService {
       target.push(CONTENT_TARGET.ARTICLE);
     }
 
-    return this._contentRepository.getReportedContentIdsByUser({ reportUser, target });
+    return this._contentRepository.getReportedContentIdsByUser({ reportUser, target, groupIds });
   }
 
   public async getScheduleContentIds(
@@ -339,6 +349,7 @@ export class ContentDomainService implements IContentDomainService {
       orderOptions: {
         sortColumn: 'scheduledAt',
         orderBy: order,
+        createdAtDesc: true,
       },
       limit,
       before,
@@ -368,7 +379,7 @@ export class ContentDomainService implements IContentDomainService {
   public async getImportantContentIds(
     props: GetImportantContentIdsProps
   ): Promise<CursorPaginationResult<string>> {
-    const { authUserId, isOnNewsfeed, groupIds, isMine, type, isSaved, limit, after } = props;
+    const { authUserId, isOnNewsfeed, groupIds, type, limit, after } = props;
     const offset = getLimitFromAfter(after);
 
     const rows = await this._contentRepository.findAll(
@@ -384,8 +395,6 @@ export class ContentDomainService implements IContentDomainService {
           groupArchived: false,
           status: CONTENT_STATUS.PUBLISHED,
           excludeReportedByUserId: authUserId,
-          createdBy: isMine ? authUserId : undefined,
-          savedByUserId: isSaved ? authUserId : undefined,
           inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
         },
         include: {
@@ -399,6 +408,54 @@ export class ContentDomainService implements IContentDomainService {
         orderOptions: {
           isImportantFirst: true,
           isPublishedByDesc: true,
+        },
+      },
+      {
+        offset,
+        limit: limit + 1,
+      }
+    );
+
+    const hasMore = rows.length > limit;
+
+    if (hasMore) {
+      rows.pop();
+    }
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta: {
+        hasNextPage: hasMore,
+        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
+      },
+    };
+  }
+
+  public async getContentsSaved(props: GetPostsSaved): Promise<CursorPaginationResult<string>> {
+    const { authUserId, isOnNewsfeed, groupIds, type, limit, after } = props;
+    const offset = getLimitFromAfter(after);
+
+    const rows = await this._contentRepository.findAll(
+      {
+        attributes: {
+          exclude: ['content'],
+        },
+        where: {
+          type,
+          groupIds,
+          isHidden: false,
+          groupArchived: false,
+          status: CONTENT_STATUS.PUBLISHED,
+          excludeReportedByUserId: authUserId,
+          inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
+        },
+        include: {
+          mustIncludeSaved: {
+            userId: authUserId,
+          },
+        },
+        orderOptions: {
+          isSavedDateByDesc: true,
         },
       },
       {
@@ -523,7 +580,7 @@ export class ContentDomainService implements IContentDomainService {
 
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
       reportUser: authUser.id,
-      groupId,
+      groupIds: [groupId],
     });
 
     const reportedContentIdsInPinned = pinnedContentIds.filter((id) => {
@@ -571,7 +628,7 @@ export class ContentDomainService implements IContentDomainService {
     }
     const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
       reportUser: userId,
-      groupId,
+      groupIds: [groupId],
     });
 
     const pinnedContentIds = contentIds.filter((id) => {
@@ -646,8 +703,7 @@ export class ContentDomainService implements IContentDomainService {
       throw new ContentNotFoundException();
     }
 
-    const groups = content.getPostGroups() || [];
-
+    const groups = content.getPostGroups();
     const listPinnedContentIds = {};
     const groupIds = [];
     groups.forEach((group) => {

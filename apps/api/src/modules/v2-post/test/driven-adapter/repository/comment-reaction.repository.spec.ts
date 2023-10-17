@@ -16,8 +16,10 @@ import {
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
 import { CommentReactionRepository } from '../../../driven-adapter/repository/comment-reaction.repository';
-import { createMockCommentReactionRecord } from '../../mock/comment.mock';
-import { createMockReactionEntity } from '../../mock/reaction.mock';
+import {
+  createMockCommentReactionRecord,
+  createMockReactionEntity,
+} from '../../mock/reaction.mock';
 
 const commentReactionRecord = createMockCommentReactionRecord();
 const commentReactionEntity = createMockReactionEntity();

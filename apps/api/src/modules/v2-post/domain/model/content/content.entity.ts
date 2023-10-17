@@ -173,11 +173,11 @@ export class ContentEntity<
   }
 
   public getGroupIds(): string[] {
-    return this._props.groupIds;
+    return this._props.groupIds || [];
   }
 
   public getPostGroups(): PostGroupAttributes[] {
-    return this._props.postGroups;
+    return this._props.postGroups || [];
   }
 
   public hasQuiz(): boolean {

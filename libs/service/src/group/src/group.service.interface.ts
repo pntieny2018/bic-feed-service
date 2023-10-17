@@ -10,7 +10,7 @@ export type UserRoleInGroup = {
 };
 
 export type GetUserRoleInGroupsResult = {
-  [key in 'community_admins' | 'owners' | 'group_admins' | 'members']: {
+  [key in 'communityAdmin' | 'owner' | 'groupAdmin' | 'member']: {
     [key: string]: string[];
   };
 };

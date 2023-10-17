@@ -12,6 +12,7 @@ import { QuizParticipantNotFoundException } from '../../domain/exception';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface';
 import { QuizParticipantMapper } from '../mapper/quiz-participant.mapper';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class QuizParticipantRepository implements IQuizParticipantRepository {
@@ -165,8 +166,12 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]> {
     const rows = await this._libQuizParticipantRepo.findMany({
-      where: { postId: contentId },
-      whereRaw: this._libQuizParticipantRepo.getConditionIsFinished(),
+      where: {
+        postId: contentId,
+        finishedAt: {
+          [Op.ne]: null,
+        },
+      },
       select: ['createdBy'],
       selectRaw: [['MAX(score)', 'score']],
       group: ['created_by'],
@@ -183,8 +188,13 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
 
     const { rows, meta } = await this._libQuizParticipantRepo.cursorPaginate(
       {
-        where: { postId: contentId, isHighest: true },
-        whereRaw: this._libQuizParticipantRepo.getConditionIsFinished(),
+        where: {
+          postId: contentId,
+          isHighest: true,
+          finishedAt: {
+            [Op.ne]: null,
+          },
+        },
       },
       {
         limit,
@@ -210,8 +220,10 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
         postId: contentIds,
         createdBy: userId,
         isHighest: true,
+        finishedAt: {
+          [Op.ne]: null,
+        },
       },
-      whereRaw: this._libQuizParticipantRepo.getConditionIsFinished(),
     });
     const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
     rows.forEach((row) => {
@@ -227,12 +239,16 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     contentIds: string[],
     userId: string
   ): Promise<Map<string, QuizParticipantEntity>> {
+    if (!contentIds.length) {
+      return new Map<string, QuizParticipantEntity>();
+    }
+
     const rows = await this._libQuizParticipantRepo.findMany({
       where: {
         postId: contentIds,
         createdBy: userId,
+        finishedAt: null,
       },
-      whereRaw: this._libQuizParticipantRepo.getConditionIsNotFinished(),
     });
     const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
     rows.forEach((row) => {

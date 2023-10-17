@@ -30,17 +30,20 @@ import {
 import {
   CreateSeriesDto,
   FindItemsBySeriesDto,
+  SearchContentsBySeriesDto,
   SearchSeriesDto,
   SeriesDto,
 } from '../../application/dto';
 import {
   FindItemsBySeriesQuery,
   FindSeriesQuery,
+  SearchContentsBySeriesQuery,
   SearchSeriesQuery,
 } from '../../application/query/series';
 import {
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,
+  SearchContentsBySeriesRequestDto,
   SearchSeriesRequestDto,
   UpdateSeriesRequestDto,
 } from '../dto/request';
@@ -119,6 +122,26 @@ export class SeriesController {
     return plainToInstance(FindItemsBySeriesDto, result, {
       groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
     });
+  }
+
+  @ApiOperation({ summary: 'Search post/article to add into series' })
+  @ApiOkResponse({
+    type: SearchContentsBySeriesDto,
+  })
+  @ResponseMessages({
+    success: 'Search post/article successfully',
+  })
+  @Version(ROUTES.SERIES.SEARCH_CONTENTS_BY_SERIES.VERSIONS)
+  @Get(ROUTES.SERIES.SEARCH_CONTENTS_BY_SERIES.PATH)
+  public async searchContents(
+    @AuthUser() authUser: UserDto,
+    @Param('seriesId', ParseUUIDPipe) seriesId: string,
+    @Query() searchContentsBySeriesRequestDto: SearchContentsBySeriesRequestDto
+  ): Promise<SearchContentsBySeriesDto> {
+    const data = await this._queryBus.execute(
+      new SearchContentsBySeriesQuery({ authUser, seriesId, ...searchContentsBySeriesRequestDto })
+    );
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Get series detail' })

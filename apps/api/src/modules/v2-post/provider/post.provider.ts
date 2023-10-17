@@ -20,9 +20,6 @@ import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
-  ProcessPostDeletedHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
@@ -47,6 +44,7 @@ import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
+  PostUpdatedEventHandler,
 } from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
@@ -70,6 +68,7 @@ import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/pos
 import {
   FindItemsBySeriesHandler,
   FindSeriesHandler,
+  SearchContentsBySeriesHandler,
   SearchSeriesHandler,
 } from '../application/query/series';
 import { SearchTagsHandler } from '../application/query/tag';
@@ -122,6 +121,7 @@ export const postProvider = [
   PostPublishedEventHandler,
   PostScheduledEventHandler,
   PostDeletedEventHandler,
+  PostUpdatedEventHandler,
 
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
@@ -153,13 +153,10 @@ export const postProvider = [
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
-  ProcessPostDeletedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
@@ -187,6 +184,7 @@ export const postProvider = [
   FindPinnedContentHandler,
   SearchSeriesHandler,
   GetContentAudienceHandler,
+  SearchContentsBySeriesHandler,
 
   /** Domain Service */
   {

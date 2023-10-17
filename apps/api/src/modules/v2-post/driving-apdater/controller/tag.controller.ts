@@ -103,15 +103,14 @@ export class TagController {
   @Version(ROUTES.TAG.UPDATE_TAG.VERSIONS)
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) tagId: string,
+    @Param('tagId', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagRequestDto
   ): Promise<TagDto> {
     const { name } = updateTagDto;
 
-    const tag = await this._commandBus.execute<UpdateTagCommand, TagDto>(
-      new UpdateTagCommand({ id: tagId, name, userId: user.id })
+    return this._commandBus.execute<UpdateTagCommand, TagDto>(
+      new UpdateTagCommand({ id: tagId, name, actor: user })
     );
-    return tag;
   }
 
   @ApiOperation({ summary: 'Delete tag' })
@@ -124,8 +123,8 @@ export class TagController {
   @ResponseMessages({ success: 'message.tag.deleted_success' })
   public async delete(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('tagId', ParseUUIDPipe) tagId: string
   ): Promise<void> {
-    await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
+    await this._commandBus.execute(new DeleteTagCommand({ id: tagId, actor: user }));
   }
 }

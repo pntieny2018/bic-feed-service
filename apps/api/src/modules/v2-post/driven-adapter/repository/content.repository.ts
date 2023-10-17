@@ -338,8 +338,8 @@ export class ContentRepository implements IContentRepository {
       [Op.and]: [
         {
           createdBy: props.reportUser,
-          ...(props.target && { targetType: props.target }),
-          ...(props.groupId && { targetId: props.groupId }),
+          ...(props.target && props.target.length && { targetType: props.target }),
+          ...(props.groupIds && props.groupIds.length && { groupId: props.groupIds }),
         },
       ],
     };

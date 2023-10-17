@@ -1,17 +1,15 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../common/constants';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
+import { SeriesRemovedItemsEvent } from '../../../../../events/series';
 import { PostDeletedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { PostChangedMessagePayload } from '../../dto/message';
 
 @EventsHandlerAndLog(PostDeletedEvent)
 export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> {
   public constructor(
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    // TODO: call domain and using event bus
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
@@ -20,30 +18,28 @@ export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> 
     if (!postEntity.isPublished()) {
       return;
     }
-    const postBefore = postEntity.getSnapshot();
 
-    const payload: PostChangedMessagePayload = {
-      state: 'delete',
-      before: {
-        id: postBefore.id,
-        actor,
-        setting: postBefore.setting,
-        type: postBefore.type,
-        groupIds: postBefore.groupIds,
-        content: postBefore.content,
-        mentionUserIds: postBefore.mentionUserIds,
-        createdAt: postBefore.createdAt,
-        updatedAt: postBefore.updatedAt,
-        lang: postBefore.lang,
-        isHidden: postBefore.isHidden,
-        status: postBefore.status,
-        seriesIds: postBefore.seriesIds,
-      },
-    };
-
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.POST_CHANGED, {
-      key: postEntity.getId(),
-      value: new PostChangedMessagePayload(payload),
-    });
+    const seriesIds = postEntity.getSeriesIds() || [];
+    for (const seriesId of seriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesRemovedItemsEvent({
+          items: [
+            {
+              id: postEntity.getId(),
+              title: null,
+              content: postEntity.get('content'),
+              type: postEntity.getType(),
+              createdBy: postEntity.getCreatedBy(),
+              groupIds: postEntity.getGroupIds(),
+              createdAt: postEntity.get('createdAt'),
+              updatedAt: postEntity.get('updatedAt'),
+            },
+          ],
+          seriesId: seriesId,
+          actor: actor,
+          contentIsDeleted: true,
+        })
+      );
+    }
   }
 }

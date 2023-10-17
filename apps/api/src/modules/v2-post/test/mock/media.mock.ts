@@ -1,51 +1,56 @@
 import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
-import { IFile, IImage, IVideo } from '@libs/database/postgres/model/comment.model';
+import { File, Image, Video } from '@libs/common/dtos';
 import { v4 } from 'uuid';
 
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 
-export function createMockFileEntity(data: Partial<IFile> = {}): FileEntity {
+export function createMockFile(data: Partial<File> = {}): File {
   const fileId = v4();
-  const userId = v4();
-
-  return new FileEntity({
+  return {
     id: fileId,
     url: `https://media.beincom.io/image/variants/comment/content/${fileId}`,
     name: 'test.jpg',
-    createdBy: userId,
+    createdBy: v4(),
     mimeType: 'image/jpeg',
     size: 1000,
+    status: MEDIA_PROCESS_STATUS.COMPLETED,
     ...data,
-  });
+  };
 }
 
-export function createMockImageEntity(data: Partial<IImage> = {}): ImageEntity {
-  const imageId = v4();
-  const userId = v4();
+export function createMockFileEntity(data: Partial<File> = {}): FileEntity {
+  const file = createMockFile(data);
+  return new FileEntity(file);
+}
 
-  return new ImageEntity({
+export function createMockImage(data: Partial<Image> = {}): Image {
+  const imageId = v4();
+  return {
     id: imageId,
     url: `https://media.beincom.io/image/variants/comment/content/${imageId}`,
     src: `/image/variants/comment/content/${imageId}`,
-    createdBy: userId,
+    createdBy: v4(),
     mimeType: 'image/jpeg',
     resource: IMAGE_RESOURCE.COMMENT_CONTENT,
     width: 275,
     height: 183,
     status: MEDIA_PROCESS_STATUS.COMPLETED,
     ...data,
-  });
+  };
 }
 
-export function createMockVideoEntity(data: Partial<IVideo> = {}): VideoEntity {
-  const videoId = v4();
-  const userId = v4();
+export function createMockImageEntity(data: Partial<Image> = {}): ImageEntity {
+  const image = createMockImage(data);
+  return new ImageEntity(image);
+}
 
-  return new VideoEntity({
+export function createMockVideo(data: Partial<Video> = {}): Video {
+  const videoId = v4();
+  return {
     id: videoId,
     url: `https://media.beincom.io/image/variants/comment/content/${videoId}`,
     name: 'test.jpg',
-    createdBy: userId,
+    createdBy: v4(),
     mimeType: 'image/jpeg',
     size: 1000,
     width: 100,
@@ -53,5 +58,10 @@ export function createMockVideoEntity(data: Partial<IVideo> = {}): VideoEntity {
     status: MEDIA_PROCESS_STATUS.COMPLETED,
     thumbnails: [],
     ...data,
-  });
+  };
+}
+
+export function createMockVideoEntity(data: Partial<Video> = {}): VideoEntity {
+  const video = createMockVideo(data);
+  return new VideoEntity(video);
 }

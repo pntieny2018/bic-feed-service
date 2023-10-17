@@ -46,8 +46,13 @@ export type GetImportantContentIdsProps = {
   authUserId: string;
   isOnNewsfeed?: boolean;
   groupIds?: string[];
-  isMine?: boolean;
-  isSaved?: boolean;
+  type?: CONTENT_TYPE;
+} & CursorPaginationProps;
+
+export type GetPostsSaved = {
+  authUserId: string;
+  isOnNewsfeed?: boolean;
+  groupIds?: string[];
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
 
@@ -103,7 +108,13 @@ export interface IContentDomainService {
     contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
+  getReportedContentIdsByUser(
+    reportUser: string,
+    options?: {
+      postTypes?: CONTENT_TYPE[];
+      groupIds?: string[];
+    }
+  ): Promise<string[]>;
   getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;

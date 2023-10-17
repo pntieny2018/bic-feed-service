@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { PaginatedArgs } from '@libs/database/postgres/common';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -219,4 +220,18 @@ export class SearchSeriesRequestDto extends PageOptionsDto {
   @IsOptional()
   @IsUUID('4', { each: true })
   public itemIds?: string[];
+}
+
+export class SearchContentsBySeriesRequestDto extends PaginatedArgs {
+  @ApiPropertyOptional({
+    description: 'Filter by keyword',
+    required: false,
+    name: 'keyword',
+  })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'keyword',
+  })
+  public keyword?: string;
 }

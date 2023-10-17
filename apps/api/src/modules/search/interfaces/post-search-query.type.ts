@@ -27,6 +27,8 @@ export type IPostSearchQuery = {
 
   isLimitSeries?: boolean;
 
+  filterEmptyContent?: boolean;
+
   shouldHighlight?: boolean;
 };
 

@@ -9,6 +9,7 @@ import {
   PostDeletedEvent,
   PostPublishedEvent,
   PostScheduledEvent,
+  PostUpdatedEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -231,66 +232,64 @@ export class PostDomainService implements IPostDomainService {
     return postEntity;
   }
 
-  public async updatePost(props: UpdatePostProps): Promise<PostEntity> {
-    const { id } = props.payload;
-    const authUser = props.authUser;
+  public async update(props: UpdatePostProps): Promise<PostEntity> {
+    const { payload, actor } = props;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(payload.id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
       shouldIncludeLinkPreview: true,
       shouldIncludeQuiz: true,
       shouldIncludeMarkReadImportant: {
-        userId: authUser?.id,
+        userId: actor?.id,
+      },
+      shouldIncludeReaction: {
+        userId: actor?.id,
       },
     });
 
-    if (
-      !postEntity ||
-      (postEntity.isHidden() && !postEntity.isOwner(authUser.id)) ||
-      !(postEntity instanceof PostEntity) ||
-      postEntity.isInArchivedGroups()
-    ) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden() && !postEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
     }
 
     if (postEntity.isDraft()) {
       throw new ContentNoPublishYetException();
     }
 
-    await this._validateAndSetPostAttributes(postEntity, props.payload, authUser);
+    await this._validateAndSetPostAttributes(postEntity, payload, actor);
 
     if (postEntity.hasVideoProcessing()) {
       postEntity.setProcessing();
     }
 
-    if (!postEntity.isChanged()) {
-      return;
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+      this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
     }
-    await this._contentRepository.update(postEntity);
+
     return postEntity;
   }
 
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
-    const { id } = props.payload;
-    const authUser = props.authUser;
+    const { payload, actor } = props;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(payload.id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
       shouldIncludeLinkPreview: true,
     });
 
-    if (
-      !postEntity ||
-      !(postEntity instanceof PostEntity) ||
-      postEntity.isHidden() ||
-      postEntity.isPublished()
-    ) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isHidden() || postEntity.isPublished()) {
       return;
     }
 
-    await this._validateAndSetPostAttributes(postEntity, props.payload, authUser);
+    await this._validateAndSetPostAttributes(postEntity, props.payload, actor);
     if (!postEntity.isChanged()) {
       return;
     }
