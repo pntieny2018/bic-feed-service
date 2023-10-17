@@ -128,6 +128,7 @@ export class SearchContentsBySeriesHandler
         },
         type: item.type as unknown as CONTENT_TYPE,
         actor: usersMapper.get(item.createdBy),
+        publishedAt: item.publishedAt,
       });
     });
 
