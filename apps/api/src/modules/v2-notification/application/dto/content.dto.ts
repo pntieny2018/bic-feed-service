@@ -1,4 +1,4 @@
-import { PostSettingDto, SeriesDto, UserMentionDto } from '../../../v2-post/application/dto';
+import { PostSettingDto, UserMentionDto } from '../../../v2-post/application/dto';
 
 import { AudienceObjectDto } from './group.dto';
 import { MediaObjectDto } from './media.dto';
@@ -21,11 +21,6 @@ export class ContentActivityObjectDto {
   public reaction?: ReactionObjectDto;
   public reactionsOfActor?: ReactionObjectDto[];
   public reactionsCount?: ReactionsCountObjectDto;
-
-  public items?: {
-    item: SeriesDto;
-    state: 'add' | 'remove';
-  }[];
 
   public createdAt: Date;
   public updatedAt: Date;
@@ -53,9 +48,25 @@ export class ArticleActivityObjectDto extends ContentActivityObjectDto {
 }
 
 export class SeriesActivityObjectDto extends ContentActivityObjectDto {
-  public item: PostActivityObjectDto | ArticleActivityObjectDto;
+  public item?: PostActivityObjectDto | ArticleActivityObjectDto;
+
+  public items?: SeriesStateActivityObjectDto[];
 
   public constructor(data: SeriesActivityObjectDto) {
     super(data);
+  }
+}
+
+export class SeriesStateActivityObjectDto {
+  public actor: {
+    id: string;
+  };
+  public id: string;
+  public title: string;
+  public state: 'add' | 'remove';
+  public audience?: AudienceObjectDto;
+
+  public constructor(data: SeriesStateActivityObjectDto) {
+    Object.assign(this, data);
   }
 }

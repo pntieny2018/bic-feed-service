@@ -9,7 +9,6 @@ import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
   ArticleActivityObjectDto,
-  ContentActivityObjectDto,
   NotificationActivityDto,
   NotificationPayloadDto,
   PostActivityObjectDto,
@@ -18,10 +17,10 @@ import {
 
 import {
   ArticleNotificationPayload,
-  ContentNotificationPayload,
   IContentNotificationApplicationService,
   PostNotificationPayload,
   SeriesNotificationPayload,
+  SeriesWithStateDto,
 } from './interface';
 
 export class ContentNotificationApplicationService
@@ -31,40 +30,6 @@ export class ContentNotificationApplicationService
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
-
-  public async sendContentNotification(payload: ContentNotificationPayload): Promise<void> {
-    const { event, actor, content, seriesWithState, verb, targetType } = payload;
-
-    const contentObject = new ContentActivityObjectDto({
-      id: content.id,
-      actor: { id: content.createdBy },
-      title: content.type === CONTENT_TYPE.ARTICLE ? (content as ArticleDto).title : null,
-      contentType: content.type.toLowerCase(),
-      audience: content.audience,
-      content:
-        content.type === CONTENT_TYPE.POST
-          ? StringHelper.removeMarkdownCharacter(content.content)
-          : null,
-      createdAt: content.createdAt,
-      updatedAt: content.updatedAt,
-      items: seriesWithState,
-    });
-    const activity = this._createContentActivity(contentObject, verb, targetType);
-
-    const kafkaPayload: NotificationPayloadDto<ContentActivityObjectDto> = {
-      key: content.id,
-      value: {
-        actor,
-        event,
-        data: activity,
-      },
-    };
-
-    await this._kafkaAdapter.emit<NotificationPayloadDto<ContentActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
-  }
 
   public async sendPostNotification(payload: PostNotificationPayload): Promise<void> {
     const { event, actor, post, oldPost, ignoreUserIds } = payload;
@@ -108,20 +73,6 @@ export class ContentNotificationApplicationService
       media: post.media,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
-    });
-  }
-
-  private _createContentActivity(
-    content: ContentActivityObjectDto,
-    verb: VerbActivity,
-    target: TargetType
-  ): NotificationActivityDto<ContentActivityObjectDto> {
-    return new NotificationActivityDto<ContentActivityObjectDto>({
-      id: v4(),
-      object: content,
-      verb,
-      target,
-      createdAt: new Date(),
     });
   }
 
@@ -217,7 +168,7 @@ export class ContentNotificationApplicationService
     const activity = this._createSeriesActivity(seriesObject, verb);
 
     const kafkaPayload: NotificationPayloadDto<SeriesActivityObjectDto> = {
-      key: series.id,
+      key: Array.isArray(series) ? series[0].id : series.id,
       value: {
         actor,
         event,
@@ -254,9 +205,32 @@ export class ContentNotificationApplicationService
   }
 
   private _createSeriesActivityObject(
-    series: SeriesDto,
-    item: PostDto | ArticleDto
+    series: SeriesDto | SeriesWithStateDto[],
+    content: PostDto | ArticleDto
   ): SeriesActivityObjectDto {
+    if (Array.isArray(series)) {
+      return new SeriesActivityObjectDto({
+        id: content.id,
+        actor: { id: content.createdBy },
+        title: content.type === CONTENT_TYPE.ARTICLE ? (content as ArticleDto).title : null,
+        content: content.content,
+        contentType: content.type.toLowerCase(),
+        setting: content.setting,
+        audience: content.audience,
+        items: series.map((seriesWithState) => ({
+          actor: {
+            id: seriesWithState.createdBy,
+          },
+          id: seriesWithState.id,
+          title: seriesWithState.title,
+          audience: seriesWithState.audience,
+          state: seriesWithState.state,
+        })),
+        createdAt: content.createdAt,
+        updatedAt: content.createdAt,
+      });
+    }
+
     return new SeriesActivityObjectDto({
       id: series.id,
       actor: { id: series.createdBy },
@@ -265,9 +239,9 @@ export class ContentNotificationApplicationService
       setting: series.setting,
       audience: series.audience,
       item:
-        item instanceof PostDto
-          ? this._createPostActivityObject(item)
-          : this._createArticleActivityObject(item),
+        content instanceof PostDto
+          ? this._createPostActivityObject(content)
+          : this._createArticleActivityObject(content),
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
     });

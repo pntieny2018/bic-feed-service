@@ -3,7 +3,6 @@ import { Inject } from '@nestjs/common';
 import {
   ArticleNotificationPayload,
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
-  ContentNotificationPayload,
   IContentNotificationApplicationService,
   PostNotificationPayload,
   SeriesNotificationPayload,
@@ -26,9 +25,5 @@ export class NotificationAdapter implements INotificationAdapter {
 
   public async sendSeriesNotification(payload: SeriesNotificationPayload): Promise<void> {
     return this._contentNotiApp.sendSeriesNotification(payload);
-  }
-
-  public async sendContentNotification(payload: ContentNotificationPayload): Promise<void> {
-    return this._contentNotiApp.sendContentNotification(payload);
   }
 }

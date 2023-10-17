@@ -3,7 +3,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 import { SeriesChangeItems } from '../../../../../common/constants';
-import { TargetType, VerbActivity } from '../../../../v2-notification/data-type';
+import { VerbActivity } from '../../../../v2-notification/data-type';
 import { SeriesSameOwnerChangedEvent } from '../../../domain/event';
 import { PostEntity } from '../../../domain/model/content';
 import {
@@ -26,30 +26,29 @@ export class NotiSeriesSameOwnerChangedEventHandler
   ) {}
 
   public async handle(event: SeriesSameOwnerChangedEvent): Promise<void> {
-    const { authUser, content, series } = event.payload;
+    const { authUser, content, series: seriesEntitesWithState } = event.payload;
 
     const item =
       content instanceof PostEntity
         ? await this._contentBinding.postBinding(content, { authUser })
         : await this._contentBinding.articleBinding(content, { authUser });
-    const seriesWithState = await Promise.all(
-      series.map(async (item) => ({
-        item: await this._contentBinding.seriesBinding(item.item, { authUser }),
-        state: item.state,
+    const seriesWithStateDto = await Promise.all(
+      seriesEntitesWithState.map(async (entity) => ({
+        ...(await this._contentBinding.seriesBinding(entity.item, { authUser })),
+        state: entity.state,
       }))
     );
 
     const payload = {
       event: SeriesChangeItems,
       actor: authUser,
-      seriesWithState,
-      content: item,
+      series: seriesWithStateDto,
+      item,
       verb: VerbActivity.CHANGE,
-      targetType: TargetType.SERIES,
     };
 
     try {
-      await this._notificationAdapter.sendContentNotification(payload);
+      await this._notificationAdapter.sendSeriesNotification(payload);
     } catch (ex) {
       this._logger.error(ex, ex?.stack);
     }

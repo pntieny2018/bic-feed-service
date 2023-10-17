@@ -143,7 +143,6 @@ export class CommentNotificationApplicationService
       verb: VerbActivity.COMMENT,
       target: target,
       createdAt: content.createdAt,
-      updatedAt: content.updatedAt,
     });
   }
 }
