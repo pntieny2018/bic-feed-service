@@ -16,6 +16,6 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
 
   public async execute(command: AutoSavePostCommand): Promise<void> {
     const { authUser, ...payload } = command.payload;
-    return this._postDomainService.autoSavePost({ authUser, payload });
+    return this._postDomainService.autoSavePost({ actor: authUser, payload });
   }
 }
