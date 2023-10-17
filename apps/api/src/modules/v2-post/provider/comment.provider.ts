@@ -9,6 +9,7 @@ import {
 } from '../application/command/comment';
 import { CommentCreatedEventHandler } from '../application/event-handler/comment/comment-created.event-handler';
 import { NotiCommentCreatedEventHandler } from '../application/event-handler/notification/comment-created.event-handler';
+import { NotiCommentDeletedEventHandler } from '../application/event-handler/notification/comment-deleted.event-handler';
 import {
   FindCommentsAroundIdHandler,
   FindCommentsPaginationHandler,
@@ -59,4 +60,5 @@ export const commentProvider = [
 
   CommentCreatedEventHandler,
   NotiCommentCreatedEventHandler,
+  NotiCommentDeletedEventHandler,
 ];

@@ -1,5 +1,6 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
@@ -9,7 +10,7 @@ import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
 } from '../../../v2-notification/application/dto';
-import { CommentCreatedEvent } from '../event/comment.event';
+import { CommentCreatedEvent, CommentDeletedEvent } from '../event/comment.event';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
@@ -57,10 +58,6 @@ export class CommentDomainService implements ICommentDomainService {
     }
     return entity;
   }
-
-  // public async getCommentsByIds(ids: string[]): Promise<CommentEntity[]> {
-  //   return this._commentRepository.findByIds(ids);
-  // }
 
   public async getCommentsAroundId(
     id: string,
@@ -134,8 +131,9 @@ export class CommentDomainService implements ICommentDomainService {
     await this._commentRepository.update(commentEntity);
   }
 
-  public async delete(id: string): Promise<void> {
-    return this._commentRepository.destroyComment(id);
+  public async delete(comment: CommentEntity, actor: UserDto): Promise<void> {
+    await this._commentRepository.destroyComment(comment.get('id'));
+    this.event.publish(new CommentDeletedEvent({ comment, user: actor }));
   }
 
   private async _getCommentsAroundChild(

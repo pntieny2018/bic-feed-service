@@ -4,7 +4,6 @@ import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../../events/comment';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
@@ -73,13 +72,6 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
       userId: actor.id,
       parentId: NIL,
     });
-
-    this._eventEmitter.emit(
-      new CommentHasBeenCreatedEvent({
-        actor,
-        commentId: commentEntity.get('id'),
-      })
-    );
 
     return this._commentBinding.commentBinding(commentEntity, { actor });
   }

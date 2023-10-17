@@ -53,7 +53,7 @@ export interface ICommentDomainService {
 
   update(input: UpdateCommentProps): Promise<void>;
 
-  delete(id: string): Promise<void>;
+  delete(comment: CommentEntity, actor: UserDto): Promise<void>;
 
   dissociateComment(
     props: DissociateCommentProps
