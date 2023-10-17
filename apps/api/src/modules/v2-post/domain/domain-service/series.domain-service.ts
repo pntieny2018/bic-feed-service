@@ -111,7 +111,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new DatabaseException();
     }
 
-    this.event.publish(new SeriesCreatedEvent(seriesEntity));
+    this.event.publish(new SeriesCreatedEvent(seriesEntity, actor));
 
     return seriesEntity;
   }

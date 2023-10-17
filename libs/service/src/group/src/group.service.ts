@@ -1,14 +1,14 @@
+import { ROLE_TYPE } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
+import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
-import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
-import { ROLE_TYPE } from '@beincom/constants';
 
 @Injectable()
 export class GroupService implements IGroupService {
@@ -144,10 +144,9 @@ export class GroupService implements IGroupService {
     roles: ROLE_TYPE[]
   ): Promise<GetUserRoleInGroupsResult> {
     const defaultResult: GetUserRoleInGroupsResult = {
-      communityAdmin: {},
-      groupAdmin: {},
-      owner: {},
-      member: {},
+      [ROLE_TYPE.OWNER]: {},
+      [ROLE_TYPE.COMMUNITY_ADMIN]: {},
+      [ROLE_TYPE.GROUP_ADMIN]: {},
     };
     try {
       const response = await this._httpService.post(
@@ -171,16 +170,16 @@ export class GroupService implements IGroupService {
     const userIds = [];
 
     for (const groupId of groupIds) {
-      if (data.communityAdmin[groupId]) {
-        userIds.push(...data.communityAdmin[groupId]);
+      if (data[ROLE_TYPE.COMMUNITY_ADMIN][groupId]) {
+        userIds.push(...data[ROLE_TYPE.COMMUNITY_ADMIN][groupId]);
       }
 
-      if (data.groupAdmin[groupId]) {
-        userIds.push(...data.groupAdmin[groupId]);
+      if (data[ROLE_TYPE.GROUP_ADMIN][groupId]) {
+        userIds.push(...data[ROLE_TYPE.GROUP_ADMIN][groupId]);
       }
 
-      if (data.owner[groupId]) {
-        userIds.push(...data.owner[groupId]);
+      if (data[ROLE_TYPE.OWNER][groupId]) {
+        userIds.push(...data[ROLE_TYPE.OWNER][groupId]);
       }
     }
     return userIds.includes(userId);

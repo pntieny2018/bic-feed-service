@@ -15,14 +15,10 @@ export class FeedConsumer {
     @Payload('value') payload: SeriesChangedMessagePayload
   ): Promise<void> {
     const { before, after, state } = payload;
-    if (state === 'delete') {
+    if (state === 'delete' || state === 'publish') {
       return;
     }
 
-    await this._feedPublisherService.fanoutOnWrite(
-      after.id,
-      after.groupIds,
-      state === 'publish' ? [] : before.groupIds
-    );
+    await this._feedPublisherService.fanoutOnWrite(after.id, after.groupIds, before.groupIds);
   }
 }
