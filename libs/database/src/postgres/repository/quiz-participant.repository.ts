@@ -5,11 +5,4 @@ export class LibQuizParticipantRepository extends BaseRepository<QuizParticipant
   public constructor() {
     super(QuizParticipantModel);
   }
-
-  public getConditionIsFinished(): string {
-    return 'finished_at IS NOT NULL';
-  }
-  public getConditionIsNotFinished(): string {
-    return 'finished_at IS NULL';
-  }
 }

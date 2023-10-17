@@ -251,17 +251,12 @@ describe('QuizParticipantRepository', () => {
             ({ toJSON: () => ({ createdBy: record.createdBy, score: record.score }) } as any)
         )
       );
-      _libQuizParticipantRepo.getConditionIsFinished.mockReturnValue(
-        "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()"
-      );
 
       const quizParticipant =
         await _quizParticipantRepo.getQuizParticipantHighestScoreGroupByUserId(mockContentId);
 
       expect(_libQuizParticipantRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentId },
-        whereRaw:
-          "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()",
+        where: { postId: mockContentId, finishedAt: null },
         select: ['createdBy'],
         selectRaw: [['MAX(score)', 'score']],
         group: ['created_by'],
@@ -279,9 +274,6 @@ describe('QuizParticipantRepository', () => {
         rows: [mockQuizParticipantRecord] as QuizParticipantModel[],
         meta: { hasNextPage: false, hasPreviousPage: false },
       });
-      _libQuizParticipantRepo.getConditionIsFinished.mockReturnValue(
-        "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()"
-      );
       _quizParticipantMapper.toDomain.mockReturnValue(mockQuizParticipantEntity);
 
       const result =
@@ -292,9 +284,7 @@ describe('QuizParticipantRepository', () => {
 
       expect(_libQuizParticipantRepo.cursorPaginate).toBeCalledWith(
         {
-          where: { postId: mockContentId, isHighest: true },
-          whereRaw:
-            "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()",
+          where: { postId: mockContentId, isHighest: true, finishedAt: null },
         },
         { limit: 10, order: ORDER.DESC, column: 'createdAt' }
       );
@@ -332,9 +322,6 @@ describe('QuizParticipantRepository', () => {
       _libQuizParticipantRepo.findMany.mockResolvedValue(
         mockQuizParticipantRecords as QuizParticipantModel[]
       );
-      _libQuizParticipantRepo.getConditionIsFinished.mockReturnValue(
-        "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()"
-      );
       _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[0]);
       _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[1]);
 
@@ -345,11 +332,8 @@ describe('QuizParticipantRepository', () => {
         );
 
       expect(_libQuizParticipantRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentIds, createdBy: mockUserId, isHighest: true },
-        whereRaw:
-          "finished_at IS NOT NULL OR started_at + time_limit * interval '1 second' <= NOW()",
+        where: { postId: mockContentIds, createdBy: mockUserId, isHighest: true, finishedAt: null },
       });
-      expect(_libQuizParticipantRepo.getConditionIsFinished).toBeCalled();
       expect(quizParticipant).toEqual(
         new Map(mockQuizParticipantEntities.map((e) => [e.get('contentId'), e]))
       );
@@ -374,9 +358,6 @@ describe('QuizParticipantRepository', () => {
       _libQuizParticipantRepo.findMany.mockResolvedValue(
         mockQuizParticipantRecords as QuizParticipantModel[]
       );
-      _libQuizParticipantRepo.getConditionIsNotFinished.mockReturnValue(
-        "finished_at IS NULL AND started_at + time_limit * interval '1 second' > NOW()"
-      );
       _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[0]);
       _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[1]);
 
@@ -387,10 +368,8 @@ describe('QuizParticipantRepository', () => {
         );
 
       expect(_libQuizParticipantRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentIds, createdBy: mockUserId },
-        whereRaw: "finished_at IS NULL AND started_at + time_limit * interval '1 second' > NOW()",
+        where: { postId: mockContentIds, createdBy: mockUserId, finishedAt: null },
       });
-      expect(_libQuizParticipantRepo.getConditionIsNotFinished).toBeCalled();
       expect(quizParticipant).toEqual(
         new Map(mockQuizParticipantEntities.map((e) => [e.get('contentId'), e]))
       );
