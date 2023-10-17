@@ -21,6 +21,9 @@ export type FindContentConditionOptions = {
 
 export type FindContentIncludeOptions = {
   mustIncludeGroup?: boolean;
+  mustIncludeSaved?: {
+    userId?: string;
+  };
   shouldIncludeGroup?: boolean;
   shouldIncludeSeries?: boolean;
   shouldIncludeItems?: boolean;
@@ -33,6 +36,7 @@ export type FindContentIncludeOptions = {
   shouldIncludeSaved?: {
     userId?: string;
   };
+
   shouldIncludeMarkReadImportant?: {
     userId: string;
   };
@@ -44,8 +48,10 @@ export type FindContentIncludeOptions = {
 export type OrderOptions = {
   isImportantFirst?: boolean;
   isPublishedByDesc?: boolean;
+  isSavedDateByDesc?: boolean;
   sortColumn?: keyof PostAttributes;
   orderBy?: ORDER;
+  createdAtDesc?: boolean;
 };
 
 export type FindContentProps = {

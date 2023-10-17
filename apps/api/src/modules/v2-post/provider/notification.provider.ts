@@ -2,6 +2,9 @@ import {
   NotiArticleDeletedEventHandler,
   NotiArticlePublishedEventHandler,
   NotiArticleUpdatedEventHandler,
+  NotiPostDeletedEventHandler,
+  NotiPostPublishedEventHandler,
+  NotiPostUpdatedEventHandler,
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,
   NotiSeriesSameOwnerChangedEventHandler,
@@ -12,6 +15,10 @@ export const notificationProvider = [
   NotiArticleDeletedEventHandler,
   NotiArticlePublishedEventHandler,
   NotiArticleUpdatedEventHandler,
+
+  NotiPostDeletedEventHandler,
+  NotiPostPublishedEventHandler,
+  NotiPostUpdatedEventHandler,
 
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,

@@ -46,8 +46,13 @@ export type GetImportantContentIdsProps = {
   authUserId: string;
   isOnNewsfeed?: boolean;
   groupIds?: string[];
-  isMine?: boolean;
-  isSaved?: boolean;
+  type?: CONTENT_TYPE;
+} & CursorPaginationProps;
+
+export type GetPostsSaved = {
+  authUserId: string;
+  isOnNewsfeed?: boolean;
+  groupIds?: string[];
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
 

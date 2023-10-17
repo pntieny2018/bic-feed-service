@@ -20,9 +20,6 @@ import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
-  ProcessPostDeletedHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
@@ -53,6 +50,7 @@ import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
+  PostUpdatedEventHandler,
 } from '../application/event-handler/post';
 import {
   SeriesCreatedEventHandler,
@@ -129,6 +127,7 @@ export const postProvider = [
   PostPublishedEventHandler,
   PostScheduledEventHandler,
   PostDeletedEventHandler,
+  PostUpdatedEventHandler,
 
   SeriesCreatedEventHandler,
   SeriesUpdatedEventHandler,
@@ -161,13 +160,10 @@ export const postProvider = [
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
-  ProcessPostDeletedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,

@@ -1,8 +1,8 @@
+import { MEDIA_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { difference, intersection } from 'lodash';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { MediaType } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';
@@ -90,16 +90,16 @@ export class MediaDomainService implements IMediaDomainService {
   }
 
   public async setMediaUsed(
-    mediaType: MediaType,
+    mediaType: MEDIA_TYPE,
     mediaIds: string[],
     userId: string = null
   ): Promise<void> {
     const config = {
-      [MediaType.FILE]: {
+      [MEDIA_TYPE.FILE]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED,
         keyIds: 'fileIds',
       },
-      [MediaType.VIDEO]: {
+      [MEDIA_TYPE.VIDEO]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED,
         keyIds: 'videoIds',
       },
@@ -117,16 +117,16 @@ export class MediaDomainService implements IMediaDomainService {
   }
 
   public async setMediaDelete(
-    mediaType: MediaType,
+    mediaType: MEDIA_TYPE,
     mediaIds: string[],
     userId: string = null
   ): Promise<void> {
     const config = {
-      [MediaType.FILE]: {
+      [MEDIA_TYPE.FILE]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES,
         keyIds: 'fileIds',
       },
-      [MediaType.VIDEO]: {
+      [MEDIA_TYPE.VIDEO]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS,
         keyIds: 'videoIds',
       },

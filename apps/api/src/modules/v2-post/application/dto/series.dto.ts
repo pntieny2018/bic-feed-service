@@ -118,6 +118,7 @@ export class ContentsInSeriesDto {
     id: string;
     name: string;
   }[];
+  public publishedAt?: Date;
 
   public constructor(data: Partial<ContentsInSeriesDto>) {
     Object.assign(this, data);
