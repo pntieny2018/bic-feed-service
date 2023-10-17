@@ -138,7 +138,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     if (orderOptions.sortColumn && orderOptions.orderBy) {
       order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
-    order.push(['createdAt', ORDER.DESC]);
+    if (orderOptions.isSavedDateByDesc) {
+      order.push(['userSavePosts', 'createdAt', ORDER.DESC]);
+    }
+    if (orderOptions.createdAtDesc) {
+      order.push(['createdAt', ORDER.DESC]);
+    }
     return order;
   }
 
@@ -183,7 +188,9 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       shouldIncludeQuiz,
       shouldIncludeReaction,
       shouldIncludeItems,
+      shouldIncludeSaved,
       mustIncludeGroup,
+      mustIncludeSaved,
     } = options.include;
 
     if (shouldIncludeGroup || mustIncludeGroup) {
@@ -266,6 +273,17 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         as: 'categories',
         required: false,
         select: ['id', 'name'],
+      });
+    }
+
+    if (shouldIncludeSaved || mustIncludeSaved) {
+      includeable.push({
+        model: UserSavePostModel,
+        as: 'userSavePosts',
+        required: Boolean(mustIncludeSaved),
+        where: {
+          userId: shouldIncludeSaved?.userId || mustIncludeSaved?.userId,
+        },
       });
     }
 
