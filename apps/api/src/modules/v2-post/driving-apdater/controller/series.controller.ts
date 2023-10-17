@@ -129,7 +129,7 @@ export class SeriesController {
   @ResponseMessages({
     success: 'message.series.removed_success',
   })
-  @Put(ROUTES.SERIES.REMOVE_ITEMS.PATH)
+  @Delete(ROUTES.SERIES.REMOVE_ITEMS.PATH)
   @Version(ROUTES.SERIES.REMOVE_ITEMS.VERSIONS)
   public async removeItems(
     @AuthUser() authUser: UserDto,

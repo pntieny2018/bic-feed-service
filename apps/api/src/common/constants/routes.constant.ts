@@ -64,15 +64,15 @@ export const ROUTES = {
     },
     ADD_ITEMS: {
       PATH: '/series/:seriesId/items',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     REMOVE_ITEMS: {
       PATH: '/series/:seriesId/items',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     REORDER_ITEMS: {
       PATH: '/series/:seriesId/items/order',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },
   POST: {
