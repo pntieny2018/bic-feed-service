@@ -11,7 +11,6 @@ import {
   ReportContentDetailModel,
 } from '@libs/database/postgres/model';
 import { BaseRepository } from '@libs/database/postgres/repository';
-import { UserDto } from '@libs/service/user';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { concat } from 'lodash';
@@ -133,30 +132,6 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
     return { rows, meta, targetIndex };
   }
 
-  public async findComment(id: string, authUser: UserDto): Promise<CommentModel> {
-    const findOptions: FindOptions = {
-      include: [
-        authUser
-          ? {
-              model: CommentReactionModel,
-              as: 'ownerReactions',
-              on: {
-                [Op.and]: {
-                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUser.id,
-                },
-              },
-            }
-          : {},
-      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
-      where: {
-        id,
-        isHidden: false,
-      },
-    };
-    return this.model.findOne(findOptions);
-  }
-
   public async findOne(
     where: WhereOptions<CommentAttributes>,
     options?: FindOneOptions
@@ -179,20 +154,8 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
         ],
       };
     }
-    if (options?.includeOwnerReactions) {
-      findOptions.include = [
-        {
-          model: CommentReactionModel,
-          as: 'ownerReactions',
-          on: {
-            [Op.and]: {
-              comment_id: { [Op.eq]: col(`CommentModel.id`) },
-              created_by: options?.includeOwnerReactions,
-            },
-          },
-        },
-      ];
-    }
+
+    findOptions.include = this._buildIncludeOptions(options);
 
     return this.model.findOne(findOptions);
   }
@@ -227,5 +190,47 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
       await transaction.rollback();
       throw e;
     }
+  }
+
+  private _buildIncludeOptions(options: FindOneOptions): Includeable[] {
+    const includeable: Includeable[] = [];
+
+    if (options?.includeOwnerReactions) {
+      includeable.push({
+        model: CommentReactionModel,
+        as: 'ownerReactions',
+        on: {
+          [Op.and]: {
+            comment_id: { [Op.eq]: col(`CommentModel.id`) },
+            created_by: options?.includeOwnerReactions,
+          },
+        },
+      });
+    }
+
+    if (options?.includeChildComments) {
+      includeable.push({
+        model: CommentModel,
+        as: 'child',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: options.includeChildComments.childCommentId,
+          },
+          createdAt: {
+            [Op.lte]: Sequelize.literal(
+              `(SELECT created_at FROM ${CommentModel.getTableName()} WHERE id = '${
+                options.includeChildComments.childCommentId
+              }')`
+            ),
+          },
+        },
+
+        limit: 100,
+        order: [['createdAt', 'DESC']],
+      });
+    }
+
+    return includeable;
   }
 }

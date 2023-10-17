@@ -1,12 +1,17 @@
 import { Inject } from '@nestjs/common';
+import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ArticleDto, CommentDto, PostDto } from '../../../v2-post/application/dto';
+import { CommentResponseDto } from '../../../v2-post/driving-apdater/dto/response';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
+  ActivityObject,
+  ActorObjectDto,
   CommentActivityObjectDto,
   CommentObjectDto,
+  MediaObjectDto,
   NotificationActivityDto,
   NotificationPayloadDto,
 } from '../dto';
@@ -67,8 +72,19 @@ export class CommentNotificationApplicationService
     }
     if (prevCommentActivities?.length) {
       kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
-        ? { ...kafkaPayload.value.meta.comment, prevCommentActivities }
-        : { prevCommentActivities };
+        ? {
+            ...kafkaPayload.value.meta.comment,
+            prevCommentActivities: this._createPrevCommentActivities(
+              prevCommentActivities,
+              content
+            ),
+          }
+        : {
+            prevCommentActivities: this._createPrevCommentActivities(
+              prevCommentActivities,
+              content
+            ),
+          };
     }
 
     await this._kafkaAdapter.emit<NotificationPayloadDto<CommentActivityObjectDto>>(
@@ -144,6 +160,67 @@ export class CommentNotificationApplicationService
       target: target,
       createdAt: content.createdAt,
       updatedAt: content.updatedAt,
+    });
+  }
+
+  private _createPrevCommentActivities(
+    comments: CommentResponseDto[],
+    content: PostDto | ArticleDto
+  ): NotificationActivityDto<ActivityObject>[] {
+    return comments.map((comment) => {
+      const activity = new ActivityObject({
+        id: content.id,
+        actor: new ActorObjectDto({
+          id: content.actor.id,
+          username: content.actor.username,
+          avatar: content.actor.avatar,
+          fullname: content.actor.fullname,
+          email: content.actor.email,
+        }),
+        audience: {
+          groups: content.audience.groups.map((g) => ({
+            id: g.id,
+            name: g.name,
+            icon: g.icon,
+            communityId: g.communityId,
+            isCommunity: g.isCommunity,
+          })),
+        },
+        title: (content as ArticleDto)?.title || '',
+        contentType: content.type.toLowerCase(),
+        content: content.content,
+        media:
+          (content as PostDto)?.media ||
+          new MediaObjectDto({
+            files: [],
+            images: [],
+            videos: [],
+          }),
+        setting: content.setting,
+        mentions: content.mentions,
+        comment: {
+          id: comment.id,
+          actor: comment.actor,
+          content: comment.content,
+          media: comment.media,
+          giphyId: comment.giphyId,
+          giphyUrl: comment.giphyUrl,
+          mentions: comment.mentions as any,
+          createdAt: comment.createdAt,
+          updatedAt: comment.updatedAt,
+        },
+        createdAt: content.createdAt,
+        updatedAt: content.createdAt,
+      });
+
+      return new NotificationActivityDto<ActivityObject>({
+        id: v4(),
+        object: activity,
+        verb: VerbActivity.COMMENT,
+        target: content.type as unknown as TargetType,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      });
     });
   }
 }

@@ -44,6 +44,12 @@ export interface ICommentRepository {
   destroyComment(id: string): Promise<void>;
 
   findOne(where: WhereOptions<CommentAttributes>, options?: FindOneProps): Promise<CommentEntity>;
+
+  findPrevComments(commentId: string, contentId: string): Promise<CommentEntity[]>;
+
+  getValidUsersFollow(userIds: string[], groupIds: string[]): Promise<string[]>;
+
+  getParentComment(commentId: string, commentParentId: string): Promise<CommentEntity>;
 }
 
 export const COMMENT_REPOSITORY_TOKEN = 'COMMENT_REPOSITORY_TOKEN';

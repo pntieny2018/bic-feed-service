@@ -3,7 +3,6 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../../events/comment';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
@@ -48,9 +47,9 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
   ) {}
 
   public async execute(command: ReplyCommentCommand): Promise<CommentDto> {
-    const { actor, postId, mentions, parentId } = command.payload;
+    const { actor, contentId, mentions, parentId } = command.payload;
 
-    const post = await this._contentDomainService.getVisibleContent(postId);
+    const post = await this._contentDomainService.getVisibleContent(contentId);
 
     this._contentValidator.checkCanReadContent(post, actor);
 
@@ -71,13 +70,6 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       userId: actor.id,
       parentId,
     });
-
-    this._eventEmitter.emit(
-      new CommentHasBeenCreatedEvent({
-        actor,
-        commentId: commentEntity.get('id'),
-      })
-    );
 
     return this._commentBinding.commentBinding(commentEntity, { actor });
   }

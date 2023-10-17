@@ -44,9 +44,9 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
   ) {}
 
   public async execute(command: UpdateCommentCommand): Promise<void> {
-    const { actor, id, mentions } = command.payload;
+    const { actor, commentId, mentions } = command.payload;
 
-    const comment = await this._commentDomainService.getVisibleComment(id);
+    const comment = await this._commentDomainService.getVisibleComment(commentId);
 
     if (!comment.isOwner(actor.id)) {
       throw new ContentAccessDeniedException();
@@ -71,14 +71,14 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     await this._commentDomainService.update({
       ...command.payload,
       userId: actor.id,
-      postId: comment.get('postId'),
+      contentId: comment.get('postId'),
     });
 
     this._eventEmitter.emit(
       new CommentHasBeenUpdatedEvent({
         actor,
         oldMentions: comment.get('mentions'),
-        commentId: id,
+        commentId,
       })
     );
   }

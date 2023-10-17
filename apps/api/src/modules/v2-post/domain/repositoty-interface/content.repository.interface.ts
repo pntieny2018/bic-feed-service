@@ -55,6 +55,7 @@ export interface IContentRepository {
   pinContent(contentId: string, groupIds: string[]): Promise<void>;
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
   saveContent(userId: string, contentId: string): Promise<void>;
+  findActorReportIds(targetId: string, contentTarget?: CONTENT_TARGET): Promise<string[]>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

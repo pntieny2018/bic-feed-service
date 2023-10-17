@@ -30,6 +30,10 @@ export class CommentMapper {
       updatedAt: model.updatedAt,
       content: model.content,
       mentions: model.mentions,
+      childs: {
+        rows: (model?.child || []).map((child) => this.toDomain(child)),
+        meta: {},
+      },
       media: {
         images: (model.mediaJson?.images || []).map(
           (image) => new ImageEntity(image as unknown as ImageAttributes)

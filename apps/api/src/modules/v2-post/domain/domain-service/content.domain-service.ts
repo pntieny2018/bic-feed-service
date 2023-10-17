@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { GetPaginationContentsProps } from '@libs/database/postgres';
 import {
   createCursor,
   CursorPaginationResult,
@@ -43,7 +44,6 @@ import {
   ReorderContentProps,
   UpdateSettingsProps,
 } from './interface';
-import { GetPaginationContentsProps } from '@libs/database/postgres';
 
 export class ContentDomainService implements IContentDomainService {
   private readonly _logger = new Logger(ContentDomainService.name);
@@ -60,6 +60,33 @@ export class ContentDomainService implements IContentDomainService {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     private readonly _authorityAppService: IAuthorityAppService
   ) {}
+
+  public async getContentById(
+    id: string,
+    authUserId?: string
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeItems: true,
+      shouldIncludeLinkPreview: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeSaved: {
+        userId: authUserId,
+      },
+      shouldIncludeMarkReadImportant: {
+        userId: authUserId,
+      },
+      shouldIncludeReaction: {
+        userId: authUserId,
+      },
+    });
+
+    if (!content || content.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    return content;
+  }
 
   public async getVisibleContent(
     contentId: string,

@@ -1,26 +1,11 @@
+import { UserDto } from '@libs/service/user';
 import { ICommand } from '@nestjs/cqrs';
 
-import { UserDto } from '../../../../../v2-user/application/user.dto';
+import { BasedCommentPayload } from '../../../../domain/domain-service/interface';
 
 export type ReplyCommentCommandPayload = {
   actor: UserDto;
-
-  postId: string;
-
-  parentId: string;
-
-  content?: string;
-
-  media?: {
-    files: string[];
-    images: string[];
-    videos: string[];
-  };
-
-  mentions?: string[];
-
-  giphyId?: string;
-};
+} & Omit<BasedCommentPayload, 'userId'>;
 
 export class ReplyCommentCommand implements ICommand {
   public constructor(public readonly payload: ReplyCommentCommandPayload) {}

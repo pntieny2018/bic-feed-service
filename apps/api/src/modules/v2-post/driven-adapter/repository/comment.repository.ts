@@ -1,8 +1,9 @@
-import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { CommentAttributes } from '@libs/database/postgres/model';
-import { LibCommentRepository } from '@libs/database/postgres/repository';
+import { CursorPaginationResult, getDatabaseConfig } from '@libs/database/postgres/common';
+import { CommentAttributes, CommentModel } from '@libs/database/postgres/model';
+import { LibCommentRepository, LibFollowRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
-import { WhereOptions } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
 import { CommentEntity } from '../../domain/model/comment';
 import {
@@ -18,6 +19,7 @@ import { CommentMapper } from '../mapper/comment.mapper';
 export class CommentRepository implements ICommentRepository {
   public constructor(
     private readonly _libCommentRepo: LibCommentRepository,
+    private readonly _libFollowRepo: LibFollowRepository,
     private readonly _commentMapper: CommentMapper
   ) {}
 
@@ -74,5 +76,67 @@ export class CommentRepository implements ICommentRepository {
 
   public async destroyComment(id: string): Promise<void> {
     await this._libCommentRepo.destroyComment(id);
+  }
+
+  public async findPrevComments(commentId: string, contentId: string): Promise<CommentEntity[]> {
+    const { schema } = getDatabaseConfig();
+    const comments = await this._libCommentRepo.findMany({
+      where: {
+        postId: contentId,
+        id: {
+          [Op.not]: commentId,
+        },
+        createdAt: {
+          [Op.lte]: Sequelize.literal(
+            `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${commentId}')`
+          ),
+        },
+      },
+      order: [['created_at', 'DESC']],
+      limit: 100,
+    });
+
+    return (comments ?? []).map((comment) => this._commentMapper.toDomain(comment));
+  }
+
+  public async getValidUsersFollow(userIds: string[], groupIds: string[]): Promise<string[]> {
+    const { schema } = getDatabaseConfig();
+    const followModel = this._libFollowRepo.getModel();
+    if (!userIds.length) {
+      return [];
+    }
+    const rows = await followModel.sequelize.query(
+      ` SELECT DISTINCT(user_id), zindex
+        FROM ${schema}.${followModel.tableName} tb1
+        WHERE group_id IN (:groupIds) AND user_id IN (:userIds)`,
+      {
+        replacements: {
+          groupIds,
+          userIds,
+        },
+      }
+    );
+    if (!rows) {
+      return [];
+    }
+    return rows[0].map((r) => r['user_id']);
+  }
+
+  public async getParentComment(
+    commentId: string,
+    commentParentId: string
+  ): Promise<CommentEntity> {
+    const comment = await this._libCommentRepo.findOne(
+      {
+        id: commentParentId,
+      },
+      {
+        includeChildComments: {
+          childCommentId: commentId,
+        },
+      }
+    );
+
+    return this._commentMapper.toDomain(comment);
   }
 }

@@ -27,9 +27,9 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
   ) {}
 
   public async execute(command: DeleteCommentCommand): Promise<void> {
-    const { actor, id } = command.payload;
+    const { actor, commentId } = command.payload;
 
-    const comment = await this._commentDomainService.getVisibleComment(id);
+    const comment = await this._commentDomainService.getVisibleComment(commentId);
 
     if (!comment.isOwner(actor.id)) {
       throw new ContentAccessDeniedException();
@@ -39,7 +39,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    await this._commentDomainService.delete(id);
+    await this._commentDomainService.delete(commentId);
 
     this._eventEmitter.emit(
       new CommentHasBeenDeletedEvent({
