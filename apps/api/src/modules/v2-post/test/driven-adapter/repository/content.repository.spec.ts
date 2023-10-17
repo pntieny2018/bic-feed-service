@@ -33,6 +33,7 @@ import {
   createMockCategoryEntity,
   createMockReportContentDetailRecord,
   createMockTagEntity,
+  createMockTagRecord,
 } from '../../mock';
 import {
   createMockArticleEntity,
@@ -41,6 +42,7 @@ import {
   createMockPostEntity,
   createMockPostGroupRecord,
   createMockPostRecord,
+  createMockPostSeriesRecord,
   createMockSeriesEntity,
   createMockSeriesRecord,
 } from '../../mock/content.mock';
@@ -275,6 +277,7 @@ describe('ContentRepository', () => {
 
   describe('_setSeries', () => {
     it('Should add and delete series success', async () => {
+      const mockPostEntity = createMockPostEntity({ postSeries: [createMockPostSeriesRecord()] });
       const mockAttachSeriesIds = [v4()];
       const mockDetachSeriesIds = mockPostEntity.getSeriesIds();
 
@@ -295,6 +298,7 @@ describe('ContentRepository', () => {
 
   describe('_setTags', () => {
     it('Should add and delete tags success', async () => {
+      const mockArticleEntity = createMockArticleEntity({ tagsJson: [createMockTagRecord()] });
       const mockAttachTagIds = [v4()];
       const mockDetachTagIds = mockArticleEntity.get('tags').map((tag) => tag.get('id'));
 

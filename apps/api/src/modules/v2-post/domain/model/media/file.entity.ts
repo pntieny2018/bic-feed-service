@@ -1,18 +1,10 @@
-import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
+import { File } from '@libs/common/dtos';
 import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
-export type FileAttributes = {
-  id: string;
-  url: string;
-  name: string;
-  createdBy: string;
-  mimeType: string;
-  size: number;
-  status?: MEDIA_PROCESS_STATUS;
-};
+export type FileAttributes = File;
 
 export class FileEntity extends DomainAggregateRoot<FileAttributes> {
   public constructor(props: FileAttributes) {

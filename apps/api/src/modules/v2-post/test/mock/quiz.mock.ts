@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import { QUIZ_PROCESS_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { QuizAnswerAttributes } from '@libs/database/postgres/model/quiz-answer.model';
 import { QuizParticipantAttributes } from '@libs/database/postgres/model/quiz-participant.model';
@@ -75,9 +76,10 @@ export function createMockQuizAnswerRecord(
 export function createMockQuizParticipationRecord(
   data: Partial<QuizParticipantAttributes> = {}
 ): QuizParticipantAttributes {
+  const quiz = createMockQuizRecord();
   return {
     id: v4(),
-    quizId: v4(),
+    quizId: quiz.id,
     postId: v4(),
     score: 0,
     isHighest: false,
@@ -86,7 +88,14 @@ export function createMockQuizParticipationRecord(
     totalCorrectAnswers: 0,
     startedAt: new Date(),
     finishedAt: null,
-    quizSnapshot: {},
+    quizSnapshot: {
+      title: quiz.title,
+      description: quiz.description,
+      questions: quiz.questions.map(({ quizId, ...question }) => ({
+        ...question,
+        answers: question.answers.map(({ questionId, ...answer }) => answer),
+      })),
+    },
     createdBy: v4(),
     updatedBy: v4(),
     createdAt: new Date(),
@@ -97,10 +106,10 @@ export function createMockQuizParticipationRecord(
 }
 
 export function createMockQuizEntity(data: Partial<QuizAttributes> = {}): QuizEntity {
-  const quiz = createMockQuizRecord(data);
+  const { postId, ...quiz } = createMockQuizRecord(data);
   return new QuizEntity({
     ...quiz,
-    contentId: quiz.postId,
+    contentId: postId,
     questions: quiz.questions.map(createMockQuizQuestionEntity),
   });
 }
@@ -109,7 +118,10 @@ export function createMockQuizQuestionEntity(
   data: Partial<QuizQuestionAttributes> = {}
 ): QuizQuestionEntity {
   const question = createMockQuizQuestionRecord(data);
-  return new QuizQuestionEntity(question);
+  return new QuizQuestionEntity({
+    ...question,
+    answers: question.answers.map(({ questionId, ...answer }) => answer),
+  });
 }
 
 export function createMockQuizParticipantEntity(
