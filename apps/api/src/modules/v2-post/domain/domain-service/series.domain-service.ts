@@ -307,20 +307,16 @@ export class SeriesDomainService implements ISeriesDomainService {
     content.setSeriesIds(uniq([...content.getSeriesIds(), id]));
     await this._contentValidator.validateLimitedToAttachSeries(content);
 
-    try {
-      await this._contentRepository.createPostsSeries(id, [itemId]);
-      this.event.publish(
-        new SeriesItemsAddedEvent({
-          authUser,
-          seriesId: id,
-          item: content,
-          context: 'add',
-        })
-      );
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
+    await this._contentRepository.createPostSeries(id, itemId);
+
+    this.event.publish(
+      new SeriesItemsAddedEvent({
+        authUser,
+        seriesId: id,
+        item: content,
+        context: 'add',
+      })
+    );
   }
 
   public async removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void> {
@@ -352,20 +348,16 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    try {
-      await this._contentRepository.deletePostsSeries(id, [itemId]);
-      this.event.publish(
-        new SeriesItemsRemovedEvent({
-          authUser,
-          seriesId: id,
-          item: content,
-          contentIsDeleted: false,
-        })
-      );
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
+    await this._contentRepository.deletePostSeries(id, itemId);
+
+    this.event.publish(
+      new SeriesItemsRemovedEvent({
+        authUser,
+        seriesId: id,
+        item: content,
+        contentIsDeleted: false,
+      })
+    );
   }
 
   public async reorderSeriesItems(input: ReorderSeriesItemsProps): Promise<void> {
@@ -389,12 +381,8 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.get('type')
     );
 
-    try {
-      await this._contentRepository.updatePostsSeries(id, itemIds);
-      this.event.publish(new SeriesItemsReoderedEvent(id));
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
+    await this._contentRepository.reorderPostsSeries(id, itemIds);
+
+    this.event.publish(new SeriesItemsReoderedEvent(id));
   }
 }

@@ -470,54 +470,38 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  public async createPostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
-    const transaction = await this._sequelizeConnection.transaction();
-    try {
-      let maxIndex =
-        (await this._libPostSeriesRepo.max('zindex', {
-          where: {
-            seriesId,
-          },
-        })) || 0;
+  public async createPostSeries(seriesId: string, postId: string): Promise<void> {
+    const maxIndex =
+      (await this._libPostSeriesRepo.max('zindex', {
+        where: {
+          seriesId,
+        },
+      })) || 0;
 
-      const dataInsert = itemIds.map((itemId) => ({
-        seriesId,
-        postId: itemId,
-        zindex: ++maxIndex,
-      }));
-
-      await this._libPostSeriesRepo.bulkCreate(dataInsert, {
-        transaction,
+    await this._libPostSeriesRepo.bulkCreate(
+      [
+        {
+          seriesId,
+          postId,
+          zindex: maxIndex + 1,
+        },
+      ],
+      {
         ignoreDuplicates: true,
-      });
-
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  public async deletePostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
-    const transaction = await this._sequelizeConnection.transaction();
-    try {
-      for (const itemId of itemIds) {
-        await this._libPostSeriesRepo.delete({
-          where: {
-            seriesId,
-            postId: itemId,
-          },
-          transaction,
-        });
       }
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
+    );
   }
 
-  public async updatePostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
+  public async deletePostSeries(seriesId: string, postId: string): Promise<void> {
+    await this._libPostSeriesRepo.delete({
+      where: {
+        seriesId,
+        postId,
+      },
+    });
+  }
+
+  public async reorderPostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       let zindex = 0;
