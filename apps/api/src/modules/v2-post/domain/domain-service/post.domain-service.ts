@@ -293,7 +293,7 @@ export class PostDomainService implements IPostDomainService {
       return;
     }
 
-    await this._validateAndSetPostAttributes(postEntity, props.payload, authUser);
+    await this._validateAndSetPostAttributes(postEntity, props.payload, authUser, false);
     if (!postEntity.isChanged()) {
       return;
     }
@@ -329,7 +329,8 @@ export class PostDomainService implements IPostDomainService {
   private async _validateAndSetPostAttributes(
     postEntity: PostEntity,
     payload: PostPayload,
-    actor: UserDto
+    actor: UserDto,
+    validatePublishContent = true
   ): Promise<void> {
     const { content, seriesIds, tagIds, groupIds, media, mentionUserIds, linkPreview } = payload;
 
@@ -354,7 +355,12 @@ export class PostDomainService implements IPostDomainService {
     postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
     postEntity.setPrivacyFromGroups(groups);
 
-    await this._postValidator.validatePublishContent(postEntity, actor, postEntity.get('groupIds'));
+    validatePublishContent &&
+      (await this._postValidator.validatePublishContent(
+        postEntity,
+        actor,
+        postEntity.get('groupIds')
+      ));
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     await this._postValidator.validateLimitedToAttachSeries(postEntity);
     await this._contentValidator.validateSeriesAndTags(
