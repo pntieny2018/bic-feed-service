@@ -40,7 +40,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload: NotificationPayloadDto<PostActivityObjectDto> = {
       key: post.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
       },
@@ -97,7 +99,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload: NotificationPayloadDto<ArticleActivityObjectDto> = {
       key: article.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
         meta: {},
@@ -170,7 +174,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload: NotificationPayloadDto<SeriesActivityObjectDto> = {
       key: Array.isArray(series) ? series[0].id : series.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
         meta: {},
