@@ -154,6 +154,7 @@ export class ContentNotificationApplicationService
       event,
       actor,
       series,
+      oldSeries,
       item,
       verb,
       targetUserIds,
@@ -175,6 +176,11 @@ export class ContentNotificationApplicationService
       },
     };
 
+    if (oldSeries) {
+      const oldSeriesObject = this._createSeriesActivityObject(oldSeries);
+      const oldActivity = this._createSeriesActivity(oldSeriesObject, verb);
+      kafkaPayload.value.meta['post']['oldData'] = oldActivity;
+    }
     if (targetUserIds?.length) {
       kafkaPayload.value.meta.series = kafkaPayload.value.meta.series
         ? { ...kafkaPayload.value.meta.series, targetUserIds: targetUserIds }
@@ -204,8 +210,15 @@ export class ContentNotificationApplicationService
 
   private _createSeriesActivityObject(
     series: SeriesDto,
-    item: PostDto | ArticleDto
+    item?: PostDto | ArticleDto
   ): SeriesActivityObjectDto {
+    let itemObject = null;
+    if (item) {
+      itemObject =
+        item instanceof PostDto
+          ? this._createPostActivityObject(item)
+          : this._createArticleActivityObject(item);
+    }
     return new SeriesActivityObjectDto({
       id: series.id,
       actor: series.actor,
@@ -213,10 +226,7 @@ export class ContentNotificationApplicationService
       contentType: series.type.toLocaleLowerCase(),
       setting: series.setting,
       audience: series.audience,
-      item:
-        item instanceof PostDto
-          ? this._createPostActivityObject(item)
-          : this._createArticleActivityObject(item),
+      item: itemObject,
       items: (series.items || []).map((item) =>
         item instanceof PostDto
           ? this._createPostActivityObject(item)

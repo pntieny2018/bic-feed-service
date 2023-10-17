@@ -7,7 +7,7 @@ export class SeriesCreatedEvent {
 }
 
 export class SeriesUpdatedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity) {}
+  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
 }
 
 export class SeriesDeletedEvent {

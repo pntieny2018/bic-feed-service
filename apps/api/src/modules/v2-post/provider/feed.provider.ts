@@ -4,6 +4,7 @@ import {
   FeedPostPublishedEventHandler,
   FeedPostUpdatedEventHandler,
   FeedSeriesPublishedEventHandler,
+  FeedSeriesUpdatedEventHandler,
 } from '../application/event-handler/feed';
 
 export const feedProvider = [
@@ -13,4 +14,5 @@ export const feedProvider = [
   FeedPostPublishedEventHandler,
   FeedPostUpdatedEventHandler,
   FeedSeriesPublishedEventHandler,
+  FeedSeriesUpdatedEventHandler,
 ];

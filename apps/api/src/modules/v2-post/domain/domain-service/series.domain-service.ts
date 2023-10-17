@@ -199,7 +199,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setMarkReadImportant();
     }
 
-    this.event.publish(new SeriesUpdatedEvent(seriesEntity));
+    this.event.publish(new SeriesUpdatedEvent(seriesEntity, actor));
 
     return seriesEntity;
   }

@@ -59,7 +59,7 @@ export class GroupAdapter implements IGroupAdapter {
     const groupMembers = await this._groupService.getUserRoleInGroups(groupIds, [
       ROLE_TYPE.GROUP_ADMIN,
     ]);
-    const groupAdmins = groupMembers[ROLE_TYPE.GROUP_ADMIN];
+    const groupAdmins = groupMembers.groupAdmin;
 
     const adminIds = Object.values(groupAdmins).flat();
 

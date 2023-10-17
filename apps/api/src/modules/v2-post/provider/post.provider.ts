@@ -27,7 +27,6 @@ import {
 import {
   CreateSeriesHandler,
   DeleteSeriesHandler,
-  ProcessSeriesUpdatedHandler,
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
@@ -44,7 +43,6 @@ import {
   PostScheduledEventHandler,
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
-import { SeriesUpdatedEventHandler } from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -117,8 +115,6 @@ export const postProvider = [
   PostDeletedEventHandler,
   PostUpdatedEventHandler,
 
-  SeriesUpdatedEventHandler,
-
   ContentHasSeenEventHandler,
 
   /** Application Binding */
@@ -152,7 +148,6 @@ export const postProvider = [
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
-  ProcessSeriesUpdatedHandler,
   UpdateSeriesHandler,
   ValidateSeriesTagsHandler,
 

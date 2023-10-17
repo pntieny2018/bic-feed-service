@@ -144,9 +144,9 @@ export class GroupService implements IGroupService {
     roles: ROLE_TYPE[]
   ): Promise<GetUserRoleInGroupsResult> {
     const defaultResult: GetUserRoleInGroupsResult = {
-      [ROLE_TYPE.OWNER]: {},
-      [ROLE_TYPE.COMMUNITY_ADMIN]: {},
-      [ROLE_TYPE.GROUP_ADMIN]: {},
+      communityAdmin: {},
+      groupAdmin: {},
+      owner: {},
     };
     try {
       const response = await this._httpService.post(
@@ -170,16 +170,16 @@ export class GroupService implements IGroupService {
     const userIds = [];
 
     for (const groupId of groupIds) {
-      if (data[ROLE_TYPE.COMMUNITY_ADMIN][groupId]) {
-        userIds.push(...data[ROLE_TYPE.COMMUNITY_ADMIN][groupId]);
+      if (data.communityAdmin[groupId]) {
+        userIds.push(...data.communityAdmin[groupId]);
       }
 
-      if (data[ROLE_TYPE.GROUP_ADMIN][groupId]) {
-        userIds.push(...data[ROLE_TYPE.GROUP_ADMIN][groupId]);
+      if (data.groupAdmin[groupId]) {
+        userIds.push(...data.groupAdmin[groupId]);
       }
 
-      if (data[ROLE_TYPE.OWNER][groupId]) {
-        userIds.push(...data[ROLE_TYPE.OWNER][groupId]);
+      if (data.owner[groupId]) {
+        userIds.push(...data.owner[groupId]);
       }
     }
     return userIds.includes(userId);

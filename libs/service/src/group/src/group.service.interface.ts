@@ -10,7 +10,9 @@ export type UserRoleInGroup = {
 };
 
 export type GetUserRoleInGroupsResult = {
-  [k in ROLE_TYPE]?: Record<string, string[]>;
+  [key in 'communityAdmin' | 'owner' | 'groupAdmin']: {
+    [key: string]: string[];
+  };
 };
 export interface IGroupService {
   findById(groupId: string): Promise<GroupDto>;
