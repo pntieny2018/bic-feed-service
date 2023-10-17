@@ -25,7 +25,7 @@ export type SeriesNotificationPayload = {
   event: string;
   actor: UserDto;
   series: SeriesDto;
-  item: PostDto | ArticleDto;
+  item?: PostDto | ArticleDto;
   verb: VerbActivity;
   targetUserIds?: string[];
   isSendToContentCreator?: boolean;

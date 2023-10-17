@@ -236,7 +236,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.delete(seriesEntity.get('id'));
 
-    this.event.publish(new SeriesDeletedEvent(seriesEntity));
+    this.event.publish(new SeriesDeletedEvent(seriesEntity, actor));
   }
 
   public async findItemsInSeries(

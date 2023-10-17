@@ -48,7 +48,8 @@ export class ArticleActivityObjectDto extends ContentActivityObjectDto {
 }
 
 export class SeriesActivityObjectDto extends ContentActivityObjectDto {
-  public item: PostActivityObjectDto | ArticleActivityObjectDto;
+  public item?: PostActivityObjectDto | ArticleActivityObjectDto;
+  public items?: (PostActivityObjectDto | ArticleActivityObjectDto)[];
 
   public constructor(data: SeriesActivityObjectDto) {
     super(data);

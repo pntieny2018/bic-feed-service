@@ -4,7 +4,6 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import {
-  ProcessSeriesDeletedCommand,
   ProcessSeriesPublishedCommand,
   ProcessSeriesUpdatedCommand,
 } from '../../application/command/series';
@@ -20,11 +19,6 @@ export class SeriesConsumer {
       case 'publish':
         await this._commandBus.execute<ProcessSeriesPublishedCommand, void>(
           new ProcessSeriesPublishedCommand(payload)
-        );
-        break;
-      case 'delete':
-        await this._commandBus.execute<ProcessSeriesDeletedCommand, void>(
-          new ProcessSeriesDeletedCommand(payload)
         );
         break;
       case 'update':

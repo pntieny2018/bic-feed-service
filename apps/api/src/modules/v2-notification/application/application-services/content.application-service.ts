@@ -217,6 +217,11 @@ export class ContentNotificationApplicationService
         item instanceof PostDto
           ? this._createPostActivityObject(item)
           : this._createArticleActivityObject(item),
+      items: (series.items || []).map((item) =>
+        item instanceof PostDto
+          ? this._createPostActivityObject(item)
+          : this._createArticleActivityObject(item as ArticleDto)
+      ),
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
     });
