@@ -106,10 +106,10 @@ export function createMockQuizParticipationRecord(
 }
 
 export function createMockQuizEntity(data: Partial<QuizAttributes> = {}): QuizEntity {
-  const quiz = createMockQuizRecord(data);
+  const { postId, ...quiz } = createMockQuizRecord(data);
   return new QuizEntity({
     ...quiz,
-    contentId: quiz.postId,
+    contentId: postId,
     questions: quiz.questions.map(createMockQuizQuestionEntity),
   });
 }
