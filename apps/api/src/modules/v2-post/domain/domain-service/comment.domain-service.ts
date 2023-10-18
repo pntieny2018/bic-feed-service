@@ -158,7 +158,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     const childsPagination = await this._commentRepository.getPagination({
       authUserId: userId,
-      postId,
+      contentId: postId,
       parentId: commentId,
       limit: targetChildLimit,
       order: ORDER.DESC,
