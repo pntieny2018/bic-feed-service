@@ -11,7 +11,7 @@ import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
 import { RULES } from '../../v2-post/constant';
 import {
-  ArticleLimitAttachedSeriesException,
+  ContentLimitAttachedSeriesException,
   ContentEmptyGroupException,
   SeriesNotFoundException,
   ValidationException,
@@ -85,7 +85,7 @@ export class SeriesAppService {
     );
 
     if (isOverLimitedToAttachSeries) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     await this._authorityService.checkCanUpdateSeries(

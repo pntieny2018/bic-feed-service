@@ -1,7 +1,4 @@
 export const GROUP_ENDPOINT = {
-  ME: {
-    PERMISSION: '/me/permissions',
-  },
   GROUP_MEMBERS: '/groups/:groupId/members',
   INTERNAL: {
     COMMUNITY_ADMINS: '/internal/communities-admins',

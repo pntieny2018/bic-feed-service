@@ -244,6 +244,12 @@ export class ContentMapper {
       title: post.title,
       summary: post.summary,
       itemIds: (post.itemIds || []).sort((a, b) => a.zindex - b.zindex).map((item) => item.postId),
+      items:
+        (post.itemIds || [])
+          .sort((a, b) => {
+            return a.zindex - b.zindex;
+          })
+          .map((item) => ({ postId: item.postId, zindex: item.zindex })) || [],
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
     });
   }

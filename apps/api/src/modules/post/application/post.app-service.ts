@@ -13,11 +13,11 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-grou
 import { RULES } from '../../v2-post/constant';
 import {
   AudienceNoBelongContentException,
+  ContentLimitAttachedSeriesException,
   ContentNotFoundException,
   ContentPinLackException,
   ContentPinNotFoundException,
   PostInvalidParameterException,
-  PostLimitAttachedSeriesException,
 } from '../../v2-post/domain/exception';
 import {
   IUserApplicationService,
@@ -265,7 +265,7 @@ export class PostAppService {
 
   public async validateUpdateSeriesData(postId: string, series: string[]): Promise<void> {
     if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     const post = (await this._postService.getPostsWithSeries([postId], true))[0];
@@ -274,7 +274,7 @@ export class PostAppService {
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimitedToAttachSeries) {
-      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

@@ -2,9 +2,13 @@ import {
   SearchArticleDeletedEventHandler,
   SearchArticlePublishedEventHandler,
   SearchArticleUpdatedEventHandler,
+  SearchContentAttachedSeriesEventHandler,
   SearchPostDeletedEventHandler,
   SearchPostPublishedEventHandler,
   SearchPostUpdatedEventHandler,
+  SearchSeriesItemsAddedEventHandler,
+  SearchSeriesItemsRemovedEventHandler,
+  SearchSeriesItemsReorderedEventHandler,
 } from '../application/event-handler/search';
 
 export const searchProvider = [
@@ -12,7 +16,13 @@ export const searchProvider = [
   SearchArticleDeletedEventHandler,
   SearchArticlePublishedEventHandler,
   SearchArticleUpdatedEventHandler,
+
   SearchPostDeletedEventHandler,
   SearchPostPublishedEventHandler,
   SearchPostUpdatedEventHandler,
+
+  SearchContentAttachedSeriesEventHandler,
+  SearchSeriesItemsReorderedEventHandler,
+  SearchSeriesItemsAddedEventHandler,
+  SearchSeriesItemsRemovedEventHandler,
 ];

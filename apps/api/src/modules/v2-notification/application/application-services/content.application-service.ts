@@ -1,4 +1,7 @@
+import { CONTENT_TYPE } from '@beincom/constants';
+import { StringHelper } from '@libs/common/helpers';
 import { Inject } from '@nestjs/common';
+import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ArticleDto, PostDto, SeriesDto } from '../../../v2-post/application/dto';
@@ -17,6 +20,7 @@ import {
   IContentNotificationApplicationService,
   PostNotificationPayload,
   SeriesNotificationPayload,
+  SeriesWithStateDto,
 } from './interface';
 
 export class ContentNotificationApplicationService
@@ -36,7 +40,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload: NotificationPayloadDto<PostActivityObjectDto> = {
       key: post.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
       },
@@ -59,12 +65,12 @@ export class ContentNotificationApplicationService
   private _createPostActivityObject(post: PostDto): PostActivityObjectDto {
     return new PostActivityObjectDto({
       id: post.id,
-      actor: post.actor,
+      actor: { id: post.createdBy },
       title: null,
-      contentType: post.type.toLocaleLowerCase(),
+      contentType: post.type.toLowerCase(),
       setting: post.setting,
       audience: post.audience,
-      content: post.content,
+      content: StringHelper.removeMarkdownCharacter(post.content),
       mentions: post.mentions,
       media: post.media,
       createdAt: post.createdAt,
@@ -76,12 +82,11 @@ export class ContentNotificationApplicationService
     post: PostActivityObjectDto
   ): NotificationActivityDto<PostActivityObjectDto> {
     return new NotificationActivityDto<PostActivityObjectDto>({
-      id: post.id,
-      object: { ...post, contentType: post.contentType.toLowerCase() },
+      id: v4(),
+      object: post,
       verb: VerbActivity.POST,
       target: TargetType.POST,
-      createdAt: post.createdAt,
-      updatedAt: post.updatedAt,
+      createdAt: new Date(),
     });
   }
 
@@ -94,7 +99,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload: NotificationPayloadDto<ArticleActivityObjectDto> = {
       key: article.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
         meta: {},
@@ -122,9 +129,9 @@ export class ContentNotificationApplicationService
   private _createArticleActivityObject(article: ArticleDto): ArticleActivityObjectDto {
     return new ArticleActivityObjectDto({
       id: article.id,
-      actor: article.actor,
+      actor: { id: article.createdBy },
       title: article.title,
-      contentType: article.type.toLocaleLowerCase(),
+      contentType: article.type.toLowerCase(),
       setting: article.setting,
       audience: article.audience,
       content: article.content,
@@ -140,12 +147,11 @@ export class ContentNotificationApplicationService
     article: ArticleActivityObjectDto
   ): NotificationActivityDto<ArticleActivityObjectDto> {
     return new NotificationActivityDto<ArticleActivityObjectDto>({
-      id: article.id,
-      object: { ...article, contentType: article.contentType.toLowerCase() },
+      id: v4(),
+      object: article,
       verb: VerbActivity.POST,
       target: TargetType.ARTICLE,
-      createdAt: article.createdAt,
-      updatedAt: article.updatedAt,
+      createdAt: new Date(),
     });
   }
 
@@ -166,9 +172,11 @@ export class ContentNotificationApplicationService
     const activity = this._createSeriesActivity(seriesObject, verb);
 
     const kafkaPayload: NotificationPayloadDto<SeriesActivityObjectDto> = {
-      key: series.id,
+      key: Array.isArray(series) ? series[0].id : series.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
         meta: {},
@@ -203,20 +211,43 @@ export class ContentNotificationApplicationService
   }
 
   private _createSeriesActivityObject(
-    series: SeriesDto,
-    item: PostDto | ArticleDto
+    series: SeriesDto | SeriesWithStateDto[],
+    content: PostDto | ArticleDto
   ): SeriesActivityObjectDto {
+    if (Array.isArray(series)) {
+      return new SeriesActivityObjectDto({
+        id: content.id,
+        actor: { id: content.createdBy },
+        title: content.type === CONTENT_TYPE.ARTICLE ? (content as ArticleDto).title : null,
+        content: content.content,
+        contentType: content.type.toLowerCase(),
+        setting: content.setting,
+        audience: content.audience,
+        items: series.map((seriesWithState) => ({
+          actor: {
+            id: seriesWithState.createdBy,
+          },
+          id: seriesWithState.id,
+          title: seriesWithState.title,
+          audience: seriesWithState.audience,
+          state: seriesWithState.state,
+        })),
+        createdAt: content.createdAt,
+        updatedAt: content.createdAt,
+      });
+    }
+
     return new SeriesActivityObjectDto({
       id: series.id,
-      actor: series.actor,
+      actor: { id: series.createdBy },
       title: series.title,
-      contentType: series.type.toLocaleLowerCase(),
+      contentType: series.type.toLowerCase(),
       setting: series.setting,
       audience: series.audience,
       item:
-        item instanceof PostDto
-          ? this._createPostActivityObject(item)
-          : this._createArticleActivityObject(item),
+        content instanceof PostDto
+          ? this._createPostActivityObject(content)
+          : this._createArticleActivityObject(content),
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
     });
@@ -227,12 +258,11 @@ export class ContentNotificationApplicationService
     verb: VerbActivity
   ): NotificationActivityDto<SeriesActivityObjectDto> {
     return new NotificationActivityDto<SeriesActivityObjectDto>({
-      id: series.id,
-      object: { ...series, contentType: series.contentType.toLowerCase() },
+      id: v4(),
+      object: series,
       verb: verb,
       target: TargetType.SERIES,
-      createdAt: series.createdAt,
-      updatedAt: series.updatedAt,
+      createdAt: new Date(),
     });
   }
 }

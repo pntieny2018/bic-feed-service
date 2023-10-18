@@ -1,8 +1,11 @@
+import * as path from 'path';
+
+import { LANGUAGE } from '@beincom/constants';
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
-import { Language, LANGUAGE_HEADER } from '../../common/constants';
-import * as path from 'path';
+
+import { LANGUAGE_HEADER } from '../../common/constants';
 
 @Global()
 @Module({
@@ -11,7 +14,7 @@ import * as path from 'path';
       useFactory: async (configService: ConfigService) => {
         const defaultLang = configService.get('lang');
         return {
-          fallbackLanguage: defaultLang || Language.en,
+          fallbackLanguage: defaultLang || LANGUAGE.EN,
           loaderOptions: {
             path: path.join(__dirname, '../../i18n/'),
           },

@@ -2,8 +2,7 @@ import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { RULES } from '../../constant';
-import { ArticleLimitAttachedSeriesException, ContentEmptyContentException } from '../exception';
+import { ContentEmptyContentException } from '../exception';
 import { ArticleEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
@@ -37,35 +36,6 @@ export class ArticleValidator implements IArticleValidator {
         articleEntity.get('seriesIds'),
         articleEntity.get('tags')
       );
-    }
-  }
-
-  public async validateLimitedToAttachSeries(articleEntity: ArticleEntity): Promise<void> {
-    if (articleEntity.isOverLimitedToAttachSeries()) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-    }
-
-    const contentWithArchivedGroups = (await this._contentRepository.findOne({
-      where: {
-        id: articleEntity.getId(),
-        groupArchived: true,
-      },
-      include: {
-        shouldIncludeSeries: true,
-      },
-    })) as ArticleEntity;
-
-    if (!contentWithArchivedGroups) {
-      return;
-    }
-
-    const series = uniq([
-      ...articleEntity.getSeriesIds(),
-      ...contentWithArchivedGroups?.getSeriesIds(),
-    ]);
-
-    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 

@@ -1,20 +1,17 @@
-import { Request } from 'express';
+import { HEADER_VERSION_KEY } from '@libs/common/constants';
 import { BadRequestException, Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
-
+import { Request } from 'express';
 import semver from 'semver';
-import {
-  MINIMUM_VERSION_SUPPORT,
-  VERSIONS_SUPPORTED,
-  VERSION_HEADER_KEY,
-} from '../common/constants';
+
+import { MINIMUM_VERSION_SUPPORT, VERSIONS_SUPPORTED } from '../common/constants';
 
 @Injectable()
 export class ApiVersioningMiddleware implements NestMiddleware {
   public async use(req: Request, res: Response, next: () => void): Promise<void> {
-    if (!req.headers[VERSION_HEADER_KEY]) {
-      req.headers[VERSION_HEADER_KEY] = MINIMUM_VERSION_SUPPORT;
+    if (!req.headers[HEADER_VERSION_KEY]) {
+      req.headers[HEADER_VERSION_KEY] = MINIMUM_VERSION_SUPPORT;
     } else {
-      const serviceVersion = req.headers[VERSION_HEADER_KEY] as string;
+      const serviceVersion = req.headers[HEADER_VERSION_KEY] as string;
       const version = serviceVersion.slice(0, -1) + '0'; // 1.4.2 -> 1.4.0
       if (!semver.valid(version)) {
         throw new BadRequestException(`Version ${version} is not valid.`);

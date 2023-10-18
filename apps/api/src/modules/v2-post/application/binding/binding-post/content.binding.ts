@@ -123,6 +123,7 @@ export class ContentBinding implements IContentBinding {
       createdAt: postEntity.get('createdAt'),
       scheduledAt: postEntity.get('scheduledAt'),
       publishedAt: postEntity.get('publishedAt'),
+      createdBy: postEntity.get('createdBy'),
       tags: (postEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -269,6 +270,7 @@ export class ContentBinding implements IContentBinding {
         ? articleEntity.get('scheduledAt')
         : articleEntity.get('publishedAt'),
       scheduledAt: articleEntity.get('scheduledAt'),
+      createdBy: articleEntity.get('createdBy'),
       tags: (articleEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),

@@ -3,6 +3,7 @@ import { I18nContext } from 'nestjs-i18n';
 
 import { ERRORS } from '../../../../common/constants/errors';
 import { DomainForbiddenException, DomainNotFoundException } from '../../../../common/exceptions';
+import { RULES } from '../../constant';
 
 export class ContentNotFoundException extends DomainNotFoundException {
   public static code = ERRORS.CONTENT_NOT_FOUND;
@@ -193,5 +194,23 @@ export class ContentInvalidScheduledTimeException extends DomainException {
     const i18n = I18nContext.current();
     message = message || i18n?.t(`error.content.invalid_scheduled_time`) || '';
     super(ContentInvalidScheduledTimeException.code, message, error);
+  }
+}
+
+export class ContentLimitAttachedSeriesException extends DomainException {
+  public static code = ERRORS.CONTENT_LIMIT_ATTACHED_SERIES;
+
+  public constructor(
+    limitNumber: number = RULES.LIMIT_ATTACHED_SERIES,
+    message: string = null,
+    error: any = null
+  ) {
+    const i18n = I18nContext.current();
+    message =
+      message ||
+      i18n?.t(`error.content.limit_attached_series`, { args: { limit: limitNumber } }) ||
+      '';
+
+    super(ContentLimitAttachedSeriesException.code, message, error);
   }
 }

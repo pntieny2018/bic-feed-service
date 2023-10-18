@@ -4,3 +4,7 @@ export * from './article-updated.event-handler';
 export * from './post-deleted.event-handler';
 export * from './post-published.event-handler';
 export * from './post-updated.event-handler';
+export * from './content-attached-series.event-handler';
+export * from './series-items-reordered.event-handler';
+export * from './series-items-added.event-handler';
+export * from './series-items-removed.event-handler';
