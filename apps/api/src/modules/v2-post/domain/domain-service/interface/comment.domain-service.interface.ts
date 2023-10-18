@@ -1,6 +1,6 @@
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
-import { CursorPaginationResult } from '../../../../../common/types';
 import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,

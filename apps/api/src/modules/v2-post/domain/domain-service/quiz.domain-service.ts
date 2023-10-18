@@ -1,9 +1,9 @@
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 
 import { ERRORS } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions';
-import { CursorPaginationResult } from '../../../../common/types';
 import { AnswerUserDto } from '../../application/dto';
 import { RULES } from '../../constant';
 import {

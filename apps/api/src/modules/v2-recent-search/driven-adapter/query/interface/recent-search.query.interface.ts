@@ -1,7 +1,6 @@
 import { ORDER } from '@beincom/constants';
+import { PaginationProps, PaginationResult } from '@libs/database/postgres/common';
 
-import { PaginationProps } from '../../../../../common/types/pagination-props.type';
-import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 
 export type GetPaginationRecentSearchProps = PaginationProps & {

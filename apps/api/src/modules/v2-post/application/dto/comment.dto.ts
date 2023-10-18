@@ -1,8 +1,8 @@
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
-import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
 import { UserMentionDto } from '../../../mention/dto';
 import { CommentResponseDto } from '../../driving-apdater/dto/response';
 

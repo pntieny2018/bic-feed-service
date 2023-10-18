@@ -1,8 +1,8 @@
+import { PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { PaginatedResponse } from '../../../../../common/dto';
 import { createUrlFromId } from '../../../../giphy/giphy.util';
 import { CommentEntity } from '../../../domain/model/comment';
 import {
