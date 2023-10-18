@@ -32,6 +32,7 @@ export const updateCommentProps: UpdateCommentProps = {
   mentions: [],
   giphyId: 'ACICHGrSD5QEFC',
   userId: userMock.id,
+  actor: userMock,
 };
 
 export const notChangedCommentProps: UpdateCommentProps = {
@@ -41,4 +42,5 @@ export const notChangedCommentProps: UpdateCommentProps = {
   mentions: ['0fa01fde-7c15-4d55-b60a-8e990123bc2e'],
   giphyId: 'EZICHGrSD5QEFCxMiC',
   userId: userMock.id,
+  actor: userMock,
 };

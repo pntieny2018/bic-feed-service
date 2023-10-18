@@ -26,7 +26,7 @@ export type CreateCommentProps = BasedCommentPayload & {
   actor: UserDto;
 };
 
-export type UpdateCommentProps = BasedCommentPayload & { commentId: string };
+export type UpdateCommentProps = BasedCommentPayload & { commentId: string; actor: UserDto };
 
 export type GetCommentsAroundIdProps = {
   userId?: string;

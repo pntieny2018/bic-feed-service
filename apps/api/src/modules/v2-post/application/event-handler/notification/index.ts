@@ -7,3 +7,6 @@ export * from './post-updated.event-handler';
 export * from './series-items-added.event-handler';
 export * from './series-items-removed.event-handler';
 export * from './series-same-owner-changed.event-handler';
+export * from './comment-created.event-handler';
+export * from './comment-deleted.event-handler';
+export * from './comment-updated.event-handler';

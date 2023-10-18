@@ -34,20 +34,23 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
   ) {}
 
   public async handle(event: CommentDeletedEvent): Promise<void> {
-    const { comment, user } = event.payload;
+    const { comment, actor } = event.payload;
 
     const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor: user,
+      actor,
     });
 
-    const content = await this._contentDomainService.getContentById(comment.get('postId'), user.id);
-    const contentDto = (await this._contentBinding.contentsBinding([content], user))[0] as
+    const content = await this._contentDomainService.getContentById(
+      comment.get('postId'),
+      actor.id
+    );
+    const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
       | PostDto
       | ArticleDto;
 
     const payload: CommentNotificationPayload = {
       event: CommentDeletedEvent.event,
-      actor: user,
+      actor,
       comment: commentDto,
       content: contentDto,
     };

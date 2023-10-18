@@ -16,8 +16,8 @@ export class CommentCreatedEventHandler implements IEventHandler<CommentCreatedE
   ) {}
 
   public async handle(event: CommentCreatedEvent): Promise<void> {
-    const { payload } = event;
+    const { actor, comment } = event.payload;
 
-    await this._contentDomain.markSeen(payload.comment.get('postId'), payload.user.id);
+    await this._contentDomain.markSeen(comment.get('postId'), actor.id);
   }
 }

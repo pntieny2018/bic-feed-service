@@ -3,6 +3,7 @@ import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+import { cloneDeep } from 'lodash';
 import { NIL } from 'uuid';
 
 import { DatabaseException } from '../../../../common/exceptions';
@@ -10,7 +11,11 @@ import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
 } from '../../../v2-notification/application/dto';
-import { CommentCreatedEvent, CommentDeletedEvent } from '../event/comment.event';
+import {
+  CommentCreatedEvent,
+  CommentDeletedEvent,
+  CommentUpdatedEvent,
+} from '../event/comment.event';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
@@ -102,7 +107,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     try {
       const res = await this._commentRepository.createComment(commentEntity);
-      this.event.publish(new CommentCreatedEvent({ comment: res, user: props.actor }));
+      this.event.publish(new CommentCreatedEvent({ comment: res, actor: props.actor }));
       return res;
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
@@ -111,8 +116,9 @@ export class CommentDomainService implements ICommentDomainService {
   }
 
   public async update(input: UpdateCommentProps): Promise<void> {
-    const { commentId, userId, content, giphyId, mentions, media } = input;
+    const { commentId, userId, content, giphyId, mentions, media, actor } = input;
     const commentEntity = await this._commentRepository.findOne({ id: commentId });
+    const oldComment = cloneDeep(commentEntity);
 
     if (media) {
       await this._setCommentMedia(commentEntity, media);
@@ -129,11 +135,12 @@ export class CommentDomainService implements ICommentDomainService {
     }
 
     await this._commentRepository.update(commentEntity);
+    this.event.publish(new CommentUpdatedEvent({ comment: commentEntity, actor, oldComment }));
   }
 
   public async delete(comment: CommentEntity, actor: UserDto): Promise<void> {
     await this._commentRepository.destroyComment(comment.get('id'));
-    this.event.publish(new CommentDeletedEvent({ comment, user: actor }));
+    this.event.publish(new CommentDeletedEvent({ comment, actor }));
   }
 
   private async _getCommentsAroundChild(

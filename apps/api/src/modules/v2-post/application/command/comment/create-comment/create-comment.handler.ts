@@ -3,7 +3,6 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
@@ -39,7 +38,6 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
     private readonly _mentionValidator: IMentionValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
-    private readonly _eventEmitter: InternalEventEmitterService,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)

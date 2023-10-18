@@ -49,16 +49,16 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
   public async execute(command: ReplyCommentCommand): Promise<CommentDto> {
     const { actor, contentId, mentions, parentId } = command.payload;
 
-    const post = await this._contentDomainService.getVisibleContent(contentId);
+    const content = await this._contentDomainService.getVisibleContent(contentId);
 
-    this._contentValidator.checkCanReadContent(post, actor);
+    await this._contentValidator.checkCanReadContent(content, actor);
 
-    if (!post.allowComment()) {
+    if (!content.allowComment()) {
       throw new ContentNoCommentPermissionException();
     }
 
     if (mentions && mentions.length) {
-      const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
+      const groups = content.get('groupIds').map((id) => new GroupDto({ id }));
       const mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
         withGroupJoined: true,
       });

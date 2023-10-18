@@ -218,7 +218,6 @@ export class CommentNotificationApplicationService
         verb: VerbActivity.COMMENT,
         target: content.type as unknown as TargetType,
         createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
       });
     });
   }

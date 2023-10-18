@@ -13,8 +13,7 @@ import {
   ICommentDomainService,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import { CommentCreatedEvent } from '../../../domain/event/comment.event';
-import { CommentEntity } from '../../../domain/model/comment';
+import { CommentUpdatedEvent } from '../../../domain/event/comment.event';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
@@ -28,8 +27,8 @@ import {
 } from '../../binding';
 import { ArticleDto, PostDto } from '../../dto';
 
-@EventsHandlerAndLog(CommentCreatedEvent)
-export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCreatedEvent> {
+@EventsHandlerAndLog(CommentUpdatedEvent)
+export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpdatedEvent> {
   public constructor(
     @Inject(NOTIFICATION_ADAPTER)
     private readonly _notiAdapter: INotificationAdapter,
@@ -45,8 +44,8 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
     private readonly _contentRepository: IContentRepository
   ) {}
 
-  public async handle(event: CommentCreatedEvent): Promise<void> {
-    const { comment, actor } = event.payload;
+  public async handle(event: CommentUpdatedEvent): Promise<void> {
+    const { comment, actor, oldComment } = event.payload;
 
     const commentDto = await this._commentBinding.commentBinding(comment, {
       actor,
@@ -61,64 +60,34 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       | ArticleDto;
 
     const payload: CommentNotificationPayload = {
-      event: CommentCreatedEvent.event,
+      event: CommentUpdatedEvent.event,
       actor,
       comment: commentDto,
       content: contentDto,
     };
+    const newMentions = comment.get('mentions').filter((mention) => {
+      return !oldComment.get('mentions').includes(mention);
+    });
 
     const recipientObj = {
       commentRecipient: CommentRecipientDto.init(),
       replyCommentRecipient: ReplyCommentRecipientDto.init(),
     };
 
-    const prevComments: CommentEntity[] = [];
-
-    const recipient = await this._commentDomainService.dissociateComment({
-      commentId: comment.get('id'),
-      userId: actor.id,
-      contentDto,
-      cb: (comments) => {
-        prevComments.push(...comments);
-      },
-    });
-
     if (comment.isChildComment()) {
       const parentComment = await this._commentDomainService.getVisibleComment(
         comment.get('parentId')
       );
       payload.parentComment = await this._commentBinding.commentBinding(parentComment);
-
-      recipientObj.replyCommentRecipient = recipient as ReplyCommentRecipientDto;
-      const { mentionedUserIdsInComment, mentionedUserIdsInParentComment } =
-        recipientObj.replyCommentRecipient;
-
-      recipientObj.replyCommentRecipient.mentionedUserIdsInParentComment =
-        await this._filterUserWasReported(commentDto.parentId, mentionedUserIdsInParentComment);
-
-      recipientObj.replyCommentRecipient.mentionedUserIdsInComment =
-        await this._filterUserWasReported(contentDto.id, mentionedUserIdsInComment);
-
+      recipientObj.replyCommentRecipient.mentionedUserIdsInComment = newMentions;
       payload.replyCommentRecipient = recipientObj.replyCommentRecipient;
     } else {
-      recipientObj.commentRecipient = recipient as CommentRecipientDto;
-
-      const { mentionedUsersInComment, mentionedUsersInPost } = recipientObj.commentRecipient;
-
-      recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUserWasReported(
-        contentDto.id,
-        mentionedUsersInComment
-      );
-
-      recipientObj.commentRecipient.mentionedUsersInPost = await this._filterUserWasReported(
-        contentDto.id,
-        mentionedUsersInPost
-      );
+      recipientObj.commentRecipient.mentionedUsersInComment =
+        recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUserWasReported(
+          contentDto.id,
+          newMentions
+        );
       payload.commentRecipient = recipientObj.commentRecipient;
-
-      if (prevComments.length) {
-        payload.prevCommentActivities = await this._commentBinding.commentsBinding(prevComments);
-      }
     }
 
     await this._notiAdapter.sendCommentNotification(payload);

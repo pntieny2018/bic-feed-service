@@ -32,10 +32,10 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
       throw new ContentAccessDeniedException();
     }
 
-    const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
+    const content = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
-    await this._contentValidator.checkCanReadContent(post, actor);
+    await this._contentValidator.checkCanReadContent(content, actor);
 
-    await this._commentDomainService.delete(comment, actor);
+    return this._commentDomainService.delete(comment, actor);
   }
 }
