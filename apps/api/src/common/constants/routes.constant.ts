@@ -282,4 +282,18 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupported(),
     },
   },
+  REACTION: {
+    GET_LIST: {
+      PATH: '/reactions',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    CREATE: {
+      PATH: '/reactions',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    DELETE: {
+      PATH: '/reactions',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
 };
