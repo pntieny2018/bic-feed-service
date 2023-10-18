@@ -1,3 +1,4 @@
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { PostModel, QuizAttributes } from '@libs/database/postgres/model';
 import {
   LibQuizAnswerRepository,
@@ -7,7 +8,6 @@ import {
 import { Injectable } from '@nestjs/common';
 import { WhereOptions } from 'sequelize';
 
-import { CursorPaginationResult } from '../../../../common/types';
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import {
   FindAllQuizProps,

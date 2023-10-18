@@ -1,9 +1,8 @@
 import { CONTENT_TYPE } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
-
-import { PaginatedArgs } from '../../../../../common/dto';
 
 export class GetTimelineRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'is_important', example: true })

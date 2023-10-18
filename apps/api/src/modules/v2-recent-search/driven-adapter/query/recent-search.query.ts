@@ -1,18 +1,20 @@
+import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { RecentSearchModel } from '../../../../database/models/recent-search.model';
 import { Op } from 'sequelize';
-import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import {
-  GetPaginationRecentSearchProps,
-  IRecentSearchQuery,
-} from './interface/recent-search.query.interface';
-import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
+
+import { RecentSearchModel } from '../../../../database/models/recent-search.model';
 import { RecentSearchType } from '../../data-type';
 import {
   IRecentSearchFactory,
   RECENT_SEARCH_FACTORY_TOKEN,
 } from '../../domain/factory/interface/recent-search.factory.interface';
+import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
+
+import {
+  GetPaginationRecentSearchProps,
+  IRecentSearchQuery,
+} from './interface/recent-search.query.interface';
 
 export class RecentSearchQuery implements IRecentSearchQuery {
   @Inject(RECENT_SEARCH_FACTORY_TOKEN) private readonly _factory: IRecentSearchFactory;

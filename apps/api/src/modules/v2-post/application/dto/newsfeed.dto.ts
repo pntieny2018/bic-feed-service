@@ -1,4 +1,5 @@
-import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
+
 import { ArticleDto } from './article.dto';
 import { PostDto } from './post.dto';
 import { SeriesDto } from './series.dto';

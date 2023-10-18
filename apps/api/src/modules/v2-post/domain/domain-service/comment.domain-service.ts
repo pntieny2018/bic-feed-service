@@ -1,9 +1,9 @@
 import { ORDER } from '@beincom/constants';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NIL } from 'uuid';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
