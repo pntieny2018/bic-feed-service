@@ -1,4 +1,5 @@
 import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import {
@@ -14,8 +15,6 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-
-import { PaginatedArgs } from '../../../../../common/dto';
 
 export class CreateQuizRequestDto {
   @ApiProperty({ type: String })

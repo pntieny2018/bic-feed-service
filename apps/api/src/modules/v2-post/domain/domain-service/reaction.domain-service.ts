@@ -1,7 +1,7 @@
+import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
-import { PaginationResult } from '../../../../common/types';
 import { REACTION_TARGET } from '../../data-type';
 import { ContentHasSeenEvent, ReactionNotifyEvent } from '../event';
 import {

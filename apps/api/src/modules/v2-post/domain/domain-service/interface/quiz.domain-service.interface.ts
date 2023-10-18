@@ -1,7 +1,7 @@
 import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
-import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { AnswerUserDto } from '../../../application/dto';
 import { QuizEntity, QuizQuestionEntity } from '../../model/quiz';
 import { QuizParticipantEntity } from '../../model/quiz-participant';

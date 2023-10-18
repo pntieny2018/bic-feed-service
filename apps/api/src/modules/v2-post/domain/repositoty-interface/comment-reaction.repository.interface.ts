@@ -1,6 +1,8 @@
-import { ReactionEntity } from '../model/reaction';
-import { PaginationResult, ReactionsCount } from '../../../../common/types';
 import { ORDER } from '@beincom/constants';
+import { PaginationResult } from '@libs/database/postgres/common';
+
+import { ReactionsCount } from '../../../../common/types';
+import { ReactionEntity } from '../model/reaction';
 
 export type FindOneCommentReactionProps = {
   reactionName?: string;
