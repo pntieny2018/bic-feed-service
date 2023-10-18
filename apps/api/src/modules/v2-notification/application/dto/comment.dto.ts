@@ -52,6 +52,7 @@ export class CommentActivityObjectDto extends ContentActivityObjectDto {
 
   public constructor(data: CommentActivityObjectDto) {
     super(data);
+    this.comment = new CommentObjectDto(data.comment);
   }
 }
 
@@ -76,6 +77,20 @@ export class CommentObjectDto {
   public updatedAt: Date;
 
   public constructor(data: CommentObjectDto) {
-    Object.assign(this, data);
+    this.id = data.id;
+    this.actor = new ActorObjectDto(data.actor);
+    this.content = data.content;
+    this.media = new MediaObjectDto(data.media);
+    this.mentions = data.mentions;
+    this.giphyId = data.giphyId;
+    this.giphyUrl = data.giphyUrl;
+    this.child = data.child ? new CommentObjectDto(data.child) : undefined;
+    this.reaction = data.reaction ? new ReactionObjectDto(data.reaction) : undefined;
+    this.reactionsOfActor = data.reactionsOfActor
+      ? data.reactionsOfActor.map((reaction) => new ReactionObjectDto(reaction))
+      : undefined;
+    this.reactionsCount = data.reactionsCount;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
   }
 }

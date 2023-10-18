@@ -2,8 +2,6 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesHasBeenDeleted } from '../../../../../common/constants';
-import { VerbActivity } from '../../../../v2-notification/data-type';
 import { SeriesDeletedEvent } from '../../../domain/event';
 import { ArticleEntity, PostEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -46,30 +44,14 @@ export class NotiSeriesDeletedEventHandler implements IEventHandler<SeriesDelete
       return;
     }
 
-    const existingCreator = new Set([]);
-    const filterItems = [];
-    for (const item of items) {
-      if (!existingCreator.has(item.getCreatedBy()) && item.getCreatedBy() !== actor.id) {
-        const itemDto =
-          item instanceof PostEntity
-            ? await this._contentBinding.postBinding(item, { authUser: actor, actor })
-            : await this._contentBinding.articleBinding(item, { authUser: actor, actor });
-
-        filterItems.push(itemDto);
-        existingCreator.add(item.getCreatedBy());
-      }
-    }
-
     const seriesDto = await this._contentBinding.seriesBinding(seriesEntity, {
       authUser: actor,
       actor,
     });
 
-    await this._notiAdapter.sendSeriesNotification({
-      event: SeriesHasBeenDeleted,
+    await this._notiAdapter.sendSeriesDeletedNotification({
       actor,
       series: seriesDto,
-      verb: VerbActivity.DELETE,
     });
   }
 }

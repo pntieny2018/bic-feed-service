@@ -43,11 +43,9 @@ export class NotiSeriesPublishedEventHandler implements IEventHandler<SeriesCrea
         authUser: actor,
       });
 
-      await this._notiAdapter.sendSeriesNotification({
-        event: SeriesHasBeenPublished,
+      await this._notiAdapter.sendSeriesPublishedNotification({
         actor,
         series: seriesDto,
-        verb: VerbActivity.POST,
         targetUserIds: notiGroupAdminIds,
       });
     }

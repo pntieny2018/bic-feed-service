@@ -3,8 +3,6 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesHasBeenUpdated } from '../../../../../common/constants';
-import { VerbActivity } from '../../../../v2-notification/data-type';
 import { SeriesUpdatedEvent } from '../../../domain/event';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
@@ -62,19 +60,18 @@ export class NotiSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
 
     const oldGroups = await this._groupAdapter.getGroupsByIds(oldSeries.groupIds);
 
-    await this._notiAdapter.sendSeriesNotification({
-      event: SeriesHasBeenUpdated,
+    await this._notiAdapter.sendSeriesUpdatedNotification({
       actor,
       series: seriesDto,
       oldSeries: {
         ...oldSeries,
         audience: { groups: oldGroups },
-        commentsCount: oldSeries.aggregation.commentsCount,
-        totalUsersSeen: oldSeries.aggregation.totalUsersSeen,
+        commentsCount: oldSeries.aggregation?.commentsCount,
+        totalUsersSeen: oldSeries.aggregation?.totalUsersSeen,
         quiz: null,
+        items: null,
         actor,
       },
-      verb: VerbActivity.POST,
       targetUserIds: notiGroupAdminIds,
     });
   }

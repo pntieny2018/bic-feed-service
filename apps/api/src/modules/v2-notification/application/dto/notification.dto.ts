@@ -23,6 +23,16 @@ export class NotificationPayloadDto<T> {
     data: NotificationActivityDto<T>;
     meta?: NotificationMetaPayloadDto<T>;
   };
+
+  public constructor(data: NotificationPayloadDto<T>) {
+    this.key = data.key;
+    this.value = {
+      actor: new ActorObjectDto(data.value.actor),
+      event: data.value.event,
+      data: data.value.data,
+      meta: data.value.meta,
+    };
+  }
 }
 
 class NotificationMetaPayloadDto<T> {

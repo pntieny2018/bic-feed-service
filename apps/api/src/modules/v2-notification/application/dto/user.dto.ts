@@ -6,6 +6,10 @@ export class ActorObjectDto {
   public email?: string;
 
   public constructor(data: ActorObjectDto) {
-    Object.assign(this, data);
+    this.id = data.id;
+    this.username = data.username;
+    this.avatar = data.avatar;
+    this.fullname = data.fullname;
+    this.email = data.email;
   }
 }
