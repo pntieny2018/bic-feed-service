@@ -187,7 +187,7 @@ export class ElasticsearchQueryBuilder {
       {
         script: {
           script: {
-            inline: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
+            source: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
           },
         },
       },
