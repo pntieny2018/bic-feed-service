@@ -20,10 +20,13 @@ import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
 import {
+  AddSeriesItemsCommand,
   CreateSeriesCommand,
   CreateSeriesCommandPayload,
   DeleteSeriesCommand,
   DeleteSeriesCommandPayload,
+  RemoveSeriesItemsCommand,
+  ReorderSeriesItemsCommand,
   UpdateSeriesCommand,
   UpdateSeriesCommandPayload,
 } from '../../application/command/series';
@@ -41,6 +44,8 @@ import {
   SearchSeriesQuery,
 } from '../../application/query/series';
 import {
+  ChangeItemsInSeriesRequestDto,
+  ReorderItemsInSeriesRequestDto,
   CreateSeriesRequestDto,
   GetItemsBySeriesRequestDto,
   SearchContentsBySeriesRequestDto,
@@ -79,6 +84,61 @@ export class SeriesController {
       } as CreateSeriesCommandPayload)
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Reorder items in series' })
+  @ApiOkResponse({
+    description: 'Reorder article/posts into series successfully',
+  })
+  @ResponseMessages({ success: 'Reorder successful.' })
+  @Put(ROUTES.SERIES.REORDER_ITEMS.PATH)
+  @Version(ROUTES.SERIES.REORDER_ITEMS.VERSIONS)
+  public async reorder(
+    @AuthUser() authUser: UserDto,
+    @Param('seriesId', ParseUUIDPipe) id: string,
+    @Body() reorderItemsDto: ReorderItemsInSeriesRequestDto
+  ): Promise<boolean> {
+    return this._commandBus.execute(
+      new ReorderSeriesItemsCommand({ authUser, ...reorderItemsDto, id })
+    );
+  }
+
+  @ApiOperation({ summary: 'Add article or post into serie' })
+  @ApiOkResponse({
+    description: 'Add article/posts into series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.added_success',
+  })
+  @Put(ROUTES.SERIES.ADD_ITEMS.PATH)
+  @Version(ROUTES.SERIES.ADD_ITEMS.VERSIONS)
+  public async addItems(
+    @AuthUser() authUser: UserDto,
+    @Param('seriesId', ParseUUIDPipe) id: string,
+    @Body() addItemsInSeriesDto: ChangeItemsInSeriesRequestDto
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new AddSeriesItemsCommand({ authUser, ...addItemsInSeriesDto, id })
+    );
+  }
+
+  @ApiOperation({ summary: 'Remove article or post from series' })
+  @ApiOkResponse({
+    description: 'Remove article/posts from series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.removed_success',
+  })
+  @Delete(ROUTES.SERIES.REMOVE_ITEMS.PATH)
+  @Version(ROUTES.SERIES.REMOVE_ITEMS.VERSIONS)
+  public async removeItems(
+    @AuthUser() authUser: UserDto,
+    @Param('seriesId', ParseUUIDPipe) id: string,
+    @Body() removeItemsInSeriesDto: ChangeItemsInSeriesRequestDto
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new RemoveSeriesItemsCommand({ authUser, ...removeItemsInSeriesDto, id })
+    );
   }
 
   @ApiOperation({ summary: 'Update series' })

@@ -171,7 +171,14 @@ export class SearchService {
     }
   }
 
-  public async updateAttributePostToSearch(post: IPost, dataUpdate: unknown): Promise<void> {
+  /**
+   * TODO refactor soon parameters
+   * @parms post (id, lang)
+   * */
+  public async updateAttributePostToSearch(
+    post: { id: string; lang?: string },
+    dataUpdate: unknown
+  ): Promise<void> {
     const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
     try {
       await this.elasticsearchService.update({

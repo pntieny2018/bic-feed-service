@@ -4,7 +4,6 @@ import { ArticleEntity } from '../../model/content';
 
 export interface IArticleValidator {
   validateArticle(articleEntity: ArticleEntity, actor: UserDto): Promise<void>;
-  validateLimitedToAttachSeries(articleEntity: ArticleEntity): Promise<void>;
   validateArticleToPublish(articleEntity: ArticleEntity): void;
 }
 

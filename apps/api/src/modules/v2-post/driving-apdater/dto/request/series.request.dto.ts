@@ -2,6 +2,7 @@ import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsNotEmpty,
   IsOptional,
@@ -234,4 +235,34 @@ export class SearchContentsBySeriesRequestDto extends PaginatedArgs {
     name: 'keyword',
   })
   public keyword?: string;
+}
+
+export class ChangeItemsInSeriesRequestDto {
+  @ApiProperty({
+    type: String,
+    name: 'item_id',
+    example: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
+  })
+  @IsNotEmpty()
+  @IsUUID('4')
+  @Expose({
+    name: 'item_id',
+  })
+  public itemId: string;
+}
+
+export class ReorderItemsInSeriesRequestDto {
+  @ApiProperty({
+    type: [String],
+    name: 'item_ids',
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8'],
+  })
+  @IsNotEmpty()
+  @IsUUID('4', { each: true })
+  @IsArray()
+  @ArrayNotEmpty()
+  @Expose({
+    name: 'item_ids',
+  })
+  public itemIds: string[];
 }

@@ -2,13 +2,16 @@ import { CONTENT_TYPE, PERMISSION_KEY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
+import { uniq } from 'lodash';
 import moment from 'moment';
 
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
+import { RULES } from '../../constant';
 import {
   ContentAccessDeniedException,
   ContentEmptyGroupException,
   ContentInvalidScheduledTimeException,
+  ContentLimitAttachedSeriesException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
@@ -17,7 +20,7 @@ import {
   TagSeriesInvalidException,
   UserNoBelongGroupException,
 } from '../exception';
-import { SeriesEntity, ContentEntity } from '../model/content';
+import { SeriesEntity, ContentEntity, PostEntity, ArticleEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import {
@@ -248,6 +251,34 @@ export class ContentValidator implements IContentValidator {
 
     if (!canPinPermission) {
       throw new ContentNoPinPermissionException();
+    }
+  }
+
+  public async validateLimitedToAttachSeries(
+    contentEntity: ArticleEntity | PostEntity
+  ): Promise<void> {
+    if (contentEntity.isOverLimitedToAttachSeries()) {
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
+    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
+      contentEntity.getId(),
+      {
+        shouldIncludeSeries: true,
+      }
+    )) as ArticleEntity | PostEntity;
+
+    if (!contentWithArchivedGroups) {
+      return;
+    }
+
+    const series = uniq([
+      ...contentEntity.getSeriesIds(),
+      ...contentWithArchivedGroups?.getSeriesIds(),
+    ]);
+
+    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }
