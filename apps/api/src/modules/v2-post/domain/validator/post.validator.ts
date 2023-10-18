@@ -1,13 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { uniq } from 'lodash';
 
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
 import { UserDto } from '../../../v2-user/application';
-import { RULES } from '../../constant';
-import { ContentEmptyContentException, PostLimitAttachedSeriesException } from '../exception';
+import { ContentEmptyContentException } from '../exception';
 import { PostEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import {
@@ -48,35 +46,6 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       postEntity.get('media')?.images.length === 0
     ) {
       throw new ContentEmptyContentException();
-    }
-  }
-
-  public async validateLimitedToAttachSeries(postEntity: PostEntity): Promise<void> {
-    if (postEntity.isOverLimitedToAttachSeries()) {
-      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-    }
-
-    const contentWithArchivedGroups = (await this._contentRepository.findOne({
-      where: {
-        id: postEntity.getId(),
-        groupArchived: true,
-      },
-      include: {
-        shouldIncludeSeries: true,
-      },
-    })) as PostEntity;
-
-    if (!contentWithArchivedGroups) {
-      return;
-    }
-
-    const series = uniq([
-      ...postEntity.getSeriesIds(),
-      ...contentWithArchivedGroups?.getSeriesIds(),
-    ]);
-
-    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
-      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

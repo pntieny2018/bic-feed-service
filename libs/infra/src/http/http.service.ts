@@ -1,4 +1,4 @@
-import { HEADER_REQ_ID, REGEX_UID } from '@libs/common/constants';
+import { HEADER_REQ_ID, HEADER_VERSION_KEY, REGEX_UID } from '@libs/common/constants';
 import {
   IHttpServiceResponse,
   IHttpService,
@@ -20,7 +20,7 @@ export class HttpService implements IHttpService {
 
     const { version } = this.options;
     if (version) {
-      this.options.headers['x-version-id'] = version;
+      this.options.headers[HEADER_VERSION_KEY] = version;
     }
   }
 

@@ -9,7 +9,6 @@ export class NotificationActivityDto<T> {
   public verb: VerbActivity;
   public target: TargetType;
   public createdAt: Date;
-  public updatedAt: Date;
 
   public constructor(data: NotificationActivityDto<T>) {
     Object.assign(this, data);

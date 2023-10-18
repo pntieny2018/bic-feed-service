@@ -1,7 +1,5 @@
-import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
-import { IImage } from '@libs/database/postgres/model/comment.model';
+import { CONTENT_TYPE } from '@beincom/constants';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import { Injectable } from '@nestjs/common';
 
 import { CategoryEntity } from '../../domain/model/category';
 import {
@@ -15,12 +13,11 @@ import {
   SeriesAttributes as SeriesEntityAttributes,
 } from '../../domain/model/content';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
-import { FileEntity, ImageAttributes, ImageEntity, VideoEntity } from '../../domain/model/media';
-import { QuizEntity } from '../../domain/model/quiz';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
+import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { TagEntity } from '../../domain/model/tag';
 
-@Injectable()
 export class ContentMapper {
   public toDomain(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) {
@@ -48,7 +45,7 @@ export class ContentMapper {
       id: postEntity.getId(),
       commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      wordCount: postEntity.get('wordCount'),
+      wordCount: postEntity.get('wordCount') || 0,
       isImportant: postEntity.get('setting')?.isImportant,
       importantExpiredAt: postEntity.get('setting')?.importantExpiredAt || null,
       canComment: postEntity.get('setting')?.canComment,
@@ -58,9 +55,9 @@ export class ContentMapper {
       content: postEntity.get('content' as keyof ContentAttributes),
       title: postEntity.get('title' as keyof ContentAttributes),
       mentions: postEntity.get('mentionUserIds' as keyof ContentAttributes) || [],
-      type: postEntity.get('type') as unknown as CONTENT_TYPE,
+      type: postEntity.get('type'),
       summary: postEntity.get('summary' as keyof ContentAttributes),
-      privacy: postEntity.get('privacy' as keyof ContentAttributes),
+      privacy: postEntity.get('privacy'),
       tagsJson:
         postEntity
           .get('tags' as keyof ContentAttributes)
@@ -70,21 +67,25 @@ export class ContentMapper {
       linkPreviewId: postEntity.get('linkPreview' as keyof ContentAttributes)
         ? postEntity.get('linkPreview' as keyof ContentAttributes)?.get('id')
         : null,
-      videoIdProcessing: postEntity.get('videoIdProcessing' as keyof ContentAttributes),
-      status: postEntity.get('status') as unknown as CONTENT_STATUS,
-      publishedAt: postEntity.get('publishedAt'),
-      scheduledAt: postEntity.get('scheduledAt'),
+      videoIdProcessing: postEntity.get('videoIdProcessing' as keyof ContentAttributes) || null,
+      cover: postEntity.get('cover' as keyof ContentAttributes)?.id || null,
+      status: postEntity.get('status'),
+      publishedAt: postEntity.get('publishedAt') || null,
+      scheduledAt: postEntity.get('scheduledAt') || null,
       errorLog: postEntity.get('errorLog'),
+      coverJson: postEntity.get('cover' as keyof ContentAttributes)
+        ? postEntity.get('cover' as keyof ContentAttributes).toObject()
+        : null,
       mediaJson: {
         files: (postEntity.get('media')?.files || []).map((file) => file.toObject()),
-        images: (postEntity.get('media')?.images || []).map(
-          (image) => image.toObject() as unknown as IImage
-        ),
+        images: (postEntity.get('media')?.images || []).map((image) => image.toObject()),
         videos: (postEntity.get('media')?.videos || []).map((video) => video.toObject()),
       },
-      coverJson: postEntity.get('cover' as keyof ContentAttributes)?.toObject(),
-      linkPreview: postEntity.get('linkPreview' as keyof ContentAttributes)?.toObject() || null,
       createdAt: postEntity.get('createdAt'),
+      updatedAt: postEntity.get('updatedAt'),
+      linkPreview: postEntity.get('linkPreview' as keyof ContentAttributes)
+        ? postEntity.get('linkPreview' as keyof ContentAttributes).toObject()
+        : null,
     };
   }
 
@@ -101,7 +102,6 @@ export class ContentMapper {
       privacy: post.privacy,
       status: post.status,
       type: post.type,
-      lang: post.lang,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -110,70 +110,46 @@ export class ContentMapper {
       },
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: (post.ownerReactions || []).map((item) => ({
+        id: item.id,
+        reactionName: item.reactionName,
+      })),
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
-      scheduledAt: post.scheduledAt,
-      content: post.content,
-      mentionUserIds: post.mentions || [],
-      groupIds: post.groups?.map((group) => group.groupId),
+      scheduledAt: post.scheduledAt || null,
+      lang: post.lang,
+      groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      seriesIds: post.postSeries?.map((series) => series.seriesId),
       quiz: post.quiz
         ? new QuizEntity({
-            id: post.quiz.id,
+            ...post.quiz,
             contentId: post.quiz.postId,
-            title: post.quiz.title,
-            description: post.quiz.description,
-            status: post.quiz.status,
-            genStatus: post.quiz.genStatus,
-            timeLimit: post.quiz.timeLimit,
-            createdAt: post.quiz.createdAt,
-            createdBy: post.quiz.createdBy,
+            questions: (post.quiz.questions || []).map(
+              (question) => new QuizQuestionEntity(question)
+            ),
           })
         : undefined,
       quizResults: (post.quizResults || []).map(
-        (quizResult) =>
-          new QuizParticipantEntity({
-            id: quizResult.id,
-            quizId: quizResult.quizId,
-            contentId: quizResult.postId,
-            quizSnapshot: quizResult.quizSnapshot,
-            timeLimit: quizResult.timeLimit,
-            score: quizResult.score,
-            isHighest: quizResult.isHighest,
-            totalAnswers: quizResult.totalAnswers,
-            totalCorrectAnswers: quizResult.totalCorrectAnswers,
-            startedAt: quizResult.startedAt,
-            finishedAt: quizResult.finishedAt,
-            answers: [],
-            updatedBy: quizResult.updatedBy,
-            updatedAt: quizResult.updatedAt,
-            createdAt: quizResult.createdAt,
-            createdBy: quizResult.createdBy,
-          })
+        (quizResult) => new QuizParticipantEntity({ ...quizResult, contentId: quizResult.postId })
       ),
-      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
-      media: {
-        images: post.mediaJson?.images.map(
-          (image) => new ImageEntity(image as unknown as ImageAttributes)
-        ),
-        files: post.mediaJson?.files.map((file) => new FileEntity(file)),
-        videos: post.mediaJson?.videos.map((video) => new VideoEntity(video)),
-      },
+      wordCount: post.wordCount,
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
       },
+      media: {
+        images: (post.mediaJson?.images || []).map((image) => new ImageEntity(image)),
+        files: (post.mediaJson?.files || []).map((file) => new FileEntity(file)),
+        videos: (post.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
+      },
+      content: post.content,
+      mentionUserIds: post.mentions || [],
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
-      videoIdProcessing: post.videoIdProcessing,
-      markedReadImportant: post.markedReadPost,
-      isSaved: post.isSaved || false,
-      ownerReactions: post.ownerReactions
-        ? post.ownerReactions.map((item) => ({
-            id: item.id,
-            reactionName: item.reactionName,
-          }))
-        : undefined,
+      seriesIds: (post.postSeries || []).map((series) => series.seriesId),
+      tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
+      videoIdProcessing: post.videoIdProcessing || null,
     });
   }
 
@@ -183,7 +159,6 @@ export class ContentMapper {
     }
     return new ArticleEntity({
       id: post.id,
-      content: post.content,
       isReported: post.isReported,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
@@ -191,9 +166,6 @@ export class ContentMapper {
       privacy: post.privacy,
       status: post.status,
       type: post.type,
-      title: post.title,
-      summary: post.summary,
-      lang: post.lang,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -202,41 +174,42 @@ export class ContentMapper {
       },
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
+      markedReadImportant: post.markedReadPost,
+      isSaved: post.isSaved || false,
+      ownerReactions: (post.ownerReactions || []).map((item) => ({
+        id: item.id,
+        reactionName: item.reactionName,
+      })),
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       scheduledAt: post.scheduledAt,
-      categories: post.categories?.map((category) => new CategoryEntity(category)),
-      groupIds: post.groups?.map((group) => group.groupId),
+      lang: post.lang,
+      groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      seriesIds: post.postSeries?.map((series) => series.seriesId),
       quiz: post.quiz
         ? new QuizEntity({
-            id: post.quiz.id,
+            ...post.quiz,
             contentId: post.quiz.postId,
-            title: post.quiz.title,
-            description: post.quiz.description,
-            status: post.quiz.status,
-            genStatus: post.quiz.genStatus,
-            timeLimit: post.quiz.timeLimit,
-            createdAt: post.quiz.createdAt,
-            createdBy: post.quiz.createdBy,
+            questions: (post.quiz.questions || []).map(
+              (question) => new QuizQuestionEntity(question)
+            ),
           })
         : undefined,
-      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
+      quizResults: (post.quizResults || []).map(
+        (quizResult) => new QuizParticipantEntity({ ...quizResult, contentId: quizResult.postId })
+      ),
+      wordCount: post.wordCount,
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
       },
+      title: post.title,
+      summary: post.summary,
+      content: post.content,
+      categories: (post.categories || []).map((category) => new CategoryEntity(category)),
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
-      wordCount: post.wordCount,
-      markedReadImportant: post.markedReadPost,
-      isSaved: post.isSaved || false,
-      ownerReactions: post.ownerReactions
-        ? post.ownerReactions.map((item) => ({
-            id: item.id,
-            reactionName: item.reactionName,
-          }))
-        : undefined,
+      seriesIds: (post.postSeries || []).map((series) => series.seriesId),
+      tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
     });
   }
 
@@ -253,9 +226,6 @@ export class ContentMapper {
       privacy: post.privacy,
       status: post.status,
       type: post.type,
-      title: post.title,
-      summary: post.summary,
-      lang: post.lang,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -264,19 +234,23 @@ export class ContentMapper {
       },
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
-      errorLog: post.errorLog,
-      publishedAt: post.publishedAt,
-      groupIds: post.groups?.map((group) => group.groupId),
-      postGroups: post.groups || [],
-      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
-      itemIds:
-        post.itemIds
-          ?.sort((a, b) => {
+      errorLog: post.errorLog,
+      publishedAt: post.publishedAt,
+      lang: post.lang,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      postGroups: post.groups || [],
+      title: post.title,
+      summary: post.summary,
+      itemIds: (post.itemIds || []).sort((a, b) => a.zindex - b.zindex).map((item) => item.postId),
+      items:
+        (post.itemIds || [])
+          .sort((a, b) => {
             return a.zindex - b.zindex;
           })
-          .map((item) => item.postId) || [],
+          .map((item) => ({ postId: item.postId, zindex: item.zindex })) || [],
+      cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
     });
   }
 }

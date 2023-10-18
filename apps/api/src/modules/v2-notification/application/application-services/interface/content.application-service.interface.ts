@@ -24,14 +24,17 @@ export type ArticleNotificationPayload = {
 export type SeriesNotificationPayload = {
   event: string;
   actor: UserDto;
-  series: SeriesDto;
-  oldSeries?: SeriesDto;
-  item?: PostDto | ArticleDto;
+  series: SeriesDto | SeriesWithStateDto[];
+  item: PostDto | ArticleDto;
   verb: VerbActivity;
   targetUserIds?: string[];
   isSendToContentCreator?: boolean;
   contentIsDeleted?: boolean;
   context?: string;
+};
+
+export type SeriesWithStateDto = SeriesDto & {
+  state: 'add' | 'remove';
 };
 
 export interface IContentNotificationApplicationService {

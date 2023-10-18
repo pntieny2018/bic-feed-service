@@ -154,7 +154,7 @@ export class UserService implements IUserService {
     if (authUserId) {
       params['actorId'] = authUserId;
     }
-    const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, { params });
+    const response = await this._httpService.get(USER_ENDPOINT.INTERNAL.GET_USERS, { params });
     if (response.status !== HttpStatus.OK) {
       return [];
     }

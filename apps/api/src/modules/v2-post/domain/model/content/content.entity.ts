@@ -173,11 +173,11 @@ export class ContentEntity<
   }
 
   public getGroupIds(): string[] {
-    return this._props.groupIds;
+    return this._props.groupIds || [];
   }
 
   public getPostGroups(): PostGroupAttributes[] {
-    return this._props.postGroups;
+    return this._props.postGroups || [];
   }
 
   public hasQuiz(): boolean {
@@ -232,9 +232,10 @@ export class ContentEntity<
     return Boolean(this._props.isSaved);
   }
 
-  /**
-   * Note: Need to override createdAt when publishing
-   */
+  public getLang(): LANGUAGE {
+    return this._props.lang;
+  }
+
   public setPublish(): void {
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;

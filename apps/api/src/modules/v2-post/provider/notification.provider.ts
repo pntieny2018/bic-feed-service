@@ -8,6 +8,9 @@ import {
   NotiSeriesDeletedEventHandler,
   NotiSeriesPublishedEventHandler,
   NotiSeriesUpdatedEventHandler,
+  NotiSeriesItemsAddedEventHandler,
+  NotiSeriesItemsRemovedEventHandler,
+  NotiSeriesSameOwnerChangedEventHandler,
 } from '../application/event-handler/notification';
 
 export const notificationProvider = [
@@ -15,10 +18,16 @@ export const notificationProvider = [
   NotiArticleDeletedEventHandler,
   NotiArticlePublishedEventHandler,
   NotiArticleUpdatedEventHandler,
+
   NotiPostDeletedEventHandler,
   NotiPostPublishedEventHandler,
   NotiPostUpdatedEventHandler,
+
   NotiSeriesDeletedEventHandler,
   NotiSeriesPublishedEventHandler,
   NotiSeriesUpdatedEventHandler,
+
+  NotiSeriesItemsAddedEventHandler,
+  NotiSeriesItemsRemovedEventHandler,
+  NotiSeriesSameOwnerChangedEventHandler,
 ];

@@ -10,7 +10,7 @@ export class ContentActivityObjectDto {
   public actor: ActorObjectDto;
   public title: string;
   public contentType: string; // lower case
-  public setting: PostSettingDto;
+  public setting?: PostSettingDto;
   public audience: AudienceObjectDto;
 
   // for Post/Article
@@ -49,9 +49,24 @@ export class ArticleActivityObjectDto extends ContentActivityObjectDto {
 
 export class SeriesActivityObjectDto extends ContentActivityObjectDto {
   public item?: PostActivityObjectDto | ArticleActivityObjectDto;
-  public items?: (PostActivityObjectDto | ArticleActivityObjectDto)[];
+
+  public items?: SeriesStateActivityObjectDto[];
 
   public constructor(data: SeriesActivityObjectDto) {
     super(data);
+  }
+}
+
+export class SeriesStateActivityObjectDto {
+  public actor: {
+    id: string;
+  };
+  public id: string;
+  public title: string;
+  public state: 'add' | 'remove';
+  public audience?: AudienceObjectDto;
+
+  public constructor(data: SeriesStateActivityObjectDto) {
+    Object.assign(this, data);
   }
 }

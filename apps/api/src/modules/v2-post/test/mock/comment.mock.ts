@@ -1,13 +1,10 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { CommentReactionAttributes } from '@libs/database/postgres/model/comment-reaction.model';
 import { CommentAttributes } from '@libs/database/postgres/model/comment.model';
 import { v4 } from 'uuid';
 
 import { CommentEntity } from '../../domain/model/comment';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { ReactionEntity } from '../../domain/model/reaction';
-
-import { createMockPostRecord } from './content.mock';
 
 export function createMockCommentRecord(data: Partial<CommentAttributes> = {}): CommentAttributes {
   const postId = v4();
@@ -29,19 +26,20 @@ export function createMockCommentRecord(data: Partial<CommentAttributes> = {}): 
     updatedBy: ownerId,
     updatedAt: now,
     createdAt: now,
-    post: createMockPostRecord({ id: postId }),
     ...data,
   };
 }
 
 export function createMockCommentEntity(data: Partial<CommentAttributes> = {}): CommentEntity {
   const comment = createMockCommentRecord(data);
+  const { mediaJson, ...restComment } = comment;
+
   return new CommentEntity({
-    ...comment,
+    ...restComment,
     media: {
-      images: (comment.mediaJson?.images || []).map((image) => new ImageEntity(image)),
-      files: (comment.mediaJson?.files || []).map((file) => new FileEntity(file)),
-      videos: (comment.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
+      images: (mediaJson?.images || []).map((image) => new ImageEntity(image)),
+      files: (mediaJson?.files || []).map((file) => new FileEntity(file)),
+      videos: (mediaJson?.videos || []).map((video) => new VideoEntity(video)),
     },
     ownerReactions: (comment?.ownerReactions || []).map(
       (reaction) =>
@@ -55,17 +53,4 @@ export function createMockCommentEntity(data: Partial<CommentAttributes> = {}): 
         })
     ),
   });
-}
-
-export function createMockCommentReactionRecord(
-  data: Partial<CommentReactionAttributes> = {}
-): CommentReactionAttributes {
-  return {
-    id: v4(),
-    commentId: v4(),
-    reactionName: 'bic_check_mark',
-    createdBy: v4(),
-    createdAt: new Date(),
-    ...data,
-  };
 }

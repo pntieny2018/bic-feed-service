@@ -132,16 +132,6 @@ export class ContentRepository implements IContentRepository {
     transaction: Transaction
   ): Promise<void> {
     const state = contentEntity.getState();
-    if (state.attachSeriesIds.length > 0) {
-      await this._libPostSeriesRepo.bulkCreate(
-        state.attachSeriesIds.map((seriesId) => ({
-          postId: contentEntity.getId(),
-          seriesId,
-        })),
-        { transaction, ignoreDuplicates: true }
-      );
-    }
-
     if (state.detachSeriesIds.length > 0) {
       await this._libPostSeriesRepo.delete({
         where: {
@@ -149,6 +139,26 @@ export class ContentRepository implements IContentRepository {
           seriesId: state.detachSeriesIds,
         },
         transaction,
+      });
+    }
+
+    if (state.attachSeriesIds.length > 0) {
+      const dataInsert = await Promise.all(
+        state.attachSeriesIds.map(async (seriesId) => ({
+          postId: contentEntity.getId(),
+          seriesId,
+          zindex:
+            (await this._libPostSeriesRepo.max('zindex', {
+              where: {
+                seriesId,
+              },
+            })) || 0 + 1,
+        }))
+      );
+
+      await this._libPostSeriesRepo.bulkCreate(dataInsert, {
+        transaction,
+        ignoreDuplicates: true,
       });
     }
   }
@@ -458,5 +468,61 @@ export class ContentRepository implements IContentRepository {
         ignoreDuplicates: true,
       }
     );
+  }
+
+  public async createPostSeries(seriesId: string, postId: string): Promise<void> {
+    const maxIndex =
+      (await this._libPostSeriesRepo.max('zindex', {
+        where: {
+          seriesId,
+        },
+      })) || 0;
+
+    await this._libPostSeriesRepo.bulkCreate(
+      [
+        {
+          seriesId,
+          postId,
+          zindex: maxIndex + 1,
+        },
+      ],
+      {
+        ignoreDuplicates: true,
+      }
+    );
+  }
+
+  public async deletePostSeries(seriesId: string, postId: string): Promise<void> {
+    await this._libPostSeriesRepo.delete({
+      where: {
+        seriesId,
+        postId,
+      },
+    });
+  }
+
+  public async reorderPostsSeries(seriesId: string, itemIds: string[]): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      let zindex = 0;
+      for (const itemId of itemIds) {
+        await this._libPostSeriesRepo.update(
+          {
+            zindex,
+          },
+          {
+            where: {
+              postId: itemId,
+              seriesId,
+            },
+          }
+        );
+        zindex++;
+      }
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }

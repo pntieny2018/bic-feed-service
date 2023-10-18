@@ -25,8 +25,11 @@ import {
   UpdatePostHandler,
 } from '../application/command/post';
 import {
+  AddSeriesItemsHandler,
   CreateSeriesHandler,
   DeleteSeriesHandler,
+  RemoveSeriesItemsHandler,
+  ReorderSeriesItemsHandler,
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
@@ -116,7 +119,6 @@ export const postProvider = [
   PostUpdatedEventHandler,
 
   ContentHasSeenEventHandler,
-
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -148,6 +150,9 @@ export const postProvider = [
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
+  AddSeriesItemsHandler,
+  RemoveSeriesItemsHandler,
+  ReorderSeriesItemsHandler,
   UpdateSeriesHandler,
   ValidateSeriesTagsHandler,
 
