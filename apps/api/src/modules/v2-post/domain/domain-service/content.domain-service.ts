@@ -62,33 +62,6 @@ export class ContentDomainService implements IContentDomainService {
     private readonly _authorityAppService: IAuthorityAppService
   ) {}
 
-  public async getContentById(
-    id: string,
-    authUserId?: string
-  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const content = await this._contentRepository.findContentByIdInActiveGroup(id, {
-      shouldIncludeGroup: true,
-      shouldIncludeItems: true,
-      shouldIncludeLinkPreview: true,
-      shouldIncludeQuiz: true,
-      shouldIncludeSaved: {
-        userId: authUserId,
-      },
-      shouldIncludeMarkReadImportant: {
-        userId: authUserId,
-      },
-      shouldIncludeReaction: {
-        userId: authUserId,
-      },
-    });
-
-    if (!content || content.isHidden()) {
-      throw new ContentNotFoundException();
-    }
-
-    return content;
-  }
-
   public async getVisibleContent(
     contentId: string,
     excludeReportedByUserId?: string

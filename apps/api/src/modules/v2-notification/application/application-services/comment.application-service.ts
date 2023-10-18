@@ -1,17 +1,17 @@
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
+import { ObjectHelper } from '../../../../common/helpers';
 import { ArticleDto, CommentDto, PostDto } from '../../../v2-post/application/dto';
 import { CommentResponseDto } from '../../../v2-post/driving-apdater/dto/response';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
-  ActivityObject,
   ActorObjectDto,
   CommentActivityObjectDto,
   CommentObjectDto,
-  MediaObjectDto,
   NotificationActivityDto,
   NotificationPayloadDto,
 } from '../dto';
@@ -99,7 +99,7 @@ export class CommentNotificationApplicationService
   ): CommentActivityObjectDto {
     return new CommentActivityObjectDto({
       id: content.id,
-      actor: comment.actor,
+      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
       title: content instanceof ArticleDto ? content.title : null,
       contentType: content.type.toLowerCase(),
       setting: content.setting,
@@ -119,7 +119,7 @@ export class CommentNotificationApplicationService
   ): CommentActivityObjectDto {
     return new CommentActivityObjectDto({
       id: content.id,
-      actor: comment.actor,
+      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
       title: content instanceof ArticleDto ? content.title : null,
       contentType: content.type.toLowerCase(),
       setting: content.setting,
@@ -138,7 +138,7 @@ export class CommentNotificationApplicationService
   private _createCommentObject(comment: CommentDto): CommentObjectDto {
     return new CommentObjectDto({
       id: comment.id,
-      actor: comment.actor,
+      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
       content: comment.content,
       media: comment.media,
       giphyId: comment.giphyId,
@@ -165,9 +165,9 @@ export class CommentNotificationApplicationService
   private _createPrevCommentActivities(
     comments: CommentResponseDto[],
     content: PostDto | ArticleDto
-  ): NotificationActivityDto<ActivityObject>[] {
+  ): NotificationActivityDto<CommentActivityObjectDto>[] {
     return comments.map((comment) => {
-      const activity = new ActivityObject({
+      const activity = new CommentActivityObjectDto({
         id: content.id,
         actor: new ActorObjectDto({
           id: content.actor.id,
@@ -188,18 +188,11 @@ export class CommentNotificationApplicationService
         title: (content as ArticleDto)?.title || '',
         contentType: content.type.toLowerCase(),
         content: content.content,
-        media:
-          (content as PostDto)?.media ||
-          new MediaObjectDto({
-            files: [],
-            images: [],
-            videos: [],
-          }),
         setting: content.setting,
         mentions: content.mentions,
         comment: {
           id: comment.id,
-          actor: comment.actor,
+          actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
           content: comment.content,
           media: comment.media,
           giphyId: comment.giphyId,
@@ -212,7 +205,7 @@ export class CommentNotificationApplicationService
         updatedAt: content.createdAt,
       });
 
-      return new NotificationActivityDto<ActivityObject>({
+      return new NotificationActivityDto<CommentActivityObjectDto>({
         id: v4(),
         object: activity,
         verb: VerbActivity.COMMENT,

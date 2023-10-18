@@ -1,7 +1,9 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
+import { ObjectHelper } from '../../../../../common/helpers';
 import { CommentNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
 import {
   CommentRecipientDto,
@@ -9,11 +11,10 @@ import {
 } from '../../../../v2-notification/application/dto';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
-  CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
-  IContentDomainService,
 } from '../../../domain/domain-service/interface';
 import { CommentCreatedEvent } from '../../../domain/event/comment.event';
+import { ContentNotFoundException } from '../../../domain/exception';
 import { CommentEntity } from '../../../domain/model/comment';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
@@ -37,8 +38,6 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -52,17 +51,20 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       actor,
     });
 
-    const content = await this._contentDomainService.getContentById(
-      comment.get('postId'),
-      actor.id
-    );
+    const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
+      mustIncludeGroup: true,
+    });
+
+    if (!content || content.isHidden()) {
+      throw new ContentNotFoundException();
+    }
     const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
       | PostDto
       | ArticleDto;
 
     const payload: CommentNotificationPayload = {
       event: CommentCreatedEvent.event,
-      actor,
+      actor: ObjectHelper.omit(['groups', 'permissions'], actor) as UserDto,
       comment: commentDto,
       content: contentDto,
     };

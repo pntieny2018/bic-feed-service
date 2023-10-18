@@ -86,10 +86,6 @@ export type GroupAudience = {
 export type GetAudiencesProps = GetContentAudienceProps;
 
 export interface IContentDomainService {
-  getContentById(
-    id: string,
-    authUserId?: string
-  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
   getRawContent(contentEntity: ContentEntity): string;
   getContentByIds(

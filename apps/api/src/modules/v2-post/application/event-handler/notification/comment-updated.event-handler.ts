@@ -9,11 +9,10 @@ import {
 } from '../../../../v2-notification/application/dto';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
-  CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
-  IContentDomainService,
 } from '../../../domain/domain-service/interface';
 import { CommentUpdatedEvent } from '../../../domain/event/comment.event';
+import { ContentNotFoundException } from '../../../domain/exception';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
@@ -36,8 +35,6 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -51,10 +48,14 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       actor,
     });
 
-    const content = await this._contentDomainService.getContentById(
-      comment.get('postId'),
-      actor.id
-    );
+    const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
+      mustIncludeGroup: true,
+    });
+
+    if (!content || content.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
     const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
       | PostDto
       | ArticleDto;

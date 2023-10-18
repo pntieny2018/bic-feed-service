@@ -161,7 +161,6 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
   }
 
   public async destroyComment(id: string): Promise<void> {
-    const comment = await this.model.findOne({ where: { id } });
     const childComments = await this.model.findAll({
       attributes: ['id'],
       where: {
@@ -177,14 +176,22 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
         },
         transaction: transaction,
       });
-      await this.model.destroy({
+
+      await this.delete({
         where: {
           parentId: id,
         },
         individualHooks: true,
         transaction: transaction,
       });
-      await comment.destroy({ transaction });
+
+      await this.delete({
+        where: {
+          id,
+        },
+        transaction: transaction,
+      });
+
       await transaction.commit();
     } catch (e) {
       await transaction.rollback();

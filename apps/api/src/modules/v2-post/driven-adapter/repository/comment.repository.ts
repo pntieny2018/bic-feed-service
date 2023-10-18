@@ -3,7 +3,6 @@ import { CommentAttributes, CommentModel } from '@libs/database/postgres/model';
 import { LibCommentRepository, LibFollowRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { Op, WhereOptions } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 
 import { CommentEntity } from '../../domain/model/comment';
 import {
@@ -86,14 +85,9 @@ export class CommentRepository implements ICommentRepository {
         id: {
           [Op.not]: commentId,
         },
-        createdAt: {
-          [Op.lte]: Sequelize.literal(
-            `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${commentId}')`
-          ),
-        },
       },
+      whereRaw: `created_at <= (SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${commentId}')`,
       order: [['created_at', 'DESC']],
-      limit: 100,
     });
 
     return (comments ?? []).map((comment) => this._commentMapper.toDomain(comment));

@@ -3,11 +3,9 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 import { CommentNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
-import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
-  IContentDomainService,
-} from '../../../domain/domain-service/interface';
 import { CommentDeletedEvent } from '../../../domain/event/comment.event';
+import { ContentNotFoundException } from '../../../domain/exception';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
@@ -29,8 +27,8 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository
   ) {}
 
   public async handle(event: CommentDeletedEvent): Promise<void> {
@@ -40,10 +38,14 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
       actor,
     });
 
-    const content = await this._contentDomainService.getContentById(
-      comment.get('postId'),
-      actor.id
-    );
+    const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
+      mustIncludeGroup: true,
+    });
+
+    if (!content || content.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
     const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
       | PostDto
       | ArticleDto;
