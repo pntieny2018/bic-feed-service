@@ -1,8 +1,11 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
-import { PaginatedArgs } from '@libs/database/postgres/common';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginatedArgs,
+} from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
-import { CursorPaginationProps, CursorPaginationResult } from '../../../../../common/types';
 import {
   PinContentCommandProps,
   ReorderPinnedContentCommandPayload,

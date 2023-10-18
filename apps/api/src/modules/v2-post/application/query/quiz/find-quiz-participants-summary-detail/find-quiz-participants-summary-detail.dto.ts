@@ -1,4 +1,5 @@
-import { IPaginatedInfo, PaginatedResponse } from '../../../../../../common/dto/cusor-pagination';
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
+
 import { QuizParticipantSummaryDetailDto } from '../../../dto';
 
 export class FindQuizParticipantsSummaryDetailDto extends PaginatedResponse<QuizParticipantSummaryDetailDto> {

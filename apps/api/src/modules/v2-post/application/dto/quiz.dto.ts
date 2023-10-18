@@ -1,9 +1,9 @@
 import { QUIZ_PROCESS_STATUS, QUIZ_RESULT_STATUS, QUIZ_STATUS } from '@beincom/constants';
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
-import { IPaginatedInfo, PaginatedResponse } from '../../../../common/dto';
 import { UserDto } from '../../../v2-user/application';
 
 import { ArticleDto } from './article.dto';
