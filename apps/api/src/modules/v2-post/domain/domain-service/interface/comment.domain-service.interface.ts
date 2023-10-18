@@ -1,4 +1,5 @@
-import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
+
 import { BasedCommentProps } from '../../factory/interface';
 import { CommentEntity } from '../../model/comment';
 

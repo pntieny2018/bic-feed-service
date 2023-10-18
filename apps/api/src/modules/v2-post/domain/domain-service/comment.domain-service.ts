@@ -1,15 +1,15 @@
 import { ORDER } from '@beincom/constants';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { NIL } from 'uuid';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { CursorPaginationResult } from '../../../../common/types/cursor-pagination-result.type';
+import { DatabaseException } from '../../../../common/exceptions';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
   CommentReplyNotExistException,
+  InvalidResourceImageException,
 } from '../exception';
-import { InvalidResourceImageException } from '../exception/media.exception';
 import { ICommentFactory, COMMENT_FACTORY_TOKEN } from '../factory/interface';
 import { CommentEntity } from '../model/comment';
 import { ICommentRepository, COMMENT_REPOSITORY_TOKEN } from '../repositoty-interface';
@@ -146,7 +146,7 @@ export class CommentDomainService implements ICommentDomainService {
     parent: CommentEntity,
     pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const postId = parent.get('postId');
+    const contentId = parent.get('postId');
     const commentId = parent.get('id');
     const { userId, targetChildLimit, limit } = pagination;
 
@@ -158,7 +158,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     const childsPagination = await this._commentRepository.getPagination({
       authUserId: userId,
-      contentId: postId,
+      contentId,
       parentId: commentId,
       limit: targetChildLimit,
       order: ORDER.DESC,
