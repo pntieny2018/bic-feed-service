@@ -1,10 +1,9 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TYPE, PERMISSION_KEY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import moment from 'moment';
 
-import { PERMISSION_KEY } from '../../../../common/constants';
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
 import {
   ContentAccessDeniedException,

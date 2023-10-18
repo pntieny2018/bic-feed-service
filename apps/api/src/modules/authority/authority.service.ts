@@ -1,4 +1,9 @@
+import { PERMISSION_KEY } from '@beincom/constants';
+import { Ability, subject } from '@casl/ability';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { permissionToCommonName, SUBJECT } from '../../common/constants/casl.constant';
+import { DomainForbiddenException } from '../../common/exceptions';
 import {
   IPost,
   PostModel,
@@ -6,13 +11,6 @@ import {
   PostStatus,
   PostType,
 } from '../../database/models/post.model';
-import { Ability, subject } from '@casl/ability';
-import {
-  PERMISSION_KEY,
-  permissionToCommonName,
-  SUBJECT,
-} from '../../common/constants/casl.constant';
-import { AuthorityFactory } from './authority.factory';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesResponseDto } from '../series/dto/responses';
 import {
@@ -20,14 +18,15 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
-import { UserDto } from '../v2-user/application';
 import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
   ContentNoPinPermissionException,
   ContentNotFoundException,
 } from '../v2-post/domain/exception';
-import { DomainForbiddenException } from '../../common/exceptions';
+import { UserDto } from '../v2-user/application';
+
+import { AuthorityFactory } from './authority.factory';
 
 @Injectable()
 export class AuthorityService {
@@ -40,7 +39,9 @@ export class AuthorityService {
   ) {}
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
-    if (post.privacy === PostPrivacy.OPEN) return;
+    if (post.privacy === PostPrivacy.OPEN) {
+      return;
+    }
     throw new DomainForbiddenException();
   }
 
@@ -49,8 +50,12 @@ export class AuthorityService {
     post: IPost,
     requireGroups?: GroupDto[]
   ): Promise<void> {
-    if (post.status !== PostStatus.PUBLISHED && post.createdBy === user.id) return;
-    if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
+    if (post.status !== PostStatus.PUBLISHED && post.createdBy === user.id) {
+      return;
+    }
+    if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) {
+      return;
+    }
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
