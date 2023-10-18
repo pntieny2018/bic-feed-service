@@ -1,4 +1,5 @@
 import { RedisService } from '@libs/infra/redis';
+import { USER_ENDPOINT } from '@libs/service/user';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -6,7 +7,6 @@ import { uniq } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
-import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 import { AxiosHelper } from '../../../../common/helpers';
 import { IAxiosConfig } from '../../../../config/axios';
 import { UserEntity, UserProps } from '../../domain/model/user';
@@ -32,7 +32,7 @@ export class UserRepository implements IUserRepository {
       if (!user) {
         const response = await lastValueFrom(
           this._httpService.get(
-            AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.GET_USER, {
+            AxiosHelper.injectParamsToStrUrl(USER_ENDPOINT.INTERNAL.GET_USER, {
               username: username,
             })
           )
@@ -97,7 +97,7 @@ export class UserRepository implements IUserRepository {
     try {
       const response = await lastValueFrom(
         this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.USER.INTERNAL.CHECK_CUD_TAG, {
+          AxiosHelper.injectParamsToStrUrl(USER_ENDPOINT.INTERNAL.CHECK_CUD_TAG, {
             userId,
             rootGroupId,
           }),
@@ -146,7 +146,7 @@ export class UserRepository implements IUserRepository {
     let users: UserProps[] = [];
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.USER.INTERNAL.GET_USERS, ids, {
+        this._httpService.post(USER_ENDPOINT.INTERNAL.GET_USERS_V2, ids, {
           params: {
             ...(authUserId && {
               actorId: authUserId,

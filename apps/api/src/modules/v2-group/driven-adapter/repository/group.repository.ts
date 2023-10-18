@@ -1,10 +1,10 @@
 import { RedisService } from '@libs/infra/redis';
+import { GROUP_ENDPOINT } from '@libs/service/group';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 
 import { CACHE_KEYS } from '../../../../common/constants';
-import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
 import { UserDto } from '../../../v2-user/application';
 import { GroupPrivacy } from '../../data-type';
@@ -38,7 +38,7 @@ export class GroupRepository implements IGroupRepository {
     if (group === null) {
       const response = await lastValueFrom(
         this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {
+          AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.SHARED_GROUPS, {
             ids: groupId,
           })
         )
@@ -65,7 +65,7 @@ export class GroupRepository implements IGroupRepository {
     if (notFoundGroupIds.length > 0) {
       const response = await lastValueFrom(
         this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {
+          AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.SHARED_GROUPS, {
             ids: notFoundGroupIds.join(','),
           })
         )
@@ -94,7 +94,7 @@ export class GroupRepository implements IGroupRepository {
         try {
           //TODO: Need Group provide API for this
           const response = await lastValueFrom(
-            this._httpService.get(ENDPOINT.GROUP.GROUP_ADMIN_PATH.replace(':groupId', groupId), {
+            this._httpService.get(GROUP_ENDPOINT.GROUP_MEMBERS.replace(':groupId', groupId), {
               headers: {
                 user: JSON.stringify({
                   ['token_use']: 'id',
@@ -136,7 +136,7 @@ export class GroupRepository implements IGroupRepository {
       const params = `group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
 
       const response = await lastValueFrom(
-        this._httpService.get(`${ENDPOINT.GROUP.INTERNAL.COMMUNITY_ADMIN_PATH}?${params}`)
+        this._httpService.get(`${GROUP_ENDPOINT.INTERNAL.COMMUNITY_ADMINS}?${params}`)
       );
       if (response.status !== HttpStatus.OK) {
         return {
