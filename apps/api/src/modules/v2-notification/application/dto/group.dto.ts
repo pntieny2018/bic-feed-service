@@ -2,7 +2,7 @@ export class AudienceObjectDto {
   public groups: GroupObjectDto[];
 
   public constructor(data: AudienceObjectDto) {
-    Object.assign(this, data);
+    this.groups = data.groups.map((group) => new GroupObjectDto(group));
   }
 }
 
@@ -14,6 +14,10 @@ class GroupObjectDto {
   public isCommunity?: boolean;
 
   public constructor(data: GroupObjectDto) {
-    Object.assign(this, data);
+    this.id = data.id;
+    this.name = data.name;
+    this.icon = data.icon;
+    this.communityId = data.communityId;
+    this.isCommunity = data.isCommunity;
   }
 }

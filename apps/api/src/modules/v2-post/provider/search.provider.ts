@@ -6,6 +6,9 @@ import {
   SearchPostDeletedEventHandler,
   SearchPostPublishedEventHandler,
   SearchPostUpdatedEventHandler,
+  SearchSeriesDeletedEventHandler,
+  SearchSeriesPublishedEventHandler,
+  SearchSeriesUpdatedEventHandler,
   SearchSeriesItemsAddedEventHandler,
   SearchSeriesItemsRemovedEventHandler,
   SearchSeriesItemsReorderedEventHandler,
@@ -20,6 +23,10 @@ export const searchProvider = [
   SearchPostDeletedEventHandler,
   SearchPostPublishedEventHandler,
   SearchPostUpdatedEventHandler,
+
+  SearchSeriesPublishedEventHandler,
+  SearchSeriesDeletedEventHandler,
+  SearchSeriesUpdatedEventHandler,
 
   SearchContentAttachedSeriesEventHandler,
   SearchSeriesItemsReorderedEventHandler,

@@ -1,4 +1,5 @@
-import { PRIVACY } from '@beincom/constants';
+import { PRIVACY, ROLE_TYPE } from '@beincom/constants';
+import { ArrayHelper } from '@libs/common/helpers';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import {
   GROUP_SERVICE_TOKEN,
@@ -6,7 +7,6 @@ import {
 } from '@libs/service/group/src/group.service.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { ArrayHelper } from '../../../../common/helpers';
 import { GroupNotFoundException } from '../../domain/exception';
 import { IGroupAdapter } from '../../domain/service-adapter-interface';
 
@@ -53,5 +53,16 @@ export class GroupAdapter implements IGroupAdapter {
       groupAndChildIdsUserJoined.push(group.id);
     }
     return ArrayHelper.arrayUnique(groupAndChildIdsUserJoined);
+  }
+
+  public async getGroupAdminIds(groupIds: string[]): Promise<string[]> {
+    const groupMembers = await this._groupService.getUserRoleInGroups(groupIds, [
+      ROLE_TYPE.GROUP_ADMIN,
+    ]);
+    const groupAdmins = groupMembers.groupAdmin;
+
+    const adminIds = Object.values(groupAdmins).flat();
+
+    return ArrayHelper.arrayUnique(adminIds);
   }
 }

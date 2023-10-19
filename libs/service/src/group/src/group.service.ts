@@ -1,14 +1,14 @@
+import { ROLE_TYPE } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
+import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
-import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
-import { ROLE_TYPE } from '@beincom/constants';
 
 @Injectable()
 export class GroupService implements IGroupService {
@@ -147,7 +147,6 @@ export class GroupService implements IGroupService {
       communityAdmin: {},
       groupAdmin: {},
       owner: {},
-      member: {},
     };
     try {
       const response = await this._httpService.post(

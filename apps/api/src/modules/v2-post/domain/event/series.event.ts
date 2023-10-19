@@ -25,15 +25,15 @@ export interface SeriesSameOwnerChangedPayload {
 }
 
 export class SeriesCreatedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity) {}
+  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
 }
 
 export class SeriesUpdatedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity) {}
+  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
 }
 
 export class SeriesDeletedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity) {}
+  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
 }
 
 export class SeriesItemsReoderedEvent {

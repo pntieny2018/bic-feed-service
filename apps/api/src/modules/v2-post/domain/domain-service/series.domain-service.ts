@@ -122,7 +122,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new DatabaseException();
     }
 
-    this.event.publish(new SeriesCreatedEvent(seriesEntity));
+    this.event.publish(new SeriesCreatedEvent(seriesEntity, actor));
 
     return seriesEntity;
   }
@@ -210,7 +210,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setMarkReadImportant();
     }
 
-    this.event.publish(new SeriesUpdatedEvent(seriesEntity));
+    this.event.publish(new SeriesUpdatedEvent(seriesEntity, actor));
 
     return seriesEntity;
   }
@@ -247,7 +247,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.delete(seriesEntity.get('id'));
 
-    this.event.publish(new SeriesDeletedEvent(seriesEntity));
+    this.event.publish(new SeriesDeletedEvent(seriesEntity, actor));
   }
 
   public async findItemsInSeries(
