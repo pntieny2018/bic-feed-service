@@ -14,6 +14,10 @@ export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
   public async handle(event: PostUpdatedEvent): Promise<void> {
     const { postEntity } = event.payload;
 
+    if (postEntity.isHidden() || !postEntity.isPublished()) {
+      return;
+    }
+
     await this._feedPublisherService.fanoutOnWrite(
       postEntity.getId(),
       postEntity.getGroupIds(),

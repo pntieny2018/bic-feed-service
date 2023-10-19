@@ -27,7 +27,7 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
   public async handle(event: PostPublishedEvent): Promise<void> {
     const { postEntity, actor } = event.payload;
 
-    if (postEntity.isHidden()) {
+    if (!postEntity.isPublished()) {
       return;
     }
 

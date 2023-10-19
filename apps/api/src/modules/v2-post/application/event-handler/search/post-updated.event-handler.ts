@@ -21,6 +21,10 @@ export class SearchPostUpdatedEventHandler implements IEventHandler<PostUpdatedE
   public async handle(event: PostUpdatedEvent): Promise<void> {
     const { postEntity, actor } = event.payload;
 
+    if (postEntity.isHidden() || !postEntity.isPublished()) {
+      return;
+    }
+
     const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
       postEntity.getId(),
       {
