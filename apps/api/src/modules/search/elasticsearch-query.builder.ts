@@ -31,14 +31,17 @@ export class ElasticsearchQueryBuilder {
     const body: BodyES = {
       query: {
         bool: {
-          must: [...this._getContentNullFilter(filterEmptyContent)],
+          must: [
+            ...this._getContentTypesFilter(contentTypes),
+            ...this._getContentNullFilter(filterEmptyContent),
+            ...this._getContentEmptyStringFilter(filterEmptyContent),
+          ],
           must_not: [
             ...this._getContentEmptyStringFilter(filterEmptyContent),
             ...this._getNotIncludeIds(excludeByIds),
           ],
           filter: [
             ...this._getActorFilter(actors),
-            ...this._getContentTypesFilter(contentTypes),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
             ...this._getItemInSeriesFilter(itemIds),
@@ -184,7 +187,7 @@ export class ElasticsearchQueryBuilder {
       {
         script: {
           script: {
-            inline: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
+            source: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
           },
         },
       },
@@ -277,11 +280,17 @@ export class ElasticsearchQueryBuilder {
   private _getContentNullFilter(filterEmptyContent?: boolean): any {
     const { content } = ELASTIC_POST_MAPPING_PATH;
     if (filterEmptyContent) {
-      return Object.values(content).map((code) => ({
-        exists: {
-          field: code,
+      return [
+        {
+          bool: {
+            should: Object.values(content).map((code) => ({
+              exists: {
+                field: code,
+              },
+            })),
+          },
         },
-      }));
+      ];
     }
     return [];
   }
@@ -289,11 +298,17 @@ export class ElasticsearchQueryBuilder {
   private _getContentEmptyStringFilter(filterEmptyContent?: boolean): any {
     const { content } = ELASTIC_POST_MAPPING_PATH;
     if (filterEmptyContent) {
-      return Object.values(content).map((code) => ({
-        term: {
-          [code]: '',
+      return [
+        {
+          bool: {
+            should: Object.values(content).map((code) => ({
+              term: {
+                [code]: '',
+              },
+            })),
+          },
         },
-      }));
+      ];
     }
     return [];
   }
