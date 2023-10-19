@@ -19,6 +19,7 @@ export class PostDto {
   public series: {
     title: string;
     id: string;
+    createdBy?: string;
   }[];
   public quiz?: QuizDto;
   public setting: PostSettingDto;
@@ -48,6 +49,7 @@ export class PostDto {
   public updatedAt: Date;
   public scheduledAt?: Date;
   public publishedAt?: Date;
+  public createdBy?: string;
   public quizHighestScore?: {
     quizParticipantId: string;
     score: number;

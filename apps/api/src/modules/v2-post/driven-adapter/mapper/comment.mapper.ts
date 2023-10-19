@@ -1,13 +1,9 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import {
-  CommentAttributes,
-  CommentModel,
-  IImage,
-} from '@libs/database/postgres/model/comment.model';
+import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
 import { Injectable } from '@nestjs/common';
 
 import { CommentEntity } from '../../domain/model/comment';
-import { FileEntity, ImageAttributes, ImageEntity, VideoEntity } from '../../domain/model/media';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { ReactionEntity } from '../../domain/model/reaction';
 
 @Injectable()
@@ -31,9 +27,7 @@ export class CommentMapper {
       content: model.content,
       mentions: model.mentions,
       media: {
-        images: (model.mediaJson?.images || []).map(
-          (image) => new ImageEntity(image as unknown as ImageAttributes)
-        ),
+        images: (model.mediaJson?.images || []).map((image) => new ImageEntity(image)),
         files: (model.mediaJson?.files || []).map((file) => new FileEntity(file)),
         videos: (model.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
       },
@@ -67,9 +61,7 @@ export class CommentMapper {
       giphyId: comment.get('giphyId'),
       mediaJson: {
         files: (comment.get('media').files || []).map((file) => file.toObject()),
-        images: (comment.get('media').images || []).map(
-          (image) => image.toObject() as unknown as IImage
-        ),
+        images: (comment.get('media').images || []).map((image) => image.toObject()),
         videos: (comment.get('media').videos || []).map((video) => video.toObject()),
       },
       mentions: comment.get('mentions'),

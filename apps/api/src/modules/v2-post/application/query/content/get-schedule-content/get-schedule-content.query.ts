@@ -5,6 +5,8 @@ import { IQuery } from '@nestjs/cqrs';
 
 export class GetScheduleContentProps extends PaginatedArgs {
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+  public groupId?: string;
+  public isMine?: boolean;
   public order: ORDER;
   public user: UserDto;
 }

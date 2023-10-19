@@ -3,7 +3,6 @@ import { cloneDeep } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { TagDuplicateNameException, TagUsedException } from '../exception';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory/interface';
 import { TagEntity } from '../model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
 
@@ -12,10 +11,10 @@ import { ITagDomainService, TagCreateProps, TagUpdateProps } from './interface';
 export class TagDomainService implements ITagDomainService {
   private readonly _logger = new Logger(TagDomainService.name);
 
-  @Inject(TAG_REPOSITORY_TOKEN)
-  private readonly _tagRepository: ITagRepository;
-  @Inject(TAG_FACTORY_TOKEN)
-  private readonly _tagFactory: ITagFactory;
+  public constructor(
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepository: ITagRepository
+  ) {}
 
   public async findByIds(ids: string[]): Promise<TagEntity[]> {
     if (!ids?.length) {
@@ -41,14 +40,15 @@ export class TagDomainService implements ITagDomainService {
       throw new TagDuplicateNameException();
     }
 
-    const tagEntity = this._tagFactory.create({
-      name,
-      groupId,
-      userId,
-    });
+    const tagEntity = TagEntity.create(
+      {
+        name,
+        groupId,
+      },
+      userId
+    );
     try {
       await this._tagRepository.create(tagEntity);
-      tagEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -81,7 +81,6 @@ export class TagDomainService implements ITagDomainService {
     if (cloneTagEntity.isChanged()) {
       try {
         await this._tagRepository.update(cloneTagEntity);
-        cloneTagEntity.commit();
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
         throw new DatabaseException();
@@ -100,9 +99,5 @@ export class TagDomainService implements ITagDomainService {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-  }
-
-  public async findTagsByKeyword(keyword: string): Promise<TagEntity[]> {
-    return this._tagRepository.findAll({ keyword });
   }
 }

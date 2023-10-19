@@ -1,11 +1,4 @@
-export const PERMISSION_KEY = {
-  CRUD_POST_ARTICLE: 'crud_post_article',
-  CRUD_SERIES: 'crud_series',
-  EDIT_OWN_CONTENT_SETTING: 'edit_own_content_setting',
-  MANAGE: 'manage',
-  PIN_CONTENT: 'pin_content',
-  CUD_QUIZ: 'cud_quiz',
-};
+import { PERMISSION_KEY } from '@beincom/constants';
 
 export const SUBJECT = {
   COMMUNITY: 'community',
@@ -20,12 +13,6 @@ export const CACHE_KEYS = {
   SHARE_GROUP: 'SG',
   IS_RUNNING_CONTENT_SCHEDULE: 'is_running_content_schedule',
 };
-
-export class BasicPermissionDto {
-  public key: string;
-  public name: string;
-  public description: string;
-}
 
 export const permissionToCommonName = (permission: string): string => {
   switch (permission) {

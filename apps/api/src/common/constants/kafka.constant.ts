@@ -23,11 +23,8 @@ export const KAFKA_TOPIC = {
     REPORT: `${process.env.KAFKA_ENV}.bein_stream.report`,
   },
   CONTENT: {
-    POST_CHANGED: `${process.env.KAFKA_ENV}.content_service.post_changed`,
     QUIZ_PROCESSED: `${process.env.KAFKA_ENV}.content_service.quiz_processed`,
     POST_AUTO_SAVE: `${process.env.KAFKA_ENV}.content_service.post_auto_save`,
-    ARTICLE_CHANGED: `${process.env.KAFKA_ENV}.content_service.article_changed`,
-    SERIES_CHANGED: `${process.env.KAFKA_ENV}.content_service.series_changed`,
     COMMENT_CHANGED: `${process.env.KAFKA_ENV}.content_service.comment_changed`,
     SERIES_DELETED: `${process.env.KAFKA_ENV}.content_service.series_deleted`,
   },

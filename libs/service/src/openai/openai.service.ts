@@ -1,23 +1,23 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { Configuration, OpenAIApi } from 'openai';
-import { ConfigService } from '@nestjs/config';
-import { v4 } from 'uuid';
-import {
-  GenerateQuestionProps,
-  GenerateQuestionResponse,
-  IOpenAIService,
-  Question,
-} from '@libs/service/openai/openai.service.interface';
+import { IHttpService, LAMBDA_COUNT_TOKEN_HTTP_TOKEN } from '@libs/infra/http';
+import { IOpenAIConfig } from '@libs/service/openai/config';
 import {
   CORRECT_ANSWER_KEY,
   MAX_TOKEN,
   TOKEN_IN_CONTEXT,
   TOKEN_PER_QUESTION_OR_ANSWER,
 } from '@libs/service/openai/constant';
-import { IOpenAIConfig } from '@libs/service/openai/config';
-import { ENDPOINT } from '../../../../apps/api/src/common/constants/endpoint.constant';
-import { IHttpService, LAMBDA_COUNT_TOKEN_HTTP_TOKEN } from '@libs/infra/http';
 import { CountTokenException } from '@libs/service/openai/openai.exception';
+import {
+  GenerateQuestionProps,
+  GenerateQuestionResponse,
+  IOpenAIService,
+} from '@libs/service/openai/openai.service.interface';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Configuration, OpenAIApi } from 'openai';
+import { v4 } from 'uuid';
+
+import { OPENAI_ENDPOINT } from './endpoint.constant';
 
 @Injectable()
 export class OpenAIService implements IOpenAIService {
@@ -89,7 +89,7 @@ export class OpenAIService implements IOpenAIService {
   }
   private async _getInputTokens(props: GenerateQuestionProps): Promise<number> {
     const { content } = props;
-    const response = await this._httpService.post(ENDPOINT.LAMBDA.COUNT_TOKEN, {
+    const response = await this._httpService.post(OPENAI_ENDPOINT.LAMBDA.COUNT_TOKEN, {
       content,
     });
     if (response.status !== HttpStatus.OK) {

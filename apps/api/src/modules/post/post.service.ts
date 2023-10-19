@@ -54,12 +54,11 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/a
 import { GroupPrivacy } from '../v2-group/data-type';
 import { RULES } from '../v2-post/constant';
 import {
-  PostLimitAttachedSeriesException,
-  ArticleLimitAttachedSeriesException,
   ContentEmptyContentException,
   ContentNotFoundException,
   ContentAccessDeniedException,
   ContentEmptyGroupException,
+  ContentLimitAttachedSeriesException,
 } from '../v2-post/domain/exception';
 import { UserDto } from '../v2-user/application';
 
@@ -1809,11 +1808,7 @@ export class PostService {
     const isOverLimitedToAttachSeries = post.postSeries.length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimitedToAttachSeries) {
-      if (post.type === PostType.POST) {
-        throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-      } else {
-        throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
-      }
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

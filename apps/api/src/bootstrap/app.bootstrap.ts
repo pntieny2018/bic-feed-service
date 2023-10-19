@@ -1,10 +1,9 @@
-import { IS_LOCAL } from '@libs/common/constants';
+import { HEADER_VERSION_KEY, IS_LOCAL } from '@libs/common/constants';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json } from 'express';
 import { Logger, PinoLogger } from 'nestjs-pino';
 
-import { VERSION_HEADER_KEY } from '../common/constants';
 import { HttpExceptionFilter } from '../common/filters';
 import { HandleResponseInterceptor } from '../common/interceptors';
 import { IAppConfig } from '../config/app';
@@ -24,7 +23,7 @@ export class AppBootstrap {
 
     app.enableVersioning({
       type: VersioningType.HEADER,
-      header: VERSION_HEADER_KEY,
+      header: HEADER_VERSION_KEY,
     });
     app.useGlobalInterceptors(new HandleResponseInterceptor());
     app.useGlobalFilters(new HttpExceptionFilter(appConfig.env, '/'));

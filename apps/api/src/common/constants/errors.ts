@@ -44,18 +44,17 @@ export const ERRORS = {
   CONTENT_HAS_BEEN_PUBLISHED: 'content.has_been_published',
   CONTENT_QUIZ_EXISTED: 'content.quiz_existed',
   CONTENT_INVALID_SCHEDULED_TIME: 'content.invalid_scheduled_time',
+  CONTENT_LIMIT_ATTACHED_SERIES: 'content.limit_attached_series',
 
   // ARTICLE
   ARTICLE_INVALID_PARAMETER: 'article.invalid_parameter',
   ARTICLE_PUBLISH_INVALID_TIME: 'article.publish_invalid_time',
   ARTICLE_REQUIRED_COVER: 'article.required_cover',
-  ARTICLE_LIMIT_ATTACHED_SERIES: 'article.limit_attached_series',
   ARTICLE_INVALID_SCHEDULED_TIME: 'article.invalid_scheduled_time',
 
   // POST
   POST_INVALID_PARAMETER: 'post.invalid_parameter',
   POST_STATUS_CONFLICTED: 'post.status_conflicted',
-  POST_LIMIT_ATTACHED_SERIES: 'post.limit_attached_series',
   POST_VIDEO_PROCESSING: 'post.video_processing',
 
   // SERIES

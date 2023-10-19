@@ -10,12 +10,14 @@ import { IPost, PostType } from '../../database/models/post.model';
 import { PostService } from '../post/post.service';
 
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
-import { IPaginationSearchResult, IPostSearchQuery, ISearchPaginationQuery } from './interfaces';
 import {
+  IPaginationSearchResult,
+  IPostSearchQuery,
+  ISearchPaginationQuery,
   IDataPostToAdd,
   IDataPostToDelete,
   IDataPostToUpdate,
-} from './interfaces/post-elasticsearch.interface';
+} from './interfaces';
 
 @Injectable()
 export class SearchService {
@@ -169,7 +171,14 @@ export class SearchService {
     }
   }
 
-  public async updateAttributePostToSearch(post: IPost, dataUpdate: unknown): Promise<void> {
+  /**
+   * TODO refactor soon parameters
+   * @parms post (id, lang)
+   * */
+  public async updateAttributePostToSearch(
+    post: { id: string; lang?: string },
+    dataUpdate: unknown
+  ): Promise<void> {
     const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
     try {
       await this.elasticsearchService.update({

@@ -1,5 +1,6 @@
 import { CACHE_KEYS } from '@beincom/constants';
 import { UserDto as ProfileUserDto } from '@beincom/dto';
+import { AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
@@ -109,7 +110,7 @@ export class UserService implements IUserService {
     if (authUserId) {
       params['actorId'] = authUserId;
     }
-    const response = await this._userHttpService.get(USER_ENDPOINT.INTERNAL.USERS_PATH, { params });
+    const response = await this._userHttpService.get(USER_ENDPOINT.INTERNAL.GET_USERS, { params });
     if (response.status !== HttpStatus.OK) {
       return [];
     }
@@ -183,5 +184,20 @@ export class UserService implements IUserService {
     }
 
     return permissions;
+  }
+
+  public async canCudTags(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await this._groupHttpService.get(
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.CHECK_CUD_TAG, {
+          userId,
+          rootGroupId,
+        })
+      );
+      return response.data.data;
+    } catch (e) {
+      this._logger.error(`[canCudTags] ${e.message}`);
+      return false;
+    }
   }
 }

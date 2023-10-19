@@ -1,7 +1,7 @@
+import { PaginatedResponse } from '@libs/database/postgres/common';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { PaginatedResponse } from '../../../../../common/dto';
 import { createUrlFromId } from '../../../../giphy/giphy.util';
 import {
   IUserApplicationService,
@@ -9,14 +9,14 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { CommentEntity } from '../../../domain/model/comment';
-import { CommentResponseDto } from '../../../driving-apdater/dto/response';
-import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
-
-import { ICommentBinding } from './comment.interface';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
+import { CommentResponseDto } from '../../../driving-apdater/dto/response';
+import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
+
+import { ICommentBinding } from './comment.interface';
 
 @Injectable()
 export class CommentBinding implements ICommentBinding {

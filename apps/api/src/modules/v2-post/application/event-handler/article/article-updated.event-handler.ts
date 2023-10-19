@@ -1,102 +1,202 @@
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { uniq } from 'lodash';
+import { IEventHandler } from '@nestjs/cqrs';
+import { InternalEventEmitterService } from 'apps/api/src/app/custom/event-emitter';
 
-import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
+import {
+  SeriesAddedItemsEvent,
+  SeriesChangedItemsEvent,
+  SeriesRemovedItemsEvent,
+} from '../../../../../events/series';
+import { ISeriesState } from '../../../../../notification/activities';
 import { ArticleUpdatedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { ArticleEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ImageDto, TagDto } from '../../dto';
-import { ArticleChangedMessagePayload } from '../../dto/message';
+import { ArticleEntity, SeriesEntity } from '../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  ITagRepository,
+  TAG_REPOSITORY_TOKEN,
+} from '../../../domain/repositoty-interface';
 
-@EventsHandler(ArticleUpdatedEvent)
+@EventsHandlerAndLog(ArticleUpdatedEvent)
 export class ArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedEvent> {
   public constructor(
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepository: ITagRepository,
+    // TODO: call domain and using event bus
+    private readonly _internalEventEmitter: InternalEventEmitterService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    private readonly _contentRepository: IContentRepository
   ) {}
 
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
     const { articleEntity, actor } = event;
-    const articleEntityBefore = new ArticleEntity(articleEntity.getSnapshot());
-    if (!articleEntity.isPublished()) {
+
+    if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findOne({
+    await this._processTagsUsed(articleEntity);
+    await this._processSeriesItemsChanged(articleEntity, actor);
+  }
+
+  private async _processTagsUsed(articleEntity: ArticleEntity): Promise<void> {
+    const attachTagIds = articleEntity.getState().attachTagIds;
+    const detachTagIds = articleEntity.getState().detachTagIds;
+
+    const tagEntities = await this._tagRepository.findAll({
+      ids: [...attachTagIds, ...detachTagIds],
+    });
+
+    const tagsMap = new Map(tagEntities.map((tag) => [tag.get('id'), tag]));
+
+    for (const id of attachTagIds) {
+      const tag = tagsMap.get(id);
+      tag.increaseTotalUsed();
+      await this._tagRepository.update(tag);
+    }
+
+    for (const id of detachTagIds) {
+      const tag = tagsMap.get(id);
+      if (tag.get('totalUsed') > 0) {
+        tag.decreaseTotalUsed();
+        await this._tagRepository.update(tag);
+      }
+    }
+  }
+
+  private async _processSeriesItemsChanged(
+    articleEntity: ArticleEntity,
+    actor: UserDto
+  ): Promise<void> {
+    const attachSeriesIds = articleEntity.getState().attachSeriesIds;
+    const detachSeriesIds = articleEntity.getState().detachSeriesIds;
+
+    const seriesIdsNeedToFind = [...attachSeriesIds, ...detachSeriesIds];
+
+    const seriesEntities = (await this._contentRepository.findAll({
       where: {
-        id: articleEntity.getId(),
-        groupArchived: true,
+        groupArchived: false,
+        isHidden: false,
+        ids: seriesIdsNeedToFind,
       },
       include: {
-        shouldIncludeSeries: true,
+        mustIncludeGroup: true,
       },
-    })) as ArticleEntity;
+    })) as SeriesEntity[];
 
-    const seriesIds = uniq([
-      ...articleEntity.getSeriesIds(),
-      ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
-    ]);
-
-    const payload: ArticleChangedMessagePayload = {
-      state: 'update',
-      before: {
-        id: articleEntityBefore.get('id'),
-        actor,
-        type: articleEntityBefore.get('type'),
-        setting: articleEntityBefore.get('setting'),
-        groupIds: articleEntityBefore.get('groupIds'),
-        seriesIds: articleEntityBefore.get('seriesIds'),
-        title: articleEntityBefore.get('title'),
-        summary: articleEntityBefore.get('summary'),
-        content: articleEntityBefore.get('content'),
-        lang: articleEntityBefore.get('lang'),
-        isHidden: articleEntityBefore.get('isHidden'),
-        status: articleEntityBefore.get('status'),
-        createdAt: articleEntityBefore.get('createdAt'),
-        updatedAt: articleEntityBefore.get('updatedAt'),
-        publishedAt: articleEntityBefore.get('publishedAt'),
+    const addSeries = seriesEntities.filter((series) => attachSeriesIds.includes(series.get('id')));
+    const removeSeries = seriesEntities.filter((series) =>
+      detachSeriesIds.includes(series.get('id'))
+    );
+    const removeSeriesWithState: ISeriesState[] = removeSeries.map((item: SeriesEntity) => ({
+      id: item.get('id'),
+      title: item.get('title'),
+      actor: {
+        id: item.get('createdBy'),
       },
-      after: {
-        id: articleEntity.get('id'),
-        actor,
-        type: articleEntity.get('type'),
-        setting: articleEntity.get('setting'),
-        groupIds: articleEntity.get('groupIds'),
-        communityIds: articleEntity.get('communityIds'),
-        seriesIds,
-        tags: (articleEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
-        categories: (articleEntity.get('categories') || []).map((item) => ({
-          id: item.get('id'),
-          name: item.get('name'),
-        })),
-        title: articleEntity.get('title'),
-        summary: articleEntity.get('summary'),
-        content: articleEntity.get('content'),
-        lang: articleEntity.get('lang'),
-        state: {
-          attachGroupIds: articleEntity.getState().attachGroupIds,
-          detachGroupIds: articleEntity.getState().detachGroupIds,
-          attachTagIds: articleEntity.getState().attachTagIds,
-          detachTagIds: articleEntity.getState().detachTagIds,
-          attachSeriesIds: articleEntity.getState().attachSeriesIds,
-          detachSeriesIds: articleEntity.getState().detachSeriesIds,
-        },
-        isHidden: articleEntity.get('isHidden'),
-        coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
-        status: articleEntity.get('status'),
-        createdAt: articleEntity.get('createdAt'),
-        updatedAt: articleEntity.get('updatedAt'),
-        publishedAt: articleEntity.get('publishedAt'),
+      state: 'remove',
+      audience: {
+        groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
       },
-    };
+    }));
+    const newSeriesWithState: ISeriesState[] = addSeries.map((item: SeriesEntity) => ({
+      id: item.get('id'),
+      title: item.get('title'),
+      actor: {
+        id: item.get('createdBy'),
+      },
+      state: 'add',
+      audience: {
+        groups: (item.get('groupIds') || []).map((groupId) => ({ id: groupId })),
+      },
+    }));
 
-    this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
-      key: articleEntity.getId(),
-      value: new ArticleChangedMessagePayload(payload),
-    });
+    let skipNotifyForNewItems = [];
+    let skipNotifyForRemoveItems = [];
+
+    if (newSeriesWithState.length && removeSeriesWithState.length) {
+      const result = new Map<string, ISeriesState[]>();
+
+      [...newSeriesWithState, ...removeSeriesWithState].forEach((item: ISeriesState): void => {
+        const key = item.actor.id;
+        if (!result.has(key)) {
+          result.set(key, []);
+        }
+        const items = result.get(key);
+        items.push(item);
+        result.set(key, items);
+      });
+
+      const sameOwnerItems = [];
+
+      result.forEach((r) => {
+        const newItem = r.filter((i) => i.state === 'add');
+        const removeItem = r.filter((i) => i.state === 'remove');
+        if (newItem.length && removeItem.length) {
+          sameOwnerItems.push(r);
+          skipNotifyForNewItems = newItem.map((i) => i.id);
+          skipNotifyForRemoveItems = removeItem.map((i) => i.id);
+        }
+      });
+
+      if (sameOwnerItems.length && !articleEntity.isHidden()) {
+        sameOwnerItems.forEach((so) => {
+          this._internalEventEmitter.emit(
+            new SeriesChangedItemsEvent({
+              content: {
+                id: articleEntity.getId(),
+                content: articleEntity.get('content'),
+                type: articleEntity.getType(),
+                createdBy: articleEntity.getCreatedBy(),
+                createdAt: articleEntity.get('createdAt'),
+                updatedAt: articleEntity.get('updatedAt'),
+              } as any,
+              series: so,
+              actor,
+            })
+          );
+        });
+      }
+    }
+
+    if (attachSeriesIds.length > 0) {
+      attachSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesAddedItemsEvent({
+            itemIds: [articleEntity.getId()],
+            seriesId: seriesId,
+            skipNotify: skipNotifyForNewItems.includes(seriesId) || articleEntity.isHidden(),
+            actor,
+            context: 'publish',
+          })
+        )
+      );
+    }
+
+    if (detachSeriesIds.length > 0) {
+      detachSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
+            items: [
+              {
+                id: articleEntity.getId(),
+                title: articleEntity.getTitle(),
+                content: articleEntity.get('content'),
+                type: articleEntity.getType(),
+                createdBy: articleEntity.getCreatedBy(),
+                groupIds: articleEntity.getGroupIds(),
+                createdAt: articleEntity.get('createdAt'),
+              },
+            ],
+            seriesId: seriesId,
+            skipNotify: skipNotifyForRemoveItems.includes(seriesId) || articleEntity.isHidden(),
+            actor,
+            contentIsDeleted: false,
+          })
+        )
+      );
+    }
   }
 }

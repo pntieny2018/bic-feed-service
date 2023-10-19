@@ -22,7 +22,7 @@ export type PostCreateProps = {
 
 export type UpdatePostProps = {
   payload: PostPayload;
-  authUser: UserDto;
+  actor: UserDto;
 };
 
 export type SchedulePostProps = {
@@ -40,7 +40,7 @@ export interface IPostDomainService {
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   schedule(input: SchedulePostProps): Promise<PostEntity>;
   publish(input: PublishPostProps): Promise<PostEntity>;
-  updatePost(props: UpdatePostProps): Promise<PostEntity>;
+  update(props: UpdatePostProps): Promise<PostEntity>;
   autoSavePost(input: UpdatePostProps): Promise<void>;
   delete(postId: string, authUser: UserDto): Promise<void>;
 }

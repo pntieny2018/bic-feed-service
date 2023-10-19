@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -16,7 +17,6 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { UserDto } from '../../../v2-user/application';
 import {
   CreateTagCommand,
   DeleteTagCommand,
@@ -87,10 +87,9 @@ export class TagController {
     @Body() createTagDto: CreateTagRequestDto
   ): Promise<TagDto> {
     const { groupId, name } = createTagDto;
-    const userId = user.id;
 
     return this._commandBus.execute<CreateTagCommand, TagDto>(
-      new CreateTagCommand({ groupId, name, userId })
+      new CreateTagCommand({ groupId, name, user })
     );
   }
 
@@ -104,15 +103,14 @@ export class TagController {
   @Version(ROUTES.TAG.UPDATE_TAG.VERSIONS)
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) tagId: string,
+    @Param('tagId', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagRequestDto
   ): Promise<TagDto> {
     const { name } = updateTagDto;
 
-    const tag = await this._commandBus.execute<UpdateTagCommand, TagDto>(
-      new UpdateTagCommand({ id: tagId, name, userId: user.id })
+    return this._commandBus.execute<UpdateTagCommand, TagDto>(
+      new UpdateTagCommand({ id: tagId, name, actor: user })
     );
-    return tag;
   }
 
   @ApiOperation({ summary: 'Delete tag' })
@@ -125,8 +123,8 @@ export class TagController {
   @ResponseMessages({ success: 'message.tag.deleted_success' })
   public async delete(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('tagId', ParseUUIDPipe) tagId: string
   ): Promise<void> {
-    await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
+    await this._commandBus.execute(new DeleteTagCommand({ id: tagId, actor: user }));
   }
 }

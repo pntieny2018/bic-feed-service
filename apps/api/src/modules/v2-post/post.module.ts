@@ -12,17 +12,16 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../../database';
 import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
+import { FeedModule } from '../feed';
 import { MediaModule } from '../media';
 import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
+import { NotificationModuleV2 } from '../v2-notification/notification.module';
 import { UserModuleV2 } from '../v2-user/user.module';
 
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
-import { ArticleConsumer } from './driving-apdater/consumer/article.consumer';
-import { PostConsumer } from './driving-apdater/consumer/post.consumer';
-import { SeriesConsumer } from './driving-apdater/consumer/series.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -36,18 +35,21 @@ import { TagController } from './driving-apdater/controller/tag.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
 import {
+  adapterProvider,
   categoryProvider,
   commentProvider,
+  feedProvider,
+  libRepositoryProvider,
   linkPreviewProvider,
+  mediaProvider,
+  notificationProvider,
+  postProvider,
+  quizProvider,
+  reactionProvider,
+  searchProvider,
   sharedProvider,
   tagProvider,
-  postProvider,
-  mediaProvider,
-  reactionProvider,
-  adapterProvider,
-  libRepositoryProvider,
 } from './provider';
-import { quizProvider } from './provider/quiz.provider';
 
 @Module({
   imports: [
@@ -61,12 +63,14 @@ import { quizProvider } from './provider/quiz.provider';
     KafkaModule,
     forwardRef(() => SearchModule),
     NotificationModule,
+    NotificationModuleV2,
     QueueModule,
     EventModule,
     UserModule,
     GroupModule,
     LibMediaModule,
     OpenaiModule,
+    FeedModule,
   ],
   controllers: [
     TagController,
@@ -78,24 +82,24 @@ import { quizProvider } from './provider/quiz.provider';
     TimelineController,
     NewsFeedController,
     CommentController,
-    PostConsumer,
-    SeriesConsumer,
-    ArticleConsumer,
     SeriesController,
     QuizController,
   ],
   providers: [
     ...adapterProvider,
-    ...tagProvider,
     ...categoryProvider,
-    ...postProvider,
+    ...commentProvider,
+    ...feedProvider,
+    ...libRepositoryProvider,
     ...linkPreviewProvider,
     ...mediaProvider,
-    ...commentProvider,
-    ...sharedProvider,
-    ...reactionProvider,
+    ...notificationProvider,
+    ...postProvider,
     ...quizProvider,
-    ...libRepositoryProvider,
+    ...reactionProvider,
+    ...searchProvider,
+    ...sharedProvider,
+    ...tagProvider,
     QuizProcessor,
   ],
   exports: [

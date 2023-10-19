@@ -94,6 +94,10 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     return this._props.seriesIds || [];
   }
 
+  public setSeriesIds(seriesIds: string[]): void {
+    this._props.seriesIds = seriesIds;
+  }
+
   public getTitle(): string {
     return this._props.title;
   }

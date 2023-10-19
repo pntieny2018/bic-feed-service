@@ -3,9 +3,6 @@ import {
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessArticleDeletedHandler,
-  ProcessArticlePublishedHandler,
-  ProcessArticleUpdatedHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
@@ -15,25 +12,24 @@ import {
   PinContentHandler,
   ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
+  SaveContentHandler,
   UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
-  ProcessPostDeletedHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
 } from '../application/command/post';
 import {
+  AddSeriesItemsHandler,
   CreateSeriesHandler,
   DeleteSeriesHandler,
-  ProcessSeriesDeletedHandler,
-  ProcessSeriesPublishedHandler,
-  ProcessSeriesUpdatedHandler,
+  RemoveSeriesItemsHandler,
+  ReorderSeriesItemsHandler,
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
@@ -48,12 +44,8 @@ import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
+  PostUpdatedEventHandler,
 } from '../application/event-handler/post';
-import {
-  SeriesCreatedEventHandler,
-  SeriesDeletedEventHandler,
-  SeriesUpdatedEventHandler,
-} from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -64,6 +56,7 @@ import {
   GetTotalDraftHandler,
   SearchContentsHandler,
   FindPinnedContentHandler,
+  GetContentAudienceHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
@@ -123,13 +116,9 @@ export const postProvider = [
   PostPublishedEventHandler,
   PostScheduledEventHandler,
   PostDeletedEventHandler,
-
-  SeriesCreatedEventHandler,
-  SeriesUpdatedEventHandler,
-  SeriesDeletedEventHandler,
+  PostUpdatedEventHandler,
 
   ContentHasSeenEventHandler,
-
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -140,9 +129,6 @@ export const postProvider = [
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessArticleDeletedHandler,
-  ProcessArticlePublishedHandler,
-  ProcessArticleUpdatedHandler,
   ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
@@ -151,23 +137,22 @@ export const postProvider = [
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
   ReorderPinnedContentHandler,
+  SeenContentHandler,
   PinContentHandler,
+  SaveContentHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
-  ProcessPostDeletedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
-  ProcessSeriesDeletedHandler,
-  ProcessSeriesPublishedHandler,
-  ProcessSeriesUpdatedHandler,
+  AddSeriesItemsHandler,
+  RemoveSeriesItemsHandler,
+  ReorderSeriesItemsHandler,
   UpdateSeriesHandler,
   ValidateSeriesTagsHandler,
 
@@ -188,6 +173,7 @@ export const postProvider = [
   GetSeriesInContentHandler,
   FindPinnedContentHandler,
   SearchSeriesHandler,
+  GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
 
   /** Domain Service */

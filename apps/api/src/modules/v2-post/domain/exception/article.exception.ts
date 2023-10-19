@@ -1,7 +1,7 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
+
 import { ERRORS } from '../../../../common/constants/errors';
-import { RULES } from '../../constant';
 
 export class ArticleInvalidParameterException extends DomainException {
   public static code = ERRORS.ARTICLE_INVALID_PARAMETER;
@@ -28,24 +28,6 @@ export class ArticleRequiredCoverException extends DomainException {
     const i18n = I18nContext.current();
     message = message || i18n?.t(`error.article.required_cover`) || '';
     super(ArticleRequiredCoverException.code, message, error);
-  }
-}
-
-export class ArticleLimitAttachedSeriesException extends DomainException {
-  public static code = ERRORS.ARTICLE_LIMIT_ATTACHED_SERIES;
-
-  public constructor(
-    limitNumber: number = RULES.LIMIT_ATTACHED_SERIES,
-    message: string = null,
-    error: any = null
-  ) {
-    const i18n = I18nContext.current();
-    message =
-      message ||
-      i18n?.t(`error.article.limit_attached_series`, { args: { limit: limitNumber } }) ||
-      '';
-
-    super(ArticleLimitAttachedSeriesException.code, message, error);
   }
 }
 

@@ -1,9 +1,9 @@
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { isEmpty } from 'lodash';
 import { NIL, validate as isUUID, v4 } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { ReactionEntity } from '../reaction';
 
