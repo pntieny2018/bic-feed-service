@@ -21,6 +21,10 @@ export class SearchArticlePublishedEventHandler implements IEventHandler<Article
   public async handle(event: ArticlePublishedEvent): Promise<void> {
     const { articleEntity } = event;
 
+    if (!articleEntity.isPublished()) {
+      return;
+    }
+
     const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
       articleEntity.getId(),
       { shouldIncludeSeries: true }

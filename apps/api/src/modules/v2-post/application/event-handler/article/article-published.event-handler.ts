@@ -22,7 +22,8 @@ export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublis
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
     const { articleEntity, actor } = event;
-    if (!articleEntity.isPublished()) {
+
+    if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
 
