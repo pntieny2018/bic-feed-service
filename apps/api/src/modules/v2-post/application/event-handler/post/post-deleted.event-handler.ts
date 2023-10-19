@@ -1,15 +1,24 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
+import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesRemovedItemsEvent } from '../../../../../events/series';
+import {
+  ISeriesDomainService,
+  ITagDomainService,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+  TAG_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import { PostDeletedEvent } from '../../../domain/event';
+import { PostEntity } from '../../../domain/model/content';
 
 @EventsHandlerAndLog(PostDeletedEvent)
 export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> {
   public constructor(
-    // TODO: call domain and using event bus
-    private readonly _internalEventEmitter: InternalEventEmitterService
+    @Inject(TAG_DOMAIN_SERVICE_TOKEN)
+    private readonly _tagDomain: ITagDomainService,
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
+    private readonly _seriesDomain: ISeriesDomainService
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
@@ -19,27 +28,19 @@ export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> 
       return;
     }
 
-    const seriesIds = postEntity.getSeriesIds() || [];
+    await this._tagDomain.decreaseTotalUsedByContent(postEntity);
+    this._processSeriesItemsChanged(postEntity, actor);
+  }
+
+  private _processSeriesItemsChanged(postEntity: PostEntity, actor: UserDto): void {
+    const seriesIds = postEntity.getSeriesIds();
     for (const seriesId of seriesIds) {
-      this._internalEventEmitter.emit(
-        new SeriesRemovedItemsEvent({
-          items: [
-            {
-              id: postEntity.getId(),
-              title: null,
-              content: postEntity.get('content'),
-              type: postEntity.getType(),
-              createdBy: postEntity.getCreatedBy(),
-              groupIds: postEntity.getGroupIds(),
-              createdAt: postEntity.get('createdAt'),
-              updatedAt: postEntity.get('updatedAt'),
-            },
-          ],
-          seriesId: seriesId,
-          actor: actor,
-          contentIsDeleted: true,
-        })
-      );
+      this._seriesDomain.sendSeriesItemsRemovedEvent({
+        authUser: actor,
+        seriesId,
+        item: postEntity,
+        contentIsDeleted: true,
+      });
     }
   }
 }

@@ -1,3 +1,5 @@
+import { UserDto } from '@libs/service/user';
+
 import {
   CreateSeriesCommandPayload,
   DeleteSeriesCommandPayload,
@@ -6,6 +8,7 @@ import {
   RemoveSeriesItemsCommandPayload,
   ReorderSeriesItemsCommandPayload,
 } from '../../../application/command/series';
+import { SeriesItemsAddedPayload, SeriesItemsRemovedPayload } from '../../event';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../../model/content';
 
 export type CreateSeriesProps = CreateSeriesCommandPayload;
@@ -20,6 +23,11 @@ export type RemoveSeriesItemsProps = RemoveSeriesItemsCommandPayload;
 
 export type ReorderSeriesItemsProps = ReorderSeriesItemsCommandPayload;
 
+export type SendContentUpdatedSeriesEventProps = {
+  content: PostEntity | ArticleEntity;
+  actor: UserDto;
+};
+
 export interface ISeriesDomainService {
   findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]>;
   findItemsInSeries(itemIds: string[], authUserId: string): Promise<(PostEntity | ArticleEntity)[]>;
@@ -29,5 +37,8 @@ export interface ISeriesDomainService {
   addSeriesItems(input: AddSeriesItemsProps): Promise<void>;
   removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void>;
   reorderSeriesItems(input: ReorderSeriesItemsProps): Promise<void>;
+  sendSeriesItemsAddedEvent(input: SeriesItemsAddedPayload): void;
+  sendSeriesItemsRemovedEvent(input: SeriesItemsRemovedPayload): void;
+  sendContentUpdatedSeriesEvent(input: SendContentUpdatedSeriesEventProps): Promise<void>;
 }
 export const SERIES_DOMAIN_SERVICE_TOKEN = 'SERIES_DOMAIN_SERVICE_TOKEN';

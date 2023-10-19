@@ -57,15 +57,20 @@ export class ContentNotificationApplicationService
         },
         event,
         data: activity,
+        meta: {},
       },
     });
     if (oldPost) {
       const oldPostObject = this._createPostActivityObject(oldPost);
       const oldActivity = this._createPostActivity(oldPostObject);
-      kafkaPayload.value.meta['post']['oldData'] = oldActivity;
+      kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+        ? { ...kafkaPayload.value.meta.post, oldData: oldActivity }
+        : { oldData: oldActivity };
     }
     if (ignoreUserIds?.length) {
-      kafkaPayload.value.meta['post']['ignoreUserIds'] = ignoreUserIds;
+      kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+        ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
+        : { ignoreUserIds: ignoreUserIds };
     }
 
     await this._kafkaAdapter.emit<NotificationPayloadDto<PostActivityObjectDto>>(
