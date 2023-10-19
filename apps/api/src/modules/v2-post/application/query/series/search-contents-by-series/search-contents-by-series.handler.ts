@@ -65,6 +65,13 @@ export class SearchContentsBySeriesHandler
     const groupIds = seriesEntity.getGroupIds();
     const filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
 
+    if (!filterGroupIds.length) {
+      return new SearchContentsBySeriesDto([], {
+        total: 0,
+        hasNextPage: false,
+      });
+    }
+
     const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(authUser.id, {
       postTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
       groupIds,
