@@ -36,10 +36,7 @@ export class ElasticsearchQueryBuilder {
             ...this._getContentNullFilter(filterEmptyContent),
             ...this._getContentEmptyStringFilter(filterEmptyContent),
           ],
-          must_not: [
-            ...this._getContentEmptyStringFilter(filterEmptyContent),
-            ...this._getNotIncludeIds(excludeByIds),
-          ],
+          must_not: [...this._getNotIncludeIds(excludeByIds)],
           filter: [
             ...this._getActorFilter(actors),
             ...this._getAudienceFilter(groupIds),
@@ -301,7 +298,7 @@ export class ElasticsearchQueryBuilder {
       return [
         {
           bool: {
-            should: Object.values(content).map((code) => ({
+            must_not: Object.values(content).map((code) => ({
               term: {
                 [code]: '',
               },
