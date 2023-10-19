@@ -1,9 +1,7 @@
-import { UserMentionDto } from '../../../v2-post/application/dto';
-
 import { ContentActivityObjectDto } from './content.dto';
 import { MediaObjectDto } from './media.dto';
 import { ReactionObjectDto, ReactionsCountObjectDto } from './reaction.dto';
-import { ActorObjectDto } from './user.dto';
+import { ActorObjectDto, UserMentionObjectDto } from './user.dto';
 
 export class CommentRecipientDto {
   public postOwnerId: string;
@@ -61,7 +59,7 @@ export class CommentObjectDto {
   public actor: ActorObjectDto;
   public content: string;
   public media: MediaObjectDto;
-  public mentions: UserMentionDto;
+  public mentions: UserMentionObjectDto;
   public giphyId: string;
   public giphyUrl: string;
 

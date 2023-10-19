@@ -1,21 +1,19 @@
-import { PostSettingDto, UserMentionDto } from '../../../v2-post/application/dto';
-
 import { AudienceObjectDto } from './group.dto';
 import { MediaObjectDto } from './media.dto';
 import { ReactionObjectDto, ReactionsCountObjectDto } from './reaction.dto';
-import { ActorObjectDto } from './user.dto';
+import { ActorObjectDto, UserMentionObjectDto } from './user.dto';
 
 export class ContentActivityObjectDto {
   public id: string;
   public actor: ActorObjectDto;
   public title: string;
   public contentType: string; // lower case
-  public setting?: PostSettingDto;
+  public setting?: PostSettingObjectDto;
   public audience: AudienceObjectDto;
 
   // for Post/Article
   public content?: string;
-  public mentions?: UserMentionDto;
+  public mentions?: UserMentionObjectDto;
 
   // for Post/Article reaction
   public reaction?: ReactionObjectDto;
@@ -33,7 +31,7 @@ export class ContentActivityObjectDto {
     this.actor = new ActorObjectDto(data.actor);
     this.title = data.title;
     this.contentType = data.contentType.toLowerCase();
-    this.setting = data.setting ? new PostSettingDto(data.setting) : undefined;
+    this.setting = data.setting ? new PostSettingObjectDto(data.setting) : undefined;
     this.audience = new AudienceObjectDto(data.audience);
     this.content = data.content;
     this.mentions = data.mentions;
@@ -76,5 +74,16 @@ export class SeriesActivityObjectDto extends ContentActivityObjectDto {
     super(data);
     this.item = data.item;
     this.items = data.items;
+  }
+}
+
+export class PostSettingObjectDto {
+  public canComment: boolean;
+  public canReact: boolean;
+  public isImportant: boolean;
+  public importantExpiredAt?: Date;
+
+  public constructor(data: Partial<PostSettingObjectDto>) {
+    Object.assign(this, data);
   }
 }

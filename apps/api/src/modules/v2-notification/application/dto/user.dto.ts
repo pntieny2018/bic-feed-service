@@ -13,3 +13,7 @@ export class ActorObjectDto {
     this.email = data.email;
   }
 }
+
+export class UserMentionObjectDto {
+  [key: string]: ActorObjectDto;
+}
