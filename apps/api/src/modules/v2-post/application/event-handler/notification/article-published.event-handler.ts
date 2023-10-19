@@ -27,6 +27,10 @@ export class NotiArticlePublishedEventHandler implements IEventHandler<ArticlePu
   public async handle(event: ArticlePublishedEvent): Promise<void> {
     const { articleEntity, actor } = event;
 
+    if (!articleEntity.isPublished()) {
+      return;
+    }
+
     const articleDto = await this._contentBinding.articleBinding(articleEntity, {
       actor,
       authUser: actor,

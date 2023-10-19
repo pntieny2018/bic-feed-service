@@ -33,7 +33,7 @@ export class NotiArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
     const { articleEntity, actor } = event;
 
-    if (articleEntity.isHidden()) {
+    if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
 
