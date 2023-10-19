@@ -1,23 +1,26 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { SentryService } from '@libs/infra/sentry';
+import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { SeriesRemovedItemsEvent } from '../../../../../events/series';
+import {
+  ISeriesDomainService,
+  ITagDomainService,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+  TAG_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import { ArticleDeletedEvent } from '../../../domain/event';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { ArticleEntity } from '../../../domain/model/content';
 
 @EventsHandlerAndLog(ArticleDeletedEvent)
 export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
   private readonly _logger = new Logger(ArticleDeletedEventHandler.name);
 
   public constructor(
-    @Inject(TAG_REPOSITORY_TOKEN)
-    private readonly _tagRepository: ITagRepository,
-    private readonly _sentryService: SentryService,
-    // TODO: call domain and using event bus
-    private readonly _internalEventEmitter: InternalEventEmitterService
+    @Inject(TAG_DOMAIN_SERVICE_TOKEN)
+    private readonly _tagDomain: ITagDomainService,
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
+    private readonly _seriesDomain: ISeriesDomainService
   ) {}
 
   public async handle(event: ArticleDeletedEvent): Promise<void> {
@@ -27,38 +30,19 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
       return;
     }
 
-    const seriesIds = articleEntity.getSeriesIds() || [];
-    for (const seriesId of seriesIds) {
-      this._internalEventEmitter.emit(
-        new SeriesRemovedItemsEvent({
-          items: [
-            {
-              id: articleEntity.getId(),
-              title: articleEntity.getTitle(),
-              content: articleEntity.get('content'),
-              type: articleEntity.getType(),
-              createdBy: articleEntity.getCreatedBy(),
-              groupIds: articleEntity.getGroupIds(),
-              createdAt: articleEntity.get('createdAt'),
-              updatedAt: articleEntity.get('updatedAt'),
-            },
-          ],
-          seriesId: seriesId,
-          actor,
-          contentIsDeleted: true,
-        })
-      );
-    }
+    await this._tagDomain.decreaseTotalUsedByContent(articleEntity);
+    this._processSeriesItemsChanged(articleEntity, actor);
+  }
 
-    try {
-      const tagEntities = articleEntity.get('tags') || [];
-      for (const tag of tagEntities) {
-        tag.increaseTotalUsed();
-        await this._tagRepository.update(tag);
-      }
-    } catch (err) {
-      this._logger.error(JSON.stringify(err?.stack));
-      this._sentryService.captureException(err);
+  private _processSeriesItemsChanged(articleEntity: ArticleEntity, actor: UserDto): void {
+    const seriesIds = articleEntity.getSeriesIds();
+    for (const seriesId of seriesIds) {
+      this._seriesDomain.sendSeriesItemsRemovedEvent({
+        authUser: actor,
+        seriesId,
+        item: articleEntity,
+        contentIsDeleted: true,
+      });
     }
   }
 }

@@ -1,8 +1,11 @@
+import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
+import { EntityHelper } from 'apps/api/src/common/helpers';
 import { cloneDeep } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import { TagDuplicateNameException, TagUsedException } from '../exception';
+import { ArticleEntity, PostEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
 
@@ -13,7 +16,9 @@ export class TagDomainService implements ITagDomainService {
 
   public constructor(
     @Inject(TAG_REPOSITORY_TOKEN)
-    private readonly _tagRepository: ITagRepository
+    private readonly _tagRepo: ITagRepository,
+
+    private readonly _sentryService: SentryService
   ) {}
 
   public async findByIds(ids: string[]): Promise<TagEntity[]> {
@@ -21,7 +26,7 @@ export class TagDomainService implements ITagDomainService {
       return [];
     }
     try {
-      return await this._tagRepository.findAll({
+      return await this._tagRepo.findAll({
         ids,
       });
     } catch (e) {
@@ -32,7 +37,7 @@ export class TagDomainService implements ITagDomainService {
 
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;
-    const findTagNameInGroup = await this._tagRepository.findOne({
+    const findTagNameInGroup = await this._tagRepo.findOne({
       groupId,
       name,
     });
@@ -48,7 +53,7 @@ export class TagDomainService implements ITagDomainService {
       userId
     );
     try {
-      await this._tagRepository.create(tagEntity);
+      await this._tagRepo.create(tagEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -64,7 +69,7 @@ export class TagDomainService implements ITagDomainService {
       throw new TagUsedException();
     }
 
-    const findTagNameInGroup = await this._tagRepository.findOne({
+    const findTagNameInGroup = await this._tagRepo.findOne({
       groupId: cloneTagEntity.get('groupId'),
       name,
     });
@@ -80,7 +85,7 @@ export class TagDomainService implements ITagDomainService {
 
     if (cloneTagEntity.isChanged()) {
       try {
-        await this._tagRepository.update(cloneTagEntity);
+        await this._tagRepo.update(cloneTagEntity);
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
         throw new DatabaseException();
@@ -94,10 +99,62 @@ export class TagDomainService implements ITagDomainService {
       throw new TagUsedException();
     }
     try {
-      await this._tagRepository.delete(tagEntity.get('id'));
+      await this._tagRepo.delete(tagEntity.get('id'));
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
+    }
+  }
+
+  public async increaseTotalUsedByContent(content: PostEntity | ArticleEntity): Promise<void> {
+    try {
+      const tagEntities = content.getTags();
+      for (const tag of tagEntities) {
+        tag.increaseTotalUsed();
+        await this._tagRepo.update(tag);
+      }
+    } catch (err) {
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
+    }
+  }
+
+  public async decreaseTotalUsedByContent(content: PostEntity | ArticleEntity): Promise<void> {
+    try {
+      const tagEntities = content.getTags();
+      for (const tag of tagEntities) {
+        tag.decreaseTotalUsed();
+        await this._tagRepo.update(tag);
+      }
+    } catch (err) {
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
+    }
+  }
+
+  public async updateTagsUsedByContent(content: PostEntity | ArticleEntity): Promise<void> {
+    try {
+      const { attachTagIds, detachTagIds } = content.getState();
+
+      const tagEntities = await this._tagRepo.findAll({ ids: [...attachTagIds, ...detachTagIds] });
+      const tagsMap = EntityHelper.entityArrayToMap(tagEntities, 'id');
+
+      for (const id of attachTagIds) {
+        const tag = tagsMap.get(id);
+        tag.increaseTotalUsed();
+        await this._tagRepo.update(tag);
+      }
+
+      for (const id of detachTagIds) {
+        const tag = tagsMap.get(id);
+        if (tag.get('totalUsed') > 0) {
+          tag.decreaseTotalUsed();
+          await this._tagRepo.update(tag);
+        }
+      }
+    } catch (err) {
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
     }
   }
 }
