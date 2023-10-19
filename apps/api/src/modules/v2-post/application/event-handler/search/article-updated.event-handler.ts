@@ -15,6 +15,10 @@ export class SearchArticleUpdatedEventHandler implements IEventHandler<ArticleUp
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
     const { articleEntity } = event;
 
+    if (articleEntity.isHidden() || !articleEntity.isPublished()) {
+      return;
+    }
+
     await this._postSearchService.updatePostsToSearch([
       {
         id: articleEntity.getId(),

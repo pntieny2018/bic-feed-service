@@ -2,8 +2,6 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesChangeItems } from '../../../../../common/constants';
-import { VerbActivity } from '../../../../v2-notification/data-type';
 import { SeriesSameOwnerChangedEvent } from '../../../domain/event';
 import { PostEntity } from '../../../domain/model/content';
 import {
@@ -39,16 +37,12 @@ export class NotiSeriesSameOwnerChangedEventHandler
       }))
     );
 
-    const payload = {
-      event: SeriesChangeItems,
-      actor: authUser,
-      series: seriesWithStateDto,
-      item,
-      verb: VerbActivity.CHANGE,
-    };
-
     try {
-      await this._notificationAdapter.sendSeriesNotification(payload);
+      await this._notificationAdapter.sendSeriesChangedItemNotification({
+        actor: authUser,
+        series: seriesWithStateDto,
+        item,
+      });
     } catch (ex) {
       this._logger.error(ex, ex?.stack);
     }

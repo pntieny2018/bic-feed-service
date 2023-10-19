@@ -2,8 +2,6 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesAddItem } from '../../../../../common/constants';
-import { VerbActivity } from '../../../../v2-notification/data-type';
 import { SeriesItemsAddedEvent } from '../../../domain/event';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -53,18 +51,14 @@ export class NotiSeriesItemsAddedEventHandler implements IEventHandler<SeriesIte
     const series = await this._contentBinding.seriesBinding(seriesEntity, { authUser });
     const isSendToContentCreator = contentEntity.getCreatedBy() !== authUser.id;
 
-    const payload = {
-      event: SeriesAddItem,
-      actor: authUser,
-      series,
-      item,
-      context,
-      verb: VerbActivity.ADD,
-      isSendToContentCreator,
-    };
-
     try {
-      await this._notificationAdapter.sendSeriesNotification(payload);
+      await this._notificationAdapter.sendSeriesAddedItemNotification({
+        actor: authUser,
+        series,
+        item,
+        isSendToContentCreator,
+        context,
+      });
     } catch (ex) {
       this._logger.error(ex, ex?.stack);
     }

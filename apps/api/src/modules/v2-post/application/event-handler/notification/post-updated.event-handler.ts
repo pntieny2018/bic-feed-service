@@ -33,7 +33,7 @@ export class NotiPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
   public async handle(event: PostUpdatedEvent): Promise<void> {
     const { postEntity, actor } = event.payload;
 
-    if (postEntity.isHidden()) {
+    if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;
     }
 

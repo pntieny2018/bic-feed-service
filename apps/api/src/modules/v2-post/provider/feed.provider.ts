@@ -3,6 +3,8 @@ import {
   FeedArticleUpdatedEventHandler,
   FeedPostPublishedEventHandler,
   FeedPostUpdatedEventHandler,
+  FeedSeriesPublishedEventHandler,
+  FeedSeriesUpdatedEventHandler,
 } from '../application/event-handler/feed';
 
 export const feedProvider = [
@@ -11,4 +13,6 @@ export const feedProvider = [
   FeedArticleUpdatedEventHandler,
   FeedPostPublishedEventHandler,
   FeedPostUpdatedEventHandler,
+  FeedSeriesPublishedEventHandler,
+  FeedSeriesUpdatedEventHandler,
 ];

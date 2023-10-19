@@ -3,7 +3,15 @@ import { StringHelper } from '@libs/common/helpers';
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
+import {
+  KAFKA_TOPIC,
+  SeriesAddItem,
+  SeriesChangeItems,
+  SeriesHasBeenDeleted,
+  SeriesHasBeenPublished,
+  SeriesHasBeenUpdated,
+  SeriesRemoveItem,
+} from '../../../../common/constants';
 import { ArticleDto, PostDto, SeriesDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
@@ -19,8 +27,12 @@ import {
   ArticleNotificationPayload,
   IContentNotificationApplicationService,
   PostNotificationPayload,
-  SeriesNotificationPayload,
-  SeriesWithStateDto,
+  SeriesAddedItemNotificationPayload,
+  SeriesChangedItemNotificationPayload,
+  SeriesDeletedNotificationPayload,
+  SeriesPublishedNotificationPayload,
+  SeriesRemovedItemNotificationPayload,
+  SeriesUpdatedNotificationPayload,
 } from './interface';
 
 export class ContentNotificationApplicationService
@@ -37,7 +49,7 @@ export class ContentNotificationApplicationService
     const postObject = this._createPostActivityObject(post);
     const activity = this._createPostActivity(postObject);
 
-    const kafkaPayload: NotificationPayloadDto<PostActivityObjectDto> = {
+    const kafkaPayload = new NotificationPayloadDto<PostActivityObjectDto>({
       key: post.id,
       value: {
         actor: {
@@ -46,7 +58,7 @@ export class ContentNotificationApplicationService
         event,
         data: activity,
       },
-    };
+    });
     if (oldPost) {
       const oldPostObject = this._createPostActivityObject(oldPost);
       const oldActivity = this._createPostActivity(oldPostObject);
@@ -67,7 +79,7 @@ export class ContentNotificationApplicationService
       id: post.id,
       actor: { id: post.createdBy },
       title: null,
-      contentType: post.type.toLowerCase(),
+      contentType: post.type,
       setting: post.setting,
       audience: post.audience,
       content: StringHelper.removeMarkdownCharacter(post.content),
@@ -96,7 +108,7 @@ export class ContentNotificationApplicationService
     const articleObject = this._createArticleActivityObject(article);
     const activity = this._createArticleActivity(articleObject);
 
-    const kafkaPayload: NotificationPayloadDto<ArticleActivityObjectDto> = {
+    const kafkaPayload = new NotificationPayloadDto<ArticleActivityObjectDto>({
       key: article.id,
       value: {
         actor: {
@@ -106,7 +118,7 @@ export class ContentNotificationApplicationService
         data: activity,
         meta: {},
       },
-    };
+    });
     if (oldArticle) {
       const oldArticleObject = this._createArticleActivityObject(oldArticle);
       const oldActivity = this._createArticleActivity(oldArticleObject);
@@ -131,7 +143,7 @@ export class ContentNotificationApplicationService
       id: article.id,
       actor: { id: article.createdBy },
       title: article.title,
-      contentType: article.type.toLowerCase(),
+      contentType: article.type,
       setting: article.setting,
       audience: article.audience,
       content: article.content,
@@ -155,54 +167,188 @@ export class ContentNotificationApplicationService
     });
   }
 
-  public async sendSeriesNotification(payload: SeriesNotificationPayload): Promise<void> {
-    const {
-      event,
-      actor,
-      series,
-      item,
-      verb,
-      targetUserIds,
-      isSendToContentCreator,
-      contentIsDeleted,
-      context,
-    } = payload;
+  public async sendSeriesPublishedNotification(
+    payload: SeriesPublishedNotificationPayload
+  ): Promise<void> {
+    const { actor, series, targetUserIds } = payload;
 
-    const seriesObject = this._createSeriesActivityObject(series, item);
-    const activity = this._createSeriesActivity(seriesObject, verb);
+    const seriesObject = this._createSeriesActivityObject(series);
+    const activity = this._createSeriesActivity(seriesObject, VerbActivity.POST);
 
-    const kafkaPayload: NotificationPayloadDto<SeriesActivityObjectDto> = {
-      key: Array.isArray(series) ? series[0].id : series.id,
+    const kafkaPayload = new NotificationPayloadDto<SeriesActivityObjectDto>({
+      key: series.id,
       value: {
-        actor: {
-          id: actor.id,
+        actor,
+        event: SeriesHasBeenPublished,
+        data: activity,
+        meta: {
+          series: { targetUserIds },
         },
-        event,
+      },
+    });
+
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
+  }
+
+  public async sendSeriesDeletedNotification(
+    payload: SeriesDeletedNotificationPayload
+  ): Promise<void> {
+    const { actor, series } = payload;
+
+    const items = series.items || [];
+    const existingCreator = new Set([]);
+    const filterItems = [];
+    for (const item of items) {
+      if (!existingCreator.has(item.createdBy) && item.createdBy !== actor.id) {
+        filterItems.push(item);
+        existingCreator.add(item.createdBy);
+      }
+    }
+    series.items = filterItems;
+    const seriesObject = this._createSeriesActivityObject(series);
+    const activity = this._createSeriesActivity(seriesObject, VerbActivity.DELETE);
+
+    const kafkaPayload = new NotificationPayloadDto<SeriesActivityObjectDto>({
+      key: series.id,
+      value: {
+        actor,
+        event: SeriesHasBeenDeleted,
         data: activity,
         meta: {},
       },
-    };
+    });
 
-    if (targetUserIds?.length) {
-      kafkaPayload.value.meta.series = kafkaPayload.value.meta.series
-        ? { ...kafkaPayload.value.meta.series, targetUserIds: targetUserIds }
-        : { targetUserIds: targetUserIds };
-    }
-    if (isSendToContentCreator !== undefined || isSendToContentCreator !== null) {
-      kafkaPayload.value.meta.series = kafkaPayload.value.meta.series
-        ? { ...kafkaPayload.value.meta.series, isSendToContentCreator: isSendToContentCreator }
-        : { isSendToContentCreator: isSendToContentCreator };
-    }
-    if (contentIsDeleted !== undefined || contentIsDeleted !== null) {
-      kafkaPayload.value.meta.series = kafkaPayload.value.meta.series
-        ? { ...kafkaPayload.value.meta.series, contentIsDeleted: contentIsDeleted }
-        : { contentIsDeleted: contentIsDeleted };
-    }
-    if (context) {
-      kafkaPayload.value.meta.series = kafkaPayload.value.meta.series
-        ? { ...kafkaPayload.value.meta.series, context: context }
-        : { context: context };
-    }
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
+  }
+
+  public async sendSeriesUpdatedNotification(
+    payload: SeriesUpdatedNotificationPayload
+  ): Promise<void> {
+    const { actor, series, oldSeries, targetUserIds } = payload;
+
+    const seriesObject = this._createSeriesActivityObject(series);
+    const activity = this._createSeriesActivity(seriesObject, VerbActivity.POST);
+
+    const oldSeriesObject = this._createSeriesActivityObject(oldSeries);
+    const oldActivity = this._createSeriesActivity(oldSeriesObject, VerbActivity.POST);
+
+    const kafkaPayload = new NotificationPayloadDto<SeriesActivityObjectDto>({
+      key: series.id,
+      value: {
+        actor,
+        event: SeriesHasBeenUpdated,
+        data: activity,
+        meta: {
+          post: { oldData: oldActivity },
+          series: { targetUserIds },
+        },
+      },
+    });
+
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
+  }
+
+  public async sendSeriesAddedItemNotification(
+    payload: SeriesAddedItemNotificationPayload
+  ): Promise<void> {
+    const { actor, series, item, isSendToContentCreator, context } = payload;
+
+    const seriesObject = this._createSeriesActivityObject(series, item);
+    const activity = this._createSeriesActivity(seriesObject, VerbActivity.ADD);
+
+    const kafkaPayload = new NotificationPayloadDto<SeriesActivityObjectDto>({
+      key: series.id,
+      value: {
+        actor,
+        event: SeriesAddItem,
+        data: activity,
+        meta: {
+          series: { isSendToContentCreator, context },
+        },
+      },
+    });
+
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
+  }
+
+  public async sendSeriesRemovedItemNotification(
+    payload: SeriesRemovedItemNotificationPayload
+  ): Promise<void> {
+    const { actor, series, item, isSendToContentCreator, contentIsDeleted } = payload;
+
+    const seriesObject = this._createSeriesActivityObject(series, item);
+    const activity = this._createSeriesActivity(seriesObject, VerbActivity.REMOVE);
+
+    const kafkaPayload = new NotificationPayloadDto<SeriesActivityObjectDto>({
+      key: series.id,
+      value: {
+        actor,
+        event: SeriesRemoveItem,
+        data: activity,
+        meta: {
+          series: { isSendToContentCreator, contentIsDeleted },
+        },
+      },
+    });
+
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
+  }
+
+  public async sendSeriesChangedItemNotification(
+    payload: SeriesChangedItemNotificationPayload
+  ): Promise<void> {
+    const { actor, series, item } = payload;
+
+    const seriesObject = new SeriesActivityObjectDto({
+      id: item.id,
+      actor: item.actor,
+      title: item.type === CONTENT_TYPE.ARTICLE ? (item as ArticleDto).title : null,
+      contentType: item.type,
+      audience: item.audience,
+      items: series.map(
+        (seriesItem) =>
+          new SeriesActivityObjectDto({
+            id: seriesItem.id,
+            actor: seriesItem.actor,
+            title: seriesItem.title,
+            contentType: seriesItem.type,
+            audience: seriesItem.audience,
+            state: seriesItem.state,
+            createdAt: seriesItem.createdAt,
+            updatedAt: seriesItem.updatedAt,
+          })
+      ),
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    });
+    const activity = this._createSeriesActivity(seriesObject, VerbActivity.CHANGE);
+
+    const kafkaPayload = new NotificationPayloadDto<SeriesActivityObjectDto>({
+      key: series[0].id,
+      value: {
+        actor,
+        event: SeriesChangeItems,
+        data: activity,
+        meta: {
+          series: {},
+        },
+      },
+    });
 
     await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
       KAFKA_TOPIC.STREAM.POST,
@@ -211,46 +357,29 @@ export class ContentNotificationApplicationService
   }
 
   private _createSeriesActivityObject(
-    series: SeriesDto | SeriesWithStateDto[],
-    content: PostDto | ArticleDto
+    series: SeriesDto,
+    content?: PostDto | ArticleDto
   ): SeriesActivityObjectDto {
-    if (Array.isArray(series)) {
-      return new SeriesActivityObjectDto({
-        id: content.id,
-        actor: { id: content.createdBy },
-        title: content.type === CONTENT_TYPE.ARTICLE ? (content as ArticleDto).title : null,
-        content: content.content,
-        contentType: content.type.toLowerCase(),
-        setting: content.setting,
-        audience: content.audience,
-        items: series.map((seriesWithState) => ({
-          actor: {
-            id: seriesWithState.createdBy,
-          },
-          id: seriesWithState.id,
-          title: seriesWithState.title,
-          audience: seriesWithState.audience,
-          state: seriesWithState.state,
-        })),
-        createdAt: content.createdAt,
-        updatedAt: content.createdAt,
-      });
-    }
-
     return new SeriesActivityObjectDto({
       id: series.id,
-      actor: { id: series.createdBy },
+      actor: series.actor,
       title: series.title,
-      contentType: series.type.toLowerCase(),
+      contentType: series.type,
       setting: series.setting,
       audience: series.audience,
-      item:
-        content instanceof PostDto
-          ? this._createPostActivityObject(content)
-          : this._createArticleActivityObject(content),
+      item: content ? this._getItemObject(content) : null,
+      items: (series.items || []).map((item) => this._getItemObject(item as PostDto | ArticleDto)),
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
     });
+  }
+
+  private _getItemObject(
+    item: PostDto | ArticleDto
+  ): PostActivityObjectDto | ArticleActivityObjectDto {
+    return item.type === CONTENT_TYPE.POST
+      ? this._createPostActivityObject(item as PostDto)
+      : this._createArticleActivityObject(item as ArticleDto);
   }
 
   private _createSeriesActivity(
