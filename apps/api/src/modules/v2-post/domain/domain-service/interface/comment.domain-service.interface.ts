@@ -34,8 +34,8 @@ export type GetCommentsAroundIdProps = {
   targetChildLimit: number;
 };
 
-export type DissociateCommentProps = {
-  commentId: string;
+export type RelevantCommentProps = {
+  commentEntity: CommentEntity;
   userId: string;
   contentDto: PostDto | ArticleDto;
   cb?: (comment: CommentEntity[]) => void;
@@ -55,8 +55,8 @@ export interface ICommentDomainService {
 
   delete(comment: CommentEntity, actor: UserDto): Promise<void>;
 
-  dissociateComment(
-    props: DissociateCommentProps
+  getRelevantUserIdsInComment(
+    props: RelevantCommentProps
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto>;
 }
 export const COMMENT_DOMAIN_SERVICE_TOKEN = 'COMMENT_DOMAIN_SERVICE_TOKEN';

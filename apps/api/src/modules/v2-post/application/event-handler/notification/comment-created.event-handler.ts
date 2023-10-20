@@ -76,8 +76,8 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
     const prevComments: CommentEntity[] = [];
 
-    const recipient = await this._commentDomainService.dissociateComment({
-      commentId: comment.get('id'),
+    const recipient = await this._commentDomainService.getRelevantUserIdsInComment({
+      commentEntity: comment,
       userId: actor.id,
       contentDto,
       cb: (comments) => {

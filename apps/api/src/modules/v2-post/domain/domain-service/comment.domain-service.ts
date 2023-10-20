@@ -32,7 +32,7 @@ import {
   UpdateCommentProps,
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
-  DissociateCommentProps,
+  RelevantCommentProps,
 } from './interface';
 
 @Injectable()
@@ -106,9 +106,9 @@ export class CommentDomainService implements ICommentDomainService {
     }
 
     try {
-      const res = await this._commentRepository.createComment(commentEntity);
-      this.event.publish(new CommentCreatedEvent({ comment: res, actor: props.actor }));
-      return res;
+      const commentCreated = await this._commentRepository.createComment(commentEntity);
+      this.event.publish(new CommentCreatedEvent({ comment: commentCreated, actor: props.actor }));
+      return commentCreated;
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -230,10 +230,10 @@ export class CommentDomainService implements ICommentDomainService {
     });
   }
 
-  public async dissociateComment(
-    props: DissociateCommentProps
+  public async getRelevantUserIdsInComment(
+    props: RelevantCommentProps
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
-    const { commentId, userId, contentDto } = props;
+    const { commentEntity, userId, contentDto } = props;
     const recipient = CommentRecipientDto.init();
 
     const groupAudienceIds = contentDto.audience.groups.map((group) => group.id);
@@ -242,15 +242,8 @@ export class CommentDomainService implements ICommentDomainService {
       : Object.values(contentDto.mentions || {});
 
     try {
-      const commentEntity = await this._commentRepository.findOne({
-        id: commentId,
-      });
-      if (!commentEntity) {
-        throw new CommentNotFoundException();
-      }
-
       if (commentEntity.isChildComment()) {
-        return this.dissociateReplyComment(userId, commentEntity, groupAudienceIds);
+        return this.getRelevantUserIdsInChildComment(userId, commentEntity, groupAudienceIds);
       }
 
       /**
@@ -269,8 +262,8 @@ export class CommentDomainService implements ICommentDomainService {
        */
       const mentionedUsersInComment = commentEntity.get('mentions') ?? [];
 
-      const prevCommentsRes = await this._commentRepository.findPrevComments(
-        commentId,
+      const prevCommentsEntity = await this._commentRepository.findPrevComments(
+        commentEntity.get('id'),
         contentDto.id
       );
 
@@ -285,14 +278,14 @@ export class CommentDomainService implements ICommentDomainService {
           ]
         : [...new Set([userId, ...mentionedUsersInComment, ...mentionedUsersInPost])];
 
-      const prevComments = prevCommentsRes.filter(
+      const validPrevComments = prevCommentsEntity.filter(
         (pc) => !ignoreUserIds.includes(pc.get('createdBy'))
       );
 
       /**
        * users who created prev comments
        */
-      const actorIdsOfPrevComments = prevComments.map((comment) => comment.get('createdBy'));
+      const actorIdsOfPrevComments = validPrevComments.map((comment) => comment.get('createdBy'));
 
       /**
        * users who was checked if users followed group audience
@@ -350,7 +343,7 @@ export class CommentDomainService implements ICommentDomainService {
 
       // call back to return prev comments
       if (props.cb) {
-        props.cb(prevCommentsRes);
+        props.cb(prevCommentsEntity);
       }
       return recipient;
     } catch (ex) {
@@ -359,7 +352,7 @@ export class CommentDomainService implements ICommentDomainService {
     }
   }
 
-  public async dissociateReplyComment(
+  public async getRelevantUserIdsInChildComment(
     userId: string,
     commentEntity: CommentEntity,
     groupAudienceIds: string[]
