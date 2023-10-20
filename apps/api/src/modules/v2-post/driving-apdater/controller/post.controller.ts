@@ -194,7 +194,6 @@ export class PostController {
   @ApiOperation({ summary: 'Delete post' })
   @ResponseMessages({
     success: 'message.post.deleted_success',
-    error: 'message.post.deleted_fail',
   })
   @Delete(ROUTES.POST.DELETE.PATH)
   @Version(ROUTES.POST.DELETE.VERSIONS)
