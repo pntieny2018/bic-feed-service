@@ -70,6 +70,7 @@ export class IndexPostCommand implements CommandRunner {
     return JSON.parse(val);
   }
 
+  // eslint-disable-next-line unused-imports/no-unused-vars
   public async run(params: string[] = [], options?: ICommandOptions): Promise<any> {
     const shouldUpdateIndex = options.updateIndex ?? false;
     const currentDefaultIndex =
@@ -80,8 +81,9 @@ export class IndexPostCommand implements CommandRunner {
     const currentDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
     if (shouldUpdateIndex) {
+      this._logger.log('Deleting all indexs...');
       await this._deleteIndex();
-      this._logger.log('updating index...');
+      this._logger.log('Creating new indexs...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_en_${currentDate}`, POST_EN_MAPPING);
@@ -322,7 +324,11 @@ export class IndexPostCommand implements CommandRunner {
   private async _deleteIndex(): Promise<void> {
     const index =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts*';
-    await this.elasticsearchService.indices.delete({ index });
+    const indices = await this.elasticsearchService.indices.get({ index });
+
+    for (const key of Object.keys(indices)) {
+      await this._removeIndex(key);
+    }
     this._logger.log(`Deleted Index`);
   }
 }
