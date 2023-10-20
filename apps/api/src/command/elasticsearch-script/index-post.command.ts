@@ -1,32 +1,33 @@
-import { Command, CommandRunner, Option } from 'nest-commander';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
-import { PostSeriesModel } from '../../database/models/post-series.model';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { PostService } from '../../modules/post/post.service';
-import { PostBindingService } from '../../modules/post/post-binding.service';
+import { InjectModel } from '@nestjs/sequelize';
+import { Command, CommandRunner, Option } from 'nest-commander';
+
 import { ElasticsearchHelper } from '../../common/helpers';
-import { POST_DEFAULT_MAPPING } from './post_default_mapping';
-import { POST_VI_MAPPING } from './post_vi_mapping';
-import { POST_EN_MAPPING } from './post_en_mapping';
-import { POST_ES_MAPPING } from './post_es_mapping';
-import { POST_JA_MAPPING } from './post_ja_mapping';
-import { POST_KO_MAPPING } from './post_ko_mapping';
-import { POST_ZH_MAPPING } from './post_zh_mapping';
-import { POST_RU_MAPPING } from './post_ru_mapping';
-import { Sequelize } from 'sequelize-typescript';
-import { SearchService } from '../../modules/search/search.service';
-import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
-import { PostGroupModel } from '../../database/models/post-group.model';
+import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { CategoryModel } from '../../database/models/category.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
+import { PostBindingService } from '../../modules/post/post-binding.service';
+import { PostService } from '../../modules/post/post.service';
+import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
+import { SearchService } from '../../modules/search/search.service';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../modules/v2-group/application';
+
+import { POST_DEFAULT_MAPPING } from './post_default_mapping';
+import { POST_EN_MAPPING } from './post_en_mapping';
+import { POST_ES_MAPPING } from './post_es_mapping';
+import { POST_JA_MAPPING } from './post_ja_mapping';
+import { POST_KO_MAPPING } from './post_ko_mapping';
+import { POST_RU_MAPPING } from './post_ru_mapping';
+import { POST_VI_MAPPING } from './post_vi_mapping';
+import { POST_ZH_MAPPING } from './post_zh_mapping';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -39,16 +40,15 @@ interface ICommandOptions {
 export class IndexPostCommand implements CommandRunner {
   private _logger = new Logger(IndexPostCommand.name);
   public constructor(
+    @InjectModel(PostModel)
+    private readonly _postModel: typeof PostModel,
     @Inject(GROUP_APPLICATION_TOKEN)
     public readonly groupAppService: IGroupApplicationService,
     public readonly postSearchService: SearchService,
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,
-    @InjectModel(PostModel) private _postModel: typeof PostModel,
-    @InjectModel(PostSeriesModel) private _postSeriesModel: typeof PostSeriesModel,
-    private _configService: ConfigService,
-    protected readonly elasticsearchService: ElasticsearchService,
-    @InjectConnection() private _sequelizeConnection: Sequelize
+    private readonly _configService: ConfigService,
+    protected readonly elasticsearchService: ElasticsearchService
   ) {}
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
