@@ -96,11 +96,11 @@ export class ContentDomainService implements IContentDomainService {
     return null;
   }
 
-  public async getDraftsPagination(
+  public async getDraftIdsPagination(
     input: GetDraftsProps
-  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
+  ): Promise<CursorPaginationResult<string>> {
     const { authUserId, isProcessing, type } = input;
-    return this._contentRepository.getPagination({
+    const { rows, meta } = await this._contentRepository.getPagination({
       ...input,
       where: {
         createdBy: authUserId,
@@ -116,6 +116,11 @@ export class ContentDomainService implements IContentDomainService {
         exclude: ['content'],
       },
     });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 
   public async getContentByIds(
@@ -710,5 +715,25 @@ export class ContentDomainService implements IContentDomainService {
     }
 
     return this._contentRepository.saveContent(authUser.id, contentId);
+  }
+
+  public async getDraftContentByIds(
+    ids: string[]
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    if (!ids.length) {
+      return [];
+    }
+    const contentEntities = await this._contentRepository.findAll({
+      where: {
+        ids,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeCategory: true,
+        shouldIncludeLinkPreview: true,
+      },
+    });
+
+    return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
   }
 }
