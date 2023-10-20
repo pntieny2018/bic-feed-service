@@ -1,10 +1,11 @@
 import { SearchTotalHits } from '@elastic/elasticsearch/lib/api/types';
+import { StringHelper } from '@libs/common/helpers';
 import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 
-import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
+import { ElasticsearchHelper } from '../../common/helpers';
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { PostService } from '../post/post.service';
@@ -50,7 +51,10 @@ export class SearchService {
         post.content = StringHelper.serializeEditorContentToText(post.content);
       }
       if (post.type === PostType.POST) {
-        post.content = StringHelper.removeMarkdownCharacter(post.content);
+        post.content =
+          !post.content || StringHelper.containsOnlySpace(post.content)
+            ? undefined
+            : StringHelper.removeMarkdownCharacter(post.content);
       }
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
@@ -131,7 +135,10 @@ export class SearchService {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       }
       if (dataIndex.type === PostType.POST) {
-        dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+        dataIndex.content =
+          !dataIndex.content || StringHelper.containsOnlySpace(dataIndex.content)
+            ? undefined
+            : StringHelper.removeMarkdownCharacter(dataIndex.content);
       }
 
       try {
