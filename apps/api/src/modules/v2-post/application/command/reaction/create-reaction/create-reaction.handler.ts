@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -5,7 +6,6 @@ import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
 } from '../../../../../v2-user/application';
-import { REACTION_TARGET } from '../../../../data-type';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -79,7 +79,7 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
   private async _validate(command: CreateReactionCommand): Promise<void> {
     let reactionEntity: ReactionEntity;
     const newCreateReactionDto = this.transformReactionNameNodeEmoji(command.payload);
-    if (command.payload.target === REACTION_TARGET.COMMENT) {
+    if (command.payload.target === CONTENT_TARGET.COMMENT) {
       await this._commentDomainService.getVisibleComment(newCreateReactionDto.targetId);
       reactionEntity = await this._commentReactionRepository.findOne({
         commentId: newCreateReactionDto.targetId,

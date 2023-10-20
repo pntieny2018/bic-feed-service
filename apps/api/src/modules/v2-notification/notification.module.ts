@@ -4,10 +4,12 @@ import { Module } from '@nestjs/common';
 import {
   CommentNotificationApplicationService,
   ContentNotificationApplicationService,
+  ReactionNotificationApplicationService,
 } from './application/application-services';
 import {
   COMMENT_NOTIFICATION_APPLICATION_SERVICE,
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
+  REACTION_NOTIFICATION_APPLICATION_SERVICE,
 } from './application/application-services/interface';
 import { KAFKA_ADAPTER } from './domain/infra-adapter-interface';
 import { KafkaAdapter } from './driven-adapter/infra';
@@ -25,6 +27,10 @@ import { KafkaAdapter } from './driven-adapter/infra';
       useClass: ContentNotificationApplicationService,
     },
     {
+      provide: REACTION_NOTIFICATION_APPLICATION_SERVICE,
+      useClass: ReactionNotificationApplicationService,
+    },
+    {
       provide: KAFKA_ADAPTER,
       useClass: KafkaAdapter,
     },
@@ -37,6 +43,10 @@ import { KafkaAdapter } from './driven-adapter/infra';
     {
       provide: CONTENT_NOTIFICATION_APPLICATION_SERVICE,
       useClass: ContentNotificationApplicationService,
+    },
+    {
+      provide: REACTION_NOTIFICATION_APPLICATION_SERVICE,
+      useClass: ReactionNotificationApplicationService,
     },
   ],
 })

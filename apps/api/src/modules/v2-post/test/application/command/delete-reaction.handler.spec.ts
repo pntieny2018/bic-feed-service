@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
@@ -7,7 +8,6 @@ import {
   DeleteReactionCommand,
   DeleteReactionHandler,
 } from '../../../application/command/reaction';
-import { REACTION_TARGET } from '../../../data-type/reaction.enum';
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
@@ -52,7 +52,7 @@ describe('DeleteReactionHandler', () => {
   describe('execute', () => {
     it('should delete reaction success', async () => {
       const targetId = v4();
-      const target = REACTION_TARGET.POST;
+      const target = CONTENT_TARGET.POST;
       const command = new DeleteReactionCommand({
         reactionName: '+1',
         target: target,
@@ -72,7 +72,7 @@ describe('DeleteReactionHandler', () => {
 
     it('should throw error when reaction not found', async () => {
       const targetId = v4();
-      const target = REACTION_TARGET.POST;
+      const target = CONTENT_TARGET.POST;
       const command = new DeleteReactionCommand({
         reactionName: '+1',
         target: target,

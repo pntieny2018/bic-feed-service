@@ -1,10 +1,9 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { ICommand } from '@nestjs/cqrs';
-
-import { REACTION_TARGET } from '../../../../data-type';
 
 export type CreateReactionCommandPayload = {
   reactionName: string;
-  target: REACTION_TARGET;
+  target: CONTENT_TARGET;
   targetId: string;
   createdBy: string;
 };

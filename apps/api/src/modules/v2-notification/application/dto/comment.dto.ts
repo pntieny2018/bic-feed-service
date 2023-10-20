@@ -70,7 +70,7 @@ export class CommentObjectDto {
   // For Comment reaction
   public reaction?: ReactionObjectDto;
   public reactionsOfActor?: ReactionObjectDto[];
-  public reactionsCount?: ReactionsCountObjectDto;
+  public reactionsCount?: ReactionsCountObjectDto[];
 
   public createdAt: Date;
   public updatedAt: Date;

@@ -20,7 +20,7 @@ export class ContentActivityObjectDto {
   // for Post/Article reaction
   public reaction?: ReactionObjectDto;
   public reactionsOfActor?: ReactionObjectDto[];
-  public reactionsCount?: ReactionsCountObjectDto;
+  public reactionsCount?: ReactionsCountObjectDto[];
 
   public createdAt: Date;
   public updatedAt: Date;
