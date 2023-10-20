@@ -1,3 +1,4 @@
+import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -8,24 +9,20 @@ import { lastValueFrom } from 'rxjs';
 
 import { ERRORS } from '../common/constants';
 import { ICognitoConfig } from '../config/cognito';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../modules/v2-user/application';
+import { UserDto } from '../modules/v2-user/application';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
   public constructor(
     private readonly _configService: ConfigService,
     private readonly _httpService: HttpService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userAppService: IUserApplicationService
+    @Inject(USER_SERVICE_TOKEN)
+    private readonly _userService: IUserService
   ) {}
 
   public async use(req: Request, res: Response, next: () => void): Promise<void> {
     try {
-      let username;
+      let username: string;
 
       if (req.headers?.user) {
         const payload = JSON.parse(req.headers?.user as string);
@@ -103,10 +100,7 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   private async _getUser(username: string): Promise<UserDto> {
-    const userInfo = await this._userAppService.findByUserName(username, {
-      withGroupJoined: true,
-      withPermission: true,
-    });
+    const userInfo = await this._userService.findByUserName(username);
     if (!userInfo) {
       throw new UnauthorizedException({
         code: ERRORS.API_UNAUTHORIZED,

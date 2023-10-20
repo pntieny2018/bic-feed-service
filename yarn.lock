@@ -934,10 +934,15 @@
     uuid "^9.0.0"
     validator "^13.7.0"
 
-"@beincom/constants@^2.1.3", "@beincom/constants@^2.1.6":
+"@beincom/constants@^2.1.3":
   version "2.1.6"
   resolved "https://registry.yarnpkg.com/@beincom/constants/-/constants-2.1.6.tgz#c3e7fe1ac48d76cb0f6f075203e185b4a0b02e2d"
   integrity sha512-HAXG0gCoJA3MFV/mWm3KvMx3EeyGnhBBCak9pac+vE9qWXv+jH+Bz0HclI/gCBR7UbQa8klFNJW54bdi9Oi0WQ==
+
+"@beincom/constants@^2.1.8":
+  version "2.1.8"
+  resolved "https://registry.yarnpkg.com/@beincom/constants/-/constants-2.1.8.tgz#69baa2636090ff2913347d49dacaf4593127dd76"
+  integrity sha512-b+YMKYZVZQHDZo9HN/1C/aFPxAVbiCLwTb8FpyXqc7NSpvFawgdzrxWtmh3XrcCXCKA1EzGCGv0V8eCIpFuXKA==
 
 "@beincom/domain@^0.1.7":
   version "0.1.7"

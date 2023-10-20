@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.54.0",
-    "@beincom/constants": "^2.1.6",
+    "@beincom/constants": "^2.1.8",
     "@beincom/domain": "^0.1.7",
     "@beincom/dto": "^2.0.2",
     "@beincom/nest-domain-event": "^0.0.2",

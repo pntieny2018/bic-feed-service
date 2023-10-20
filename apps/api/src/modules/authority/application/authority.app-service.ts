@@ -3,7 +3,7 @@ import { Ability, subject } from '@casl/ability';
 import { SentryService } from '@libs/infra/sentry';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { SUBJECT } from '../../../common/constants/casl.constant';
+import { SUBJECT } from '../../../common/constants';
 import { UserDto } from '../../v2-user/application';
 import { UserPermission } from '../../v2-user/domain/model/user';
 
