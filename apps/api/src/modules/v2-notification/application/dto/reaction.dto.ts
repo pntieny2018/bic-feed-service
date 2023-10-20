@@ -13,7 +13,10 @@ export class ReactionObjectDto {
   public createdAt?: Date;
 
   public constructor(data: ReactionObjectDto) {
-    Object.assign(this, data);
+    this.id = data.id;
+    this.actor = new ActorObjectDto(data.actor);
+    this.reactionName = data.reactionName;
+    this.createdAt = data.createdAt;
   }
 }
 

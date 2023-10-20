@@ -28,7 +28,9 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
         logger.debug(`EventHandler done: ${JSON.stringify({ event, debugContext })}`);
       }
       function logError(error: any): void {
-        logger.error(`EventHandler error: ${JSON.stringify({ event, debugContext, error })}`);
+        logger.error(
+          `EventHandler error: ${JSON.stringify({ event, debugContext, error: error.message })}`
+        );
         Sentry.captureException(error);
       }
 

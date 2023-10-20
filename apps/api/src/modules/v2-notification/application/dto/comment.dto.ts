@@ -1,9 +1,7 @@
-import { UserMentionDto } from '../../../v2-post/application/dto';
-
 import { ContentActivityObjectDto } from './content.dto';
 import { MediaObjectDto } from './media.dto';
 import { ReactionObjectDto, ReactionsCountObjectDto } from './reaction.dto';
-import { ActorObjectDto } from './user.dto';
+import { ActorObjectDto, UserMentionObjectDto } from './user.dto';
 
 export class CommentRecipientDto {
   public postOwnerId: string;
@@ -52,6 +50,7 @@ export class CommentActivityObjectDto extends ContentActivityObjectDto {
 
   public constructor(data: CommentActivityObjectDto) {
     super(data);
+    this.comment = new CommentObjectDto(data.comment);
   }
 }
 
@@ -60,7 +59,7 @@ export class CommentObjectDto {
   public actor: ActorObjectDto;
   public content: string;
   public media: MediaObjectDto;
-  public mentions: UserMentionDto;
+  public mentions: UserMentionObjectDto;
   public giphyId: string;
   public giphyUrl: string;
 
@@ -76,6 +75,20 @@ export class CommentObjectDto {
   public updatedAt: Date;
 
   public constructor(data: CommentObjectDto) {
-    Object.assign(this, data);
+    this.id = data.id;
+    this.actor = new ActorObjectDto(data.actor);
+    this.content = data.content;
+    this.media = new MediaObjectDto(data.media);
+    this.mentions = data.mentions;
+    this.giphyId = data.giphyId;
+    this.giphyUrl = data.giphyUrl;
+    this.child = data.child ? new CommentObjectDto(data.child) : undefined;
+    this.reaction = data.reaction ? new ReactionObjectDto(data.reaction) : undefined;
+    this.reactionsOfActor = data.reactionsOfActor
+      ? data.reactionsOfActor.map((reaction) => new ReactionObjectDto(reaction))
+      : undefined;
+    this.reactionsCount = data.reactionsCount;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
   }
 }

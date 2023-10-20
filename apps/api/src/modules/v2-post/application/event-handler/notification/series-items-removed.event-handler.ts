@@ -2,8 +2,6 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesRemoveItem } from '../../../../../common/constants';
-import { VerbActivity } from '../../../../v2-notification/data-type';
 import { SeriesItemsRemovedEvent } from '../../../domain/event';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -53,18 +51,14 @@ export class NotiSeriesItemsRemovedEventHandler implements IEventHandler<SeriesI
     const series = await this._contentBinding.seriesBinding(seriesEntity, { authUser });
     const isSendToContentCreator = contentEntity.getCreatedBy() !== authUser.id;
 
-    const payload = {
-      event: SeriesRemoveItem,
-      actor: authUser,
-      series,
-      item,
-      contentIsDeleted,
-      verb: VerbActivity.REMOVE,
-      isSendToContentCreator,
-    };
-
     try {
-      await this._notificationAdapter.sendSeriesNotification(payload);
+      await this._notificationAdapter.sendSeriesRemovedItemNotification({
+        actor: authUser,
+        series,
+        item,
+        isSendToContentCreator,
+        contentIsDeleted,
+      });
     } catch (ex) {
       this._logger.error(ex, ex?.stack);
     }
