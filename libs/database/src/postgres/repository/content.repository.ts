@@ -44,6 +44,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   ): Promise<PostModel[]> {
     const findOption = this.buildFindOptions(findAllPostOptions);
     findOption.order = this.buildOrderByOptions(findAllPostOptions.orderOptions);
+    findOption.subQuery = false;
     if (offsetPaginate) {
       findOption.limit = offsetPaginate.limit;
       findOption.offset = offsetPaginate.offset;
