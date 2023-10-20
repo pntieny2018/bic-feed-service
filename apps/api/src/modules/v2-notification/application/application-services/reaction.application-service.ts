@@ -9,10 +9,10 @@ import { CommentResponseDto } from '../../../v2-post/driving-apdater/dto/respons
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
+  CommentActivityObjectDto,
   CommentObjectDto,
   ContentActivityObjectDto,
   NotificationPayloadDto,
-  ReactionCommentActivityObjectDto,
 } from '../dto';
 
 import { IReactionNotificationApplicationService, ReactionNotificationPayload } from './interface';
@@ -37,7 +37,7 @@ export class ReactionNotificationApplicationService
       : TargetType.COMMENT;
 
     const kafkaPayload: NotificationPayloadDto<
-      ContentActivityObjectDto | ReactionCommentActivityObjectDto
+      ContentActivityObjectDto | CommentActivityObjectDto
     > = {
       key: content.id,
       value: {
@@ -62,7 +62,7 @@ export class ReactionNotificationApplicationService
     reaction: ReactionDto,
     comment?: CommentResponseDto,
     parentComment?: CommentResponseDto
-  ): ContentActivityObjectDto | ReactionCommentActivityObjectDto {
+  ): ContentActivityObjectDto | CommentActivityObjectDto {
     const contentActivity = new ContentActivityObjectDto({
       id: content.id,
       actor: ObjectHelper.omit(['groups', 'permissions'], content.actor) as UserDto,
@@ -97,7 +97,7 @@ export class ReactionNotificationApplicationService
     reaction: ReactionDto,
     contentActivity: ContentActivityObjectDto,
     comment: CommentResponseDto
-  ): ReactionCommentActivityObjectDto {
+  ): CommentActivityObjectDto {
     const commentActivity = new CommentObjectDto({
       id: comment.id,
       actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
@@ -113,7 +113,7 @@ export class ReactionNotificationApplicationService
       updatedAt: comment.createdAt,
     });
 
-    return new ReactionCommentActivityObjectDto({
+    return new CommentActivityObjectDto({
       ...contentActivity,
       comment: commentActivity,
     });
@@ -124,7 +124,7 @@ export class ReactionNotificationApplicationService
     contentActivity: ContentActivityObjectDto,
     comment: CommentResponseDto,
     parentComment: CommentResponseDto
-  ): ReactionCommentActivityObjectDto {
+  ): CommentActivityObjectDto {
     const commentActivity = new CommentObjectDto({
       id: parentComment.id,
       actor: ObjectHelper.omit(['groups', 'permissions'], parentComment.actor) as UserDto,
@@ -151,7 +151,7 @@ export class ReactionNotificationApplicationService
       updatedAt: parentComment.createdAt,
     });
 
-    return new ReactionCommentActivityObjectDto({
+    return new CommentActivityObjectDto({
       ...contentActivity,
       comment: commentActivity,
     });
