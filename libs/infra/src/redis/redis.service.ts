@@ -83,4 +83,8 @@ export class RedisService {
   public async keys(pattern: string): Promise<string[]> {
     return await this._store.keys(pattern);
   }
+
+  public async existKey(key: string): Promise<boolean> {
+    return (await this._store.exists(key)) === 1;
+  }
 }
