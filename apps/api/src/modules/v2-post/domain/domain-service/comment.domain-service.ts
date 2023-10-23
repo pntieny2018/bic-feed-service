@@ -6,7 +6,6 @@ import { EventBus } from '@nestjs/cqrs';
 import { cloneDeep } from 'lodash';
 import { NIL } from 'uuid';
 
-import { DatabaseException } from '../../../../common/exceptions';
 import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
@@ -105,14 +104,9 @@ export class CommentDomainService implements ICommentDomainService {
       await this._setCommentMedia(commentEntity, media);
     }
 
-    try {
-      const commentCreated = await this._commentRepository.createComment(commentEntity);
-      this.event.publish(new CommentCreatedEvent({ comment: commentCreated, actor: props.actor }));
-      return commentCreated;
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
+    const commentCreated = await this._commentRepository.createComment(commentEntity);
+    this.event.publish(new CommentCreatedEvent({ comment: commentCreated, actor: props.actor }));
+    return commentCreated;
   }
 
   public async update(input: UpdateCommentProps): Promise<void> {

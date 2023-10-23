@@ -471,7 +471,7 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  public async findActorReportIds(
+  public async findUserIdsReportedTargetId(
     targetId: string,
     contentTarget?: CONTENT_TARGET
   ): Promise<string[]> {

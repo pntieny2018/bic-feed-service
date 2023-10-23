@@ -96,10 +96,10 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
         recipientObj.replyCommentRecipient;
 
       recipientObj.replyCommentRecipient.mentionedUserIdsInParentComment =
-        await this._filterUserWasReported(commentDto.parentId, mentionedUserIdsInParentComment);
+        await this._filterOutUserWasReported(commentDto.parentId, mentionedUserIdsInParentComment);
 
       recipientObj.replyCommentRecipient.mentionedUserIdsInComment =
-        await this._filterUserWasReported(contentDto.id, mentionedUserIdsInComment);
+        await this._filterOutUserWasReported(contentDto.id, mentionedUserIdsInComment);
 
       payload.replyCommentRecipient = recipientObj.replyCommentRecipient;
     } else {
@@ -107,12 +107,12 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
       const { mentionedUsersInComment, mentionedUsersInPost } = recipientObj.commentRecipient;
 
-      recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUserWasReported(
+      recipientObj.commentRecipient.mentionedUsersInComment = await this._filterOutUserWasReported(
         contentDto.id,
         mentionedUsersInComment
       );
 
-      recipientObj.commentRecipient.mentionedUsersInPost = await this._filterUserWasReported(
+      recipientObj.commentRecipient.mentionedUsersInPost = await this._filterOutUserWasReported(
         contentDto.id,
         mentionedUsersInPost
       );
@@ -126,13 +126,13 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
     await this._notiAdapter.sendCommentNotification(payload);
   }
 
-  private async _filterUserWasReported(targetId: string, userIds: string[]): Promise<string[]> {
+  private async _filterOutUserWasReported(targetId: string, userIds: string[]): Promise<string[]> {
     if (!userIds || !userIds?.length) {
       return [];
     }
 
-    const actorReportedIds = await this._contentRepository.findActorReportIds(targetId);
+    const userIdsReported = await this._contentRepository.findUserIdsReportedTargetId(targetId);
 
-    return userIds.filter((userId) => !actorReportedIds.includes(userId));
+    return userIds.filter((userId) => !userIdsReported.includes(userId));
   }
 }

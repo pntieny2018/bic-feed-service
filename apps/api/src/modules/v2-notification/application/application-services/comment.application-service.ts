@@ -1,17 +1,15 @@
-import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { ObjectHelper } from '../../../../common/helpers';
 import { ArticleDto, CommentDto, PostDto } from '../../../v2-post/application/dto';
-import { CommentResponseDto } from '../../../v2-post/driving-apdater/dto/response';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
   ActorObjectDto,
   CommentActivityObjectDto,
   CommentObjectDto,
+  GroupObjectDto,
   NotificationActivityDto,
   NotificationPayloadDto,
 } from '../dto';
@@ -99,7 +97,7 @@ export class CommentNotificationApplicationService
   ): CommentActivityObjectDto {
     return new CommentActivityObjectDto({
       id: content.id,
-      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
+      actor: comment.actor,
       title: content instanceof ArticleDto ? content.title : null,
       contentType: content.type.toLowerCase(),
       setting: content.setting,
@@ -119,7 +117,7 @@ export class CommentNotificationApplicationService
   ): CommentActivityObjectDto {
     return new CommentActivityObjectDto({
       id: content.id,
-      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
+      actor: comment.actor,
       title: content instanceof ArticleDto ? content.title : null,
       contentType: content.type.toLowerCase(),
       setting: content.setting,
@@ -138,7 +136,7 @@ export class CommentNotificationApplicationService
   private _createCommentObject(comment: CommentDto): CommentObjectDto {
     return new CommentObjectDto({
       id: comment.id,
-      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
+      actor: comment.actor,
       content: comment.content,
       media: comment.media,
       giphyId: comment.giphyId,
@@ -163,27 +161,17 @@ export class CommentNotificationApplicationService
   }
 
   private _createPrevCommentActivities(
-    comments: CommentResponseDto[],
+    comments: CommentDto[],
     content: PostDto | ArticleDto
   ): NotificationActivityDto<CommentActivityObjectDto>[] {
     return comments.map((comment) => {
       const activity = new CommentActivityObjectDto({
         id: content.id,
-        actor: new ActorObjectDto({
-          id: content.actor.id,
-          username: content.actor.username,
-          avatar: content.actor.avatar,
-          fullname: content.actor.fullname,
-          email: content.actor.email,
-        }),
+        actor: new ActorObjectDto(content.actor),
         audience: {
-          groups: content.audience.groups.map((g) => ({
-            id: g.id,
-            name: g.name,
-            icon: g.icon,
-            communityId: g.communityId,
-            isCommunity: g.isCommunity,
-          })),
+          groups: content.audience.groups.map((group) => {
+            return new GroupObjectDto(group);
+          }),
         },
         title: (content as ArticleDto)?.title || '',
         contentType: content.type.toLowerCase(),
@@ -192,14 +180,14 @@ export class CommentNotificationApplicationService
         mentions: content.mentions,
         comment: {
           id: comment.id,
-          actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
+          actor: comment.actor,
           content: comment.content,
           media: comment.media,
           giphyId: comment.giphyId,
           giphyUrl: comment.giphyUrl,
           mentions: comment.mentions as any,
           createdAt: comment.createdAt,
-          updatedAt: comment.updatedAt,
+          updatedAt: comment.createdAt,
         },
         createdAt: content.createdAt,
         updatedAt: content.createdAt,

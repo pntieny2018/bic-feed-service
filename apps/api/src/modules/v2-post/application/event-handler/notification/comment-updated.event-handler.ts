@@ -84,23 +84,21 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       payload.replyCommentRecipient = recipientObj.replyCommentRecipient;
     } else {
       recipientObj.commentRecipient.mentionedUsersInComment =
-        recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUserWasReported(
-          contentDto.id,
-          newMentions
-        );
+        recipientObj.commentRecipient.mentionedUsersInComment =
+          await this._filterOutUserWasReported(contentDto.id, newMentions);
       payload.commentRecipient = recipientObj.commentRecipient;
     }
 
     await this._notiAdapter.sendCommentNotification(payload);
   }
 
-  private async _filterUserWasReported(targetId: string, userIds: string[]): Promise<string[]> {
+  private async _filterOutUserWasReported(targetId: string, userIds: string[]): Promise<string[]> {
     if (!userIds || !userIds?.length) {
       return [];
     }
 
-    const actorReportedIds = await this._contentRepository.findActorReportIds(targetId);
+    const userIdsReported = await this._contentRepository.findUserIdsReportedTargetId(targetId);
 
-    return userIds.filter((userId) => !actorReportedIds.includes(userId));
+    return userIds.filter((userId) => !userIdsReported.includes(userId));
   }
 }

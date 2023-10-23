@@ -1,7 +1,6 @@
 import { UserDto } from '@libs/service/user';
 
 import { ArticleDto, CommentDto, PostDto } from '../../../../v2-post/application/dto';
-import { CommentResponseDto } from '../../../../v2-post/driving-apdater/dto/response';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../../dto';
 
 export const COMMENT_NOTIFICATION_APPLICATION_SERVICE = 'COMMENT_NOTIFICATION_APPLICATION_SERVICE';
@@ -14,7 +13,7 @@ export type CommentNotificationPayload = {
   parentComment?: CommentDto;
   commentRecipient?: CommentRecipientDto;
   replyCommentRecipient?: ReplyCommentRecipientDto;
-  prevCommentActivities?: CommentResponseDto[];
+  prevCommentActivities?: CommentDto[];
 };
 
 export interface ICommentNotificationApplicationService {
