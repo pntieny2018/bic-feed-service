@@ -163,7 +163,7 @@ export class UserService implements IUserService {
     if (!isExistCommunityPermissionCacheKey || !isExistGroupPermissionCacheKey) {
       const response = await this._groupHttpService.get(
         AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, {
-          params: { userId },
+          userId,
         })
       );
 
