@@ -114,7 +114,9 @@ export class StringHelper {
   }
 
   public static serializeEditorContentToText(textStringify: string): string {
-    if (!textStringify) return textStringify;
+    if (!textStringify) {
+      return textStringify;
+    }
     try {
       const nodes: Node[] = JSON.parse(textStringify);
       return nodes.map((node) => Node.string(node)).join('\n');

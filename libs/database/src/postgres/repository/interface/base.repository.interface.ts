@@ -60,6 +60,7 @@ export type FindOptions<M extends Model> = {
   offset?: number;
   order?: [string | Literal, 'ASC' | 'DESC'][];
   group?: string[];
+  subQuery?: boolean;
 };
 export type Include<M extends Model> = Omit<IncludeOptions, 'attributes'> & {
   select?: string[];

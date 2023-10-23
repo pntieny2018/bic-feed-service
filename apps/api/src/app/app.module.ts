@@ -1,5 +1,6 @@
 import { HEADER_REQ_ID } from '@libs/common/constants';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
+import { UserModule } from '@libs/service/user';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -89,6 +90,7 @@ import { LibModule } from './lib.module';
     AdminModule,
     I18nGlobalModule,
     PostgresModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [],

@@ -41,6 +41,22 @@ export class RedisService {
     }
   }
 
+  public async hgetall<T>(key: string): Promise<T> {
+    const result = await this._store.hgetall(key);
+    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'HGETALL', key, result })}`);
+    try {
+      return result as unknown as T;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  public async getSets(key: string): Promise<string[]> {
+    const result = await this._store.smembers(key);
+    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'SMEMBERS', key, result })}`);
+    return result;
+  }
+
   public async mget(keys: string[]): Promise<any> {
     if (keys.length === 0) {
       return [];
@@ -66,5 +82,9 @@ export class RedisService {
 
   public async keys(pattern: string): Promise<string[]> {
     return await this._store.keys(pattern);
+  }
+
+  public async existKey(key: string): Promise<boolean> {
+    return (await this._store.exists(key)) === 1;
   }
 }

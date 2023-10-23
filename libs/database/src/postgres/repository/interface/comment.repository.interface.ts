@@ -12,7 +12,7 @@ export type FindOneOptions = {
 
 export type GetPaginationCommentProps = CursorPaginationProps & {
   authUserId?: string;
-  postId: string;
+  contentId: string;
   parentId?: string;
 };
 

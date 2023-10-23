@@ -71,7 +71,11 @@ export class CommentController {
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
   ): Promise<FindCommentsPaginationDto> {
     const data = await this._queryBus.execute(
-      new FindCommentsPaginationQuery({ authUser: user, ...getListCommentsDto })
+      new FindCommentsPaginationQuery({
+        authUser: user,
+        ...getListCommentsDto,
+        contentId: getListCommentsDto.postId,
+      })
     );
     return instanceToInstance(data, {
       groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],

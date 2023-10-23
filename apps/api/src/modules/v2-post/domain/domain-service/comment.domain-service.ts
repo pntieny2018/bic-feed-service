@@ -172,7 +172,7 @@ export class CommentDomainService implements ICommentDomainService {
     parent: CommentEntity,
     pagination: GetCommentsAroundIdProps
   ): Promise<CursorPaginationResult<CommentEntity>> {
-    const postId = parent.get('postId');
+    const contentId = parent.get('postId');
     const commentId = parent.get('id');
     const { userId, targetChildLimit, limit } = pagination;
 
@@ -184,7 +184,7 @@ export class CommentDomainService implements ICommentDomainService {
 
     const childsPagination = await this._commentRepository.getPagination({
       authUserId: userId,
-      postId,
+      contentId,
       parentId: commentId,
       limit: targetChildLimit,
       order: ORDER.DESC,
