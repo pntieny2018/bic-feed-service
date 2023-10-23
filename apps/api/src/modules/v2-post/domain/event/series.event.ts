@@ -36,7 +36,7 @@ export class SeriesDeletedEvent {
   public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
 }
 
-export class SeriesItemsReoderedEvent {
+export class SeriesItemsReorderedEvent {
   public constructor(public readonly seriesId: string) {}
 }
 

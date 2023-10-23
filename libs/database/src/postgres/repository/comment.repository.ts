@@ -37,7 +37,7 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentModel>> {
-    const { authUserId, limit, order, postId, parentId, before, after } = input;
+    const { authUserId, limit, order, contentId, parentId, before, after } = input;
     const findOptions: FindOptions = {
       include: [
         authUserId
@@ -54,7 +54,7 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
           : {},
       ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
       where: {
-        postId: postId,
+        postId: contentId,
         parentId: parentId,
         isHidden: false,
         ...(authUserId && {
@@ -95,14 +95,14 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
       where: { id: commentId },
     });
     const cursor = createCursor({ createdAt: targetComment.get('createdAt') });
-    const postId = targetComment.get('postId');
+    const contentId = targetComment.get('postId');
     const parentId = targetComment.get('parentId');
 
     const soonerCommentsQuery = this.getPagination({
       ...props,
       limit: first,
       after: cursor,
-      postId,
+      contentId,
       parentId,
     });
 
@@ -110,7 +110,7 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
       ...props,
       limit: last,
       before: cursor,
-      postId,
+      contentId,
       parentId,
     });
 

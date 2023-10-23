@@ -1,11 +1,10 @@
 import { ORDER } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { IQuery } from '@nestjs/cqrs';
-
-import { UserDto } from '../../../../../v2-user/application';
 
 type Props = {
   authUser?: UserDto;
-  postId: string;
+  contentId: string;
   parentId: string;
   limit: number;
   before?: string;

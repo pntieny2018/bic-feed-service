@@ -155,6 +155,27 @@ export class UserService implements IUserService {
     const communityPermissionCacheKey = `${CACHE_KEYS.COMMUNITY_PERMISSION}:${userId}`;
     const groupPermissionCacheKey = `${CACHE_KEYS.GROUP_PERMISSION}:${userId}`;
 
+    const isExistCommunityPermissionCacheKey = await this._store.existKey(
+      communityPermissionCacheKey
+    );
+    const isExistGroupPermissionCacheKey = await this._store.existKey(groupPermissionCacheKey);
+
+    if (!isExistCommunityPermissionCacheKey || !isExistGroupPermissionCacheKey) {
+      const response = await this._groupHttpService.get(
+        AxiosHelper.injectParamsToStrUrl(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, {
+          userId,
+        })
+      );
+
+      if (response.status !== HttpStatus.OK) {
+        return null;
+      }
+
+      permissions.communities = response.data['data'].communities;
+      permissions.groups = response.data['data'].groups;
+      return permissions;
+    }
+
     const communityPermissions = await this._store.hgetall<Record<string, string>>(
       communityPermissionCacheKey
     );
@@ -173,19 +194,6 @@ export class UserService implements IUserService {
 
     for (const groupId in groupPermissions) {
       permissions.groups[groupId] = JSON.parse(groupPermissions[groupId]);
-    }
-
-    if (!communityPermissions || !groupPermissions) {
-      const response = await this._groupHttpService.get(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, {
-        params: { userId },
-      });
-
-      if (response.status !== HttpStatus.OK) {
-        return null;
-      }
-
-      permissions.communities = response.data['data'].communities;
-      permissions.groups = response.data['data'].groups;
     }
 
     return permissions;

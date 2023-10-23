@@ -10,10 +10,7 @@ import {
   ICommentRepository,
 } from '../../../../domain/repositoty-interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
-import {
-  COMMENT_BINDING_TOKEN,
-  ICommentBinding,
-} from '../../../binding/binding-comment/comment.interface';
+import { COMMENT_BINDING_TOKEN, ICommentBinding } from '../../../binding';
 import { FindCommentsPaginationDto } from '../../../dto';
 
 import { FindCommentsPaginationQuery } from './find-comments-pagination.query';
@@ -34,11 +31,11 @@ export class FindCommentsPaginationHandler
   ) {}
 
   public async execute(query: FindCommentsPaginationQuery): Promise<FindCommentsPaginationDto> {
-    const { postId, authUser } = query.payload;
+    const { contentId, authUser } = query.payload;
 
-    const post = await this._contentDomainService.getVisibleContent(postId, authUser.id);
+    const content = await this._contentDomainService.getVisibleContent(contentId, authUser.id);
 
-    this._contentValidator.checkCanReadContent(post, authUser);
+    await this._contentValidator.checkCanReadContent(content, authUser);
 
     const { rows, meta } = await this._commentRepository.getPagination({
       ...query.payload,
@@ -49,8 +46,8 @@ export class FindCommentsPaginationHandler
       return new FindCommentsPaginationDto([], meta);
     }
 
-    const instances = await this._commentBinding.commentsBinding(rows, authUser);
+    const commentsDto = await this._commentBinding.commentsBinding(rows, authUser);
 
-    return new FindCommentsPaginationDto(instances, meta);
+    return new FindCommentsPaginationDto(commentsDto, meta);
   }
 }
