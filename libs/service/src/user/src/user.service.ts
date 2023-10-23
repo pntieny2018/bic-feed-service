@@ -155,11 +155,11 @@ export class UserService implements IUserService {
     const communityPermissionCacheKey = `${CACHE_KEYS.COMMUNITY_PERMISSION}:${userId}`;
     const groupPermissionCacheKey = `${CACHE_KEYS.GROUP_PERMISSION}:${userId}`;
 
-    const communityPermissions = await this._store.hgetall<Record<string, string[]>>(
+    const communityPermissions = await this._store.hgetall<Record<string, string>>(
       communityPermissionCacheKey
     );
 
-    const groupPermissions = await this._store.hgetall<Record<string, string[]>>(
+    const groupPermissions = await this._store.hgetall<Record<string, string>>(
       groupPermissionCacheKey
     );
 
@@ -167,8 +167,13 @@ export class UserService implements IUserService {
     delete communityPermissions[versionPermissionCacheKey];
     delete groupPermissions[versionPermissionCacheKey];
 
-    permissions.communities = communityPermissions;
-    permissions.groups = groupPermissions;
+    for (const communityId in communityPermissions) {
+      permissions.communities[communityId] = JSON.parse(communityPermissions[communityId]);
+    }
+
+    for (const groupId in groupPermissions) {
+      permissions.groups[groupId] = JSON.parse(groupPermissions[groupId]);
+    }
 
     if (!communityPermissions || !groupPermissions) {
       const response = await this._groupHttpService.get(GROUP_ENDPOINT.INTERNAL.USER_PERMISSIONS, {

@@ -31,14 +31,11 @@ export class ElasticsearchQueryBuilder {
     const body: BodyES = {
       query: {
         bool: {
-          must: [
-            ...this._getContentTypesFilter(contentTypes),
-            ...this._getContentNullFilter(filterEmptyContent),
-            ...this._getContentEmptyStringFilter(filterEmptyContent),
-          ],
+          must: [...this._getContentNullFilter(filterEmptyContent)],
           must_not: [...this._getNotIncludeIds(excludeByIds)],
           filter: [
             ...this._getActorFilter(actors),
+            ...this._getContentTypesFilter(contentTypes),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
             ...this._getItemInSeriesFilter(itemIds),
@@ -275,34 +272,11 @@ export class ElasticsearchQueryBuilder {
   }
 
   private _getContentNullFilter(filterEmptyContent?: boolean): any {
-    const { content } = ELASTIC_POST_MAPPING_PATH;
     if (filterEmptyContent) {
       return [
         {
-          bool: {
-            should: Object.values(content).map((code) => ({
-              exists: {
-                field: code,
-              },
-            })),
-          },
-        },
-      ];
-    }
-    return [];
-  }
-
-  private _getContentEmptyStringFilter(filterEmptyContent?: boolean): any {
-    const { content } = ELASTIC_POST_MAPPING_PATH;
-    if (filterEmptyContent) {
-      return [
-        {
-          bool: {
-            must_not: Object.values(content).map((code) => ({
-              term: {
-                [code]: '',
-              },
-            })),
+          exists: {
+            field: 'content',
           },
         },
       ];
