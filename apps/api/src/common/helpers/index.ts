@@ -3,6 +3,7 @@ export * from './array.helper';
 export * from './axios.helper';
 export * from './boolean.helper';
 export * from './elasticsearch.helper';
+export * from './entity.helper';
 export * from './mention.helper';
 export * from './model.helper';
 export * from './network.helper';

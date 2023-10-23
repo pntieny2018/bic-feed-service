@@ -1,6 +1,7 @@
 import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+import { EntityHelper } from 'apps/api/src/common/helpers';
 import { uniq } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -8,9 +9,12 @@ import {
   SeriesCreatedEvent,
   SeriesUpdatedEvent,
   SeriesDeletedEvent,
-  SeriesItemsReoderedEvent,
+  SeriesItemsReorderedEvent,
   SeriesItemsAddedEvent,
   SeriesItemsRemovedEvent,
+  SeriesSameOwnerChangedEvent,
+  SeriesItemsRemovedPayload,
+  SeriesItemsAddedPayload,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -34,6 +38,7 @@ import {
   AddSeriesItemsProps,
   RemoveSeriesItemsProps,
   ReorderSeriesItemsProps,
+  SendContentUpdatedSeriesEventProps,
 } from './interface';
 import {
   IMediaDomainService,
@@ -383,6 +388,133 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.reorderPostsSeries(id, itemIds);
 
-    this.event.publish(new SeriesItemsReoderedEvent(id));
+    this.event.publish(new SeriesItemsReorderedEvent(id));
+  }
+
+  public sendSeriesItemsAddedEvent(input: SeriesItemsAddedPayload): void {
+    this.event.publish(new SeriesItemsAddedEvent(input));
+  }
+
+  public sendSeriesItemsRemovedEvent(input: SeriesItemsRemovedPayload): void {
+    this.event.publish(new SeriesItemsRemovedEvent(input));
+  }
+
+  public async sendContentUpdatedSeriesEvent(
+    input: SendContentUpdatedSeriesEventProps
+  ): Promise<void> {
+    const { content, actor } = input;
+
+    const { attachSeriesIds, detachSeriesIds } = content.getState();
+
+    const series = (await this._contentRepository.findAll({
+      where: {
+        groupArchived: false,
+        isHidden: false,
+        ids: [...attachSeriesIds, ...detachSeriesIds],
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
+    })) as SeriesEntity[];
+
+    const addSeries = series.filter((series) => attachSeriesIds.includes(series.getId()));
+    const removeSeries = series.filter((series) => detachSeriesIds.includes(series.getId()));
+
+    const {
+      skipNotifyForAddSeriesIds,
+      skipNotifyForRemoveSeriesIds,
+      sameChangeSeriesOwnerIds,
+      seriesMap,
+    } = this._processSameChangeSeries(addSeries, removeSeries);
+
+    if (sameChangeSeriesOwnerIds.length) {
+      sameChangeSeriesOwnerIds.forEach((ownerId) => {
+        this.event.publish(
+          new SeriesSameOwnerChangedEvent({
+            authUser: actor,
+            series: seriesMap[ownerId].map((item) => ({
+              item,
+              state: addSeries.some((s) => s.getId() === item.getId()) ? 'add' : 'remove',
+            })),
+            content,
+          })
+        );
+      });
+    }
+
+    if (attachSeriesIds.length) {
+      attachSeriesIds.forEach((seriesId) => {
+        this.sendSeriesItemsAddedEvent({
+          authUser: actor,
+          seriesId,
+          item: content,
+          skipNotify: skipNotifyForAddSeriesIds.includes(seriesId) || content.isHidden(),
+          context: 'publish',
+        });
+      });
+    }
+
+    if (detachSeriesIds.length) {
+      detachSeriesIds.forEach((seriesId) => {
+        this.sendSeriesItemsRemovedEvent({
+          authUser: actor,
+          seriesId,
+          item: content,
+          contentIsDeleted: false,
+          skipNotify: skipNotifyForRemoveSeriesIds.includes(seriesId) || content.isHidden(),
+        });
+      });
+    }
+  }
+
+  private _processSameChangeSeries(
+    addSeries: SeriesEntity[],
+    removeSeries: SeriesEntity[]
+  ): {
+    skipNotifyForAddSeriesIds: string[];
+    skipNotifyForRemoveSeriesIds: string[];
+    sameChangeSeriesOwnerIds: string[];
+    seriesMap: Record<string, SeriesEntity[]>;
+  } {
+    let skipNotifyForAddSeriesIds = [];
+    let skipNotifyForRemoveSeriesIds = [];
+    let sameChangeSeriesOwnerIds = [];
+    let seriesMap = {};
+
+    if (addSeries.length && removeSeries.length) {
+      /**
+       * example of seriesMap
+       * {
+       *  'user1': [series1, series2],
+       *  'user2': [series3, series4],
+       *  'user3': [series5],
+       * }
+       */
+      seriesMap = EntityHelper.entityArrayToArrayRecord<SeriesEntity>(
+        [...addSeries, ...removeSeries],
+        'createdBy'
+      );
+      sameChangeSeriesOwnerIds = Object.keys(seriesMap).filter(
+        (ownerId) =>
+          addSeries.some((series) => series.get('createdBy') === ownerId) &&
+          removeSeries.some((series) => series.get('createdBy') === ownerId)
+      );
+
+      if (sameChangeSeriesOwnerIds.length) {
+        skipNotifyForAddSeriesIds = sameChangeSeriesOwnerIds.filter((ownerId) =>
+          addSeries.some((series) => series.get('createdBy') === ownerId)
+        );
+        skipNotifyForRemoveSeriesIds = sameChangeSeriesOwnerIds.filter((ownerId) =>
+          removeSeries.some((series) => series.get('createdBy') === ownerId)
+        );
+      }
+    }
+
+    return {
+      skipNotifyForAddSeriesIds,
+      skipNotifyForRemoveSeriesIds,
+      sameChangeSeriesOwnerIds,
+      seriesMap,
+    };
   }
 }

@@ -3,13 +3,15 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
-import { InternalEventEmitterService } from 'apps/api/src/app/custom/event-emitter';
 
 import { KAFKA_TOPIC } from '../../../../../common/constants';
-import { SeriesAddedItemsEvent } from '../../../../../events/series';
 import {
   IMediaDomainService,
+  ISeriesDomainService,
+  ITagDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+  TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { PostPublishedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
@@ -18,12 +20,14 @@ import { PostEntity } from '../../../domain/model/content';
 @EventsHandlerAndLog(PostPublishedEvent)
 export class PostPublishedEventHandler implements IEventHandler<PostPublishedEvent> {
   public constructor(
+    @Inject(TAG_DOMAIN_SERVICE_TOKEN)
+    private readonly _tagDomain: ITagDomainService,
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
+    private readonly _seriesDomain: ISeriesDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
     @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter,
-    // TODO: call domain and using event bus
-    private readonly _internalEventEmitter: InternalEventEmitterService
+    private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
@@ -31,7 +35,8 @@ export class PostPublishedEventHandler implements IEventHandler<PostPublishedEve
 
     if (postEntity.isPublished()) {
       await this._processMedia(postEntity);
-      await this._processSeriesItemsChanged(postEntity, actor);
+      await this._tagDomain.increaseTotalUsedByContent(postEntity);
+      this._processSeriesItemsChanged(postEntity, actor);
     }
 
     if (postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
@@ -61,17 +66,15 @@ export class PostPublishedEventHandler implements IEventHandler<PostPublishedEve
     }
   }
 
-  private async _processSeriesItemsChanged(postEntity: PostEntity, actor: UserDto): Promise<void> {
-    const seriesIds = postEntity.getSeriesIds() || [];
+  private _processSeriesItemsChanged(postEntity: PostEntity, actor: UserDto): void {
+    const seriesIds = postEntity.getSeriesIds();
     for (const seriesId of seriesIds) {
-      this._internalEventEmitter.emit(
-        new SeriesAddedItemsEvent({
-          itemIds: [postEntity.getId()],
-          seriesId,
-          actor: actor,
-          context: 'publish',
-        })
-      );
+      this._seriesDomain.sendSeriesItemsAddedEvent({
+        authUser: actor,
+        seriesId,
+        item: postEntity,
+        context: 'publish',
+      });
     }
   }
 }
