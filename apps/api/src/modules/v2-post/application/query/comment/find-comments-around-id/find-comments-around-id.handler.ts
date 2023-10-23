@@ -8,10 +8,7 @@ import {
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
-import {
-  COMMENT_BINDING_TOKEN,
-  ICommentBinding,
-} from '../../../binding/binding-comment/comment.interface';
+import { COMMENT_BINDING_TOKEN, ICommentBinding } from '../../../binding';
 import { FindCommentsAroundIdDto } from '../../../dto';
 
 import { FindCommentsAroundIdQuery } from './find-comments-around-id.query';
@@ -38,22 +35,16 @@ export class FindCommentsAroundIdHandler
 
     const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
-    this._contentValidator.checkCanReadContent(post, authUser);
+    await this._contentValidator.checkCanReadContent(post, authUser);
 
-    const aroundCommentPagination = await this._commentDomainService.getCommentsAroundId(
-      commentId,
-      {
-        userId: authUser.id,
-        limit,
-        targetChildLimit,
-      }
-    );
+    const { rows, meta } = await this._commentDomainService.getCommentsAroundId(commentId, {
+      userId: authUser.id,
+      limit,
+      targetChildLimit,
+    });
 
-    const bindingInstances = await this._commentBinding.commentsBinding(
-      aroundCommentPagination.rows,
-      authUser
-    );
+    const commentsDto = await this._commentBinding.commentsBinding(rows, authUser);
 
-    return new FindCommentsAroundIdDto(bindingInstances, aroundCommentPagination.meta);
+    return new FindCommentsAroundIdDto(commentsDto, meta);
   }
 }
