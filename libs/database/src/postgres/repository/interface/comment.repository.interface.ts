@@ -5,6 +5,9 @@ import { CommentModel } from '@libs/database/postgres/model';
 export type FindOneOptions = {
   excludeReportedByUserId?: string;
   includeOwnerReactions?: string;
+  includeChildComments?: {
+    childCommentId: string;
+  };
 };
 
 export type GetPaginationCommentProps = CursorPaginationProps & {

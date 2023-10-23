@@ -118,6 +118,7 @@ export class CommentController {
     const data = await this._commandBus.execute<CreateCommentCommand, CommentDto>(
       new CreateCommentCommand({
         ...createCommentDto,
+        contentId: createCommentDto.postId,
         actor: user,
         media: createCommentDto.media
           ? {
@@ -149,6 +150,7 @@ export class CommentController {
     const data = await this._commandBus.execute<ReplyCommentCommand, CommentDto>(
       new ReplyCommentCommand({
         ...replyCommentRequestDto,
+        contentId: replyCommentRequestDto.postId,
         parentId: commentId,
         actor: user,
         media: replyCommentRequestDto.media
@@ -181,7 +183,7 @@ export class CommentController {
     await this._commandBus.execute<UpdateCommentCommand, void>(
       new UpdateCommentCommand({
         ...updateCommentRequestDto,
-        id: commentId,
+        commentId,
         actor: user,
         media: updateCommentRequestDto.media
           ? {
@@ -210,7 +212,7 @@ export class CommentController {
   ): Promise<void> {
     await this._commandBus.execute<DeleteCommentCommand, void>(
       new DeleteCommentCommand({
-        id: commentId,
+        commentId,
         actor: user,
       } as DeleteCommentCommandPayload)
     );

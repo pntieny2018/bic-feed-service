@@ -6,7 +6,7 @@ export class AudienceObjectDto {
   }
 }
 
-class GroupObjectDto {
+export class GroupObjectDto {
   public id: string;
   public name?: string;
   public icon?: string;

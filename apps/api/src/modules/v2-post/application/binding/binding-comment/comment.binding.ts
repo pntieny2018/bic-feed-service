@@ -1,18 +1,15 @@
 import { PaginatedResponse } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { createUrlFromId } from '../../../../giphy/giphy.util';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../../../v2-user/application';
 import { CommentEntity } from '../../../domain/model/comment';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
 import { CommentResponseDto } from '../../../driving-apdater/dto/response';
 import { CommentDto, FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
 
@@ -21,8 +18,8 @@ import { ICommentBinding } from './comment.interface';
 @Injectable()
 export class CommentBinding implements ICommentBinding {
   public constructor(
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepo: ICommentReactionRepository
   ) {}
@@ -35,7 +32,7 @@ export class CommentBinding implements ICommentBinding {
       ...rows.map((item) => item.get('mentions')).flat(),
     ]);
 
-    const users = await this._userApplicationService.findAllAndFilterByPersonalVisibility(
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
       userIdsNeedToFind,
       authUser?.id
     );
@@ -111,7 +108,7 @@ export class CommentBinding implements ICommentBinding {
       userIdsNeedToFind.push(commentEntity.get('createdBy'));
     }
 
-    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+    const users = await this._userAdapter.getUsersByIds(userIdsNeedToFind, {
       withGroupJoined: false,
     });
 

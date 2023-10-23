@@ -1,3 +1,4 @@
+import { StringHelper } from '@libs/common/helpers';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 
@@ -35,7 +36,7 @@ export class RedisService {
     const result = await this._store.get(key);
     this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'GET', key, result })}`);
     try {
-      return JSON.parse(result) as unknown as T;
+      return StringHelper.isJson(result) ? (JSON.parse(result) as T) : (result as unknown as T);
     } catch (e) {
       return null;
     }

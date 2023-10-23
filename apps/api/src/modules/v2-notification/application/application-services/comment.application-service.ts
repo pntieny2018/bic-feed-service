@@ -1,12 +1,15 @@
 import { Inject } from '@nestjs/common';
+import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ArticleDto, CommentDto, PostDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
+  ActorObjectDto,
   CommentActivityObjectDto,
   CommentObjectDto,
+  GroupObjectDto,
   NotificationActivityDto,
   NotificationPayloadDto,
 } from '../dto';
@@ -67,8 +70,19 @@ export class CommentNotificationApplicationService
     }
     if (prevCommentActivities?.length) {
       kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
-        ? { ...kafkaPayload.value.meta.comment, prevCommentActivities }
-        : { prevCommentActivities };
+        ? {
+            ...kafkaPayload.value.meta.comment,
+            prevCommentActivities: this._createPrevCommentActivities(
+              prevCommentActivities,
+              content
+            ),
+          }
+        : {
+            prevCommentActivities: this._createPrevCommentActivities(
+              prevCommentActivities,
+              content
+            ),
+          };
     }
 
     await this._kafkaAdapter.emit<NotificationPayloadDto<CommentActivityObjectDto>>(
@@ -143,6 +157,49 @@ export class CommentNotificationApplicationService
       verb: VerbActivity.COMMENT,
       target: target,
       createdAt: content.createdAt,
+    });
+  }
+
+  private _createPrevCommentActivities(
+    comments: CommentDto[],
+    content: PostDto | ArticleDto
+  ): NotificationActivityDto<CommentActivityObjectDto>[] {
+    return comments.map((comment) => {
+      const activity = new CommentActivityObjectDto({
+        id: content.id,
+        actor: new ActorObjectDto(content.actor),
+        audience: {
+          groups: content.audience.groups.map((group) => {
+            return new GroupObjectDto(group);
+          }),
+        },
+        title: (content as ArticleDto)?.title || '',
+        contentType: content.type.toLowerCase(),
+        content: content.content,
+        setting: content.setting,
+        mentions: content.mentions,
+        comment: {
+          id: comment.id,
+          actor: comment.actor,
+          content: comment.content,
+          media: comment.media,
+          giphyId: comment.giphyId,
+          giphyUrl: comment.giphyUrl,
+          mentions: comment.mentions as any,
+          createdAt: comment.createdAt,
+          updatedAt: comment.createdAt,
+        },
+        createdAt: content.createdAt,
+        updatedAt: content.createdAt,
+      });
+
+      return new NotificationActivityDto<CommentActivityObjectDto>({
+        id: v4(),
+        object: activity,
+        verb: VerbActivity.COMMENT,
+        target: content.type as unknown as TargetType,
+        createdAt: comment.createdAt,
+      });
     });
   }
 }
