@@ -9,7 +9,7 @@ export type SeriesAttributes = ContentAttributes & {
   title: string;
   summary: string;
   itemIds?: string[];
-  items?: { postId: string; zindex: number }[];
+  items?: { id: string; zindex: number }[];
   cover: ImageEntity;
 };
 
