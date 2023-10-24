@@ -4,7 +4,7 @@ type ContentHasSeenEventPayload = {
 };
 
 type ContentAttachedSeriesEventPayload = {
-  contentIds: string[];
+  contentId: string;
 };
 
 export class ContentHasSeenEvent {
