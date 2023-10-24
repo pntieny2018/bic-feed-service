@@ -19,7 +19,7 @@ export class CleanUpDeletedSeriesCommand implements CommandRunner {
         where: {
           type: PostType.SERIES,
           deletedAt: {
-            [Op.eq]: null,
+            [Op.not]: null,
           },
         },
         paranoid: false,
