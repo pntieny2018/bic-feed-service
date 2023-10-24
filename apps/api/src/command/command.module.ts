@@ -18,6 +18,7 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
 
 import { CleanArticleCommand } from './clean-article.command';
 import { CleanDraftPostCommand } from './clean-draft-posts.command';
+import { CleanUpDeletedSeriesCommand } from './clean-up-deleted-series.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
@@ -93,6 +94,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigratePublishedTimeContentCommand,
     ExportReactionCountDataCommand,
     ExportInvalidTagNameCommand,
+    CleanUpDeletedSeriesCommand,
   ],
 })
 export class CommandModule {}
