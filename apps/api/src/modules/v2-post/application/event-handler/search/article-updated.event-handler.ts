@@ -1,13 +1,19 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { SearchService } from '../../../../search/search.service';
 import { ArticleUpdatedEvent } from '../../../domain/event';
+import { ArticleEntity } from '../../../domain/model/content';
+import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { ImageDto, TagDto } from '../../dto';
 
 @EventsHandlerAndLog(ArticleUpdatedEvent)
 export class SearchArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedEvent> {
   public constructor(
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepository: IContentRepository,
     // TODO: Change to Adapter
     private readonly _postSearchService: SearchService
   ) {}
@@ -19,6 +25,16 @@ export class SearchArticleUpdatedEventHandler implements IEventHandler<ArticleUp
       return;
     }
 
+    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
+      articleEntity.getId(),
+      { shouldIncludeSeries: true }
+    )) as ArticleEntity;
+
+    const seriesIds = uniq([
+      ...articleEntity.getSeriesIds(),
+      ...(contentWithArchivedGroups ? contentWithArchivedGroups?.getSeriesIds() : []),
+    ]);
+
     await this._postSearchService.updatePostsToSearch([
       {
         id: articleEntity.getId(),
@@ -27,7 +43,7 @@ export class SearchArticleUpdatedEventHandler implements IEventHandler<ArticleUp
         isHidden: articleEntity.isHidden(),
         groupIds: articleEntity.getGroupIds(),
         communityIds: articleEntity.get('communityIds'),
-        seriesIds: articleEntity.getSeriesIds(),
+        seriesIds,
         createdBy: articleEntity.getCreatedBy(),
         lang: articleEntity.get('lang'),
         updatedAt: articleEntity.get('updatedAt'),
