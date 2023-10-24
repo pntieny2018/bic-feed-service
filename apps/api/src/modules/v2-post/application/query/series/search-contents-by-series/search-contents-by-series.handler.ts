@@ -12,6 +12,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
+import { SeriesEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -51,9 +52,10 @@ export class SearchContentsBySeriesHandler
       after,
     } = query.payload;
 
-    const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
+    const seriesEntity = (await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
       mustIncludeGroup: true,
-    });
+      shouldIncludeItems: true,
+    })) as SeriesEntity;
 
     if (!seriesEntity || !seriesEntity.getGroupIds().length) {
       return new SearchContentsBySeriesDto([], {
@@ -82,7 +84,7 @@ export class SearchContentsBySeriesHandler
       filterEmptyContent: true,
       contentTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
       groupIds: filterGroupIds,
-      excludeByIds,
+      excludeByIds: uniq([...excludeByIds, ...seriesEntity.get('itemIds')]),
       isLimitSeries: true,
       size: limit,
       searchAfter: after ? parseCursor(after) : undefined,
