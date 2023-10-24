@@ -90,7 +90,7 @@ export class UserService implements IUserService {
       return [];
     }
 
-    const usernames = await Promise.all(ids.map((id) => this._getUsernameFromUserIdInCache(id)));
+    const usernames = await this._getUsernamesFromUserIdsInCache(ids);
     const users: UserDto[] = [];
     for (const username of usernames) {
       const user = await this._getUserDtoByUserName(username);
@@ -132,6 +132,11 @@ export class UserService implements IUserService {
 
   private async _getUsernameFromUserIdInCache(userId: string): Promise<string> {
     return this._store.get<string>(`${CACHE_KEYS.USERNAME}:${userId}`);
+  }
+
+  private async _getUsernamesFromUserIdsInCache(userIds: string[]): Promise<string[]> {
+    const keys = userIds.map((userId) => `${CACHE_KEYS.USERNAME}:${userId}`);
+    return this._store.mget(keys);
   }
 
   private async _getProfileUserByUserNameFromCache(username: string): Promise<ProfileUserDto> {

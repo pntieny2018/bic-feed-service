@@ -65,7 +65,11 @@ export class RedisService {
     const result = await this._store.mget(keys);
     this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'MGET', keys, result })}`);
     try {
-      return result.map((r) => JSON.parse(r)).filter((r) => !!r);
+      return result
+        .map((r) => {
+          return StringHelper.isJson(r) ? JSON.parse(r) : r;
+        })
+        .filter((r) => !!r);
     } catch (e) {
       return [];
     }
