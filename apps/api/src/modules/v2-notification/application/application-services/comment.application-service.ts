@@ -86,7 +86,7 @@ export class CommentNotificationApplicationService
     }
 
     await this._kafkaAdapter.emit<NotificationPayloadDto<CommentActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
+      KAFKA_TOPIC.STREAM.COMMENT,
       kafkaPayload
     );
   }

@@ -1,4 +1,3 @@
-import { CONTENT_STATUS } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
@@ -19,25 +18,17 @@ export class SearchContentAttachedSeriesEventHandler
   ) {}
 
   public async handle(event: ContentAttachedSeriesEvent): Promise<void> {
-    const { contentIds } = event.payload;
+    const { contentId } = event.payload;
 
-    const contents = (await this._contentRepository.findAll({
-      where: {
-        ids: contentIds,
-        status: CONTENT_STATUS.PUBLISHED,
-      },
-      include: {
-        shouldIncludeSeries: true,
-      },
-    })) as (PostEntity | ArticleEntity)[];
+    const content = (await this._contentRepository.findContentById(contentId, {
+      shouldIncludeSeries: true,
+    })) as PostEntity | ArticleEntity;
 
-    for (const content of contents) {
-      await this._postSearchService.updateAttributePostToSearch(
-        { id: content.getId(), lang: content.getLang() },
-        {
-          seriesIds: content.getSeriesIds(),
-        }
-      );
-    }
+    await this._postSearchService.updateAttributePostToSearch(
+      { id: content.getId(), lang: content.getLang() },
+      {
+        seriesIds: content.getSeriesIds(),
+      }
+    );
   }
 }
