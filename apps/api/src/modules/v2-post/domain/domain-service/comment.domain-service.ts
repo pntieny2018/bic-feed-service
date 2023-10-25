@@ -363,8 +363,7 @@ export class CommentDomainService implements ICommentDomainService {
         throw new CommentNotFoundException();
       }
 
-      const parentCommentCreatorId =
-        parentComment.get('createdBy') === userId ? null : parentComment.get('createdBy');
+      const parentCommentCreatorId = parentComment.get('createdBy');
 
       const mentionedUserIdsInComment = commentEntity.get('mentions') ?? [];
 
