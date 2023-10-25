@@ -401,6 +401,10 @@ export class CommentDomainService implements ICommentDomainService {
        *        4. also replied on a comment you are replied.
        *        5. replied on a comment you are mentioned. (mentioned user in parent comment)
        */
+      if (parentCommentCreatorId) {
+        recipient.parentCommentCreatorId = parentCommentCreatorId;
+      }
+
       for (const validUserId of validUserIds.filter((id) => id !== userId)) {
         if (!handledUserIds.includes(validUserId)) {
           if (mentionedUserIdsInComment.includes(validUserId)) {
@@ -409,11 +413,6 @@ export class CommentDomainService implements ICommentDomainService {
             continue;
           }
 
-          if (parentCommentCreatorId === validUserId && parentCommentCreatorId !== null) {
-            recipient.parentCommentCreatorId = validUserId;
-            handledUserIds.push(validUserId);
-            continue;
-          }
           if (mentionedUserIdsInParentComment.includes(validUserId)) {
             recipient.mentionedUserIdsInParentComment.push(validUserId);
             handledUserIds.push(validUserId);
