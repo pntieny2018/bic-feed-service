@@ -21,9 +21,11 @@ export class UserService implements IUserService {
     @Inject(GROUP_HTTP_TOKEN) private readonly _groupHttpService: IHttpService
   ) {}
 
-  public async findByUserName(username: string): Promise<UserDto> {
+  public async findProfileAndPermissionByUsername(username: string): Promise<UserDto> {
     try {
-      return this._getUserDtoByUserName(username);
+      const user = await this._getUserDtoByUserName(username);
+      user.permissions = await this._getPermissionByUserId(user.id);
+      return user;
     } catch (e) {
       this._logger.error(e);
       return null;
@@ -78,11 +80,41 @@ export class UserService implements IUserService {
       return null;
     }
 
-    const permissions = await this._getPermissionByUserId(userProfile.id);
     const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
     const joinedGroups = await this._getJoinedGroupsByUserIdFromCache(userProfile.id);
 
-    return new UserDto({ ...userProfile, permissions, showingBadges, groups: joinedGroups });
+    return new UserDto({ ...userProfile, showingBadges, groups: joinedGroups });
+  }
+
+  private async _getUsersDtoByUserNames(usernames: string[]): Promise<UserDto[]> {
+    if (usernames.length === 0) {
+      return [];
+    }
+
+    const usersProfile = await this._getProfileUsersByUserNamesFromCache(usernames);
+
+    const pipeline = this._store.getClient().pipeline();
+    const results = new Map();
+
+    usersProfile.forEach((userProfile) => {
+      const key = `${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`;
+      pipeline.smembers(key);
+
+      results.set(userProfile, key);
+    });
+
+    const joinedGroup = await pipeline.exec();
+    const users: UserDto[] = [];
+    joinedGroup.forEach((result, index) => {
+      const [err, value] = result;
+
+      const userProfile = usersProfile[index];
+      const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
+      const joinedGroups = value as string[];
+      users.push(new UserDto({ ...userProfile, showingBadges, groups: joinedGroups }));
+    });
+
+    return users;
   }
 
   private async _getUsersFromCacheByIds(ids: string[]): Promise<UserDto[]> {
@@ -91,13 +123,8 @@ export class UserService implements IUserService {
     }
 
     const usernames = await this._getUsernamesFromUserIdsInCache(ids);
-    const users: UserDto[] = [];
-    for (const username of usernames) {
-      const user = await this._getUserDtoByUserName(username);
-      users.push(user);
-    }
 
-    return users;
+    return this._getUsersDtoByUserNames(usernames);
   }
 
   // TODO: now user squad is keeping this api for protect domain logic, will be refactor it later
@@ -117,17 +144,14 @@ export class UserService implements IUserService {
 
     const userApis = response.data['data'];
 
-    return Promise.all(
-      userApis.map(async (user) => {
-        const permissions = await this._getPermissionByUserId(user.id);
-        const showingBadgesWithCommunity: ShowingBadgeDto[] = user?.showingBadges?.map((badge) => ({
-          ...badge,
-          community: badge.community || null,
-        }));
+    return userApis.map((user) => {
+      const showingBadgesWithCommunity: ShowingBadgeDto[] = user?.showingBadges?.map((badge) => ({
+        ...badge,
+        community: badge.community || null,
+      }));
 
-        return new UserDto({ ...user, permissions, showingBadges: showingBadgesWithCommunity });
-      })
-    );
+      return new UserDto({ ...user, showingBadges: showingBadgesWithCommunity });
+    });
   }
 
   private async _getUsernameFromUserIdInCache(userId: string): Promise<string> {
@@ -141,6 +165,13 @@ export class UserService implements IUserService {
 
   private async _getProfileUserByUserNameFromCache(username: string): Promise<ProfileUserDto> {
     return this._store.get<ProfileUserDto>(`${CACHE_KEYS.USER_PROFILE}:${username}`);
+  }
+
+  private async _getProfileUsersByUserNamesFromCache(
+    usernames: string[]
+  ): Promise<ProfileUserDto[]> {
+    const keys = usernames.map((username) => `${CACHE_KEYS.USER_PROFILE}:${username}`);
+    return this._store.mget(keys);
   }
 
   private async _getShowingBadgesByUserIdFromCache(userId: string): Promise<ShowingBadgeDto[]> {
