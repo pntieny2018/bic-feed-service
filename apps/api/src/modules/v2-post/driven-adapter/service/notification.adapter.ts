@@ -2,7 +2,10 @@ import { Inject } from '@nestjs/common';
 
 import {
   ArticleNotificationPayload,
+  COMMENT_NOTIFICATION_APPLICATION_SERVICE,
+  CommentNotificationPayload,
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
+  ICommentNotificationApplicationService,
   IContentNotificationApplicationService,
   IReactionNotificationApplicationService,
   PostNotificationPayload,
@@ -21,6 +24,8 @@ export class NotificationAdapter implements INotificationAdapter {
   public constructor(
     @Inject(CONTENT_NOTIFICATION_APPLICATION_SERVICE)
     private readonly _contentNotiApp: IContentNotificationApplicationService,
+    @Inject(COMMENT_NOTIFICATION_APPLICATION_SERVICE)
+    private readonly _commentNotiApp: ICommentNotificationApplicationService,
     @Inject(REACTION_NOTIFICATION_APPLICATION_SERVICE)
     private readonly _reactionNotiApp: IReactionNotificationApplicationService
   ) {}
@@ -71,5 +76,9 @@ export class NotificationAdapter implements INotificationAdapter {
 
   public sendReactionNotification(payload: ReactionNotificationPayload): Promise<void> {
     return this._reactionNotiApp.sendReactionNotification(payload);
+  }
+
+  public async sendCommentNotification(payload: CommentNotificationPayload): Promise<void> {
+    return this._commentNotiApp.sendCommentNotification(payload);
   }
 }

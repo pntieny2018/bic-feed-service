@@ -15,6 +15,7 @@ import {
   SeriesSameOwnerChangedEvent,
   SeriesItemsRemovedPayload,
   SeriesItemsAddedPayload,
+  ContentAttachedSeriesEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -314,6 +315,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.createPostSeries(id, itemId);
 
+    this.event.publish(new ContentAttachedSeriesEvent({ contentId: itemId }));
     this.event.publish(
       new SeriesItemsAddedEvent({
         authUser,
@@ -355,6 +357,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.deletePostSeries(id, itemId);
 
+    this.event.publish(new ContentAttachedSeriesEvent({ contentId: itemId }));
     this.event.publish(
       new SeriesItemsRemovedEvent({
         authUser,

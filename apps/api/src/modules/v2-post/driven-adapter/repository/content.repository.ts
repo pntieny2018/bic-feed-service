@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { CONTENT_TARGET } from '@beincom/constants/lib/content';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
@@ -218,6 +219,7 @@ export class ContentRepository implements IContentRepository {
   public async delete(id: string): Promise<void> {
     await this._libContentRepo.delete({
       where: { id },
+      force: true,
     });
     return;
   }
@@ -468,6 +470,26 @@ export class ContentRepository implements IContentRepository {
         ignoreDuplicates: true,
       }
     );
+  }
+
+  public async findUserIdsReportedTargetId(
+    targetId: string,
+    contentTarget?: CONTENT_TARGET
+  ): Promise<string[]> {
+    const condition: WhereOptions<ReportContentDetailAttributes> = {
+      [Op.and]: [
+        {
+          targetId,
+          ...(contentTarget && { targetType: contentTarget }),
+        },
+      ],
+    };
+
+    const reports = await this._libUserReportContentRepo.findMany({
+      where: condition,
+    });
+
+    return (reports || []).map((report) => report.createdBy);
   }
 
   public async createPostSeries(seriesId: string, postId: string): Promise<void> {

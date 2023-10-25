@@ -1,5 +1,6 @@
 import {
   ArticleNotificationPayload,
+  CommentNotificationPayload,
   PostNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
@@ -22,4 +23,5 @@ export interface INotificationAdapter {
   sendSeriesAddedItemNotification(payload: SeriesAddedItemNotificationPayload): Promise<void>;
   sendSeriesRemovedItemNotification(payload: SeriesRemovedItemNotificationPayload): Promise<void>;
   sendSeriesChangedItemNotification(payload: SeriesChangedItemNotificationPayload): Promise<void>;
+  sendCommentNotification(payload: CommentNotificationPayload): Promise<void>;
 }

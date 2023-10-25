@@ -1,9 +1,9 @@
 import { PaginatedResponse } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { createUrlFromId } from '../../../../giphy/giphy.util';
-import { UserDto } from '../../../../v2-user/application';
 import { CommentEntity } from '../../../domain/model/comment';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,

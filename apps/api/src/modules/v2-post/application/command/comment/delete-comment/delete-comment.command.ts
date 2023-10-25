@@ -1,10 +1,8 @@
+import { UserDto } from '@libs/service/user';
 import { ICommand } from '@nestjs/cqrs';
 
-import { UserDto } from '../../../../../v2-user/application/user.dto';
-
 export type DeleteCommentCommandPayload = {
-  id: string;
-
+  commentId: string;
   actor: UserDto;
 };
 

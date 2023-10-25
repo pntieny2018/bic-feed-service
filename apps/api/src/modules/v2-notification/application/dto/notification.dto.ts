@@ -1,6 +1,10 @@
 import { TargetType, VerbActivity } from '../../data-type';
 
-import { CommentRecipientDto, ReplyCommentRecipientDto } from './comment.dto';
+import {
+  CommentActivityObjectDto,
+  CommentRecipientDto,
+  ReplyCommentRecipientDto,
+} from './comment.dto';
 import { ActorObjectDto } from './user.dto';
 
 export class NotificationActivityDto<T> {
@@ -51,7 +55,7 @@ class NotificationMetaPayloadDto<T> {
   public comment?: {
     commentRecipient?: CommentRecipientDto;
     replyCommentRecipient?: ReplyCommentRecipientDto;
-    prevCommentActivities?: T[];
+    prevCommentActivities?: NotificationActivityDto<CommentActivityObjectDto>[];
   };
 
   public series?: {
