@@ -15,6 +15,8 @@ export * from './quiz-participant-answer.repository';
 export * from './quiz-participant.repository';
 export * from './quiz-question.repository';
 export * from './quiz.repository';
+export * from './reaction-comment-details.repository';
+export * from './reaction-content-details.repository';
 export * from './tag.repository';
 export * from './user-mark-read-post.repository';
 export * from './user-report-content.repository';
