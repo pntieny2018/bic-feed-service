@@ -23,8 +23,8 @@ export class UserService implements IUserService {
 
   public async findProfileAndPermissionByUsername(username: string): Promise<UserDto> {
     try {
-      const user = await this._getUserDtoByUserName(username);
-      user.permissions = await this._getPermissionByUserId(user.id);
+      const user = await this._getUserFromCacheByUserName(username);
+      user.permissions = await this._getPermissionFromCacheByUserId(user.id);
       return user;
     } catch (e) {
       this._logger.error(e);
@@ -34,8 +34,8 @@ export class UserService implements IUserService {
 
   public async findById(id: string): Promise<UserDto> {
     try {
-      const username = await this._getUsernameFromUserIdInCache(id);
-      return this._getUserDtoByUserName(username);
+      const [username] = await this._getUsernamesFromCacheByUserIds([id]);
+      return this._getUserFromCacheByUserName(username);
     } catch (e) {
       this._logger.error(e);
       return null;
@@ -48,8 +48,8 @@ export class UserService implements IUserService {
     }
 
     try {
-      const uniqueIds = uniq(ids);
-      return this._getUsersFromCacheByIds(uniqueIds);
+      const usernames = await this._getUsernamesFromCacheByUserIds(uniq(ids));
+      return this._getUsersFromCacheByUserNames(usernames);
     } catch (e) {
       this._logger.error(e);
       return [];
@@ -68,63 +68,6 @@ export class UserService implements IUserService {
       this._logger.error(e);
       return [];
     }
-  }
-
-  private async _getUserDtoByUserName(username: string): Promise<UserDto> {
-    if (!username) {
-      return null;
-    }
-
-    const userProfile = await this._getProfileUserByUserNameFromCache(username);
-    if (!userProfile) {
-      return null;
-    }
-
-    const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
-    const joinedGroups = await this._getJoinedGroupsByUserIdFromCache(userProfile.id);
-
-    return new UserDto({ ...userProfile, showingBadges, groups: joinedGroups });
-  }
-
-  private async _getUsersDtoByUserNames(usernames: string[]): Promise<UserDto[]> {
-    if (usernames.length === 0) {
-      return [];
-    }
-
-    const usersProfile = await this._getProfileUsersByUserNamesFromCache(usernames);
-
-    const pipeline = this._store.getClient().pipeline();
-    const results = new Map();
-
-    usersProfile.forEach((userProfile) => {
-      const key = `${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`;
-      pipeline.smembers(key);
-
-      results.set(userProfile, key);
-    });
-
-    const joinedGroup = await pipeline.exec();
-    const users: UserDto[] = [];
-    joinedGroup.forEach((result, index) => {
-      const [err, value] = result;
-
-      const userProfile = usersProfile[index];
-      const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
-      const joinedGroups = value as string[];
-      users.push(new UserDto({ ...userProfile, showingBadges, groups: joinedGroups }));
-    });
-
-    return users;
-  }
-
-  private async _getUsersFromCacheByIds(ids: string[]): Promise<UserDto[]> {
-    if (!ids.length) {
-      return [];
-    }
-
-    const usernames = await this._getUsernamesFromUserIdsInCache(ids);
-
-    return this._getUsersDtoByUserNames(usernames);
   }
 
   // TODO: now user squad is keeping this api for protect domain logic, will be refactor it later
@@ -154,35 +97,70 @@ export class UserService implements IUserService {
     });
   }
 
-  private async _getUsernameFromUserIdInCache(userId: string): Promise<string> {
-    return this._store.get<string>(`${CACHE_KEYS.USERNAME}:${userId}`);
+  private async _getUserFromCacheByUserName(username: string): Promise<UserDto> {
+    if (!username) {
+      return null;
+    }
+
+    const [userProfile] = await this._getUserProfilesFromCacheByUserNames([username]);
+    if (!userProfile) {
+      return null;
+    }
+
+    const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
+    const joinedGroups = await this._getJoinedGroupsFromCacheByUserId(userProfile.id);
+
+    return new UserDto({ ...userProfile, showingBadges, groups: joinedGroups });
   }
 
-  private async _getUsernamesFromUserIdsInCache(userIds: string[]): Promise<string[]> {
+  private async _getUsersFromCacheByUserNames(usernames: string[]): Promise<UserDto[]> {
+    if (!usernames.length) {
+      return [];
+    }
+
+    const usersProfile = await this._getUserProfilesFromCacheByUserNames(usernames);
+
+    const pipeline = this._store.getClient().pipeline();
+    const results = new Map();
+
+    usersProfile.forEach((userProfile) => {
+      const key = `${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`;
+      pipeline.smembers(key);
+
+      results.set(userProfile, key);
+    });
+
+    const joinedGroup = await pipeline.exec();
+    const users: UserDto[] = [];
+    joinedGroup.forEach((result, index) => {
+      const [err, value] = result;
+
+      const userProfile = usersProfile[index];
+      const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
+      const joinedGroups = value as string[];
+      users.push(new UserDto({ ...userProfile, showingBadges, groups: joinedGroups }));
+    });
+
+    return users;
+  }
+
+  private async _getUsernamesFromCacheByUserIds(userIds: string[]): Promise<string[]> {
     const keys = userIds.map((userId) => `${CACHE_KEYS.USERNAME}:${userId}`);
     return this._store.mget(keys);
   }
 
-  private async _getProfileUserByUserNameFromCache(username: string): Promise<ProfileUserDto> {
-    return this._store.get<ProfileUserDto>(`${CACHE_KEYS.USER_PROFILE}:${username}`);
-  }
-
-  private async _getProfileUsersByUserNamesFromCache(
+  private async _getUserProfilesFromCacheByUserNames(
     usernames: string[]
   ): Promise<ProfileUserDto[]> {
     const keys = usernames.map((username) => `${CACHE_KEYS.USER_PROFILE}:${username}`);
     return this._store.mget(keys);
   }
 
-  private async _getShowingBadgesByUserIdFromCache(userId: string): Promise<ShowingBadgeDto[]> {
-    return this._store.get<ShowingBadgeDto[]>(`${CACHE_KEYS.SHOWING_BADGES}:${userId}`);
-  }
-
-  private async _getJoinedGroupsByUserIdFromCache(userId: string): Promise<string[]> {
+  private async _getJoinedGroupsFromCacheByUserId(userId: string): Promise<string[]> {
     return this._store.getSets(`${CACHE_KEYS.JOINED_GROUPS}:${userId}`);
   }
 
-  private async _getPermissionByUserId(userId: string): Promise<UserPermissionDto> {
+  private async _getPermissionFromCacheByUserId(userId: string): Promise<UserPermissionDto> {
     const versionPermissionCacheKey = 'version';
     const permissions: UserPermissionDto = {
       communities: {},
