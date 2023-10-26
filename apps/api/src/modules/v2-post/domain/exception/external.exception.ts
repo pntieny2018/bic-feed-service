@@ -1,5 +1,6 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
+
 import { ERRORS } from '../../../../common/constants/errors';
 
 export class UserNoBelongGroupException extends DomainException {
@@ -17,6 +18,15 @@ export class GroupNotFoundException extends DomainException {
 
   public constructor(message: string = null, error: any = null) {
     message = message || 'Group is not found';
+    super(GroupNotFoundException.code, message, error);
+  }
+}
+
+export class UserNotFoundException extends DomainException {
+  public static code = ERRORS.USER_NOT_FOUND;
+
+  public constructor(message: string = null, error: any = null) {
+    message = message || 'User is not found';
     super(GroupNotFoundException.code, message, error);
   }
 }
