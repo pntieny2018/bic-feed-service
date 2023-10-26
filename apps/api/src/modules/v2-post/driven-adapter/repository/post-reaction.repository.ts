@@ -1,8 +1,11 @@
 import { ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
-import { LibPostReactionRepository } from '@libs/database/postgres/repository';
+import {
+  LibPostReactionRepository,
+  LibReactionContentDetailsRepository,
+} from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
-import { Op, Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
 import { ReactionsCount } from '../../../../common/types';
@@ -18,6 +21,7 @@ import { PostReactionMapper } from '../mapper/post-reaction.mapper';
 export class PostReactionRepository implements IPostReactionRepository {
   public constructor(
     private readonly _libPostReactionRepo: LibPostReactionRepository,
+    private readonly _libReactionContentDetailsRepo: LibReactionContentDetailsRepository,
     private readonly _postReactionMapper: PostReactionMapper
   ) {}
 
@@ -41,34 +45,23 @@ export class PostReactionRepository implements IPostReactionRepository {
   public async getAndCountReactionByContents(
     contentIds: string[]
   ): Promise<Map<string, ReactionsCount>> {
-    const result = await this._libPostReactionRepo.findMany({
-      select: ['postId', 'reactionName'],
-      selectRaw: [
-        [`COUNT("id")`, 'total'],
-        [`MIN("created_at")`, 'date'],
-      ],
+    const reactionCount = await this._libReactionContentDetailsRepo.findMany({
       where: {
-        postId: contentIds,
+        contentId: contentIds,
       },
-      group: ['postId', `reactionName`],
-      order: [[Sequelize.literal('date'), ORDER.ASC]],
     });
-
-    if (!result) {
-      return new Map<string, ReactionsCount>();
-    }
 
     return new Map<string, ReactionsCount>(
       contentIds.map((contentId) => {
         return [
           contentId,
-          result
+          reactionCount
             .filter((i) => {
-              return i.postId === contentId;
+              return i.contentId === contentId;
             })
             .map((item) => {
               item = item.toJSON();
-              return { [item['reactionName']]: parseInt(item['total']) };
+              return { [item['reactionName']]: item['count'] };
             }),
         ];
       })

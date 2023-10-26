@@ -1,7 +1,7 @@
 import { ReactionCommentDetailsModel } from '@libs/database/postgres/model';
 import { BaseRepository } from '@libs/database/postgres/repository/base.repository';
 
-export class ReactionCommentDetailsRepository extends BaseRepository<ReactionCommentDetailsModel> {
+export class LibReactionCommentDetailsRepository extends BaseRepository<ReactionCommentDetailsModel> {
   public constructor() {
     super(ReactionCommentDetailsModel);
   }
