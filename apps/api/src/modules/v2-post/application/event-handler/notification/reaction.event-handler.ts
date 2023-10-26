@@ -31,7 +31,7 @@ import {
 import { ArticleDto, PostDto } from '../../dto';
 
 @EventsHandler(ReactionNotifyEvent)
-export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyEvent> {
+export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEvent> {
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
