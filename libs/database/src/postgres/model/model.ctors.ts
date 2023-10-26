@@ -22,6 +22,8 @@ import { QuizParticipantAnswerModel } from './quiz-participant-answers.model';
 import { QuizParticipantModel } from './quiz-participant.model';
 import { QuizQuestionModel } from './quiz-question.model';
 import { QuizModel } from './quiz.model';
+import { ReactionCommentDetailsModel } from './reaction-comment-details.model';
+import { ReactionContentDetailsModel } from './reaction-content-details.model';
 import { RecentSearchModel } from './recent-search.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
 import { ReportContentModel } from './report-content.model';
@@ -56,6 +58,7 @@ export const MODEL_CTORS = [
   QuizParticipantAnswerModel,
   QuizParticipantModel,
   QuizQuestionModel,
+
   RecentSearchModel,
   ReportContentDetailModel,
   ReportContentModel,
@@ -64,4 +67,6 @@ export const MODEL_CTORS = [
   UserNewsFeedModel,
   UserSavePostModel,
   UserSeenPostModel,
+  ReactionCommentDetailsModel,
+  ReactionContentDetailsModel,
 ];

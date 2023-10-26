@@ -1,6 +1,14 @@
 import { IsUUID } from 'class-validator';
-import { InferAttributes, InferCreationAttributes, Model } from 'sequelize';
-import { Column, CreatedAt, Default, PrimaryKey, Table, UpdatedAt } from 'sequelize-typescript';
+import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import {
+  Column,
+  CreatedAt,
+  Default,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+  Model,
+} from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
 export type ReactionContentDetailsAttributes = InferAttributes<ReactionContentDetailsModel>;

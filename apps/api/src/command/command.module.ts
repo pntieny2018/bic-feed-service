@@ -1,3 +1,4 @@
+import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { LogModule } from '@libs/infra/log';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -41,6 +42,7 @@ import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
+import { UpdateReactionCountCommand } from './update-reaction-count.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
 
@@ -64,6 +66,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     FeedPublisherModule,
     FollowModule,
     UploadModule,
+    PostgresModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -95,6 +98,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     ExportReactionCountDataCommand,
     ExportInvalidTagNameCommand,
     CleanUpDeletedSeriesCommand,
+    UpdateReactionCountCommand,
   ],
 })
 export class CommandModule {}
