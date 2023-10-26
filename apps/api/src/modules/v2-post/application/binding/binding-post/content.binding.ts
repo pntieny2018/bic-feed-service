@@ -30,12 +30,9 @@ import {
   IGroupAdapter,
 } from '../../../domain/service-adapter-interface';
 import {
-  FileDto,
-  ImageDto,
   PostDto,
   SeriesDto,
   UserMentionDto,
-  VideoDto,
   ArticleDto,
   LinkPreviewDto,
   SeriesInContentDto,
@@ -43,6 +40,7 @@ import {
   PostInSeriesDto,
   ArticleInSeriesDto,
 } from '../../dto';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
 
 import { IContentBinding } from './content.interface';
@@ -52,6 +50,8 @@ export class ContentBinding implements IContentBinding {
   public constructor(
     @Inject(QUIZ_BINDING_TOKEN)
     private readonly _quizBinding: IQuizBinding,
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
 
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
@@ -111,15 +111,7 @@ export class ContentBinding implements IContentBinding {
       status: postEntity.get('status'),
       type: postEntity.getType(),
       setting: postEntity.get('setting'),
-      media: {
-        files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
-        images: (postEntity.get('media').images || []).map(
-          (image) => new ImageDto(image.toObject())
-        ),
-        videos: (postEntity.get('media').videos || []).map(
-          (video) => new VideoDto(video.toObject())
-        ),
-      },
+      media: this._mediaBinding.binding(postEntity.get('media')),
       createdAt: postEntity.get('createdAt'),
       updatedAt: postEntity.get('updatedAt'),
       markedReadPost: postEntity.get('markedReadImportant'),
@@ -215,9 +207,7 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
-      coverMedia: articleEntity.get('cover')
-        ? new ImageDto(articleEntity.get('cover').toObject())
-        : null,
+      coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
       series,
       tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
       quiz:
@@ -292,9 +282,7 @@ export class ContentBinding implements IContentBinding {
       title: seriesEntity.get('title'),
       summary: seriesEntity.get('summary'),
       items: bindingItems,
-      coverMedia: seriesEntity.get('cover')
-        ? new ImageDto(seriesEntity.get('cover').toObject())
-        : null,
+      coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
     });
   }
 
@@ -319,11 +307,7 @@ export class ContentBinding implements IContentBinding {
           type: item.getType(),
           actor: users.find((user) => user.id === item.getCreatedBy()),
           isSaved: item.get('isSaved'),
-          media: {
-            files: (item.get('media').files || []).map((file) => new FileDto(file.toObject())),
-            images: (item.get('media').images || []).map((image) => new ImageDto(image.toObject())),
-            videos: (item.get('media').videos || []).map((video) => new VideoDto(video.toObject())),
-          },
+          media: this._mediaBinding.binding(item.get('media')),
           audience: {
             groups: groups.filter((group) => item.getGroupIds().includes(group.id)),
           },
@@ -341,7 +325,7 @@ export class ContentBinding implements IContentBinding {
         setting: item.get('setting'),
         actor: users.find((user) => user.id === item.getCreatedBy()),
         isSaved: item.get('isSaved'),
-        coverMedia: item.get('cover') ? new ImageDto(item.get('cover').toObject()) : null,
+        coverMedia: this._mediaBinding.imageBinding(item.get('cover')),
         categories: (item.get('categories') || []).map((category) => ({
           id: category.get('id'),
           name: category.get('name'),
@@ -582,11 +566,7 @@ export class ContentBinding implements IContentBinding {
       status: postAttributes.status,
       type: postAttributes.type,
       setting: postAttributes.setting,
-      media: {
-        files: (postAttributes.media.files || []).map((file) => new FileDto(file.toObject())),
-        images: (postAttributes.media.images || []).map((image) => new ImageDto(image.toObject())),
-        videos: (postAttributes.media.videos || []).map((video) => new VideoDto(video.toObject())),
-      },
+      media: this._mediaBinding.binding(postAttributes.media),
       createdAt: postAttributes.createdAt,
       updatedAt: postAttributes.updatedAt,
       markedReadPost: postAttributes.markedReadImportant,
@@ -683,7 +663,7 @@ export class ContentBinding implements IContentBinding {
         id: category.get('id'),
         name: category.get('name'),
       })),
-      coverMedia: articleAttributes.cover ? new ImageDto(articleAttributes.cover.toObject()) : null,
+      coverMedia: this._mediaBinding.imageBinding(articleAttributes.cover),
       series,
       tags: (articleAttributes.tags || []).map((tagEntity) =>
         this._getTagBindingInContent(tagEntity)

@@ -7,13 +7,15 @@ import { SearchService } from '../../../../search/search.service';
 import { ArticlePublishedEvent } from '../../../domain/event';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ImageDto } from '../../dto';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../binding/binding-media';
 
 @EventsHandlerAndLog(ArticlePublishedEvent)
 export class SearchArticlePublishedEventHandler implements IEventHandler<ArticlePublishedEvent> {
   public constructor(
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    private readonly _contentRepo: IContentRepository,
     // TODO: Change to Adapter
     private readonly _postSearchService: SearchService
   ) {}
@@ -25,7 +27,7 @@ export class SearchArticlePublishedEventHandler implements IEventHandler<Article
       return;
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
+    const contentWithArchivedGroups = (await this._contentRepo.findContentByIdInArchivedGroup(
       articleEntity.getId(),
       { shouldIncludeSeries: true }
     )) as ArticleEntity;
@@ -50,7 +52,7 @@ export class SearchArticlePublishedEventHandler implements IEventHandler<Article
         publishedAt: articleEntity.get('publishedAt'),
         title: articleEntity.getTitle(),
         summary: articleEntity.get('summary'),
-        coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
+        coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
         categories: (articleEntity.get('categories') || []).map((category) => ({
           id: category.get('id'),
           name: category.get('name'),
