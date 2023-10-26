@@ -244,7 +244,7 @@ export class CommentDomainService implements ICommentDomainService {
        * User who created post
        * Will equal null if post creator comment to self's post
        */
-      const contentOwnerId = contentDto.actor.id === userId ? null : contentDto.actor.id;
+      const contentOwnerId = contentDto.actor.id;
 
       /**
        * users who mentioned in post
@@ -308,17 +308,15 @@ export class CommentDomainService implements ICommentDomainService {
        *        4. also commented on a post.
        */
 
+      if (contentOwnerId) {
+        recipient.postOwnerId = contentOwnerId;
+      }
+
       const handledUserIds = [];
       for (const validUserId of validUserIds) {
         if (!handledUserIds.includes(validUserId)) {
           if (mentionedUsersInComment.includes(validUserId)) {
             recipient.mentionedUsersInComment.push(validUserId);
-            handledUserIds.push(validUserId);
-            continue;
-          }
-
-          if (validUserId === contentOwnerId && contentOwnerId !== null) {
-            recipient.postOwnerId = validUserId;
             handledUserIds.push(validUserId);
             continue;
           }
