@@ -13,7 +13,7 @@ import {
 import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
 import { UserMentionDto } from '../../../../mention/dto';
 import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
-import { MediaDto } from '../../../application/dto';
+import { MediaRequestDto } from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
 
@@ -41,13 +41,13 @@ export class UpdatePostRequestDto {
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
-    type: MediaDto,
+    type: MediaRequestDto,
     required: false,
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => MediaDto)
-  public media?: MediaDto;
+  @Type(() => MediaRequestDto)
+  public media?: MediaRequestDto;
 
   @ApiProperty({ type: UserMentionDto })
   @IsOptional()

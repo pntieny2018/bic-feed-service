@@ -56,15 +56,10 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       withGroupJoined: true,
     });
 
-    const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([
-      postEntity.getId(),
-    ]);
-
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
       actor: command.payload.authUser,
       authUser: command.payload.authUser,
-      reactionsCount: reactionsCount.get(postEntity.getId()),
       mentionUsers,
     });
 

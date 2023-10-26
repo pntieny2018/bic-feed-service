@@ -3,7 +3,7 @@ import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import { QuestionDto, QuizDto, QuizParticipantDto } from '../../dto';
 
 export interface IQuizBinding {
-  binding(quizEntity: QuizEntity): Promise<QuizDto>;
+  binding(quizEntity: QuizEntity): QuizDto;
   bindQuizParticipants(quizParticipants: QuizParticipantEntity[]): Promise<QuizParticipantDto[]>;
   bindQuizQuestion(quizParticipants: QuizQuestionEntity): Promise<QuestionDto>;
 }

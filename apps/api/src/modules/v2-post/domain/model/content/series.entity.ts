@@ -58,6 +58,10 @@ export class SeriesEntity extends ContentEntity<SeriesAttributes> {
     return this._props.title;
   }
 
+  public getItemIds(): string[] {
+    return this._props.itemIds || [];
+  }
+
   /**
    * Note: Summary can be empty string
    */

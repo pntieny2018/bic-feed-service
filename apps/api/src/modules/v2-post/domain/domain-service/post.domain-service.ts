@@ -3,7 +3,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { LinkPreviewDto, MediaDto } from '../../application/dto';
+import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
   ContentHasSeenEvent,
   PostDeletedEvent,
@@ -381,7 +381,7 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setLinkPreview(linkPreviewEntity);
   }
 
-  private async _setNewMedia(postEntity: PostEntity, media: MediaDto): Promise<void> {
+  private async _setNewMedia(postEntity: PostEntity, media: MediaRequestDto): Promise<void> {
     const ownerId = postEntity.get('createdBy');
 
     const imageEntities = postEntity.get('media').images;
