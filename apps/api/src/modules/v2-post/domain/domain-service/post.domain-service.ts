@@ -263,7 +263,7 @@ export class PostDomainService implements IPostDomainService {
 
     await this._validateAndSetPostAttributes(postEntity, payload, actor);
 
-    if (postEntity.hasVideoProcessing()) {
+    if (postEntity.hasVideoProcessing() && !postEntity.isWaitingSchedule()) {
       postEntity.setProcessing();
     }
 
