@@ -92,6 +92,18 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
 
     const targetComment = await this.first({
       where: { id: commentId },
+      include: [
+        {
+          model: CommentReactionModel,
+          as: 'ownerReactions',
+          on: {
+            [Op.and]: {
+              comment_id: { [Op.eq]: col(`CommentModel.id`) },
+              created_by: props.authUserId,
+            },
+          },
+        },
+      ],
     });
     const cursor = createCursor({ createdAt: targetComment.get('createdAt') });
     const contentId = targetComment.get('postId');
