@@ -4,6 +4,7 @@ export const USER_SERVICE_TOKEN = 'USER_SERVICE_TOKEN';
 
 export interface IUserService {
   findProfileAndPermissionByUsername(username: string): Promise<UserDto>;
+  findProfileAndPermissionById(id: string): Promise<UserDto>;
   findById(id: string): Promise<UserDto>;
   findAllByIds(ids: string[]): Promise<UserDto[]>;
   findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]>;

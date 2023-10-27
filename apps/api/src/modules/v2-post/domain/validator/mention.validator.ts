@@ -33,7 +33,7 @@ export class MentionValidator implements IMentionValidator {
     }
     const invalidUsers = [];
     for (const user of users) {
-      if (!groups.some((group) => user.groups.includes(group.id))) {
+      if (!groups.some((group) => user?.groups.includes(group.id))) {
         invalidUsers.push(user.id);
       }
     }

@@ -32,6 +32,18 @@ export class UserService implements IUserService {
     }
   }
 
+  public async findProfileAndPermissionById(id: string): Promise<UserDto> {
+    try {
+      const [username] = await this._getUsernamesFromCacheByUserIds([id]);
+      const user = await this._getUserFromCacheByUserName(username);
+      user.permissions = await this._getPermissionFromCacheByUserId(user.id);
+      return user;
+    } catch (e) {
+      this._logger.error(e);
+      return null;
+    }
+  }
+
   public async findById(id: string): Promise<UserDto> {
     try {
       const [username] = await this._getUsernamesFromCacheByUserIds([id]);
@@ -72,29 +84,36 @@ export class UserService implements IUserService {
 
   // TODO: now user squad is keeping this api for protect domain logic, will be refactor it later
   private async _getUsersFromApiByIds(ids: string[], authUserId: string): Promise<UserDto[]> {
-    if (!ids.length) {
+    try {
+      if (!ids.length) {
+        return [];
+      }
+
+      const params = { ids };
+      if (authUserId) {
+        params['actorId'] = authUserId;
+      }
+      const response = await this._userHttpService.get(USER_ENDPOINT.INTERNAL.GET_USERS, {
+        params,
+      });
+      if (response.status !== HttpStatus.OK) {
+        return [];
+      }
+
+      const userApis = response.data['data'];
+
+      return userApis.map((user) => {
+        const showingBadgesWithCommunity: ShowingBadgeDto[] = user?.showingBadges?.map((badge) => ({
+          ...badge,
+          community: badge.community || null,
+        }));
+
+        return new UserDto({ ...user, showingBadges: showingBadgesWithCommunity });
+      });
+    } catch (e) {
+      this._logger.error(e);
       return [];
     }
-
-    const params = { ids };
-    if (authUserId) {
-      params['actorId'] = authUserId;
-    }
-    const response = await this._userHttpService.get(USER_ENDPOINT.INTERNAL.GET_USERS, { params });
-    if (response.status !== HttpStatus.OK) {
-      return [];
-    }
-
-    const userApis = response.data['data'];
-
-    return userApis.map((user) => {
-      const showingBadgesWithCommunity: ShowingBadgeDto[] = user?.showingBadges?.map((badge) => ({
-        ...badge,
-        community: badge.community || null,
-      }));
-
-      return new UserDto({ ...user, showingBadges: showingBadgesWithCommunity });
-    });
   }
 
   private async _getUserFromCacheByUserName(username: string): Promise<UserDto> {
@@ -134,6 +153,11 @@ export class UserService implements IUserService {
     const users: UserDto[] = [];
     joinedGroup.forEach((result, index) => {
       const [err, value] = result;
+
+      if (err) {
+        this._logger.error(err);
+        return;
+      }
 
       const userProfile = usersProfile[index];
       const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];

@@ -14,23 +14,24 @@ export class UserAdapter implements IUserAdapter {
   public async getUserById(userId: string, options?: FindUserOption): Promise<UserDto> {
     const user = await this._userService.findById(userId);
 
-    if (!user) {
-      throw new UserNotFoundException();
-    }
-
     const excluded = this._getExcludedFields(options);
 
     return new UserDto(user, excluded);
   }
 
+  public async getUserByIdWithPermission(userId: string): Promise<UserDto> {
+    const user = await this._userService.findProfileAndPermissionById(userId);
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return new UserDto(user);
+  }
+
   public async getUsersByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
     const uniqueIds = uniq(userIds);
     const users = await this._userService.findAllByIds(uniqueIds);
-
-    if (!users || users.length !== uniqueIds.length) {
-      const notFoundIds = uniqueIds.filter((id) => !users.find((user) => user.id === id));
-      throw new UserNotFoundException(`User not found with ids: ${notFoundIds.join(', ')}`);
-    }
 
     const excluded = this._getExcludedFields(options);
 
@@ -39,9 +40,7 @@ export class UserAdapter implements IUserAdapter {
 
   private _getExcludedFields(options?: FindUserOption): string[] {
     const excluded = [];
-    if (!options?.withPermission) {
-      excluded.push('permissions');
-    }
+
     if (!options?.withGroupJoined) {
       excluded.push('groups');
     }
