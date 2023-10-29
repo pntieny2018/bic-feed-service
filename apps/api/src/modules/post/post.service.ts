@@ -749,41 +749,6 @@ export class PostService {
     return posts;
   }
 
-  public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
-    if (groupIds.length === 0) {
-      return [];
-    }
-    try {
-      const posts = await this.postModel.findAll({
-        attributes: ['id'],
-        subQuery: false,
-        where: {
-          status: PostStatus.PUBLISHED,
-          isHidden: false,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            required: true,
-            attributes: ['groupId'],
-            where: {
-              groupId: groupIds,
-              isArchived: false,
-            },
-          },
-        ],
-        limit: take,
-        order: [['createdAt', 'DESC']],
-      });
-      return posts.map((p) => p.id);
-    } catch (ex) {
-      this.logger.error(ex, ex?.stack);
-      this.sentryService.captureException(ex);
-      return [];
-    }
-  }
-
   public async markRead(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
@@ -1022,60 +987,6 @@ export class PostService {
         },
       }
     );
-  }
-
-  public getPostPrivacyByCompareGroupPrivacy(
-    groupPrivacy: GroupPrivacy,
-    postPrivacy: PostPrivacy
-  ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
-      return PostPrivacy.OPEN;
-    }
-    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
-      return PostPrivacy.CLOSED;
-    }
-    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
-      return PostPrivacy.PRIVATE;
-    }
-    return PostPrivacy.SECRET;
-  }
-
-  public async filterPostIdsNeedToUpdatePrivacy(
-    postIds: string[],
-    newPrivacy: PostPrivacy
-  ): Promise<{ [key: string]: string[] }> {
-    const relationInfo = await this.postGroupModel.findAll({
-      where: { postId: { [Op.in]: postIds } },
-    });
-    const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
-    const groupInfos = await this.groupAppService.findAllByIds(groupIds);
-    const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
-      returnValue[elementValue.id] = elementValue.privacy;
-      return returnValue;
-    }, {});
-    const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
-      if (!returnValue[elementValue.postId]) {
-        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId],
-          newPrivacy
-        );
-      } else {
-        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId],
-          returnValue[elementValue.postId]
-        );
-      }
-      return returnValue;
-    }, {});
-    const updatedPostIds = {};
-    Object.entries(postPrivacyMapping).forEach(([postId, postPrivacy]) => {
-      if (!updatedPostIds[postPrivacy.toString()]) {
-        updatedPostIds[postPrivacy.toString()] = [postId];
-      } else {
-        updatedPostIds[postPrivacy.toString()].push(postId);
-      }
-    });
-    return updatedPostIds;
   }
 
   public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
