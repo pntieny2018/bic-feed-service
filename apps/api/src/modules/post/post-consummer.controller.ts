@@ -3,12 +3,10 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { KAFKA_TOPIC } from '../../common/constants';
-import { PostPrivacy } from '../../database/models/post.model';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 
-import { UpdatePrivacyDto } from './dto/requests/update-privacy.dto';
 import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
 import { VideoProcessingEndDto } from './dto/responses/process-video-response.dto';
 import { PostService } from './post.service';
@@ -22,18 +20,6 @@ export class PostConsumerController {
     private _postService: PostService,
     private _eventEmitter: InternalEventEmitterService
   ) {}
-
-  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)
-  public async privacyUpdate(@Payload('value') updatePrivacyDto: UpdatePrivacyDto): Promise<void> {
-    const postIds = await this._postService.findIdsByGroupId([updatePrivacyDto.groupId], null);
-    const postIdsNeedToUpdatePrivacy = await this._postService.filterPostIdsNeedToUpdatePrivacy(
-      postIds,
-      updatePrivacyDto.privacy
-    );
-    for (const [privacy, postIds] of Object.entries(postIdsNeedToUpdatePrivacy)) {
-      await this._postService.updateData(postIds, { privacy: PostPrivacy[privacy] });
-    }
-  }
 
   @EventPattern(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED)
   public async createVideoPostDone(
