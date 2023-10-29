@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
@@ -546,5 +546,57 @@ export class ContentRepository implements IContentRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async findContentIdsByGroupId(groupId: string, take = 1000): Promise<string[]> {
+    const contents = await this._libContentRepo.findMany({
+      select: ['id'],
+      where: {
+        status: CONTENT_STATUS.PUBLISHED,
+        isHidden: false,
+      },
+      include: [
+        {
+          model: this._libPostGroupRepo.getModel(),
+          as: 'groups',
+          required: true,
+          select: ['groupId'],
+          where: {
+            groupId,
+            isArchived: false,
+          },
+        },
+      ],
+      limit: take,
+      order: [['createdAt', ORDER.DESC]],
+    });
+
+    return contents.map((postGroup) => postGroup.id);
+  }
+
+  public async findContentGroupsByContentIds(
+    contentIds: string[]
+  ): Promise<{ contentId: string; groupId: string }[]> {
+    const contentGroups = await this._libPostGroupRepo.findMany({
+      where: {
+        postId: contentIds,
+      },
+    });
+
+    return contentGroups.map(({ groupId, postId }) => ({
+      contentId: postId,
+      groupId,
+    }));
+  }
+
+  public async updateContentPrivacy(contentIds: string[], privacy: PRIVACY): Promise<void> {
+    await this._libContentRepo.update(
+      { privacy },
+      {
+        where: {
+          id: contentIds,
+        },
+      }
+    );
   }
 }
