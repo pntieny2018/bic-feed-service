@@ -22,6 +22,7 @@ import { UserModuleV2 } from '../v2-user/user.module';
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
+import { PostConsumer } from './driving-apdater/consumer/post.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -34,6 +35,7 @@ import { SeriesController } from './driving-apdater/controller/series.controller
 import { TagController } from './driving-apdater/controller/tag.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
+import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consummer/publish-remove-post-to-newsfeed.consummer';
 import {
   adapterProvider,
   categoryProvider,
@@ -50,7 +52,6 @@ import {
   sharedProvider,
   tagProvider,
 } from './provider';
-import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consummer/publish-remove-post-to-newsfeed.consummer';
 import { workerProvider } from './provider/worker.provider';
 
 @Module({
@@ -87,6 +88,7 @@ import { workerProvider } from './provider/worker.provider';
     SeriesController,
     QuizController,
     PublishOrRemovePostToNewsfeedConsumer,
+    PostConsumer,
   ],
   providers: [
     ...adapterProvider,

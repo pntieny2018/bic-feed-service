@@ -15,6 +15,7 @@ import {
   SeenContentHandler,
   SaveContentHandler,
   UpdateContentSettingHandler,
+  ProcessGroupPrivacyUpdatedHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
@@ -131,17 +132,18 @@ export const postProvider = [
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
 
   MarkReadImportantContentHandler,
-  UpdateContentSettingHandler,
+  PinContentHandler,
+  ProcessGroupPrivacyUpdatedHandler,
+  ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
   SeenContentHandler,
-  PinContentHandler,
   SaveContentHandler,
+  UpdateContentSettingHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
