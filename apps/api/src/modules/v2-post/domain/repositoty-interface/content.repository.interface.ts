@@ -68,7 +68,7 @@ export interface IContentRepository {
   deletePostSeries(seriesId: string, postId: string): Promise<void>;
   reorderPostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
 
-  findContentIdsByGroupId(groupId: string, take: number): Promise<string[]>;
+  findContentIdsByGroupId(groupId: string, offsetPaginate: PaginationProps): Promise<string[]>;
   findContentGroupsByContentIds(
     contentIds: string[]
   ): Promise<{ contentId: string; groupId: string }[]>;

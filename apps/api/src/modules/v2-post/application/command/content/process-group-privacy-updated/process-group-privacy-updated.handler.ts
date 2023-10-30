@@ -25,14 +25,28 @@ export class ProcessGroupPrivacyUpdatedHandler
   public async execute(command: ProcessGroupPrivacyUpdatedCommand): Promise<void> {
     const { groupId, privacy } = command.payload;
 
-    const contentIdsInGroup = await this._contentRepository.findContentIdsByGroupId(groupId, 1000);
-    const updateContentPrivacyMapping = await this._getUpdateContentPrivacyMapping(
-      contentIdsInGroup,
-      privacy
-    );
+    const limit = 1000;
+    let offset = 0;
 
-    for (const [privacy, contentIds] of Object.entries(updateContentPrivacyMapping)) {
-      await this._contentRepository.updateContentPrivacy(contentIds, privacy);
+    while (true) {
+      const contentIdsInGroup = await this._contentRepository.findContentIdsByGroupId(groupId, {
+        offset,
+        limit,
+      });
+      const updateContentPrivacyMapping = await this._getUpdateContentPrivacyMapping(
+        contentIdsInGroup,
+        privacy
+      );
+
+      for (const [privacy, contentIds] of Object.entries(updateContentPrivacyMapping)) {
+        await this._contentRepository.updateContentPrivacy(contentIds, privacy);
+      }
+
+      if (contentIdsInGroup.length < limit) {
+        break;
+      } else {
+        offset += limit;
+      }
     }
   }
 

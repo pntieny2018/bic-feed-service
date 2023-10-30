@@ -559,7 +559,11 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  public async findContentIdsByGroupId(groupId: string, take = 1000): Promise<string[]> {
+  public async findContentIdsByGroupId(
+    groupId: string,
+    offsetPaginate: PaginationProps
+  ): Promise<string[]> {
+    const { limit, offset } = offsetPaginate;
     const contents = await this._libContentRepo.findMany({
       select: ['id', 'createdAt'],
       where: {
@@ -578,7 +582,8 @@ export class ContentRepository implements IContentRepository {
           },
         },
       ],
-      limit: take,
+      limit,
+      offset,
       order: [['createdAt', ORDER.DESC]],
     });
 
