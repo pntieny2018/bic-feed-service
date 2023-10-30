@@ -1,6 +1,7 @@
+import { IKafkaConsumeMessage } from '@libs/infra/kafka';
+import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { EventPattern, Payload } from '@nestjs/microservices';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ProcessGroupPrivacyUpdatedCommand } from '../../application/command/content';
@@ -12,15 +13,13 @@ export class PostConsumer {
 
   public constructor(private readonly _commandBus: CommandBus) {}
 
-  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)
+  @EventPatternAndLog(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)
   public async groupPrivacyUpdated(
-    @Payload('topic') topic: string,
-    @Payload('value') payload: GroupPrivacyUpdatedMessagePayload
+    message: IKafkaConsumeMessage<GroupPrivacyUpdatedMessagePayload>
   ): Promise<void> {
-    this._logger.debug(`Received message: ${JSON.stringify(payload)} from topic: ${topic}`);
-
+    const { value } = message;
     await this._commandBus.execute<ProcessGroupPrivacyUpdatedCommand, void>(
-      new ProcessGroupPrivacyUpdatedCommand(payload)
+      new ProcessGroupPrivacyUpdatedCommand(value)
     );
   }
 }
