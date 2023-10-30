@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { ArticleDto, CommentDto, PostDto } from '../../../v2-post/application/dto';
+import { ArticleDto, CommentBaseDto, PostDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
@@ -93,7 +93,7 @@ export class CommentNotificationApplicationService
 
   private _createContentCommentActivityObject(
     content: PostDto | ArticleDto,
-    comment: CommentDto
+    comment: CommentBaseDto
   ): CommentActivityObjectDto {
     return new CommentActivityObjectDto({
       id: content.id,
@@ -112,8 +112,8 @@ export class CommentNotificationApplicationService
 
   private _createReplyCommentActivityObject(
     content: PostDto | ArticleDto,
-    comment: CommentDto,
-    parentComment: CommentDto
+    comment: CommentBaseDto,
+    parentComment: CommentBaseDto
   ): CommentActivityObjectDto {
     return new CommentActivityObjectDto({
       id: content.id,
@@ -133,7 +133,7 @@ export class CommentNotificationApplicationService
     });
   }
 
-  private _createCommentObject(comment: CommentDto): CommentObjectDto {
+  private _createCommentObject(comment: CommentBaseDto): CommentObjectDto {
     return new CommentObjectDto({
       id: comment.id,
       actor: comment.actor,
@@ -161,7 +161,7 @@ export class CommentNotificationApplicationService
   }
 
   private _createPrevCommentActivities(
-    comments: CommentDto[],
+    comments: CommentBaseDto[],
     content: PostDto | ArticleDto
   ): NotificationActivityDto<CommentActivityObjectDto>[] {
     return comments.map((comment) => {

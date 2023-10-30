@@ -9,24 +9,24 @@ import { ReactionEntity } from '../reaction';
 
 export type CommentAttributes = {
   id: string;
+  postId: string;
+  parentId?: string;
+  content?: string;
   media?: {
     videos?: VideoEntity[];
     files?: FileEntity[];
     images?: ImageEntity[];
   };
-  postId: string;
-  parentId?: string;
-  edited?: boolean;
-  content?: string;
+  mentions?: string[];
   giphyId?: string;
   isHidden?: boolean;
+  edited?: boolean;
   createdBy: string;
   updatedBy: string;
   createdAt?: Date;
   updatedAt?: Date;
   totalReply?: number;
   childs?: CursorPaginationResult<CommentEntity>;
-  mentions?: string[];
   ownerReactions?: ReactionEntity[];
 };
 

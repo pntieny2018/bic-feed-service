@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
+
 import {
   KAFKA_TOPIC,
   ReactionHasBeenCreated,
@@ -33,33 +34,39 @@ import {
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import { IReactionBinding, REACTION_BINDING_TOKEN } from '../../binding';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../binding/binding-media';
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
-import { FileDto, ImageDto, ReactionDto, VideoDto } from '../../dto';
+import { ReactionDto } from '../../dto';
 
 @EventsHandler(ReactionNotifyEvent)
 export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyEvent> {
   public constructor(
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userAppService: IUserApplicationService,
-    @Inject(COMMENT_REPOSITORY_TOKEN)
-    private readonly _commentRepository: ICommentRepository,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
+    @Inject(REACTION_BINDING_TOKEN)
+    private readonly _reactionBinding: IReactionBinding,
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
+
+    @Inject(COMMENT_REPOSITORY_TOKEN)
+    private readonly _commentRepo: ICommentRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepo: IContentRepository,
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepo: ICommentReactionRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepo: IPostReactionRepository,
-    @Inject(REACTION_BINDING_TOKEN)
-    private readonly _reactionBinding: IReactionBinding,
+
     @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    private readonly _kafkaAdapter: IKafkaAdapter,
+
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService
   ) {}
 
   public async handle(event: ReactionNotifyEvent): Promise<void> {
@@ -95,7 +102,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     action: 'create' | 'delete',
     actor: UserDto
   ): Promise<void> {
-    const commentEntity = await this._commentRepository.findOne(
+    const commentEntity = await this._commentRepo.findOne(
       { id: commentId },
       {
         includeOwnerReactions: actor.id,
@@ -105,7 +112,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
       return;
     }
 
-    const contentEntity = (await this._contentRepository.findOne({
+    const contentEntity = (await this._contentRepo.findOne({
       where: { id: commentEntity.get('postId') },
       include: {
         mustIncludeGroup: true,
@@ -149,17 +156,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
       content: contentEntity instanceof PostEntity ? contentEntity.get('content') : null,
       mentions: mentionUsers,
       setting: contentEntity.get('setting'),
-      media: {
-        files: (contentEntity.get('media')?.files || []).map(
-          (file) => new FileDto(file.toObject())
-        ),
-        images: (contentEntity.get('media')?.images || []).map(
-          (image) => new ImageDto(image.toObject())
-        ),
-        videos: (contentEntity.get('media')?.videos || []).map(
-          (video) => new VideoDto(video.toObject())
-        ),
-      },
+      media: this._mediaBinding.binding(contentEntity.get('media')),
       comment: await this._getCommentPayload(reactionEntity, commentEntity),
       createdAt: contentEntity.get('createdAt'),
       updatedAt: contentEntity.get('updatedAt'),
@@ -211,7 +208,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
 
     let parentCommentEntity: CommentEntity = null;
     if (commentEntity.isChildComment()) {
-      parentCommentEntity = await this._commentRepository.findOne({
+      parentCommentEntity = await this._commentRepo.findOne({
         id: commentEntity.get('parentId'),
       });
       const userIdsOfParent = [parentCommentEntity.get('createdBy')];
@@ -223,13 +220,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
         id: parentCommentEntity.get('id'),
         actor: usersOfParent.find((user) => user.id === parentCommentEntity.get('createdBy')),
         content: parentCommentEntity.get('content'),
-        media: {
-          files: [],
-          images: parentCommentEntity
-            .get('media')
-            .images.map((image) => new ImageDto(image.toObject())),
-          videos: [],
-        },
+        media: this._mediaBinding.binding(parentCommentEntity.get('media')),
         mentions: this._contentBinding.mapMentionWithUserInfo(
           usersOfParent.filter((user) => parentCommentEntity.get('mentions').includes(user.id))
         ),
@@ -238,13 +229,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
           actor: commentActor,
           reaction,
           content: commentEntity.get('content'),
-          media: {
-            files: [],
-            images: commentEntity
-              .get('media')
-              .images.map((image) => new ImageDto(image.toObject())),
-            videos: [],
-          },
+          media: this._mediaBinding.binding(commentEntity.get('media')),
           mentions: mentionUsersComment,
           reactionsCount: reactionsCount.get(commentEntity.get('id')) || [],
           reactionsOfActor: commentEntity.get('ownerReactions').map(
@@ -267,11 +252,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
         actor: commentActor,
         reaction,
         content: commentEntity.get('content'),
-        media: {
-          files: [],
-          images: commentEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
-          videos: [],
-        },
+        media: this._mediaBinding.binding(commentEntity.get('media')),
         mentions: mentionUsersComment,
         reactionsCount: reactionsCount.get(commentEntity.get('id')) || [],
         reactionsOfActor: commentEntity.get('ownerReactions').map(
@@ -296,7 +277,7 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
     action: 'create' | 'delete',
     actor: UserDto
   ): Promise<void> {
-    const contentEntity = (await this._contentRepository.findOne({
+    const contentEntity = (await this._contentRepo.findOne({
       where: { id: contentId },
       include: {
         mustIncludeGroup: true,
@@ -347,20 +328,8 @@ export class ReactionNotifyEventHandler implements IEventHandler<ReactionNotifyE
       content: contentEntity instanceof PostEntity ? contentEntity.get('content') : null,
       media:
         contentEntity instanceof PostEntity
-          ? {
-              files: contentEntity.get('media').files?.map((file) => new FileDto(file.toObject())),
-              images: contentEntity
-                .get('media')
-                .images?.map((image) => new ImageDto(image.toObject())),
-              videos: contentEntity
-                .get('media')
-                .videos?.map((video) => new VideoDto(video.toObject())),
-            }
-          : {
-              files: [],
-              images: [],
-              videos: [],
-            },
+          ? this._mediaBinding.binding(contentEntity.get('media'))
+          : { files: [], images: [], videos: [] },
       mentions: mentionUsers,
       setting: contentEntity.get('setting'),
       reaction,
