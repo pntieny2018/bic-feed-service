@@ -6,7 +6,7 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
 import { ObjectHelper } from '../../../../../common/helpers';
 import { ReactionNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
-import { ReactionNotifyEvent } from '../../../domain/event';
+import { ReactionEvent } from '../../../domain/event';
 import { ContentEntity } from '../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
@@ -30,8 +30,8 @@ import {
 } from '../../binding';
 import { ArticleDto, PostDto } from '../../dto';
 
-@EventsHandler(ReactionNotifyEvent)
-export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEvent> {
+@EventsHandler(ReactionEvent)
+export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
@@ -49,7 +49,7 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEve
     private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: ReactionNotifyEvent): Promise<void> {
+  public async handle(event: ReactionEvent): Promise<void> {
     const { reactionEntity, action } = event;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));

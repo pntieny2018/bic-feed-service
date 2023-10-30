@@ -17,6 +17,13 @@ export type GetPaginationCommentReactionProps = {
   order: ORDER;
   limit: number;
 };
+
+export type UpdateCountCommentReactionProps = {
+  reactionName: string;
+  commentId: string;
+  action: 'create' | 'delete';
+};
+
 export interface ICommentReactionRepository {
   findOne(input: FindOneCommentReactionProps): Promise<ReactionEntity>;
 
@@ -28,6 +35,8 @@ export interface ICommentReactionRepository {
   ): Promise<PaginationResult<ReactionEntity>>;
 
   getAndCountReactionByComments(commentIds: string[]): Promise<Map<string, ReactionsCount>>;
+
+  updateCountReaction(props: UpdateCountCommentReactionProps): Promise<void>;
 }
 
 export const COMMENT_REACTION_REPOSITORY_TOKEN = 'COMMENT_REACTION_REPOSITORY_TOKEN';

@@ -14,6 +14,7 @@ import {
   FindOnePostReactionProps,
   GetPaginationPostReactionProps,
   IPostReactionRepository,
+  UpdateCountContentReactionProps,
 } from '../../domain/repositoty-interface';
 import { PostReactionMapper } from '../mapper/post-reaction.mapper';
 
@@ -95,5 +96,14 @@ export class PostReactionRepository implements IPostReactionRepository {
       rows: result,
       total: count,
     };
+  }
+
+  public async updateCountReaction(props: UpdateCountContentReactionProps): Promise<void> {
+    const { reactionName, contentId, action } = props;
+    if (action === 'create') {
+      await this._libReactionContentDetailsRepo.increaseReactionCount(reactionName, contentId);
+    } else {
+      await this._libReactionContentDetailsRepo.decreaseReactionCount(reactionName, contentId);
+    }
   }
 }

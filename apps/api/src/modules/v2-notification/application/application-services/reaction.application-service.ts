@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { v4 } from 'uuid';
+import { v4, NIL } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import {
@@ -34,7 +34,7 @@ export class ReactionNotificationApplicationService
     const activity = this._createReactionActivityObject(content, reaction, comment, parentComment);
     const target = !comment
       ? TargetType.POST
-      : comment.parentId
+      : comment.parentId !== NIL
       ? TargetType.CHILD_COMMENT
       : TargetType.COMMENT;
 

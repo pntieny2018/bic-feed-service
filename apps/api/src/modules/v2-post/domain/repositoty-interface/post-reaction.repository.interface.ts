@@ -18,6 +18,13 @@ export type GetPaginationPostReactionProps = {
   order: ORDER;
   limit: number;
 };
+
+export type UpdateCountContentReactionProps = {
+  reactionName: string;
+  contentId: string;
+  action: 'create' | 'delete';
+};
+
 export interface IPostReactionRepository {
   findOne(input: FindOnePostReactionProps): Promise<ReactionEntity>;
 
@@ -26,6 +33,7 @@ export interface IPostReactionRepository {
   delete(id: string): Promise<void>;
   getPagination(input: GetPaginationPostReactionProps): Promise<PaginationResult<ReactionEntity>>;
   getAndCountReactionByContents(contentIds: string[]): Promise<Map<string, ReactionsCount>>;
+  updateCountReaction(props: UpdateCountContentReactionProps): Promise<void>;
 }
 
 export const POST_REACTION_REPOSITORY_TOKEN = 'POST_REACTION_REPOSITORY_TOKEN';

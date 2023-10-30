@@ -14,6 +14,7 @@ import {
   FindOneCommentReactionProps,
   GetPaginationCommentReactionProps,
   ICommentReactionRepository,
+  UpdateCountCommentReactionProps,
 } from '../../domain/repositoty-interface';
 import { CommentReactionMapper } from '../mapper/comment-reaction.mapper';
 
@@ -99,5 +100,14 @@ export class CommentReactionRepository implements ICommentReactionRepository {
       rows: result,
       total: count,
     };
+  }
+
+  public async updateCountReaction(props: UpdateCountCommentReactionProps): Promise<void> {
+    const { reactionName, commentId, action } = props;
+    if (action === 'create') {
+      await this._libReactionCommentDetailsRepo.increaseReactionCount(reactionName, commentId);
+    } else {
+      await this._libReactionCommentDetailsRepo.decreaseReactionCount(reactionName, commentId);
+    }
   }
 }
