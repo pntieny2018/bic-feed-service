@@ -9,11 +9,6 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
-import {
-  CONTENT_REPOSITORY_TOKEN,
-  IContentRepository,
-} from '../../../../domain/repositoty-interface';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -28,8 +23,6 @@ import { UpdatePostCommand } from './update-post.command';
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, PostDto> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
     @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
     private readonly _reactionDomainService: IReactionDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
@@ -41,9 +34,7 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter,
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(command: UpdatePostCommand): Promise<PostDto> {
@@ -65,15 +56,10 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
       withGroupJoined: true,
     });
 
-    const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([
-      postEntity.getId(),
-    ]);
-
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
       actor: command.payload.authUser,
       authUser: command.payload.authUser,
-      reactionsCount: reactionsCount.get(postEntity.getId()),
       mentionUsers,
     });
 

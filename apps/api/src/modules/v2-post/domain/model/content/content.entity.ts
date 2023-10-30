@@ -5,7 +5,6 @@ import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { PostType } from '../../../data-type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
@@ -168,7 +167,7 @@ export class ContentEntity<
     return this._props.aggregation.totalUsersSeen === 0;
   }
 
-  public getType(): PostType | CONTENT_TYPE {
+  public getType(): CONTENT_TYPE {
     return this._props.type;
   }
 

@@ -29,7 +29,7 @@ import {
   UpdateCommentCommandPayload,
 } from '../../application/command/comment';
 import {
-  CommentDto,
+  CommentBaseDto,
   FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
 } from '../../application/dto';
@@ -103,7 +103,7 @@ export class CommentController {
 
   @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({
-    type: CommentDto,
+    type: CommentBaseDto,
     description: 'Create comment successfully',
   })
   @ResponseMessages({
@@ -114,8 +114,8 @@ export class CommentController {
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentRequestDto
-  ): Promise<CommentDto> {
-    const data = await this._commandBus.execute<CreateCommentCommand, CommentDto>(
+  ): Promise<CommentBaseDto> {
+    const data = await this._commandBus.execute<CreateCommentCommand, CommentBaseDto>(
       new CreateCommentCommand({
         ...createCommentDto,
         contentId: createCommentDto.postId,
@@ -134,7 +134,7 @@ export class CommentController {
 
   @ApiOperation({ summary: 'Reply comment' })
   @ApiOkResponse({
-    type: CommentDto,
+    type: CommentBaseDto,
     description: 'Create reply comment successfully',
   })
   @ResponseMessages({
@@ -146,8 +146,8 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) replyCommentRequestDto: ReplyCommentRequestDto
-  ): Promise<CommentDto> {
-    const data = await this._commandBus.execute<ReplyCommentCommand, CommentDto>(
+  ): Promise<CommentBaseDto> {
+    const data = await this._commandBus.execute<ReplyCommentCommand, CommentBaseDto>(
       new ReplyCommentCommand({
         ...replyCommentRequestDto,
         contentId: replyCommentRequestDto.postId,

@@ -6,13 +6,13 @@ import {
 } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { difference } from 'lodash';
+import { Op } from 'sequelize';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
 import { QuizParticipantNotFoundException } from '../../domain/exception';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { IQuizParticipantRepository } from '../../domain/repositoty-interface';
 import { QuizParticipantMapper } from '../mapper/quiz-participant.mapper';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class QuizParticipantRepository implements IQuizParticipantRepository {
@@ -162,6 +162,21 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     return this._quizParticipantMapper.toDomain(quizParticipant);
   }
 
+  public async findQuizParticipantDoingByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity> {
+    const quizParticipant = await this._libQuizParticipantRepo.first({
+      where: {
+        postId: contentId,
+        createdBy: userId,
+        finishedAt: null,
+      },
+    });
+
+    return this._quizParticipantMapper.toDomain(quizParticipant);
+  }
+
   public async getQuizParticipantHighestScoreGroupByUserId(
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]> {
@@ -209,52 +224,5 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
       rows: rows.map((row) => this._quizParticipantMapper.toDomain(row)),
       meta,
     };
-  }
-
-  public async getMapQuizParticipantHighestScoreGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantEntity>> {
-    const rows = await this._libQuizParticipantRepo.findMany({
-      where: {
-        postId: contentIds,
-        createdBy: userId,
-        isHighest: true,
-        finishedAt: {
-          [Op.ne]: null,
-        },
-      },
-    });
-    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
-    rows.forEach((row) => {
-      const contentId = row.postId;
-      if (!contentIdsMapHighestScore.has(contentId)) {
-        contentIdsMapHighestScore.set(contentId, this._quizParticipantMapper.toDomain(row));
-      }
-    });
-    return contentIdsMapHighestScore;
-  }
-
-  public async getMapQuizParticipantsDoingGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantEntity>> {
-    if (!contentIds.length) {
-      return new Map<string, QuizParticipantEntity>();
-    }
-
-    const rows = await this._libQuizParticipantRepo.findMany({
-      where: {
-        postId: contentIds,
-        createdBy: userId,
-        finishedAt: null,
-      },
-    });
-    const contentIdsMapHighestScore = new Map<string, QuizParticipantEntity>();
-    rows.forEach((row) => {
-      const contentId = row.postId;
-      contentIdsMapHighestScore.set(contentId, this._quizParticipantMapper.toDomain(row));
-    });
-    return contentIdsMapHighestScore;
   }
 }
