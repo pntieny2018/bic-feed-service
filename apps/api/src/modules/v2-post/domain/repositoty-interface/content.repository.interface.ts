@@ -17,6 +17,7 @@ export type GetReportContentIdsProps = {
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
+  updateContentPrivacy(contentIds: string[], privacy: string): Promise<void>;
   delete(id: string): Promise<void>;
 
   findContentById(
@@ -71,7 +72,6 @@ export interface IContentRepository {
   findContentGroupsByContentIds(
     contentIds: string[]
   ): Promise<{ contentId: string; groupId: string }[]>;
-  updateContentPrivacy(contentIds: string[], privacy: string): Promise<void>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
