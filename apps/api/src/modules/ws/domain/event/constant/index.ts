@@ -1,1 +1,1 @@
-export * from './events.constant';
+export * from './event.constant';
