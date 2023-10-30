@@ -1,10 +1,11 @@
 import { CONTENT_TARGET } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 
 export type CreateReactionValidatorPayload = {
   reactionName: string;
   target: CONTENT_TARGET;
   targetId: string;
-  createdBy: string;
+  authUser: UserDto;
 };
 
 export interface IReactionValidator {

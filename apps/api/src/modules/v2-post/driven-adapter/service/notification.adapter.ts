@@ -10,7 +10,9 @@ import {
   IReactionNotificationApplicationService,
   PostNotificationPayload,
   REACTION_NOTIFICATION_APPLICATION_SERVICE,
-  ReactionNotificationPayload,
+  ReactionCommentNotificationPayload,
+  ReactionContentNotificationPayload,
+  ReactionReplyCommentNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
   SeriesDeletedNotificationPayload,
@@ -74,8 +76,22 @@ export class NotificationAdapter implements INotificationAdapter {
     return this._contentNotiApp.sendSeriesChangedItemNotification(payload);
   }
 
-  public async sendReactionNotification(payload: ReactionNotificationPayload): Promise<void> {
-    return this._reactionNotiApp.sendReactionNotification(payload);
+  public async sendReactionContentNotification(
+    payload: ReactionContentNotificationPayload
+  ): Promise<void> {
+    return this._reactionNotiApp.sendReactionContentNotification(payload);
+  }
+
+  public async sendReactionCommentNotification(
+    payload: ReactionCommentNotificationPayload
+  ): Promise<void> {
+    return this._reactionNotiApp.sendReactionCommentNotification(payload);
+  }
+
+  public async sendReactionReplyCommentNotification(
+    payload: ReactionReplyCommentNotificationPayload
+  ): Promise<void> {
+    return this._reactionNotiApp.sendReactionReplyCommentNotification(payload);
   }
 
   public async sendCommentNotification(payload: CommentNotificationPayload): Promise<void> {

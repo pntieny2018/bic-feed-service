@@ -1,5 +1,6 @@
 import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { ReactionsCount } from 'apps/api/src/common/types';
 
 import { ReactionEntity } from '../../model/reaction';
@@ -7,7 +8,7 @@ import { ReactionEntity } from '../../model/reaction';
 export type ReactionCreateProps = {
   reactionName: string;
   targetId: string;
-  createdBy: string;
+  authUser: UserDto;
   target: CONTENT_TARGET;
 };
 

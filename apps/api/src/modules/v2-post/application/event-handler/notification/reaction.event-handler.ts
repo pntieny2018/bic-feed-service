@@ -2,11 +2,12 @@ import { CONTENT_TARGET } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { NIL } from 'uuid';
 
 import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
 import { ObjectHelper } from '../../../../../common/helpers';
-import { ReactionNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
 import { ReactionEvent } from '../../../domain/event';
+import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
@@ -22,13 +23,13 @@ import {
 } from '../../../domain/service-adapter-interface';
 import {
   COMMENT_BINDING_TOKEN,
-  ICommentBinding,
   CONTENT_BINDING_TOKEN,
+  ICommentBinding,
   IContentBinding,
-  REACTION_BINDING_TOKEN,
   IReactionBinding,
+  REACTION_BINDING_TOKEN,
 } from '../../binding';
-import { ArticleDto, PostDto } from '../../dto';
+import { ArticleDto, CommentExtendedDto, PostDto } from '../../dto';
 
 @EventsHandler(ReactionEvent)
 export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
@@ -56,56 +57,31 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
 
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
 
-    const payload: ReactionNotificationPayload = {
+    const payload: any = {
       event: action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved,
       actor: ObjectHelper.omit(['groups', 'permissions'], reactionActor) as UserDto,
       reaction: reactionDto,
-      content: null,
-      comment: null,
     };
 
     if (reactionEntity.get('target') === CONTENT_TARGET.COMMENT) {
-      const commentEntity = await this._commentRepository.findOne(
-        { id: reactionEntity.get('targetId') },
-        {
-          includeOwnerReactions: reactionActor.id,
-        }
+      const commentDto = await this._getCommentDto(
+        reactionEntity.get('targetId'),
+        reactionActor.id
       );
+      payload.comment = commentDto;
 
-      if (!commentEntity) {
-        return;
-      }
+      payload.content = await this._getContentDto(commentDto.postId, reactionActor.id);
 
-      const commentActor = await this._userAdapter.getUserById(commentEntity.get('createdBy'));
-
-      payload.comment = (
-        await this._commentBinding.commentsBinding([commentEntity], commentActor)
-      )[0];
-
-      payload.content = await this._getContentDto(commentEntity.get('postId'), reactionActor.id);
-
-      if (commentEntity.isChildComment()) {
-        const parentCommentEntity = await this._commentRepository.findOne({
-          id: commentEntity.get('parentId'),
-        });
-
-        if (!parentCommentEntity) {
-          return;
-        }
-
-        const parentCommentActor = await this._userAdapter.getUserById(
-          parentCommentEntity.get('createdBy')
-        );
-
-        payload.parentComment = (
-          await this._commentBinding.commentsBinding([parentCommentEntity], parentCommentActor)
-        )[0];
+      if (commentDto.parentId !== NIL) {
+        payload.parentComment = await this._getCommentDto(commentDto.parentId);
+        return this._notificationAdapter.sendReactionReplyCommentNotification(payload);
+      } else {
+        return this._notificationAdapter.sendReactionCommentNotification(payload);
       }
     } else {
       payload.content = await this._getContentDto(reactionEntity.get('targetId'), reactionActor.id);
+      return this._notificationAdapter.sendReactionContentNotification(payload);
     }
-
-    await this._notificationAdapter.sendReactionNotification(payload);
   }
 
   private async _getContentDto(
@@ -121,8 +97,8 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
         },
       },
     });
-    if (!contentEntity || contentEntity.isHidden()) {
-      return;
+    if (!contentEntity || contentEntity.isHidden() || !contentEntity.isPublished()) {
+      throw new ContentNotFoundException();
     }
 
     const contentActor = await this._userAdapter.getUserById(
@@ -132,5 +108,25 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
 
     const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);
     return contentDto[0] as PostDto | ArticleDto;
+  }
+
+  private async _getCommentDto(
+    commentId: string,
+    reactionActorId?: string
+  ): Promise<CommentExtendedDto> {
+    const commentEntity = await this._commentRepository.findOne(
+      { id: commentId },
+      reactionActorId && {
+        includeOwnerReactions: reactionActorId,
+      }
+    );
+
+    if (!commentEntity) {
+      throw new CommentNotFoundException();
+    }
+
+    const commentActor = await this._userAdapter.getUserById(commentEntity.get('createdBy'));
+
+    return (await this._commentBinding.commentsBinding([commentEntity], commentActor))[0];
   }
 }

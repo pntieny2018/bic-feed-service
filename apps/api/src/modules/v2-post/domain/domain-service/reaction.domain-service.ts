@@ -47,7 +47,7 @@ export class ReactionDomainService implements IReactionDomainService {
       case CONTENT_TARGET.ARTICLE:
         return this._postReactionRepository.getPagination(props);
       default:
-        break;
+        throw new ReactionTargetNotExistingException();
     }
   }
 
@@ -58,11 +58,11 @@ export class ReactionDomainService implements IReactionDomainService {
   }
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
-    const { reactionName, createdBy, target, targetId } = input;
+    const { reactionName, authUser, target, targetId } = input;
     const reactionEntity = this._reactionFactory.create({
       target,
       reactionName,
-      createdBy,
+      createdBy: authUser.id,
       targetId: targetId,
     });
 
