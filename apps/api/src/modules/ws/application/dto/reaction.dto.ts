@@ -1,19 +1,18 @@
+import { CONTENT_TYPE } from '@beincom/constants';
+
 import { ActorObjectDto } from './user.dto';
 
 export class ReactionObjectDto {
   public id: string;
-  public createdAt: Date;
   public commentId?: string;
-  public contentId?: string;
+  public parentId?: string;
+  public contentId: string;
+  public contentType: CONTENT_TYPE;
+  public createdAt: Date;
   public actor: ActorObjectDto;
   public reactionName: string;
-  public reactionsCount?: ReactionsCountObjectDto;
 
   public constructor(data: ReactionObjectDto) {
-    Object.assign(this, data);
+    Object.assign(this, data, { actor: new ActorObjectDto(data.actor) });
   }
-}
-
-export class ReactionsCountObjectDto {
-  [index: string]: Record<string, number>;
 }
