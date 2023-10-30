@@ -1,7 +1,11 @@
 import { UserDto } from '@libs/service/user';
 
-import { ArticleDto, PostDto, ReactionDto } from '../../../../v2-post/application/dto';
-import { CommentResponseDto } from '../../../../v2-post/driving-apdater/dto/response';
+import {
+  ArticleDto,
+  CommentExtendedDto,
+  PostDto,
+  ReactionDto,
+} from '../../../../v2-post/application/dto';
 
 export const REACTION_NOTIFICATION_APPLICATION_SERVICE =
   'REACTION_NOTIFICATION_APPLICATION_SERVICE';
@@ -11,8 +15,8 @@ export type ReactionNotificationPayload = {
   actor: UserDto;
   content: PostDto | ArticleDto;
   reaction: ReactionDto;
-  comment?: CommentResponseDto;
-  parentComment?: CommentResponseDto;
+  comment?: CommentExtendedDto;
+  parentComment?: CommentExtendedDto;
 };
 
 export interface IReactionNotificationApplicationService {

@@ -1,6 +1,5 @@
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
-import { NotiReactionEventHandler } from '../application/event-handler/notification';
 import { FindReactionsHandler } from '../application/query/reaction';
 import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { ReactionDomainService } from '../domain/domain-service/reaction.domain-service';
@@ -29,9 +28,6 @@ export const reactionProvider = [
 
   /* Application Query */
   FindReactionsHandler,
-
-  /* Application Event handler */
-  NotiReactionEventHandler,
 
   /* Domain Service */
   {
