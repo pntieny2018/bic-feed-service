@@ -74,7 +74,7 @@ export class NotificationAdapter implements INotificationAdapter {
     return this._contentNotiApp.sendSeriesChangedItemNotification(payload);
   }
 
-  public sendReactionNotification(payload: ReactionNotificationPayload): Promise<void> {
+  public async sendReactionNotification(payload: ReactionNotificationPayload): Promise<void> {
     return this._reactionNotiApp.sendReactionNotification(payload);
   }
 

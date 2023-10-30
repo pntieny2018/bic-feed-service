@@ -40,12 +40,14 @@ export class ReactionDomainService implements IReactionDomainService {
   ) {}
 
   public async getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>> {
-    if (props.target === CONTENT_TARGET.COMMENT) {
-      return this._commentReactionRepository.getPagination(props);
-    }
-
-    if (props.target === CONTENT_TARGET.POST || props.target === CONTENT_TARGET.ARTICLE) {
-      return this._postReactionRepository.getPagination(props);
+    switch (props.target) {
+      case CONTENT_TARGET.COMMENT:
+        return this._commentReactionRepository.getPagination(props);
+      case CONTENT_TARGET.POST:
+      case CONTENT_TARGET.ARTICLE:
+        return this._postReactionRepository.getPagination(props);
+      default:
+        throw new ReactionTargetNotExistingException();
     }
   }
 

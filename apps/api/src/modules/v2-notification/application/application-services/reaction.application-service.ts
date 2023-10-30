@@ -1,11 +1,13 @@
-import { ObjectHelper } from '@libs/common/helpers';
-import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { ArticleDto, PostDto, ReactionDto } from '../../../v2-post/application/dto';
-import { CommentResponseDto } from '../../../v2-post/driving-apdater/dto/response';
+import {
+  ArticleDto,
+  CommentExtendedDto,
+  PostDto,
+  ReactionDto,
+} from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
@@ -60,12 +62,12 @@ export class ReactionNotificationApplicationService
   private _createReactionActivityObject(
     content: PostDto | ArticleDto,
     reaction: ReactionDto,
-    comment?: CommentResponseDto,
-    parentComment?: CommentResponseDto
+    comment?: CommentExtendedDto,
+    parentComment?: CommentExtendedDto
   ): ContentActivityObjectDto | CommentActivityObjectDto {
     const contentActivity = new ContentActivityObjectDto({
       id: content.id,
-      actor: ObjectHelper.omit(['groups', 'permissions'], content.actor) as UserDto,
+      actor: content.actor,
       audience: content.audience,
       title: (content as ArticleDto)?.title || null,
       content: (content as PostDto)?.content || null,
@@ -96,11 +98,11 @@ export class ReactionNotificationApplicationService
   private _createCommentReactionActivityObject(
     reaction: ReactionDto,
     contentActivity: ContentActivityObjectDto,
-    comment: CommentResponseDto
+    comment: CommentExtendedDto
   ): CommentActivityObjectDto {
     const commentActivity = new CommentObjectDto({
       id: comment.id,
-      actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
+      actor: comment.actor,
       content: comment.content,
       media: comment.media,
       reaction,
@@ -122,17 +124,17 @@ export class ReactionNotificationApplicationService
   private _createReplyCommentReactionActivityObject(
     reaction: ReactionDto,
     contentActivity: ContentActivityObjectDto,
-    comment: CommentResponseDto,
-    parentComment: CommentResponseDto
+    comment: CommentExtendedDto,
+    parentComment: CommentExtendedDto
   ): CommentActivityObjectDto {
     const commentActivity = new CommentObjectDto({
       id: parentComment.id,
-      actor: ObjectHelper.omit(['groups', 'permissions'], parentComment.actor) as UserDto,
+      actor: parentComment.actor,
       content: parentComment.content,
       media: parentComment.media,
       child: new CommentObjectDto({
         id: comment.id,
-        actor: ObjectHelper.omit(['groups', 'permissions'], comment.actor) as UserDto,
+        actor: comment.actor,
         content: comment.content,
         media: comment.media,
         reaction,
