@@ -3,62 +3,43 @@ import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/commo
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
+import { PostType } from '../../../../database/models/post.model';
 
-import { ArticleDto, ImageDto, MediaDto, PostDto, PostSettingDto, QuizDto } from '.';
+import {
+  ArticleInSeriesDto,
+  ImageDto,
+  MediaDto,
+  PostInSeriesDto,
+  PostSettingDto,
+  QuizDto,
+} from '.';
 
 export class SeriesDto {
   public id: string;
-
-  public title: string;
-
-  public summary: string;
-
-  public audience: {
-    groups: GroupDto[];
-  };
-
-  public communities?: GroupDto[];
-
-  public items?: Partial<PostDto | ArticleDto>[];
-
-  public setting: PostSettingDto;
-
-  public isHidden?: boolean;
-
-  public quiz?: QuizDto;
-
-  public coverMedia?: ImageDto;
-
-  public actor: UserDto;
-
-  public status: PostStatus | CONTENT_STATUS;
-
-  public privacy: PostPrivacy | PRIVACY;
-
-  public type: PostType | CONTENT_TYPE;
-
-  public markedReadPost?: boolean;
-
-  public isSaved?: boolean;
-
-  public commentsCount: number;
-
-  public totalUsersSeen: number;
   public isReported: boolean;
-
-  public createdAt: Date;
-
-  public updatedAt?: Date;
-
-  public publishedAt?: Date;
-
+  public isHidden?: boolean;
   public createdBy: string;
-
+  public actor: UserDto;
+  public privacy: PRIVACY;
+  public status: CONTENT_STATUS;
+  public type: CONTENT_TYPE;
+  public setting: PostSettingDto;
+  public createdAt: Date;
+  public updatedAt?: Date;
+  public markedReadPost?: boolean;
+  public isSaved?: boolean;
+  public publishedAt?: Date;
+  public audience: { groups: GroupDto[] };
+  public communities?: GroupDto[];
+  public commentsCount: number;
+  public totalUsersSeen: number;
+  public title: string;
+  public summary: string;
+  public items?: (PostInSeriesDto | ArticleInSeriesDto)[];
+  public quiz?: QuizDto;
+  public coverMedia?: ImageDto;
   public highlight?: string;
-
   public titleHighlight?: string;
-
   public summaryHighlight?: string;
 
   public constructor(data: Partial<SeriesDto>) {
@@ -129,4 +110,10 @@ export class SearchContentsBySeriesDto extends PaginatedResponse<ContentsInSerie
   public constructor(list: ContentsInSeriesDto[], meta?: IPaginatedInfo) {
     super(list, meta);
   }
+}
+
+export class SeriesInContentDto {
+  public id: string;
+  public title: string;
+  public createdBy?: string;
 }

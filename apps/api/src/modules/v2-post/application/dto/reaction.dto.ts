@@ -62,3 +62,10 @@ export class FindReactionsDto implements IQueryResult {
     Object.assign(this, data);
   }
 }
+
+export class OwnerReactionDto {
+  public id: string;
+  public reactionName: string;
+}
+
+export type ReactionCount = Record<string, number>;
