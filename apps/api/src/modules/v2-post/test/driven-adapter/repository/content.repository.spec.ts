@@ -826,10 +826,13 @@ describe('ContentRepository', () => {
 
       _libContentRepo.findMany.mockResolvedValue(mockPostRecords as PostModel[]);
 
-      const contentIds = await _contentRepo.findContentIdsByGroupId(mockGroupId);
+      const contentIds = await _contentRepo.findContentIdsByGroupId(mockGroupId, {
+        offset: 0,
+        limit: 1000,
+      });
 
       expect(_libContentRepo.findMany).toBeCalledWith({
-        select: ['id'],
+        select: ['id', 'createdAt'],
         where: { status: CONTENT_STATUS.PUBLISHED, isHidden: false },
         include: [
           {
@@ -841,6 +844,7 @@ describe('ContentRepository', () => {
           },
         ],
         limit: 1000,
+        offset: 0,
         order: [['createdAt', ORDER.DESC]],
       });
       expect(contentIds).toEqual(mockContentIds);
