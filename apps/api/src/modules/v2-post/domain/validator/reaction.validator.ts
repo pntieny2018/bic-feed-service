@@ -16,7 +16,12 @@ import {
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 
-import { CreateReactionValidatorPayload, IReactionValidator } from './interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  CreateReactionValidatorPayload,
+  IContentValidator,
+  IReactionValidator,
+} from './interface';
 
 @Injectable()
 export class ReactionValidator implements IReactionValidator {
@@ -28,24 +33,31 @@ export class ReactionValidator implements IReactionValidator {
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService
+    private readonly _contentDomainService: IContentDomainService,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator
   ) {}
 
   public async validateCreateReaction(props: CreateReactionValidatorPayload): Promise<void> {
     let reactionEntity: ReactionEntity;
 
     if (props.target === CONTENT_TARGET.COMMENT) {
-      await this._commentDomainService.getVisibleComment(props.targetId);
+      const comment = await this._commentDomainService.getVisibleComment(props.targetId);
+      const content = await this._contentDomainService.getVisibleContent(comment.get('postId'));
+      await this._contentValidator.checkCanReadContent(content, props.authUser);
+
       reactionEntity = await this._commentReactionRepository.findOne({
         commentId: props.targetId,
-        createdBy: props.createdBy,
+        createdBy: props.authUser.id,
         reactionName: props.reactionName,
       });
     } else {
-      await this._contentDomainService.getVisibleContent(props.targetId);
+      const content = await this._contentDomainService.getVisibleContent(props.targetId);
+      await this._contentValidator.checkCanReadContent(content, props.authUser);
+
       reactionEntity = await this._postReactionRepository.findOne({
         postId: props.targetId,
-        createdBy: props.createdBy,
+        createdBy: props.authUser.id,
         reactionName: props.reactionName,
       });
     }

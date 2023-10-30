@@ -12,7 +12,7 @@ export class ReactionObjectDto {
 
   public constructor(data: ReactionObjectDto) {
     this.id = data.id;
-    this.actor = new ActorObjectDto(data.actor);
+    data.actor && (this.actor = new ActorObjectDto(data.actor));
     this.reactionName = data.reactionName;
     this.createdAt = data.createdAt;
   }

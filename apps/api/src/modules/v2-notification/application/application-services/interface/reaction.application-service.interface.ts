@@ -10,15 +10,34 @@ import {
 export const REACTION_NOTIFICATION_APPLICATION_SERVICE =
   'REACTION_NOTIFICATION_APPLICATION_SERVICE';
 
-export type ReactionNotificationPayload = {
+export type ReactionContentNotificationPayload = {
   event: string;
   actor: UserDto;
   content: PostDto | ArticleDto;
   reaction: ReactionDto;
-  comment?: CommentExtendedDto;
-  parentComment?: CommentExtendedDto;
+};
+
+export type ReactionCommentNotificationPayload = {
+  event: string;
+  actor: UserDto;
+  content: PostDto | ArticleDto;
+  reaction: ReactionDto;
+  comment: CommentExtendedDto;
+};
+
+export type ReactionReplyCommentNotificationPayload = {
+  event: string;
+  actor: UserDto;
+  content: PostDto | ArticleDto;
+  reaction: ReactionDto;
+  comment: CommentExtendedDto;
+  parentComment: CommentExtendedDto;
 };
 
 export interface IReactionNotificationApplicationService {
-  sendReactionNotification(payload: ReactionNotificationPayload): Promise<void>;
+  sendReactionContentNotification(payload: ReactionContentNotificationPayload): Promise<void>;
+  sendReactionCommentNotification(payload: ReactionCommentNotificationPayload): Promise<void>;
+  sendReactionReplyCommentNotification(
+    payload: ReactionReplyCommentNotificationPayload
+  ): Promise<void>;
 }

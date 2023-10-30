@@ -33,15 +33,13 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
       newCreateReactionDto
     );
 
-    const actor = await this._userAdapter.getUserById(newReactionEntity.get('createdBy'));
-
     return new ReactionDto({
       id: newReactionEntity.get('id'),
       target: newReactionEntity.get('target'),
       targetId: newReactionEntity.get('targetId'),
       reactionName: newReactionEntity.get('reactionName'),
       createdAt: newReactionEntity.get('createdAt'),
-      actor,
+      actor: command.payload.authUser,
     });
   }
 

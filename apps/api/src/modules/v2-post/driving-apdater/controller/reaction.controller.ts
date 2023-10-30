@@ -68,7 +68,7 @@ export class ReactionController {
   ): Promise<ReactionDto> {
     const { target, targetId, reactionName } = createReactionDto;
     return this._commandBus.execute(
-      new CreateReactionCommand({ target, targetId, reactionName, createdBy: user.id })
+      new CreateReactionCommand({ target, targetId, reactionName, authUser: user })
     );
   }
 
