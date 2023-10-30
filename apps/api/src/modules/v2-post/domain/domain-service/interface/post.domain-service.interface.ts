@@ -1,7 +1,7 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { LinkPreviewDto, MediaDto } from '../../../application/dto';
+import { LinkPreviewDto, MediaRequestDto } from '../../../application/dto';
 import { PostEntity } from '../../model/content';
 
 export type PostPayload = {
@@ -10,7 +10,7 @@ export type PostPayload = {
   seriesIds?: string[];
   tagIds?: string[];
   groupIds?: string[];
-  media?: MediaDto;
+  media?: MediaRequestDto;
   mentionUserIds?: string[];
   linkPreview?: LinkPreviewDto;
 };

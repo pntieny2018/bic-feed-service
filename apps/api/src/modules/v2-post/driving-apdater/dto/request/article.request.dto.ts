@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { MediaDto, MediaItemDto } from '../../../application/dto';
+import { MediaRequestDto, MediaItemDto } from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
 
@@ -51,7 +51,7 @@ export class UpdateArticleRequestDto {
   @Type(() => AudienceRequestDto)
   public audience?: AudienceRequestDto;
 
-  @ApiPropertyOptional({ type: MediaDto })
+  @ApiPropertyOptional({ type: MediaRequestDto })
   @IsOptional()
   @Expose({ name: 'cover_media' })
   public coverMedia?: MediaItemDto;

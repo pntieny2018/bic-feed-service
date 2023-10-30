@@ -8,7 +8,7 @@ import { IQuizBinding } from './quiz.interface';
 
 @Injectable()
 export class QuizBinding implements IQuizBinding {
-  public async binding(entity: QuizEntity): Promise<QuizDto> {
+  public binding(entity: QuizEntity): QuizDto {
     return new QuizDto({
       id: entity.get('id'),
       contentId: entity.get('contentId'),

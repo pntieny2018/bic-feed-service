@@ -38,9 +38,9 @@ export class SearchContentsBySeriesHandler
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    private readonly _contentRepo: IContentRepository,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService
+    private readonly _contentDomain: IContentDomainService
   ) {}
 
   public async execute(query: SearchContentsBySeriesQuery): Promise<SearchContentsBySeriesDto> {
@@ -52,7 +52,7 @@ export class SearchContentsBySeriesHandler
       after,
     } = query.payload;
 
-    const seriesEntity = (await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
+    const seriesEntity = (await this._contentRepo.findContentByIdInActiveGroup(seriesId, {
       mustIncludeGroup: true,
       shouldIncludeItems: true,
     })) as SeriesEntity;
@@ -74,7 +74,7 @@ export class SearchContentsBySeriesHandler
       });
     }
 
-    const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(authUser.id, {
+    const excludeByIds = await this._contentDomain.getReportedContentIdsByUser(authUser.id, {
       postTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
       groupIds,
     });

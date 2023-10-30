@@ -1,6 +1,6 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import {
@@ -24,14 +24,13 @@ import {
   COMMENT_BINDING_TOKEN,
   ICommentBinding,
 } from '../../../binding/binding-comment/comment.interface';
-import { CommentDto } from '../../../dto';
+import { CommentBaseDto } from '../../../dto';
 
 import { CreateCommentCommand } from './create-comment.command';
 
 @CommandHandler(CreateCommentCommand)
-export class CreateCommentHandler implements ICommandHandler<CreateCommentCommand, CommentDto> {
+export class CreateCommentHandler implements ICommandHandler<CreateCommentCommand, CommentBaseDto> {
   public constructor(
-    private readonly _event: EventBus,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
     @Inject(MENTION_VALIDATOR_TOKEN)
@@ -39,17 +38,17 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _commentDomainService: ICommentDomainService,
+    private readonly _commentDomain: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    protected readonly _contentDomainService: IContentDomainService,
+    protected readonly _contentDomain: IContentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService
   ) {}
 
-  public async execute(command: CreateCommentCommand): Promise<CommentDto> {
+  public async execute(command: CreateCommentCommand): Promise<CommentBaseDto> {
     const { actor, contentId, mentions } = command.payload;
 
-    const content = await this._contentDomainService.getVisibleContent(contentId);
+    const content = await this._contentDomain.getVisibleContent(contentId);
 
     await this._contentValidator.checkCanReadContent(content, actor);
 
@@ -65,7 +64,7 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
       await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
 
-    const commentEntity = await this._commentDomainService.create({
+    const commentEntity = await this._commentDomain.create({
       ...command.payload,
       userId: actor.id,
       parentId: NIL,

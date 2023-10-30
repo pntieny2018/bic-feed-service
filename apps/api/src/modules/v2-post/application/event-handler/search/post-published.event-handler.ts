@@ -7,13 +7,16 @@ import { SearchService } from '../../../../search/search.service';
 import { PostPublishedEvent } from '../../../domain/event';
 import { PostEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { FileDto, ImageDto, TagDto, VideoDto } from '../../dto';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../binding/binding-media';
+import { TagDto } from '../../dto';
 
 @EventsHandlerAndLog(PostPublishedEvent)
 export class SearchPostPublishedEventHandler implements IEventHandler<PostPublishedEvent> {
   public constructor(
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    private readonly _contentRepo: IContentRepository,
     // TODO: Change to Adapter
     private readonly _postSearchService: SearchService
   ) {}
@@ -25,7 +28,7 @@ export class SearchPostPublishedEventHandler implements IEventHandler<PostPublis
       return;
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
+    const contentWithArchivedGroups = (await this._contentRepo.findContentByIdInArchivedGroup(
       postEntity.getId(),
       { shouldIncludeSeries: true }
     )) as PostEntity;
@@ -40,15 +43,7 @@ export class SearchPostPublishedEventHandler implements IEventHandler<PostPublis
         id: postEntity.getId(),
         type: postEntity.getType(),
         content: postEntity.get('content'),
-        media: {
-          files: (postEntity.get('media').files || []).map((file) => new FileDto(file.toObject())),
-          images: (postEntity.get('media').images || []).map(
-            (image) => new ImageDto(image.toObject())
-          ),
-          videos: (postEntity.get('media').videos || []).map(
-            (video) => new VideoDto(video.toObject())
-          ),
-        },
+        media: this._mediaBinding.binding(postEntity.get('media')),
         isHidden: postEntity.isHidden(),
         mentionUserIds: postEntity.get('mentionUserIds'),
         groupIds: postEntity.get('groupIds'),
