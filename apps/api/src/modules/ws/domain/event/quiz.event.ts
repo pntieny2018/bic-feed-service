@@ -3,15 +3,15 @@ import { QUIZ_PROCESS_STATUS } from '@beincom/constants';
 import { TargetType, VerbActivity } from '../../data-type';
 
 import { QUIZ_HAS_BEEN_PROCESSED } from './constant';
-import { IEvent, IEventPayload } from './interface';
+import { IEvent, IEventData } from './interface';
 
-export type QuizProcessedExtraData = {
+type QuizProcessedExtraData = {
   quizId: string;
-  description: string;
+  description?: string;
   genStatus: QUIZ_PROCESS_STATUS;
 };
 
-export class QuizProcessedEventPayload implements IEventPayload {
+export class QuizProcessedEventData implements IEventData {
   public target = TargetType.QUIZ;
   public event = QUIZ_HAS_BEEN_PROCESSED;
   public verb = VerbActivity.GENERATE_QUIZ;
@@ -26,7 +26,7 @@ export class QuizProcessedEventPayload implements IEventPayload {
 
 export class QuizProcessedEvent implements IEvent {
   public rooms: string[];
-  public data: QuizProcessedEventPayload;
+  public data: QuizProcessedEventData;
 
   public constructor(payload: QuizProcessedEvent) {
     Object.assign(this, payload);

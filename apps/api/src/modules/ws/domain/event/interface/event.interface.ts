@@ -1,6 +1,6 @@
 import { TargetType, VerbActivity } from '../../../data-type';
 
-export interface IEventPayload {
+export interface IEventData {
   event: string;
   verb: VerbActivity;
   target: TargetType;
@@ -9,5 +9,5 @@ export interface IEventPayload {
 
 export interface IEvent {
   rooms: string[];
-  data: IEventPayload;
+  data: IEventData;
 }
