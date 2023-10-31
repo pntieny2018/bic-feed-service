@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { UserDto } from '@libs/service/user';
+import { Body, Controller, Delete, Get, Post, Query, Version } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser } from '../../../../common/decorators';
-import { UserDto } from '../../../v2-user/application';
 import { CreateReactionCommand, DeleteReactionCommand } from '../../application/command/reaction';
 import { ReactionDto, ReactionListDto } from '../../application/dto';
 import { FindReactionsQuery } from '../../application/query/reaction';
@@ -17,22 +17,20 @@ import { GetReactionPipe } from '../pipes/get-reaction.pipe';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
-@Controller({
-  path: 'reactions',
-  version: VERSIONS_SUPPORTED,
-})
+@Controller()
 export class ReactionController {
   public constructor(
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
 
-  @Get('/')
   @ApiOperation({ summary: 'Get reaction.' })
   @ApiOkResponse({
     description: 'Get reaction successfully',
     type: ReactionListDto,
   })
+  @Version(ROUTES.REACTION.GET_LIST.VERSIONS)
+  @Get(ROUTES.REACTION.GET_LIST.PATH)
   public async get(
     @AuthUser() authUser: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionRequestDto
@@ -62,14 +60,15 @@ export class ReactionController {
     type: ReactionDto,
     description: 'Create reaction successfully',
   })
-  @Post('/')
+  @Version(ROUTES.REACTION.CREATE.VERSIONS)
+  @Post(ROUTES.REACTION.CREATE.PATH)
   public async create(
     @AuthUser() user: UserDto,
     @Body() createReactionDto: CreateReactionRequestDto
   ): Promise<ReactionDto> {
     const { target, targetId, reactionName } = createReactionDto;
     return this._commandBus.execute(
-      new CreateReactionCommand({ target, targetId, reactionName, createdBy: user.id })
+      new CreateReactionCommand({ target, targetId, reactionName, authUser: user })
     );
   }
 
@@ -78,7 +77,8 @@ export class ReactionController {
     description: 'Delete reaction successfully',
     type: Boolean,
   })
-  @Delete('/')
+  @Version(ROUTES.REACTION.DELETE.VERSIONS)
+  @Delete(ROUTES.REACTION.DELETE.PATH)
   public async delete(
     @AuthUser() user: UserDto,
     @Body() deleteReactionDto: DeleteReactionRequestDto

@@ -1,8 +1,9 @@
+import { CONTENT_TARGET } from '@beincom/constants';
+
 import { ReactionEntity, ReactionAttributes } from '../../model/reaction';
-import { REACTION_TARGET } from '../../../data-type';
 
 export type CreateReactionProps = Readonly<{
-  target: REACTION_TARGET;
+  target: CONTENT_TARGET;
   targetId: string;
   reactionName: string;
   createdBy: string;

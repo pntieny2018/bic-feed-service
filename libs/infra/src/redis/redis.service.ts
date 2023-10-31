@@ -38,16 +38,18 @@ export class RedisService {
     try {
       return StringHelper.isJson(result) ? (JSON.parse(result) as T) : (result as unknown as T);
     } catch (e) {
+      this._logger.error(e?.message);
       return null;
     }
   }
 
   public async hgetall<T>(key: string): Promise<T> {
-    const result = await this._store.hgetall(key);
-    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'HGETALL', key, result })}`);
     try {
+      const result = await this._store.hgetall(key);
+      this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'HGETALL', key, result })}`);
       return result as unknown as T;
     } catch (e) {
+      this._logger.error(e?.message);
       return null;
     }
   }

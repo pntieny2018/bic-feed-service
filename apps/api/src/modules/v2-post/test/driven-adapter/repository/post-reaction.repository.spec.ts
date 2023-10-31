@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test } from '@nestjs/testing';
@@ -6,7 +7,6 @@ import { Sequelize } from 'sequelize-typescript';
 
 import { getDatabaseConfig } from '../../../../../config/database';
 import { PostReactionModel } from '../../../../../database/models/post-reaction.model';
-import { REACTION_TARGET } from '../../../data-type';
 import { REACTION_FACTORY_TOKEN } from '../../../domain/factory/interface/reaction.factory.interface';
 import { ReactionFactory } from '../../../domain/factory/reaction.factory';
 import {
@@ -17,7 +17,7 @@ import { PostReactionRepository } from '../../../driven-adapter/repository/post-
 import { createMockReactionEntity } from '../../mock/reaction.mock';
 
 const transaction = createMock<Transaction>();
-const mockReactionEntity = createMockReactionEntity({ target: REACTION_TARGET.POST });
+const mockReactionEntity = createMockReactionEntity({ target: CONTENT_TARGET.POST });
 
 describe('PostReactionRepository', () => {
   let repo: IPostReactionRepository;
