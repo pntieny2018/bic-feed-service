@@ -25,9 +25,9 @@ export class WebsocketAdapter implements IWebsocketAdapter {
     @Inject(REACTION_EVENT_APPLICATION_SERVICE)
     private readonly _reactionWebsocketApp: IReactionEventApplicationService,
     @Inject(COMMENT_EVENT_APPLICATION_SERVICE)
-    private readonly __commmentWebsocketApp: ICommentEventApplicationService,
+    private readonly _commmentWebsocketApp: ICommentEventApplicationService,
     @Inject(POST_EVENT_APPLICATION_SERVICE)
-    private readonly __postWebsocketApp: IPostEventApplicationService
+    private readonly _postWebsocketApp: IPostEventApplicationService
   ) {}
 
   public async emitQuizProcessedEvent(payload: QuizProcessedEventPayload): Promise<void> {
@@ -47,10 +47,10 @@ export class WebsocketAdapter implements IWebsocketAdapter {
   }
 
   public async emitCommentCreatedEvent(payload: CommentCreatedEventPayload): Promise<void> {
-    return this.__commmentWebsocketApp.emitCommentCreatedEvent(payload);
+    return this._commmentWebsocketApp.emitCommentCreatedEvent(payload);
   }
 
   public async emitPostVideoProcessedEvent(payload: PostVideoProcessedEventPayload): Promise<void> {
-    return this.__postWebsocketApp.emitPostVideoProcessedEvent(payload);
+    return this._postWebsocketApp.emitPostVideoProcessedEvent(payload);
   }
 }
