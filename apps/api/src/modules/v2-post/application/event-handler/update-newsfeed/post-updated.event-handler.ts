@@ -1,14 +1,17 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { IEventHandler } from '@nestjs/cqrs';
-
-import { FeedPublisherService } from '../../../../feed-publisher';
 import { PostUpdatedEvent } from '../../../domain/event';
+import { Inject } from '@nestjs/common';
+import {
+  INewsfeedDomainService,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface/newsfeed.domain-service.interface';
 
 @EventsHandlerAndLog(PostUpdatedEvent)
 export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> {
   public constructor(
-    // TODO: Change to Adapter
-    private readonly _feedPublisherService: FeedPublisherService
+    @Inject(NEWSFEED_DOMAIN_SERVICE_TOKEN)
+    private readonly _newsfeedDomainService: INewsfeedDomainService
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
@@ -17,11 +20,10 @@ export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
     if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;
     }
-
-    await this._feedPublisherService.fanoutOnWrite(
-      postEntity.getId(),
-      postEntity.getGroupIds(),
-      postEntity.getSnapshot().groupIds
-    );
+    await this._newsfeedDomainService.dispatchNewsfeed({
+      contentId: postEntity.getId(),
+      newGroupIds: postEntity.getGroupIds(),
+      oldGroupIds: postEntity.getSnapshot().groupIds,
+    });
   }
 }

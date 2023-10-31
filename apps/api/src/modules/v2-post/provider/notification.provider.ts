@@ -11,7 +11,7 @@ import {
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,
   NotiSeriesSameOwnerChangedEventHandler,
-} from '../application/event-handler/notification';
+} from '../application/event-handler/send-notification';
 
 export const notificationProvider = [
   /** Application Event Handler */

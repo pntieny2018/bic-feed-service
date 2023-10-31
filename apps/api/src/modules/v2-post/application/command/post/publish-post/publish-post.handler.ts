@@ -15,6 +15,10 @@ import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { PostDto } from '../../../dto';
 
 import { PublishPostCommand } from './publish-post.command';
+import {
+  FOLLOW_REPOSITORY_TOKEN,
+  IFollowRepository,
+} from '../../../../domain/repositoty-interface';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
