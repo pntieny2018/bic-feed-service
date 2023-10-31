@@ -1,12 +1,12 @@
+import { CONTENT_TARGET } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { ICommand } from '@nestjs/cqrs';
-
-import { REACTION_TARGET } from '../../../../data-type';
 
 export type CreateReactionCommandPayload = {
   reactionName: string;
-  target: REACTION_TARGET;
+  target: CONTENT_TARGET;
   targetId: string;
-  createdBy: string;
+  authUser: UserDto;
 };
 export class CreateReactionCommand implements ICommand {
   public constructor(public readonly payload: CreateReactionCommandPayload) {}

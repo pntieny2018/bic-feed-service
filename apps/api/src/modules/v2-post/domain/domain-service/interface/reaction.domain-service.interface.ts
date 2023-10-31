@@ -1,21 +1,21 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { ReactionsCount } from 'apps/api/src/common/types';
 
-import { REACTION_TARGET } from '../../../data-type';
 import { ReactionEntity } from '../../model/reaction';
 
 export type ReactionCreateProps = {
   reactionName: string;
   targetId: string;
-  createdBy: string;
-  target: REACTION_TARGET;
+  authUser: UserDto;
+  target: CONTENT_TARGET;
 };
 
 export type GetReactionsProps = {
   reactionName: string;
   targetId: string;
-  target: string;
+  target: CONTENT_TARGET;
   latestId: string;
   order: ORDER;
   limit: number;
@@ -24,7 +24,7 @@ export type GetReactionsProps = {
 export type DeleteReactionProps = {
   userId: string;
   targetId: string;
-  target: REACTION_TARGET;
+  target: CONTENT_TARGET;
   reactionId?: string;
   reactionName: string;
 };

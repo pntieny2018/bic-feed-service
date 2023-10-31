@@ -1,10 +1,10 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
 import { USER_APPLICATION_TOKEN, UserApplicationService } from '../../../../v2-user/application';
 import { FindReactionsHandler } from '../../../application/query/reaction';
-import { REACTION_TARGET } from '../../../data-type';
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
@@ -40,7 +40,7 @@ describe('FindReactionsPaginationHandler', () => {
   describe('execute', () => {
     it('should find reactions success', async () => {
       const targetId = v4();
-      const targetType = REACTION_TARGET.POST;
+      const targetType = CONTENT_TARGET.POST;
       const createdBy = v4();
       const createdBy2 = v4();
       const createdAt = new Date();

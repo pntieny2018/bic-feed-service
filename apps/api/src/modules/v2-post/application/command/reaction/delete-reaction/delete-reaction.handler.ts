@@ -4,7 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface/reaction.domain-service.interface';
+} from '../../../../domain/domain-service/interface';
 
 import { DeleteReactionCommand } from './delete-reaction.command';
 
