@@ -10,6 +10,8 @@ export type CommentCreatedEventPayload = {
   contentId: string;
   contentType: CONTENT_TYPE;
   comment: CommentBaseDto;
+  commentId: string;
+  parentId: string;
 };
 
 export interface ICommentEventApplicationService {

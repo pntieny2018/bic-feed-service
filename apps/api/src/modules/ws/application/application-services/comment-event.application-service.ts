@@ -1,3 +1,4 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
@@ -14,18 +15,28 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
   ) {}
 
   public async emitCommentCreatedEvent(payload: CommentCreatedEventPayload): Promise<void> {
-    const { event: eventName, recipients, contentId, contentType, comment } = payload;
+    const {
+      event: eventName,
+      recipients,
+      contentId,
+      commentId,
+      parentId,
+      contentType,
+      comment,
+    } = payload;
 
     const event = new CommentCreatedEvent({
       rooms: recipients,
       data: new CommentCreatedEventData({
         event: eventName,
-        verb: VerbActivity.POST,
-        target: TargetType.POST,
+        verb: VerbActivity.COMMENT,
+        target: contentType === CONTENT_TYPE.POST ? TargetType.POST : TargetType.ARTICLE,
         extra: {
           contentId,
           contentType,
           comment,
+          commentId,
+          parentId,
         },
       }),
     });

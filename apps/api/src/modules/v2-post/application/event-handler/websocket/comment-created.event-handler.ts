@@ -39,6 +39,8 @@ export class WsCommentCreatedEventHandler implements IEventHandler<CommentCreate
       recipients: content.getGroupIds(),
       contentType: content.getType(),
       contentId: content.getId(),
+      commentId: comment.get('id'),
+      parentId: comment.get('parentId'),
       comment: commentDto,
     });
   }
