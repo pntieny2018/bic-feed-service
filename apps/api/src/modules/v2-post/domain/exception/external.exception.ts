@@ -27,6 +27,6 @@ export class UserNotFoundException extends DomainException {
 
   public constructor(message: string = null, error: any = null) {
     message = message || 'User is not found';
-    super(GroupNotFoundException.code, message, error);
+    super(UserNotFoundException.code, message, error);
   }
 }
