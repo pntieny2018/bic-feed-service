@@ -1,10 +1,6 @@
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
-import {
-  CursorPaginationProps,
-  CursorPaginationResult,
-  PaginationProps,
-} from '@libs/database/postgres/common';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
@@ -561,43 +557,5 @@ export class ContentRepository implements IContentRepository {
       await transaction.rollback();
       throw error;
     }
-  }
-
-  public async getPaginationByGroupId(
-    groupId: string,
-    cursorPagination: CursorPaginationProps
-  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = cursorPagination;
-    const { rows, meta } = await this._libContentRepo.cursorPaginate(
-      {
-        where: {
-          status: CONTENT_STATUS.PUBLISHED,
-          isHidden: false,
-        },
-        include: [
-          {
-            model: this._libPostGroupRepo.getModel(),
-            as: 'groups',
-            required: true,
-            where: {
-              groupId,
-              isArchived: false,
-            },
-          },
-        ],
-      },
-      {
-        limit,
-        before,
-        after,
-        order,
-        column,
-      }
-    );
-
-    return {
-      rows: rows.map((row) => this._contentMapper.toDomain(row)),
-      meta,
-    };
   }
 }
