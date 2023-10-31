@@ -1,6 +1,10 @@
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
-import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginationProps,
+} from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
@@ -559,49 +563,41 @@ export class ContentRepository implements IContentRepository {
     }
   }
 
-  public async findContentIdsByGroupId(
+  public async getPaginationByGroupId(
     groupId: string,
-    offsetPaginate: PaginationProps
-  ): Promise<string[]> {
-    const { limit, offset } = offsetPaginate;
-    const contents = await this._libContentRepo.findMany({
-      select: ['id', 'createdAt'],
-      where: {
-        status: CONTENT_STATUS.PUBLISHED,
-        isHidden: false,
-      },
-      include: [
-        {
-          model: this._libPostGroupRepo.getModel(),
-          as: 'groups',
-          required: true,
-          select: ['groupId'],
-          where: {
-            groupId,
-            isArchived: false,
-          },
+    cursorPagination: CursorPaginationProps
+  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
+    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = cursorPagination;
+    const { rows, meta } = await this._libContentRepo.cursorPaginate(
+      {
+        where: {
+          status: CONTENT_STATUS.PUBLISHED,
+          isHidden: false,
         },
-      ],
-      limit,
-      offset,
-      order: [['createdAt', ORDER.DESC]],
-    });
-
-    return contents.map((postGroup) => postGroup.id);
-  }
-
-  public async findContentGroupsByContentIds(
-    contentIds: string[]
-  ): Promise<{ contentId: string; groupId: string }[]> {
-    const contentGroups = await this._libPostGroupRepo.findMany({
-      where: {
-        postId: contentIds,
+        include: [
+          {
+            model: this._libPostGroupRepo.getModel(),
+            as: 'groups',
+            required: true,
+            where: {
+              groupId,
+              isArchived: false,
+            },
+          },
+        ],
       },
-    });
+      {
+        limit,
+        before,
+        after,
+        order,
+        column,
+      }
+    );
 
-    return contentGroups.map(({ groupId, postId }) => ({
-      contentId: postId,
-      groupId,
-    }));
+    return {
+      rows: rows.map((row) => this._contentMapper.toDomain(row)),
+      meta,
+    };
   }
 }
