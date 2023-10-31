@@ -1,5 +1,6 @@
 import { SearchTotalHits } from '@elastic/elasticsearch/lib/api/types';
 import { StringHelper } from '@libs/common/helpers';
+import { PostAttributes } from '@libs/database/postgres/model';
 import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -201,7 +202,10 @@ export class SearchService {
     }
   }
 
-  public async updateAttributePostsToSearch(posts: IPost[], dataUpdate: unknown): Promise<void> {
+  public async updateAttributePostsToSearch(
+    posts: (IPost | PostAttributes)[],
+    dataUpdate: unknown
+  ): Promise<void> {
     const updateOps = [];
     posts.forEach((post, indexPost) => {
       const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);

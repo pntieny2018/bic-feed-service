@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { TestBed } from '@automock/jest';
-import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER, PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { PostGroupModel } from '@libs/database/postgres/model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
@@ -813,39 +813,6 @@ describe('ContentRepository', () => {
         { zindex: 1 },
         { where: { seriesId: mockSeriesId, postId: mockItemIds[1] } }
       );
-    });
-  });
-
-  describe('getPaginationByGroupId', () => {
-    it('Should get pagination by groupId success', async () => {
-      const mockGroupId = v4();
-
-      _libContentRepo.cursorPaginate.mockResolvedValue({
-        rows: [mockPostRecord] as PostModel[],
-        meta: { hasNextPage: false, hasPreviousPage: false },
-      });
-      _contentMapper.toDomain.mockReturnValue(mockPostEntity);
-
-      const result = await _contentRepo.getPaginationByGroupId(mockGroupId, { limit: 1000 });
-
-      expect(_libContentRepo.cursorPaginate).toBeCalledWith(
-        {
-          where: { status: CONTENT_STATUS.PUBLISHED, isHidden: false },
-          include: [
-            {
-              model: _libPostGroupRepo.getModel(),
-              as: 'groups',
-              required: true,
-              where: { groupId: mockGroupId, isArchived: false },
-            },
-          ],
-        },
-        { limit: 1000, order: ORDER.DESC, column: 'createdAt' }
-      );
-      expect(result).toEqual({
-        rows: [mockPostEntity],
-        meta: { hasNextPage: false, hasPreviousPage: false },
-      });
     });
   });
 });

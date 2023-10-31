@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { IPaginatedInfo } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -39,7 +40,16 @@ export class ProcessGroupPrivacyUpdatedHandler
       return;
     }
 
-    const { rows, meta } = await this._contentRepository.getPaginationByGroupId(groupId, {
+    const { rows, meta } = await this._contentRepository.getPagination({
+      where: {
+        groupIds: [groupId],
+        groupArchived: false,
+        status: CONTENT_STATUS.PUBLISHED,
+        isHidden: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
       limit: 1000,
       after: endCursor,
     });
