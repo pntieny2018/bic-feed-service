@@ -1,5 +1,9 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginationProps,
+} from '@libs/database/postgres/common';
 import {
   FindContentIncludeOptions,
   FindContentProps,
@@ -68,10 +72,10 @@ export interface IContentRepository {
   deletePostSeries(seriesId: string, postId: string): Promise<void>;
   reorderPostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
 
-  findContentIdsByGroupId(groupId: string, offsetPaginate: PaginationProps): Promise<string[]>;
-  findContentGroupsByContentIds(
-    contentIds: string[]
-  ): Promise<{ contentId: string; groupId: string }[]>;
+  getPaginationByGroupId(
+    groupId: string,
+    cursorPagination: CursorPaginationProps
+  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

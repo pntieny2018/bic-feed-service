@@ -1,8 +1,9 @@
-import { PRIVACY } from '@beincom/constants';
+import { IPaginatedInfo } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { uniq } from 'lodash';
+import { isBoolean } from 'class-validator';
 
+import { ArticleEntity, PostEntity, SeriesEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -23,91 +24,62 @@ export class ProcessGroupPrivacyUpdatedHandler
   ) {}
 
   public async execute(command: ProcessGroupPrivacyUpdatedCommand): Promise<void> {
-    const { groupId, privacy } = command.payload;
+    const { groupId } = command.payload;
 
-    const limit = 1000;
-    let offset = 0;
-
-    while (true) {
-      const contentIdsInGroup = await this._contentRepository.findContentIdsByGroupId(groupId, {
-        offset,
-        limit,
-      });
-      const updateContentPrivacyMapping = await this._getUpdateContentPrivacyMapping(
-        contentIdsInGroup,
-        privacy
-      );
-
-      for (const [privacy, contentIds] of Object.entries(updateContentPrivacyMapping)) {
-        await this._contentRepository.updateContentPrivacy(contentIds, privacy);
-      }
-
-      if (contentIdsInGroup.length < limit) {
-        break;
-      } else {
-        offset += limit;
-      }
-    }
+    await this._recursiveUpdateContentPrivacy(groupId);
   }
 
-  private async _getUpdateContentPrivacyMapping(
-    contentIds: string[],
-    privacy: PRIVACY
-  ): Promise<{ [privacy: string]: string[] }> {
-    const contentGroups = await this._contentRepository.findContentGroupsByContentIds(contentIds);
+  private async _recursiveUpdateContentPrivacy(
+    groupId: string,
+    metadata?: IPaginatedInfo
+  ): Promise<void> {
+    const { hasNextPage, endCursor } = metadata || {};
 
-    const groupIds = uniq(contentGroups.map((contentGroup) => contentGroup.groupId));
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    if (isBoolean(hasNextPage) && hasNextPage === false) {
+      return;
+    }
 
-    const groupPrivacyMapping: { [id: string]: PRIVACY } = groups.reduce((mapping, group) => {
-      mapping[group.id] = group.privacy;
-      return mapping;
-    }, {});
+    const { rows, meta } = await this._contentRepository.getPaginationByGroupId(groupId, {
+      limit: 1000,
+      after: endCursor,
+    });
 
-    const postPrivacyMapping: { [id: string]: PRIVACY } = contentGroups.reduce(
-      (mapping, { contentId, groupId }) => {
-        if (!mapping[contentId]) {
-          mapping[contentId] = this._getContentPrivacyByCompareGroupPrivacy(
-            groupPrivacyMapping[groupId],
-            privacy
-          );
+    if (!rows || rows.length === 0) {
+      return;
+    }
+
+    await this._updateContentsPrivacy(rows);
+
+    await this._recursiveUpdateContentPrivacy(groupId, meta);
+  }
+
+  private async _updateContentsPrivacy(
+    contents: (PostEntity | ArticleEntity | SeriesEntity)[]
+  ): Promise<void> {
+    for (const content of contents) {
+      const groupIds = content.getGroupIds();
+      const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+
+      content.setPrivacyFromGroups(groups);
+    }
+
+    const contentsChanged = contents.filter((content) => content.isChanged());
+
+    const contentPrivacyMapping: { [privacy: string]: string[] } = contentsChanged.reduce(
+      (mapping, content) => {
+        const privacy = content.getPrivacy();
+        if (!mapping[privacy]) {
+          mapping[privacy] = [content.getId()];
         } else {
-          mapping[contentId] = this._getContentPrivacyByCompareGroupPrivacy(
-            groupPrivacyMapping[groupId],
-            mapping[contentId]
-          );
+          mapping[privacy].push(content.getId());
         }
-
         return mapping;
       },
       {}
     );
 
-    const updateContentPrivacyMapping: { [privacy: string]: string[] } = {};
-    for (const [contentId, privacy] of Object.entries(postPrivacyMapping)) {
-      if (!updateContentPrivacyMapping[privacy]) {
-        updateContentPrivacyMapping[privacy] = [contentId];
-      } else {
-        updateContentPrivacyMapping[privacy].push(contentId);
-      }
+    for (const [privacy, contentIds] of Object.entries(contentPrivacyMapping)) {
+      await this._contentRepository.updateContentPrivacy(contentIds, privacy);
     }
-
-    return updateContentPrivacyMapping;
-  }
-
-  private _getContentPrivacyByCompareGroupPrivacy(
-    groupPrivacy: PRIVACY,
-    contentPrivacy: PRIVACY
-  ): PRIVACY {
-    if (groupPrivacy === PRIVACY.OPEN || contentPrivacy === PRIVACY.OPEN) {
-      return PRIVACY.OPEN;
-    }
-    if (groupPrivacy === PRIVACY.CLOSED || contentPrivacy === PRIVACY.CLOSED) {
-      return PRIVACY.CLOSED;
-    }
-    if (groupPrivacy === PRIVACY.PRIVATE || contentPrivacy === PRIVACY.PRIVATE) {
-      return PRIVACY.PRIVATE;
-    }
-    return PRIVACY.SECRET;
   }
 }

@@ -816,57 +816,36 @@ describe('ContentRepository', () => {
     });
   });
 
-  describe('findContentIdsByGroupId', () => {
-    it('Should find content ids success', async () => {
+  describe('getPaginationByGroupId', () => {
+    it('Should get pagination by groupId success', async () => {
       const mockGroupId = v4();
-      const mockContentIds = [v4(), v4()];
-      const mockPostRecords = mockContentIds.map((contentId) =>
-        createMockPostRecord({ id: contentId })
+
+      _libContentRepo.cursorPaginate.mockResolvedValue({
+        rows: [mockPostRecord] as PostModel[],
+        meta: { hasNextPage: false, hasPreviousPage: false },
+      });
+      _contentMapper.toDomain.mockReturnValue(mockPostEntity);
+
+      const result = await _contentRepo.getPaginationByGroupId(mockGroupId, { limit: 1000 });
+
+      expect(_libContentRepo.cursorPaginate).toBeCalledWith(
+        {
+          where: { status: CONTENT_STATUS.PUBLISHED, isHidden: false },
+          include: [
+            {
+              model: _libPostGroupRepo.getModel(),
+              as: 'groups',
+              required: true,
+              where: { groupId: mockGroupId, isArchived: false },
+            },
+          ],
+        },
+        { limit: 1000, order: ORDER.DESC, column: 'createdAt' }
       );
-
-      _libContentRepo.findMany.mockResolvedValue(mockPostRecords as PostModel[]);
-
-      const contentIds = await _contentRepo.findContentIdsByGroupId(mockGroupId, {
-        offset: 0,
-        limit: 1000,
+      expect(result).toEqual({
+        rows: [mockPostEntity],
+        meta: { hasNextPage: false, hasPreviousPage: false },
       });
-
-      expect(_libContentRepo.findMany).toBeCalledWith({
-        select: ['id', 'createdAt'],
-        where: { status: CONTENT_STATUS.PUBLISHED, isHidden: false },
-        include: [
-          {
-            model: _libPostGroupRepo.getModel(),
-            as: 'groups',
-            required: true,
-            select: ['groupId'],
-            where: { groupId: mockGroupId, isArchived: false },
-          },
-        ],
-        limit: 1000,
-        offset: 0,
-        order: [['createdAt', ORDER.DESC]],
-      });
-      expect(contentIds).toEqual(mockContentIds);
-    });
-  });
-
-  describe('findContentGroupsByContentIds', () => {
-    it('Should find content group success', async () => {
-      const mockContentIds = [v4(), v4()];
-      const mockContentGroups = mockContentIds.map((contentId) => ({ contentId, groupId: v4() }));
-      const mockPostGroupRecords = mockContentGroups.map(({ contentId, groupId }) =>
-        createMockPostGroupRecord({ postId: contentId, groupId })
-      );
-
-      _libPostGroupRepo.findMany.mockResolvedValue(mockPostGroupRecords as PostGroupModel[]);
-
-      const result = await _contentRepo.findContentGroupsByContentIds(mockContentIds);
-
-      expect(_libPostGroupRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentIds },
-      });
-      expect(result).toEqual(mockContentGroups);
     });
   });
 });
