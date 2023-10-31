@@ -19,10 +19,7 @@ import {
   IMentionValidator,
   MENTION_VALIDATOR_TOKEN,
 } from '../../../../domain/validator/interface';
-import {
-  COMMENT_BINDING_TOKEN,
-  ICommentBinding,
-} from '../../../binding/binding-comment/comment.interface';
+import { COMMENT_BINDING_TOKEN, ICommentBinding } from '../../../binding';
 import { CommentBaseDto } from '../../../dto';
 
 import { ReplyCommentCommand } from './reply-comment.command';

@@ -17,7 +17,7 @@ export type GetPaginationCommentProps = CursorPaginationProps & {
 };
 
 export type GetAroundCommentProps = {
-  authUserId?: string;
+  authUserId: string;
   limit: number;
   order: ORDER;
 };
