@@ -6,6 +6,7 @@ export type QuizProcessedEventPayload = {
   recipients: string[];
   event: string;
   quizId: string;
+  contentId: string;
   description?: string;
   genStatus: QUIZ_PROCESS_STATUS;
 };

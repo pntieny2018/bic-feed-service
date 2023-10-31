@@ -14,7 +14,7 @@ export class QuizEventApplicationService implements IQuizEventApplicationService
   ) {}
 
   public async emitQuizProcessedEvent(payload: QuizProcessedEventPayload): Promise<void> {
-    const { event: eventName, quizId, description, genStatus, recipients } = payload;
+    const { event: eventName, quizId, contentId, description, genStatus, recipients } = payload;
 
     const event = new QuizProcessedEvent({
       rooms: recipients,
@@ -24,6 +24,7 @@ export class QuizEventApplicationService implements IQuizEventApplicationService
         target: TargetType.QUIZ,
         extra: {
           quizId,
+          contentId,
           description,
           genStatus,
         },

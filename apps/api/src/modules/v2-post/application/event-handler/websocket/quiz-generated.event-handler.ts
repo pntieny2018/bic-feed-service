@@ -41,6 +41,7 @@ export class WsQuizGeneratedEventHandler implements IEventHandler<QuizGeneratedE
       event: QuizGeneratedEvent.event,
       recipients: [quizEntity.get('createdBy')],
       quizId: quizEntity.get('id'),
+      contentId: quizEntity.get('contentId'),
       genStatus: quizEntity.get('genStatus'),
     });
   }

@@ -6,6 +6,7 @@ import { IEvent, IEventData } from './interface';
 
 type QuizProcessedExtraData = {
   quizId: string;
+  contentId: string;
   description?: string;
   genStatus: QUIZ_PROCESS_STATUS;
 };
