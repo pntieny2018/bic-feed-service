@@ -10,6 +10,5 @@ export enum TargetType {
   ARTICLE = 'ARTICLE',
   SERIES = 'SERIES',
   COMMENT = 'COMMENT',
-  CHILD_COMMENT = 'CHILD_COMMENT',
   QUIZ = 'QUIZ',
 }

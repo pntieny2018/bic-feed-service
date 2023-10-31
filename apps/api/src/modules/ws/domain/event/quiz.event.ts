@@ -2,7 +2,6 @@ import { QUIZ_PROCESS_STATUS } from '@beincom/constants';
 
 import { TargetType, VerbActivity } from '../../data-type';
 
-import { QUIZ_HAS_BEEN_PROCESSED } from './constant';
 import { IEvent, IEventData } from './interface';
 
 type QuizProcessedExtraData = {
@@ -12,15 +11,13 @@ type QuizProcessedExtraData = {
 };
 
 export class QuizProcessedEventData implements IEventData {
-  public target = TargetType.QUIZ;
-  public event = QUIZ_HAS_BEEN_PROCESSED;
-  public verb = VerbActivity.GENERATE_QUIZ;
+  public verb: VerbActivity;
+  public target: TargetType;
+  public event: string;
   public extra: QuizProcessedExtraData;
 
-  public constructor(extra: QuizProcessedExtraData) {
-    Object.assign(this, {
-      extra: extra,
-    });
+  public constructor(data: QuizProcessedEventData) {
+    Object.assign(this, data);
   }
 }
 

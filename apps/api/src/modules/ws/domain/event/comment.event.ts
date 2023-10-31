@@ -2,22 +2,22 @@ import { TargetType, VerbActivity } from '../../data-type';
 
 import { IEvent, IEventData } from './interface';
 
-export class ReactionEventData implements IEventData {
+export class CommentCreatedEventData implements IEventData {
   public verb: VerbActivity;
   public target: TargetType;
   public event: string;
   public extra: Record<string, unknown>;
 
-  public constructor(payload: ReactionEventData) {
+  public constructor(payload: CommentCreatedEventData) {
     Object.assign(this, payload);
   }
 }
 
-export class ReactionEvent implements IEvent {
+export class CommentCreatedEvent implements IEvent {
   public rooms: string[];
-  public data: ReactionEventData;
+  public data: CommentCreatedEventData;
 
-  public constructor(payload: ReactionEvent) {
+  public constructor(payload: CommentCreatedEvent) {
     Object.assign(this, payload);
   }
 }

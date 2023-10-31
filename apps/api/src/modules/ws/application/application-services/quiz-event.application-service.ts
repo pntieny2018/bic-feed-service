@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
+import { TargetType, VerbActivity } from '../../data-type';
 import { QuizProcessedEvent, QuizProcessedEventData } from '../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 
@@ -13,11 +14,20 @@ export class QuizEventApplicationService implements IQuizEventApplicationService
   ) {}
 
   public async emitQuizProcessedEvent(payload: QuizProcessedEventPayload): Promise<void> {
-    const { quizId, description, genStatus, recipients } = payload;
+    const { event: eventName, quizId, description, genStatus, recipients } = payload;
 
     const event = new QuizProcessedEvent({
       rooms: recipients,
-      data: new QuizProcessedEventData({ quizId, description, genStatus }),
+      data: new QuizProcessedEventData({
+        event: eventName,
+        verb: VerbActivity.GENERATE_QUIZ,
+        target: TargetType.QUIZ,
+        extra: {
+          quizId,
+          description,
+          genStatus,
+        },
+      }),
     });
 
     await this._kafkaAdapter.emit<QuizProcessedEvent>(

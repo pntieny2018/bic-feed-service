@@ -4,6 +4,7 @@ export const QUIZ_EVENT_APPLICATION_SERVICE = 'QUIZ_EVENT_APPLICATION_SERVICE';
 
 export type QuizProcessedEventPayload = {
   recipients: string[];
+  event: string;
   quizId: string;
   description?: string;
   genStatus: QUIZ_PROCESS_STATUS;

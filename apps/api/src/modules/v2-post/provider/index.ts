@@ -12,3 +12,4 @@ export * from './reaction.provider';
 export * from './search.provider';
 export * from './shared.provider';
 export * from './tag.provider';
+export * from './websocket.provider';
