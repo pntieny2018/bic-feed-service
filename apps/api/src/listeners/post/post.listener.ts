@@ -1,6 +1,6 @@
 import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
@@ -14,6 +14,10 @@ import { FeedPublisherService } from '../../modules/feed-publisher';
 import { MediaService } from '../../modules/media';
 import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
+import {
+  IPostEventApplicationService,
+  POST_EVENT_APPLICATION_SERVICE,
+} from '../../modules/ws/application/application-services/interface';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
 
@@ -29,7 +33,9 @@ export class PostListener {
     private readonly _postSearchService: SearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _internalEventEmitter: InternalEventEmitterService
+    private readonly _internalEventEmitter: InternalEventEmitterService,
+    @Inject(POST_EVENT_APPLICATION_SERVICE)
+    private readonly _postWebsocketApp: IPostEventApplicationService
   ) {}
 
   @On(PostVideoSuccessEvent)
@@ -114,6 +120,14 @@ export class PostListener {
             },
           },
         },
+      });
+
+      // TODO: Move to v2-post module event handler
+      await this._postWebsocketApp.emitPostVideoProcessedEvent({
+        event: event.getEventName(),
+        recipients: post.audience.groups.map((group) => group.id),
+        postId: post.id,
+        status: 'successful',
       });
 
       const {
@@ -234,6 +248,14 @@ export class PostListener {
       } else {
         this._logger.debug(`[Event video failed]: Post ${post.id} is published fail`);
       }
+
+      // TODO: Move to v2-post module event handler
+      await this._postWebsocketApp.emitPostVideoProcessedEvent({
+        event: event.getEventName(),
+        recipients: post.audience.groups.map((group) => group.id),
+        postId: post.id,
+        status: 'failed',
+      });
 
       const postActivity = this._postActivityService.createPayload({
         title: null,
