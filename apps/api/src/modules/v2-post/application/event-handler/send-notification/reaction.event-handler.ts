@@ -101,9 +101,8 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEve
       throw new ContentNotFoundException();
     }
 
-    const contentActor = await this._userAdapter.getUserById(
-      (contentEntity as ContentEntity).get('createdBy'),
-      { withPermission: true, withGroupJoined: true }
+    const contentActor = await this._userAdapter.getUserByIdWithPermission(
+      (contentEntity as ContentEntity).get('createdBy')
     );
 
     const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);
