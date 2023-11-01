@@ -1,12 +1,11 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { UserDto } from '@libs/service/user';
+import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
-import { ObjectHelper } from '../../../../../common/helpers';
-import { ReactionEvent } from '../../../domain/event';
+import { ReactionHasBeenCreated } from '../../../../../common/constants';
+import { ReactionCreatedEvent } from '../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content';
 import {
@@ -31,8 +30,8 @@ import {
 } from '../../binding';
 import { ArticleDto, CommentExtendedDto, PostDto } from '../../dto';
 
-@EventsHandler(ReactionEvent)
-export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
+@EventsHandlerAndLog(ReactionCreatedEvent)
+export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCreatedEvent> {
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
@@ -50,16 +49,16 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionEvent> {
     private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: ReactionEvent): Promise<void> {
-    const { reactionEntity, action } = event;
+  public async handle(event: ReactionCreatedEvent): Promise<void> {
+    const { reactionEntity } = event;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
 
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
 
     const payload: any = {
-      event: action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved,
-      actor: ObjectHelper.omit(['groups', 'permissions'], reactionActor) as UserDto,
+      event: ReactionHasBeenCreated,
+      actor: reactionActor,
       reaction: reactionDto,
     };
 

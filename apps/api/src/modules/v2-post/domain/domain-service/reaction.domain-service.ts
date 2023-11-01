@@ -3,7 +3,7 @@ import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
-import { ContentHasSeenEvent, ReactionEvent } from '../event';
+import { ContentHasSeenEvent, ReactionCreatedEvent, ReactionDeletedEvent } from '../event';
 import {
   ReactionNotFoundException,
   ReactionNotHaveAuthorityException,
@@ -84,7 +84,7 @@ export class ReactionDomainService implements IReactionDomainService {
         throw new ReactionTargetNotExistingException();
     }
 
-    this.eventBus.publish(new ReactionEvent(reactionEntity, 'create'));
+    this.eventBus.publish(new ReactionCreatedEvent(reactionEntity));
     return reactionEntity;
   }
 
@@ -127,6 +127,6 @@ export class ReactionDomainService implements IReactionDomainService {
       await this._postReactionRepository.delete(reaction.get('id'));
     }
 
-    this.eventBus.publish(new ReactionEvent(reaction, 'delete'));
+    this.eventBus.publish(new ReactionDeletedEvent(reaction));
   }
 }

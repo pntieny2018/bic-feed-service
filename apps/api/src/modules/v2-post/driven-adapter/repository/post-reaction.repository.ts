@@ -98,12 +98,13 @@ export class PostReactionRepository implements IPostReactionRepository {
     };
   }
 
-  public async updateCountReaction(props: UpdateCountContentReactionProps): Promise<void> {
-    const { reactionName, contentId, action } = props;
-    if (action === 'create') {
-      await this._libReactionContentDetailsRepo.increaseReactionCount(reactionName, contentId);
-    } else {
-      await this._libReactionContentDetailsRepo.decreaseReactionCount(reactionName, contentId);
-    }
+  public async increaseReactionCount(props: UpdateCountContentReactionProps): Promise<void> {
+    const { reactionName, contentId } = props;
+    await this._libReactionContentDetailsRepo.increaseReactionCount(reactionName, contentId);
+  }
+
+  public async decreaseReactionCount(props: UpdateCountContentReactionProps): Promise<void> {
+    const { reactionName, contentId } = props;
+    await this._libReactionContentDetailsRepo.decreaseReactionCount(reactionName, contentId);
   }
 }

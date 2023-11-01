@@ -35,7 +35,7 @@ export class LibReactionCommentDetailsRepository extends BaseRepository<Reaction
       return;
     }
     if (reactionCommentDetails.count === 1) {
-      await reactionCommentDetails.destroy();
+      return reactionCommentDetails.destroy();
     }
     await reactionCommentDetails.decrement('count', { by: 1 });
   }

@@ -39,10 +39,11 @@ import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-ar
 import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
+import { UpdateCommentReactionCountCommand } from './update-comment-reaction-count.command';
+import { UpdateContentReactionCountCommand } from './update-content-reaction-count.command';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
-import { UpdateReactionCountCommand } from './update-reaction-count.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
 
@@ -98,7 +99,8 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     ExportReactionCountDataCommand,
     ExportInvalidTagNameCommand,
     CleanUpDeletedSeriesCommand,
-    UpdateReactionCountCommand,
+    UpdateCommentReactionCountCommand,
+    UpdateContentReactionCountCommand,
   ],
 })
 export class CommandModule {}

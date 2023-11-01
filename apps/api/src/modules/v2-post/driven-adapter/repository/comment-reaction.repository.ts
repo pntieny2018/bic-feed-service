@@ -102,12 +102,13 @@ export class CommentReactionRepository implements ICommentReactionRepository {
     };
   }
 
-  public async updateCountReaction(props: UpdateCountCommentReactionProps): Promise<void> {
-    const { reactionName, commentId, action } = props;
-    if (action === 'create') {
-      await this._libReactionCommentDetailsRepo.increaseReactionCount(reactionName, commentId);
-    } else {
-      await this._libReactionCommentDetailsRepo.decreaseReactionCount(reactionName, commentId);
-    }
+  public async increaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void> {
+    const { reactionName, commentId } = props;
+    await this._libReactionCommentDetailsRepo.increaseReactionCount(reactionName, commentId);
+  }
+
+  public async decreaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void> {
+    const { reactionName, commentId } = props;
+    await this._libReactionCommentDetailsRepo.decreaseReactionCount(reactionName, commentId);
   }
 }

@@ -21,7 +21,6 @@ export type GetPaginationCommentReactionProps = {
 export type UpdateCountCommentReactionProps = {
   reactionName: string;
   commentId: string;
-  action: 'create' | 'delete';
 };
 
 export interface ICommentReactionRepository {
@@ -36,7 +35,9 @@ export interface ICommentReactionRepository {
 
   getAndCountReactionByComments(commentIds: string[]): Promise<Map<string, ReactionsCount>>;
 
-  updateCountReaction(props: UpdateCountCommentReactionProps): Promise<void>;
+  increaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void>;
+
+  decreaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void>;
 }
 
 export const COMMENT_REACTION_REPOSITORY_TOKEN = 'COMMENT_REACTION_REPOSITORY_TOKEN';
