@@ -1,5 +1,6 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { ORDER } from '@beincom/constants';
 import { IPaginatedInfo } from '@libs/database/postgres/common';
+import { GroupDto } from '@libs/service/group';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'class-validator';
@@ -27,11 +28,14 @@ export class ProcessGroupPrivacyUpdatedHandler
   public async execute(command: ProcessGroupPrivacyUpdatedCommand): Promise<void> {
     const { groupId } = command.payload;
 
-    await this._recursiveUpdateContentPrivacy(groupId);
+    const groups: GroupDto[] = [];
+
+    await this._recursiveUpdateContentPrivacy(groupId, groups);
   }
 
   private async _recursiveUpdateContentPrivacy(
     groupId: string,
+    groups: GroupDto[],
     metadata?: IPaginatedInfo
   ): Promise<void> {
     const { hasNextPage, endCursor } = metadata || {};
@@ -43,9 +47,6 @@ export class ProcessGroupPrivacyUpdatedHandler
     const { rows, meta } = await this._contentRepository.getPagination({
       where: {
         groupIds: [groupId],
-        groupArchived: false,
-        status: CONTENT_STATUS.PUBLISHED,
-        isHidden: false,
       },
       include: {
         mustIncludeGroup: true,
@@ -59,19 +60,34 @@ export class ProcessGroupPrivacyUpdatedHandler
       return;
     }
 
-    await this._updateContentsPrivacy(rows);
+    const groupsInContents = await this._getGroupsInContents(rows, groups);
+    groups.push(...groupsInContents);
 
-    await this._recursiveUpdateContentPrivacy(groupId, meta);
+    await this._updateContentsPrivacy(rows, groups);
+
+    await this._recursiveUpdateContentPrivacy(groupId, groups, meta);
+  }
+
+  private async _getGroupsInContents(
+    contents: (PostEntity | ArticleEntity | SeriesEntity)[],
+    groups: GroupDto[]
+  ): Promise<GroupDto[]> {
+    const groupIds = contents.map((content) => content.getGroupIds()).flat();
+    const groupIdsNeedToFind = groupIds.filter((id) => !groups.find((group) => group.id === id));
+    const groupsNeedToFind = await this._groupAdapter.getGroupsByIds(groupIdsNeedToFind);
+
+    return groupsNeedToFind;
   }
 
   private async _updateContentsPrivacy(
-    contents: (PostEntity | ArticleEntity | SeriesEntity)[]
+    contents: (PostEntity | ArticleEntity | SeriesEntity)[],
+    groups: GroupDto[]
   ): Promise<void> {
     for (const content of contents) {
       const groupIds = content.getGroupIds();
-      const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+      const groupsInContents = groups.filter((group) => groupIds.includes(group.id));
 
-      content.setPrivacyFromGroups(groups);
+      content.setPrivacyFromGroups(groupsInContents);
     }
 
     const contentsChanged = contents.filter((content) => content.isChanged());

@@ -15,6 +15,10 @@ export class PostGroupRepository implements IPostGroupRepository {
   public constructor(private readonly _libPostGroupRepo: LibPostGroupRepository) {}
 
   public async getNotInStateGroupIds(groupIds: string[], isArchived: boolean): Promise<string[]> {
+    if (!groupIds.length) {
+      return [];
+    }
+
     const record = await this._libPostGroupRepo.findMany({
       selectRaw: [
         ['DISTINCT group_id', 'groupId'],

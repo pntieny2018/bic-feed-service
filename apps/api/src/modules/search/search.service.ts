@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/sequelize';
 
 import { ElasticsearchHelper } from '../../common/helpers';
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
-import { IPost, PostType } from '../../database/models/post.model';
+import { PostType } from '../../database/models/post.model';
 import { PostService } from '../post/post.service';
 
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
@@ -203,7 +203,7 @@ export class SearchService {
   }
 
   public async updateAttributePostsToSearch(
-    posts: (IPost | PostAttributes)[],
+    posts: PostAttributes[],
     dataUpdate: unknown
   ): Promise<void> {
     const updateOps = [];
