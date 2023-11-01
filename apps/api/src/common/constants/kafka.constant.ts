@@ -27,5 +27,6 @@ export const KAFKA_TOPIC = {
     POST_AUTO_SAVE: `${process.env.KAFKA_ENV}.content_service.post_auto_save`,
     COMMENT_CHANGED: `${process.env.KAFKA_ENV}.content_service.comment_changed`,
     SERIES_DELETED: `${process.env.KAFKA_ENV}.content_service.series_deleted`,
+    PUBLISH_OR_REMOVE_TO_NEWSFEED: `${process.env.KAFKA_ENV}.content_service.publish_or_remove_to_newsfeed`,
   },
 };

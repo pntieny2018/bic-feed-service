@@ -10,6 +10,6 @@ export class KafkaAdapter implements IKafkaAdapter {
   ) {}
 
   public async emit<T>(topic: string, payload: T): Promise<void> {
-    return this._kafkaService.emit(topic, payload);
+    return this._kafkaService.emit(topic, [payload]);
   }
 }

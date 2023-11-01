@@ -216,7 +216,7 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
 
-      if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
+      if (postEntity.isNotUsersSeen()) {
         await this._contentDomainService.markSeen(postId, actor.id);
         postEntity.increaseTotalSeen();
       }

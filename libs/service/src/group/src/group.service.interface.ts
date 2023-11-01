@@ -14,6 +14,13 @@ export type GetUserRoleInGroupsResult = {
     [key: string]: string[];
   };
 };
+
+export type GetUserIdsInGroups = {
+  groupIds: string[];
+  notInGroupIds: string[];
+  after?: string;
+  limit?: number;
+};
 export interface IGroupService {
   findById(groupId: string): Promise<GroupDto>;
 
@@ -39,6 +46,10 @@ export interface IGroupService {
   ): Promise<GetUserRoleInGroupsResult | null>;
 
   isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
+  getUserIdsInGroups(GetUserIdsInGroups): Promise<{
+    list: string[];
+    cursor: string;
+  }>;
 }
 
 export const GROUP_SERVICE_TOKEN = 'GROUP_SERVICE_TOKEN';

@@ -12,7 +12,7 @@ import {
   NotiCommentCreatedEventHandler,
   NotiCommentDeletedEventHandler,
   NotiCommentUpdatedEventHandler,
-} from '../application/event-handler/notification';
+} from '../application/event-handler/send-notification';
 import {
   FindCommentsAroundIdHandler,
   FindCommentsPaginationHandler,
