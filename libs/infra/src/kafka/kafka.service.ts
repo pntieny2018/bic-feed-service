@@ -57,4 +57,33 @@ export class KafkaService implements IKafkaService {
       },
     });
   }
+
+  public sendMessages<TInput>(topic: string, messages: TInput[]): void {
+    const topicName = `${topic}`;
+    const headers = {
+      requestId: this._clsService.getId() ?? v4(),
+    };
+
+    const record = {
+      topic: topicName,
+      messages: messages.map((item) => ({
+        key: item['key'] || null,
+        value: JSON.stringify(item['value']),
+        headers,
+      })),
+    };
+
+    const sub = this._producerOb.subscribe({
+      next: (producer) => producer.send(record),
+      error: (e) => this._logger.error(`Producing msg to ${topicName} failed: ${e.message}`),
+      complete: () => {
+        this._logger.debug(
+          `Produced msg to ${topicName}: ${JSON.stringify({
+            ...record.messages,
+          })}`
+        );
+        sub.unsubscribe();
+      },
+    });
+  }
 }
