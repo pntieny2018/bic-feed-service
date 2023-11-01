@@ -18,6 +18,9 @@ import { ReactionNotifyEvent } from '../../../domain/event';
 import { IWebsocketAdapter, WEBSOCKET_ADAPTER } from '../../../domain/service-adapter-interface';
 import { IReactionBinding, REACTION_BINDING_TOKEN } from '../../binding';
 
+/**
+ * TODO: Split event to create/delete reaction soon
+ */
 @EventsHandler(ReactionNotifyEvent)
 export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent> {
   public constructor(
@@ -35,8 +38,10 @@ export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent
     const { reactionEntity, action } = event;
 
     const targetId = reactionEntity.get('targetId');
-    const reactionDto = await this._reactionBinding.binding(reactionEntity);
-    const reaction = instanceToInstance(reactionDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    const reactionBinding = await this._reactionBinding.binding(reactionEntity);
+    const reaction = instanceToInstance(reactionBinding, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
     const eventName = action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved;
 
     switch (reactionEntity.get('target')) {
