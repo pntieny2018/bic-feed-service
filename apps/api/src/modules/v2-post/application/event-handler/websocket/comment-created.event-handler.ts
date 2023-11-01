@@ -1,6 +1,8 @@
+import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
+import { instanceToInstance } from 'class-transformer';
 
 import { CommentCreatedEvent } from '../../../domain/event/comment.event';
 import { ContentNotFoundException } from '../../../domain/exception';
@@ -41,7 +43,7 @@ export class WsCommentCreatedEventHandler implements IEventHandler<CommentCreate
       contentId: content.getId(),
       commentId: comment.get('id'),
       parentId: comment.get('parentId'),
-      comment: commentDto,
+      comment: instanceToInstance(commentDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] }),
     });
   }
 }

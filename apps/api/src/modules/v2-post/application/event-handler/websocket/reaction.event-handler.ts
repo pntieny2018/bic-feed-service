@@ -1,8 +1,13 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { instanceToInstance } from 'class-transformer';
 
-import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
+import {
+  ReactionHasBeenCreated,
+  ReactionHasBeenRemoved,
+  TRANSFORMER_VISIBLE_ONLY,
+} from '../../../../../common/constants';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -31,6 +36,7 @@ export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent
 
     const targetId = reactionEntity.get('targetId');
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
+    const reaction = instanceToInstance(reactionDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
     const eventName = action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved;
 
     switch (reactionEntity.get('target')) {
@@ -40,7 +46,7 @@ export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent
         await this._websocketAdapter.emitReactionToPostEvent({
           event: eventName,
           recipients: content.getGroupIds(),
-          reaction: reactionDto,
+          reaction,
           contentType: content.get('type'),
           contentId: content.get('id'),
         });
@@ -53,7 +59,7 @@ export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent
         await this._websocketAdapter.emitReactionToCommentEvent({
           event: eventName,
           recipients: contentEntity.getGroupIds(),
-          reaction: reactionDto,
+          reaction,
           commentId: comment.get('id'),
           parentId: comment.get('parentId'),
           contentType: content.get('type'),
