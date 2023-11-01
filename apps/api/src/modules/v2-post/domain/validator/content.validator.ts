@@ -148,7 +148,7 @@ export class ContentValidator implements IContentValidator {
     });
     const invalidUsers = [];
     for (const user of users) {
-      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
+      if (!groupIds.some((groupId) => user?.groups.includes(groupId))) {
         invalidUsers.push(user.id);
       }
     }
