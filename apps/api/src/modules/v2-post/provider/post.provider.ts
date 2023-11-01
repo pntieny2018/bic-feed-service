@@ -20,6 +20,7 @@ import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
+  PostVideoSuccessHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
@@ -75,6 +76,8 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
+import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
+import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
 import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
@@ -100,8 +103,6 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
-import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
-import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 
 export const postProvider = [
   /** Processor */
@@ -149,6 +150,7 @@ export const postProvider = [
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
+  PostVideoSuccessHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,

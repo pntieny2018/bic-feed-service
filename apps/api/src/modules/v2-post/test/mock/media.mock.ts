@@ -55,6 +55,7 @@ export function createMockVideo(data: Partial<Video> = {}): Video {
     size: 1000,
     width: 100,
     height: 100,
+    duration: 100,
     status: MEDIA_PROCESS_STATUS.COMPLETED,
     thumbnails: [],
     ...data,
