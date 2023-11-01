@@ -19,6 +19,8 @@ export const ERRORS = {
   GROUP_NOT_EXISTING: 'group.not_existing',
   GROUP_NOT_MEMBER: 'group.not_member',
 
+  USER_NOT_FOUND: 'user.not_found',
+
   // OPENAI
   OPENAI_EXCEPTION: 'quiz.openai_exception',
 
