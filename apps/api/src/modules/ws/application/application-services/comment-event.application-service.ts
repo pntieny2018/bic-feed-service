@@ -2,7 +2,7 @@ import { CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { TargetType, VerbActivity } from '../../data-type';
+import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
 import { CommentCreatedEvent, CommentCreatedEventData } from '../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 
@@ -29,8 +29,8 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
       rooms: recipients,
       data: new CommentCreatedEventData({
         event: eventName,
-        verb: VerbActivity.COMMENT,
-        target: contentType === CONTENT_TYPE.POST ? TargetType.POST : TargetType.ARTICLE,
+        verb: WS_ACTIVITY_VERB.COMMENT,
+        target: contentType === CONTENT_TYPE.POST ? WS_TARGET_TYPE.POST : WS_TARGET_TYPE.ARTICLE,
         extra: {
           contentId,
           contentType,

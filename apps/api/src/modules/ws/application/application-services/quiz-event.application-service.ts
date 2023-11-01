@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { TargetType, VerbActivity } from '../../data-type';
+import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
 import { QuizProcessedEvent, QuizProcessedEventData } from '../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 
@@ -20,8 +20,8 @@ export class QuizEventApplicationService implements IQuizEventApplicationService
       rooms: recipients,
       data: new QuizProcessedEventData({
         event: eventName,
-        verb: VerbActivity.GENERATE_QUIZ,
-        target: TargetType.QUIZ,
+        verb: WS_ACTIVITY_VERB.GENERATE_QUIZ,
+        target: WS_TARGET_TYPE.QUIZ,
         extra: {
           quizId,
           contentId,

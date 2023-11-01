@@ -1,10 +1,10 @@
-import { TargetType, VerbActivity } from '../../data-type';
+import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
 
 import { IEvent, IEventData } from './interface';
 
 export class CommentCreatedEventData implements IEventData {
-  public verb: VerbActivity;
-  public target: TargetType;
+  public verb: WS_ACTIVITY_VERB;
+  public target: WS_TARGET_TYPE;
   public event: string;
   public extra: Record<string, unknown>;
 
