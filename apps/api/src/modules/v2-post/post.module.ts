@@ -50,8 +50,6 @@ import {
   sharedProvider,
   tagProvider,
 } from './provider';
-import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consummer/publish-remove-post-to-newsfeed.consummer';
-import { workerProvider } from './provider/worker.provider';
 
 @Module({
   imports: [
@@ -86,7 +84,6 @@ import { workerProvider } from './provider/worker.provider';
     CommentController,
     SeriesController,
     QuizController,
-    PublishOrRemovePostToNewsfeedConsumer,
   ],
   providers: [
     ...adapterProvider,
@@ -104,7 +101,6 @@ import { workerProvider } from './provider/worker.provider';
     ...sharedProvider,
     ...tagProvider,
     QuizProcessor,
-    ...workerProvider,
   ],
   exports: [
     ...quizProvider,

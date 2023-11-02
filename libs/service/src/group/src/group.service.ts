@@ -3,7 +3,7 @@ import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
-import { GetUserIdsInGroups, GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
+import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
@@ -183,30 +183,5 @@ export class GroupService implements IGroupService {
       }
     }
     return userIds.includes(userId);
-  }
-
-  public async getUserIdsInGroups(input: GetUserIdsInGroups): Promise<{
-    list: string[];
-    cursor: string;
-  }> {
-    const { groupIds, notInGroupIds, limit, after } = input;
-    try {
-      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
-        group_ids: groupIds,
-        ignore_group_ids: notInGroupIds,
-        limit: limit || 5000,
-        after: after || null,
-      });
-      return {
-        list: response.data['data'],
-        cursor: response.data['meta']['cursors']['next'],
-      };
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex));
-      return {
-        list: [],
-        cursor: null,
-      };
-    }
   }
 }
