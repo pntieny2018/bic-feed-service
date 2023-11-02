@@ -3,26 +3,19 @@ import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { instanceToInstance } from 'class-transformer';
 
-import {
-  ReactionHasBeenCreated,
-  ReactionHasBeenRemoved,
-  TRANSFORMER_VISIBLE_ONLY,
-} from '../../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../common/constants';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
   IContentDomainService,
 } from '../../../domain/domain-service/interface';
-import { ReactionNotifyEvent } from '../../../domain/event';
+import { ReactionDeletedEvent } from '../../../domain/event';
 import { IWebsocketAdapter, WEBSOCKET_ADAPTER } from '../../../domain/service-adapter-interface';
 import { IReactionBinding, REACTION_BINDING_TOKEN } from '../../binding';
 
-/**
- * TODO: Split event to create/delete reaction soon
- */
-@EventsHandler(ReactionNotifyEvent)
-export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent> {
+@EventsHandler(ReactionDeletedEvent)
+export class WsReactionDeletedEventHandler implements IEventHandler<ReactionDeletedEvent> {
   public constructor(
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
@@ -34,22 +27,21 @@ export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent
     private readonly _websocketAdapter: IWebsocketAdapter
   ) {}
 
-  public async handle(event: ReactionNotifyEvent): Promise<void> {
-    const { reactionEntity, action } = event;
+  public async handle(event: ReactionDeletedEvent): Promise<void> {
+    const { reactionEntity } = event;
 
     const targetId = reactionEntity.get('targetId');
     const reactionBinding = await this._reactionBinding.binding(reactionEntity);
     const reaction = instanceToInstance(reactionBinding, {
       groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
     });
-    const eventName = action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved;
 
     switch (reactionEntity.get('target')) {
       case CONTENT_TARGET.POST:
       case CONTENT_TARGET.ARTICLE:
         const content = await this._contentDomainService.getVisibleContent(targetId);
         await this._websocketAdapter.emitReactionToPostEvent({
-          event: eventName,
+          event: ReactionDeletedEvent.event,
           recipients: content.getGroupIds(),
           reaction,
           contentType: content.get('type'),
@@ -62,7 +54,7 @@ export class WsReactionEventHandler implements IEventHandler<ReactionNotifyEvent
           comment.get('postId')
         );
         await this._websocketAdapter.emitReactionToCommentEvent({
-          event: eventName,
+          event: ReactionDeletedEvent.event,
           recipients: contentEntity.getGroupIds(),
           reaction,
           commentId: comment.get('id'),

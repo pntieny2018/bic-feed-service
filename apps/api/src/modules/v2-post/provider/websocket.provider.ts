@@ -1,12 +1,14 @@
 import {
   WsCommentCreatedEventHandler,
   WsQuizGeneratedEventHandler,
-  WsReactionEventHandler,
+  WsReactionCreatedEventHandler,
+  WsReactionDeletedEventHandler,
 } from '../application/event-handler/websocket';
 
 export const webSocketProvider = [
   /** Application Event Handler */
   WsCommentCreatedEventHandler,
   WsQuizGeneratedEventHandler,
-  WsReactionEventHandler,
+  WsReactionCreatedEventHandler,
+  WsReactionDeletedEventHandler,
 ];
