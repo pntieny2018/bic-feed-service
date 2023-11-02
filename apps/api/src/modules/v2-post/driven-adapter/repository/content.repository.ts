@@ -1,4 +1,4 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
@@ -103,6 +103,17 @@ export class ContentRepository implements IContentRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async updateContentPrivacy(contentIds: string[], privacy: PRIVACY): Promise<void> {
+    await this._libContentRepo.update(
+      { privacy },
+      {
+        where: {
+          id: contentIds,
+        },
+      }
+    );
   }
 
   private async _setGroups(postEntity: ContentEntity, transaction: Transaction): Promise<void> {
@@ -277,6 +288,14 @@ export class ContentRepository implements IContentRepository {
     return this._contentMapper.toDomain(content);
   }
 
+  public async findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
+    return contents.map((content) => this._contentMapper.toDomain(content));
+  }
+
   public async getContentById(
     contentId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
@@ -288,12 +307,24 @@ export class ContentRepository implements IContentRepository {
     return content;
   }
 
-  public async findAll(
-    findAllPostOptions: FindContentProps,
-    offsetPaginate?: PaginationProps
-  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
-    return contents.map((content) => this._contentMapper.toDomain(content));
+  public async getPagination(
+    getPaginationContentsProps: GetPaginationContentsProps
+  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
+    const { rows, meta } = await this._libContentRepo.getPagination(getPaginationContentsProps);
+
+    return {
+      rows: rows.map((row) => this._contentMapper.toDomain(row)),
+      meta,
+    };
+  }
+
+  public async countDraftContentByUserId(userId: string): Promise<number> {
+    return this._libContentRepo.count({
+      where: {
+        createdBy: userId,
+        status: CONTENT_STATUS.DRAFT,
+      },
+    });
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {
@@ -330,17 +361,6 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  public async getPagination(
-    getPaginationContentsProps: GetPaginationContentsProps
-  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { rows, meta } = await this._libContentRepo.getPagination(getPaginationContentsProps);
-
-    return {
-      rows: rows.map((row) => this._contentMapper.toDomain(row)),
-      meta,
-    };
-  }
-
   public async getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]> {
     if (!props.reportUser) {
       return [];
@@ -362,13 +382,24 @@ export class ContentRepository implements IContentRepository {
     return rows.map((row) => row.targetId);
   }
 
-  public async countDraftContentByUserId(userId: string): Promise<number> {
-    return this._libContentRepo.count({
-      where: {
-        createdBy: userId,
-        status: CONTENT_STATUS.DRAFT,
-      },
+  public async findUserIdsReportedTargetId(
+    targetId: string,
+    contentTarget?: CONTENT_TARGET
+  ): Promise<string[]> {
+    const condition: WhereOptions<ReportContentDetailAttributes> = {
+      [Op.and]: [
+        {
+          targetId,
+          ...(contentTarget && { targetType: contentTarget }),
+        },
+      ],
+    };
+
+    const reports = await this._libUserReportContentRepo.findMany({
+      where: condition,
     });
+
+    return (reports || []).map((report) => report.createdBy);
   }
 
   public async findPinnedContentIdsByGroupId(groupId: string): Promise<string[]> {
@@ -470,26 +501,6 @@ export class ContentRepository implements IContentRepository {
         ignoreDuplicates: true,
       }
     );
-  }
-
-  public async findUserIdsReportedTargetId(
-    targetId: string,
-    contentTarget?: CONTENT_TARGET
-  ): Promise<string[]> {
-    const condition: WhereOptions<ReportContentDetailAttributes> = {
-      [Op.and]: [
-        {
-          targetId,
-          ...(contentTarget && { targetType: contentTarget }),
-        },
-      ],
-    };
-
-    const reports = await this._libUserReportContentRepo.findMany({
-      where: condition,
-    });
-
-    return (reports || []).map((report) => report.createdBy);
   }
 
   public async createPostSeries(seriesId: string, postId: string): Promise<void> {
