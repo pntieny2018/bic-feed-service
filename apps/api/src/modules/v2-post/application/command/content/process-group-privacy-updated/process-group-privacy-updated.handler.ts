@@ -4,6 +4,7 @@ import { GroupDto } from '@libs/service/group';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'class-validator';
+import { uniq } from 'lodash';
 
 import { ArticleEntity, PostEntity, SeriesEntity } from '../../../../domain/model/content';
 import {
@@ -73,7 +74,9 @@ export class ProcessGroupPrivacyUpdatedHandler
     groups: GroupDto[]
   ): Promise<GroupDto[]> {
     const groupIds = contents.map((content) => content.getGroupIds()).flat();
-    const groupIdsNeedToFind = groupIds.filter((id) => !groups.find((group) => group.id === id));
+    const groupIdsNeedToFind = uniq(groupIds).filter(
+      (id) => !groups.find((group) => group.id === id)
+    );
     const groupsNeedToFind = await this._groupAdapter.getGroupsByIds(groupIdsNeedToFind);
 
     return groupsNeedToFind;

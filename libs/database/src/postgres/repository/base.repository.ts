@@ -175,8 +175,16 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
   ): Promise<CursorPaginationResult<M>> {
     const { after, before, limit = PAGING_DEFAULT_LIMIT, order, column } = paginationProps;
 
+    const attributes = this._buildSelect(findOptions);
+    const include = this._buildInclude(findOptions);
+    const where = this._buildWhere(findOptions);
+
     const paginator = new CursorPaginator(this.model, [column], { before, after, limit }, order);
-    const { rows, meta } = await paginator.paginate(findOptions);
+    const { rows, meta } = await paginator.paginate({
+      attributes,
+      where,
+      include: include.length > 0 ? include : undefined,
+    });
 
     return {
       rows,

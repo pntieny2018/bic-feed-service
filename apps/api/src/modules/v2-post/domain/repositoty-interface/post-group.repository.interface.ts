@@ -5,6 +5,7 @@ export type GetPaginationPostGroupProps = {
   where: {
     groupIds: string[];
     isArchived?: boolean;
+    isDistinctContent?: boolean;
   };
 } & CursorPaginationProps;
 

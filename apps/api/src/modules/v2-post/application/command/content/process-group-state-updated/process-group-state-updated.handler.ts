@@ -1,5 +1,4 @@
 import { IPaginatedInfo } from '@libs/database/postgres/common';
-import { PostGroupAttributes } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'class-validator';
@@ -59,7 +58,7 @@ export class ProcessGroupStateUpdatedHandler
     }
 
     const { rows: postGroups, meta } = await this._postGroupRepo.getPagination({
-      where: { groupIds },
+      where: { groupIds, isDistinctContent: true },
       limit: 1000,
       after: endCursor,
     });
@@ -68,13 +67,13 @@ export class ProcessGroupStateUpdatedHandler
       return;
     }
 
-    await this._updateContent(postGroups);
+    const contentIds = postGroups.map((postGroup) => postGroup.postId);
+    await this._updateContent(contentIds);
 
     await this._recursiveUpdateContent(groupIds, meta);
   }
 
-  private async _updateContent(postGroups: PostGroupAttributes[]): Promise<void> {
-    const contentIds = postGroups.map((postGroup) => postGroup.postId);
+  private async _updateContent(contentIds: string[]): Promise<void> {
     const contentEntities = await this._contentRepo.findAll({
       where: { ids: contentIds, groupArchived: false },
       include: { mustIncludeGroup: true },
