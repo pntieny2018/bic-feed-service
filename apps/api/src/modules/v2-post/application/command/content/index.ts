@@ -1,4 +1,5 @@
 export * from './mark-read-important-content';
+export * from './process-group-privacy-updated';
 export * from './process-scheduled-content-publishing';
 export * from './update-content-setting';
 export * from './reorder-pinned-content';

@@ -15,7 +15,9 @@ import {
   SeenContentHandler,
   SaveContentHandler,
   UpdateContentSettingHandler,
+  ProcessGroupPrivacyUpdatedHandler,
 } from '../application/command/content';
+import { ProcessGroupStateUpdatedHandler } from '../application/command/content/process-group-state-updated';
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -87,7 +89,10 @@ import {
   POST_FACTORY_TOKEN,
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
-import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  POST_GROUP_REPOSITORY_TOKEN,
+} from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
 import {
@@ -103,6 +108,7 @@ import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
+import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
@@ -133,17 +139,19 @@ export const postProvider = [
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
 
   MarkReadImportantContentHandler,
-  UpdateContentSettingHandler,
+  PinContentHandler,
+  ProcessGroupPrivacyUpdatedHandler,
+  ProcessGroupStateUpdatedHandler,
+  ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
   SeenContentHandler,
-  PinContentHandler,
   SaveContentHandler,
+  UpdateContentSettingHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -245,5 +253,9 @@ export const postProvider = [
   {
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
+  },
+  {
+    provide: POST_GROUP_REPOSITORY_TOKEN,
+    useClass: PostGroupRepository,
   },
 ];

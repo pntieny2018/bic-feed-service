@@ -115,6 +115,10 @@ export class ContentEntity<
     }
   }
 
+  public getPrivacy(): PRIVACY {
+    return this._props.privacy;
+  }
+
   public setPrivacyFromGroups(groups: GroupDto[]): void {
     if (groups.length === 0) {
       return;

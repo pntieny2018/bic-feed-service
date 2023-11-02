@@ -13,5 +13,6 @@ export * from './series-same-owner-changed.event-handler';
 export * from './comment-created.event-handler';
 export * from './comment-deleted.event-handler';
 export * from './comment-updated.event-handler';
-export * from './reaction.event-handler';
+export * from './created-reaction.event-handler';
+export * from './deleted-reaction.event-handler';
 export * from './post-video-process-fail.event-handler';

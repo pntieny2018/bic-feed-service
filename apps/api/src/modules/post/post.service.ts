@@ -18,7 +18,6 @@ import { NIL } from 'uuid';
 
 import { EntityIdDto, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
-import { ModelHelper } from '../../common/helpers/model.helper';
 import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
@@ -41,7 +40,6 @@ import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -749,41 +747,6 @@ export class PostService {
     return posts;
   }
 
-  public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
-    if (groupIds.length === 0) {
-      return [];
-    }
-    try {
-      const posts = await this.postModel.findAll({
-        attributes: ['id'],
-        subQuery: false,
-        where: {
-          status: PostStatus.PUBLISHED,
-          isHidden: false,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            required: true,
-            attributes: ['groupId'],
-            where: {
-              groupId: groupIds,
-              isArchived: false,
-            },
-          },
-        ],
-        limit: take,
-        order: [['createdAt', 'DESC']],
-      });
-      return posts.map((p) => p.id);
-    } catch (ex) {
-      this.logger.error(ex, ex?.stack);
-      this.sentryService.captureException(ex);
-      return [];
-    }
-  }
-
   public async markRead(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
@@ -1022,60 +985,6 @@ export class PostService {
         },
       }
     );
-  }
-
-  public getPostPrivacyByCompareGroupPrivacy(
-    groupPrivacy: GroupPrivacy,
-    postPrivacy: PostPrivacy
-  ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
-      return PostPrivacy.OPEN;
-    }
-    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
-      return PostPrivacy.CLOSED;
-    }
-    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
-      return PostPrivacy.PRIVATE;
-    }
-    return PostPrivacy.SECRET;
-  }
-
-  public async filterPostIdsNeedToUpdatePrivacy(
-    postIds: string[],
-    newPrivacy: PostPrivacy
-  ): Promise<{ [key: string]: string[] }> {
-    const relationInfo = await this.postGroupModel.findAll({
-      where: { postId: { [Op.in]: postIds } },
-    });
-    const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
-    const groupInfos = await this.groupAppService.findAllByIds(groupIds);
-    const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
-      returnValue[elementValue.id] = elementValue.privacy;
-      return returnValue;
-    }, {});
-    const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
-      if (!returnValue[elementValue.postId]) {
-        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId],
-          newPrivacy
-        );
-      } else {
-        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId],
-          returnValue[elementValue.postId]
-        );
-      }
-      return returnValue;
-    }, {});
-    const updatedPostIds = {};
-    Object.entries(postPrivacyMapping).forEach(([postId, postPrivacy]) => {
-      if (!updatedPostIds[postPrivacy.toString()]) {
-        updatedPostIds[postPrivacy.toString()] = [postId];
-      } else {
-        updatedPostIds[postPrivacy.toString()].push(postId);
-      }
-    });
-    return updatedPostIds;
   }
 
   public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
@@ -1519,104 +1428,6 @@ export class PostService {
       },
     ];
     return this.postModel.findAll(findOption);
-  }
-
-  public async updateGroupStateAndGetPostIdsAffected(
-    groupIds: string[],
-    isArchive: boolean
-  ): Promise<string[]> {
-    const notInStateGroupIds = await this.postGroupModel.findAll({
-      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId'], 'is_archived'],
-      where: { groupId: groupIds, isArchived: !isArchive },
-      limit: groupIds.length,
-    });
-
-    const [affectedCount] = await this.postGroupModel.update(
-      { isArchived: isArchive },
-      { where: { groupId: notInStateGroupIds.map((e) => e.groupId) } }
-    );
-    if (affectedCount > 0) {
-      const affectPostGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
-        groupId: notInStateGroupIds.map((e) => e.groupId),
-      });
-      return affectPostGroups.map((e) => e.postId);
-    }
-    return null;
-  }
-
-  public async getPostsArchivedOrRestoredByGroupEventPayload(
-    postIds: string[]
-  ): Promise<PostsArchivedOrRestoredByGroupEventPayload> {
-    const postGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
-      postId: postIds,
-      isArchived: false,
-    });
-    const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
-      if (!result[postId]) {
-        result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
-      }
-      return result;
-    }, {});
-    const affectedPosts = await ModelHelper.getAllRecursive<IPost>(this.postModel, {
-      id: Object.keys(postIndex),
-    });
-    return {
-      posts: affectedPosts,
-      mappingPostIdGroupIds: postIndex,
-    };
-  }
-
-  private async _addSeriesToPost(
-    seriesIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<void> {
-    if (seriesIds.length === 0) {
-      return;
-    }
-    const dataCreate = seriesIds.map((seriesId) => ({
-      postId: postId,
-      seriesId,
-    }));
-    await this.postSeriesModel.bulkCreate(dataCreate, { transaction });
-  }
-
-  private async _updateSeriesToPost(
-    seriesIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<void> {
-    const currentSeries = await this.postSeriesModel.findAll({
-      where: { postId },
-    });
-    const currentSeriesIds = currentSeries.map((i) => i.seriesId);
-
-    const deleteSeriesIds = ArrayHelper.arrDifferenceElements(currentSeriesIds, seriesIds);
-    if (deleteSeriesIds.length) {
-      await this.postSeriesModel.destroy({
-        where: { seriesId: deleteSeriesIds, postId },
-        transaction,
-      });
-    }
-
-    const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
-    if (addSeriesIds.length) {
-      const dataInsert = [];
-      for (const seriesId of addSeriesIds) {
-        const maxIndexArticlesInSeries: number = await this.postSeriesModel.max('zindex', {
-          where: {
-            seriesId,
-          },
-        });
-        dataInsert.push({
-          postId,
-          seriesId,
-          zindex: maxIndexArticlesInSeries + 1,
-        });
-      }
-
-      await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
-    }
   }
 
   public async getPinnedList(groupId: string, user: UserDto): Promise<ArticleResponseDto[]> {
