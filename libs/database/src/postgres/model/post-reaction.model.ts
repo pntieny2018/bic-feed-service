@@ -11,7 +11,6 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
 
 export type PostReactionAttributes = InferAttributes<PostReactionModel>;
@@ -34,7 +33,6 @@ export class PostReactionModel extends Model<
   @Column
   public postId: string;
 
-  @ForeignKey(() => MediaModel)
   @Column
   public reactionName: string;
 

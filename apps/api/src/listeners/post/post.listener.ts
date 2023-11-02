@@ -8,7 +8,6 @@ import { MediaMarkAction, MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 import { SeriesAddedItemsEvent } from '../../events/series';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { MediaService } from '../../modules/media';
@@ -283,17 +282,5 @@ export class PostListener {
         },
       });
     }
-  }
-
-  @On(PostsArchivedOrRestoredByGroupEvent)
-  public async onPostsArchivedOrRestoredByGroup(
-    event: PostsArchivedOrRestoredByGroupEvent
-  ): Promise<void> {
-    await this._postSearchService.updateAttributePostsToSearch(
-      event.payload.posts,
-      event.payload.posts.map((post) => ({
-        groupIds: event.payload.mappingPostIdGroupIds[post.id],
-      }))
-    );
   }
 }
