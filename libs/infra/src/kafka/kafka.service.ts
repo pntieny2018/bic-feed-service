@@ -20,19 +20,27 @@ export class KafkaService implements IKafkaService {
     this._producerOb = from(this._kafkaClient.connect());
   }
 
-  public emit<TInput>(topic: string, messages: TInput[]): void {
+  public emit<TInput>(topic: string, payload: TInput): void {
+    const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
+
     const topicName = `${topic}`;
     const headers = {
       requestId: this._clsService.getId() ?? v4(),
     };
+    const message = hasKey
+      ? {
+          key: payload['key'],
+          value: JSON.stringify(payload['value']),
+          headers,
+        }
+      : {
+          value: JSON.stringify(payload),
+          headers,
+        };
 
     const record = {
       topic: topicName,
-      messages: messages.map((item) => ({
-        key: item['key'] || null,
-        value: JSON.stringify(item['value']),
-        headers,
-      })),
+      messages: [message],
     };
 
     const sub = this._producerOb.subscribe({
@@ -41,7 +49,8 @@ export class KafkaService implements IKafkaService {
       complete: () => {
         this._logger.debug(
           `Produced msg to ${topicName}: ${JSON.stringify({
-            ...record.messages,
+            ...message,
+            value: JSON.parse(message.value),
           })}`
         );
         sub.unsubscribe();

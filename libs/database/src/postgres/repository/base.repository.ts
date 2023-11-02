@@ -67,7 +67,6 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       limit: options.limit || undefined,
       offset: options.offset || undefined,
       subQuery: options.subQuery,
-      replacements: options.replacements,
     });
   }
 

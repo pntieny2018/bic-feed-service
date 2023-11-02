@@ -22,10 +22,10 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
       const context = getContext();
       const debugContext = getDebugContext(context);
 
-      logger.debug(`EventHandler start: ${JSON.stringify({ event: event.payload.event })}`);
+      logger.debug(`EventHandler start: ${JSON.stringify({ event, debugContext })}`);
 
       function logDone(): void {
-        logger.debug(`EventHandler done: ${JSON.stringify({ event: event.payload.event })}`);
+        logger.debug(`EventHandler done: ${JSON.stringify({ event, debugContext })}`);
       }
       function logError(error: any): void {
         logger.error(

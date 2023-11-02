@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -15,10 +16,6 @@ import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { PostDto } from '../../../dto';
 
 import { PublishPostCommand } from './publish-post.command';
-import {
-  FOLLOW_REPOSITORY_TOKEN,
-  IFollowRepository,
-} from '../../../../domain/repositoty-interface';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -36,9 +33,26 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
   public async execute(command: PublishPostCommand): Promise<PostDto> {
     const { actor, ...payload } = command.payload;
     const postEntity = await this._postDomainService.publish({ payload, actor });
+
+    if (postEntity.getSnapshot().status === CONTENT_STATUS.PUBLISHED) {
+      return this._contentBinding.postBinding(postEntity, {
+        actor,
+        authUser: actor,
+      });
+    }
+
+    const groups = await this._groupAdapter.getGroupsByIds(
+      command.payload?.groupIds || postEntity.get('groupIds')
+    );
+    const mentionUsers = await this._userAdapter.getUsersByIds(payload.mentionUserIds || [], {
+      withGroupJoined: true,
+    });
+
     return this._contentBinding.postBinding(postEntity, {
+      groups,
       actor,
       authUser: actor,
+      mentionUsers,
     });
   }
 }
