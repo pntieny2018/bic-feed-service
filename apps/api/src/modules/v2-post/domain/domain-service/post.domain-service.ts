@@ -10,6 +10,7 @@ import {
   PostPublishedEvent,
   PostScheduledEvent,
   PostUpdatedEvent,
+  PostVideoFailedEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -257,19 +258,25 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    if (postEntity.isDraft()) {
+    if (postEntity.isDraft() && !props?.isVideoProcessFailed) {
       throw new ContentNoPublishYetException();
     }
 
     await this._validateAndSetPostAttributes(postEntity, payload, actor);
 
-    if (postEntity.hasVideoProcessing() && !postEntity.isWaitingSchedule()) {
+    if (
+      postEntity.hasVideoProcessing() &&
+      !postEntity.isWaitingSchedule() &&
+      !props?.isVideoProcessFailed
+    ) {
       postEntity.setProcessing();
     }
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
+      props?.isVideoProcessFailed
+        ? this.event.publish(new PostVideoFailedEvent({ postEntity, actor }))
+        : this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
     }
 
     return postEntity;
@@ -343,6 +350,10 @@ export class PostDomainService implements IPostDomainService {
       await this._setNewLinkPreview(postEntity, linkPreview);
     }
 
+    if (payload.status) {
+      postEntity.setStatus(payload.status);
+    }
+
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
     const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
       withGroupJoined: true,
@@ -405,11 +416,7 @@ export class PostDomainService implements IPostDomainService {
       newFileIds,
       ownerId
     );
-    const videos = await this._mediaDomainService.getAvailableVideos(
-      videoEntities,
-      newVideoIds,
-      ownerId
-    );
+    const videos = await this._mediaDomainService.getAvailableVideos(newVideoIds, ownerId);
 
     postEntity.setMedia({
       files,

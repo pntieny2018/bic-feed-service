@@ -188,10 +188,6 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     return this._props.videoIdProcessing;
   }
 
-  public setVideoIdProcessing(videoId: string): void {
-    this._props.videoIdProcessing = videoId;
-  }
-
   private _updateVideosState(videos: VideoEntity[]): void {
     const currentVideoIds = (this._props.media.videos || []).map((video) => video.get('id'));
     for (const video of videos) {
@@ -201,7 +197,9 @@ export class PostEntity extends ContentEntity<PostAttributes> {
         }
         this._state.attachVideoIds.push(video.get('id'));
       } else {
-        if (video.isProcessed()) {
+        if (video.isProcessing()) {
+          this._props.videoIdProcessing = video.get('id');
+        } else {
           this._props.videoIdProcessing = null;
         }
       }

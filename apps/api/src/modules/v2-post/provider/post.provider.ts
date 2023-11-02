@@ -20,6 +20,7 @@ import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
+  PostVideoFailHandler,
   PostVideoSuccessHandler,
   PublishPostHandler,
   SchedulePostHandler,
@@ -151,6 +152,7 @@ export const postProvider = [
   UpdatePostHandler,
   DeletePostHandler,
   PostVideoSuccessHandler,
+  PostVideoFailHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,

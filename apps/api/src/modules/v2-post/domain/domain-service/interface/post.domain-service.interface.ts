@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
@@ -13,6 +14,7 @@ export type PostPayload = {
   media?: MediaRequestDto;
   mentionUserIds?: string[];
   linkPreview?: LinkPreviewDto;
+  status?: CONTENT_STATUS;
 };
 
 export type PostCreateProps = {
@@ -23,6 +25,7 @@ export type PostCreateProps = {
 export type UpdatePostProps = {
   payload: PostPayload;
   actor: UserDto;
+  isVideoProcessFailed?: boolean;
 };
 
 export type SchedulePostProps = {

@@ -6,6 +6,7 @@ import {
   PostHasBeenPublished,
   PostHasBeenScheduled,
   PostHasBeenUpdated,
+  PostVideoHasBeenFailed,
 } from '../../../../common/constants';
 import { PostEntity } from '../model/content';
 
@@ -46,6 +47,16 @@ export class PostDeletedEvent implements IEventPayload {
 
 export class PostUpdatedEvent implements IEventPayload {
   public static event = PostHasBeenUpdated;
+
+  public payload: PostEventPayload;
+
+  public constructor(data: PostEventPayload) {
+    this.payload = data;
+  }
+}
+
+export class PostVideoFailedEvent implements IEventPayload {
+  public static event = PostVideoHasBeenFailed;
 
   public payload: PostEventPayload;
 

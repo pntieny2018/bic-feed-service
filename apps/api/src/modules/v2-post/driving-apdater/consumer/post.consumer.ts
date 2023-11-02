@@ -3,7 +3,8 @@ import { Controller, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EventPattern, Payload } from '@nestjs/microservices';
 
-import { PostVideoSuccessCommand } from '../../application/command/post';
+import { KAFKA_TOPIC } from '../../../../common/constants';
+import { PostVideoFailCommand, PostVideoSuccessCommand } from '../../application/command/post';
 import { PostVideoProcessedMessagePayload } from '../../application/dto/message';
 
 @Controller()
@@ -12,8 +13,7 @@ export class PostConsumer {
 
   public constructor(private readonly _commandBus: CommandBus) {}
 
-  @EventPattern('123')
-  // @EventPattern(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED)
+  @EventPattern(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED)
   public async eventVideoProcessed(
     @Payload('value') payload: PostVideoProcessedMessagePayload
   ): Promise<void> {
@@ -26,6 +26,7 @@ export class PostConsumer {
         await this._commandBus.execute(new PostVideoSuccessCommand(payload));
         break;
       case MEDIA_PROCESS_STATUS.FAILED:
+        await this._commandBus.execute(new PostVideoFailCommand(payload));
         break;
       default:
         break;

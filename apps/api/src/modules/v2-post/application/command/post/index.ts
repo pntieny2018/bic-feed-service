@@ -5,3 +5,4 @@ export * from './schedule-post';
 export * from './update-post';
 export * from './delete-post';
 export * from './post-video-success';
+export * from './post-video-fail';
