@@ -1,7 +1,12 @@
 import { IEventPayload } from '@libs/infra/event';
 import { UserDto } from '@libs/service/user';
 
-import { PostHasBeenPublished, PostHasBeenScheduled } from '../../../../common/constants';
+import {
+  PostHasBeenDeleted,
+  PostHasBeenPublished,
+  PostHasBeenScheduled,
+  PostHasBeenUpdated,
+} from '../../../../common/constants';
 import { PostEntity } from '../model/content';
 
 interface PostEventPayload {
@@ -21,6 +26,26 @@ export class PostPublishedEvent implements IEventPayload {
 
 export class PostScheduledEvent implements IEventPayload {
   public static event = PostHasBeenScheduled;
+
+  public payload: PostEventPayload;
+
+  public constructor(data: PostEventPayload) {
+    this.payload = data;
+  }
+}
+
+export class PostDeletedEvent implements IEventPayload {
+  public static event = PostHasBeenDeleted;
+
+  public payload: PostEventPayload;
+
+  public constructor(data: PostEventPayload) {
+    this.payload = data;
+  }
+}
+
+export class PostUpdatedEvent implements IEventPayload {
+  public static event = PostHasBeenUpdated;
 
   public payload: PostEventPayload;
 

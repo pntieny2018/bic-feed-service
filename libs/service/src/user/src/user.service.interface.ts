@@ -3,8 +3,10 @@ import { UserDto } from './user.dto';
 export const USER_SERVICE_TOKEN = 'USER_SERVICE_TOKEN';
 
 export interface IUserService {
-  findByUserName(username: string): Promise<UserDto>;
+  findProfileAndPermissionByUsername(username: string): Promise<UserDto>;
+  findProfileAndPermissionById(id: string): Promise<UserDto>;
   findById(id: string): Promise<UserDto>;
   findAllByIds(ids: string[]): Promise<UserDto[]>;
   findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]>;
+  canCudTags(userId: string, rootGroupId: string): Promise<boolean>;
 }

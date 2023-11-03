@@ -9,7 +9,9 @@ import {
 import { PublishArticleHandler } from '../../../../application/command/article';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
+  IContentDomainService,
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
@@ -24,6 +26,7 @@ describe('PublishArticleHandler', () => {
   let publishArticleHandler: PublishArticleHandler;
   let articleDomainService: IArticleDomainService;
   let postDomainService: IPostDomainService;
+  let contentDomainService: IContentDomainService;
   let contentBinding: IContentBinding;
 
   beforeEach(async () => {
@@ -39,6 +42,10 @@ describe('PublishArticleHandler', () => {
           useValue: createMock<IPostDomainService>(),
         },
         {
+          provide: CONTENT_DOMAIN_SERVICE_TOKEN,
+          useValue: createMock<IContentDomainService>(),
+        },
+        {
           provide: CONTENT_BINDING_TOKEN,
           useValue: createMock<IContentBinding>(),
         },
@@ -47,6 +54,7 @@ describe('PublishArticleHandler', () => {
     publishArticleHandler = module.get(PublishArticleHandler);
     articleDomainService = module.get(ARTICLE_DOMAIN_SERVICE_TOKEN);
     postDomainService = module.get(POST_DOMAIN_SERVICE_TOKEN);
+    contentDomainService = module.get(CONTENT_DOMAIN_SERVICE_TOKEN);
     contentBinding = module.get(CONTENT_BINDING_TOKEN);
   });
 
@@ -62,8 +70,8 @@ describe('PublishArticleHandler', () => {
 
     it('should execute publish article', async () => {
       jest.spyOn(articleDomainService, 'publish').mockResolvedValueOnce(articleEntityMock);
-      jest.spyOn(postDomainService, 'markSeen').mockResolvedValueOnce();
-      jest.spyOn(postDomainService, 'markReadImportant').mockResolvedValueOnce();
+      jest.spyOn(contentDomainService, 'markSeen').mockResolvedValueOnce();
+      jest.spyOn(contentDomainService, 'markReadImportant').mockResolvedValueOnce();
       jest.spyOn(articleEntityMock, 'isImportant').mockReturnValue(true);
       jest.spyOn(articleEntityMock, 'increaseTotalSeen').mockReturnValue();
       jest.spyOn(articleEntityMock, 'setMarkReadImportant').mockReturnValue();
@@ -75,9 +83,12 @@ describe('PublishArticleHandler', () => {
       });
 
       expect(articleDomainService.publish).toBeCalledWith(payload);
-      expect(postDomainService.markSeen).toBeCalledWith(articleEntityMock.get('id'), userMock.id);
+      expect(contentDomainService.markSeen).toBeCalledWith(
+        articleEntityMock.get('id'),
+        userMock.id
+      );
       expect(articleEntityMock.increaseTotalSeen).toBeCalled();
-      expect(postDomainService.markReadImportant).toBeCalledWith(
+      expect(contentDomainService.markReadImportant).toBeCalledWith(
         articleEntityMock.get('id'),
         userMock.id
       );

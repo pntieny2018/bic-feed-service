@@ -25,22 +25,6 @@ export class PostController {
     return this._postAppService.getTotalDraft(user);
   }
 
-  @ApiOperation({ summary: 'Delete post' })
-  @ApiOkResponse({
-    type: Boolean,
-    description: 'Delete post successfully',
-  })
-  @ResponseMessages({
-    success: 'message.post.deleted_success',
-  })
-  @Delete('/:id')
-  public async delete(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) postId: string
-  ): Promise<void> {
-    await this._postAppService.deletePost(user, postId);
-  }
-
   @ApiOperation({ summary: 'Mark as read' })
   @ApiOkResponse({
     type: Boolean,

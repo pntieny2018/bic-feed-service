@@ -1,9 +1,9 @@
-import { IFile, IImage, IVideo } from '@libs/database/postgres/model/comment.model';
+import { File, Image, Video } from '@libs/common/dtos';
 
 export interface IMediaService {
-  findImagesByIds(ids: string[]): Promise<IImage[]>;
-  findFilesByIds(ids: string[]): Promise<IFile[]>;
-  findVideosByIds(ids: string[]): Promise<IVideo[]>;
+  findImagesByIds(ids: string[]): Promise<Image[]>;
+  findFilesByIds(ids: string[]): Promise<File[]>;
+  findVideosByIds(ids: string[]): Promise<Video[]>;
 }
 
 export const MEDIA_SERVICE_TOKEN = 'MEDIA_SERVICE_TOKEN';

@@ -4,10 +4,13 @@ import {
   CursorPaginationResult,
   CursorPaginator,
 } from '@libs/database/postgres/common';
-import { CommentReactionModel } from '@libs/database/postgres/model/comment-reaction.model';
-import { CommentAttributes, CommentModel } from '@libs/database/postgres/model/comment.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
-import { UserDto } from '@libs/service/user';
+import {
+  CommentAttributes,
+  CommentModel,
+  CommentReactionModel,
+  ReportContentDetailModel,
+} from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { concat } from 'lodash';
@@ -18,23 +21,22 @@ import {
   GetAroundCommentProps,
   GetAroundCommentResult,
   GetPaginationCommentProps,
-  ILibCommentRepository,
 } from './interface';
 
 @Injectable()
-export class LibCommentRepository implements ILibCommentRepository {
+export class LibCommentRepository extends BaseRepository<CommentModel> {
   public constructor(
-    @InjectModel(CommentModel)
-    private readonly _commentModel: typeof CommentModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
-  ) {}
+  ) {
+    super(CommentModel);
+  }
 
   public async getPagination(
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentModel>> {
-    const { authUserId, limit, order, postId, parentId, before, after } = input;
+    const { authUserId, limit, order, contentId, parentId, before, after } = input;
     const findOptions: FindOptions = {
       include: [
         authUserId
@@ -51,7 +53,7 @@ export class LibCommentRepository implements ILibCommentRepository {
           : {},
       ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
       where: {
-        postId: postId,
+        postId: contentId,
         parentId: parentId,
         isHidden: false,
         ...(authUserId && {
@@ -66,7 +68,7 @@ export class LibCommentRepository implements ILibCommentRepository {
     };
 
     const paginator = new CursorPaginator(
-      this._commentModel,
+      this.model,
       ['createdAt'],
       { before, after, limit },
       order
@@ -88,16 +90,32 @@ export class LibCommentRepository implements ILibCommentRepository {
     const first = Math.ceil(limitExcludeTarget / 2);
     const last = limitExcludeTarget - first;
 
-    const targetComment = await this._commentModel.findByPk(commentId);
+    const targetComment = await this.first({
+      where: { id: commentId },
+      include: [
+        {
+          model: CommentReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          on: {
+            [Op.and]: {
+              comment_id: { [Op.eq]: col(`CommentModel.id`) },
+              created_by: props?.authUserId,
+            },
+          },
+        },
+      ],
+    });
+
     const cursor = createCursor({ createdAt: targetComment.get('createdAt') });
-    const postId = targetComment.get('postId');
+    const contentId = targetComment.get('postId');
     const parentId = targetComment.get('parentId');
 
     const soonerCommentsQuery = this.getPagination({
       ...props,
       limit: first,
       after: cursor,
-      postId,
+      contentId,
       parentId,
     });
 
@@ -105,7 +123,7 @@ export class LibCommentRepository implements ILibCommentRepository {
       ...props,
       limit: last,
       before: cursor,
-      postId,
+      contentId,
       parentId,
     });
 
@@ -126,34 +144,6 @@ export class LibCommentRepository implements ILibCommentRepository {
     const targetIndex = rows.length - (soonerComment.rows?.length || 0) - 1;
 
     return { rows, meta, targetIndex };
-  }
-
-  public async findComment(id: string, authUser: UserDto): Promise<CommentModel> {
-    const findOptions: FindOptions = {
-      include: [
-        authUser
-          ? {
-              model: CommentReactionModel,
-              as: 'ownerReactions',
-              on: {
-                [Op.and]: {
-                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUser.id,
-                },
-              },
-            }
-          : {},
-      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
-      where: {
-        id,
-        isHidden: false,
-      },
-    };
-    return this._commentModel.findOne(findOptions);
-  }
-
-  public async createComment(data: CommentAttributes): Promise<CommentModel> {
-    return this._commentModel.create(data);
   }
 
   public async findOne(
@@ -178,35 +168,14 @@ export class LibCommentRepository implements ILibCommentRepository {
         ],
       };
     }
-    if (options?.includeOwnerReactions) {
-      findOptions.include = [
-        {
-          model: CommentReactionModel,
-          as: 'ownerReactions',
-          on: {
-            [Op.and]: {
-              comment_id: { [Op.eq]: col(`CommentModel.id`) },
-              created_by: options?.includeOwnerReactions,
-            },
-          },
-        },
-      ];
-    }
 
-    return this._commentModel.findOne(findOptions);
-  }
+    findOptions.include = this._buildIncludeOptions(options);
 
-  public async update(commentId: string, attributes: Partial<CommentAttributes>): Promise<void> {
-    await this._commentModel.update(attributes, {
-      where: {
-        id: commentId,
-      },
-    });
+    return this.model.findOne(findOptions);
   }
 
   public async destroyComment(id: string): Promise<void> {
-    const comment = await this._commentModel.findOne({ where: { id } });
-    const childComments = await this._commentModel.findAll({
+    const childComments = await this.model.findAll({
       attributes: ['id'],
       where: {
         parentId: id,
@@ -221,18 +190,68 @@ export class LibCommentRepository implements ILibCommentRepository {
         },
         transaction: transaction,
       });
-      await this._commentModel.destroy({
+
+      await this.delete({
         where: {
           parentId: id,
         },
         individualHooks: true,
         transaction: transaction,
       });
-      await comment.destroy({ transaction });
+
+      await this.delete({
+        where: {
+          id,
+        },
+        transaction: transaction,
+      });
+
       await transaction.commit();
     } catch (e) {
       await transaction.rollback();
       throw e;
     }
+  }
+
+  private _buildIncludeOptions(options: FindOneOptions): Includeable[] {
+    const includeable: Includeable[] = [];
+
+    if (options?.includeOwnerReactions) {
+      includeable.push({
+        model: CommentReactionModel,
+        as: 'ownerReactions',
+        on: {
+          [Op.and]: {
+            comment_id: { [Op.eq]: col(`CommentModel.id`) },
+            created_by: options?.includeOwnerReactions,
+          },
+        },
+      });
+    }
+
+    if (options?.includeChildComments) {
+      includeable.push({
+        model: CommentModel,
+        as: 'child',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: options.includeChildComments.childCommentId,
+          },
+          createdAt: {
+            [Op.lte]: Sequelize.literal(
+              `(SELECT created_at FROM ${CommentModel.getTableName()} WHERE id = '${
+                options.includeChildComments.childCommentId
+              }')`
+            ),
+          },
+        },
+
+        limit: 100,
+        order: [['createdAt', 'DESC']],
+      });
+    }
+
+    return includeable;
   }
 }

@@ -1,45 +1,35 @@
-import {
-  LIB_CONTENT_REPOSITORY_TOKEN,
-  LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-  LIB_QUIZ_REPOSITORY_TOKEN,
-} from '@libs/database/postgres';
-import { LibContentRepository } from '@libs/database/postgres/repository/content.repository';
-import { LibQuizParticipantRepository } from '@libs/database/postgres/repository/quiz-participant.repository';
-import { LibQuizRepository } from '@libs/database/postgres/repository/quiz.repository';
-
-import { ContentBinding } from '../application/binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
+import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessArticleDeletedHandler,
-  ProcessArticlePublishedHandler,
-  ProcessArticleUpdatedHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
 } from '../application/command/article';
 import {
   MarkReadImportantContentHandler,
-  UpdateContentSettingHandler,
+  PinContentHandler,
   ProcessScheduledContentPublishingHandler,
+  ReorderPinnedContentHandler,
+  SeenContentHandler,
+  SaveContentHandler,
+  UpdateContentSettingHandler,
 } from '../application/command/content';
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
+  DeletePostHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
 } from '../application/command/post';
 import {
+  AddSeriesItemsHandler,
   CreateSeriesHandler,
   DeleteSeriesHandler,
-  ProcessSeriesDeletedHandler,
-  ProcessSeriesPublishedHandler,
-  ProcessSeriesUpdatedHandler,
+  RemoveSeriesItemsHandler,
+  ReorderSeriesItemsHandler,
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
@@ -49,39 +39,45 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
+import { ContentHasSeenEventHandler } from '../application/event-handler/content';
 import {
+  PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
+  PostUpdatedEventHandler,
 } from '../application/event-handler/post';
-import {
-  SeriesCreatedEventHandler,
-  SeriesUpdatedEventHandler,
-  SeriesDeletedEventHandler,
-} from '../application/event-handler/series';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
-  GetSeriesInContentHandler,
   FindTimelineGroupHandler,
   GetMenuSettingsHandler,
+  GetSeriesInContentHandler,
+  GetTotalDraftHandler,
   SearchContentsHandler,
+  FindPinnedContentHandler,
+  GetContentAudienceHandler,
 } from '../application/query/content';
 import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
-import { FindItemsBySeriesHandler, FindSeriesHandler } from '../application/query/series';
+import {
+  FindItemsBySeriesHandler,
+  FindSeriesHandler,
+  SearchContentsBySeriesHandler,
+  SearchSeriesHandler,
+} from '../application/query/series';
 import { SearchTagsHandler } from '../application/query/tag';
 import { ArticleDomainService } from '../domain/domain-service/article.domain-service';
 import { ContentDomainService } from '../domain/domain-service/content.domain-service';
 import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
   ARTICLE_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
-import { PostFactory, ArticleFactory, SeriesFactory } from '../domain/factory';
+import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
 import {
   ARTICLE_FACTORY_TOKEN,
   POST_FACTORY_TOKEN,
@@ -91,8 +87,8 @@ import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
 import {
-  CONTENT_VALIDATOR_TOKEN,
   ARTICLE_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
   POST_VALIDATOR_TOKEN,
 } from '../domain/validator/interface';
@@ -102,7 +98,7 @@ import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
-import { ContentRepository } from '../driven-adapter/repository/content.repository';
+import { ContentRepository } from '../driven-adapter/repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
@@ -116,12 +112,13 @@ export const postProvider = [
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
+
   PostPublishedEventHandler,
   PostScheduledEventHandler,
-  SeriesCreatedEventHandler,
-  SeriesUpdatedEventHandler,
-  SeriesDeletedEventHandler,
+  PostDeletedEventHandler,
+  PostUpdatedEventHandler,
 
+  ContentHasSeenEventHandler,
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -132,27 +129,30 @@ export const postProvider = [
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessArticleDeletedHandler,
-  ProcessArticlePublishedHandler,
-  ProcessArticleUpdatedHandler,
   ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
+
   MarkReadImportantContentHandler,
   UpdateContentSettingHandler,
+  ReorderPinnedContentHandler,
+  SeenContentHandler,
+  PinContentHandler,
+  SaveContentHandler,
+
   AutoSavePostHandler,
   CreateDraftPostHandler,
-  ProcessPostPublishedHandler,
-  ProcessPostUpdatedHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  DeletePostHandler,
+
   CreateSeriesHandler,
   DeleteSeriesHandler,
-  ProcessSeriesDeletedHandler,
-  ProcessSeriesPublishedHandler,
-  ProcessSeriesUpdatedHandler,
+  AddSeriesItemsHandler,
+  RemoveSeriesItemsHandler,
+  ReorderSeriesItemsHandler,
   UpdateSeriesHandler,
   ValidateSeriesTagsHandler,
 
@@ -169,7 +169,12 @@ export const postProvider = [
   FindItemsBySeriesHandler,
   FindSeriesHandler,
   SearchTagsHandler,
+  GetTotalDraftHandler,
   GetSeriesInContentHandler,
+  FindPinnedContentHandler,
+  SearchSeriesHandler,
+  GetContentAudienceHandler,
+  SearchContentsBySeriesHandler,
 
   /** Domain Service */
   {
@@ -226,24 +231,9 @@ export const postProvider = [
   QuizParticipantMapper,
   QuizQuestionMapper,
   QuizMapper,
-
   /** Driven Repository */
   {
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
-  },
-
-  /** Library Repository */
-  {
-    provide: LIB_CONTENT_REPOSITORY_TOKEN,
-    useClass: LibContentRepository,
-  },
-  {
-    provide: LIB_QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-    useClass: LibQuizParticipantRepository,
-  },
-  {
-    provide: LIB_QUIZ_REPOSITORY_TOKEN,
-    useClass: LibQuizRepository,
   },
 ];

@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TYPE, IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 
 import { MediaType } from '../../../database/models/media.model';
 import { PostType } from '../../../database/models/post.model';
@@ -7,6 +7,10 @@ export interface ICoverMedia {
   id: string;
   createdBy: string;
   url: string;
+  source: string;
+  resource: IMAGE_RESOURCE;
+  mimeType: string;
+  status: MEDIA_PROCESS_STATUS;
   createdAt: Date;
   name: string;
   originName: string;

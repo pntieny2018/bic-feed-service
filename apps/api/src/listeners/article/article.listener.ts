@@ -5,25 +5,17 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
 import { PostStatus } from '../../database/models/post.model';
-import {
-  ArticleHasBeenDeletedEvent,
-  ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent,
-} from '../../events/article';
+import { ArticleHasBeenPublishedEvent, ArticleHasBeenUpdatedEvent } from '../../events/article';
 import {
   SeriesAddedItemsEvent,
   SeriesChangedItemsEvent,
   SeriesRemovedItemsEvent,
 } from '../../events/series';
-import { ArticleService } from '../../modules/article/article.service';
 import { FeedService } from '../../modules/feed/feed.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
-import { MediaService } from '../../modules/media';
 import { SeriesSimpleResponseDto } from '../../modules/post/dto/responses';
-import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
-import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
 import { ISeriesState, PostActivityService } from '../../notification/activities';
@@ -36,98 +28,13 @@ export class ArticleListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postService: PostService,
-    private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
-    private readonly _seriesService: SeriesService,
     private readonly _tagService: TagService,
-    private readonly _articleService: ArticleService,
-    private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
-
-  @On(ArticleHasBeenDeletedEvent)
-  public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
-    const { article, actor } = event.payload;
-    if (article.status !== PostStatus.PUBLISHED) {
-      return;
-    }
-
-    this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
-      this._logger.error(JSON.stringify(e?.stack));
-      this._sentryService.captureException(e);
-    });
-
-    this._postSearchService.deletePostsToSearch([article]).catch((e) => {
-      this._logger.error(JSON.stringify(e?.stack));
-      this._sentryService.captureException(e);
-    });
-
-    this._tagService
-      .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
-      .catch((ex) => this._logger.debug(ex));
-
-    const activity = this._postActivityService.createPayload({
-      actor: {
-        id: article.createdBy,
-        username: 'unused',
-        email: 'unused',
-        avatar: 'unused',
-        fullname: 'unused',
-      },
-      title: article.title,
-      content: article.content,
-      contentType: article.type,
-      createdAt: article.createdAt,
-      setting: {
-        canComment: article.canComment,
-        canReact: article.canReact,
-        isImportant: article.isImportant,
-      },
-      id: article.id,
-      audience: {
-        groups: (article?.groups ?? []).map((g) => ({
-          id: g.groupId,
-        })) as any,
-      },
-    });
-
-    await this._notificationService.publishPostNotification({
-      key: `${article.id}`,
-      value: {
-        actor: {
-          id: article.createdBy,
-        },
-        event: event.getEventName(),
-        data: activity,
-      },
-    });
-
-    const seriesIds = article['postSeries'].map((series) => series.seriesId) ?? [];
-    for (const seriesId of seriesIds) {
-      this._internalEventEmitter.emit(
-        new SeriesRemovedItemsEvent({
-          items: [
-            {
-              id: article.id,
-              title: article.title,
-              content: article.content,
-              type: article.type,
-              createdBy: article.createdBy,
-              groupIds: article.groups.map((group) => group.groupId),
-              createdAt: article.createdAt,
-              updatedAt: article.updatedAt,
-            },
-          ],
-          seriesId: seriesId,
-          actor,
-          contentIsDeleted: true,
-        })
-      );
-    }
-  }
 
   @On(ArticleHasBeenPublishedEvent)
   public async onArticlePublished(event: ArticleHasBeenPublishedEvent): Promise<void> {

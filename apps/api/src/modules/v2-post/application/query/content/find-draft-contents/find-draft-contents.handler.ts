@@ -5,10 +5,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { FindDraftContentsDto } from '../../../dto';
 
 import { FindDraftContentsQuery } from './find-draft-contents.query';
@@ -27,7 +24,7 @@ export class FindDraftContentsHandler
   public async execute(query: FindDraftContentsQuery): Promise<FindDraftContentsDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._contentDomainService.getDraftsPagination({
+    const { rows, meta } = await this._contentDomainService.getDraftIdsPagination({
       ...query.payload,
       authUserId: authUser.id,
     });
@@ -36,11 +33,7 @@ export class FindDraftContentsHandler
       return new FindDraftContentsDto([], meta);
     }
 
-    const contentIds = rows.map((row) => row.getId());
-    const contentEntities = await this._contentDomainService.getContentByIds({
-      ids: contentIds,
-      authUserId: authUser.id,
-    });
+    const contentEntities = await this._contentDomainService.getDraftContentByIds(rows);
 
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 

@@ -40,6 +40,10 @@ export class PaginatedArgs implements IPaginationArgs {
 }
 
 export class PaginatedInfo implements IPaginatedInfo {
+  @IsOptional()
+  @ApiPropertyOptional()
+  public total?: number;
+
   @ApiProperty()
   @IsOptional()
   public startCursor?: string;

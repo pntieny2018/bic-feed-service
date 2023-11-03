@@ -1,6 +1,9 @@
+import { CONTENT_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -12,17 +15,16 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ROUTES } from 'apps/api/src/common/constants/routes.constant';
 import { plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { PostStatus } from '../../../../database/models/post.model';
-import { UserDto } from '../../../v2-user/application';
 import {
   AutoSavePostCommand,
   CreateDraftPostCommand,
+  DeletePostCommand,
   PublishPostCommand,
   SchedulePostCommand,
   UpdatePostCommand,
@@ -77,28 +79,21 @@ export class PostController {
     @Body() updatePostRequestDto: UpdatePostRequestDto,
     @Req() req: Request
   ): Promise<PostDto> {
-    const { audience, tags, series, mentions, media } = updatePostRequestDto;
+    const { audience, tags, series, mentions } = updatePostRequestDto;
 
     const data = await this._commandBus.execute<UpdatePostCommand, PostDto>(
       new UpdatePostCommand({
         ...updatePostRequestDto,
-        id: postId,
         mentionUserIds: mentions,
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
+        id: postId,
         authUser,
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -127,7 +122,7 @@ export class PostController {
       })
     );
 
-    if (data.status === PostStatus.PROCESSING) {
+    if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
 
@@ -144,7 +139,7 @@ export class PostController {
     @AuthUser() authUser: UserDto,
     @Body() autoSavePostRequestDto: AutoSavePostRequestDto
   ): Promise<void> {
-    const { audience, tags, series, mentions, media } = autoSavePostRequestDto;
+    const { audience, tags, series, mentions } = autoSavePostRequestDto;
     return this._commandBus.execute<AutoSavePostCommand, void>(
       new AutoSavePostCommand({
         ...autoSavePostRequestDto,
@@ -153,13 +148,6 @@ export class PostController {
         groupIds: audience?.groupIds,
         tagIds: tags,
         seriesIds: series,
-        media: media
-          ? {
-              filesIds: media?.files.map((file) => file.id),
-              imagesIds: media?.images.map((image) => image.id),
-              videosIds: media?.videos.map((video) => video.id),
-            }
-          : undefined,
         authUser,
       })
     );
@@ -201,5 +189,18 @@ export class PostController {
         actor: user,
       })
     );
+  }
+
+  @ApiOperation({ summary: 'Delete post' })
+  @ResponseMessages({
+    success: 'message.post.deleted_success',
+  })
+  @Delete(ROUTES.POST.DELETE.PATH)
+  @Version(ROUTES.POST.DELETE.VERSIONS)
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<void> {
+    await this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
   }
 }

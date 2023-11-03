@@ -1,32 +1,65 @@
 import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { GetPaginationContentsProps } from '@libs/database/postgres';
 import {
-  CursorPaginationResult,
   createCursor,
+  CursorPaginationResult,
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
-import { Inject } from '@nestjs/common';
+import { UserDto } from '@libs/service/user';
+import { Inject, Logger } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
+import { uniq } from 'lodash';
 
 import { StringHelper } from '../../../../common/helpers';
-import { ContentAccessDeniedException, ContentNotFoundException } from '../exception';
-import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../model/content';
+import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
+import {
+  AudienceNoBelongContentException,
+  ContentAccessDeniedException,
+  ContentNotFoundException,
+  ContentPinLackException,
+  ContentPinNotFoundException,
+} from '../exception';
+import { ArticleEntity, ContentEntity, PostEntity, SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
+  IPostValidator,
+  POST_VALIDATOR_TOKEN,
+} from '../validator/interface';
 
 import {
+  GetAudiencesProps,
   GetContentByIdsProps,
   GetContentIdsInNewsFeedProps,
   GetContentIdsInTimelineProps,
   GetContentIdsScheduleProps,
   GetDraftsProps,
   GetImportantContentIdsProps,
+  GetPostsSaved,
   GetScheduledContentProps,
+  GroupAudience,
   IContentDomainService,
+  PinContentProps,
+  ReorderContentProps,
+  UpdateSettingsProps,
 } from './interface';
 
 export class ContentDomainService implements IContentDomainService {
+  private readonly _logger = new Logger(ContentDomainService.name);
+
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository
+    private readonly _contentRepository: IContentRepository,
+    @Inject(POST_VALIDATOR_TOKEN)
+    private readonly _postValidator: IPostValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    private readonly _authorityAppService: IAuthorityAppService
   ) {}
 
   public async getVisibleContent(
@@ -63,11 +96,11 @@ export class ContentDomainService implements IContentDomainService {
     return null;
   }
 
-  public async getDraftsPagination(
+  public async getDraftIdsPagination(
     input: GetDraftsProps
-  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
+  ): Promise<CursorPaginationResult<string>> {
     const { authUserId, isProcessing, type } = input;
-    return this._contentRepository.getPagination({
+    const { rows, meta } = await this._contentRepository.getPagination({
       ...input,
       where: {
         createdBy: authUserId,
@@ -83,12 +116,20 @@ export class ContentDomainService implements IContentDomainService {
         exclude: ['content'],
       },
     });
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta,
+    };
   }
 
   public async getContentByIds(
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const { ids, authUserId } = input;
+    if (!ids.length) {
+      return [];
+    }
     const contentEntities = await this._contentRepository.findAll({
       where: {
         ids,
@@ -132,19 +173,20 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
+    if (isSaved) {
+      return this.getContentsSaved({ ...props, isOnNewsfeed: true });
+    }
+
     const { rows, meta } = await this._contentRepository.getPagination({
-      attributes: {
-        exclude: ['content'],
-      },
+      select: ['id'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
         inNewsfeedUserId: authUserId,
         groupArchived: false,
         excludeReportedByUserId: authUserId,
-        createdBy: isMine ? authUserId : undefined,
-        savedByUserId: isSaved ? authUserId : undefined,
         type,
+        createdBy: isMine ? authUserId : undefined,
       },
       limit,
       order,
@@ -179,6 +221,10 @@ export class ContentDomainService implements IContentDomainService {
 
     if (isImportant) {
       return this.getImportantContentIds(props);
+    }
+
+    if (isSaved) {
+      return this.getContentsSaved({ ...props });
     }
 
     const { rows, meta } = await this._contentRepository.getPagination({
@@ -231,35 +277,33 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    return this._contentRepository.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId,
-        },
+    return this._contentRepository.findContentByIdInActiveGroup(contentId, {
+      shouldIncludeGroup: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeSaved: {
+        userId,
       },
     });
   }
 
   public async getReportedContentIdsByUser(
     reportUser: string,
-    postTypes?: CONTENT_TYPE[]
+    options?: {
+      postTypes?: CONTENT_TYPE[];
+      groupIds?: string[];
+    }
   ): Promise<string[]> {
-    if (!postTypes) {
-      return this._contentRepository.getReportedContentIdsByUser(reportUser, [
-        CONTENT_TARGET.ARTICLE,
-        CONTENT_TARGET.POST,
-      ]);
+    if (!options) {
+      return this._contentRepository.getReportedContentIdsByUser({
+        reportUser,
+        target: [CONTENT_TARGET.ARTICLE, CONTENT_TARGET.POST],
+      });
     }
 
+    const { postTypes = [], groupIds } = options;
     const target: CONTENT_TARGET[] = [];
     if (postTypes.includes(CONTENT_TYPE.POST)) {
       target.push(CONTENT_TARGET.POST);
@@ -268,29 +312,41 @@ export class ContentDomainService implements IContentDomainService {
       target.push(CONTENT_TARGET.ARTICLE);
     }
 
-    return this._contentRepository.getReportedContentIdsByUser(reportUser, target);
+    return this._contentRepository.getReportedContentIdsByUser({ reportUser, target, groupIds });
   }
 
   public async getScheduleContentIds(
     params: GetContentIdsScheduleProps
   ): Promise<CursorPaginationResult<string>> {
-    const { user, limit, before, after, type, order } = params;
-
-    const { rows, meta } = await this._contentRepository.getPagination({
+    const { userId, groupId, limit, before, after, type, order } = params;
+    const findOption: GetPaginationContentsProps = {
       where: {
-        createdBy: user.id,
         type,
         statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
       },
       orderOptions: {
         sortColumn: 'scheduledAt',
         orderBy: order,
+        createdAtDesc: true,
       },
       limit,
       before,
       after,
       order,
-    });
+    };
+
+    if (userId) {
+      findOption.where.createdBy = userId;
+    }
+
+    if (groupId) {
+      findOption.where.groupIds = [groupId];
+      findOption.include = {
+        mustIncludeGroup: true,
+      };
+    }
+
+    const { rows, meta } = await this._contentRepository.getPagination(findOption);
 
     return {
       rows: rows.map((row) => row.getId()),
@@ -301,7 +357,7 @@ export class ContentDomainService implements IContentDomainService {
   public async getImportantContentIds(
     props: GetImportantContentIdsProps
   ): Promise<CursorPaginationResult<string>> {
-    const { authUserId, isOnNewsfeed, groupIds, isMine, type, isSaved, limit, after } = props;
+    const { authUserId, isOnNewsfeed, groupIds, type, limit, after } = props;
     const offset = getLimitFromAfter(after);
 
     const rows = await this._contentRepository.findAll(
@@ -317,8 +373,6 @@ export class ContentDomainService implements IContentDomainService {
           groupArchived: false,
           status: CONTENT_STATUS.PUBLISHED,
           excludeReportedByUserId: authUserId,
-          createdBy: isMine ? authUserId : undefined,
-          savedByUserId: isSaved ? authUserId : undefined,
           inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
         },
         include: {
@@ -332,6 +386,54 @@ export class ContentDomainService implements IContentDomainService {
         orderOptions: {
           isImportantFirst: true,
           isPublishedByDesc: true,
+        },
+      },
+      {
+        offset,
+        limit: limit + 1,
+      }
+    );
+
+    const hasMore = rows.length > limit;
+
+    if (hasMore) {
+      rows.pop();
+    }
+
+    return {
+      rows: rows.map((row) => row.getId()),
+      meta: {
+        hasNextPage: hasMore,
+        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
+      },
+    };
+  }
+
+  public async getContentsSaved(props: GetPostsSaved): Promise<CursorPaginationResult<string>> {
+    const { authUserId, isOnNewsfeed, groupIds, type, limit, after } = props;
+    const offset = getLimitFromAfter(after);
+
+    const rows = await this._contentRepository.findAll(
+      {
+        attributes: {
+          exclude: ['content'],
+        },
+        where: {
+          type,
+          groupIds,
+          isHidden: false,
+          groupArchived: false,
+          status: CONTENT_STATUS.PUBLISHED,
+          excludeReportedByUserId: authUserId,
+          inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
+        },
+        include: {
+          mustIncludeSaved: {
+            userId: authUserId,
+          },
+        },
+        orderOptions: {
+          isSavedDateByDesc: true,
         },
       },
       {
@@ -389,5 +491,249 @@ export class ContentDomainService implements IContentDomainService {
     })) as SeriesEntity[];
 
     return seriesEntites;
+  }
+
+  public async updateSetting(props: UpdateSettingsProps): Promise<void> {
+    const { contentId, authUser, canReact, canComment, isImportant, importantExpiredAt } = props;
+
+    const contentEntity: ContentEntity = await this._contentRepository.findContentByIdInActiveGroup(
+      contentId,
+      {
+        shouldIncludeGroup: true,
+      }
+    );
+    if (!contentEntity || contentEntity.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    await this._postValidator.checkCanEditContentSetting(authUser, contentEntity.get('groupIds'));
+    contentEntity.setSetting({
+      canComment,
+      canReact,
+      isImportant,
+      importantExpiredAt,
+    });
+    await this._contentRepository.update(contentEntity);
+
+    if (isImportant) {
+      await this._contentRepository.markReadImportant(contentId, authUser.id);
+    }
+  }
+
+  public async markSeen(contentId: string, userId: string): Promise<void> {
+    const hasSeen = await this._contentRepository.hasSeen(contentId, userId);
+    if (hasSeen) {
+      return;
+    }
+    return this._contentRepository.markSeen(contentId, userId);
+  }
+
+  public async markReadImportant(contentId: string, userId: string): Promise<void> {
+    const contentEntity = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+      },
+    });
+    if (!contentEntity || contentEntity.isHidden()) {
+      return;
+    }
+    if (contentEntity.isDraft()) {
+      return;
+    }
+    if (!contentEntity.isImportant()) {
+      return;
+    }
+
+    return this._contentRepository.markReadImportant(contentId, userId);
+  }
+
+  public async reorderPinned(props: ReorderContentProps): Promise<void> {
+    const { authUser, contentIds, groupId } = props;
+
+    await this._contentValidator.checkCanPinContent(authUser, [groupId]);
+    const pinnedContentIds = await this._contentRepository.findPinnedContentIdsByGroupId(groupId);
+    if (pinnedContentIds.length === 0) {
+      throw new ContentPinNotFoundException();
+    }
+
+    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
+      reportUser: authUser.id,
+      groupIds: [groupId],
+    });
+
+    const reportedContentIdsInPinned = pinnedContentIds.filter((id) => {
+      return reportedContentIds.includes(id);
+    });
+
+    const pinnedContentIdsExcludeReported = pinnedContentIds.filter((id) => {
+      return !reportedContentIds.includes(id);
+    });
+
+    const contentIdsNotBelong = contentIds.filter(
+      (contentId) => !pinnedContentIdsExcludeReported.includes(contentId)
+    );
+    if (contentIdsNotBelong.length > 0) {
+      throw new ContentPinNotFoundException(null, { contentsDenied: contentIdsNotBelong });
+    }
+
+    const contentIdsNotFound = pinnedContentIdsExcludeReported.filter(
+      (contentId) => !contentIds.includes(contentId)
+    );
+    if (contentIdsNotFound.length > 0) {
+      throw new ContentPinLackException(null, { contentsLacked: contentIdsNotFound });
+    }
+
+    // get index of each reportedContentIds in pinnedContentIds
+    const reportedContentIdsIndexInPinned = reportedContentIdsInPinned.map((id) => {
+      return pinnedContentIdsExcludeReported.indexOf(id);
+    });
+
+    reportedContentIdsInPinned.forEach((id, index) => {
+      // insert id into contentIds at index reportedContentIdsIndexInPinned[index]
+      contentIds.splice(reportedContentIdsIndexInPinned[index], 0, id);
+    });
+
+    return this._contentRepository.reorderPinnedContent(contentIds, groupId);
+  }
+
+  public async findPinnedOrder(
+    groupId: string,
+    userId: string
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const contentIds = await this._contentRepository.findPinnedContentIdsByGroupId(groupId);
+    if (contentIds.length === 0) {
+      return [];
+    }
+    const reportedContentIds = await this._contentRepository.getReportedContentIdsByUser({
+      reportUser: userId,
+      groupIds: [groupId],
+    });
+
+    const pinnedContentIds = contentIds.filter((id) => {
+      return !reportedContentIds.includes(id);
+    });
+
+    return this.getContentByIds({
+      authUserId: userId,
+      ids: pinnedContentIds,
+    });
+  }
+
+  public async updatePinnedContent(props: PinContentProps): Promise<void> {
+    const { authUser, contentId, unpinGroupIds, pinGroupIds } = props;
+
+    const content = await this._contentRepository.findOne({
+      where: {
+        id: contentId,
+        isHidden: false,
+        groupArchived: false,
+      },
+      include: {
+        mustIncludeGroup: true,
+      },
+    });
+
+    if (!content) {
+      throw new ContentNotFoundException();
+    }
+
+    const postGroups = content.getPostGroups();
+    const currentGroupIds = content.getGroupIds();
+    const currentPinGroupIds = [];
+    const currentUnpinGroupIds = [];
+
+    for (const postGroup of postGroups) {
+      if (postGroup.isPinned) {
+        currentPinGroupIds.push(postGroup.groupId);
+      }
+      if (!postGroup.isPinned) {
+        currentUnpinGroupIds.push(postGroup.groupId);
+      }
+    }
+
+    const newGroupIdsPinAndUnpin = uniq([...unpinGroupIds, ...pinGroupIds]);
+
+    const groupIdsNotBelong = newGroupIdsPinAndUnpin.every((groupId) =>
+      currentGroupIds.includes(groupId)
+    );
+
+    if (!groupIdsNotBelong) {
+      throw new AudienceNoBelongContentException();
+    }
+
+    await this._contentValidator.checkCanPinContent(authUser, newGroupIdsPinAndUnpin);
+
+    const addPinGroupIds = pinGroupIds.filter((groupId) => !currentPinGroupIds.includes(groupId));
+    const addUnpinGroupIds = unpinGroupIds.filter(
+      (groupId) => !currentUnpinGroupIds.includes(groupId)
+    );
+
+    await this._contentRepository.pinContent(contentId, addPinGroupIds);
+    await this._contentRepository.unpinContent(contentId, addUnpinGroupIds);
+  }
+
+  public async getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(props.contentId, {
+      mustIncludeGroup: true,
+    });
+
+    if (!content || content.isHidden()) {
+      throw new ContentNotFoundException();
+    }
+
+    const groups = content.getPostGroups();
+    const listPinnedContentIds = {};
+    const groupIds = [];
+    groups.forEach((group) => {
+      groupIds.push(group.groupId);
+      listPinnedContentIds[group.groupId] = group.isPinned;
+    });
+
+    let dataGroups = await this._groupAdapter.getGroupsByIds(groupIds);
+
+    if (props.pinnable) {
+      await this._authorityAppService.buildAbility(props.authUser);
+      dataGroups = dataGroups.filter((group) =>
+        this._authorityAppService.canPinContent([group.id])
+      );
+    }
+
+    return dataGroups.map(
+      (group): GroupAudience => ({
+        id: group.id,
+        name: group.name,
+        isPinned: listPinnedContentIds[group.id],
+      })
+    );
+  }
+
+  public async saveContent(contentId: string, authUser: UserDto): Promise<void> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(contentId);
+
+    if (!content || !content.isPublished()) {
+      throw new ContentNotFoundException();
+    }
+
+    return this._contentRepository.saveContent(authUser.id, contentId);
+  }
+
+  public async getDraftContentByIds(
+    ids: string[]
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    if (!ids.length) {
+      return [];
+    }
+    const contentEntities = await this._contentRepository.findAll({
+      where: {
+        ids,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeCategory: true,
+        shouldIncludeLinkPreview: true,
+      },
+    });
+
+    return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
   }
 }

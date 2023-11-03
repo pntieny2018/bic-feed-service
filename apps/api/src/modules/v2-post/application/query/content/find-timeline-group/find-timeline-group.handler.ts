@@ -9,11 +9,8 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
-import { FindTimelineGroupDto } from '../../../dto/timeline.dto';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
+import { FindTimelineGroupDto } from '../../../dto';
 
 import { FindTimelineGroupQuery } from './find-timeline-group.query';
 

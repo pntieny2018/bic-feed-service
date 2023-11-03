@@ -36,10 +36,8 @@ export class ProcessScheduledContentPublishingHandler
     const { id, actorId } = command.payload;
 
     const contentEntity = await this._contentRepository.getContentById(id);
-    const actor = await this._userAdapter.getUserById(actorId, {
-      withPermission: true,
-      withGroupJoined: true,
-    });
+    const actor = await this._userAdapter.getUserByIdWithPermission(actorId);
+
     if (!actor) {
       throw new DomainNotFoundException('User not found');
     }
@@ -51,10 +49,11 @@ export class ProcessScheduledContentPublishingHandler
           break;
         }
 
-        case CONTENT_TYPE.POST: {
-          await this._postDomainService.publish({ payload: { id }, actor });
-        }
-
+        case CONTENT_TYPE.POST:
+          {
+            await this._postDomainService.publish({ payload: { id }, actor });
+          }
+          break;
         default:
           break;
       }

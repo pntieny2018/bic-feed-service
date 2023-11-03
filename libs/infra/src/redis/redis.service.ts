@@ -1,3 +1,4 @@
+import { StringHelper } from '@libs/common/helpers';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 
@@ -35,10 +36,26 @@ export class RedisService {
     const result = await this._store.get(key);
     this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'GET', key, result })}`);
     try {
-      return JSON.parse(result) as unknown as T;
+      return StringHelper.isJson(result) ? (JSON.parse(result) as T) : (result as unknown as T);
     } catch (e) {
       return null;
     }
+  }
+
+  public async hgetall<T>(key: string): Promise<T> {
+    const result = await this._store.hgetall(key);
+    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'HGETALL', key, result })}`);
+    try {
+      return result as unknown as T;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  public async getSets(key: string): Promise<string[]> {
+    const result = await this._store.smembers(key);
+    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'SMEMBERS', key, result })}`);
+    return result;
   }
 
   public async mget(keys: string[]): Promise<any> {
@@ -48,7 +65,11 @@ export class RedisService {
     const result = await this._store.mget(keys);
     this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'MGET', keys, result })}`);
     try {
-      return result.map((r) => JSON.parse(r)).filter((r) => !!r);
+      return result
+        .map((r) => {
+          return StringHelper.isJson(r) ? JSON.parse(r) : r;
+        })
+        .filter((r) => !!r);
     } catch (e) {
       return [];
     }
@@ -66,5 +87,9 @@ export class RedisService {
 
   public async keys(pattern: string): Promise<string[]> {
     return await this._store.keys(pattern);
+  }
+
+  public async existKey(key: string): Promise<boolean> {
+    return (await this._store.exists(key)) === 1;
   }
 }

@@ -1,4 +1,5 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BooleanHelper } from 'apps/api/src/common/helpers';
 import { Expose, Transform, Type } from 'class-transformer';
@@ -13,8 +14,6 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
-
-import { PaginatedArgs } from '../../../../../common/dto';
 
 import { PublishArticleRequestDto } from './article.request.dto';
 
@@ -37,7 +36,7 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
   public type?: CONTENT_TYPE;
 }
 
-export class SearchContentsRequestDto {
+export class SearchContentsRequestDto extends PaginatedArgs {
   @ApiPropertyOptional({ description: 'List of creator' })
   @IsOptional()
   @IsNotEmpty()
@@ -148,6 +147,31 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
   @IsOptional()
   @IsEnum([CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST])
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
+
+  @ApiPropertyOptional({
+    description: 'Filter by creator',
+    type: Boolean,
+  })
+  @IsNotEmpty()
+  @Type(() => Boolean)
+  @ValidateIf((input) => input.groupId == undefined)
+  @Expose({
+    name: 'is_mine',
+  })
+  public isMine?: boolean;
+
+  @ApiProperty({
+    type: String,
+    example: '40dc4093-1bd0-4105-869f-8504e1986145',
+    name: 'group_id',
+  })
+  @IsNotEmpty()
+  @IsUUID()
+  @Expose({
+    name: 'group_id',
+  })
+  @ValidateIf((input) => input.isMine == undefined)
+  public groupId?: string;
 }
 
 export class ScheduleContentRequestDto extends PublishArticleRequestDto {
@@ -166,4 +190,52 @@ export class ScheduleContentRequestDto extends PublishArticleRequestDto {
     super(data);
     Object.assign(this, data);
   }
+}
+
+export class GetAudienceContentDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => BooleanHelper.convertStringToBoolean(value))
+  public pinnable?: boolean;
+}
+
+export class PinContentDto {
+  @ApiProperty({
+    name: 'pin_group_ids',
+    type: [String],
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
+  })
+  @Expose({
+    name: 'pin_group_ids',
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  @IsUUID('4', { each: true })
+  public pinGroupIds: string[];
+
+  @ApiProperty({
+    name: 'unpin_group_ids',
+    type: [String],
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
+  })
+  @Expose({
+    name: 'unpin_group_ids',
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  @IsUUID('4', { each: true })
+  public unpinGroupIds: string[];
 }

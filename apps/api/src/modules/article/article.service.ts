@@ -1,3 +1,4 @@
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -8,7 +9,6 @@ import { NIL } from 'uuid';
 
 import { PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
-import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
@@ -316,9 +316,9 @@ export class ArticleService {
       if (
         article.media.videos.filter(
           (m) =>
-            m.status === MediaStatus.WAITING_PROCESS ||
-            m.status === MediaStatus.PROCESSING ||
-            m.status === MediaStatus.FAILED
+            m.status === MEDIA_PROCESS_STATUS.WAITING_PROCESS ||
+            m.status === MEDIA_PROCESS_STATUS.PROCESSING ||
+            m.status === MEDIA_PROCESS_STATUS.FAILED
         ).length > 0
       ) {
         status = PostStatus.PROCESSING;

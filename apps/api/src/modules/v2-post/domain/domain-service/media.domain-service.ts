@@ -1,19 +1,16 @@
+import { MEDIA_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { difference, intersection } from 'lodash';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { MediaType } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
-import { IMediaRepository, MEDIA_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';
 
-import { IMediaDomainService } from './interface/media.domain-service.interface';
+import { IMediaDomainService } from './interface';
 
 export class MediaDomainService implements IMediaDomainService {
   public constructor(
-    @Inject(MEDIA_REPOSITORY_TOKEN)
-    private readonly _mediaRepo: IMediaRepository,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter,
     @Inject(MEDIA_ADAPTER)
@@ -36,7 +33,7 @@ export class MediaDomainService implements IMediaDomainService {
     let result = videoEntities.filter((e) => notChangedIds.includes(e.get('id')));
 
     if (addingVideoIds.length) {
-      const videos = await this._mediaRepo.findVideos(addingVideoIds);
+      const videos = await this._mediaAdapter.findVideosByIds(addingVideoIds);
       const availableVideos = videos.filter((video) => video.isOwner(ownerId));
       result = result.concat(availableVideos);
     }
@@ -60,7 +57,7 @@ export class MediaDomainService implements IMediaDomainService {
     let result = fileEntities.filter((e) => notChangedIds.includes(e.get('id')));
 
     if (addingFileIds.length) {
-      const files = await this._mediaRepo.findFiles(addingFileIds);
+      const files = await this._mediaAdapter.findFilesByIds(addingFileIds);
       const availableFiles = files.filter((file) => file.isOwner(ownerId));
       result = result.concat(availableFiles);
     }
@@ -93,16 +90,16 @@ export class MediaDomainService implements IMediaDomainService {
   }
 
   public async setMediaUsed(
-    mediaType: MediaType,
+    mediaType: MEDIA_TYPE,
     mediaIds: string[],
     userId: string = null
   ): Promise<void> {
     const config = {
-      [MediaType.FILE]: {
+      [MEDIA_TYPE.FILE]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED,
         keyIds: 'fileIds',
       },
-      [MediaType.VIDEO]: {
+      [MEDIA_TYPE.VIDEO]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED,
         keyIds: 'videoIds',
       },
@@ -120,16 +117,16 @@ export class MediaDomainService implements IMediaDomainService {
   }
 
   public async setMediaDelete(
-    mediaType: MediaType,
+    mediaType: MEDIA_TYPE,
     mediaIds: string[],
     userId: string = null
   ): Promise<void> {
     const config = {
-      [MediaType.FILE]: {
+      [MEDIA_TYPE.FILE]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES,
         keyIds: 'fileIds',
       },
-      [MediaType.VIDEO]: {
+      [MEDIA_TYPE.VIDEO]: {
         topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS,
         keyIds: 'videoIds',
       },

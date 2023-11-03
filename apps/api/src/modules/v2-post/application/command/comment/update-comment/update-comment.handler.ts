@@ -2,12 +2,6 @@ import { GroupDto } from '@libs/service/group/src/group.dto';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
-import { CommentHasBeenUpdatedEvent } from '../../../../../../events/comment';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -18,6 +12,7 @@ import {
   ContentAccessDeniedException,
   ContentNoCommentPermissionException,
 } from '../../../../domain/exception';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import {
   IContentValidator,
   CONTENT_VALIDATOR_TOKEN,
@@ -38,31 +33,30 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     protected readonly _contentDomainService: IContentDomainService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService,
-    private readonly _eventEmitter: InternalEventEmitterService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(command: UpdateCommentCommand): Promise<void> {
-    const { actor, id, mentions } = command.payload;
+    const { actor, commentId, mentions } = command.payload;
 
-    const comment = await this._commentDomainService.getVisibleComment(id);
+    const comment = await this._commentDomainService.getVisibleComment(commentId);
 
     if (!comment.isOwner(actor.id)) {
       throw new ContentAccessDeniedException();
     }
 
-    const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
+    const content = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
-    this._contentValidator.checkCanReadContent(post, actor);
+    await this._contentValidator.checkCanReadContent(content, actor);
 
-    if (!post.allowComment()) {
+    if (!content.allowComment()) {
       throw new ContentNoCommentPermissionException();
     }
 
     if (mentions && mentions.length) {
-      const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
-      const mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
+      const groups = content.get('groupIds').map((id) => new GroupDto({ id }));
+      const mentionUsers = await this._userAdapter.getUsersByIds(mentions, {
         withGroupJoined: true,
       });
       await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
@@ -71,15 +65,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     await this._commentDomainService.update({
       ...command.payload,
       userId: actor.id,
-      postId: comment.get('postId'),
+      contentId: comment.get('postId'),
     });
-
-    this._eventEmitter.emit(
-      new CommentHasBeenUpdatedEvent({
-        actor,
-        oldMentions: comment.get('mentions'),
-        commentId: id,
-      })
-    );
   }
 }

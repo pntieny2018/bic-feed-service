@@ -11,16 +11,18 @@ import {
   Version,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { PostAppService } from './application/post.app-service';
-import { UserDto } from '../v2-user/application';
-import { GetAudienceContentDto } from './dto/requests/get-audience-content.response.dto';
-import { PostResponseDto } from './dto/responses';
-import { PinContentDto } from '../feed/dto/request/pin-content.dto';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PageDto } from '../../common/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
+import { PinContentDto } from '../feed/dto/request/pin-content.dto';
+import { UserDto } from '../v2-user/application';
+
+import { PostAppService } from './application/post.app-service';
+import { GetAudienceContentDto } from './dto/requests/get-audience-content.response.dto';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PostResponseDto } from './dto/responses';
 
 @ApiSecurity('authorization')
 @ApiTags('Content')
@@ -30,21 +32,6 @@ import { ArticleResponseDto } from '../article/dto/responses';
 })
 export class ContentController {
   public constructor(private _postAppService: PostAppService) {}
-
-  @ApiOperation({ summary: 'Save post' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @ResponseMessages({
-    success: 'message.content.saved_success',
-  })
-  @Post('/:postId/save')
-  public async save(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.savePost(user, postId);
-  }
 
   @ApiOperation({ summary: 'unsave post' })
   @ApiOkResponse({

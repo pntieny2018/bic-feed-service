@@ -1,17 +1,26 @@
-import { Inject } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
+import { Inject, Logger } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../../src/common/constants';
+import {
+  ISeriesDomainService,
+  ITagDomainService,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+  TAG_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import { ArticleDeletedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { TagDto } from '../../dto';
-import { ArticleChangedMessagePayload } from '../../dto/message';
+import { ArticleEntity } from '../../../domain/model/content';
 
-@EventsHandler(ArticleDeletedEvent)
+@EventsHandlerAndLog(ArticleDeletedEvent)
 export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
+  private readonly _logger = new Logger(ArticleDeletedEventHandler.name);
+
   public constructor(
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    @Inject(TAG_DOMAIN_SERVICE_TOKEN)
+    private readonly _tagDomain: ITagDomainService,
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
+    private readonly _seriesDomain: ISeriesDomainService
   ) {}
 
   public async handle(event: ArticleDeletedEvent): Promise<void> {
@@ -20,31 +29,20 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
     if (!articleEntity.isPublished()) {
       return;
     }
-    const payload: ArticleChangedMessagePayload = {
-      state: 'delete',
-      before: {
-        id: articleEntity.get('id'),
-        actor,
-        type: articleEntity.get('type'),
-        setting: articleEntity.get('setting'),
-        groupIds: articleEntity.get('groupIds'),
-        seriesIds: articleEntity.get('seriesIds'),
-        tags: (articleEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
-        title: articleEntity.get('title'),
-        summary: articleEntity.get('summary'),
-        content: articleEntity.get('content'),
-        lang: articleEntity.get('lang'),
-        isHidden: articleEntity.get('isHidden'),
-        status: articleEntity.get('status'),
-        createdAt: articleEntity.get('createdAt'),
-        updatedAt: articleEntity.get('updatedAt'),
-        publishedAt: articleEntity.get('publishedAt'),
-      },
-    };
 
-    return this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.ARTICLE_CHANGED, {
-      key: articleEntity.getId(),
-      value: new ArticleChangedMessagePayload(payload),
-    });
+    await this._tagDomain.decreaseTotalUsedByContent(articleEntity);
+    this._processSeriesItemsChanged(articleEntity, actor);
+  }
+
+  private _processSeriesItemsChanged(articleEntity: ArticleEntity, actor: UserDto): void {
+    const seriesIds = articleEntity.getSeriesIds();
+    for (const seriesId of seriesIds) {
+      this._seriesDomain.sendSeriesItemsRemovedEvent({
+        authUser: actor,
+        seriesId,
+        item: articleEntity,
+        contentIsDeleted: true,
+      });
+    }
   }
 }

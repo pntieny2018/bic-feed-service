@@ -1,5 +1,6 @@
+import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
+
 import { UserDto } from '../../../../v2-user/application';
-import { ImageResource } from '../../../data-type';
 
 export type ImageProps = {
   id: string;
@@ -7,10 +8,10 @@ export type ImageProps = {
   source: string;
   createdBy: string;
   mimeType: string;
-  resource: ImageResource;
+  resource: IMAGE_RESOURCE;
   width: number;
   height: number;
-  status: string;
+  status: MEDIA_PROCESS_STATUS;
 };
 
 export interface IMediaValidator {

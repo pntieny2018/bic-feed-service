@@ -1,5 +1,4 @@
-import { LIB_LINK_PREVIEW_REPOSITORY_TOKEN } from '@libs/database/postgres/repository/interface';
-import { LibLinkPreviewRepository } from '@libs/database/postgres/repository/link-preview.repository';
+import { LibLinkPreviewRepository } from '@libs/database/postgres/repository';
 
 import { LINK_PREVIEW_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { LinkPreviewDomainService } from '../domain/domain-service/link-preview.domain-service';
@@ -22,9 +21,6 @@ export const linkPreviewProvider = [
     provide: LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
     useClass: LinkPreviewDomainService,
   },
-  {
-    provide: LIB_LINK_PREVIEW_REPOSITORY_TOKEN,
-    useClass: LibLinkPreviewRepository,
-  },
+  LibLinkPreviewRepository,
   LinkPreviewMapper,
 ];

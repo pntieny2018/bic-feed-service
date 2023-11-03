@@ -1,6 +1,8 @@
 import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
+import { uniq } from 'lodash';
 
+import { UserNotFoundException } from '../../domain/exception';
 import { FindUserOption, IUserAdapter } from '../../domain/service-adapter-interface';
 
 export class UserAdapter implements IUserAdapter {
@@ -17,8 +19,19 @@ export class UserAdapter implements IUserAdapter {
     return new UserDto(user, excluded);
   }
 
+  public async getUserByIdWithPermission(userId: string): Promise<UserDto> {
+    const user = await this._userService.findProfileAndPermissionById(userId);
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return new UserDto(user);
+  }
+
   public async getUsersByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
-    const users = await this._userService.findAllByIds(userIds);
+    const uniqueIds = uniq(userIds);
+    const users = await this._userService.findAllByIds(uniqueIds);
 
     const excluded = this._getExcludedFields(options);
 
@@ -27,9 +40,7 @@ export class UserAdapter implements IUserAdapter {
 
   private _getExcludedFields(options?: FindUserOption): string[] {
     const excluded = [];
-    if (!options?.withPermission) {
-      excluded.push('permissions');
-    }
+
     if (!options?.withGroupJoined) {
       excluded.push('groups');
     }
@@ -44,5 +55,9 @@ export class UserAdapter implements IUserAdapter {
       return [];
     }
     return this._userService.findAllByIdsWithAuthUser(userIds, authUserId);
+  }
+
+  public async canCudTags(userId: string, groupId: string): Promise<boolean> {
+    return this._userService.canCudTags(userId, groupId);
   }
 }
