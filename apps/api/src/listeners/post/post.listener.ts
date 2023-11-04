@@ -124,7 +124,7 @@ export class PostListener {
       // TODO: Move to v2-post module event handler
       await this._postWebsocketApp.emitPostVideoProcessedEvent({
         event: event.getEventName(),
-        recipients: post.audience.groups.map((group) => group.id),
+        recipients: [post.createdBy],
         postId: post.id,
         status: 'successful',
       });
@@ -251,7 +251,7 @@ export class PostListener {
       // TODO: Move to v2-post module event handler
       await this._postWebsocketApp.emitPostVideoProcessedEvent({
         event: event.getEventName(),
-        recipients: post.audience.groups.map((group) => group.id),
+        recipients: [post.createdBy],
         postId: post.id,
         status: 'failed',
       });
