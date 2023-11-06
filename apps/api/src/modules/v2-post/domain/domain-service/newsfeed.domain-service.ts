@@ -1,24 +1,35 @@
 import { Inject, Logger } from '@nestjs/common';
 import { ArrayHelper } from 'apps/api/src/common/helpers';
-import { FOLLOW_REPOSITORY_TOKEN, IFollowRepository } from '../repositoty-interface';
 import {
-  DispatchNewsfeedProps,
+  CONTENT_REPOSITORY_TOKEN,
+  FOLLOW_REPOSITORY_TOKEN,
+  IContentRepository,
+  IFollowRepository,
+} from '../repositoty-interface';
+import {
+  DispatchContentIdToGroupsProps,
+  DispatchContentsInGroupsToUserIdProps,
   INewsfeedDomainService,
 } from './interface/newsfeed.domain-service.interface';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { KAFKA_TOPIC } from '../../../../common/constants';
+import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
   private readonly _logger = new Logger(NewsfeedDomainService.name);
 
   public constructor(
     @Inject(FOLLOW_REPOSITORY_TOKEN)
-    private readonly _followRepository: IFollowRepository,
+    private readonly _followRepo: IFollowRepository,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepo: IContentRepository,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
-  public async dispatchNewsfeed(input: DispatchNewsfeedProps): Promise<void> {
+  public async dispatchContentIdToGroups(input: DispatchContentIdToGroupsProps): Promise<void> {
     const { contentId, newGroupIds, oldGroupIds } = input;
 
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
@@ -28,7 +39,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       let latestFollowId = 0;
       while (true) {
         const { userIds, latestFollowId: lastId } =
-          await this._followRepository.getUserFollowGroupIds({
+          await this._followRepo._findUsersFollowedGroupIds({
             groupIds: newGroupIds,
             notExistInGroupIds: [],
             zindex: latestFollowId,
@@ -58,7 +69,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       let latestFollowId = 0;
       while (true) {
         const { userIds, latestFollowId: lastId } =
-          await this._followRepository.getUserFollowGroupIds({
+          await this._followRepo._findUsersFollowedGroupIds({
             groupIds: detachedGroupIds,
             notExistInGroupIds: newGroupIds,
             zindex: latestFollowId,
@@ -82,6 +93,36 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
         }
         latestFollowId = lastId;
       }
+    }
+  }
+
+  public async dispatchContentsInGroupsToUserId(
+    input: DispatchContentsInGroupsToUserIdProps
+  ): Promise<void> {
+    const { userId, groupIds, action } = input;
+    let after = null;
+    while (true) {
+      const contents = await this._contentRepo.getCursorPaginationPostIdsPublishedInGroup({
+        groupIds,
+        limit: 1000,
+        after,
+      });
+      if (!contents.ids.length) {
+        break;
+      }
+
+      await this._kafkaAdapter.sendMessages(
+        KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
+        contents.ids.map((contentId) => ({
+          key: contentId,
+          value: {
+            contentId,
+            userId,
+            action,
+          },
+        }))
+      );
+      after = contents.cursor;
     }
   }
 }

@@ -5,10 +5,13 @@ export type GetUserFollowsGroupIdsProps = {
   limit: number;
 };
 export interface IFollowRepository {
-  getUserFollowGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
+  _findUsersFollowedGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
     userIds: string[];
     latestFollowId: number;
   }>;
+  findGroupIdsUserFollowed(userId: string): Promise<string[]>;
+  bulkCreate(data: { userId: string; groupId: string }[]): Promise<void>;
+  deleteByUserIdAndGroupIds(userId: string, groupIds: string[]): Promise<void>;
 }
 
 export const FOLLOW_REPOSITORY_TOKEN = 'FOLLOW_REPOSITORY_TOKEN';

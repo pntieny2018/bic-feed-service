@@ -20,7 +20,7 @@ export class FeedSeriesPublishedEventHandler implements IEventHandler<SeriesCrea
     if (seriesEntity.isHidden() || !seriesEntity.isPublished()) {
       return;
     }
-    await this._newsfeedDomainService.dispatchNewsfeed({
+    await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: seriesEntity.getId(),
       newGroupIds: seriesEntity.getGroupIds(),
       oldGroupIds: [],

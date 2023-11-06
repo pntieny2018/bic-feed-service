@@ -20,7 +20,7 @@ export class FeedPostPublishedEventHandler implements IEventHandler<PostPublishe
     if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;
     }
-    await this._newsfeedDomainService.dispatchNewsfeed({
+    await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: postEntity.getId(),
       newGroupIds: postEntity.getGroupIds(),
       oldGroupIds: [],

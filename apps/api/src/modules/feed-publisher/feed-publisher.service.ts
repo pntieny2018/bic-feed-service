@@ -135,12 +135,13 @@ export class FeedPublisherService {
         )} and keep: ${JSON.stringify(oldGroupIds)}`
       );
       while (true) {
-        const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
-          attachedGroupIds,
-          oldGroupIds,
-          latestFollowId,
-          1000
-        );
+        const { userIds, latestFollowId: lastId } =
+          await this._followService._findUsersFollowedGroupIds(
+            attachedGroupIds,
+            oldGroupIds,
+            latestFollowId,
+            1000
+          );
         if (userIds.length) {
           await this.attachPostToUserIds(userIds, postId);
           this._logger.debug(
@@ -163,12 +164,13 @@ export class FeedPublisherService {
         )} and keep: ${JSON.stringify(newGroupIds)}`
       );
       while (true) {
-        const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
-          detachedGroupIds,
-          newGroupIds,
-          latestFollowId,
-          1000
-        );
+        const { userIds, latestFollowId: lastId } =
+          await this._followService._findUsersFollowedGroupIds(
+            detachedGroupIds,
+            newGroupIds,
+            latestFollowId,
+            1000
+          );
         if (userIds.length) {
           await this.detachPostFromUserIds(userIds, postId);
         }

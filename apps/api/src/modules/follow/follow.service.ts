@@ -156,7 +156,7 @@ export class FollowService {
    * @param followId Number
    * @param limit Number
    */
-  public async getUserFollowGroupIds(
+  public async _findUsersFollowedGroupIds(
     groupIds: string[],
     notExistInGroupIds: string[] = [],
     zindex = 0,

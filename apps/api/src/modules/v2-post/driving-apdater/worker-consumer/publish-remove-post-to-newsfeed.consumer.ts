@@ -4,7 +4,7 @@ import { KAFKA_TOPIC } from '../../../../common/constants';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { Controller } from '@nestjs/common';
 import { PublishContentToNewsfeedCommand } from '../../application/command/worker/publish-post-to-newsfeed';
-import { RemoveContentToNewsfeedCommand } from '../../application/command/worker/remove-post-to-newsfeed';
+import { RemoveContentFromNewsfeedCommand } from '../../application/command/worker/remove-post-from-newsfeed';
 
 @Controller()
 export class PublishOrRemovePostToNewsfeedConsumer {
@@ -25,8 +25,8 @@ export class PublishOrRemovePostToNewsfeedConsumer {
     }
 
     if (action === 'remove') {
-      await this._commandBus.execute<RemoveContentToNewsfeedCommand>(
-        new RemoveContentToNewsfeedCommand({ contentId, userId })
+      await this._commandBus.execute<RemoveContentFromNewsfeedCommand>(
+        new RemoveContentFromNewsfeedCommand({ contentId, userId })
       );
     }
   }

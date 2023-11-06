@@ -49,4 +49,8 @@ export class UserAdapter implements IUserAdapter {
   public async canCudTags(userId: string, groupId: string): Promise<boolean> {
     return this._userService.canCudTags(userId, groupId);
   }
+
+  public async getGroupIdsJoinedByUserId(userId: string): Promise<string[]> {
+    return this._userService.getGroupIdsJoinedByUserId(userId);
+  }
 }

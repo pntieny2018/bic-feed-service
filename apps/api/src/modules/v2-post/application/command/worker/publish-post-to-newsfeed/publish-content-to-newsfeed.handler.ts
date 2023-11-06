@@ -22,8 +22,6 @@ export class PublishContentToNewsfeedHandler
   ) {}
 
   public async execute(command: PublishContentToNewsfeedCommand): Promise<void> {
-    //TODO: ranking & update cache
-
     const { contentId, userId } = command.payload;
 
     const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
@@ -34,6 +32,15 @@ export class PublishContentToNewsfeedHandler
     if (!content.isPublished() || content.isHidden()) {
       return;
     }
+    const hasPublishedNewsfeed = await this._userNewsfeedRepo.hasPublishedContentIdToUserId(
+      contentId,
+      userId
+    );
+    if (hasPublishedNewsfeed) {
+      return;
+    }
+
+    //TODO: ranking & update cache
     await this._userNewsfeedRepo.attachContentIdToUserId(contentId, userId);
   }
 }

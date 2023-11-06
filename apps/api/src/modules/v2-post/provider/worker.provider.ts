@@ -1,4 +1,4 @@
 import { PublishContentToNewsfeedHandler } from '../application/command/worker/publish-post-to-newsfeed';
-import { RemoveContentToNewsfeedHandler } from '../application/command/worker/remove-post-to-newsfeed';
+import { RemoveContentFromNewsfeedHandler } from '../application/command/worker/remove-post-from-newsfeed';
 
-export const workerProvider = [PublishContentToNewsfeedHandler, RemoveContentToNewsfeedHandler];
+export const workerProvider = [PublishContentToNewsfeedHandler, RemoveContentFromNewsfeedHandler];

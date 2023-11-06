@@ -12,4 +12,5 @@ export interface IUserAdapter {
   getUsersByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]>;
   findAllAndFilterByPersonalVisibility(userIds: string[], authUserId: string): Promise<UserDto[]>;
   canCudTags(userId: string, groupId: string): Promise<boolean>;
+  getGroupIdsJoinedByUserId(userId: string): Promise<string[]>;
 }

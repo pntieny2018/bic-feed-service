@@ -1,7 +1,15 @@
 import { CONTENT_STATUS, ORDER } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
-import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
-import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
+import {
+  CursorPaginationResult,
+  getDatabaseConfig,
+  PaginationProps,
+} from '@libs/database/postgres/common';
+import {
+  PostGroupModel,
+  PostModel,
+  ReportContentDetailAttributes,
+} from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
@@ -33,7 +41,11 @@ import {
   ArticleAttributes,
   ContentAttributes,
 } from '../../domain/model/content';
-import { GetReportContentIdsProps, IContentRepository } from '../../domain/repositoty-interface';
+import {
+  GetCursorPaginationPostIdsInGroup,
+  GetReportContentIdsProps,
+  IContentRepository,
+} from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
 @Injectable()
@@ -546,5 +558,58 @@ export class ContentRepository implements IContentRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+  public async getCursorPaginationPostIdsPublishedInGroup(
+    props: GetCursorPaginationPostIdsInGroup
+  ): Promise<{
+    ids: string[];
+    cursor: string;
+  }> {
+    const { groupIds, notInGroupIds, limit, after } = props;
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+
+    const rows = await this._libContentRepo.cursorPaginate(
+      {
+        select: ['id'],
+        where: {
+          status: CONTENT_STATUS.PUBLISHED,
+          isHidden: false,
+        },
+        whereRaw: `EXISTS (          
+                            SELECT 1
+                            FROM  ${schema}.${postGroupTable} g            
+                            WHERE g.post_id = "PostModel".id  AND g.group_id IN (:groupIds)
+                            AND is_archived = false
+                  ) ${
+                    notInGroupIds.length > 0 ? ` AND "PostModel".id NOT IN (:notInGroupIds)` : ``
+                  }`,
+        replacements: {
+          groupIds,
+        },
+      },
+      {
+        after,
+        limit,
+        column: 'created_at',
+        order: ORDER.DESC,
+      }
+    );
+    return {
+      ids: rows.rows.map((row) => row.id),
+      cursor: rows.meta.endCursor,
+    };
+  }
+
+  public async hasBelongActiveGroupIds(contentId: string, groupIds: string[]): Promise<boolean> {
+    const data = await this._libPostGroupRepo.first({
+      where: {
+        groupId: groupIds,
+        postId: contentId,
+        isArchived: false,
+      },
+    });
+
+    return !!data;
   }
 }
