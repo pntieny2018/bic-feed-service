@@ -15,7 +15,6 @@ export type GetReportContentIdsProps = {
 };
 export type GetCursorPaginationPostIdsInGroup = {
   groupIds: string[];
-  notInGroupIds?: string[];
   limit: number;
   after: string;
 };

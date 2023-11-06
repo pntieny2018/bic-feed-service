@@ -576,7 +576,7 @@ export class ContentRepository implements IContentRepository {
     ids: string[];
     cursor: string;
   }> {
-    const { groupIds, notInGroupIds, limit, after } = props;
+    const { groupIds, limit, after } = props;
     const { schema } = getDatabaseConfig();
     const postGroupTable = PostGroupModel.tableName;
 
@@ -592,9 +592,7 @@ export class ContentRepository implements IContentRepository {
                             FROM  ${schema}.${postGroupTable} g            
                             WHERE g.post_id = "PostModel".id  AND g.group_id IN (:groupIds)
                             AND is_archived = false
-                  ) ${
-                    notInGroupIds.length > 0 ? ` AND "PostModel".id NOT IN (:notInGroupIds)` : ``
-                  }`,
+                  )`,
         replacements: {
           groupIds,
         },

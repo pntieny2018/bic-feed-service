@@ -253,6 +253,6 @@ export class UserService implements IUserService {
   }
 
   public async getGroupIdsJoinedByUserId(userId: string): Promise<string[]> {
-    return this._getJoinedGroupsByUserIdFromCache(userId);
+    return this._getJoinedGroupsFromCacheByUserId(userId);
   }
 }
