@@ -1,10 +1,11 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
-import { EventPattern, Payload } from '@nestjs/microservices';
 import { Controller } from '@nestjs/common';
 import { PublishContentToNewsfeedCommand } from '../../application/command/worker/publish-post-to-newsfeed';
 import { RemoveContentFromNewsfeedCommand } from '../../application/command/worker/remove-post-from-newsfeed';
+import { EventPatternAndLog } from '@libs/infra/log';
+import { IKafkaConsumeMessage } from '@libs/infra/kafka';
 
 @Controller()
 export class PublishOrRemovePostToNewsfeedConsumer {
@@ -13,11 +14,15 @@ export class PublishOrRemovePostToNewsfeedConsumer {
     private readonly _queryBus: QueryBus
   ) {}
 
-  @EventPattern(KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED)
+  @EventPatternAndLog(KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED)
   public async publishOrRemovePostToNewsfeed(
-    @Payload('value') payload: { userId: string; contentId: string; action: 'publish' | 'remove' }
+    message: IKafkaConsumeMessage<{
+      userId: string;
+      contentId: string;
+      action: 'publish' | 'remove';
+    }>
   ): Promise<void> {
-    const { userId, contentId, action } = payload;
+    const { userId, contentId, action } = message.value;
     if (action === 'publish') {
       await this._commandBus.execute<PublishContentToNewsfeedCommand>(
         new PublishContentToNewsfeedCommand({ contentId, userId })

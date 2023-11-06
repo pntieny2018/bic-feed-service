@@ -7,6 +7,7 @@ import { v4 } from 'uuid';
 
 import { KAFKA_TOKEN } from './kafka.constant';
 import { IKafkaService } from './kafka.service.interface';
+import { HEADER_REQ_ID } from '@libs/common/constants';
 
 @Injectable()
 export class KafkaService implements IKafkaService {
@@ -25,7 +26,7 @@ export class KafkaService implements IKafkaService {
 
     const topicName = `${topic}`;
     const headers = {
-      requestId: this._clsService.getId() ?? v4(),
+      [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
     const message = hasKey
       ? {
@@ -61,7 +62,7 @@ export class KafkaService implements IKafkaService {
   public sendMessages<TInput>(topic: string, messages: TInput[]): void {
     const topicName = `${topic}`;
     const headers = {
-      requestId: this._clsService.getId() ?? v4(),
+      [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
 
     const record = {

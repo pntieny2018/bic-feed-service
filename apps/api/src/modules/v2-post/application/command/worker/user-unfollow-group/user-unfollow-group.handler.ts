@@ -23,17 +23,13 @@ export class UserUnfollowGroupHandler implements ICommandHandler<UserUnfollowGro
 
   public async execute(command: UserUnfollowGroupCommand): Promise<void> {
     const { userId, groupIds } = command.payload;
-    const dataFollowNeedToAdd = await this._filterGroupIdsUserNeedFollowed(userId, groupIds);
-    if (dataFollowNeedToAdd.length === 0) {
-      return;
-    }
 
     await this._followRepo.deleteByUserIdAndGroupIds(userId, groupIds);
 
     await this._newsfeedDomainService.dispatchContentsInGroupsToUserId({
       groupIds,
       userId,
-      action: 'publish',
+      action: 'remove',
     });
   }
 

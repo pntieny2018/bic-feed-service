@@ -590,17 +590,16 @@ export class ContentRepository implements IContentRepository {
         whereRaw: `EXISTS (          
                             SELECT 1
                             FROM  ${schema}.${postGroupTable} g            
-                            WHERE g.post_id = "PostModel".id  AND g.group_id IN (:groupIds)
+                            WHERE g.post_id = "PostModel".id  AND g.group_id IN (${groupIds
+                              .map((item) => this._sequelizeConnection.escape(item))
+                              .join(',')})
                             AND is_archived = false
                   )`,
-        replacements: {
-          groupIds,
-        },
       },
       {
         after,
         limit,
-        column: 'created_at',
+        column: 'createdAt',
         order: ORDER.DESC,
       }
     );

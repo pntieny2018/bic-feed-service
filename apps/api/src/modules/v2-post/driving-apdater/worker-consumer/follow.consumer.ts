@@ -1,9 +1,13 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Get, Logger, Post, Version } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { UserFollowGroupCommand } from '../../application/command/worker/user-follow-group';
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { UserUnfollowGroupCommand } from '../../application/command/worker/user-unfollow-group';
+import { AuthUser } from '../../../../common/decorators';
+import { UserDto } from '@libs/service/user';
+import { EventPatternAndLog } from '@libs/infra/log';
+import { IKafkaConsumeMessage } from '@libs/infra/kafka';
 
 @Controller()
 export class FollowConsumer {
@@ -14,12 +18,15 @@ export class FollowConsumer {
     private readonly _queryBus: QueryBus
   ) {}
 
-  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
+  @EventPatternAndLog(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
   public async follow(
-    @Payload('value') payload: { userId: string; groupIds: string[]; verb: 'FOLLOW' | 'UNFOLLOW' }
+    message: IKafkaConsumeMessage<{
+      userId: string;
+      groupIds: string[];
+      verb: 'FOLLOW' | 'UNFOLLOW';
+    }>
   ): Promise<void> {
-    this._logger.debug(`[Event follow/unfollow]: ${JSON.stringify(payload)}`);
-    const { userId, groupIds, verb } = payload;
+    const { userId, groupIds, verb } = message.value;
     if (verb === 'FOLLOW') {
       await this._commandBus.execute<UserFollowGroupCommand>(
         new UserFollowGroupCommand({ userId, groupIds })
