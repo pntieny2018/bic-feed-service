@@ -17,21 +17,21 @@ export class PostEventApplicationService implements IPostEventApplicationService
     const { event: eventName, postId, status, recipients } = payload;
 
     const event = new PostVideoProcessedEvent({
-      rooms: recipients,
-      data: new PostVideoProcessedEventData({
-        event: eventName,
-        verb: WS_ACTIVITY_VERB.POST,
-        target: WS_TARGET_TYPE.POST,
-        extra: {
-          postId,
-          status,
-        },
-      }),
+      key: postId,
+      value: {
+        rooms: recipients,
+        data: new PostVideoProcessedEventData({
+          event: eventName,
+          verb: WS_ACTIVITY_VERB.POST,
+          target: WS_TARGET_TYPE.POST,
+          extra: {
+            postId,
+            status,
+          },
+        }),
+      },
     });
 
-    await this._kafkaAdapter.emit<PostVideoProcessedEvent>(
-      KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT,
-      event
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
   }
 }

@@ -26,24 +26,24 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
     } = payload;
 
     const event = new CommentCreatedEvent({
-      rooms: recipients,
-      data: new CommentCreatedEventData({
-        event: eventName,
-        verb: WS_ACTIVITY_VERB.COMMENT,
-        target: contentType === CONTENT_TYPE.POST ? WS_TARGET_TYPE.POST : WS_TARGET_TYPE.ARTICLE,
-        extra: {
-          contentId,
-          contentType,
-          comment,
-          commentId,
-          parentId,
-        },
-      }),
+      key: contentId,
+      value: {
+        rooms: recipients,
+        data: new CommentCreatedEventData({
+          event: eventName,
+          verb: WS_ACTIVITY_VERB.COMMENT,
+          target: contentType === CONTENT_TYPE.POST ? WS_TARGET_TYPE.POST : WS_TARGET_TYPE.ARTICLE,
+          extra: {
+            contentId,
+            contentType,
+            comment,
+            commentId,
+            parentId,
+          },
+        }),
+      },
     });
 
-    await this._kafkaAdapter.emit<CommentCreatedEvent>(
-      KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT,
-      event
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
   }
 }

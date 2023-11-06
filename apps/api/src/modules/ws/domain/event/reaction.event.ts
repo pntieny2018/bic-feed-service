@@ -1,6 +1,8 @@
 import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
 
-import { IEvent, IEventData } from './interface';
+import { IEventData } from './interface';
+
+import { BaseEvent } from '.';
 
 export class ReactionEventData implements IEventData {
   public verb: WS_ACTIVITY_VERB;
@@ -13,11 +15,4 @@ export class ReactionEventData implements IEventData {
   }
 }
 
-export class ReactionEvent implements IEvent {
-  public rooms: string[];
-  public data: ReactionEventData;
-
-  public constructor(payload: ReactionEvent) {
-    Object.assign(this, payload);
-  }
-}
+export class ReactionEvent extends BaseEvent<ReactionEventData> {}

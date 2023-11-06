@@ -17,23 +17,23 @@ export class QuizEventApplicationService implements IQuizEventApplicationService
     const { event: eventName, quizId, contentId, description, genStatus, recipients } = payload;
 
     const event = new QuizProcessedEvent({
-      rooms: recipients,
-      data: new QuizProcessedEventData({
-        event: eventName,
-        verb: WS_ACTIVITY_VERB.GENERATE_QUIZ,
-        target: WS_TARGET_TYPE.QUIZ,
-        extra: {
-          quizId,
-          contentId,
-          description,
-          genStatus,
-        },
-      }),
+      key: quizId,
+      value: {
+        rooms: recipients,
+        data: new QuizProcessedEventData({
+          event: eventName,
+          verb: WS_ACTIVITY_VERB.GENERATE_QUIZ,
+          target: WS_TARGET_TYPE.QUIZ,
+          extra: {
+            quizId,
+            contentId,
+            description,
+            genStatus,
+          },
+        }),
+      },
     });
 
-    await this._kafkaAdapter.emit<QuizProcessedEvent>(
-      KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT,
-      event
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
   }
 }

@@ -29,47 +29,56 @@ export class ReactionEventApplicationService implements IReactionEventApplicatio
     } = payload;
 
     const event = new ReactionEvent({
-      rooms: recipients,
-      data: new ReactionEventData({
-        event: eventName,
-        target: WS_TARGET_TYPE.COMMENT,
-        verb: WS_ACTIVITY_VERB.REACT,
-        extra: { contentId, contentType, commentId, parentId, reaction },
-      }),
+      key: commentId,
+      value: {
+        rooms: recipients,
+        data: new ReactionEventData({
+          event: eventName,
+          target: WS_TARGET_TYPE.COMMENT,
+          verb: WS_ACTIVITY_VERB.REACT,
+          extra: { contentId, contentType, commentId, parentId, reaction },
+        }),
+      },
     });
 
-    await this._kafkaAdapter.emit<ReactionEvent>(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
   }
 
   public async emitReactionToPostEvent(payload: ReactionToContentEventPayload): Promise<void> {
     const { event: eventName, contentId, contentType, reaction, recipients } = payload;
 
     const event = new ReactionEvent({
-      rooms: recipients,
-      data: new ReactionEventData({
-        event: eventName,
-        target: WS_TARGET_TYPE.POST,
-        verb: WS_ACTIVITY_VERB.REACT,
-        extra: { contentId, contentType, reaction },
-      }),
+      key: contentId,
+      value: {
+        rooms: recipients,
+        data: new ReactionEventData({
+          event: eventName,
+          target: WS_TARGET_TYPE.POST,
+          verb: WS_ACTIVITY_VERB.REACT,
+          extra: { contentId, contentType, reaction },
+        }),
+      },
     });
 
-    await this._kafkaAdapter.emit<ReactionEvent>(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
   }
 
   public async emitReactionToArticleEvent(payload: ReactionToContentEventPayload): Promise<void> {
     const { event: eventName, contentId, contentType, reaction, recipients } = payload;
 
     const event = new ReactionEvent({
-      rooms: recipients,
-      data: new ReactionEventData({
-        event: eventName,
-        target: WS_TARGET_TYPE.ARTICLE,
-        verb: WS_ACTIVITY_VERB.REACT,
-        extra: { contentId, contentType, reaction },
-      }),
+      key: contentId,
+      value: {
+        rooms: recipients,
+        data: new ReactionEventData({
+          event: eventName,
+          target: WS_TARGET_TYPE.ARTICLE,
+          verb: WS_ACTIVITY_VERB.REACT,
+          extra: { contentId, contentType, reaction },
+        }),
+      },
     });
 
-    await this._kafkaAdapter.emit<ReactionEvent>(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
   }
 }

@@ -2,7 +2,9 @@ import { QUIZ_PROCESS_STATUS } from '@beincom/constants';
 
 import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
 
-import { IEvent, IEventData } from './interface';
+import { IEventData } from './interface';
+
+import { BaseEvent } from '.';
 
 type QuizProcessedExtraData = {
   quizId: string;
@@ -22,11 +24,4 @@ export class QuizProcessedEventData implements IEventData {
   }
 }
 
-export class QuizProcessedEvent implements IEvent {
-  public rooms: string[];
-  public data: QuizProcessedEventData;
-
-  public constructor(payload: QuizProcessedEvent) {
-    Object.assign(this, payload);
-  }
-}
+export class QuizProcessedEvent extends BaseEvent<QuizProcessedEventData> {}
