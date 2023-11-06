@@ -1,12 +1,11 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { UserDto } from '@libs/service/user';
+import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../../common/constants';
-import { ObjectHelper } from '../../../../../common/helpers';
-import { ReactionNotifyEvent } from '../../../domain/event';
+import { ReactionHasBeenRemoved } from '../../../../../common/constants';
+import { ReactionDeletedEvent } from '../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content';
 import {
@@ -31,8 +30,8 @@ import {
 } from '../../binding';
 import { ArticleDto, CommentExtendedDto, PostDto } from '../../dto';
 
-@EventsHandler(ReactionNotifyEvent)
-export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEvent> {
+@EventsHandlerAndLog(ReactionDeletedEvent)
+export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDeletedEvent> {
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
@@ -50,16 +49,16 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEve
     private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: ReactionNotifyEvent): Promise<void> {
-    const { reactionEntity, action } = event;
+  public async handle(event: ReactionDeletedEvent): Promise<void> {
+    const { reactionEntity } = event;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
 
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
 
     const payload: any = {
-      event: action === 'create' ? ReactionHasBeenCreated : ReactionHasBeenRemoved,
-      actor: ObjectHelper.omit(['groups', 'permissions'], reactionActor) as UserDto,
+      event: ReactionHasBeenRemoved,
+      actor: reactionActor,
       reaction: reactionDto,
     };
 
@@ -101,9 +100,8 @@ export class NotiReactionEventHandler implements IEventHandler<ReactionNotifyEve
       throw new ContentNotFoundException();
     }
 
-    const contentActor = await this._userAdapter.getUserById(
-      (contentEntity as ContentEntity).get('createdBy'),
-      { withPermission: true, withGroupJoined: true }
+    const contentActor = await this._userAdapter.getUserByIdWithPermission(
+      (contentEntity as ContentEntity).get('createdBy')
     );
 
     const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);

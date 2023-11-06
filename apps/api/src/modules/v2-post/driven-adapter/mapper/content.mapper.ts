@@ -57,6 +57,7 @@ export class ContentMapper {
       mentions: postEntity.get('mentionUserIds' as keyof ContentAttributes) || [],
       type: postEntity.get('type'),
       summary: postEntity.get('summary' as keyof ContentAttributes),
+      lang: postEntity.get('lang'),
       privacy: postEntity.get('privacy'),
       tagsJson:
         postEntity

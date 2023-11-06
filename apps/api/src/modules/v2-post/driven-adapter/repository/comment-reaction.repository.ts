@@ -1,8 +1,11 @@
 import { ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
-import { LibCommentReactionRepository } from '@libs/database/postgres/repository';
+import {
+  LibCommentReactionRepository,
+  LibReactionCommentDetailsRepository,
+} from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
-import { Op, Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
 import { ReactionsCount } from '../../../../common/types';
@@ -11,6 +14,7 @@ import {
   FindOneCommentReactionProps,
   GetPaginationCommentReactionProps,
   ICommentReactionRepository,
+  UpdateCountCommentReactionProps,
 } from '../../domain/repositoty-interface';
 import { CommentReactionMapper } from '../mapper/comment-reaction.mapper';
 
@@ -18,6 +22,7 @@ import { CommentReactionMapper } from '../mapper/comment-reaction.mapper';
 export class CommentReactionRepository implements ICommentReactionRepository {
   public constructor(
     private readonly _libCommentReactionRepo: LibCommentReactionRepository,
+    private readonly _libReactionCommentDetailsRepo: LibReactionCommentDetailsRepository,
     private readonly _commentReactionMapper: CommentReactionMapper
   ) {}
 
@@ -31,9 +36,7 @@ export class CommentReactionRepository implements ICommentReactionRepository {
   }
 
   public async create(data: ReactionEntity): Promise<void> {
-    return this._libCommentReactionRepo.createCommentReactionByStore(
-      this._commentReactionMapper.toPersistence(data)
-    );
+    await this._libCommentReactionRepo.create(this._commentReactionMapper.toPersistence(data));
   }
 
   public async delete(id: string): Promise<void> {
@@ -47,34 +50,23 @@ export class CommentReactionRepository implements ICommentReactionRepository {
   public async getAndCountReactionByComments(
     commentIds: string[]
   ): Promise<Map<string, ReactionsCount>> {
-    const result = await this._libCommentReactionRepo.findMany({
-      select: ['commentId', 'reactionName'],
-      selectRaw: [
-        [`COUNT("id")`, 'total'],
-        [`MIN("created_at")`, 'date'],
-      ],
+    const reactionCount = await this._libReactionCommentDetailsRepo.findMany({
       where: {
         commentId: commentIds,
       },
-      group: ['commentId', `reactionName`],
-      order: [[Sequelize.literal('date'), ORDER.ASC]],
     });
-
-    if (!result) {
-      return new Map<string, ReactionsCount>();
-    }
 
     return new Map<string, ReactionsCount>(
       commentIds.map((commentId) => {
         return [
           commentId,
-          result
+          reactionCount
             .filter((i) => {
               return i.commentId === commentId;
             })
             .map((item) => {
               item = item.toJSON();
-              return { [item['reactionName']]: parseInt(item['total']) };
+              return { [item['reactionName']]: item['count'] };
             }),
         ];
       })
@@ -108,5 +100,15 @@ export class CommentReactionRepository implements ICommentReactionRepository {
       rows: result,
       total: count,
     };
+  }
+
+  public async increaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void> {
+    const { reactionName, commentId } = props;
+    await this._libReactionCommentDetailsRepo.increaseReactionCount(reactionName, commentId);
+  }
+
+  public async decreaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void> {
+    const { reactionName, commentId } = props;
+    await this._libReactionCommentDetailsRepo.decreaseReactionCount(reactionName, commentId);
   }
 }

@@ -2,7 +2,9 @@ import { UserDto } from '@libs/service/user';
 import { Body, Controller, Delete, Get, Post, Query, Version } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { instanceToInstance } from 'class-transformer';
 
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser } from '../../../../common/decorators';
 import { CreateReactionCommand, DeleteReactionCommand } from '../../application/command/reaction';
@@ -67,9 +69,11 @@ export class ReactionController {
     @Body() createReactionDto: CreateReactionRequestDto
   ): Promise<ReactionDto> {
     const { target, targetId, reactionName } = createReactionDto;
-    return this._commandBus.execute(
+    const reactionDto = await this._commandBus.execute(
       new CreateReactionCommand({ target, targetId, reactionName, authUser: user })
     );
+
+    return instanceToInstance(reactionDto, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
