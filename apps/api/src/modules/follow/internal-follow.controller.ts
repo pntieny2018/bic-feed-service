@@ -10,7 +10,7 @@ export class InternalFollowController {
 
   public constructor(private _followService: FollowService) {}
 
-  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
+  // @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
   public async follow(@Payload('value') payload: FollowDto): Promise<void> {
     this._logger.debug(`[Event follow/unfollow]: ${JSON.stringify(payload)}`);
     if (payload.verb === 'FOLLOW') {
