@@ -55,6 +55,16 @@ export class PostUpdatedEvent implements IEventPayload {
   }
 }
 
+export class PostVideoSuccessEvent {
+  public videoIds: string[];
+  public createdBy: string;
+
+  public constructor(videoIds: string[], createdBy: string) {
+    this.videoIds = videoIds;
+    this.createdBy = createdBy;
+  }
+}
+
 export class PostVideoFailedEvent implements IEventPayload {
   public static event = PostVideoHasBeenFailed;
 

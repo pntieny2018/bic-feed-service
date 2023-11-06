@@ -1,13 +1,11 @@
-import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../../common/constants';
 import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
+import { PostVideoSuccessEvent } from '../../../../domain/event';
 import { PostEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -27,8 +25,7 @@ export class PostVideoSuccessHandler implements ICommandHandler<PostVideoSuccess
     private readonly _contentRepository: IContentRepository,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    private readonly event: EventBus
   ) {}
 
   public async execute(command: PostVideoSuccessCommand): Promise<void> {
@@ -37,10 +34,6 @@ export class PostVideoSuccessHandler implements ICommandHandler<PostVideoSuccess
     const posts = (await this._contentRepository.findAll({
       where: {
         videoIdProcessing: videoId,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
       },
     })) as PostEntity[];
 
@@ -55,11 +48,10 @@ export class PostVideoSuccessHandler implements ICommandHandler<PostVideoSuccess
         ],
       };
 
-      const isScheduledPost =
-        post.get('status') === CONTENT_STATUS.WAITING_SCHEDULE ||
-        post.get('status') === CONTENT_STATUS.SCHEDULE_FAILED;
+      const isScheduledPost = post.isScheduleFailed() || post.isWaitingSchedule();
 
       const actor = await this._userAdapter.getUserByIdWithPermission(post.get('createdBy'));
+      this.event.publish(new PostVideoSuccessEvent([videoId], actor.id));
 
       if (!isScheduledPost) {
         await this._postDomainService.publish({
@@ -70,23 +62,12 @@ export class PostVideoSuccessHandler implements ICommandHandler<PostVideoSuccess
           actor,
         });
       } else {
-        await this._postDomainService.update({
-          payload: {
-            id: post.get('id'),
-            media,
-          },
+        await this._postDomainService.updateVideoProcess({
+          id: post.get('id'),
+          media,
           actor,
         });
       }
     }
-
-    await this._emitToUploadService(videoId, posts[0]?.get('createdBy') || null);
-  }
-
-  private async _emitToUploadService(videoId: string, userId: string): Promise<void> {
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED, {
-      key: null,
-      value: JSON.stringify({ videoIds: [videoId], userId }),
-    });
   }
 }

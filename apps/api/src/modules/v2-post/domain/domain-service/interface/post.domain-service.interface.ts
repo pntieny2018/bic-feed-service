@@ -25,6 +25,13 @@ export type PostCreateProps = {
 export type UpdatePostProps = {
   payload: PostPayload;
   actor: UserDto;
+};
+
+export type UpdateVideoProcessProps = {
+  id: string;
+  media: MediaRequestDto;
+  actor: UserDto;
+  status?: CONTENT_STATUS;
   isVideoProcessFailed?: boolean;
 };
 
@@ -44,6 +51,7 @@ export interface IPostDomainService {
   schedule(input: SchedulePostProps): Promise<PostEntity>;
   publish(input: PublishPostProps): Promise<PostEntity>;
   update(props: UpdatePostProps): Promise<PostEntity>;
+  updateVideoProcess(props: UpdateVideoProcessProps): Promise<void>;
   autoSavePost(input: UpdatePostProps): Promise<void>;
   delete(postId: string, authUser: UserDto): Promise<void>;
 }

@@ -55,6 +55,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
+  UpdateVideoProcessProps,
 } from './interface';
 
 export class PostDomainService implements IPostDomainService {
@@ -258,28 +259,51 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    if (postEntity.isDraft() && !props?.isVideoProcessFailed) {
+    if (postEntity.isDraft()) {
       throw new ContentNoPublishYetException();
     }
 
     await this._validateAndSetPostAttributes(postEntity, payload, actor);
 
-    if (
-      postEntity.hasVideoProcessing() &&
-      !postEntity.isWaitingSchedule() &&
-      !props?.isVideoProcessFailed
-    ) {
+    if (postEntity.hasVideoProcessing() && !postEntity.isWaitingSchedule()) {
       postEntity.setProcessing();
     }
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      props?.isVideoProcessFailed
-        ? this.event.publish(new PostVideoFailedEvent({ postEntity, actor }))
-        : this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
+      this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
     }
 
     return postEntity;
+  }
+
+  public async updateVideoProcess(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, media, actor } = props;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    await this._setNewMedia(postEntity, media);
+    if (props.status) {
+      postEntity.setStatus(props.status);
+    }
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+      props?.isVideoProcessFailed &&
+        this.event.publish(new PostVideoFailedEvent({ postEntity, actor }));
+    }
   }
 
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
@@ -397,7 +421,6 @@ export class PostDomainService implements IPostDomainService {
 
     const imageEntities = postEntity.get('media').images;
     const fileEntities = postEntity.get('media').files;
-    const videoEntities = postEntity.get('media').videos;
 
     const newImageIds = media?.images?.map((image) => image.id) || [];
     const newFileIds = media?.files?.map((file) => file.id) || [];

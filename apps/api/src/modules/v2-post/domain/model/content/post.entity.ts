@@ -197,7 +197,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
         }
         this._state.attachVideoIds.push(video.get('id'));
       } else {
-        if (video.isProcessing()) {
+        if (!video.isProcessed()) {
           this._props.videoIdProcessing = video.get('id');
         } else {
           this._props.videoIdProcessing = null;

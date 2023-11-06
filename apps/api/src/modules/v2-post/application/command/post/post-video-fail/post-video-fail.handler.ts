@@ -33,34 +33,26 @@ export class PostVideoFailHandler implements ICommandHandler<PostVideoFailComman
       where: {
         videoIdProcessing: videoId,
       },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-      },
     })) as PostEntity[];
 
     for (const post of posts) {
-      const isScheduledPost =
-        post.get('status') === CONTENT_STATUS.WAITING_SCHEDULE ||
-        post.get('status') === CONTENT_STATUS.SCHEDULE_FAILED;
+      const isScheduledPost = post.isScheduleFailed() || post.isWaitingSchedule();
 
       const actor = await this._userAdapter.getUserByIdWithPermission(post.get('createdBy'));
 
-      await this._postDomainService.update({
+      await this._postDomainService.updateVideoProcess({
+        id: post.get('id'),
         actor,
-        payload: {
-          id: post.get('id'),
-          media: {
-            images: [],
-            files: [],
-            videos: [
-              {
-                id: videoId,
-              },
-            ],
-          },
-          status: isScheduledPost ? CONTENT_STATUS.SCHEDULE_FAILED : CONTENT_STATUS.DRAFT,
+        media: {
+          images: [],
+          files: [],
+          videos: [
+            {
+              id: videoId,
+            },
+          ],
         },
+        status: isScheduledPost ? CONTENT_STATUS.SCHEDULE_FAILED : CONTENT_STATUS.DRAFT,
         isVideoProcessFailed: true,
       });
     }

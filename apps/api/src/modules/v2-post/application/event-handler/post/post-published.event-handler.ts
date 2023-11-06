@@ -34,29 +34,22 @@ export class PostPublishedEventHandler implements IEventHandler<PostPublishedEve
     const { postEntity, actor } = event.payload;
 
     if (postEntity.isPublished()) {
-      await this._processMedia(postEntity);
+      await this._processFile(postEntity);
       await this._tagDomain.increaseTotalUsedByContent(postEntity);
       this._processSeriesItemsChanged(postEntity, actor);
     }
 
     if (postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {
-      this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+      await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: { videoIds: [postEntity.getVideoIdProcessing()] },
       });
     }
   }
 
-  private async _processMedia(postEntity: PostEntity): Promise<void> {
-    const videoIds = postEntity.get('media').videos.map((video) => video.get('id'));
+  private async _processFile(postEntity: PostEntity): Promise<void> {
     const fileIds = postEntity.get('media').files.map((file) => file.get('id'));
-    if (videoIds.length) {
-      await this._mediaDomainService.setMediaUsed(
-        MEDIA_TYPE.VIDEO,
-        videoIds,
-        postEntity.get('createdBy')
-      );
-    }
+
     if (fileIds.length) {
       await this._mediaDomainService.setMediaUsed(
         MEDIA_TYPE.FILE,

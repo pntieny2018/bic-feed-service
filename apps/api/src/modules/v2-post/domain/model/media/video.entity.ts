@@ -27,6 +27,9 @@ export class VideoEntity extends DomainAggregateRoot<VideoAttributes> {
   }
 
   public isProcessing(): boolean {
-    return this._props.status === MEDIA_PROCESS_STATUS.PROCESSING;
+    return (
+      this._props.status === MEDIA_PROCESS_STATUS.PROCESSING ||
+      this._props.status === MEDIA_PROCESS_STATUS.WAITING_PROCESS
+    );
   }
 }

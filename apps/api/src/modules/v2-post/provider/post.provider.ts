@@ -50,6 +50,7 @@ import {
   PostScheduledEventHandler,
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
+import { PostVideoSuccessEventHandler } from '../application/event-handler/post/post-video-success.event-handler';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -127,6 +128,7 @@ export const postProvider = [
   PostScheduledEventHandler,
   PostDeletedEventHandler,
   PostUpdatedEventHandler,
+  PostVideoSuccessEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */

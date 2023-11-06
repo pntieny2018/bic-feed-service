@@ -23,7 +23,7 @@ import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
 import { GroupConsumer } from './driving-apdater/consumer/group.consumer';
-import { PostConsumer } from './driving-apdater/consumer/post.consumer';
+import { MediaConsumer } from './driving-apdater/consumer/media.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -88,7 +88,7 @@ import { workerProvider } from './provider/worker.provider';
     CommentController,
     SeriesController,
     QuizController,
-    PostConsumer,
+    MediaConsumer,
     PublishOrRemovePostToNewsfeedConsumer,
     GroupConsumer,
   ],
