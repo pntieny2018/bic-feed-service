@@ -3,16 +3,13 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
-import {
   ICommentDomainService,
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { ContentNoCommentPermissionException } from '../../../../domain/exception';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -37,8 +34,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     protected readonly _contentDomainService: IContentDomainService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(command: ReplyCommentCommand): Promise<CommentDto> {
@@ -54,7 +51,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
     if (mentions && mentions.length) {
       const groups = content.get('groupIds').map((id) => new GroupDto({ id }));
-      const mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
+      const mentionUsers = await this._userAdapter.getUsersByIds(mentions, {
         withGroupJoined: true,
       });
       await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
