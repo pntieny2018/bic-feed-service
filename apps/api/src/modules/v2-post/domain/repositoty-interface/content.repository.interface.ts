@@ -63,6 +63,7 @@ export interface IContentRepository {
   pinContent(contentId: string, groupIds: string[]): Promise<void>;
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
   saveContent(userId: string, contentId: string): Promise<void>;
+  unSaveContent(userId: string, contentId: string): Promise<void>;
 
   createPostSeries(seriesId: string, postId: string): Promise<void>;
   deletePostSeries(seriesId: string, postId: string): Promise<void>;
