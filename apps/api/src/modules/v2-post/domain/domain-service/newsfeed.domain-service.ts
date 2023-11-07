@@ -49,7 +49,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
           await this._kafkaAdapter.sendMessages(
             KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
             userIds.map((userId) => ({
-              key: contentId,
+              key: userId,
               value: {
                 contentId: contentId,
                 userId,
@@ -79,7 +79,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
           await this._kafkaAdapter.sendMessages(
             KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
             userIds.map((userId) => ({
-              key: contentId,
+              key: userId,
               value: {
                 contentId: contentId,
                 userId,
@@ -114,7 +114,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       await this._kafkaAdapter.sendMessages(
         KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
         contents.ids.map((contentId) => ({
-          key: contentId,
+          key: userId,
           value: {
             contentId,
             userId,
