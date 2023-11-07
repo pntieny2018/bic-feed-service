@@ -1,9 +1,8 @@
-import { getDatabaseConfig } from '@libs/database/postgres/common';
 import { FollowModel } from '@libs/database/postgres/model';
 import { LibFollowRepository, LibPostTagRepository } from '@libs/database/postgres/repository';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { Op, Sequelize } from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { GetUserFollowsGroupIdsProps, IFollowRepository } from '../../domain/repositoty-interface';
 
 @Injectable()
@@ -16,7 +15,30 @@ export class FollowRepository implements IFollowRepository {
     private readonly _libFollowRepo: LibFollowRepository
   ) {}
 
-  public async getUserFollowGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
+  public async findGroupIdsUserFollowed(userId: string): Promise<string[]> {
+    const rows = await this._libFollowRepo.findMany({
+      where: {
+        userId,
+      },
+    });
+
+    return rows.map((r) => r.groupId);
+  }
+
+  public async bulkCreate(data: { userId: string; groupId: string }[]): Promise<void> {
+    if (data.length) {
+      await this._libFollowRepo.bulkCreate(data);
+    }
+  }
+  public async deleteByUserIdAndGroupIds(userId: string, groupIds: string[]): Promise<void> {
+    await this._libFollowRepo.delete({
+      where: {
+        userId,
+        groupId: groupIds,
+      },
+    });
+  }
+  public async findUsersFollowedGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
     userIds: string[];
     latestFollowId: number;
   }> {

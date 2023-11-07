@@ -20,6 +20,15 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
       { ignoreDuplicates: true }
     );
   }
+  public async hasPublishedContentIdToUserId(contentId: string, userId: string): Promise<boolean> {
+    const data = await this._libUserNewsfeedRepo.first({
+      where: {
+        userId,
+        postId: contentId,
+      },
+    });
+    return !!data;
+  }
   public async detachContentIdFromUserId(contentId: string, userId: string): Promise<void> {
     await this._libUserNewsfeedRepo.delete({
       where: {

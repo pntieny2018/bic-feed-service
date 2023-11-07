@@ -20,7 +20,7 @@ export class FeedArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
-    await this._newsfeedDomainService.dispatchNewsfeed({
+    await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: articleEntity.getId(),
       newGroupIds: articleEntity.getGroupIds(),
       oldGroupIds: articleEntity.getSnapshot().groupIds,
