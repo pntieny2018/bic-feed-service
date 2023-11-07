@@ -8,11 +8,14 @@ import {
   ICommentNotificationApplicationService,
   IContentNotificationApplicationService,
   IReactionNotificationApplicationService,
+  IReportNotificationApplicationService,
   PostNotificationPayload,
   REACTION_NOTIFICATION_APPLICATION_SERVICE,
   ReactionCommentNotificationPayload,
   ReactionContentNotificationPayload,
   ReactionReplyCommentNotificationPayload,
+  REPORT_NOTIFICATION_APPLICATION_SERVICE,
+  ReportCreatedNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
   SeriesDeletedNotificationPayload,
@@ -29,7 +32,9 @@ export class NotificationAdapter implements INotificationAdapter {
     @Inject(COMMENT_NOTIFICATION_APPLICATION_SERVICE)
     private readonly _commentNotiApp: ICommentNotificationApplicationService,
     @Inject(REACTION_NOTIFICATION_APPLICATION_SERVICE)
-    private readonly _reactionNotiApp: IReactionNotificationApplicationService
+    private readonly _reactionNotiApp: IReactionNotificationApplicationService,
+    @Inject(REPORT_NOTIFICATION_APPLICATION_SERVICE)
+    private readonly _reportNotiApp: IReportNotificationApplicationService
   ) {}
 
   public async sendPostNotification(payload: PostNotificationPayload): Promise<void> {
@@ -96,5 +101,11 @@ export class NotificationAdapter implements INotificationAdapter {
 
   public async sendCommentNotification(payload: CommentNotificationPayload): Promise<void> {
     return this._commentNotiApp.sendCommentNotification(payload);
+  }
+
+  public async sendReportCreatedNotification(
+    payload: ReportCreatedNotificationPayload
+  ): Promise<void> {
+    return this._reportNotiApp.sendReportCreatedNotification(payload);
   }
 }
