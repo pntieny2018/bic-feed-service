@@ -1,4 +1,5 @@
 import { REPORT_BINDING_TOKEN, ReportBinding } from '../application/binding';
+import { ReportCommentHandler } from '../application/command/comment';
 import { ReportContentHandler } from '../application/command/content';
 import { ReportCreatedEventHandler } from '../application/event-handler/content';
 import { REPORT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
@@ -10,7 +11,7 @@ import { ReportRepository } from '../driven-adapter/repository';
 export const reportProvider = [
   /* Application Command */
   ReportContentHandler,
-  ReportContentHandler,
+  ReportCommentHandler,
 
   /* Application Event Handler */
   ReportCreatedEventHandler,

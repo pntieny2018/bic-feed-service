@@ -26,7 +26,7 @@ export class ReportContentHandler implements ICommandHandler<ReportContentComman
 
     const contentEntity = await this._contentDomain.getVisibleContent(contentId);
 
-    if (!(contentEntity instanceof PostEntity) || !(contentEntity instanceof ArticleEntity)) {
+    if (!(contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity)) {
       throw new ContentNotFoundException();
     }
 

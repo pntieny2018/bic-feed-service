@@ -27,7 +27,7 @@ export class ReportNotificationApplicationService implements IReportNotification
     const commentObject = this._createReportActivityObject(report, actor);
     const activity = this._createReportActivity(commentObject);
 
-    const kafkaPayload: NotificationPayloadDto<ReportActivityObjectDto> = {
+    const kafkaPayload = new NotificationPayloadDto<ReportActivityObjectDto>({
       key: report.id,
       value: {
         actor,
@@ -37,7 +37,7 @@ export class ReportNotificationApplicationService implements IReportNotification
           report: { adminInfos },
         },
       },
-    };
+    });
 
     await this._kafkaAdapter.emit<NotificationPayloadDto<ReportActivityObjectDto>>(
       KAFKA_TOPIC.STREAM.REPORT,

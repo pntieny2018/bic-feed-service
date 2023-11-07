@@ -100,9 +100,8 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
       throw new ContentNotFoundException();
     }
 
-    const contentActor = await this._userAdapter.getUserById(
-      (contentEntity as ContentEntity).get('createdBy'),
-      { withGroupJoined: true }
+    const contentActor = await this._userAdapter.getUserByIdWithPermission(
+      (contentEntity as ContentEntity).get('createdBy')
     );
 
     const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);

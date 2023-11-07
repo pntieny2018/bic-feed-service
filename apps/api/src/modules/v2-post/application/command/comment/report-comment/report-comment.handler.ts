@@ -14,7 +14,7 @@ import { ValidationException } from '../../../../domain/exception';
 import { ReportCommentCommand } from './report-comment.command';
 
 @CommandHandler(ReportCommentCommand)
-export class ReportContentHandler implements ICommandHandler<ReportCommentCommand, void> {
+export class ReportCommentHandler implements ICommandHandler<ReportCommentCommand, void> {
   public constructor(
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomain: ICommentDomainService,

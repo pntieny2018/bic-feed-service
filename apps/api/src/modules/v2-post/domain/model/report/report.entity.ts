@@ -63,28 +63,33 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     const reportId = v4();
     const now = new Date();
 
-    return new ReportEntity({
+    const reportDetails = details.map((detail) => ({
       id: v4(),
+      reportId,
+      targetId,
+      targetType,
+      groupId: detail.groupId,
+      createdBy: detail.createdBy,
+      reportTo: REPORT_SCOPE.COMMUNITY,
+      reasonType: detail.reasonType,
+      reason: detail.reason,
+      createdAt: now,
+      updatedAt: now,
+    }));
+
+    const reportEntity = new ReportEntity({
+      id: reportId,
       targetId,
       targetType,
       authorId,
       status,
-      details: details.map((detail) => ({
-        id: v4(),
-        reportId,
-        targetId,
-        targetType,
-        groupId: detail.groupId,
-        createdBy: detail.createdBy,
-        reportTo: REPORT_SCOPE.COMMUNITY,
-        reasonType: detail.reasonType,
-        reason: detail.reason,
-        createdAt: now,
-        updatedAt: now,
-      })),
+      details: reportDetails,
       createdAt: now,
       updatedAt: now,
     });
+
+    reportEntity._state.attachDetails = reportDetails;
+    return reportEntity;
   }
 
   public validate(): void {

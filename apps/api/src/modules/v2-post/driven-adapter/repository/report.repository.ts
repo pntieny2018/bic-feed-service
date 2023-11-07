@@ -17,7 +17,16 @@ export class ReportRepository implements IReportRepository {
   ) {}
 
   public async findReportByTargetId(targetId: string): Promise<ReportEntity> {
-    const report = await this._libReportRepo.first({ where: { targetId } });
+    const report = await this._libReportRepo.first({
+      where: { targetId },
+      include: [
+        {
+          model: this._libReportDetailRepo.getModel(),
+          required: true,
+          as: 'details',
+        },
+      ],
+    });
     return this._reportMapper.toDomain(report);
   }
 
