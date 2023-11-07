@@ -43,8 +43,8 @@ export const FileHasBeenUploaded = 'file.has.been.uploaded';
 export const ReactionHasBeenCreated = 'reaction.has.been.created';
 export const ReactionHasBeenRemoved = 'reaction.has.been.removed';
 
-// reaction
-export const ReportContentHasBeenCreated = 'report.has.been.created';
+// report
+export const ReportCreated = 'report.has.been.created';
 export const ReportContentHasBeenApproved = 'report.has.been.approved';
 // ws
 export const OnWebSocketConnect = 'on.websocket.connect';
