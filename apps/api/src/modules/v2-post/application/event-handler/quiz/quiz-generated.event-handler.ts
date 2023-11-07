@@ -39,14 +39,11 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
     }
 
     this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.QUIZ_PROCESSED, {
-      key: quizId,
-      value: {
-        contentId: quizEntity.get('contentId'),
-        contentType: contentEntity.getType(),
-        quizId: quizEntity.get('id'),
-        genStatus: quizEntity.get('genStatus'),
-        createdBy: quizEntity.get('createdBy'),
-      },
+      contentId: quizEntity.get('contentId'),
+      contentType: contentEntity.getType(),
+      quizId: quizEntity.get('id'),
+      genStatus: quizEntity.get('genStatus'),
+      createdBy: quizEntity.get('createdBy'),
     });
   }
 }

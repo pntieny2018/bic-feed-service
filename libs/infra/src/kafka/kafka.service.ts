@@ -6,7 +6,6 @@ import { Observable, from } from 'rxjs';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOKEN } from './kafka.constant';
-import { IKafkaProducerMessage } from './kafka.interface';
 import { IKafkaService } from './kafka.service.interface';
 import { HEADER_REQ_ID } from '@libs/common/constants';
 
@@ -22,16 +21,23 @@ export class KafkaService implements IKafkaService {
     this._producerOb = from(this._kafkaClient.connect());
   }
 
-  public emit(topic: string, payload: IKafkaProducerMessage): void {
+  public emit<TInput>(topic: string, payload: TInput): void {
+    const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
+
     const topicName = `${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
-    const message = {
-      key: payload['key'],
-      value: JSON.stringify(payload['value']),
-      headers,
-    };
+    const message = hasKey
+      ? {
+          key: payload['key'],
+          value: JSON.stringify(payload['value']),
+          headers,
+        }
+      : {
+          value: JSON.stringify(payload),
+          headers,
+        };
 
     const record = {
       topic: topicName,
@@ -53,7 +59,7 @@ export class KafkaService implements IKafkaService {
     });
   }
 
-  public sendMessages(topic: string, messages: IKafkaProducerMessage[]): void {
+  public sendMessages<TInput>(topic: string, messages: TInput[]): void {
     const topicName = `${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),

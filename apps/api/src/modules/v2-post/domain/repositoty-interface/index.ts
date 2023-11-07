@@ -9,3 +9,5 @@ export * from './quiz.repository.interface';
 export * from './quiz-participant.repository.interface';
 export * from './series.repository.interface';
 export * from './tag.repository.interface';
+export * from './follow.repository.interface';
+export * from './user-newsfeed.repository.interface';

@@ -1,4 +1,4 @@
-export interface IKafkaConsumerMessage<T> {
+export interface IKafkaConsumeMessage<T> {
   topic: string;
   partition: number;
   key: string;
@@ -6,9 +6,4 @@ export interface IKafkaConsumerMessage<T> {
     [key: string]: any;
   };
   value: T;
-}
-
-export interface IKafkaProducerMessage {
-  key: string;
-  value: { [key: string]: any };
 }

@@ -4,13 +4,16 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+} from '../../../../../v2-user/application';
+import {
   ICommentDomainService,
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { ContentNoCommentPermissionException } from '../../../../domain/exception';
-import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -35,17 +38,17 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _commentDomainService: ICommentDomainService,
+    private readonly _commentDomain: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    protected readonly _contentDomainService: IContentDomainService,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter
+    protected readonly _contentDomain: IContentDomainService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService
   ) {}
 
   public async execute(command: CreateCommentCommand): Promise<CommentBaseDto> {
     const { actor, contentId, mentions } = command.payload;
 
-    const content = await this._contentDomainService.getVisibleContent(contentId);
+    const content = await this._contentDomain.getVisibleContent(contentId);
 
     await this._contentValidator.checkCanReadContent(content, actor);
 
@@ -55,14 +58,13 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
 
     if (mentions && mentions.length) {
       const groups = content.get('groupIds').map((id) => new GroupDto({ id }));
-      const mentionUsers = await this._userAdapter.getUsersByIds(mentions, {
+      const mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
         withGroupJoined: true,
       });
-
       await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
 
-    const commentEntity = await this._commentDomainService.create({
+    const commentEntity = await this._commentDomain.create({
       ...command.payload,
       userId: actor.id,
       parentId: NIL,

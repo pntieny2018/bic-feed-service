@@ -1,12 +1,11 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
-
+import { PostPublishedEvent } from '../../../domain/event';
+import { Inject } from '@nestjs/common';
 import {
   INewsfeedDomainService,
   NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/newsfeed.domain-service.interface';
-import { PostPublishedEvent } from '../../../domain/event';
 
 @EventsHandlerAndLog(PostPublishedEvent)
 export class FeedPostPublishedEventHandler implements IEventHandler<PostPublishedEvent> {

@@ -52,7 +52,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload = new NotificationPayloadDto<PostActivityObjectDto>({
       key: post.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
         meta: {},
@@ -71,13 +73,16 @@ export class ContentNotificationApplicationService
         : { ignoreUserIds: ignoreUserIds };
     }
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<PostActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   private _createPostActivityObject(post: PostDto): PostActivityObjectDto {
     return new PostActivityObjectDto({
       id: post.id,
-      actor: post.actor,
+      actor: { id: post.createdBy },
       title: null,
       contentType: post.type,
       setting: post.setting,
@@ -111,7 +116,9 @@ export class ContentNotificationApplicationService
     const kafkaPayload = new NotificationPayloadDto<ArticleActivityObjectDto>({
       key: article.id,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event,
         data: activity,
         meta: {},
@@ -130,13 +137,16 @@ export class ContentNotificationApplicationService
         : { ignoreUserIds: ignoreUserIds };
     }
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<ArticleActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   private _createArticleActivityObject(article: ArticleDto): ArticleActivityObjectDto {
     return new ArticleActivityObjectDto({
       id: article.id,
-      actor: article.actor,
+      actor: { id: article.createdBy },
       title: article.title,
       contentType: article.type,
       setting: article.setting,
@@ -182,7 +192,10 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   public async sendSeriesDeletedNotification(
@@ -213,7 +226,10 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   public async sendSeriesUpdatedNotification(
@@ -240,7 +256,10 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   public async sendSeriesAddedItemNotification(
@@ -263,7 +282,10 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   public async sendSeriesRemovedItemNotification(
@@ -286,7 +308,10 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   public async sendSeriesChangedItemNotification(
@@ -330,7 +355,10 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
+      KAFKA_TOPIC.STREAM.POST,
+      kafkaPayload
+    );
   }
 
   private _createSeriesActivityObject(
