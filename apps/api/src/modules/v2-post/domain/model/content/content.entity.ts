@@ -335,4 +335,8 @@ export class ContentEntity<
   public isInArchivedGroups(): boolean {
     return this.isPublished() && !this.getGroupIds()?.length;
   }
+
+  public setReported(isReported: boolean): void {
+    this._props.isReported = isReported;
+  }
 }

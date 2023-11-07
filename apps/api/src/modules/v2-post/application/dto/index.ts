@@ -9,6 +9,7 @@ export * from './post.dto';
 export * from './queue.dto';
 export * from './quiz.dto';
 export * from './reaction.dto';
+export * from './report.dto';
 export * from './series.dto';
 export * from './tag.dto';
 export * from './timeline.dto';
