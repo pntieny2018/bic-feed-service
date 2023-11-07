@@ -1,7 +1,7 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
 import {
   ReportContentDetailAttributes,
-  ReportTo,
+  REPORT_SCOPE,
 } from '@libs/database/postgres/model/report-content-detail.model';
 import { v4 } from 'uuid';
 
@@ -14,9 +14,9 @@ export function createMockReportContentDetailRecord(
     targetType: CONTENT_TARGET.POST,
     groupId: v4(),
     createdBy: v4(),
-    reportTo: ReportTo.GROUP,
+    reportTo: REPORT_SCOPE.GROUP,
     reportId: v4(),
-    reasonType: 'spam',
+    reasonType: CONTENT_REPORT_REASON_TYPE.SPAM,
     reason: 'This is spam',
     createdAt: new Date(),
     updatedAt: new Date(),
