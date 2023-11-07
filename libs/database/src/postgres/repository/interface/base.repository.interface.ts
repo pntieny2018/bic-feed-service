@@ -61,7 +61,6 @@ export type FindOptions<M extends Model> = {
   order?: [string | Literal, 'ASC' | 'DESC'][];
   group?: string[];
   subQuery?: boolean;
-  replacements?: { [key: string]: any };
 };
 export type Include<M extends Model> = Omit<IncludeOptions, 'attributes'> & {
   select?: string[];

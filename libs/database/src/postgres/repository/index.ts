@@ -22,4 +22,3 @@ export * from './user-mark-read-post.repository';
 export * from './user-report-content.repository';
 export * from './user-save-post.repository';
 export * from './user-seen-post.repository';
-export * from './user-newsfeed.repository';

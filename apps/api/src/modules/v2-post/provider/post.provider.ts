@@ -106,8 +106,6 @@ import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
-import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
-import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 
 export const postProvider = [
   /** Processor */
@@ -202,10 +200,6 @@ export const postProvider = [
   {
     provide: SERIES_DOMAIN_SERVICE_TOKEN,
     useClass: SeriesDomainService,
-  },
-  {
-    provide: NEWSFEED_DOMAIN_SERVICE_TOKEN,
-    useClass: NewsfeedDomainService,
   },
 
   /** Domain Factory */
