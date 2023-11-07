@@ -39,7 +39,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       let latestFollowId = 0;
       while (true) {
         const { userIds, latestFollowId: lastId } =
-          await this._followRepo._findUsersFollowedGroupIds({
+          await this._followRepo.findUsersFollowedGroupIds({
             groupIds: newGroupIds,
             notExistInGroupIds: [],
             zindex: latestFollowId,
@@ -69,7 +69,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       let latestFollowId = 0;
       while (true) {
         const { userIds, latestFollowId: lastId } =
-          await this._followRepo._findUsersFollowedGroupIds({
+          await this._followRepo.findUsersFollowedGroupIds({
             groupIds: detachedGroupIds,
             notExistInGroupIds: newGroupIds,
             zindex: latestFollowId,

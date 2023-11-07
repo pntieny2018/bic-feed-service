@@ -5,7 +5,7 @@ export type GetUserFollowsGroupIdsProps = {
   limit: number;
 };
 export interface IFollowRepository {
-  _findUsersFollowedGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
+  findUsersFollowedGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
     userIds: string[];
     latestFollowId: number;
   }>;

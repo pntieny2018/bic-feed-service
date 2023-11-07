@@ -38,7 +38,7 @@ export class FollowRepository implements IFollowRepository {
       },
     });
   }
-  public async _findUsersFollowedGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
+  public async findUsersFollowedGroupIds(input: GetUserFollowsGroupIdsProps): Promise<{
     userIds: string[];
     latestFollowId: number;
   }> {

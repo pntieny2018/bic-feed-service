@@ -136,7 +136,7 @@ export class FeedPublisherService {
       );
       while (true) {
         const { userIds, latestFollowId: lastId } =
-          await this._followService._findUsersFollowedGroupIds(
+          await this._followService.findUsersFollowedGroupIds(
             attachedGroupIds,
             oldGroupIds,
             latestFollowId,
@@ -165,7 +165,7 @@ export class FeedPublisherService {
       );
       while (true) {
         const { userIds, latestFollowId: lastId } =
-          await this._followService._findUsersFollowedGroupIds(
+          await this._followService.findUsersFollowedGroupIds(
             detachedGroupIds,
             newGroupIds,
             latestFollowId,
