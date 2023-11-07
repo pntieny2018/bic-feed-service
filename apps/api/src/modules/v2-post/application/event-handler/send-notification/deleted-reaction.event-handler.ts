@@ -102,7 +102,7 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
 
     const contentActor = await this._userAdapter.getUserById(
       (contentEntity as ContentEntity).get('createdBy'),
-      { withPermission: true, withGroupJoined: true }
+      { withGroupJoined: true }
     );
 
     const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);
