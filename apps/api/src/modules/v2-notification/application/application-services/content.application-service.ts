@@ -71,10 +71,7 @@ export class ContentNotificationApplicationService
         : { ignoreUserIds: ignoreUserIds };
     }
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<PostActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   private _createPostActivityObject(post: PostDto): PostActivityObjectDto {
@@ -133,10 +130,7 @@ export class ContentNotificationApplicationService
         : { ignoreUserIds: ignoreUserIds };
     }
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<ArticleActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   private _createArticleActivityObject(article: ArticleDto): ArticleActivityObjectDto {
@@ -188,10 +182,7 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   public async sendSeriesDeletedNotification(
@@ -222,10 +213,7 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   public async sendSeriesUpdatedNotification(
@@ -252,10 +240,7 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   public async sendSeriesAddedItemNotification(
@@ -278,10 +263,7 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   public async sendSeriesRemovedItemNotification(
@@ -304,10 +286,7 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   public async sendSeriesChangedItemNotification(
@@ -351,10 +330,7 @@ export class ContentNotificationApplicationService
       },
     });
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<SeriesActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.POST,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
 
   private _createSeriesActivityObject(

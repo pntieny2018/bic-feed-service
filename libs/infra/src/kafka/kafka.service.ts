@@ -1,3 +1,4 @@
+import { HEADER_REQ_ID } from '@libs/common/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { Producer } from '@nestjs/microservices/external/kafka.interface';
@@ -6,8 +7,8 @@ import { Observable, from } from 'rxjs';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOKEN } from './kafka.constant';
+import { IKafkaProducerMessage } from './kafka.interface';
 import { IKafkaService } from './kafka.service.interface';
-import { HEADER_REQ_ID } from '@libs/common/constants';
 
 @Injectable()
 export class KafkaService implements IKafkaService {
@@ -21,23 +22,16 @@ export class KafkaService implements IKafkaService {
     this._producerOb = from(this._kafkaClient.connect());
   }
 
-  public emit<TInput>(topic: string, payload: TInput): void {
-    const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
-
+  public emit(topic: string, payload: IKafkaProducerMessage): void {
     const topicName = `${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
-    const message = hasKey
-      ? {
-          key: payload['key'],
-          value: JSON.stringify(payload['value']),
-          headers,
-        }
-      : {
-          value: JSON.stringify(payload),
-          headers,
-        };
+    const message = {
+      key: payload['key'],
+      value: JSON.stringify(payload['value']),
+      headers,
+    };
 
     const record = {
       topic: topicName,
@@ -59,7 +53,7 @@ export class KafkaService implements IKafkaService {
     });
   }
 
-  public sendMessages<TInput>(topic: string, messages: TInput[]): void {
+  public sendMessages(topic: string, messages: IKafkaProducerMessage[]): void {
     const topicName = `${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
