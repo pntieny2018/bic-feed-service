@@ -22,11 +22,10 @@ import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
   DeletePostHandler,
-  PostVideoFailHandler,
-  PostVideoSuccessHandler,
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  PostVideoProcessedHandler,
 } from '../application/command/post';
 import {
   AddSeriesItemsHandler,
@@ -50,7 +49,14 @@ import {
   PostScheduledEventHandler,
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
-import { PostVideoSuccessEventHandler } from '../application/event-handler/post/post-video-success.event-handler';
+import {
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+} from '../application/event-handler/set-file-state';
+import {
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
+} from '../application/event-handler/set-video-state';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -128,7 +134,10 @@ export const postProvider = [
   PostScheduledEventHandler,
   PostDeletedEventHandler,
   PostUpdatedEventHandler,
-  PostVideoSuccessEventHandler,
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -161,8 +170,7 @@ export const postProvider = [
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
-  PostVideoSuccessHandler,
-  PostVideoFailHandler,
+  PostVideoProcessedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,

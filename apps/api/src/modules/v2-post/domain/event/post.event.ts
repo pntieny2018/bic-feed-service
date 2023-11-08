@@ -7,6 +7,7 @@ import {
   PostHasBeenScheduled,
   PostHasBeenUpdated,
   PostVideoHasBeenFailed,
+  PostVideoHasBeenPublished,
 } from '../../../../common/constants';
 import { PostEntity } from '../model/content';
 
@@ -55,13 +56,13 @@ export class PostUpdatedEvent implements IEventPayload {
   }
 }
 
-export class PostVideoSuccessEvent {
-  public videoIds: string[];
-  public createdBy: string;
+export class PostVideoSuccessEvent implements IEventPayload {
+  public static event = PostVideoHasBeenPublished;
 
-  public constructor(videoIds: string[], createdBy: string) {
-    this.videoIds = videoIds;
-    this.createdBy = createdBy;
+  public payload: PostEventPayload;
+
+  public constructor(data: PostEventPayload) {
+    this.payload = data;
   }
 }
 

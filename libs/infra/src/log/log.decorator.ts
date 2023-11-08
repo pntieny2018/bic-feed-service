@@ -166,7 +166,7 @@ export function EventPatternAndLog(topicName: string) {
 
     descriptor.value = function (message: IKafkaConsumeMessage<unknown>): void {
       const { headers } = message;
-      const requestId = headers[HEADER_REQ_ID] || v4(); // Assuming you have a requestId header
+      const requestId = headers?.[HEADER_REQ_ID] || v4(); // Assuming you have a requestId header
       const cls = ClsServiceManager.getClsService();
       cls.enter();
       cls.set(CLS_ID, requestId);

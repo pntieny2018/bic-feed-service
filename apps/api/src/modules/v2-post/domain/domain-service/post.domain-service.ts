@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
@@ -11,6 +12,7 @@ import {
   PostScheduledEvent,
   PostUpdatedEvent,
   PostVideoFailedEvent,
+  PostVideoSuccessEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -277,8 +279,8 @@ export class PostDomainService implements IPostDomainService {
     return postEntity;
   }
 
-  public async updateVideoProcess(props: UpdateVideoProcessProps): Promise<void> {
-    const { id, media, actor } = props;
+  public async updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, videoId, actor } = props;
 
     const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
@@ -294,15 +296,68 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._setNewMedia(postEntity, media);
-    if (props.status) {
-      postEntity.setStatus(props.status);
-    }
+    await this._setNewMedia(postEntity, {
+      images: [],
+      files: [],
+      videos: [
+        {
+          id: videoId,
+        },
+      ],
+    });
+
+    const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
+    const status = isScheduledPost ? CONTENT_STATUS.SCHEDULE_FAILED : CONTENT_STATUS.DRAFT;
+
+    postEntity.setStatus(status);
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      props?.isVideoProcessFailed &&
-        this.event.publish(new PostVideoFailedEvent({ postEntity, actor }));
+      this.event.publish(new PostVideoFailedEvent({ postEntity, actor }));
+    }
+  }
+
+  public async updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, videoId, actor } = props;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
+
+    await this._setNewMedia(postEntity, {
+      images: [],
+      files: [],
+      videos: [
+        {
+          id: videoId,
+        },
+      ],
+    });
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+      this.event.publish(new PostVideoSuccessEvent({ postEntity, actor }));
+    }
+
+    if (!isScheduledPost) {
+      await this.publish({
+        payload: {
+          id: postEntity.get('id'),
+        },
+        actor,
+      });
     }
   }
 
@@ -318,6 +373,10 @@ export class PostDomainService implements IPostDomainService {
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isHidden() || postEntity.isPublished()) {
       return;
+    }
+
+    if (!postEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
     }
 
     await this._validateAndSetPostAttributes(postEntity, props.payload, actor, false);

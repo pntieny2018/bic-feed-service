@@ -2,6 +2,6 @@ import { ICommand } from '@nestjs/cqrs';
 
 import { PostVideoProcessedMessagePayload } from '../../../dto/message';
 
-export class PostVideoFailCommand implements ICommand {
+export class PostVideoProcessedCommand implements ICommand {
   public constructor(public readonly payload: PostVideoProcessedMessagePayload) {}
 }
