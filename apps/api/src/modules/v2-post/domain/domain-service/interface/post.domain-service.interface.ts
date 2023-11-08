@@ -29,10 +29,8 @@ export type UpdatePostProps = {
 
 export type UpdateVideoProcessProps = {
   id: string;
-  media: MediaRequestDto;
+  videoId: string;
   actor: UserDto;
-  status?: CONTENT_STATUS;
-  isVideoProcessFailed?: boolean;
 };
 
 export type SchedulePostProps = {
@@ -51,7 +49,8 @@ export interface IPostDomainService {
   schedule(input: SchedulePostProps): Promise<PostEntity>;
   publish(input: PublishPostProps): Promise<PostEntity>;
   update(props: UpdatePostProps): Promise<PostEntity>;
-  updateVideoProcess(props: UpdateVideoProcessProps): Promise<void>;
+  updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void>;
+  updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void>;
   autoSavePost(input: UpdatePostProps): Promise<void>;
   delete(postId: string, authUser: UserDto): Promise<void>;
 }

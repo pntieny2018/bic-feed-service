@@ -1,2 +1,2 @@
 export * from './post-video-success.handler';
-export * from './post-video-success.command';
+export * from './post-updated.event-handler';
