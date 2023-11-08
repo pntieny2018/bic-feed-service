@@ -1,11 +1,12 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { IEventHandler } from '@nestjs/cqrs';
-import { ArticlePublishedEvent } from '../../../domain/event';
 import { Inject } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
+
 import {
   INewsfeedDomainService,
   NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/newsfeed.domain-service.interface';
+import { ArticlePublishedEvent } from '../../../domain/event';
 
 @EventsHandlerAndLog(ArticlePublishedEvent)
 export class FeedArticlePublishedEventHandler implements IEventHandler<ArticlePublishedEvent> {
@@ -21,7 +22,7 @@ export class FeedArticlePublishedEventHandler implements IEventHandler<ArticlePu
       return;
     }
 
-    await this._newsfeedDomainService.dispatchNewsfeed({
+    await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: articleEntity.getId(),
       newGroupIds: articleEntity.getGroupIds(),
       oldGroupIds: [],

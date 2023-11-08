@@ -1,11 +1,12 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { IEventHandler } from '@nestjs/cqrs';
-import { ArticleUpdatedEvent } from '../../../domain/event';
 import { Inject } from '@nestjs/common';
+import { IEventHandler } from '@nestjs/cqrs';
+
 import {
   INewsfeedDomainService,
   NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface/newsfeed.domain-service.interface';
+import { ArticleUpdatedEvent } from '../../../domain/event';
 
 @EventsHandlerAndLog(ArticleUpdatedEvent)
 export class FeedArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedEvent> {
@@ -20,7 +21,7 @@ export class FeedArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
-    await this._newsfeedDomainService.dispatchNewsfeed({
+    await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: articleEntity.getId(),
       newGroupIds: articleEntity.getGroupIds(),
       oldGroupIds: articleEntity.getSnapshot().groupIds,

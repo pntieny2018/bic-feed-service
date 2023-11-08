@@ -36,7 +36,6 @@ import { SeriesController } from './driving-apdater/controller/series.controller
 import { TagController } from './driving-apdater/controller/tag.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
-import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consummer/publish-remove-post-to-newsfeed.consummer';
 import {
   adapterProvider,
   categoryProvider,
@@ -54,6 +53,8 @@ import {
   tagProvider,
   webSocketProvider,
 } from './provider';
+import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
+import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consumer';
 import { workerProvider } from './provider/worker.provider';
 
 @Module({
@@ -92,6 +93,7 @@ import { workerProvider } from './provider/worker.provider';
     QuizController,
     PublishOrRemovePostToNewsfeedConsumer,
     GroupConsumer,
+    FollowConsumer,
   ],
   providers: [
     ...adapterProvider,

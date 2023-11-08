@@ -1,3 +1,4 @@
+import { HEADER_REQ_ID } from '@libs/common/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { Producer } from '@nestjs/microservices/external/kafka.interface';
@@ -22,22 +23,15 @@ export class KafkaService implements IKafkaService {
   }
 
   public emit(topic: string, payload: IKafkaProducerMessage): void {
-    const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
-
     const topicName = `${topic}`;
     const headers = {
-      requestId: this._clsService.getId() ?? v4(),
+      [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
-    const message = hasKey
-      ? {
-          key: payload['key'],
-          value: JSON.stringify(payload['value']),
-          headers,
-        }
-      : {
-          value: JSON.stringify(payload),
-          headers,
-        };
+    const message = {
+      key: payload['key'],
+      value: JSON.stringify(payload['value']),
+      headers,
+    };
 
     const record = {
       topic: topicName,
@@ -62,7 +56,7 @@ export class KafkaService implements IKafkaService {
   public sendMessages(topic: string, messages: IKafkaProducerMessage[]): void {
     const topicName = `${topic}`;
     const headers = {
-      requestId: this._clsService.getId() ?? v4(),
+      [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
 
     const record = {

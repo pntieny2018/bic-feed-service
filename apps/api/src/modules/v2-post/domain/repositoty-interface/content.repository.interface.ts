@@ -13,6 +13,11 @@ export type GetReportContentIdsProps = {
   target?: CONTENT_TARGET[];
   groupIds?: string[];
 };
+export type GetCursorPaginationPostIdsInGroup = {
+  groupIds: string[];
+  limit: number;
+  after: string;
+};
 
 export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
@@ -67,6 +72,13 @@ export interface IContentRepository {
   createPostSeries(seriesId: string, postId: string): Promise<void>;
   deletePostSeries(seriesId: string, postId: string): Promise<void>;
   reorderPostsSeries(seriesId: string, itemIds: string[]): Promise<void>;
+  getCursorPaginationPostIdsPublishedInGroup(
+    getCursorPaginationPostIdsInGroup: GetCursorPaginationPostIdsInGroup
+  ): Promise<{
+    ids: string[];
+    cursor: string;
+  }>;
+  hasBelongActiveGroupIds(contentId: string, groupIds: string[]): Promise<boolean>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';
