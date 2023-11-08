@@ -115,8 +115,8 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     return this._props.status === REPORT_STATUS.IGNORED;
   }
 
-  public isHid(): boolean {
-    return this._props.status === REPORT_STATUS.HID;
+  public isHidden(): boolean {
+    return this._props.status === REPORT_STATUS.HIDDEN;
   }
 
   public updateStatus(status: REPORT_STATUS): void {

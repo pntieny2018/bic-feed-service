@@ -21,7 +21,7 @@ import {
 export enum REPORT_STATUS {
   CREATED = 'CREATED',
   IGNORED = 'IGNORED',
-  HID = 'HID',
+  HIDDEN = 'HID',
 }
 
 export type ReportContentAttribute = InferAttributes<ReportContentModel>;

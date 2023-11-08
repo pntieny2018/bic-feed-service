@@ -3,13 +3,11 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
-  CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
-  IContentDomainService,
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { ValidationException } from '../../../../domain/exception';
+import { ReportOwnContentException } from '../../../../domain/exception';
 
 import { ReportCommentCommand } from './report-comment.command';
 
@@ -18,8 +16,6 @@ export class ReportContentHandler implements ICommandHandler<ReportCommentComman
   public constructor(
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomain: ICommentDomainService,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomain: IContentDomainService,
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
     private readonly _reportDomain: IReportDomainService
   ) {}
@@ -30,7 +26,7 @@ export class ReportContentHandler implements ICommandHandler<ReportCommentComman
     const commentEntity = await this._commentDomain.getVisibleComment(commentId);
 
     if (authUser.id === commentEntity.get('createdBy')) {
-      throw new ValidationException('You cant not report yourself');
+      throw new ReportOwnContentException();
     }
 
     await this._reportDomain.reportComment({
