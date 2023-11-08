@@ -23,22 +23,15 @@ export class KafkaService implements IKafkaService {
   }
 
   public emit(topic: string, payload: IKafkaProducerMessage): void {
-    const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
-
     const topicName = `${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
-    const message = hasKey
-      ? {
-          key: payload['key'],
-          value: JSON.stringify(payload['value']),
-          headers,
-        }
-      : {
-          value: JSON.stringify(payload),
-          headers,
-        };
+    const message = {
+      key: payload['key'],
+      value: JSON.stringify(payload['value']),
+      headers,
+    };
 
     const record = {
       topic: topicName,
