@@ -9,7 +9,7 @@ import { v4 } from 'uuid';
 
 import { HEADER_REQ_ID } from '../../../common/src/constants';
 import { IEventPayload } from '../event';
-import { IKafkaConsumeMessage } from '../kafka';
+import { IKafkaConsumerMessage } from '../kafka';
 import { Job, JobWithContext } from '../queue';
 
 import { CONTEXT, getContext, getDebugContext } from './log.context';
@@ -164,7 +164,7 @@ export function EventPatternAndLog(topicName: string) {
     const className = target.constructor.name;
     const logger = new Logger(className);
 
-    descriptor.value = function (message: IKafkaConsumeMessage<unknown>): void {
+    descriptor.value = function (message: IKafkaConsumerMessage<unknown>): void {
       const { headers } = message;
       const requestId = headers[HEADER_REQ_ID] || v4(); // Assuming you have a requestId header
       const cls = ClsServiceManager.getClsService();
