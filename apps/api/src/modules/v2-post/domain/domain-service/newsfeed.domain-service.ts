@@ -1,19 +1,21 @@
 import { Inject, Logger } from '@nestjs/common';
 import { ArrayHelper } from 'apps/api/src/common/helpers';
+
+import { KAFKA_TOPIC } from '../../../../common/constants';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
   FOLLOW_REPOSITORY_TOKEN,
   IContentRepository,
   IFollowRepository,
 } from '../repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface';
+
 import {
   DispatchContentIdToGroupsProps,
   DispatchContentsInGroupsToUserIdProps,
   INewsfeedDomainService,
 } from './interface/newsfeed.domain-service.interface';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
-import { KAFKA_TOPIC } from '../../../../common/constants';
-import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
   private readonly _logger = new Logger(NewsfeedDomainService.name);

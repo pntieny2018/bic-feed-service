@@ -1,3 +1,4 @@
+import { HEADER_REQ_ID } from '@libs/common/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { Producer } from '@nestjs/microservices/external/kafka.interface';
@@ -8,7 +9,6 @@ import { v4 } from 'uuid';
 import { KAFKA_TOKEN } from './kafka.constant';
 import { IKafkaProducerMessage } from './kafka.interface';
 import { IKafkaService } from './kafka.service.interface';
-import { HEADER_REQ_ID } from '@libs/common/constants';
 
 @Injectable()
 export class KafkaService implements IKafkaService {
