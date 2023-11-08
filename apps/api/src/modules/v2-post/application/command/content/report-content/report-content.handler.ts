@@ -7,7 +7,7 @@ import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { ContentNotFoundException, ValidationException } from '../../../../domain/exception';
+import { ContentNotFoundException, ReportOwnContentException } from '../../../../domain/exception';
 import { ArticleEntity, PostEntity } from '../../../../domain/model/content';
 
 import { ReportContentCommand } from './report-content.command';
@@ -31,7 +31,7 @@ export class ReportContentHandler implements ICommandHandler<ReportContentComman
     }
 
     if (authUser.id === contentEntity.getCreatedBy()) {
-      throw new ValidationException('You cant not report yourself');
+      throw new ReportOwnContentException();
     }
 
     await this._reportDomain.reportContent({

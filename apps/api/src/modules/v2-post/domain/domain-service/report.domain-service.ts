@@ -79,7 +79,10 @@ export class ReportDomainService implements IReportDomainService {
   ): Promise<void> {
     const { targetId, targetType, authorId, groupIds, authUser, reasonType, reason } = data;
 
-    let reportEntity = await this._reportRepo.findReportByTargetId(targetId);
+    let reportEntity = await this._reportRepo.findOne({
+      where: { targetId },
+      include: { details: true },
+    });
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     const rootGroupIds = groups.map((group) => group.rootGroupId);
@@ -97,7 +100,7 @@ export class ReportDomainService implements IReportDomainService {
       }
       reportEntity.addDetails(reportDetails);
 
-      await this._reportRepo.updateReport(reportEntity);
+      await this._reportRepo.update(reportEntity);
     } else {
       const report = {
         targetId,
@@ -107,7 +110,7 @@ export class ReportDomainService implements IReportDomainService {
       };
       reportEntity = ReportEntity.create(report, reportDetails);
 
-      await this._reportRepo.createReport(reportEntity);
+      await this._reportRepo.create(reportEntity);
     }
 
     this._event.publish(new ReportCreatedEvent({ report: reportEntity, actor: authUser }));

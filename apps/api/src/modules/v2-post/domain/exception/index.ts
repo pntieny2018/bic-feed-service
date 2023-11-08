@@ -8,6 +8,7 @@ export * from './openai.exception';
 export * from './post.exception';
 export * from './quiz.exception';
 export * from './reaction.exception';
+export * from './report.exception';
 export * from './series.exception';
 export * from './tag.exception';
 export * from './validation.exception';
