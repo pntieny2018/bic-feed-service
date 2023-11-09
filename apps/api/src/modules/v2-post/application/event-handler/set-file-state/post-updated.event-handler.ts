@@ -22,14 +22,14 @@ export class FilePostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
       if (attachFileIds.length) {
         await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED, {
           key: null,
-          value: { videoIds: attachFileIds, userId: actor.id },
+          value: { fileIds: attachFileIds, userId: actor.id },
         });
       }
 
       if (detachFileIds.length) {
         await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES, {
           key: null,
-          value: { videoIds: detachFileIds, userId: actor.id },
+          value: { fileIds: detachFileIds, userId: actor.id },
         });
       }
     }

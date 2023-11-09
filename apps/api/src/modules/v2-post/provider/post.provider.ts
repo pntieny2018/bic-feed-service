@@ -50,10 +50,12 @@ import {
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
 import {
+  FilePostDeletedEventHandler,
   FilePostPublishedEventHandler,
   FilePostUpdatedEventHandler,
 } from '../application/event-handler/set-file-state';
 import {
+  VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
   VideoPostVideoSuccessEventHandler,
 } from '../application/event-handler/set-video-state';
@@ -136,8 +138,10 @@ export const postProvider = [
   PostUpdatedEventHandler,
   FilePostPublishedEventHandler,
   FilePostUpdatedEventHandler,
+  FilePostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
   VideoPostVideoSuccessEventHandler,
+  VideoPostDeletedEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
