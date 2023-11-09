@@ -213,7 +213,6 @@ export class CommentDomainService implements ICommentDomainService {
       commentEntity.get('createdBy')
     );
     const videos = await this._mediaDomainService.getAvailableVideos(
-      commentEntity.get('media').videos,
       media?.videos,
       commentEntity.get('createdBy')
     );

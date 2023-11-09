@@ -17,7 +17,6 @@ import { PostAppService } from './application/post.app-service';
 import { ContentController } from './content.controller';
 import { FeedBackupController } from './feed-backup.controller';
 import { PostBindingService } from './post-binding.service';
-import { PostConsumerController } from './post-consummer.controller';
 import { PostCronService } from './post-cron.service';
 import { PostHistoryService } from './post-history.service';
 import { PostController } from './post.controller';
@@ -43,7 +42,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     LinkPreviewModule,
     TagModule,
   ],
-  controllers: [PostController, PostConsumerController, ContentController, FeedBackupController],
+  controllers: [PostController, ContentController, FeedBackupController],
   providers: [PostService, PostBindingService, PostHistoryService, PostCronService, PostAppService],
   exports: [PostService, PostBindingService, PostHistoryService],
 })

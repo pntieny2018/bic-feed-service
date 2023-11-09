@@ -1,8 +1,9 @@
+import { MEDIA_PROCESS_STATUS } from '@beincom/constants/lib/media';
 import { Video } from '@libs/common/dtos';
 import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { DomainModelException } from '../../../../../common/exceptions';
 
 export type VideoAttributes = Video;
 
@@ -13,7 +14,7 @@ export class VideoEntity extends DomainAggregateRoot<VideoAttributes> {
 
   public validate(): void {
     if (!isUUID(this._props.id)) {
-      throw new DomainModelException(`Group ID must be UUID`);
+      throw new DomainModelException(`Video ID must be UUID`);
     }
   }
 
@@ -22,6 +23,13 @@ export class VideoEntity extends DomainAggregateRoot<VideoAttributes> {
   }
 
   public isProcessed(): boolean {
-    return this._props.status === 'DONE';
+    return this._props.status === MEDIA_PROCESS_STATUS.COMPLETED;
+  }
+
+  public isProcessing(): boolean {
+    return (
+      this._props.status === MEDIA_PROCESS_STATUS.PROCESSING ||
+      this._props.status === MEDIA_PROCESS_STATUS.WAITING_PROCESS
+    );
   }
 }

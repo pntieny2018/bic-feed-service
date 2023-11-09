@@ -1,3 +1,4 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
@@ -13,6 +14,7 @@ export type PostPayload = {
   media?: MediaRequestDto;
   mentionUserIds?: string[];
   linkPreview?: LinkPreviewDto;
+  status?: CONTENT_STATUS;
 };
 
 export type PostCreateProps = {
@@ -22,6 +24,12 @@ export type PostCreateProps = {
 
 export type UpdatePostProps = {
   payload: PostPayload;
+  actor: UserDto;
+};
+
+export type UpdateVideoProcessProps = {
+  id: string;
+  videoId: string;
   actor: UserDto;
 };
 
@@ -41,6 +49,8 @@ export interface IPostDomainService {
   schedule(input: SchedulePostProps): Promise<PostEntity>;
   publish(input: PublishPostProps): Promise<PostEntity>;
   update(props: UpdatePostProps): Promise<PostEntity>;
+  updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void>;
+  updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void>;
   autoSavePost(input: UpdatePostProps): Promise<void>;
   delete(postId: string, authUser: UserDto): Promise<void>;
 }

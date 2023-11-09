@@ -366,6 +366,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         );
       }
 
+      if (options.where.videoIdProcessing) {
+        conditions.push({
+          videoIdProcessing: options.where.videoIdProcessing,
+        });
+      }
+
       if (
         isBoolean(options.where.groupArchived) &&
         !options.include?.shouldIncludeGroup &&
