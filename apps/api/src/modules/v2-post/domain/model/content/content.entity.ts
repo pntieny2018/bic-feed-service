@@ -251,6 +251,10 @@ export class ContentEntity<
     return this._props.status === CONTENT_STATUS.DRAFT;
   }
 
+  public setStatus(status: CONTENT_STATUS): void {
+    this._props.status = status;
+  }
+
   public setProcessing(): void {
     this._props.status = CONTENT_STATUS.PROCESSING;
   }

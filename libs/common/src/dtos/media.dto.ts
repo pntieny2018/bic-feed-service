@@ -37,6 +37,7 @@ export type Video = {
   size: number;
   width: number;
   height: number;
+  duration: number;
   status: MEDIA_PROCESS_STATUS;
   thumbnails: VideoThumbnail[];
 };

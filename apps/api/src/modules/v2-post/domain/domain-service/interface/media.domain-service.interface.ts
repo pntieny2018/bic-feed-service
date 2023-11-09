@@ -15,11 +15,7 @@ export interface IMediaDomainService {
     ownerId: string
   ): Promise<FileEntity[]>;
 
-  getAvailableVideos(
-    currentImageEntities: VideoEntity[],
-    newVideoIds: string[],
-    ownerId: string
-  ): Promise<VideoEntity[]>;
+  getAvailableVideos(newVideoIds: string[], ownerId: string): Promise<VideoEntity[]>;
 
   setMediaUsed(mediaType: MEDIA_TYPE, mediaIds: string[], userId: string): Promise<void>;
   setMediaDelete(mediaType: MEDIA_TYPE, mediaIds: string[], userId: string): Promise<void>;

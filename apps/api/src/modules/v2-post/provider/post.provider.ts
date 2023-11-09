@@ -25,6 +25,7 @@ import {
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  PostVideoProcessedHandler,
 } from '../application/command/post';
 import {
   AddSeriesItemsHandler,
@@ -48,6 +49,14 @@ import {
   PostScheduledEventHandler,
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
+import {
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+} from '../application/event-handler/set-file-state';
+import {
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
+} from '../application/event-handler/set-video-state';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -77,6 +86,8 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
+import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
+import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
 import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
@@ -106,8 +117,6 @@ import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
-import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
-import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 
 export const postProvider = [
   /** Processor */
@@ -125,6 +134,10 @@ export const postProvider = [
   PostScheduledEventHandler,
   PostDeletedEventHandler,
   PostUpdatedEventHandler,
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -157,6 +170,7 @@ export const postProvider = [
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
+  PostVideoProcessedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
