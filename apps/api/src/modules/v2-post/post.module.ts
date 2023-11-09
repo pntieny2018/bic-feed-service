@@ -23,6 +23,7 @@ import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
 import { GroupConsumer } from './driving-apdater/consumer/group.consumer';
+import { AdminManageController } from './driving-apdater/controller/admin-manage.controller';
 import { MediaConsumer } from './driving-apdater/consumer/media.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
@@ -38,6 +39,7 @@ import { TimelineController } from './driving-apdater/controller/timeline.contro
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
 import {
   adapterProvider,
+  adminManageProvider,
   categoryProvider,
   commentProvider,
   feedProvider,
@@ -90,6 +92,7 @@ import { workerProvider } from './provider/worker.provider';
     CommentController,
     SeriesController,
     QuizController,
+    AdminManageController,
     MediaConsumer,
     PublishOrRemovePostToNewsfeedConsumer,
     GroupConsumer,
@@ -113,6 +116,7 @@ import { workerProvider } from './provider/worker.provider';
     ...tagProvider,
     QuizProcessor,
     ...workerProvider,
+    ...adminManageProvider,
   ],
   exports: [
     ...quizProvider,

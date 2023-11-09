@@ -1,4 +1,5 @@
 import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
+import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
 import { REPORT_SCOPE, REPORT_STATUS } from '@libs/database/postgres/model';
 
 export class ReportDto {
@@ -11,6 +12,8 @@ export class ReportDto {
   public createdAt?: Date;
   public updatedAt?: Date;
   public details?: ReportDetailDto[];
+  public content?: string;
+  public authorContentReported?: AuthorContentReported;
 
   public constructor(data: Partial<ReportDto>) {
     Object.assign(this, data);
@@ -32,5 +35,22 @@ export class ReportDetailDto {
 
   public constructor(data: Partial<ReportDetailDto>) {
     Object.assign(this, data);
+  }
+}
+
+export class AuthorContentReported {
+  public id: string;
+  public avatar: string;
+  public username: string;
+  public fullname: string;
+
+  public constructor(data: AuthorContentReported) {
+    Object.assign(this, data);
+  }
+}
+
+export class GetListReportsPaginationDto extends PaginatedResponse<ReportDto> {
+  public constructor(list: ReportDto[], meta?: IPaginatedInfo) {
+    super(list, meta);
   }
 }
