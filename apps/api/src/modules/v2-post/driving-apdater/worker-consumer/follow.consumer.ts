@@ -1,26 +1,19 @@
-import { Controller, Get, Logger, Post, Version } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { UserFollowGroupCommand } from '../../application/command/worker/user-follow-group';
-import { KAFKA_TOPIC } from '../../../../common/constants';
-import { UserUnfollowGroupCommand } from '../../application/command/worker/user-unfollow-group';
-import { AuthUser } from '../../../../common/decorators';
-import { UserDto } from '@libs/service/user';
+import { IKafkaConsumerMessage } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
-import { IKafkaConsumeMessage } from '@libs/infra/kafka';
+import { Controller } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+
+import { KAFKA_TOPIC } from '../../../../common/constants';
+import { UserFollowGroupCommand } from '../../application/command/worker/user-follow-group';
+import { UserUnfollowGroupCommand } from '../../application/command/worker/user-unfollow-group';
 
 @Controller()
 export class FollowConsumer {
-  private _logger = new Logger(FollowConsumer.name);
-
-  public constructor(
-    private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
-  ) {}
+  public constructor(private readonly _commandBus: CommandBus) {}
 
   @EventPatternAndLog(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
   public async follow(
-    message: IKafkaConsumeMessage<{
+    message: IKafkaConsumerMessage<{
       userId: string;
       groupIds: string[];
       verb: 'FOLLOW' | 'UNFOLLOW';
