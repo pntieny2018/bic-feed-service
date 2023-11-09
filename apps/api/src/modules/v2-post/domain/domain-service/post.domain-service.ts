@@ -335,7 +335,6 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
-    this.event.publish(new PostVideoSuccessEvent({ postEntity, actor }));
 
     await this._setNewMedia(postEntity, {
       images: [],
@@ -349,6 +348,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
+      this.event.publish(new PostVideoSuccessEvent({ postEntity, actor }));
     }
 
     if (!isScheduledPost) {
@@ -373,6 +373,10 @@ export class PostDomainService implements IPostDomainService {
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isHidden() || postEntity.isPublished()) {
       return;
+    }
+
+    if (!postEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
     }
 
     await this._validateAndSetPostAttributes(postEntity, props.payload, actor, false);
