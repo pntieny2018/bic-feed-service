@@ -1,5 +1,7 @@
 import {
   WsCommentCreatedEventHandler,
+  WsPostVideoFailedEventHandler,
+  WsPostVideoSuccessEventHandler,
   WsQuizGeneratedEventHandler,
   WsReactionCreatedEventHandler,
   WsReactionDeletedEventHandler,
@@ -11,4 +13,6 @@ export const webSocketProvider = [
   WsQuizGeneratedEventHandler,
   WsReactionCreatedEventHandler,
   WsReactionDeletedEventHandler,
+  WsPostVideoSuccessEventHandler,
+  WsPostVideoFailedEventHandler,
 ];
