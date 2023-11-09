@@ -4,6 +4,8 @@ import { ReportCreatedEventHandler } from '../application/event-handler/content'
 import { REPORT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { ReportDomainService } from '../domain/domain-service/report.domain-service';
 import { REPORT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import { REPORT_CONTENT_VALIDATOR_TOKEN } from '../domain/validator/interface';
+import { ReportContentValidator } from '../domain/validator/report-content.validator';
 import { ReportMapper } from '../driven-adapter/mapper';
 import { ReportRepository } from '../driven-adapter/repository';
 
@@ -35,4 +37,10 @@ export const reportProvider = [
 
   /* Mapper */
   ReportMapper,
+
+  /* Validator */
+  {
+    provide: REPORT_CONTENT_VALIDATOR_TOKEN,
+    useClass: ReportContentValidator,
+  },
 ];

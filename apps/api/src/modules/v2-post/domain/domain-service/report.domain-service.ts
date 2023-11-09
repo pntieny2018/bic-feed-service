@@ -1,4 +1,5 @@
 import { CONTENT_TARGET } from '@beincom/constants';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
@@ -20,6 +21,7 @@ import {
   CreateReportCommentProps,
   CreateReportContentProps,
   CreateReportProps,
+  GetListReportsProps,
   IReportDomainService,
 } from './interface';
 
@@ -119,5 +121,9 @@ export class ReportDomainService implements IReportDomainService {
     }
 
     this._event.publish(new ReportCreatedEvent({ report: reportEntity, actor: authUser }));
+  }
+
+  public getListReports(input: GetListReportsProps): Promise<CursorPaginationResult<ReportEntity>> {
+    return this._reportRepo.getListReports(input);
   }
 }
