@@ -9,6 +9,7 @@ import {
 } from '../../../../domain/domain-service/interface';
 import { ContentNotFoundException, ReportOwnContentException } from '../../../../domain/exception';
 import { ArticleEntity, PostEntity } from '../../../../domain/model/content';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
 
 import { ReportContentCommand } from './report-content.command';
 
@@ -18,7 +19,9 @@ export class ReportContentHandler implements ICommandHandler<ReportContentComman
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomain: IContentDomainService,
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
-    private readonly _reportDomain: IReportDomainService
+    private readonly _reportDomain: IReportDomainService,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator
   ) {}
 
   public async execute(command: ReportContentCommand): Promise<void> {
@@ -26,11 +29,15 @@ export class ReportContentHandler implements ICommandHandler<ReportContentComman
 
     const contentEntity = await this._contentDomain.getVisibleContent(contentId);
 
-    if (!(contentEntity instanceof PostEntity) || !(contentEntity instanceof ArticleEntity)) {
+    const isReportableContent =
+      contentEntity instanceof PostEntity || contentEntity instanceof ArticleEntity;
+    if (!isReportableContent) {
       throw new ContentNotFoundException();
     }
 
-    if (authUser.id === contentEntity.getCreatedBy()) {
+    await this._contentValidator.checkCanReadContent(contentEntity, authUser);
+
+    if (contentEntity.isOwner(authUser.id)) {
       throw new ReportOwnContentException();
     }
 

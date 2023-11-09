@@ -39,10 +39,7 @@ export class ReportNotificationApplicationService implements IReportNotification
       },
     };
 
-    await this._kafkaAdapter.emit<NotificationPayloadDto<ReportActivityObjectDto>>(
-      KAFKA_TOPIC.STREAM.REPORT,
-      kafkaPayload
-    );
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REPORT, kafkaPayload);
   }
 
   private _createReportActivityObject(report: ReportDto, actor: UserDto): ReportActivityObjectDto {

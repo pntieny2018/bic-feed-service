@@ -17,16 +17,18 @@ export class ReportCreatedEventHandler implements IEventHandler<ReportCreatedEve
     const { report } = event.payload;
 
     const targetType = report.get('targetType');
-    if (targetType === CONTENT_TARGET.POST || targetType === CONTENT_TARGET.ARTICLE) {
-      const content = await this._contentRepo.getContentById(report.get('targetId'));
-      content.setReported(true);
+    if (targetType === CONTENT_TARGET.COMMENT) {
+      return;
+    }
 
-      await this._contentRepo.update(content);
+    const content = await this._contentRepo.getContentById(report.get('targetId'));
+    content.setReported(true);
 
-      const { attachDetails } = report.getState() || {};
-      for (const reportDetail of attachDetails) {
-        await this._contentRepo.unSaveContent(reportDetail.createdBy, reportDetail.targetId);
-      }
+    await this._contentRepo.update(content);
+
+    const { attachDetails } = report.getState() || {};
+    for (const reportDetail of attachDetails) {
+      await this._contentRepo.unSaveContent(reportDetail.createdBy, reportDetail.targetId);
     }
   }
 }

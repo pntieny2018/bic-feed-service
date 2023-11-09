@@ -5,7 +5,7 @@ export class ReportDto {
   public id: string;
   public targetId: string;
   public targetType: CONTENT_TARGET;
-  public authorId: string;
+  public targetActorId: string;
   public status: REPORT_STATUS;
   public updatedBy?: string;
   public createdAt?: Date;

@@ -23,7 +23,7 @@ export type ReportAttributes = {
   id: string;
   targetId: string;
   targetType: CONTENT_TARGET;
-  authorId: string;
+  targetActorId: string;
   status: REPORT_STATUS;
   updatedBy?: string;
   createdAt?: Date;
@@ -58,7 +58,7 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     report: Partial<ReportAttributes>,
     details: CreateReportDetailProps[]
   ): ReportEntity {
-    const { targetId, targetType, authorId, status } = report;
+    const { targetId, targetType, targetActorId, status } = report;
 
     const reportId = v4();
     const now = new Date();
@@ -67,7 +67,7 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
       id: v4(),
       targetId,
       targetType,
-      authorId,
+      targetActorId,
       status,
       details: details.map((detail) => ({
         id: v4(),
@@ -94,7 +94,7 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     if (this._props.targetId && !isUUID(this._props.targetId)) {
       throw new DomainModelException(`Target ID must be UUID`);
     }
-    if (this._props.authorId && !isUUID(this._props.authorId)) {
+    if (this._props.targetActorId && !isUUID(this._props.targetActorId)) {
       throw new DomainModelException(`Author ID By must be UUID`);
     }
   }

@@ -25,7 +25,7 @@ export class ReportRepository implements IReportRepository {
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
-    const { id, targetId, targetType, authorId, status } = input.where;
+    const { id, targetId, targetType, targetActorId, status } = input.where;
     const { details } = input.include || {};
 
     const condition: WhereOptions<ReportContentAttribute> = {};
@@ -38,8 +38,8 @@ export class ReportRepository implements IReportRepository {
     if (targetType) {
       condition.targetType = targetType;
     }
-    if (authorId) {
-      condition.authorId = authorId;
+    if (targetActorId) {
+      condition.authorId = targetActorId;
     }
     if (status) {
       condition.status = status;
@@ -65,15 +65,15 @@ export class ReportRepository implements IReportRepository {
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
     const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
-    const { targetType, authorId, status } = input.where;
+    const { targetType, targetActorId, status } = input.where;
     const { details } = input.include || {};
 
     const condition: WhereOptions<ReportContentAttribute> = {};
     if (targetType) {
       condition.targetType = targetType;
     }
-    if (authorId) {
-      condition.authorId = authorId;
+    if (targetActorId) {
+      condition.authorId = targetActorId;
     }
     if (status) {
       condition.status = status;

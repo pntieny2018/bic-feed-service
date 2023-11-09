@@ -13,7 +13,7 @@ export type FindOneReportProps = {
     id?: string;
     targetId?: string;
     targetType?: CONTENT_TARGET;
-    authorId?: string;
+    targetActorId?: string;
     status?: REPORT_STATUS;
   };
   include?: IncludeReportProps;
@@ -22,7 +22,7 @@ export type FindOneReportProps = {
 export type GetPaginationReportProps = {
   where: {
     targetType?: CONTENT_TARGET[];
-    authorId?: string;
+    targetActorId?: string;
     status?: REPORT_STATUS;
   };
   include?: IncludeReportProps;

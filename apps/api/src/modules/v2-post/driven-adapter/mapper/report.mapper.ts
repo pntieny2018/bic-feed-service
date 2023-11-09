@@ -9,7 +9,17 @@ export class ReportMapper {
     if (model === null) {
       return null;
     }
-    return new ReportEntity(model.toJSON());
+    return new ReportEntity({
+      id: model.id,
+      targetId: model.targetId,
+      targetType: model.targetType,
+      targetActorId: model.authorId,
+      status: model.status,
+      updatedBy: model.updatedBy,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+      details: model.details,
+    });
   }
 
   public toPersistence(entity: ReportEntity): ReportContentAttribute {
@@ -17,7 +27,7 @@ export class ReportMapper {
       id: entity.get('id'),
       targetId: entity.get('targetId'),
       targetType: entity.get('targetType'),
-      authorId: entity.get('authorId'),
+      authorId: entity.get('targetActorId'),
       status: entity.get('status'),
       updatedBy: entity.get('updatedBy'),
       createdAt: entity.get('createdAt'),

@@ -25,7 +25,7 @@ export class ReportContentHandler implements ICommandHandler<ReportCommentComman
 
     const commentEntity = await this._commentDomain.getVisibleComment(commentId);
 
-    if (authUser.id === commentEntity.get('createdBy')) {
+    if (commentEntity.isOwner(authUser.id)) {
       throw new ReportOwnContentException();
     }
 

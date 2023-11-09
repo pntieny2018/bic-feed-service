@@ -14,6 +14,7 @@ import {
   REPORT_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
 
 import {
   CreateReportCommentProps,
@@ -24,6 +25,8 @@ import {
 
 export class ReportDomainService implements IReportDomainService {
   public constructor(
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
     @Inject(REPORT_REPOSITORY_TOKEN)
     private readonly _reportRepo: IReportRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -40,7 +43,7 @@ export class ReportDomainService implements IReportDomainService {
     await this._createReport({
       targetId: content.getId(),
       targetType: content instanceof PostEntity ? CONTENT_TARGET.POST : CONTENT_TARGET.ARTICLE,
-      authorId: content.getCreatedBy(),
+      targetActorId: content.getCreatedBy(),
       groupIds: content.getGroupIds(),
       authUser,
       reasonType,
@@ -58,10 +61,12 @@ export class ReportDomainService implements IReportDomainService {
       throw new ContentNotFoundException();
     }
 
+    await this._contentValidator.checkCanReadContent(contentEntity, authUser);
+
     await this._createReport({
       targetId: comment.get('id'),
       targetType: CONTENT_TARGET.COMMENT,
-      authorId: comment.get('createdBy'),
+      targetActorId: comment.get('createdBy'),
       groupIds: contentEntity.getGroupIds(),
       authUser,
       reasonType,
@@ -73,11 +78,11 @@ export class ReportDomainService implements IReportDomainService {
     data: CreateReportProps & {
       targetId: string;
       targetType: CONTENT_TARGET;
-      authorId: string;
+      targetActorId: string;
       groupIds: string[];
     }
   ): Promise<void> {
-    const { targetId, targetType, authorId, groupIds, authUser, reasonType, reason } = data;
+    const { targetId, targetType, targetActorId, groupIds, authUser, reasonType, reason } = data;
 
     let reportEntity = await this._reportRepo.findOne({
       where: { targetId },
@@ -105,7 +110,7 @@ export class ReportDomainService implements IReportDomainService {
       const report = {
         targetId,
         targetType,
-        authorId,
+        targetActorId,
         status: REPORT_STATUS.CREATED,
       };
       reportEntity = ReportEntity.create(report, reportDetails);
