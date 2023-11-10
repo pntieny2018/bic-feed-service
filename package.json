@@ -13,7 +13,6 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "start:app": "npm run script:pre-migration && npx sequelize-cli db:migrate && npm run script:post-migration && node dist/apps/api/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -21,9 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/api/test/jest-e2e.json",
     "docker-compose-up": "sudo rm -fr data && docker-compose up --build",
-    "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/.bin/sequelize migration:generate --name",
-    "script:pre-migration": "node dist/apps/api/src/command/cli.js clean-up:deleted-content-ref && node dist/apps/api/src/command/cli.js clean-up:deleted-comment-ref",
-    "script:post-migration": ""
+    "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/.bin/sequelize migration:generate --name"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.54.0",

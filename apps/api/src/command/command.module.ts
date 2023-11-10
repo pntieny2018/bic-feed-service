@@ -17,6 +17,8 @@ import { UploadModule } from '../modules/upload';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 
+import { CleanUpDeletedCommentRefCommand } from './clean-up-deleted-comment-ref.command';
+import { CleanUpDeletedContentRefCommand } from './clean-up-deleted-content-ref.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
@@ -95,6 +97,8 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     ExportInvalidTagNameCommand,
     UpdateCommentReactionCountCommand,
     UpdateContentReactionCountCommand,
+    CleanUpDeletedContentRefCommand,
+    CleanUpDeletedCommentRefCommand,
   ],
 })
 export class CommandModule {}
