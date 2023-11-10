@@ -59,7 +59,7 @@ export class WsReactionCreatedEventHandler implements IEventHandler<ReactionCrea
           reaction,
           commentId: comment.get('id'),
           parentId: comment.get('parentId'),
-          contentType: content.get('type'),
+          contentType: contentEntity.get('type'),
           contentId: contentEntity.get('id'),
         });
         break;
