@@ -21,6 +21,7 @@ import {
   MarkReadImportantContentCommand,
   PinContentCommand,
   ReorderPinnedContentCommand,
+  ReportContentCommand,
   SaveContentCommand,
   SeenContentCommand,
   UpdateContentSettingCommand,
@@ -48,6 +49,7 @@ import {
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
+  CreateReportDto,
   GetAudienceContentDto,
   GetDraftContentsRequestDto,
   GetScheduleContentsQueryDto,
@@ -387,6 +389,28 @@ export class ContentController {
       new SaveContentCommand({
         authUser,
         contentId,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Report content' })
+  @ApiOkResponse({ description: 'Reported content successfully' })
+  @ResponseMessages({
+    success: 'Reported content successfully',
+    error: 'Reported content failed',
+  })
+  @Post(ROUTES.CONTENT.CREATE_REPORT.PATH)
+  @Version(ROUTES.CONTENT.CREATE_REPORT.VERSIONS)
+  public async reportContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @Body() input: CreateReportDto
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new ReportContentCommand({
+        authUser,
+        contentId,
+        ...input,
       })
     );
   }

@@ -5,11 +5,13 @@ import {
   CommentNotificationApplicationService,
   ContentNotificationApplicationService,
   ReactionNotificationApplicationService,
+  ReportNotificationApplicationService,
 } from './application/application-services';
 import {
   COMMENT_NOTIFICATION_APPLICATION_SERVICE,
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
   REACTION_NOTIFICATION_APPLICATION_SERVICE,
+  REPORT_NOTIFICATION_APPLICATION_SERVICE,
 } from './application/application-services/interface';
 import { KAFKA_ADAPTER } from './domain/infra-adapter-interface';
 import { KafkaAdapter } from './driven-adapter/infra';
@@ -31,6 +33,10 @@ import { KafkaAdapter } from './driven-adapter/infra';
       useClass: ReactionNotificationApplicationService,
     },
     {
+      provide: REPORT_NOTIFICATION_APPLICATION_SERVICE,
+      useClass: ReportNotificationApplicationService,
+    },
+    {
       provide: KAFKA_ADAPTER,
       useClass: KafkaAdapter,
     },
@@ -47,6 +53,10 @@ import { KafkaAdapter } from './driven-adapter/infra';
     {
       provide: REACTION_NOTIFICATION_APPLICATION_SERVICE,
       useClass: ReactionNotificationApplicationService,
+    },
+    {
+      provide: REPORT_NOTIFICATION_APPLICATION_SERVICE,
+      useClass: ReportNotificationApplicationService,
     },
   ],
 })
