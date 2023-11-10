@@ -33,12 +33,7 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
         data: new CommentCreatedEventData({
           event: eventName,
           verb: WS_ACTIVITY_VERB.COMMENT,
-          target:
-            parentId !== NIL
-              ? WS_TARGET_TYPE.COMMENT
-              : contentType === CONTENT_TYPE.POST
-              ? WS_TARGET_TYPE.POST
-              : WS_TARGET_TYPE.ARTICLE,
+          target: this._getTargetComment(payload),
           extra: {
             contentId,
             contentType,
@@ -51,5 +46,15 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
     });
 
     await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_NOTIFICATION.WS_EVENT, event);
+  }
+
+  private _getTargetComment(payload: CommentCreatedEventPayload): WS_TARGET_TYPE {
+    const { parentId, contentType } = payload;
+
+    return parentId !== NIL
+      ? WS_TARGET_TYPE.COMMENT
+      : contentType === CONTENT_TYPE.POST
+      ? WS_TARGET_TYPE.POST
+      : WS_TARGET_TYPE.ARTICLE;
   }
 }
