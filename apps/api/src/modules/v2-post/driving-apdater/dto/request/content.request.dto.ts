@@ -239,3 +239,9 @@ export class PinContentDto {
   @IsUUID('4', { each: true })
   public unpinGroupIds: string[];
 }
+
+export class GetMyReportedContentsRequestDto extends PaginatedArgs {
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
+}
