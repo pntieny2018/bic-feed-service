@@ -77,6 +77,8 @@ export class ContentDomainService implements IContentDomainService {
     } else {
       contentEntity = await this._contentRepository.findContentById(contentId, {
         mustIncludeGroup: true,
+        shouldIncludeLinkPreview: true,
+        shouldIncludeSeries: true,
       });
     }
 

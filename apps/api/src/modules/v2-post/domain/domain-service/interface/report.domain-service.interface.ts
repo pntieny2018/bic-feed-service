@@ -22,6 +22,7 @@ export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
   getListReports(input: GetListReportsProps): Promise<CursorPaginationResult<ReportEntity>>;
+  getReport(id: string): Promise<ReportEntity>;
 }
 
 export const REPORT_DOMAIN_SERVICE_TOKEN = 'REPORT_DOMAIN_SERVICE_TOKEN';

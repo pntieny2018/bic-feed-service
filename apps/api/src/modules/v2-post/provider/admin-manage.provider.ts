@@ -1,3 +1,3 @@
-import { GetListReportsHandler } from '../application/query/admin-manage';
+import { GetListReportsHandler, GetReportDetailsHandler } from '../application/query/admin-manage';
 
-export const adminManageProvider = [GetListReportsHandler];
+export const adminManageProvider = [GetListReportsHandler, GetReportDetailsHandler];

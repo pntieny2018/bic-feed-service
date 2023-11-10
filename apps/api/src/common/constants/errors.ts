@@ -106,4 +106,5 @@ export const ERRORS = {
   // REPORT
   REPORT_OWN_CONTENT: 'report.own_content',
   REPORT_NOT_GROUP_ADMIN: 'report.not_group_admin',
+  REPORT_NOT_FOUND: 'report.not_found',
 };

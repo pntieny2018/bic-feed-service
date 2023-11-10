@@ -5,7 +5,7 @@ import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { ReportCreatedEvent } from '../event';
-import { ContentNotFoundException } from '../exception';
+import { ContentNotFoundException, ReportNotFoundException } from '../exception';
 import { PostEntity } from '../model/content';
 import { ReportEntity } from '../model/report';
 import {
@@ -125,5 +125,17 @@ export class ReportDomainService implements IReportDomainService {
 
   public getListReports(input: GetListReportsProps): Promise<CursorPaginationResult<ReportEntity>> {
     return this._reportRepo.getListReports(input);
+  }
+
+  public async getReport(id: string): Promise<ReportEntity> {
+    const report = await this._reportRepo.findOne({
+      where: { id },
+    });
+
+    if (!report) {
+      throw new ReportNotFoundException();
+    }
+
+    return report;
   }
 }

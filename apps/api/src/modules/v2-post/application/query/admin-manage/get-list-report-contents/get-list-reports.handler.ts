@@ -15,7 +15,9 @@ import { GetListReportsPaginationDto } from '../../../dto';
 import { GetListReportsQuery } from './get-list-reports.query';
 
 @QueryHandler(GetListReportsQuery)
-export class GetListReportsHandler implements IQueryHandler<GetListReportsQuery> {
+export class GetListReportsHandler
+  implements IQueryHandler<GetListReportsQuery, GetListReportsPaginationDto>
+{
   public constructor(
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
     private readonly _reportDomainService: IReportDomainService,

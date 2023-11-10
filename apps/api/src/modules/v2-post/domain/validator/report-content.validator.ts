@@ -14,7 +14,6 @@ export class ReportContentValidator implements IReportContentValidator {
 
   public async validateAdminRootGroup(props: ValidateAdminRootGroupPayload): Promise<void> {
     const groupAdminsMapper = await this._groupAdapter.getGroupAdminMap([props.rootGroupId]);
-
     if (!groupAdminsMapper?.[props.rootGroupId]?.includes(props.userId)) {
       throw new NotGroupAdminException();
     }
