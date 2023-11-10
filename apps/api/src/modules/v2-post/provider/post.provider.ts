@@ -16,6 +16,7 @@ import {
   SaveContentHandler,
   UpdateContentSettingHandler,
   ProcessGroupPrivacyUpdatedHandler,
+  UnsaveContentHandler,
 } from '../application/command/content';
 import { ProcessGroupStateUpdatedHandler } from '../application/command/content/process-group-state-updated';
 import {
@@ -166,6 +167,7 @@ export const postProvider = [
   ReorderPinnedContentHandler,
   SeenContentHandler,
   SaveContentHandler,
+  UnsaveContentHandler,
   UpdateContentSettingHandler,
 
   AutoSavePostHandler,

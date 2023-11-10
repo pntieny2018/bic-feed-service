@@ -515,6 +515,15 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
+  public async unSaveContent(userId: string, contentId: string): Promise<void> {
+    await this._libUserSavePostRepo.delete({
+      where: {
+        userId,
+        postId: contentId,
+      },
+    });
+  }
+
   public async createPostSeries(seriesId: string, postId: string): Promise<void> {
     const maxIndex =
       (await this._libPostSeriesRepo.max('zindex', {

@@ -2,6 +2,7 @@ import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -23,6 +24,7 @@ import {
   ReorderPinnedContentCommand,
   SaveContentCommand,
   SeenContentCommand,
+  UnsaveContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
@@ -385,6 +387,28 @@ export class ContentController {
   ): Promise<void> {
     return this._commandBus.execute(
       new SaveContentCommand({
+        authUser,
+        contentId,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'unsave post' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Unsave post successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.unsaved_success',
+  })
+  @Delete(ROUTES.CONTENT.UNSAVE_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.UNSAVE_CONTENT.VERSIONS)
+  public async unSave(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string
+  ): Promise<boolean> {
+    return this._commandBus.execute<UnsaveContentCommand, boolean>(
+      new UnsaveContentCommand({
         authUser,
         contentId,
       })
