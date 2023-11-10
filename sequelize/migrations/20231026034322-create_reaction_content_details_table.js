@@ -19,6 +19,7 @@ module.exports = {
         content_id: {
           type: Sequelize.UUID,
           allowNull: false,
+          references: { model: 'posts', key: 'id' }
         },
         count: {
           type: Sequelize.INTEGER(),

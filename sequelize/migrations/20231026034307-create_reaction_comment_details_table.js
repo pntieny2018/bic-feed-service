@@ -19,6 +19,7 @@ module.exports = {
         comment_id: {
           type: Sequelize.UUID,
           allowNull: false,
+          references: { model: 'comments', key: 'id' }
         },
         count: {
           type: Sequelize.INTEGER(),
