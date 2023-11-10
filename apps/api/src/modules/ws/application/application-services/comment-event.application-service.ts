@@ -51,10 +51,14 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
   private _getTargetComment(payload: CommentCreatedEventPayload): WS_TARGET_TYPE {
     const { parentId, contentType } = payload;
 
-    return parentId !== NIL
-      ? WS_TARGET_TYPE.COMMENT
-      : contentType === CONTENT_TYPE.POST
-      ? WS_TARGET_TYPE.POST
-      : WS_TARGET_TYPE.ARTICLE;
+    if (parentId !== NIL) {
+      return WS_TARGET_TYPE.COMMENT;
+    }
+
+    if (contentType === CONTENT_TYPE.POST) {
+      return WS_TARGET_TYPE.POST;
+    } else {
+      return WS_TARGET_TYPE.ARTICLE;
+    }
   }
 }
