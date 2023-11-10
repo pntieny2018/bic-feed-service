@@ -1,5 +1,6 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
+import { NIL } from 'uuid';
 
 import { KAFKA_TOPIC } from '../../../../common/constants';
 import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
@@ -32,7 +33,12 @@ export class CommentEventApplicationService implements ICommentEventApplicationS
         data: new CommentCreatedEventData({
           event: eventName,
           verb: WS_ACTIVITY_VERB.COMMENT,
-          target: contentType === CONTENT_TYPE.POST ? WS_TARGET_TYPE.POST : WS_TARGET_TYPE.ARTICLE,
+          target:
+            parentId !== NIL
+              ? WS_TARGET_TYPE.COMMENT
+              : contentType === CONTENT_TYPE.POST
+              ? WS_TARGET_TYPE.POST
+              : WS_TARGET_TYPE.ARTICLE,
           extra: {
             contentId,
             contentType,
