@@ -102,4 +102,7 @@ export const ERRORS = {
 
   // RECENT SEARCH
   RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
+
+  // REPORT
+  REPORT_OWN_CONTENT: 'report.own_content',
 };

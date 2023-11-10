@@ -8,8 +8,11 @@ import {
   Table,
   UpdatedAt,
   Model,
+  ForeignKey,
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
+
+import { PostModel } from './post.model';
 
 export type ReactionContentDetailsAttributes = InferAttributes<ReactionContentDetailsModel>;
 
@@ -30,6 +33,7 @@ export class ReactionContentDetailsModel extends Model<
   @Column
   public reactionName: string;
 
+  @ForeignKey(() => PostModel)
   @IsUUID()
   @Column
   public contentId: string;

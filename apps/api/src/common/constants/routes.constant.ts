@@ -211,6 +211,14 @@ export const ROUTES = {
       PATH: 'content/draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    GET_REPORTS: {
+      PATH: 'content/reports', // old: /reports/me/content
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    CREATE_REPORT: {
+      PATH: 'content/:contentId/reports', // old: /reports/content
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
     GET_MENU_SETTINGS: {
       PATH: 'content/:contentId/menu-settings',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
@@ -285,6 +293,10 @@ export const ROUTES = {
       PATH: '/comments/:commentId/reply',
       VERSIONS: AppHelper.getVersionsSupported(),
     },
+    CREATE_REPORT: {
+      PATH: 'comments/:commentId/reports', // old: /reports/content
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
   },
   REACTION: {
     GET_LIST: {
@@ -298,6 +310,28 @@ export const ROUTES = {
     DELETE: {
       PATH: '/reactions',
       VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
+  MANAGE_REPORTS: {
+    GET_LIST: {
+      PATH: 'manage/communities/:rootGroupId/content-reports', // old: /reports/review
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    GET_DETAIL: {
+      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId', // old: /reports/:rootGroupId/content/:targetId
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    STATISTIC: {
+      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId/statistics', // old: /reports/:reportId/statistics/:targetId
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    IGNORE: {
+      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId/ignore', // old: /reports/status
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    HIDE: {
+      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId/hide', // old: /reports/status
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },
 };

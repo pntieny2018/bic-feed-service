@@ -15,7 +15,7 @@ import {
   LibPostGroupRepository,
   LibPostSeriesRepository,
   LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
+  LibUserReportContentDetailRepository,
   LibUserSeenPostRepository,
   LibContentRepository,
   LibPostTagRepository,
@@ -60,7 +60,7 @@ export class ContentRepository implements IContentRepository {
     private readonly _libPostCategoryRepo: LibPostCategoryRepository,
     private readonly _libUserSeenPostRepo: LibUserSeenPostRepository,
     private readonly _libUserMarkReadPostRepo: LibUserMarkReadPostRepository,
-    private readonly _libUserReportContentRepo: LibUserReportContentRepository,
+    private readonly _libUserReportContentRepo: LibUserReportContentDetailRepository,
     private readonly _libUserSavePostRepo: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper
   ) {}
