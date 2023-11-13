@@ -2,9 +2,10 @@ import { CONTENT_REPORT_REASON_TYPE } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
+import { ReportReasonCountDto } from '../../../application/dto';
 import { CommentEntity } from '../../model/comment';
 import { ArticleEntity, PostEntity } from '../../model/content';
-import { ReportEntity } from '../../model/report';
+import { ReportEntity, ReportDetailAttributes } from '../../model/report';
 
 export type CreateReportProps = {
   authUser: UserDto;
@@ -21,6 +22,7 @@ export type GetListReportsProps = CursorPaginationProps & {
 export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
+  countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[];
   getListReports(input: GetListReportsProps): Promise<CursorPaginationResult<ReportEntity>>;
 }
 

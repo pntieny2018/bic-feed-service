@@ -26,7 +26,6 @@ import { LinkPreviewAttributes, LinkPreviewModel } from './link-preview.model';
 import { MediaAttributes, MediaModel } from './media.model';
 import { PostCategoryAttributes, PostCategoryModel } from './post-category.model';
 import { PostGroupAttributes, PostGroupModel } from './post-group.model';
-import { PostMediaModel } from './post-media.model';
 import { PostReactionAttributes, PostReactionModel } from './post-reaction.model';
 import { PostSeriesAttributes, PostSeriesModel } from './post-series.model';
 import { PostTagAttributes, PostTagModel } from './post-tag.model';
@@ -175,9 +174,6 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
 
   @HasMany(() => CommentModel)
   public comments?: CommentAttributes[];
-
-  @BelongsToMany(() => MediaModel, () => PostMediaModel)
-  public media?: MediaAttributes[];
 
   @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
   public categories?: CategoryAttributes[];

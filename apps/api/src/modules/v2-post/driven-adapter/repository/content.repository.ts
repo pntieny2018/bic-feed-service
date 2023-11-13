@@ -240,10 +240,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async delete(id: string): Promise<void> {
-    await this._libContentRepo.delete({
-      where: { id },
-      force: true,
-    });
+    await this._libContentRepo.destroyContent(id);
     return;
   }
 
