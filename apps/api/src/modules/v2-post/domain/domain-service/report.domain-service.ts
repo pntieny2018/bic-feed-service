@@ -1,12 +1,14 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_REPORT_REASONS, CONTENT_TARGET } from '@beincom/constants';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
+import { ReportReasonCountDto } from '../../application/dto';
 import { ReportCreatedEvent } from '../event';
 import { ContentNotFoundException } from '../exception';
 import { PostEntity } from '../model/content';
-import { ReportEntity } from '../model/report';
+import { ReportDetailAttributes, ReportEntity } from '../model/report';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
@@ -119,5 +121,20 @@ export class ReportDomainService implements IReportDomainService {
     }
 
     this._event.publish(new ReportCreatedEvent({ report: reportEntity, actor: authUser }));
+  }
+
+  public countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[] {
+    const reasonTypes = uniq(reportDetails.map((detail) => detail.reasonType));
+
+    return reasonTypes.map((reasonType) => {
+      const reasonTypeDetails = reportDetails.filter((detail) => detail.reasonType === reasonType);
+      const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonType);
+
+      return {
+        reasonType,
+        description: reason?.description,
+        total: reasonTypeDetails.length,
+      };
+    });
   }
 }
