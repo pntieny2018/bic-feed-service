@@ -98,11 +98,13 @@ describe('ReplyCommentHandler', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           t: () => {},
         } as any)
     );
 
     jest.spyOn(eventEmitter, 'emit').mockImplementation(() => ({
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       t: () => {},
     }));
   });
@@ -122,7 +124,7 @@ describe('ReplyCommentHandler', () => {
           videos: [],
         },
         parentId: parentId,
-        postId: postId,
+        contentId: postId,
         content: 'This is a sample comment',
         giphyId: 'EZICHGrSD5QEFCxMiC',
         mentions: userMentions.map((mention) => mention.id),
@@ -169,7 +171,7 @@ describe('ReplyCommentHandler', () => {
           videos: [],
         },
         parentId: parentTagetId,
-        postId: postId,
+        contentId: postId,
         content: 'This is a comment',
         giphyId: 'EZICHGrSD5QEFCxMiC',
         mentions: [],
@@ -201,7 +203,7 @@ describe('ReplyCommentHandler', () => {
         videos: [],
       },
       parentId: parentTagetId,
-      postId: postId,
+      contentId: postId,
       content: 'This is a comment',
       giphyId: 'EZICHGrSD5QEFCxMiC',
       mentions: [],
@@ -239,7 +241,7 @@ describe('ReplyCommentHandler', () => {
         videos: [],
       },
       parentId: parentTagetId,
-      postId: postId,
+      contentId: postId,
       content: 'This is a comment',
       giphyId: 'EZICHGrSD5QEFCxMiC',
       mentions: [],
