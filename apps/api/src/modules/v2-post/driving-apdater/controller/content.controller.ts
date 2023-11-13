@@ -408,8 +408,8 @@ export class ContentController {
   public async unSave(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
-  ): Promise<boolean> {
-    return this._commandBus.execute<UnsaveContentCommand, boolean>(
+  ): Promise<void> {
+    return this._commandBus.execute<UnsaveContentCommand>(
       new UnsaveContentCommand({
         authUser,
         contentId,

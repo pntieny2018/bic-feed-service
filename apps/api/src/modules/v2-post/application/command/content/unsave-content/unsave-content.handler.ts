@@ -9,15 +9,14 @@ import {
 import { UnsaveContentCommand } from './unsave-content.command';
 
 @CommandHandler(UnsaveContentCommand)
-export class UnsaveContentHandler implements ICommandHandler<UnsaveContentCommand, boolean> {
+export class UnsaveContentHandler implements ICommandHandler<UnsaveContentCommand, void> {
   public constructor(
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService
   ) {}
 
-  public async execute(command: UnsaveContentCommand): Promise<boolean> {
+  public async execute(command: UnsaveContentCommand): Promise<void> {
     const { authUser, contentId } = command.payload;
-    await this._contentDomainService.unsaveContent(contentId, authUser.id);
-    return true;
+    return this._contentDomainService.unsaveContent(contentId, authUser.id);
   }
 }
