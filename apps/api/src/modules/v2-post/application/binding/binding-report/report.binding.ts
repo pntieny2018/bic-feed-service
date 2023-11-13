@@ -11,7 +11,7 @@ import {
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
-import { AuthorContentReported, ReportDto } from '../../dto';
+import { ContentReportDetail, ReportDto, TargetAuthor } from '../../dto';
 
 import { IReportBinding } from './report.interface';
 
@@ -47,7 +47,7 @@ export class ReportBinding implements IReportBinding {
 
     for (const entity of entities) {
       const author = authors.find((author) => author.id === entity.get('targetActorId'));
-      const authorContentReported = new AuthorContentReported({
+      const targetAuthor = new TargetAuthor({
         id: author?.id,
         avatar: author?.avatar,
         username: author?.username,
@@ -76,6 +76,10 @@ export class ReportBinding implements IReportBinding {
         }
       }
 
+      const contentReportDetail = new ContentReportDetail({
+        content,
+      });
+
       reports.push(
         new ReportDto({
           id: entity.get('id'),
@@ -87,8 +91,8 @@ export class ReportBinding implements IReportBinding {
           createdAt: entity.get('createdAt'),
           updatedAt: entity.get('updatedAt'),
           details: entity.getDetails(),
-          authorContentReported,
-          content,
+          targetAuthor,
+          contentReportDetail,
         })
       );
     }

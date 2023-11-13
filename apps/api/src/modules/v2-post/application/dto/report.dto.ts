@@ -16,8 +16,8 @@ export class ReportDto {
   public createdAt?: Date;
   public updatedAt?: Date;
   public details?: ReportDetailDto[];
-  public content?: string;
-  public authorContentReported?: AuthorContentReported;
+  public contentReportDetail?: ContentReportDetail;
+  public targetAuthor?: TargetAuthor;
 
   public constructor(data: Partial<ReportDto>) {
     Object.assign(this, data);
@@ -42,13 +42,21 @@ export class ReportDetailDto {
   }
 }
 
-export class AuthorContentReported {
+export class TargetAuthor {
   public id: string;
   public avatar: string;
   public username: string;
   public fullname: string;
 
-  public constructor(data: AuthorContentReported) {
+  public constructor(data: TargetAuthor) {
+    Object.assign(this, data);
+  }
+}
+
+export class ContentReportDetail {
+  public content: string;
+
+  public constructor(data: ContentReportDetail) {
     Object.assign(this, data);
   }
 }
@@ -60,10 +68,10 @@ export class GetListReportsPaginationDto extends PaginatedResponse<ReportDto> {
 }
 
 export class GetReportContentDetailsDto {
-  public content?: PostDto | ArticleDto;
-  public comment?: CommentBaseDto;
+    public content?: PostDto | ArticleDto;
+    public comment?: CommentBaseDto;
 
-  public constructor(data: Partial<GetReportContentDetailsDto>) {
-    Object.assign(this, data);
-  }
+    public constructor(data: Partial<GetReportContentDetailsDto>) {
+        Object.assign(this, data);
+    }
 }

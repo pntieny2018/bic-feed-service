@@ -144,7 +144,7 @@ export class ReportRepository implements IReportRepository {
         )`,
         include: [
           {
-            model: this._libReportDetailRepo.getModel(),
+            model: ReportContentDetailModel,
             as: 'details',
             required: true,
             where: {
@@ -161,7 +161,7 @@ export class ReportRepository implements IReportRepository {
     );
 
     return {
-      rows: rows.map((report) => this._reportMapper.toDomain(report)),
+      rows: rows.map((report) => this._reportMapper.toDomain(report.toJSON())),
       meta,
     };
   }

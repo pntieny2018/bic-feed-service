@@ -26,7 +26,7 @@ export class AdminManageController {
   })
   @Get(ROUTES.MANAGE_REPORTS.GET_LIST.PATH)
   @Version(ROUTES.MANAGE_REPORTS.GET_LIST.VERSIONS)
-  public getListReportContents(
+  public async getListReportContents(
     @AuthUser() authUser: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Query() paginateOption: PaginatedArgs
