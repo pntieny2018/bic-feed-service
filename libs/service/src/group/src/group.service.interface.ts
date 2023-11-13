@@ -15,9 +15,11 @@ export type GetUserRoleInGroupsResult = {
   };
 };
 
-export type GetUserIdsInGroups = {
+export type GetUserIdsInGroupsProps = {
   groupIds: string[];
   notInGroupIds: string[];
+  ignoreUserIds?: string;
+  includeDeactivated?: boolean;
   after?: string;
   limit?: number;
 };
@@ -46,7 +48,7 @@ export interface IGroupService {
   ): Promise<GetUserRoleInGroupsResult | null>;
 
   isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
-  getUserIdsInGroups(GetUserIdsInGroups): Promise<{
+  getUserIdsInGroups(props: GetUserIdsInGroupsProps): Promise<{
     list: string[];
     cursor: string;
   }>;
