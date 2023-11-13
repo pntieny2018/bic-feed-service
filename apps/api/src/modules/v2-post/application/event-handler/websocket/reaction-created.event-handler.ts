@@ -38,29 +38,36 @@ export class WsReactionCreatedEventHandler implements IEventHandler<ReactionCrea
 
     switch (reactionEntity.get('target')) {
       case CONTENT_TARGET.POST:
-      case CONTENT_TARGET.ARTICLE:
-        const content = await this._contentDomainService.getVisibleContent(targetId);
+        const post = await this._contentDomainService.getVisibleContent(targetId);
         await this._websocketAdapter.emitReactionToPostEvent({
           event: ReactionCreatedEvent.event,
-          recipients: content.getGroupIds(),
+          recipients: post.getGroupIds(),
           reaction,
-          contentType: content.get('type'),
-          contentId: content.get('id'),
+          contentType: post.get('type'),
+          contentId: post.get('id'),
+        });
+        break;
+      case CONTENT_TARGET.ARTICLE:
+        const article = await this._contentDomainService.getVisibleContent(targetId);
+        await this._websocketAdapter.emitReactionToArticleEvent({
+          event: ReactionCreatedEvent.event,
+          recipients: article.getGroupIds(),
+          reaction,
+          contentType: article.get('type'),
+          contentId: article.get('id'),
         });
         break;
       case CONTENT_TARGET.COMMENT:
         const comment = await this._commentDomainService.getVisibleComment(targetId);
-        const contentEntity = await this._contentDomainService.getVisibleContent(
-          comment.get('postId')
-        );
+        const content = await this._contentDomainService.getVisibleContent(comment.get('postId'));
         await this._websocketAdapter.emitReactionToCommentEvent({
           event: ReactionCreatedEvent.event,
-          recipients: contentEntity.getGroupIds(),
+          recipients: content.getGroupIds(),
           reaction,
           commentId: comment.get('id'),
           parentId: comment.get('parentId'),
-          contentType: contentEntity.get('type'),
-          contentId: contentEntity.get('id'),
+          contentType: content.get('type'),
+          contentId: content.get('id'),
         });
         break;
       default:
