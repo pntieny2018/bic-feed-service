@@ -39,6 +39,11 @@ export class PostReactionRepository implements IPostReactionRepository {
         },
       ],
     });
+
+    if (!postReaction) {
+      return null;
+    }
+
     postReaction.target =
       postReaction.post?.type === CONTENT_TYPE.ARTICLE
         ? CONTENT_TARGET.ARTICLE
