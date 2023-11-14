@@ -131,7 +131,7 @@ export class ReportRepository implements IReportRepository {
   public async getListReports(
     props: GetListReportsProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { rootGroupId, limit, before, after } = props;
+    const { groupId, limit, before, after } = props;
     const { schema } = getDatabaseConfig();
 
     const { rows, meta } = await this._libReportRepo.cursorPaginate(
@@ -140,7 +140,7 @@ export class ReportRepository implements IReportRepository {
           status: REPORT_STATUS.CREATED,
         },
         whereRaw: `id IN (
-          SELECT report_id FROM ${schema}.${ReportContentDetailModel.tableName} where group_id = '${rootGroupId}'
+          SELECT report_id FROM ${schema}.${ReportContentDetailModel.tableName} where group_id = '${groupId}'
         )`,
         include: [
           {
@@ -148,7 +148,7 @@ export class ReportRepository implements IReportRepository {
             as: 'details',
             required: true,
             where: {
-              groupId: rootGroupId,
+              groupId,
             },
           },
         ],

@@ -10,12 +10,3 @@ export class ReportOwnContentException extends DomainException {
     super(ReportOwnContentException.code, message, error);
   }
 }
-
-export class NotGroupAdminException extends DomainException {
-  public static code = ERRORS.GROUP_NOT_ADMIN;
-
-  public constructor(message: string = null, error: any = null) {
-    message = message || 'You are not group admin';
-    super(NotGroupAdminException.code, message, error);
-  }
-}

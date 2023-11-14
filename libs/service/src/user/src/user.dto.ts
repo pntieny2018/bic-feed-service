@@ -24,12 +24,7 @@ export class ShowingBadgeDto {
   public community: CommunityInfo;
 }
 
-export class UserPermissionDto {
-  public communities: { [commId: string]: string[] };
-  public groups: { [groupId: string]: string[] };
-}
-
-export class UserDto {
+export class BaseUserDto {
   @Expose()
   public id: string;
 
@@ -45,6 +40,17 @@ export class UserDto {
   @Expose()
   public avatar: string;
 
+  public constructor(data: Partial<BaseUserDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class UserPermissionDto {
+  public communities: { [commId: string]: string[] };
+  public groups: { [groupId: string]: string[] };
+}
+
+export class UserDto extends BaseUserDto {
   @Expose()
   public showingBadges?: ShowingBadgeDto[];
 
@@ -64,6 +70,8 @@ export class UserDto {
   public groups?: string[];
 
   public constructor(data: Partial<UserDto>, excluded?: string[]) {
+    super(data);
+
     Object.assign(this, data);
     if (excluded?.length > 0) {
       excluded.forEach((key) => {

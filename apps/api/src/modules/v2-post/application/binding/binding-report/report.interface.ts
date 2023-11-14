@@ -1,8 +1,8 @@
 import { ReportEntity } from '../../../domain/model/report';
-import { ReportDto } from '../../dto';
+import { ReportDto, ReportForManageDto } from '../../dto';
 
 export interface IReportBinding {
   binding(reportEntity: ReportEntity): ReportDto;
-  bindingList(entities: ReportEntity[]): Promise<ReportDto[]>;
+  bindingReportsForManage(entities: ReportEntity[]): Promise<ReportForManageDto[]>;
 }
 export const REPORT_BINDING_TOKEN = 'REPORT_BINDING_TOKEN';

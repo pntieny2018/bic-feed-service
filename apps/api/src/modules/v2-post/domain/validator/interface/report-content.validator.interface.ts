@@ -1,10 +1,10 @@
-export type ValidateAdminRootGroupPayload = {
+export type CanManageReportContentPayload = {
   rootGroupId: string;
   userId: string;
 };
 
 export interface IReportContentValidator {
-  validateAdminRootGroup(props: ValidateAdminRootGroupPayload): Promise<void>;
+  canManageReportContent(props: CanManageReportContentPayload): Promise<void>;
 }
 
 export const REPORT_CONTENT_VALIDATOR_TOKEN = 'REPORT_CONTENT_VALIDATOR_TOKEN';

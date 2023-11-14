@@ -74,4 +74,11 @@ export class GroupAdapter implements IGroupAdapter {
 
     return groupAdmins;
   }
+
+  public getCommunityAdmins(rootGroupIds: string[]): Promise<{
+    admins: Record<string, string[]>;
+    owners: Record<string, string[]>;
+  }> {
+    return this._groupService.getCommunityAdmins(rootGroupIds);
+  }
 }
