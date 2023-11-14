@@ -41,8 +41,8 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       let cursorPagination = null;
       while (true) {
         const { list: userIds, cursor } = await this._groupAdapter.getUserIdsInGroups({
-          groupIds: newGroupIds,
-          notInGroupIds: [],
+          groupIds: attachedGroupIds,
+          notInGroupIds: oldGroupIds,
           limit: 1000,
           after: cursorPagination,
         });
