@@ -23,15 +23,15 @@ export class UserFollowGroupHandler implements ICommandHandler<UserFollowGroupCo
 
   public async execute(command: UserFollowGroupCommand): Promise<void> {
     const { userId, groupIds } = command.payload;
-    const dataFollowNeedToAdd = await this._getGroupIdsUserNeedFollowed(userId, groupIds);
-    if (dataFollowNeedToAdd.length === 0) {
+    const attachGroupIds = await this._getGroupIdsUserNeedFollowed(userId, groupIds);
+    if (attachGroupIds.length === 0) {
       return;
     }
 
-    await this._followRepo.bulkCreate(dataFollowNeedToAdd.map((groupId) => ({ userId, groupId })));
+    await this._followRepo.bulkCreate(attachGroupIds.map((groupId) => ({ userId, groupId })));
 
     await this._newsfeedDomainService.dispatchContentsInGroupsToUserId({
-      groupIds,
+      groupIds: attachGroupIds,
       userId,
       action: 'publish',
     });

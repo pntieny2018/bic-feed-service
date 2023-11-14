@@ -8,8 +8,11 @@ import {
   Table,
   UpdatedAt,
   Model,
+  ForeignKey,
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
+
+import { CommentModel } from './comment.model';
 
 export type ReactionCommentDetailsAttributes = InferAttributes<ReactionCommentDetailsModel>;
 
@@ -30,6 +33,7 @@ export class ReactionCommentDetailsModel extends Model<
   @Column
   public reactionName: string;
 
+  @ForeignKey(() => CommentModel)
   @IsUUID()
   @Column
   public commentId: string;

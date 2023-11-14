@@ -85,11 +85,13 @@ describe('CreateCommentHandler', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           t: () => {},
         } as any)
     );
 
     jest.spyOn(eventEmitter, 'emit').mockImplementation(() => ({
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       t: () => {},
     }));
   });
@@ -107,7 +109,7 @@ describe('CreateCommentHandler', () => {
           images: ['ea62f4f6-92a1-4c0b-9f4a-7680544e6a44'],
           videos: [],
         },
-        postId: postId,
+        contentId: postId,
         content: 'This is a comment',
         giphyId: 'EZICHGrSD5QEFCxMiC',
         mentions: userMentions.map((mention) => mention.id),
@@ -146,7 +148,7 @@ describe('CreateCommentHandler', () => {
           images: [],
           videos: [],
         },
-        postId: postId,
+        contentId: postId,
         content: 'This is a comment',
         giphyId: 'EZICHGrSD5QEFCxMiC',
         mentions: [],
@@ -166,7 +168,7 @@ describe('CreateCommentHandler', () => {
         images: [],
         videos: [],
       },
-      postId: postId,
+      contentId: postId,
       content: 'This is a comment',
       giphyId: 'EZICHGrSD5QEFCxMiC',
       mentions: [],
