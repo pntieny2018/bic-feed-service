@@ -1,4 +1,5 @@
 import { CONTENT_TARGET } from '@beincom/constants';
+import { BaseUserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { uniq } from 'lodash';
 
@@ -11,7 +12,7 @@ import {
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
-import { ContentReportDetail, ReportDto, TargetAuthor } from '../../dto';
+import { ReportDto, ReportForManageDto } from '../../dto';
 
 import { IReportBinding } from './report.interface';
 
@@ -39,7 +40,7 @@ export class ReportBinding implements IReportBinding {
     });
   }
 
-  public async bindingList(entities: ReportEntity[]): Promise<ReportDto[]> {
+  public async bindingReportsForManage(entities: ReportEntity[]): Promise<ReportForManageDto[]> {
     const reports = [];
     const targetActorIds = uniq(entities.map((entity) => entity.get('targetActorId')));
 
@@ -47,41 +48,40 @@ export class ReportBinding implements IReportBinding {
 
     for (const entity of entities) {
       const author = authors.find((author) => author.id === entity.get('targetActorId'));
-      const targetAuthor = new TargetAuthor({
+      const targetActor = new BaseUserDto({
         id: author?.id,
         avatar: author?.avatar,
+        email: author?.email,
         username: author?.username,
         fullname: author?.fullname,
       });
 
       let content = '';
 
-      if (entity.get('targetType') === CONTENT_TARGET.COMMENT) {
-        const comment = await this._commentRepository.findOne({
-          id: entity.get('targetId'),
-        });
-        if (comment) {
-          content = comment.get('content');
-        }
-      } else {
-        const post = await this._contentRepository.findOne({
-          where: {
+      switch (entity.get('targetType')) {
+        case CONTENT_TARGET.COMMENT:
+          const comment = await this._commentRepository.findOne({
             id: entity.get('targetId'),
-          },
-        });
-        if (post) {
+          });
+          content = comment?.get('content');
+          break;
+        case CONTENT_TARGET.POST:
+        case CONTENT_TARGET.ARTICLE:
+          const post = await this._contentRepository.findOne({
+            where: {
+              id: entity.get('targetId'),
+            },
+          });
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
-          content = (post as PostEntity | ArticleEntity).get('content');
-        }
+          content = (post as PostEntity | ArticleEntity)?.get('content');
+          break;
+        default:
+          break;
       }
 
-      const contentReportDetail = new ContentReportDetail({
-        content,
-      });
-
       reports.push(
-        new ReportDto({
+        new ReportForManageDto({
           id: entity.get('id'),
           targetId: entity.get('targetId'),
           targetType: entity.get('targetType'),
@@ -91,8 +91,8 @@ export class ReportBinding implements IReportBinding {
           createdAt: entity.get('createdAt'),
           updatedAt: entity.get('updatedAt'),
           details: entity.getDetails(),
-          targetAuthor,
-          contentReportDetail,
+          targetActor,
+          content,
         })
       );
     }

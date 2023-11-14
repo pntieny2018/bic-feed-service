@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { NotGroupAdminException } from '../exception';
+import { NotCommunityAdminException } from '../exception';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
-import { IReportContentValidator, ValidateAdminRootGroupPayload } from './interface';
+import { CanManageReportContentPayload, IReportContentValidator } from './interface';
 
 @Injectable()
 export class ReportContentValidator implements IReportContentValidator {
@@ -12,11 +12,14 @@ export class ReportContentValidator implements IReportContentValidator {
     private readonly _groupAdapter: IGroupAdapter
   ) {}
 
-  public async validateAdminRootGroup(props: ValidateAdminRootGroupPayload): Promise<void> {
-    const groupAdminsMapper = await this._groupAdapter.getGroupAdminMap([props.rootGroupId]);
+  public async canManageReportContent(props: CanManageReportContentPayload): Promise<void> {
+    const { admins, owners } = await this._groupAdapter.getCommunityAdmins([props.rootGroupId]);
 
-    if (!groupAdminsMapper?.[props.rootGroupId]?.includes(props.userId)) {
-      throw new NotGroupAdminException();
+    const isCommunityAdmin = admins?.[props.rootGroupId]?.includes(props.userId);
+    const isCommunityOwner = owners?.[props.rootGroupId]?.includes(props.userId);
+
+    if (!isCommunityAdmin && !isCommunityOwner) {
+      throw new NotCommunityAdminException();
     }
   }
 }

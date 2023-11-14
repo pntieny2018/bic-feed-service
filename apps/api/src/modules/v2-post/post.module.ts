@@ -23,12 +23,12 @@ import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
 import { GroupConsumer } from './driving-apdater/consumer/group.consumer';
-import { AdminManageController } from './driving-apdater/controller/admin-manage.controller';
 import { MediaConsumer } from './driving-apdater/consumer/media.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
 import { ContentController } from './driving-apdater/controller/content.controller';
+import { ManageController } from './driving-apdater/controller/manage.controller';
 import { NewsFeedController } from './driving-apdater/controller/newsfeed.controller';
 import { PostController } from './driving-apdater/controller/post.controller';
 import { QuizController } from './driving-apdater/controller/quiz.controller';
@@ -37,6 +37,8 @@ import { SeriesController } from './driving-apdater/controller/series.controller
 import { TagController } from './driving-apdater/controller/tag.controller';
 import { TimelineController } from './driving-apdater/controller/timeline.controller';
 import { QuizProcessor } from './driving-apdater/queue-processor/quiz.processor';
+import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consumer';
+import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
 import {
   adapterProvider,
   adminManageProvider,
@@ -55,8 +57,6 @@ import {
   sharedProvider,
   tagProvider,
 } from './provider';
-import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
-import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consumer';
 import { workerProvider } from './provider/worker.provider';
 
 @Module({
@@ -92,7 +92,7 @@ import { workerProvider } from './provider/worker.provider';
     CommentController,
     SeriesController,
     QuizController,
-    AdminManageController,
+    ManageController,
     MediaConsumer,
     PublishOrRemovePostToNewsfeedConsumer,
     GroupConsumer,

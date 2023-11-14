@@ -1,6 +1,10 @@
-import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
-import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
+import {
+  CONTENT_REPORT_REASON_DESCRIPTION,
+  CONTENT_REPORT_REASON_TYPE,
+  CONTENT_TARGET,
+} from '@beincom/constants';
 import { REPORT_SCOPE, REPORT_STATUS } from '@libs/database/postgres/model';
+import { BaseUserDto } from '@libs/service/user';
 
 import { ArticleDto } from './article.dto';
 import { CommentBaseDto } from './comment.dto';
@@ -16,10 +20,18 @@ export class ReportDto {
   public createdAt?: Date;
   public updatedAt?: Date;
   public details?: ReportDetailDto[];
-  public contentReportDetail?: ContentReportDetail;
-  public targetAuthor?: TargetAuthor;
 
   public constructor(data: Partial<ReportDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class ReportForManageDto extends ReportDto {
+  public content: string;
+  public targetActor: BaseUserDto;
+
+  public constructor(data: Partial<ReportForManageDto>) {
+    super(data);
     Object.assign(this, data);
   }
 }
@@ -42,36 +54,22 @@ export class ReportDetailDto {
   }
 }
 
-export class TargetAuthor {
-  public id: string;
-  public avatar: string;
-  public username: string;
-  public fullname: string;
-
-  public constructor(data: TargetAuthor) {
-    Object.assign(this, data);
-  }
+export class ReportReasonCountDto {
+  public reasonType: CONTENT_REPORT_REASON_TYPE;
+  public description: CONTENT_REPORT_REASON_DESCRIPTION;
+  public total: number;
 }
 
-export class ContentReportDetail {
-  public content: string;
-
-  public constructor(data: ContentReportDetail) {
-    Object.assign(this, data);
-  }
-}
-
-export class GetListReportsPaginationDto extends PaginatedResponse<ReportDto> {
-  public constructor(list: ReportDto[], meta?: IPaginatedInfo) {
-    super(list, meta);
-  }
+export class ReportTargetDto {
+  public target: PostDto | ArticleDto | CommentBaseDto;
+  public reasonCounts: ReportReasonCountDto[];
 }
 
 export class GetReportContentDetailsDto {
-    public content?: PostDto | ArticleDto;
-    public comment?: CommentBaseDto;
+  public content?: PostDto | ArticleDto;
+  public comment?: CommentBaseDto;
 
-    public constructor(data: Partial<GetReportContentDetailsDto>) {
-        Object.assign(this, data);
-    }
+  public constructor(data: Partial<GetReportContentDetailsDto>) {
+    Object.assign(this, data);
+  }
 }

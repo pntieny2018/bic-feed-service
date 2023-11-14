@@ -47,7 +47,7 @@ export class GetReportDetailsHandler
   public async execute(query: GetReportDetailsQuery): Promise<GetReportContentDetailsDto> {
     const { rootGroupId, reportId, authUser } = query.payload;
 
-    await this._reportContentValidator.validateAdminRootGroup({
+    await this._reportContentValidator.canManageReportContent({
       rootGroupId,
       userId: authUser.id,
     });
