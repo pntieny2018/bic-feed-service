@@ -1,4 +1,4 @@
-import { PaginatedArgs } from '@libs/database/postgres/common';
+import { PaginatedArgs, PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { Controller, Get, Param, ParseUUIDPipe, Query, Version } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -6,13 +6,13 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { GetListReportsPaginationDto } from '../../application/dto';
+import { ReportForManagerDto } from '../../application/dto';
 import { GetListReportsQuery } from '../../application/query/admin-manage';
 
 @ApiTags('v2 admin manage')
 @ApiSecurity('authorization')
 @Controller()
-export class AdminManageController {
+export class ManageController {
   public constructor(
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
@@ -30,7 +30,7 @@ export class AdminManageController {
     @AuthUser() authUser: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Query() paginateOption: PaginatedArgs
-  ): Promise<GetListReportsPaginationDto> {
+  ): Promise<PaginatedResponse<ReportForManagerDto>> {
     return this._queryBus.execute(
       new GetListReportsQuery({ groupId: rootGroupId, authUser, ...paginateOption })
     );

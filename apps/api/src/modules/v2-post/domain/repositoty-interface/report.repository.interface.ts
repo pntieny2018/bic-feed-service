@@ -29,7 +29,7 @@ export type GetPaginationReportProps = {
 } & CursorPaginationProps;
 
 export type GetListReportsProps = CursorPaginationProps & {
-  rootGroupId: string;
+  groupId: string;
 };
 
 export interface IReportRepository {

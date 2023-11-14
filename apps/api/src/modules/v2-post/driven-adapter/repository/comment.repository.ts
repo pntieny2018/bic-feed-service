@@ -61,6 +61,11 @@ export class CommentRepository implements ICommentRepository {
     return this._commentMapper.toDomain(comment);
   }
 
+  public async findMany(where: WhereOptions<CommentAttributes>): Promise<CommentEntity[]> {
+    const comments = await this._libCommentRepo.findMany({ where });
+    return (comments ?? []).map((comment) => this._commentMapper.toDomain(comment));
+  }
+
   public async update(commentEntity: CommentEntity): Promise<void> {
     try {
       await this._libCommentRepo.update(this._commentMapper.toPersistence(commentEntity), {
