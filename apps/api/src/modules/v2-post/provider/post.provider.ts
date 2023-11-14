@@ -16,6 +16,7 @@ import {
   SaveContentHandler,
   UpdateContentSettingHandler,
   ProcessGroupPrivacyUpdatedHandler,
+  UnsaveContentHandler,
 } from '../application/command/content';
 import { ProcessGroupStateUpdatedHandler } from '../application/command/content/process-group-state-updated';
 import {
@@ -70,8 +71,9 @@ import {
   SearchContentsHandler,
   FindPinnedContentHandler,
   GetContentAudienceHandler,
+  GetMyReportedContentsHandler,
+  GetScheduleContentHandler,
 } from '../application/query/content';
-import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
   FindItemsBySeriesHandler,
@@ -87,8 +89,8 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
-import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
 import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
@@ -166,6 +168,7 @@ export const postProvider = [
   ReorderPinnedContentHandler,
   SeenContentHandler,
   SaveContentHandler,
+  UnsaveContentHandler,
   UpdateContentSettingHandler,
 
   AutoSavePostHandler,
@@ -203,6 +206,7 @@ export const postProvider = [
   SearchSeriesHandler,
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
+  GetMyReportedContentsHandler,
 
   /** Domain Service */
   {

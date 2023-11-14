@@ -1,8 +1,10 @@
 import { CONTENT_REPORT_REASON_TYPE } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 
+import { ReportReasonCountDto } from '../../../application/dto';
 import { CommentEntity } from '../../model/comment';
 import { ArticleEntity, PostEntity } from '../../model/content';
+import { ReportDetailAttributes } from '../../model/report';
 
 export type CreateReportProps = {
   authUser: UserDto;
@@ -16,6 +18,7 @@ export type CreateReportCommentProps = CreateReportProps & { comment: CommentEnt
 export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
+  countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[];
 }
 
 export const REPORT_DOMAIN_SERVICE_TOKEN = 'REPORT_DOMAIN_SERVICE_TOKEN';

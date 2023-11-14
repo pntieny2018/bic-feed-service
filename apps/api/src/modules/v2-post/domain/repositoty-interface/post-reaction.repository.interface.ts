@@ -1,4 +1,4 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 
 import { ReactionsCount } from '../../../../common/types';
@@ -14,6 +14,7 @@ export type FindOnePostReactionProps = {
 export type GetPaginationPostReactionProps = {
   reactionName: string;
   targetId: string;
+  target: CONTENT_TARGET;
   latestId: string;
   order: ORDER;
   limit: number;

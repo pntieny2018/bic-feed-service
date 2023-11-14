@@ -717,6 +717,16 @@ export class ContentDomainService implements IContentDomainService {
     return this._contentRepository.saveContent(authUser.id, contentId);
   }
 
+  public async unsaveContent(contentId: string, userId: string): Promise<void> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(contentId);
+
+    if (!content || !content.isPublished()) {
+      throw new ContentNotFoundException();
+    }
+
+    return this._contentRepository.unSaveContent(userId, contentId);
+  }
+
   public async getDraftContentByIds(
     ids: string[]
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
