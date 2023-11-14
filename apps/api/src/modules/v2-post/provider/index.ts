@@ -13,4 +13,4 @@ export * from './report.provider';
 export * from './search.provider';
 export * from './shared.provider';
 export * from './tag.provider';
-export * from './admin-manage.provider';
+export * from './manage.provider';
