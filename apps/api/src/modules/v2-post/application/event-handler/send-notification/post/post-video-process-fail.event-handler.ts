@@ -2,12 +2,12 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { PostVideoFailedEvent } from '../../../domain/event';
+import { PostVideoFailedEvent } from '../../../../domain/event';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(PostVideoFailedEvent)
 export class NotiPostVideoFailedEventHandler implements IEventHandler<PostVideoFailedEvent> {
@@ -30,8 +30,7 @@ export class NotiPostVideoFailedEventHandler implements IEventHandler<PostVideoF
       authUser: actor,
     });
 
-    await this._notiAdapter.sendPostNotification({
-      event: PostVideoFailedEvent.event,
+    await this._notiAdapter.sendPostVideoProcessFailedNotification({
       actor,
       post: postDto,
     });

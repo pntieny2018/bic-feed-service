@@ -1,33 +1,33 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { ObjectHelper } from '../../../../../common/helpers';
-import { CommentNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
 import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
-} from '../../../../v2-notification/application/dto';
+} from '../../../../../v2-notification/application/dto';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
-} from '../../../domain/domain-service/interface';
-import { CommentCreatedEvent } from '../../../domain/event/comment.event';
-import { ContentNotFoundException } from '../../../domain/exception';
-import { CommentEntity } from '../../../domain/model/comment';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+} from '../../../../domain/domain-service/interface';
+import { CommentCreatedEvent } from '../../../../domain/event';
+import { ContentNotFoundException } from '../../../../domain/exception';
+import { CommentEntity } from '../../../../domain/model/comment';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
+} from '../../../../domain/service-adapter-interface';
 import {
   COMMENT_BINDING_TOKEN,
   CONTENT_BINDING_TOKEN,
   ICommentBinding,
   IContentBinding,
-} from '../../binding';
-import { ArticleDto, PostDto } from '../../dto';
+} from '../../../binding';
+import { ArticleDto, CommentExtendedDto, PostDto } from '../../../dto';
 
 @EventsHandlerAndLog(CommentCreatedEvent)
 export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCreatedEvent> {
@@ -62,9 +62,8 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       | PostDto
       | ArticleDto;
 
-    const payload: CommentNotificationPayload = {
-      event: CommentCreatedEvent.event,
-      actor: ObjectHelper.omit(['groups', 'permissions'], actor) as UserDto,
+    const payload = {
+      actor,
       comment: commentDto,
       content: contentDto,
     };
@@ -89,7 +88,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       const parentComment = await this._commentDomainService.getVisibleComment(
         comment.get('parentId')
       );
-      payload.parentComment = await this._commentBinding.commentBinding(parentComment);
+      const parentCommentDto = await this._commentBinding.commentBinding(parentComment);
 
       recipientObj.replyCommentRecipient = recipient as ReplyCommentRecipientDto;
       const { mentionedUserIdsInComment, mentionedUserIdsInParentComment } =
@@ -101,7 +100,13 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       recipientObj.replyCommentRecipient.mentionedUserIdsInComment =
         await this._filterOutUserWasReported(contentDto.id, mentionedUserIdsInComment);
 
-      payload.replyCommentRecipient = recipientObj.replyCommentRecipient;
+      const replyCommentRecipient = recipientObj.replyCommentRecipient;
+
+      return this._notiAdapter.sendCommentReplyCreatedNotification({
+        ...payload,
+        replyCommentRecipient,
+        parentComment: parentCommentDto,
+      });
     } else {
       recipientObj.commentRecipient = recipient as CommentRecipientDto;
 
@@ -116,14 +121,19 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
         contentDto.id,
         mentionedUsersInPost
       );
-      payload.commentRecipient = recipientObj.commentRecipient;
+      const commentRecipient = recipientObj.commentRecipient;
 
+      let prevCommentActivities: CommentExtendedDto[] = [];
       if (prevComments.length) {
-        payload.prevCommentActivities = await this._commentBinding.commentsBinding(prevComments);
+        prevCommentActivities = await this._commentBinding.commentsBinding(prevComments);
       }
-    }
 
-    await this._notiAdapter.sendCommentNotification(payload);
+      return this._notiAdapter.sendCommentCreatedNotification({
+        ...payload,
+        commentRecipient,
+        prevCommentActivities,
+      });
+    }
   }
 
   private async _filterOutUserWasReported(targetId: string, userIds: string[]): Promise<string[]> {

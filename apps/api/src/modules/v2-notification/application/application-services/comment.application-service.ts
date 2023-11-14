@@ -1,7 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
+import {
+  CommentHasBeenCreated,
+  CommentHasBeenDeleted,
+  CommentHasBeenUpdated,
+  KAFKA_TOPIC,
+} from '../../../../common/constants';
 import { ArticleDto, CommentBaseDto, PostDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
@@ -14,7 +19,14 @@ import {
   NotificationPayloadDto,
 } from '../dto';
 
-import { CommentNotificationPayload, ICommentNotificationApplicationService } from './interface';
+import {
+  CommentCreatedNotificationPayload,
+  CommentDeletedNotificationPayload,
+  CommentReplyCreatedNotificationPayload,
+  CommentReplyUpdatedNotificationPayload,
+  CommentUpdatedNotificationPayload,
+  ICommentNotificationApplicationService,
+} from './interface';
 
 export class CommentNotificationApplicationService
   implements ICommentNotificationApplicationService
@@ -24,51 +36,31 @@ export class CommentNotificationApplicationService
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
-  public async sendCommentNotification(payload: CommentNotificationPayload): Promise<void> {
-    const {
-      event,
-      actor,
-      comment,
-      content,
-      parentComment,
-      commentRecipient,
-      replyCommentRecipient,
-      prevCommentActivities,
-    } = payload;
+  public async sendCommentCreatedNotification(
+    payload: CommentCreatedNotificationPayload
+  ): Promise<void> {
+    const { actor, comment, content, commentRecipient, prevCommentActivities } = payload;
 
-    let commentObject;
-    let target;
-
-    if (parentComment) {
-      target = TargetType.COMMENT;
-      commentObject = this._createReplyCommentActivityObject(content, comment, parentComment);
-    } else {
-      target = content instanceof PostDto ? TargetType.POST : TargetType.ARTICLE;
-      commentObject = this._createContentCommentActivityObject(content, comment);
-    }
+    const target = content instanceof PostDto ? TargetType.POST : TargetType.ARTICLE;
+    const commentObject = this._createContentCommentActivityObject(content, comment);
 
     const activity = this._createCommentActivity(commentObject, target);
 
-    const kafkaPayload: NotificationPayloadDto<CommentActivityObjectDto> = {
+    const kafkaPayload = new NotificationPayloadDto<CommentActivityObjectDto>({
       key: content.id,
       value: {
         actor,
-        event,
+        event: CommentHasBeenCreated,
         data: activity,
         meta: {},
       },
-    };
-    if (commentRecipient) {
-      kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
-        ? { ...kafkaPayload.value.meta.comment, commentRecipient }
-        : { commentRecipient };
-    }
-    if (replyCommentRecipient) {
-      kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
-        ? { ...kafkaPayload.value.meta.comment, replyCommentRecipient }
-        : { replyCommentRecipient };
-    }
-    if (prevCommentActivities?.length) {
+    });
+
+    kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
+      ? { ...kafkaPayload.value.meta.comment, commentRecipient }
+      : { commentRecipient };
+
+    if (prevCommentActivities.length) {
       kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
         ? {
             ...kafkaPayload.value.meta.comment,
@@ -84,6 +76,110 @@ export class CommentNotificationApplicationService
             ),
           };
     }
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
+  }
+
+  public async sendCommentReplyCreatedNotification(
+    payload: CommentReplyCreatedNotificationPayload
+  ): Promise<void> {
+    const { actor, comment, content, parentComment, replyCommentRecipient } = payload;
+
+    const target = TargetType.COMMENT;
+    const commentObject = this._createReplyCommentActivityObject(content, comment, parentComment);
+
+    const activity = this._createCommentActivity(commentObject, target);
+
+    const kafkaPayload = new NotificationPayloadDto<CommentActivityObjectDto>({
+      key: content.id,
+      value: {
+        actor,
+        event: CommentHasBeenCreated,
+        data: activity,
+        meta: {},
+      },
+    });
+
+    kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
+      ? { ...kafkaPayload.value.meta.comment, replyCommentRecipient }
+      : { replyCommentRecipient };
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
+  }
+
+  public async sendCommentUpdatedNotification(
+    payload: CommentUpdatedNotificationPayload
+  ): Promise<void> {
+    const { actor, comment, content, commentRecipient } = payload;
+
+    const target = content instanceof PostDto ? TargetType.POST : TargetType.ARTICLE;
+    const commentObject = this._createContentCommentActivityObject(content, comment);
+
+    const activity = this._createCommentActivity(commentObject, target);
+
+    const kafkaPayload = new NotificationPayloadDto<CommentActivityObjectDto>({
+      key: content.id,
+      value: {
+        actor,
+        event: CommentHasBeenUpdated,
+        data: activity,
+        meta: {},
+      },
+    });
+
+    kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
+      ? { ...kafkaPayload.value.meta.comment, commentRecipient }
+      : { commentRecipient };
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
+  }
+
+  public async sendCommentReplyUpdatedNotification(
+    payload: CommentReplyUpdatedNotificationPayload
+  ): Promise<void> {
+    const { actor, comment, content, parentComment, replyCommentRecipient } = payload;
+
+    const target = TargetType.COMMENT;
+    const commentObject = this._createReplyCommentActivityObject(content, comment, parentComment);
+
+    const activity = this._createCommentActivity(commentObject, target);
+
+    const kafkaPayload = new NotificationPayloadDto<CommentActivityObjectDto>({
+      key: content.id,
+      value: {
+        actor,
+        event: CommentHasBeenUpdated,
+        data: activity,
+        meta: {},
+      },
+    });
+
+    kafkaPayload.value.meta.comment = kafkaPayload.value.meta.comment
+      ? { ...kafkaPayload.value.meta.comment, replyCommentRecipient }
+      : { replyCommentRecipient };
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
+  }
+
+  public async sendCommentDeletedNotification(
+    payload: CommentDeletedNotificationPayload
+  ): Promise<void> {
+    const { actor, content, comment } = payload;
+
+    const target = content instanceof PostDto ? TargetType.POST : TargetType.ARTICLE;
+    const commentObject = this._createContentCommentActivityObject(content, comment);
+
+    const activity = this._createCommentActivity(commentObject, target);
+
+    const kafkaPayload = new NotificationPayloadDto<CommentActivityObjectDto>({
+      key: content.id,
+      value: {
+        actor,
+        event: CommentHasBeenDeleted,
+        data: activity,
+        meta: {},
+      },
+    });
 
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
   }

@@ -3,15 +3,17 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { ArticleHasBeenUpdated } from '../../../../../common/constants';
-import { ArticleUpdatedEvent } from '../../../domain/event';
-import { ArticleEntity, SeriesEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { ArticleUpdatedEvent } from '../../../../domain/event';
+import { ArticleEntity, SeriesEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(ArticleUpdatedEvent)
 export class NotiArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedEvent> {
@@ -63,8 +65,7 @@ export class NotiArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
 
     const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
-    await this._notiAdapter.sendArticleNotification({
-      event: ArticleHasBeenUpdated,
+    await this._notiAdapter.sendArticleUpdatedNotification({
       actor,
       article: articleDto,
       oldArticle: oldArticleDto,

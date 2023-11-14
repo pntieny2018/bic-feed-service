@@ -3,14 +3,14 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { ReportCreatedEvent } from '../../../domain/event';
+import { ReportCreatedEvent } from '../../../../domain/event';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { IReportBinding, REPORT_BINDING_TOKEN } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { IReportBinding, REPORT_BINDING_TOKEN } from '../../../binding';
 
 @EventsHandlerAndLog(ReportCreatedEvent)
 export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreatedEvent> {

@@ -1,21 +1,60 @@
 import { UserDto } from '@libs/service/user';
 
-import { ArticleDto, CommentBaseDto, PostDto } from '../../../../v2-post/application/dto';
+import {
+  ArticleDto,
+  CommentBaseDto,
+  CommentExtendedDto,
+  PostDto,
+} from '../../../../v2-post/application/dto';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../../dto';
 
 export const COMMENT_NOTIFICATION_APPLICATION_SERVICE = 'COMMENT_NOTIFICATION_APPLICATION_SERVICE';
 
-export type CommentNotificationPayload = {
-  event: string;
+export type CommentCreatedNotificationPayload = {
   actor: UserDto;
   comment: CommentBaseDto;
   content: PostDto | ArticleDto;
-  parentComment?: CommentBaseDto;
-  commentRecipient?: CommentRecipientDto;
-  replyCommentRecipient?: ReplyCommentRecipientDto;
-  prevCommentActivities?: CommentBaseDto[];
+  commentRecipient: CommentRecipientDto;
+  prevCommentActivities: CommentExtendedDto[];
+};
+
+export type CommentReplyCreatedNotificationPayload = {
+  actor: UserDto;
+  comment: CommentBaseDto;
+  content: PostDto | ArticleDto;
+  parentComment: CommentBaseDto;
+  replyCommentRecipient: ReplyCommentRecipientDto;
+};
+
+export type CommentUpdatedNotificationPayload = {
+  actor: UserDto;
+  comment: CommentBaseDto;
+  content: PostDto | ArticleDto;
+  commentRecipient: CommentRecipientDto;
+};
+
+export type CommentReplyUpdatedNotificationPayload = {
+  actor: UserDto;
+  comment: CommentBaseDto;
+  content: PostDto | ArticleDto;
+  parentComment: CommentBaseDto;
+  replyCommentRecipient: ReplyCommentRecipientDto;
+};
+
+export type CommentDeletedNotificationPayload = {
+  actor: UserDto;
+  content: PostDto | ArticleDto;
+  comment: CommentBaseDto;
 };
 
 export interface ICommentNotificationApplicationService {
-  sendCommentNotification(payload: CommentNotificationPayload): Promise<void>;
+  sendCommentCreatedNotification(payload: CommentCreatedNotificationPayload): Promise<void>;
+  sendCommentReplyCreatedNotification(
+    payload: CommentReplyCreatedNotificationPayload
+  ): Promise<void>;
+  sendCommentUpdatedNotification(payload: CommentUpdatedNotificationPayload): Promise<void>;
+  sendCommentReplyUpdatedNotification(
+    payload: CommentReplyUpdatedNotificationPayload
+  ): Promise<void>;
+  sendCommentDeletedNotification(payload: CommentDeletedNotificationPayload): Promise<void>;
 }

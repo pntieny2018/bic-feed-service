@@ -2,13 +2,12 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { PostHasBeenDeleted } from '../../../../../common/constants';
-import { PostDeletedEvent } from '../../../domain/event';
+import { PostDeletedEvent } from '../../../../domain/event';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(PostDeletedEvent)
 export class NotiPostDeletedEventHandler implements IEventHandler<PostDeletedEvent> {
@@ -27,8 +26,7 @@ export class NotiPostDeletedEventHandler implements IEventHandler<PostDeletedEve
       authUser: actor,
     });
 
-    await this._notiAdapter.sendPostNotification({
-      event: PostHasBeenDeleted,
+    await this._notiAdapter.sendPostDeletedNotification({
       actor,
       post: postDto,
     });

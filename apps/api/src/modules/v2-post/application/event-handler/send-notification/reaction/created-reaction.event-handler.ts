@@ -4,22 +4,22 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { ReactionHasBeenRemoved } from '../../../../../common/constants';
-import { ReactionDeletedEvent } from '../../../domain/event';
-import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
-import { ContentEntity } from '../../../domain/model/content';
+import { ReactionHasBeenCreated } from '../../../../../../common/constants';
+import { ReactionCreatedEvent } from '../../../../domain/event';
+import { CommentNotFoundException, ContentNotFoundException } from '../../../../domain/exception';
+import { ContentEntity } from '../../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
-} from '../../../domain/repositoty-interface';
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   IUserAdapter,
   NOTIFICATION_ADAPTER,
   USER_ADAPTER,
-} from '../../../domain/service-adapter-interface';
+} from '../../../../domain/service-adapter-interface';
 import {
   COMMENT_BINDING_TOKEN,
   CONTENT_BINDING_TOKEN,
@@ -27,11 +27,11 @@ import {
   IContentBinding,
   IReactionBinding,
   REACTION_BINDING_TOKEN,
-} from '../../binding';
-import { ArticleDto, CommentExtendedDto, PostDto } from '../../dto';
+} from '../../../binding';
+import { ArticleDto, CommentExtendedDto, PostDto } from '../../../dto';
 
-@EventsHandlerAndLog(ReactionDeletedEvent)
-export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDeletedEvent> {
+@EventsHandlerAndLog(ReactionCreatedEvent)
+export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCreatedEvent> {
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
@@ -49,7 +49,7 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
     private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: ReactionDeletedEvent): Promise<void> {
+  public async handle(event: ReactionCreatedEvent): Promise<void> {
     const { reactionEntity } = event;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
@@ -57,7 +57,7 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
 
     const payload: any = {
-      event: ReactionHasBeenRemoved,
+      event: ReactionHasBeenCreated,
       actor: reactionActor,
       reaction: reactionDto,
     };

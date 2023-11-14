@@ -2,29 +2,31 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { CommentNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
 import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
-} from '../../../../v2-notification/application/dto';
+} from '../../../../../v2-notification/application/dto';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
-} from '../../../domain/domain-service/interface';
-import { CommentUpdatedEvent } from '../../../domain/event/comment.event';
-import { ContentNotFoundException } from '../../../domain/exception';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+} from '../../../../domain/domain-service/interface';
+import { CommentUpdatedEvent } from '../../../../domain/event';
+import { ContentNotFoundException } from '../../../../domain/exception';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
+} from '../../../../domain/service-adapter-interface';
 import {
   COMMENT_BINDING_TOKEN,
   CONTENT_BINDING_TOKEN,
   ICommentBinding,
   IContentBinding,
-} from '../../binding';
-import { ArticleDto, PostDto } from '../../dto';
+} from '../../../binding';
+import { ArticleDto, PostDto } from '../../../dto';
 
 @EventsHandlerAndLog(CommentUpdatedEvent)
 export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpdatedEvent> {
@@ -60,8 +62,7 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       | PostDto
       | ArticleDto;
 
-    const payload: CommentNotificationPayload = {
-      event: CommentUpdatedEvent.event,
+    const payload = {
       actor,
       comment: commentDto,
       content: contentDto,
@@ -79,17 +80,26 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       const parentComment = await this._commentDomainService.getVisibleComment(
         comment.get('parentId')
       );
-      payload.parentComment = await this._commentBinding.commentBinding(parentComment);
+      const parentCommentDto = await this._commentBinding.commentBinding(parentComment);
       recipientObj.replyCommentRecipient.mentionedUserIdsInComment = newMentions;
-      payload.replyCommentRecipient = recipientObj.replyCommentRecipient;
+      const replyCommentRecipient = recipientObj.replyCommentRecipient;
+
+      return this._notiAdapter.sendCommentReplyUpdatedNotification({
+        ...payload,
+        parentComment: parentCommentDto,
+        replyCommentRecipient,
+      });
     } else {
       recipientObj.commentRecipient.mentionedUsersInComment =
         recipientObj.commentRecipient.mentionedUsersInComment =
           await this._filterOutUserWasReported(contentDto.id, newMentions);
-      payload.commentRecipient = recipientObj.commentRecipient;
-    }
+      const commentRecipient = recipientObj.commentRecipient;
 
-    await this._notiAdapter.sendCommentNotification(payload);
+      return this._notiAdapter.sendCommentUpdatedNotification({
+        ...payload,
+        commentRecipient,
+      });
+    }
   }
 
   private async _filterOutUserWasReported(targetId: string, userIds: string[]): Promise<string[]> {

@@ -2,14 +2,17 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesItemsRemovedEvent } from '../../../domain/event';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { SeriesItemsRemovedEvent } from '../../../../domain/event';
+import { PostEntity, SeriesEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding/binding-post';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding/binding-post';
 
 @EventsHandlerAndLog(SeriesItemsRemovedEvent)
 export class NotiSeriesItemsRemovedEventHandler implements IEventHandler<SeriesItemsRemovedEvent> {
