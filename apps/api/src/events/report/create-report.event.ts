@@ -6,6 +6,7 @@ import { UserDto } from '../../modules/v2-user/application';
 export type CreateReportEventPayload = IReportContentAttribute & {
   actor: UserDto;
   groupIds: string[];
+  content: string;
 };
 
 export class CreateReportEvent implements IEvent<CreateReportEventPayload> {

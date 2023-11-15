@@ -10,7 +10,9 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CACHE_KEYS } from '../../common/constants/casl.constant';
 import { PageDto } from '../../common/dto';
 import { ValidatorException } from '../../common/exceptions';
+import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
+import { PostType } from '../../database/models/post.model';
 import {
   IReportContentDetailAttribute,
   ReportContentDetailModel,
@@ -593,8 +595,31 @@ export class ReportContentService {
 
       existedReport.details = details;
 
+      let content = '';
+      switch (existedReport.targetType) {
+        case TargetType.COMMENT:
+          const comment = await this._commentService.findComment(existedReport.targetId);
+          content = comment.content;
+          break;
+
+        case TargetType.ARTICLE:
+        case TargetType.POST:
+          const post = await this._postService.findPost({
+            postId: existedReport.targetId,
+          });
+
+          content =
+            post.type === PostType.POST
+              ? StringHelper.removeMarkdownCharacter(post.content).slice(0, 200)
+              : StringHelper.removeMarkdownCharacter(post.title).slice(0, 200);
+          break;
+
+        default:
+          break;
+      }
+
       this._eventEmitter.emit(
-        new CreateReportEvent({ actor: user, groupIds: groupIds, ...existedReport })
+        new CreateReportEvent({ actor: user, groupIds: groupIds, ...existedReport, content })
       );
     } catch (ex) {
       await trx.rollback();
@@ -647,9 +672,31 @@ export class ReportContentService {
       const reportJson = report.toJSON();
 
       reportJson.details = detailJson;
+      let content = '';
+      switch (reportJson.targetType) {
+        case TargetType.COMMENT:
+          const comment = await this._commentService.findComment(reportJson.targetId);
+          content = comment.content;
+          break;
+
+        case TargetType.ARTICLE:
+        case TargetType.POST:
+          const post = await this._postService.findPost({
+            postId: reportJson.targetId,
+          });
+
+          content =
+            post.type === PostType.POST
+              ? StringHelper.removeMarkdownCharacter(post.content).slice(0, 200)
+              : StringHelper.removeMarkdownCharacter(post.title).slice(0, 200);
+          break;
+
+        default:
+          break;
+      }
 
       this._eventEmitter.emit(
-        new CreateReportEvent({ actor: user, groupIds: groupIds, ...reportJson })
+        new CreateReportEvent({ actor: user, groupIds: groupIds, ...reportJson, content })
       );
     } catch (ex) {
       await trx.rollback();
