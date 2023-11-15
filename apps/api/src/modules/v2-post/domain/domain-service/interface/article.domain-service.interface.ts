@@ -1,3 +1,4 @@
+import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 
 import { MediaItemDto } from '../../../application/dto';
@@ -41,8 +42,14 @@ export type DeleteArticleProps = {
   actor: UserDto;
 };
 
+export type CreateArticleProps = {
+  groups?: GroupDto[];
+  userId: string;
+};
+
 export interface IArticleDomainService {
   getArticleById(id: string, authUser: UserDto): Promise<ArticleEntity>;
+  createDraft(input: CreateArticleProps): Promise<ArticleEntity>;
   delete(input: DeleteArticleProps): Promise<void>;
   update(input: UpdateArticleProps): Promise<ArticleEntity>;
   publish(input: PublishArticleProps): Promise<ArticleEntity>;

@@ -1,8 +1,16 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
-import { PaginatedArgs } from '@libs/database/postgres/common';
+import {
+  CursorPaginationProps,
+  CursorPaginationResult,
+  PaginatedArgs,
+} from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
-import { CursorPaginationProps, CursorPaginationResult } from '../../../../../common/types';
+import {
+  PinContentCommandProps,
+  ReorderPinnedContentCommandPayload,
+} from '../../../application/command/content';
+import { GetContentAudienceProps } from '../../../application/query/content';
 import { ArticleEntity, PostEntity, SeriesEntity, ContentEntity } from '../../model/content';
 
 export type GetDraftsProps = {
@@ -41,16 +49,41 @@ export type GetImportantContentIdsProps = {
   authUserId: string;
   isOnNewsfeed?: boolean;
   groupIds?: string[];
-  isMine?: boolean;
-  isSaved?: boolean;
+  type?: CONTENT_TYPE;
+} & CursorPaginationProps;
+
+export type GetPostsSaved = {
+  authUserId: string;
+  isOnNewsfeed?: boolean;
+  groupIds?: string[];
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
 
 export class GetContentIdsScheduleProps extends PaginatedArgs {
   public order: ORDER;
-  public user: UserDto;
+  public userId: string;
+  public groupId?: string;
   public type?: Exclude<CONTENT_TYPE, CONTENT_TYPE.SERIES>;
 }
+
+export type UpdateSettingsProps = {
+  contentId: string;
+  authUser: UserDto;
+  canComment: boolean;
+  canReact: boolean;
+  isImportant: boolean;
+  importantExpiredAt: Date;
+};
+
+export type ReorderContentProps = ReorderPinnedContentCommandPayload;
+export type PinContentProps = PinContentCommandProps;
+export type GroupAudience = {
+  id: string;
+  name: string;
+  isPinned: boolean;
+};
+
+export type GetAudiencesProps = GetContentAudienceProps;
 
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
@@ -64,18 +97,34 @@ export interface IContentDomainService {
   getContentIdsInTimeline(
     query: GetContentIdsInTimelineProps
   ): Promise<CursorPaginationResult<string>>;
-  getDraftsPagination(
-    data: GetDraftsProps
-  ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
+  getDraftIdsPagination(data: GetDraftsProps): Promise<CursorPaginationResult<string>>;
+  getDraftContentByIds(ids: string[]): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   getScheduledContent(
     input: GetScheduledContentProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
   getContentToBuildMenuSettings(
-    id: string,
+    contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getReportedContentIdsByUser(reportUser: string, postTypes?: CONTENT_TYPE[]): Promise<string[]>;
+  getReportedContentIdsByUser(
+    reportUser: string,
+    options?: {
+      postTypes?: CONTENT_TYPE[];
+      groupIds?: string[];
+    }
+  ): Promise<string[]>;
   getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
+  updateSetting(props: UpdateSettingsProps): Promise<void>;
+  markSeen(contentId: string, userId: string): Promise<void>;
+  markReadImportant(contentId: string, userId: string): Promise<void>;
+  reorderPinned(props: ReorderContentProps): Promise<void>;
+  findPinnedOrder(
+    groupId: string,
+    userId: string
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+  updatePinnedContent(props: PinContentProps): Promise<void>;
+  getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
+  saveContent(contentId: string, authUser: UserDto): Promise<void>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

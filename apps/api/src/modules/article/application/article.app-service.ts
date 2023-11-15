@@ -1,17 +1,13 @@
 import { CONTENT_TYPE } from '@beincom/constants';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { IMediaService, MEDIA_SERVICE_TOKEN } from '@libs/service/media/src/interface';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { uniq } from 'lodash';
 
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { ExternalService } from '../../../app/external.service';
 import { PageDto } from '../../../common/dto';
 import { PostStatus } from '../../../database/models/post.model';
-import {
-  ArticleHasBeenDeletedEvent,
-  ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent,
-} from '../../../events/article';
+import { ArticleHasBeenPublishedEvent, ArticleHasBeenUpdatedEvent } from '../../../events/article';
 import { AuthorityService } from '../../authority';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
 import { PostBindingService } from '../../post/post-binding.service';
@@ -25,7 +21,7 @@ import { TagService } from '../../tag/tag.service';
 import { RULES } from '../../v2-post/constant';
 import {
   ArticleInvalidParameterException,
-  ArticleLimitAttachedSeriesException,
+  ContentLimitAttachedSeriesException,
   ContentNotFoundException,
 } from '../../v2-post/domain/exception';
 import { UserDto } from '../../v2-user/application';
@@ -49,7 +45,8 @@ export class ArticleAppService {
     private _postService: PostService,
     private _searchService: SearchService,
     private _tagService: TagService,
-    private _externalService: ExternalService
+    @Inject(MEDIA_SERVICE_TOKEN)
+    private readonly _mediaService: IMediaService
   ) {}
 
   public async getRelatedById(
@@ -134,7 +131,7 @@ export class ArticleAppService {
       updateArticleDto.coverMedia?.id &&
       updateArticleDto.coverMedia.id !== articleBefore.coverMedia?.id
     ) {
-      const images = await this._externalService.getImageIds([updateArticleDto.coverMedia.id]);
+      const images = await this._mediaService.findImagesByIds([updateArticleDto.coverMedia.id]);
       if (images.length === 0) {
         throw new BadRequestException('Invalid cover image');
       }
@@ -287,35 +284,6 @@ export class ArticleAppService {
     return article;
   }
 
-  public async delete(user: UserDto, articleId: string): Promise<boolean> {
-    const articles = await this._postService.getListWithGroupsByIds([articleId], false);
-
-    if (articles.length === 0) {
-      throw new ContentNotFoundException();
-    }
-    const article = articles[0];
-    await this._authorityService.checkPostOwner(article, user.id);
-
-    if (article.status === PostStatus.PUBLISHED) {
-      await this._authorityService.checkCanDeletePost(
-        user,
-        article.groups.map((g) => g.groupId)
-      );
-    }
-
-    const articleDeleted = await this._postService.delete(article, user);
-    if (articleDeleted) {
-      this._eventEmitter.emit(
-        new ArticleHasBeenDeletedEvent({
-          article: articleDeleted,
-          actor: user,
-        })
-      );
-      return true;
-    }
-    return false;
-  }
-
   /*
     Search articles in series detail
   */
@@ -432,7 +400,7 @@ export class ArticleAppService {
 
   public async validateUpdateSeriesData(articleId: string, series: string[]): Promise<void> {
     if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     const article = (await this._postService.getPostsWithSeries([articleId], true))[0];
@@ -441,7 +409,7 @@ export class ArticleAppService {
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimitedToAttachSeries) {
-      throw new ArticleLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

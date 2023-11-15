@@ -1,8 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
-import { CommentHasBeenDeletedEvent } from '../../../../../../events/comment/comment-has-been-deleted.event';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -22,30 +20,22 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     protected readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator,
-    private readonly _eventEmitter: InternalEventEmitterService
+    private readonly _contentValidator: IContentValidator
   ) {}
 
   public async execute(command: DeleteCommentCommand): Promise<void> {
-    const { actor, id } = command.payload;
+    const { actor, commentId } = command.payload;
 
-    const comment = await this._commentDomainService.getVisibleComment(id);
+    const comment = await this._commentDomainService.getVisibleComment(commentId);
 
     if (!comment.isOwner(actor.id)) {
       throw new ContentAccessDeniedException();
     }
 
-    const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
+    const content = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
-    this._contentValidator.checkCanReadContent(post, actor);
+    await this._contentValidator.checkCanReadContent(content, actor);
 
-    await this._commentDomainService.delete(id);
-
-    this._eventEmitter.emit(
-      new CommentHasBeenDeletedEvent({
-        actor,
-        comment,
-      })
-    );
+    return this._commentDomainService.delete(comment, actor);
   }
 }

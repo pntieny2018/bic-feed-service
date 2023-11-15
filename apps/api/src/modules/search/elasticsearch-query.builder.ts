@@ -25,12 +25,13 @@ export class ElasticsearchQueryBuilder {
       excludeByIds,
       groupIds,
       isLimitSeries,
+      filterEmptyContent,
       shouldHighlight,
     } = query;
     const body: BodyES = {
       query: {
         bool: {
-          must: [],
+          must: [...this._getContentNullFilter(filterEmptyContent)],
           must_not: [...this._getNotIncludeIds(excludeByIds)],
           filter: [
             ...this._getActorFilter(actors),
@@ -180,7 +181,7 @@ export class ElasticsearchQueryBuilder {
       {
         script: {
           script: {
-            inline: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
+            source: `doc['${seriesIds}'].length < ${RULES.LIMIT_ATTACHED_SERIES} `,
           },
         },
       },
@@ -189,9 +190,9 @@ export class ElasticsearchQueryBuilder {
 
   private _getSort(textSearch: string): any {
     if (textSearch) {
-      return [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
+      return [{ ['_score']: 'desc' }, { publishedAt: 'desc' }];
     } else {
-      return [{ createdAt: 'desc' }];
+      return [{ publishedAt: 'desc' }];
     }
   }
 
@@ -263,6 +264,19 @@ export class ElasticsearchQueryBuilder {
         {
           terms: {
             [tags.name]: tagNames,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getContentNullFilter(filterEmptyContent?: boolean): any {
+    if (filterEmptyContent) {
+      return [
+        {
+          exists: {
+            field: 'content',
           },
         },
       ];

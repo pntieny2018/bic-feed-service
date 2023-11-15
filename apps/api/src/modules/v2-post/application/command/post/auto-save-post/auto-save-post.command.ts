@@ -1,27 +1,10 @@
+import { UserDto } from '@libs/service/user';
 import { ICommand } from '@nestjs/cqrs';
 
-import { UserDto } from '../../../../../v2-user/application';
+import { PostPayload } from '../../../../domain/domain-service/interface';
 
-export type AutoSavePostCommandPayload = {
-  id: string;
-  groupIds: string[];
+export type AutoSavePostCommandPayload = PostPayload & {
   authUser: UserDto;
-  content?: string;
-  tagIds?: string[];
-  seriesIds?: string[];
-  mentionUserIds?: string[];
-  linkPreview?: {
-    url: string;
-    domain: string;
-    image: string;
-    title: string;
-    description: string;
-  };
-  media?: {
-    filesIds: string[];
-    imagesIds: string[];
-    videosIds: string[];
-  };
 };
 export class AutoSavePostCommand implements ICommand {
   public constructor(public readonly payload: AutoSavePostCommandPayload) {}

@@ -1,30 +1,15 @@
 import { getDatabaseConfig } from '@libs/database/postgres/common';
-import {
-  PostReactionAttributes,
-  PostReactionModel,
-} from '@libs/database/postgres/model/post-reaction.model';
-import {
-  FindOnePostReactionProps,
-  ILibPostReactionRepository,
-} from '@libs/database/postgres/repository/interface';
-import { Logger } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
+import { PostReactionAttributes, PostReactionModel } from '@libs/database/postgres/model';
+import { BaseRepository } from '@libs/database/postgres/repository';
+import { InjectConnection } from '@nestjs/sequelize';
+import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 
-export class LibPostReactionRepository implements ILibPostReactionRepository {
-  public constructor(
-    @InjectModel(PostReactionModel)
-    private readonly _postReactionModel: typeof PostReactionModel,
-    @InjectConnection() private readonly _sequelizeConnection: Sequelize
-  ) {}
-  private _logger = new Logger(LibPostReactionRepository.name);
-
-  public async findOne(input: FindOnePostReactionProps): Promise<PostReactionModel> {
-    const findOptions: FindOptions = { where: input };
-    return this._postReactionModel.findOne(findOptions);
+export class LibPostReactionRepository extends BaseRepository<PostReactionModel> {
+  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {
+    super(PostReactionModel);
   }
 
-  public async create(data: PostReactionAttributes): Promise<void> {
+  public async createPostReactionByStore(data: PostReactionAttributes): Promise<void> {
     const { schema } = getDatabaseConfig();
     const postId = data.postId;
     const userId = data.createdBy;
@@ -41,17 +26,5 @@ export class LibPostReactionRepository implements ILibPostReactionRepository {
         });
       }
     );
-  }
-
-  public async delete(id: string): Promise<void> {
-    const transaction = await this._sequelizeConnection.transaction();
-    try {
-      await this._postReactionModel.destroy({ where: { id: id }, transaction });
-      await transaction.commit();
-    } catch (e) {
-      await transaction.rollback();
-      this._logger.error(JSON.stringify(e?.stack));
-      throw e;
-    }
   }
 }

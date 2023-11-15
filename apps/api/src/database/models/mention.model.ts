@@ -1,9 +1,14 @@
-import { PostModel } from './post.model';
-import { CommentModel } from './comment.model';
-import { MentionableType } from '../../common/constants';
-import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { IsUUID } from 'class-validator';
+import { BelongsTo, Column, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
+
+import { CommentModel } from './comment.model';
+import { PostModel } from './post.model';
+
+export enum MentionableType {
+  POST = 'post',
+  COMMENT = 'comment',
+}
 
 export interface IMention {
   id?: string;

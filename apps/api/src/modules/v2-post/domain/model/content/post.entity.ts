@@ -102,6 +102,14 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     return this._props.seriesIds || [];
   }
 
+  public setSeriesIds(seriesIds: string[]): void {
+    this._props.seriesIds = seriesIds;
+  }
+
+  public getTags(): TagEntity[] {
+    return this._props.tags || [];
+  }
+
   public setTags(newTags: TagEntity[]): void {
     if (!newTags) {
       return;

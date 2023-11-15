@@ -1,7 +1,7 @@
 import { ORDER } from '@beincom/constants';
+import { PaginationResult } from '@libs/database/postgres/common';
 import { ReactionsCount } from 'apps/api/src/common/types';
 
-import { PaginationResult } from '../../../../../common/types/pagination-result.type';
 import { REACTION_TARGET } from '../../../data-type';
 import { ReactionEntity } from '../../model/reaction';
 

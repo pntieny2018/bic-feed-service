@@ -1,4 +1,4 @@
-import { IMAGE_RESOURCE } from '@beincom/constants';
+import { Media } from '@libs/common/dtos';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes, Sequelize } from 'sequelize';
 import {
@@ -19,58 +19,12 @@ import {
 } from 'sequelize-typescript';
 import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
-import { CommentReactionModel } from './comment-reaction.model';
+import { CommentReactionAttributes, CommentReactionModel } from './comment-reaction.model';
 import { PostAttributes, PostModel } from './post.model';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
   DECREMENT = 'decrement',
-}
-
-export interface IFile {
-  id: string;
-  url: string;
-  name: string;
-  createdBy: string;
-  mimeType: string;
-  size: number;
-}
-
-export interface IImage {
-  id: string;
-  url: string;
-  src?: string;
-  createdBy: string;
-  mimeType: string;
-  resource: IMAGE_RESOURCE;
-  width: number;
-  height: number;
-  status: string;
-}
-
-export interface IVideoThumbnail {
-  url: string;
-  width: number;
-  height: number;
-}
-
-export interface IVideo {
-  id: string;
-  url: string;
-  name: string;
-  mimeType: string;
-  createdBy: string;
-  size: number;
-  width: number;
-  height: number;
-  status: string;
-  thumbnails: IVideoThumbnail[];
-}
-
-export interface IMediaJson {
-  files: IFile[];
-  images: IImage[];
-  videos: IVideo[];
 }
 
 export type CommentAttributes = InferAttributes<CommentModel>;
@@ -132,7 +86,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   @Column({
     type: DataTypes.JSONB,
   })
-  public mediaJson: IMediaJson;
+  public mediaJson: Media;
 
   @AllowNull(true)
   @Column({
@@ -151,7 +105,7 @@ export class CommentModel extends Model<CommentAttributes, InferCreationAttribut
   public child?: CommentModel[];
 
   @HasMany(() => CommentReactionModel)
-  public ownerReactions?: CommentReactionModel[];
+  public ownerReactions?: CommentReactionAttributes[];
 
   @AfterCreate
   public static async onCommentCreated(comment: CommentModel): Promise<void> {

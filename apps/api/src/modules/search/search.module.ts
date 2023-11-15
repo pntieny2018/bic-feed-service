@@ -10,7 +10,6 @@ import { PostModuleV2 } from '../v2-post/post.module';
 
 import { SearchAppService } from './application/search.app-service';
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
-import { SearchConsumer } from './search.consumer';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
 
@@ -23,7 +22,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 };
 @Module({
   imports: [forwardRef(() => PostModuleV2), GroupModuleV2, PostModule, TagModule],
-  controllers: [SearchController, SearchConsumer],
+  controllers: [SearchController],
   providers: [SearchService, ElasticsearchQueryBuilder, SearchAppService],
   exports: [SearchService],
 })

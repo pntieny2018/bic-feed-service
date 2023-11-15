@@ -11,9 +11,9 @@ import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
-  IReactionRepository,
-  REACTION_REPOSITORY_TOKEN,
+  IPostReactionRepository,
   IQuizParticipantRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import {
@@ -45,7 +45,8 @@ export class ContentBinding implements IContentBinding {
     @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _contentRepo: IContentRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepository: IQuizParticipantRepository,
-    @Inject(REACTION_REPOSITORY_TOKEN) private readonly _reactionRepository: IReactionRepository
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepo: IPostReactionRepository
   ) {}
   public async postBinding(
     postEntity: PostEntity,
@@ -122,6 +123,7 @@ export class ContentBinding implements IContentBinding {
       createdAt: postEntity.get('createdAt'),
       scheduledAt: postEntity.get('scheduledAt'),
       publishedAt: postEntity.get('publishedAt'),
+      createdBy: postEntity.get('createdBy'),
       tags: (postEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -131,6 +133,7 @@ export class ContentBinding implements IContentBinding {
         ? dataBinding.series.map((series) => ({
             id: series.get('id'),
             title: series.get('title'),
+            createdBy: series.get('createdBy'),
           }))
         : undefined,
       quiz:
@@ -235,7 +238,7 @@ export class ContentBinding implements IContentBinding {
       });
     }
 
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents([
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
       articleEntity.getId(),
     ]);
 
@@ -267,6 +270,7 @@ export class ContentBinding implements IContentBinding {
         ? articleEntity.get('scheduledAt')
         : articleEntity.get('publishedAt'),
       scheduledAt: articleEntity.get('scheduledAt'),
+      createdBy: articleEntity.get('createdBy'),
       tags: (articleEntity.get('tags') || []).map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
@@ -276,6 +280,7 @@ export class ContentBinding implements IContentBinding {
         ? series.map((series) => ({
             id: series.get('id'),
             title: series.get('title'),
+            createdBy: series.get('createdBy'),
           }))
         : undefined,
       quiz:
@@ -348,6 +353,7 @@ export class ContentBinding implements IContentBinding {
     );
 
     let items = [];
+    let itemGroups = [];
     let userIdsNeedToFind = [seriesEntity.get('createdBy')];
     if (seriesEntity.get('itemIds')?.length) {
       const itemIds = seriesEntity.get('itemIds');
@@ -361,6 +367,7 @@ export class ContentBinding implements IContentBinding {
         include: {
           shouldIncludeCategory: true,
           shouldIncludeQuiz: true,
+          shouldIncludeGroup: true,
         },
       });
 
@@ -369,6 +376,9 @@ export class ContentBinding implements IContentBinding {
         ...items.map((item) => item.get('createdBy')),
         ...userIdsNeedToFind,
       ]);
+
+      const itemGroupIds = items.map((item) => item.getGroupIds()).flat();
+      itemGroups = await this._groupAdapter.getGroupsByIds(itemGroupIds);
     }
     const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
       userIdsNeedToFind,
@@ -385,6 +395,7 @@ export class ContentBinding implements IContentBinding {
           return {
             id: item.getId(),
             content: item.get('content'),
+            createdBy: item.getCreatedBy(),
             createdAt: item.get('createdAt'),
             publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
@@ -396,6 +407,9 @@ export class ContentBinding implements IContentBinding {
               images: item.get('media').images?.map((image) => new ImageDto(image.toObject())),
               videos: item.get('media').videos?.map((video) => new VideoDto(video.toObject())),
             },
+            audience: {
+              groups: itemGroups.filter((group) => item.getGroupIds().includes(group.id)),
+            },
           };
         }
         if (item instanceof ArticleEntity) {
@@ -404,6 +418,7 @@ export class ContentBinding implements IContentBinding {
             title: item.get('title'),
             summary: item.get('summary'),
             type: item.get('type'),
+            createdBy: item.getCreatedBy(),
             createdAt: item.get('createdAt'),
             publishedAt: item.get('publishedAt'),
             setting: item.get('setting'),
@@ -414,6 +429,9 @@ export class ContentBinding implements IContentBinding {
               id: category.get('id'),
               name: category.get('name'),
             })),
+            audience: {
+              groups: itemGroups.filter((group) => item.getGroupIds().includes(group.id)),
+            },
           };
         }
       }),
@@ -445,6 +463,9 @@ export class ContentBinding implements IContentBinding {
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
   ): Promise<(PostDto | ArticleDto | SeriesDto)[]> {
+    if (!contentEntities.length) {
+      return [];
+    }
     const {
       users,
       groups,
@@ -854,7 +875,7 @@ export class ContentBinding implements IContentBinding {
       })
     );
 
-    const reactionsCount = await this._reactionRepository.getAndCountReactionByContents(contentIds);
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(contentIds);
 
     let series = new Map<string, SeriesEntity | PostEntity | ArticleEntity>();
     if (seriesIds.length > 0) {

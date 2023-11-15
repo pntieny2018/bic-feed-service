@@ -1,5 +1,4 @@
-import { LibCommentRepository } from '@libs/database/postgres/repository/comment.repository';
-import { LIB_COMMENT_REPOSITORY_TOKEN } from '@libs/database/postgres/repository/interface';
+import { LibCommentRepository, LibFollowRepository } from '@libs/database/postgres/repository';
 
 import { CommentBinding, COMMENT_BINDING_TOKEN } from '../application/binding';
 import {
@@ -8,6 +7,12 @@ import {
   ReplyCommentHandler,
   UpdateCommentHandler,
 } from '../application/command/comment';
+import { CommentCreatedEventHandler } from '../application/event-handler/comment';
+import {
+  NotiCommentCreatedEventHandler,
+  NotiCommentDeletedEventHandler,
+  NotiCommentUpdatedEventHandler,
+} from '../application/event-handler/notification';
 import {
   FindCommentsAroundIdHandler,
   FindCommentsPaginationHandler,
@@ -43,10 +48,9 @@ export const commentProvider = [
     provide: COMMENT_BINDING_TOKEN,
     useClass: CommentBinding,
   },
-  {
-    provide: LIB_COMMENT_REPOSITORY_TOKEN,
-    useClass: LibCommentRepository,
-  },
+  LibCommentRepository,
+  LibFollowRepository,
+
   /** Application */
   CreateCommentHandler,
   ReplyCommentHandler,
@@ -56,4 +60,9 @@ export const commentProvider = [
   FindCommentsAroundIdHandler,
 
   CommentMapper,
+
+  CommentCreatedEventHandler,
+  NotiCommentCreatedEventHandler,
+  NotiCommentDeletedEventHandler,
+  NotiCommentUpdatedEventHandler,
 ];

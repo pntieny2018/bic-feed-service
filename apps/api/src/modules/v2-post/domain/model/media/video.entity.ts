@@ -1,25 +1,10 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { Video } from '@libs/common/dtos';
 import { validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
-export interface VideoThumbnailAttributes {
-  url: string;
-  width: number;
-  height: number;
-}
-
-export type VideoAttributes = {
-  id: string;
-  url: string;
-  name: string;
-  mimeType: string;
-  createdBy: string;
-  size: number;
-  width: number;
-  height: number;
-  status: string;
-  thumbnails: VideoThumbnailAttributes[];
-};
+export type VideoAttributes = Video;
 
 export class VideoEntity extends DomainAggregateRoot<VideoAttributes> {
   public constructor(props: VideoAttributes) {

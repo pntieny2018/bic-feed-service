@@ -8,7 +8,9 @@
     "saved_success": "Saved content successfully",
     "unsaved_success": "Unsaved content successfully",
     "reported_success": "Reported content successfully",
-    "edited_setting_success": "Edited setting successfully"
+    "edited_setting_success": "Edited setting successfully",
+    "reorder_pin_content_success": "Reordered pinned content successfully",
+    "pin_content_success": "Pinned content successfully"
   },
   "post": {
     "created_success": "Created post successfully",
@@ -33,8 +35,8 @@
     "created_success": "Published series successfully",
     "updated_success": "Edited series successfully",
     "deleted_success": "Deleted series successfully",
-    "added_success": "Added article/post successfully",
-    "removed_success": "Removed article/post successfully"
+    "added_success": "Added content successfully",
+    "removed_success": "Removed content successfully"
   },
   "comment": {
     "created_success": "Created comment successfully",

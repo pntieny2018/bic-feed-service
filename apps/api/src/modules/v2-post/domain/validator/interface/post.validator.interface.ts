@@ -1,17 +1,14 @@
-import { IContentValidator } from './content.validator.interface';
+import { UserDto } from '@libs/service/user';
+
 import { PostEntity } from '../../model/content';
 
+import { IContentValidator } from './content.validator.interface';
+
 export interface IPostValidator extends IContentValidator {
-  validateAndSetMedia(
+  validatePublishContent(
     postEntity: PostEntity,
-    media: {
-      filesIds?: string[];
-      imagesIds?: string[];
-      videosIds?: string[];
-    }
-  ): void;
-
-  validateLimitedToAttachSeries(postEntity: PostEntity): Promise<void>;
+    userAuth: UserDto,
+    groupIds: string[]
+  ): Promise<void>;
 }
-
 export const POST_VALIDATOR_TOKEN = 'POST_VALIDATOR_TOKEN';

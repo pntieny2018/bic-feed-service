@@ -94,6 +94,10 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     return this._props.seriesIds || [];
   }
 
+  public setSeriesIds(seriesIds: string[]): void {
+    this._props.seriesIds = seriesIds;
+  }
+
   public getTitle(): string {
     return this._props.title;
   }
@@ -106,6 +110,10 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     this._state.detachCategoryIds = difference(entityIds, newEntiyIds);
 
     this._props.categories = categoryEntities;
+  }
+
+  public getTags(): TagEntity[] {
+    return this._props.tags || [];
   }
 
   public setTags(newTags: TagEntity[]): void {

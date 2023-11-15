@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TYPE, LANGUAGE, PRIVACY } from '@beincom/constants';
+import { Media } from '@libs/common/dtos';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
@@ -19,7 +20,7 @@ import {
 import { v4 as uuid_v4 } from 'uuid';
 
 import { CategoryAttributes, CategoryModel } from './category.model';
-import { CommentAttributes, CommentModel, IMediaJson } from './comment.model';
+import { CommentAttributes, CommentModel } from './comment.model';
 import { FailedProcessPostAttributes, FailedProcessPostModel } from './failed-process-post.model';
 import { LinkPreviewAttributes, LinkPreviewModel } from './link-preview.model';
 import { MediaAttributes, MediaModel } from './media.model';
@@ -158,7 +159,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @Column({
     type: DataTypes.JSONB,
   })
-  public mediaJson?: IMediaJson;
+  public mediaJson?: Media;
 
   @CreatedAt
   @Column

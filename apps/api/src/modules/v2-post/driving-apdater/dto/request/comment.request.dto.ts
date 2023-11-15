@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
@@ -14,7 +15,6 @@ import {
 import { NIL } from 'uuid';
 
 import { PAGING_DEFAULT_LIMIT } from '../../../../../common/constants';
-import { PaginatedArgs } from '../../../../../common/dto';
 import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
 import { UserMentionDto } from '../../../application/dto';
 

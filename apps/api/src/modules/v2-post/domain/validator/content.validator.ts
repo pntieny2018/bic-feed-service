@@ -1,27 +1,26 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TYPE, PERMISSION_KEY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
+import { uniq } from 'lodash';
 import moment from 'moment';
 
-import { PERMISSION_KEY } from '../../../../common/constants';
-import {
-  AUTHORITY_APP_SERVICE_TOKEN,
-  IAuthorityAppService,
-} from '../../../authority/application/authority.app-service.interface';
-import { PostType } from '../../data-type';
+import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../authority';
+import { RULES } from '../../constant';
 import {
   ContentAccessDeniedException,
   ContentEmptyGroupException,
   ContentInvalidScheduledTimeException,
+  ContentLimitAttachedSeriesException,
   ContentNoCRUDPermissionAtGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
+  ContentNoPinPermissionException,
   ContentRequireGroupException,
   TagSeriesInvalidException,
   UserNoBelongGroupException,
 } from '../exception';
-import { SeriesEntity, ContentEntity } from '../model/content';
+import { SeriesEntity, ContentEntity, PostEntity, ArticleEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import {
@@ -49,12 +48,12 @@ export class ContentValidator implements IContentValidator {
   public async checkCanCRUDContent(
     user: UserDto,
     groupAudienceIds: string[],
-    postType?: PostType | CONTENT_TYPE
+    contentType?: CONTENT_TYPE
   ): Promise<void> {
     const notCreatableInGroups: GroupDto[] = [];
     const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
     await this._authorityAppService.buildAbility(user);
-    const permissionKey = this._postTypeToPermissionKey(postType);
+    const permissionKey = this._postTypeToPermissionKey(contentType);
     for (const group of groups) {
       if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)) {
         notCreatableInGroups.push(group);
@@ -97,12 +96,12 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  private _postTypeToPermissionKey(postType: PostType | CONTENT_TYPE): string {
+  private _postTypeToPermissionKey(postType: CONTENT_TYPE): string {
     switch (postType) {
-      case PostType.SERIES:
+      case CONTENT_TYPE.SERIES:
         return PERMISSION_KEY.CRUD_SERIES;
-      case PostType.ARTICLE:
-      case PostType.POST:
+      case CONTENT_TYPE.ARTICLE:
+      case CONTENT_TYPE.POST:
       default:
         return PERMISSION_KEY.CRUD_POST_ARTICLE;
     }
@@ -149,7 +148,7 @@ export class ContentValidator implements IContentValidator {
     });
     const invalidUsers = [];
     for (const user of users) {
-      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
+      if (!groupIds.some((groupId) => user?.groups.includes(groupId))) {
         invalidUsers.push(user.id);
       }
     }
@@ -159,7 +158,11 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public checkCanReadContent(post: ContentEntity, user: UserDto, groups?: GroupDto[]): void {
+  public async checkCanReadContent(
+    post: ContentEntity,
+    user: UserDto,
+    groups?: GroupDto[]
+  ): Promise<void> {
     if (!post.isPublished() && post.isOwner(user.id)) {
       return;
     }
@@ -167,6 +170,12 @@ export class ContentValidator implements IContentValidator {
       return;
     }
     const groupAudienceIds = post.get('groupIds') ?? [];
+
+    const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
+    if (isAdmin && !post.isDraft()) {
+      return;
+    }
+
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
@@ -232,6 +241,44 @@ export class ContentValidator implements IContentValidator {
     const validScheduleTime = moment().add(30, 'minutes');
     if (moment(scheduleAt).isBefore(validScheduleTime, 'minutes')) {
       throw new ContentInvalidScheduledTimeException();
+    }
+  }
+
+  public async checkCanPinContent(user: UserDto, groupIds: string[]): Promise<void> {
+    await this._authorityAppService.buildAbility(user);
+
+    const canPinPermission = this._authorityAppService.canPinContent(groupIds);
+
+    if (!canPinPermission) {
+      throw new ContentNoPinPermissionException();
+    }
+  }
+
+  public async validateLimitedToAttachSeries(
+    contentEntity: ArticleEntity | PostEntity
+  ): Promise<void> {
+    if (contentEntity.isOverLimitedToAttachSeries()) {
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+    }
+
+    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
+      contentEntity.getId(),
+      {
+        shouldIncludeSeries: true,
+      }
+    )) as ArticleEntity | PostEntity;
+
+    if (!contentWithArchivedGroups) {
+      return;
+    }
+
+    const series = uniq([
+      ...contentEntity.getSeriesIds(),
+      ...contentWithArchivedGroups?.getSeriesIds(),
+    ]);
+
+    if (series.length > RULES.LIMIT_ATTACHED_SERIES) {
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

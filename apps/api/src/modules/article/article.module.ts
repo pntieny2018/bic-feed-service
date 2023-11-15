@@ -1,22 +1,25 @@
-import { MediaModule } from '../media';
+import { MediaModule as LibMediaModule } from '@libs/service/media/media.module';
 import { Module } from '@nestjs/common';
-import { MentionModule } from '../mention';
-import { CommentModule } from '../comment';
+
 import { AuthorityModule } from '../authority';
-import { ArticleService } from './article.service';
-import { PostModule } from '../post';
-import { ArticleController } from './article.controller';
 import { CategoryModule } from '../category';
-import { SeriesModule } from '../series';
-import { CanUseCategoryConstraint } from './validators/can-use-category.validator';
-import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
+import { CommentModule } from '../comment';
 import { FeedModule } from '../feed';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
-import { ArticleAppService } from './application/article.app-service';
+import { MediaModule } from '../media';
+import { MentionModule } from '../mention';
+import { PostModule } from '../post';
 import { SearchModule } from '../search';
+import { SeriesModule } from '../series';
 import { TagModule } from '../tag';
-import { UserModuleV2 } from '../v2-user/user.module';
 import { GroupModuleV2 } from '../v2-group/group.module';
+import { UserModuleV2 } from '../v2-user/user.module';
+
+import { ArticleAppService } from './application/article.app-service';
+import { ArticleController } from './article.controller';
+import { ArticleService } from './article.service';
+import { CanUseCategoryConstraint } from './validators/can-use-category.validator';
+import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
 
 @Module({
   imports: [
@@ -33,6 +36,7 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     LinkPreviewModule,
     CommentModule,
     SeriesModule,
+    LibMediaModule,
   ],
   controllers: [ArticleController],
   providers: [ArticleService, ArticleAppService, CanUseCategoryConstraint, CanUseSeriesConstraint],

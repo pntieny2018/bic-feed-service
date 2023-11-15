@@ -1,3 +1,4 @@
+import { ArticleEntity, PostEntity } from '../../model/content';
 import { TagEntity } from '../../model/tag';
 
 export type TagCreateProps = {
@@ -13,13 +14,11 @@ export type TagUpdateProps = {
 
 export interface ITagDomainService {
   findByIds(ids: string[]): Promise<TagEntity[]>;
-
   createTag(data: TagCreateProps): Promise<TagEntity>;
-
   updateTag(tag: TagEntity, data: TagUpdateProps): Promise<TagEntity>;
-
   deleteTag(tag: TagEntity): Promise<void>;
-
-  findTagsByKeyword(keyword: string): Promise<TagEntity[]>;
+  increaseTotalUsedByContent(content: PostEntity | ArticleEntity): Promise<void>;
+  decreaseTotalUsedByContent(content: PostEntity | ArticleEntity): Promise<void>;
+  updateTagsUsedByContent(content: PostEntity | ArticleEntity): Promise<void>;
 }
 export const TAG_DOMAIN_SERVICE_TOKEN = 'TAG_DOMAIN_SERVICE_TOKEN';

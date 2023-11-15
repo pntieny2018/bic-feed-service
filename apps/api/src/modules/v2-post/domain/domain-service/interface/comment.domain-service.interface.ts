@@ -1,15 +1,44 @@
-import { CursorPaginationResult } from '../../../../../common/types/cursor-pagination-result.type';
-import { BasedCommentProps } from '../../factory/interface';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
+
+import {
+  CommentRecipientDto,
+  ReplyCommentRecipientDto,
+} from '../../../../v2-notification/application/dto';
+import { ArticleDto, PostDto } from '../../../application/dto';
 import { CommentEntity } from '../../model/comment';
 
-export type CreateCommentProps = BasedCommentProps;
+export type BasedCommentPayload = {
+  userId: string;
+  contentId: string;
+  parentId?: string;
+  content?: string;
+  giphyId?: string;
+  media?: {
+    files: string[];
+    images: string[];
+    videos: string[];
+  };
+  mentions?: string[];
+};
 
-export type UpdateCommentProps = BasedCommentProps & { id: string };
+export type CreateCommentProps = BasedCommentPayload & {
+  actor: UserDto;
+};
+
+export type UpdateCommentProps = BasedCommentPayload & { commentId: string; actor: UserDto };
 
 export type GetCommentsAroundIdProps = {
   userId?: string;
   limit: number;
   targetChildLimit: number;
+};
+
+export type RelevantCommentProps = {
+  commentEntity: CommentEntity;
+  userId: string;
+  contentDto: PostDto | ArticleDto;
+  cb?: (comment: CommentEntity[]) => void;
 };
 
 export interface ICommentDomainService {
@@ -24,6 +53,10 @@ export interface ICommentDomainService {
 
   update(input: UpdateCommentProps): Promise<void>;
 
-  delete(id: string): Promise<void>;
+  delete(comment: CommentEntity, actor: UserDto): Promise<void>;
+
+  getRelevantUserIdsInComment(
+    props: RelevantCommentProps
+  ): Promise<CommentRecipientDto | ReplyCommentRecipientDto>;
 }
 export const COMMENT_DOMAIN_SERVICE_TOKEN = 'COMMENT_DOMAIN_SERVICE_TOKEN';

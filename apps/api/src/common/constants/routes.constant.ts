@@ -1,11 +1,13 @@
-import { AppHelper } from '../helpers/app.helper';
+import { AppHelper } from '../helpers';
 
 import {
-  VERSION_1_10_0,
   VERSION_1_5_0,
   VERSION_1_6_0,
   VERSION_1_7_0,
   VERSION_1_8_0,
+  VERSION_1_9_0,
+  VERSION_1_10_0,
+  VERSION_1_11_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -23,11 +25,11 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupported(),
     },
     UPDATE_TAG: {
-      PATH: '/tags/:id',
+      PATH: '/tags/:tagId',
       VERSIONS: AppHelper.getVersionsSupported(),
     },
     DELETE_TAG: {
-      PATH: '/tags/:id',
+      PATH: '/tags/:tagId',
       VERSIONS: AppHelper.getVersionsSupported(),
     },
   },
@@ -51,6 +53,26 @@ export const ROUTES = {
     GET_ITEMS_BY_SERIES: {
       PATH: '/series/items',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    SEARCH_SERIES: {
+      PATH: '/series',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    SEARCH_CONTENTS_BY_SERIES: {
+      PATH: '/series/:seriesId/contents',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    ADD_ITEMS: {
+      PATH: '/series/:seriesId/items',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    REMOVE_ITEMS: {
+      PATH: '/series/:seriesId/items',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    REORDER_ITEMS: {
+      PATH: '/series/:seriesId/items/order',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
   },
   POST: {
@@ -77,6 +99,10 @@ export const ROUTES = {
     SCHEDULE: {
       PATH: '/posts/:postId/schedule',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    DELETE: {
+      PATH: '/posts/:postId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
   ARTICLE: {
@@ -170,12 +196,90 @@ export const ROUTES = {
   },
   CONTENT: {
     GET_SCHEDULE: {
-      PATH: '/schedule',
+      PATH: 'content/schedule',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    GET_TOTAL_DRAFT: {
+      PATH: 'content/total-draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_SERIES: {
-      PATH: '/:contentId/series',
+      PATH: 'content/:contentId/series',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    GET_DRAFTS: {
+      PATH: 'content/draft',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_MENU_SETTINGS: {
+      PATH: 'content/:contentId/menu-settings',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
+    },
+    SEARCH_CONTENTS: {
+      PATH: 'content/',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
+    },
+    MARK_AS_READ: {
+      PATH: 'content/:contentId/mark-as-read',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    VALIDATE_SERIES_TAGS: {
+      PATH: 'content/validate-series-tags',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    UPDATE_SETTINGS: {
+      PATH: 'content/:contentId/setting',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    REORDER_PIN_CONTENT: {
+      PATH: 'content/pinned-content/groups/:groupId/order',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    GET_PINNED_CONTENT: {
+      PATH: 'content/pinned-content/groups/:groupId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    SEEN_CONTENT: {
+      PATH: 'content/:contentId/seen',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    PIN_CONTENT: {
+      PATH: 'content/pinned-content/:contentId',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    GET_AUDIENCE: {
+      PATH: 'content/:contentId/audiences',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
+    },
+    SAVE_CONTENT: {
+      PATH: 'content/:contentId/save',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+  },
+  COMMENT: {
+    GET_LIST: {
+      PATH: '/comments',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    CREATE: {
+      PATH: '/comments',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    GET_AROUND_COMMENT: {
+      PATH: '/comments/:commentId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    UPDATE: {
+      PATH: '/comments/:commentId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    DELETE: {
+      PATH: '/comments/:commentId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+    REPLY: {
+      PATH: '/comments/:commentId/reply',
+      VERSIONS: AppHelper.getVersionsSupported(),
     },
   },
 };

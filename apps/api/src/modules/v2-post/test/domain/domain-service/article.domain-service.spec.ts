@@ -20,6 +20,7 @@ import {
   ContentHasBeenPublishedException,
   ContentNotFoundException,
 } from '../../../domain/exception';
+import { ArticleEntity } from '../../../domain/model/content';
 import {
   CATEGORY_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -472,6 +473,40 @@ describe('Article domain service', () => {
         expect(error).toBeDefined();
         expect(error).toBeInstanceOf(ContentEmptyContentException);
       }
+    });
+  });
+
+  describe('createDraft', () => {
+    const articleEntityMock = createMockArticleEntity();
+
+    it('should create draft article successfully', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockResolvedValue();
+      jest.spyOn(ArticleEntity, 'create').mockReturnValue(articleEntityMock);
+      jest.spyOn(articleEntityMock, 'setGroups').mockImplementation(jest.fn().mockReturnThis());
+      jest
+        .spyOn(articleEntityMock, 'setPrivacyFromGroups')
+        .mockImplementation(jest.fn().mockReturnThis());
+      const result = await domainService.createDraft({
+        userId,
+        groups: [],
+      });
+      expect(ArticleEntity.create).toBeCalledWith({
+        userId,
+        groupIds: [],
+      });
+      expect(result).toEqual(articleEntityMock);
+    });
+
+    it('should throw error when create draft article', async () => {
+      const userId = v4();
+      jest.spyOn(contentRepository, 'create').mockRejectedValue(new Error());
+      await expect(
+        domainService.createDraft({
+          userId,
+          groups: [],
+        })
+      ).rejects.toThrow();
     });
   });
 });

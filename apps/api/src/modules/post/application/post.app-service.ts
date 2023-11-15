@@ -1,35 +1,35 @@
-import { uniq } from 'lodash';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
+import { uniq } from 'lodash';
+
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
 import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PostModel, PostStatus } from '../../../database/models/post.model';
-import { PostHasBeenDeletedEvent } from '../../../events/post';
+import { PostModel } from '../../../database/models/post.model';
+import { ArticleResponseDto } from '../../article/dto/responses';
 import { AuthorityService } from '../../authority';
-import { GetPostEditedHistoryDto } from '../dto/requests';
-import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
-import { PostEditedHistoryDto } from '../dto/responses';
-import { PostHistoryService } from '../post-history.service';
-import { PostService } from '../post.service';
 import { TagService } from '../../tag/tag.service';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
+import { RULES } from '../../v2-post/constant';
+import {
+  AudienceNoBelongContentException,
+  ContentLimitAttachedSeriesException,
+  ContentNotFoundException,
+  ContentPinLackException,
+  ContentPinNotFoundException,
+  PostInvalidParameterException,
+} from '../../v2-post/domain/exception';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../v2-user/application';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
+import { GetPostEditedHistoryDto } from '../dto/requests';
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
-import { InjectModel } from '@nestjs/sequelize';
-import { ArticleResponseDto } from '../../article/dto/responses';
-import { RULES } from '../../v2-post/constant';
-import {
-  AudienceNoBelongContentException,
-  ContentNotFoundException,
-  ContentPinLackException,
-  ContentPinNotFoundException,
-  PostInvalidParameterException,
-  PostLimitAttachedSeriesException,
-} from '../../v2-post/domain/exception';
+import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
+import { PostEditedHistoryDto } from '../dto/responses';
+import { PostHistoryService } from '../post-history.service';
+import { PostService } from '../post.service';
 
 @Injectable()
 export class PostAppService {
@@ -59,34 +59,6 @@ export class PostAppService {
 
   public async getTotalDraft(user: UserDto): Promise<any> {
     return this._postService.getTotalDraft(user);
-  }
-
-  public async deletePost(user: UserDto, postId: string): Promise<boolean> {
-    const posts = await this._postService.getListWithGroupsByIds([postId], false);
-
-    if (posts.length === 0) {
-      throw new ContentNotFoundException();
-    }
-    await this._authorityService.checkPostOwner(posts[0], user.id);
-
-    if (posts[0].status === PostStatus.PUBLISHED) {
-      await this._authorityService.checkCanDeletePost(
-        user,
-        posts[0].groups.map((g) => g.groupId)
-      );
-    }
-
-    const postDeleted = await this._postService.delete(posts[0], user);
-    if (postDeleted) {
-      this._eventEmitter.emit(
-        new PostHasBeenDeletedEvent({
-          post: postDeleted,
-          actor: user,
-        })
-      );
-      return true;
-    }
-    return false;
   }
 
   public async markReadPost(user: UserDto, postId: string): Promise<boolean> {
@@ -233,8 +205,12 @@ export class PostAppService {
     const currentPinGroupIds = [];
     const currentUnpinGroupIds = [];
     for (const group of groups) {
-      if (group.isPinned) currentPinGroupIds.push(group.groupId);
-      if (!group.isPinned) currentUnpinGroupIds.push(group.groupId);
+      if (group.isPinned) {
+        currentPinGroupIds.push(group.groupId);
+      }
+      if (!group.isPinned) {
+        currentUnpinGroupIds.push(group.groupId);
+      }
       currentGroupIds.push(group.groupId);
     }
 
@@ -289,7 +265,7 @@ export class PostAppService {
 
   public async validateUpdateSeriesData(postId: string, series: string[]): Promise<void> {
     if (series && series.length > RULES.LIMIT_ATTACHED_SERIES) {
-      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
     const post = (await this._postService.getPostsWithSeries([postId], true))[0];
@@ -298,7 +274,7 @@ export class PostAppService {
       uniq([...series, ...seriesIds]).length > RULES.LIMIT_ATTACHED_SERIES;
 
     if (isOverLimitedToAttachSeries) {
-      throw new PostLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
+      throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
   }
 }

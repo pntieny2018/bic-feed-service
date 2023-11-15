@@ -3,12 +3,6 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { InternalEventEmitterService } from '../../../../../../app/custom/event-emitter';
-import { CommentHasBeenCreatedEvent } from '../../../../../../events/comment';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
 import {
   ICommentDomainService,
   COMMENT_DOMAIN_SERVICE_TOKEN,
@@ -16,6 +10,7 @@ import {
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { ContentNoCommentPermissionException } from '../../../../domain/exception';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -39,31 +34,31 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
     private readonly _mentionValidator: IMentionValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
-    private readonly _eventEmitter: InternalEventEmitterService,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     protected readonly _contentDomainService: IContentDomainService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(command: CreateCommentCommand): Promise<CommentDto> {
-    const { actor, postId, mentions } = command.payload;
+    const { actor, contentId, mentions } = command.payload;
 
-    const post = await this._contentDomainService.getVisibleContent(postId);
+    const content = await this._contentDomainService.getVisibleContent(contentId);
 
-    this._contentValidator.checkCanReadContent(post, actor);
+    await this._contentValidator.checkCanReadContent(content, actor);
 
-    if (!post.allowComment()) {
+    if (!content.allowComment()) {
       throw new ContentNoCommentPermissionException();
     }
 
     if (mentions && mentions.length) {
-      const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
-      const mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
+      const groups = content.get('groupIds').map((id) => new GroupDto({ id }));
+      const mentionUsers = await this._userAdapter.getUsersByIds(mentions, {
         withGroupJoined: true,
       });
+
       await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
 
@@ -72,13 +67,6 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
       userId: actor.id,
       parentId: NIL,
     });
-
-    this._eventEmitter.emit(
-      new CommentHasBeenCreatedEvent({
-        actor,
-        commentId: commentEntity.get('id'),
-      })
-    );
 
     return this._commentBinding.commentBinding(commentEntity, { actor });
   }

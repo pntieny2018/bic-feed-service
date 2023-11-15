@@ -1,5 +1,4 @@
-import { LIB_TAG_REPOSITORY_TOKEN } from '@libs/database/postgres/repository/interface';
-import { LibTagRepository } from '@libs/database/postgres/repository/tag.repository';
+import { LibTagRepository } from '@libs/database/postgres/repository';
 
 import { CreateTagHandler, DeleteTagHandler, UpdateTagHandler } from '../application/command/tag';
 import { FindTagsPaginationHandler } from '../application/query/tag';
@@ -24,10 +23,7 @@ export const tagProvider = [
     provide: TAG_FACTORY_TOKEN,
     useClass: TagFactory,
   },
-  {
-    provide: LIB_TAG_REPOSITORY_TOKEN,
-    useClass: LibTagRepository,
-  },
+  LibTagRepository,
   TagMapper,
   /** Application */
   CreateTagHandler,

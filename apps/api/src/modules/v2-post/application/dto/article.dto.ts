@@ -25,6 +25,7 @@ export class ArticleDto {
   public series: {
     title: string;
     id: string;
+    createdBy?: string;
   }[];
   public quiz?: QuizDto;
   public setting: PostSettingDto;
@@ -49,6 +50,7 @@ export class ArticleDto {
   public updatedAt: Date;
   public scheduledAt?: Date;
   public publishedAt?: Date;
+  public createdBy?: string;
   public quizHighestScore?: {
     quizParticipantId: string;
     score: number;

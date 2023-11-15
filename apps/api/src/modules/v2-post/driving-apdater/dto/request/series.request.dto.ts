@@ -1,13 +1,19 @@
+import { PaginatedArgs } from '@libs/database/postgres/common';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+
+import { PageOptionsDto } from '../../../../../common/dto';
+
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from './media.request.dto';
 import { PostSettingRequestDto } from './post.request.dto';
@@ -179,4 +185,84 @@ export class GetItemsBySeriesRequestDto {
   })
   @IsNotEmpty()
   public seriesIds: string[];
+}
+
+export class SearchSeriesRequestDto extends PageOptionsDto {
+  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'content_search',
+  })
+  public contentSearch?: string;
+
+  @ApiProperty({
+    description: 'Group IDs',
+    required: false,
+    name: 'group_ids',
+  })
+  @Expose({
+    name: 'group_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public groupIds?: string[];
+
+  @ApiProperty({
+    description: 'Item IDs',
+    required: false,
+    name: 'item_ids',
+  })
+  @Expose({
+    name: 'item_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public itemIds?: string[];
+}
+
+export class SearchContentsBySeriesRequestDto extends PaginatedArgs {
+  @ApiPropertyOptional({
+    description: 'Filter by keyword',
+    required: false,
+    name: 'keyword',
+  })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'keyword',
+  })
+  public keyword?: string;
+}
+
+export class ChangeItemsInSeriesRequestDto {
+  @ApiProperty({
+    type: String,
+    name: 'item_id',
+    example: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
+  })
+  @IsNotEmpty()
+  @IsUUID('4')
+  @Expose({
+    name: 'item_id',
+  })
+  public itemId: string;
+}
+
+export class ReorderItemsInSeriesRequestDto {
+  @ApiProperty({
+    type: [String],
+    name: 'item_ids',
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8'],
+  })
+  @IsNotEmpty()
+  @IsUUID('4', { each: true })
+  @IsArray()
+  @ArrayNotEmpty()
+  @Expose({
+    name: 'item_ids',
+  })
+  public itemIds: string[];
 }
