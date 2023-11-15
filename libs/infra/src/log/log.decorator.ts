@@ -83,13 +83,11 @@ export function ProcessorAndLog(queueName: string) {
           const jobContext = job.data.context;
 
           const cls = ClsServiceManager.getClsService();
-          logger.debug(`ProcessorAndLog cls before: ${JSON.stringify({ cls, id: cls.getId() })}`);
 
           cls.enter();
           cls.set(CLS_ID, jobContext.requestId);
           cls.set(CLS_REQ, { user: jobContext.actor });
           cls.set(CONTEXT, jobContext);
-          logger.debug(`ProcessorAndLog cls after: ${JSON.stringify({ cls, id: cls.getId() })}`);
 
           const context = getContext();
           const debugContext = getDebugContext(context, methodName);
