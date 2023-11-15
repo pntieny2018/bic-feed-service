@@ -26,14 +26,14 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
       const context = getContext();
       const debugContext = getDebugContext(context);
 
-      logger.debug(`EventHandler start: ${JSON.stringify({ event: event.payload?.event })}`);
+      logger.debug(`EventHandler start: ${JSON.stringify({ debugContext })}`);
 
       function logDone(): void {
-        logger.debug(`EventHandler done: ${JSON.stringify({ event: event.payload?.event })}`);
+        logger.debug(`EventHandler done: ${JSON.stringify({ debugContext })}`);
       }
       function logError(error: any): void {
         logger.error(
-          `EventHandler error: ${JSON.stringify({ event, debugContext, error: error.message })}`
+          `EventHandler error: ${JSON.stringify({ debugContext, error: error.message })}`
         );
         Sentry.captureException(error);
       }
@@ -83,10 +83,13 @@ export function ProcessorAndLog(queueName: string) {
           const jobContext = job.data.context;
 
           const cls = ClsServiceManager.getClsService();
+          logger.debug(`ProcessorAndLog cls before: ${JSON.stringify({ cls, id: cls.getId() })}`);
+
           cls.enter();
           cls.set(CLS_ID, jobContext.requestId);
           cls.set(CLS_REQ, { user: jobContext.actor });
           cls.set(CONTEXT, jobContext);
+          logger.debug(`ProcessorAndLog cls after: ${JSON.stringify({ cls, id: cls.getId() })}`);
 
           const context = getContext();
           const debugContext = getDebugContext(context, methodName);
@@ -171,14 +174,14 @@ export function EventPatternAndLog(topicName: string) {
       cls.enter();
       cls.set(CLS_ID, requestId);
 
-      logger.debug(`EventPattern start: ${JSON.stringify({ message })}`);
+      logger.debug(`EventPattern start: ${JSON.stringify({ topicName, message })}`);
 
       function logDone(): void {
-        logger.debug(`EventPattern done: ${JSON.stringify({ message })}`);
+        logger.debug(`EventPattern done: ${JSON.stringify({ topicName })}`);
       }
 
       function logError(error: any): void {
-        logger.error(`EventPattern error: ${JSON.stringify({ message, error: error.message })}`);
+        logger.error(`EventPattern error: ${JSON.stringify({ topicName, error: error.message })}`);
         Sentry.captureException(error);
       }
 
