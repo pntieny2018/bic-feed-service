@@ -7,6 +7,7 @@ export type CreateReportEventPayload = IReportContentAttribute & {
   actor: UserDto;
   groupIds: string[];
   content: string;
+  actorReported: UserDto[];
 };
 
 export class CreateReportEvent implements IEvent<CreateReportEventPayload> {

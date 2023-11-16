@@ -1,11 +1,13 @@
-import { IEvent } from '../../common/interfaces';
 import { ReportContentHasBeenApproved } from '../../common/constants';
+import { IEvent } from '../../common/interfaces';
 import { IReportContentAttribute } from '../../database/models/report-content.model';
 import { UserDto } from '../../modules/v2-user/application';
 
 export type ApproveReportEventPayload = IReportContentAttribute & {
   actor: UserDto;
   groupIds: string[];
+  content: string;
+  actorReported: UserDto[];
 };
 
 export class ApproveReportEvent implements IEvent<ApproveReportEventPayload> {
