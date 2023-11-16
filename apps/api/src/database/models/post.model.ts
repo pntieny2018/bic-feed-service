@@ -30,7 +30,6 @@ import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IMedia, MediaModel } from './media.model';
 import { PostCategoryModel } from './post-category.model';
 import { IPostGroup, PostGroupModel } from './post-group.model';
-import { PostMediaModel } from './post-media.model';
 import { IPostReaction, PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
 import { IPostTag, PostTagModel } from './post-tag.model';
@@ -256,9 +255,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => CommentModel)
   public comments?: IComment[];
-
-  @BelongsToMany(() => MediaModel, () => PostMediaModel)
-  public media?: MediaModel[];
 
   @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
   public categories?: ICategory[];

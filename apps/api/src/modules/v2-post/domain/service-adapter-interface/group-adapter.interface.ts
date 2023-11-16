@@ -8,4 +8,5 @@ export interface IGroupAdapter {
   isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
   getGroupIdsAndChildIdsUserJoined(group: GroupDto, userGroupIds: string[]): string[];
   getGroupAdminIds(groupIds: string[]): Promise<string[]>;
+  getGroupAdminMap(groupIds: string[]): Promise<{ [groupId: string]: string[] }>;
 }

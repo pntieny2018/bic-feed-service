@@ -15,7 +15,7 @@ import {
   LibPostGroupRepository,
   LibPostSeriesRepository,
   LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
+  LibUserReportContentDetailRepository,
   LibUserSeenPostRepository,
   LibContentRepository,
   LibPostTagRepository,
@@ -60,7 +60,7 @@ export class ContentRepository implements IContentRepository {
     private readonly _libPostCategoryRepo: LibPostCategoryRepository,
     private readonly _libUserSeenPostRepo: LibUserSeenPostRepository,
     private readonly _libUserMarkReadPostRepo: LibUserMarkReadPostRepository,
-    private readonly _libUserReportContentRepo: LibUserReportContentRepository,
+    private readonly _libUserReportContentRepo: LibUserReportContentDetailRepository,
     private readonly _libUserSavePostRepo: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper
   ) {}
@@ -240,10 +240,7 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async delete(id: string): Promise<void> {
-    await this._libContentRepo.delete({
-      where: { id },
-      force: true,
-    });
+    await this._libContentRepo.destroyContent(id);
     return;
   }
 
@@ -513,6 +510,15 @@ export class ContentRepository implements IContentRepository {
         ignoreDuplicates: true,
       }
     );
+  }
+
+  public async unSaveContent(userId: string, contentId: string): Promise<void> {
+    await this._libUserSavePostRepo.delete({
+      where: {
+        userId,
+        postId: contentId,
+      },
+    });
   }
 
   public async createPostSeries(seriesId: string, postId: string): Promise<void> {
