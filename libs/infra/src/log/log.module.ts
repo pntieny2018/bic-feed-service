@@ -16,6 +16,7 @@ import { Logger, LoggerModule } from 'nestjs-pino';
           forRoutes: ['*'],
           pinoHttp: {
             level: 'debug',
+            autoLogging: false,
             serializers: {
               req: (req: Request): any => {
                 return {

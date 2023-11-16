@@ -23,7 +23,7 @@ export class NotiSeriesDeletedEventHandler implements IEventHandler<SeriesDelete
   ) {}
 
   public async handle(event: SeriesDeletedEvent): Promise<void> {
-    const { seriesEntity, actor } = event;
+    const { seriesEntity, authUser } = event.payload;
 
     if (seriesEntity.isHidden() || !seriesEntity.get('itemIds')?.length) {
       return;
@@ -40,17 +40,17 @@ export class NotiSeriesDeletedEventHandler implements IEventHandler<SeriesDelete
       },
     })) as (PostEntity | ArticleEntity)[];
 
-    if (items.every((item) => item.isOwner(actor.id))) {
+    if (items.every((item) => item.isOwner(authUser.id))) {
       return;
     }
 
     const seriesDto = await this._contentBinding.seriesBinding(seriesEntity, {
-      authUser: actor,
-      actor,
+      authUser,
+      actor: authUser,
     });
 
     await this._notiAdapter.sendSeriesDeletedNotification({
-      actor,
+      actor: authUser,
       series: seriesDto,
     });
   }

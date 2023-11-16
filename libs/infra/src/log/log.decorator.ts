@@ -23,17 +23,18 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
     const originalHandler = target.prototype.handle;
 
     function logAndExecute(event: IEventPayload): void {
+      const eventName = event.getEventName();
       const context = getContext();
       const debugContext = getDebugContext(context);
 
-      logger.debug(`EventHandler start: ${JSON.stringify({ debugContext })}`);
+      logger.debug(`EventHandler start: ${JSON.stringify({ eventName, debugContext })}`);
 
       function logDone(): void {
-        logger.debug(`EventHandler done: ${JSON.stringify({ debugContext })}`);
+        logger.debug(`EventHandler done: ${JSON.stringify({ eventName, debugContext })}`);
       }
       function logError(error: any): void {
         logger.error(
-          `EventHandler error: ${JSON.stringify({ debugContext, error: error.message })}`
+          `EventHandler error: ${JSON.stringify({ eventName, debugContext, error: error.message })}`
         );
         Sentry.captureException(error);
       }

@@ -9,7 +9,7 @@ import {
 import { CommentEntity } from '../model/comment';
 
 interface CommentEventPayload {
-  actor: UserDto;
+  authUser: UserDto;
   comment: CommentEntity;
   oldComment?: CommentEntity;
 }
@@ -22,6 +22,10 @@ export class CommentCreatedEvent implements IEventPayload {
   public constructor(data: CommentEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return CommentCreatedEvent.event;
+  }
 }
 
 export class CommentDeletedEvent implements IEventPayload {
@@ -32,6 +36,10 @@ export class CommentDeletedEvent implements IEventPayload {
   public constructor(data: CommentEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return CommentDeletedEvent.event;
+  }
 }
 
 export class CommentUpdatedEvent implements IEventPayload {
@@ -41,5 +49,9 @@ export class CommentUpdatedEvent implements IEventPayload {
 
   public constructor(data: CommentEventPayload) {
     this.payload = data;
+  }
+
+  public getEventName(): string {
+    return CommentUpdatedEvent.event;
   }
 }

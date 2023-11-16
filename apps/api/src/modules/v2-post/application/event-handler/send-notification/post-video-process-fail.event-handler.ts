@@ -19,20 +19,20 @@ export class NotiPostVideoFailedEventHandler implements IEventHandler<PostVideoF
   ) {}
 
   public async handle(event: PostVideoFailedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       return;
     }
 
     const postDto = await this._contentBinding.postBinding(postEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     await this._notiAdapter.sendPostNotification({
-      event: PostVideoFailedEvent.event,
-      actor,
+      event: event.getEventName(),
+      actor: authUser,
       post: postDto,
     });
   }

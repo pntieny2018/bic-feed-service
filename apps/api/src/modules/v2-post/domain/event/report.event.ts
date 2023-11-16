@@ -1,15 +1,16 @@
+import { IEventPayload } from '@libs/infra/event';
 import { UserDto } from '@libs/service/user';
 
-import { ReportCreated } from '../../../../common/constants';
+import { ReportHasBeenCreated } from '../../../../common/constants';
 import { ReportEntity } from '../model/report';
 
 interface ReportEventPayload {
   report: ReportEntity;
-  actor: UserDto;
+  authUser: UserDto;
 }
 
-export class ReportCreatedEvent {
-  public static event = ReportCreated;
+export class ReportCreatedEvent implements IEventPayload {
+  public static event = ReportHasBeenCreated;
 
   public payload: ReportEventPayload;
 

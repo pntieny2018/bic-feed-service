@@ -6,7 +6,7 @@ import { uniq } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import {
-  SeriesCreatedEvent,
+  SeriesPublishedEvent,
   SeriesUpdatedEvent,
   SeriesDeletedEvent,
   SeriesItemsReorderedEvent,
@@ -128,7 +128,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new DatabaseException();
     }
 
-    this.event.publish(new SeriesCreatedEvent(seriesEntity, actor));
+    this.event.publish(new SeriesPublishedEvent({ seriesEntity, authUser: actor }));
 
     return seriesEntity;
   }
@@ -216,7 +216,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setMarkReadImportant();
     }
 
-    this.event.publish(new SeriesUpdatedEvent(seriesEntity, actor));
+    this.event.publish(new SeriesUpdatedEvent({ seriesEntity, authUser: actor }));
 
     return seriesEntity;
   }
@@ -253,7 +253,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.delete(seriesEntity.get('id'));
 
-    this.event.publish(new SeriesDeletedEvent(seriesEntity, actor));
+    this.event.publish(new SeriesDeletedEvent({ seriesEntity, authUser: actor }));
   }
 
   public async findItemsInSeries(
