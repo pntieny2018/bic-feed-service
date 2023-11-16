@@ -6,7 +6,8 @@ import {
   LibUserReportContentRepository,
 } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
-import { WhereOptions } from 'sequelize';
+import { InjectConnection } from '@nestjs/sequelize';
+import { Sequelize, WhereOptions } from 'sequelize';
 
 import { ReportEntity } from '../../domain/model/report';
 import {
@@ -21,7 +22,10 @@ export class ReportRepository implements IReportRepository {
   public constructor(
     private readonly _libReportRepo: LibUserReportContentRepository,
     private readonly _libReportDetailRepo: LibUserReportContentDetailRepository,
-    private readonly _reportMapper: ReportMapper
+    private readonly _reportMapper: ReportMapper,
+
+    @InjectConnection()
+    private readonly _sequelizeConnection: Sequelize
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
@@ -49,7 +53,7 @@ export class ReportRepository implements IReportRepository {
     if (details) {
       include.push({
         model: this._libReportDetailRepo.getModel(),
-        required: true,
+        required: false,
         as: 'details',
       });
     }
@@ -102,24 +106,55 @@ export class ReportRepository implements IReportRepository {
   }
 
   public async create(reportEntity: ReportEntity): Promise<void> {
-    const report = this._reportMapper.toPersistence(reportEntity);
-    const { details, ...reportData } = report;
+    const transaction = await this._sequelizeConnection.transaction();
 
-    await this._libReportRepo.create(reportData);
+    try {
+      const report = this._reportMapper.toPersistence(reportEntity);
+      const { details, ...reportData } = report;
 
-    if (details?.length) {
-      await this._libReportDetailRepo.bulkCreate(details, { ignoreDuplicates: true });
+      await this._libReportRepo.create(reportData, { transaction });
+
+      if (details?.length) {
+        await this._libReportDetailRepo.bulkCreate(details, {
+          ignoreDuplicates: true,
+          transaction,
+        });
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
   }
 
   public async update(reportEntity: ReportEntity): Promise<void> {
-    const report = this._reportMapper.toPersistence(reportEntity);
-    const { id, status, details } = report;
+    const transaction = await this._sequelizeConnection.transaction();
 
-    await this._libReportRepo.update({ status }, { where: { id } });
+    try {
+      const report = this._reportMapper.toPersistence(reportEntity);
+      const { id, status } = report;
 
-    if (details?.length) {
-      await this._libReportDetailRepo.bulkCreate(details, { ignoreDuplicates: true });
+      await this._libReportRepo.update(
+        { status },
+        {
+          where: { id },
+          transaction,
+        }
+      );
+
+      const { attachDetails } = reportEntity.getState();
+      if (attachDetails?.length) {
+        await this._libReportDetailRepo.bulkCreate(attachDetails, {
+          ignoreDuplicates: true,
+          transaction,
+        });
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
   }
 }

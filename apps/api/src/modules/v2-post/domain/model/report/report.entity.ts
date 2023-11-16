@@ -64,7 +64,7 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     const now = new Date();
 
     return new ReportEntity({
-      id: v4(),
+      id: reportId,
       targetId,
       targetType,
       targetActorId,
