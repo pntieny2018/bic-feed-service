@@ -22,9 +22,9 @@ export interface IReportContentDetailAttribute {
   reportId?: string;
   targetId: string;
   targetType: string;
-  reasonType?: string;
+  reasonType: string;
   reason?: string;
-  createdBy?: string;
+  createdBy: string;
   status?: string;
   createdAt?: Date;
   updatedAt?: Date;
