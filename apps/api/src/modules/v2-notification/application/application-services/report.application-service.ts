@@ -22,9 +22,9 @@ export class ReportNotificationApplicationService implements IReportNotification
   public async sendReportCreatedNotification(
     payload: ReportCreatedNotificationPayload
   ): Promise<void> {
-    const { actor, report, adminInfos, content } = payload;
+    const { actor, report, adminInfos, content, actorsReported } = payload;
 
-    const commentObject = this._createReportActivityObject(report, actor);
+    const commentObject = this._createReportActivityObject(report, actor, actorsReported);
     const activity = this._createReportActivity(commentObject);
 
     const kafkaPayload: NotificationPayloadDto<ReportActivityObjectDto> = {
@@ -42,11 +42,15 @@ export class ReportNotificationApplicationService implements IReportNotification
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REPORT, kafkaPayload);
   }
 
-  private _createReportActivityObject(report: ReportDto, actor: UserDto): ReportActivityObjectDto {
+  private _createReportActivityObject(
+    report: ReportDto,
+    actor: UserDto,
+    actorsReported: UserDto[]
+  ): ReportActivityObjectDto {
     return new ReportActivityObjectDto({
       id: report.id,
       actor,
-      report: { ...report, details: report.details || [] },
+      report: { ...report, details: report.details || [], actorsReported },
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
     });

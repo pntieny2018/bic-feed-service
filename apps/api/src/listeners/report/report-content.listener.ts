@@ -67,7 +67,7 @@ export class ReportContentListener {
         delete rc.createdBy;
         return rc;
       }),
-      actorsReported: payload.actorReported,
+      actorsReported: payload.actorsReported,
       verb: VerbActivity.REPORT,
       target: TypeActivity.REPORT_CONTENT,
       createdAt: payload.details[0].createdAt,
@@ -121,7 +121,7 @@ export class ReportContentListener {
           delete rc.createdBy;
           return rc;
         }),
-        actorsReported: payload.actorReported,
+        actorsReported: payload.actorsReported,
         verb: VerbActivity.APPROVE_REPORT_CONTENT,
         target: TypeActivity.REPORT_CONTENT,
         createdAt: payload.details[0].createdAt,

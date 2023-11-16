@@ -7,7 +7,7 @@ export type ApproveReportEventPayload = IReportContentAttribute & {
   actor: UserDto;
   groupIds: string[];
   content: string;
-  actorReported: UserDto[];
+  actorsReported: UserDto[];
 };
 
 export class ApproveReportEvent implements IEvent<ApproveReportEventPayload> {

@@ -17,9 +17,12 @@ import {
   GROUP_ADAPTER,
   IGroupAdapter,
   INotificationAdapter,
+  IUserAdapter,
   NOTIFICATION_ADAPTER,
+  USER_ADAPTER,
 } from '../../../domain/service-adapter-interface';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../../binding';
+import { ReportDetailDto } from '../../dto';
 
 @EventsHandlerAndLog(ReportCreatedEvent)
 export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreatedEvent> {
@@ -32,6 +35,8 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
     private readonly _commentRepo: ICommentRepository,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
     @Inject(NOTIFICATION_ADAPTER)
     private readonly _notiAdapter: INotificationAdapter
   ) {}
@@ -45,26 +50,38 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
     const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
 
     let content = '';
+    let targetContent: PostEntity | ArticleEntity;
     switch (reportDto.targetType) {
       case CONTENT_TARGET.COMMENT:
         const comment = await this._commentRepo.findOne({
           id: reportDto.targetId,
         });
+        targetContent = (await this._contentRepo.findOne({
+          where: {
+            id: comment.get('postId'),
+          },
+          include: {
+            mustIncludeGroup: true,
+          },
+        })) as PostEntity | ArticleEntity;
         content = comment.get('content');
         break;
 
       case CONTENT_TARGET.ARTICLE:
       case CONTENT_TARGET.POST:
-        const post = await this._contentRepo.findOne({
+        targetContent = (await this._contentRepo.findOne({
           where: {
             id: reportDto.targetId,
           },
-        });
+          include: {
+            mustIncludeGroup: true,
+          },
+        })) as PostEntity | ArticleEntity;
 
         content =
-          post.getType() === CONTENT_TYPE.POST
-            ? (post as PostEntity).get('content')
-            : (post as ArticleEntity).get('title');
+          targetContent.getType() === CONTENT_TYPE.POST
+            ? (targetContent as PostEntity).get('content')
+            : (targetContent as ArticleEntity).get('title');
 
         StringHelper.removeMarkdownCharacter(content).slice(0, 200);
         break;
@@ -73,11 +90,25 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
         break;
     }
 
+    const postGroupIds = targetContent.getGroupIds();
+
+    reportDto.details = postGroupIds.map((groupId) => {
+      return new ReportDetailDto({
+        groupId,
+        targetId: reportDto.targetId,
+        targetType: reportDto.targetType,
+      });
+    });
+
+    const actorsReportedIds = uniq(reportDto.details.map((detail) => detail.createdBy));
+    const actorsReported = await this._userAdapter.getUsersByIds(actorsReportedIds);
+
     await this._notiAdapter.sendReportCreatedNotification({
       report: reportDto,
       actor,
       adminInfos: groupAdminMap,
       content,
+      actorsReported,
     });
   }
 }

@@ -641,7 +641,7 @@ export class ReportContentService {
         },
       });
       const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
-      const actorReported = await this._userAppService.findAllByIds(actorReportedIds);
+      const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
 
       this._eventEmitter.emit(
         new CreateReportEvent({
@@ -649,7 +649,7 @@ export class ReportContentService {
           groupIds: groupIds,
           ...existedReport,
           content,
-          actorReported,
+          actorsReported,
         })
       );
     } catch (ex) {
@@ -705,7 +705,7 @@ export class ReportContentService {
       });
 
       const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
-      const actorReported = await this._userAppService.findAllByIds(actorReportedIds);
+      const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
 
       const reportJson = report.toJSON();
 
@@ -757,7 +757,7 @@ export class ReportContentService {
           groupIds: groupIds,
           ...reportJson,
           content,
-          actorReported,
+          actorsReported,
         })
       );
     } catch (ex) {
@@ -837,7 +837,7 @@ export class ReportContentService {
         const actorReportedIds = uniq(
           detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy)
         );
-        const actorReported = await this._userAppService.findAllByIds(actorReportedIds);
+        const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
 
         let content = '';
         let post: IPost = null;
@@ -874,6 +874,8 @@ export class ReportContentService {
             reportTo: reportDetails[0].reportTo,
             targetId: reportJson.targetId,
             targetType: reportJson.targetType,
+            createdBy: reportDetails[0].createdBy,
+            reasonType: reportDetails[0].reasonType,
           };
         });
 
@@ -882,7 +884,7 @@ export class ReportContentService {
             actor: admin,
             ...reportJson,
             groupIds: groupIds,
-            actorReported,
+            actorsReported,
             content,
           })
         );
