@@ -18,6 +18,7 @@ import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
 import { UserModuleV2 } from '../v2-user/user.module';
+import { WebSocketModule } from '../ws/ws.module';
 
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
@@ -52,6 +53,7 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
+  webSocketProvider,
 } from './provider';
 import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
 import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consumer';
@@ -70,6 +72,7 @@ import { workerProvider } from './provider/worker.provider';
     forwardRef(() => SearchModule),
     NotificationModule,
     NotificationModuleV2,
+    WebSocketModule,
     QueueModule,
     EventModule,
     UserModule,
@@ -111,6 +114,7 @@ import { workerProvider } from './provider/worker.provider';
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,
+    ...webSocketProvider,
     QuizProcessor,
     ...workerProvider,
   ],

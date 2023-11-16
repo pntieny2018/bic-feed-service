@@ -15,6 +15,9 @@ export const KAFKA_TOPIC = {
       DELETE_FILES: `${process.env.KAFKA_ENV}.bein_upload.job.delete_files`,
     },
   },
+  BEIN_NOTIFICATION: {
+    WS_EVENT: `${process.env.KAFKA_ENV}.ws-event`,
+  },
   STREAM: {
     VIDEO_POST_PUBLIC: `${process.env.KAFKA_ENV}.bein_stream.video_post_has_been_created`,
     POST: `${process.env.KAFKA_ENV}.bein_stream.post`,
