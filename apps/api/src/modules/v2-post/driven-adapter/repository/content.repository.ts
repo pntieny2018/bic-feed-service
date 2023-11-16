@@ -1,7 +1,15 @@
-import { CONTENT_STATUS, ORDER } from '@beincom/constants';
+import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
-import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
-import { PostModel, ReportContentDetailAttributes } from '@libs/database/postgres/model';
+import {
+  CursorPaginationResult,
+  getDatabaseConfig,
+  PaginationProps,
+} from '@libs/database/postgres/common';
+import {
+  PostGroupModel,
+  PostModel,
+  ReportContentDetailAttributes,
+} from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
@@ -33,7 +41,11 @@ import {
   ArticleAttributes,
   ContentAttributes,
 } from '../../domain/model/content';
-import { GetReportContentIdsProps, IContentRepository } from '../../domain/repositoty-interface';
+import {
+  GetCursorPaginationPostIdsInGroup,
+  GetReportContentIdsProps,
+  IContentRepository,
+} from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
 @Injectable()
@@ -103,6 +115,17 @@ export class ContentRepository implements IContentRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async updateContentPrivacy(contentIds: string[], privacy: PRIVACY): Promise<void> {
+    await this._libContentRepo.update(
+      { privacy },
+      {
+        where: {
+          id: contentIds,
+        },
+      }
+    );
   }
 
   private async _setGroups(postEntity: ContentEntity, transaction: Transaction): Promise<void> {
@@ -277,6 +300,14 @@ export class ContentRepository implements IContentRepository {
     return this._contentMapper.toDomain(content);
   }
 
+  public async findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
+    return contents.map((content) => this._contentMapper.toDomain(content));
+  }
+
   public async getContentById(
     contentId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
@@ -288,12 +319,24 @@ export class ContentRepository implements IContentRepository {
     return content;
   }
 
-  public async findAll(
-    findAllPostOptions: FindContentProps,
-    offsetPaginate?: PaginationProps
-  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
-    return contents.map((content) => this._contentMapper.toDomain(content));
+  public async getPagination(
+    getPaginationContentsProps: GetPaginationContentsProps
+  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
+    const { rows, meta } = await this._libContentRepo.getPagination(getPaginationContentsProps);
+
+    return {
+      rows: rows.map((row) => this._contentMapper.toDomain(row)),
+      meta,
+    };
+  }
+
+  public async countDraftContentByUserId(userId: string): Promise<number> {
+    return this._libContentRepo.count({
+      where: {
+        createdBy: userId,
+        status: CONTENT_STATUS.DRAFT,
+      },
+    });
   }
 
   public async markSeen(postId: string, userId: string): Promise<void> {
@@ -330,17 +373,6 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  public async getPagination(
-    getPaginationContentsProps: GetPaginationContentsProps
-  ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
-    const { rows, meta } = await this._libContentRepo.getPagination(getPaginationContentsProps);
-
-    return {
-      rows: rows.map((row) => this._contentMapper.toDomain(row)),
-      meta,
-    };
-  }
-
   public async getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]> {
     if (!props.reportUser) {
       return [];
@@ -362,13 +394,24 @@ export class ContentRepository implements IContentRepository {
     return rows.map((row) => row.targetId);
   }
 
-  public async countDraftContentByUserId(userId: string): Promise<number> {
-    return this._libContentRepo.count({
-      where: {
-        createdBy: userId,
-        status: CONTENT_STATUS.DRAFT,
-      },
+  public async findUserIdsReportedTargetId(
+    targetId: string,
+    contentTarget?: CONTENT_TARGET
+  ): Promise<string[]> {
+    const condition: WhereOptions<ReportContentDetailAttributes> = {
+      [Op.and]: [
+        {
+          targetId,
+          ...(contentTarget && { targetType: contentTarget }),
+        },
+      ],
+    };
+
+    const reports = await this._libUserReportContentRepo.findMany({
+      where: condition,
     });
+
+    return (reports || []).map((report) => report.createdBy);
   }
 
   public async findPinnedContentIdsByGroupId(groupId: string): Promise<string[]> {
@@ -472,26 +515,6 @@ export class ContentRepository implements IContentRepository {
     );
   }
 
-  public async findUserIdsReportedTargetId(
-    targetId: string,
-    contentTarget?: CONTENT_TARGET
-  ): Promise<string[]> {
-    const condition: WhereOptions<ReportContentDetailAttributes> = {
-      [Op.and]: [
-        {
-          targetId,
-          ...(contentTarget && { targetType: contentTarget }),
-        },
-      ],
-    };
-
-    const reports = await this._libUserReportContentRepo.findMany({
-      where: condition,
-    });
-
-    return (reports || []).map((report) => report.createdBy);
-  }
-
   public async createPostSeries(seriesId: string, postId: string): Promise<void> {
     const maxIndex =
       (await this._libPostSeriesRepo.max('zindex', {
@@ -546,5 +569,55 @@ export class ContentRepository implements IContentRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+  public async getCursorPaginationPostIdsPublishedInGroup(
+    props: GetCursorPaginationPostIdsInGroup
+  ): Promise<{
+    ids: string[];
+    cursor: string;
+  }> {
+    const { groupIds, limit, after } = props;
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+
+    const rows = await this._libContentRepo.cursorPaginate(
+      {
+        select: ['id', 'createdAt'],
+        where: {
+          status: CONTENT_STATUS.PUBLISHED,
+          isHidden: false,
+        },
+        whereRaw: `EXISTS (          
+                            SELECT 1
+                            FROM  ${schema}.${postGroupTable} g            
+                            WHERE g.post_id = "PostModel".id  AND g.group_id IN (${groupIds
+                              .map((item) => this._sequelizeConnection.escape(item))
+                              .join(',')})
+                            AND is_archived = false
+                  )`,
+      },
+      {
+        after,
+        limit,
+        column: 'createdAt',
+        order: ORDER.DESC,
+      }
+    );
+    return {
+      ids: rows.rows.map((row) => row.id),
+      cursor: rows.meta.endCursor,
+    };
+  }
+
+  public async hasBelongActiveGroupIds(contentId: string, groupIds: string[]): Promise<boolean> {
+    const data = await this._libPostGroupRepo.first({
+      where: {
+        groupId: groupIds,
+        postId: contentId,
+        isArchived: false,
+      },
+    });
+
+    return !!data;
   }
 }

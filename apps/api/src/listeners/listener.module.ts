@@ -17,7 +17,6 @@ import { NotificationModule } from '../notification';
 
 import { ArticleListener } from './article';
 import { CommentListener } from './comment';
-import { PostListener } from './post';
 import { ReportContentListener } from './report';
 import {
   SeriesAddedItemsListener,
@@ -44,7 +43,6 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
     TagModule,
   ],
   providers: [
-    PostListener,
     CommentListener,
     ArticleListener,
     SeriesAddedItemsListener,

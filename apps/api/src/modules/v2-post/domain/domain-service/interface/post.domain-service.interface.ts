@@ -1,7 +1,8 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { LinkPreviewDto, MediaDto } from '../../../application/dto';
+import { LinkPreviewDto, MediaRequestDto } from '../../../application/dto';
 import { PostEntity } from '../../model/content';
 
 export type PostPayload = {
@@ -10,9 +11,10 @@ export type PostPayload = {
   seriesIds?: string[];
   tagIds?: string[];
   groupIds?: string[];
-  media?: MediaDto;
+  media?: MediaRequestDto;
   mentionUserIds?: string[];
   linkPreview?: LinkPreviewDto;
+  status?: CONTENT_STATUS;
 };
 
 export type PostCreateProps = {
@@ -22,6 +24,12 @@ export type PostCreateProps = {
 
 export type UpdatePostProps = {
   payload: PostPayload;
+  actor: UserDto;
+};
+
+export type UpdateVideoProcessProps = {
+  id: string;
+  videoId: string;
   actor: UserDto;
 };
 
@@ -41,6 +49,8 @@ export interface IPostDomainService {
   schedule(input: SchedulePostProps): Promise<PostEntity>;
   publish(input: PublishPostProps): Promise<PostEntity>;
   update(props: UpdatePostProps): Promise<PostEntity>;
+  updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void>;
+  updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void>;
   autoSavePost(input: UpdatePostProps): Promise<void>;
   delete(postId: string, authUser: UserDto): Promise<void>;
 }

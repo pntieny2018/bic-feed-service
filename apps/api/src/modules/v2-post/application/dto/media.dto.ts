@@ -12,7 +12,7 @@ export class MediaItemDto {
   public id: string;
 }
 
-export class MediaDto {
+export class MediaRequestDto {
   @ApiProperty({ required: false, type: [MediaItemDto] })
   @IsArray()
   @IsOptional()
@@ -36,6 +36,12 @@ export class MediaDto {
   @Type(() => MediaItemDto)
   @Expose()
   public files?: MediaItemDto[] = [];
+}
+
+export class MediaDto {
+  public images: ImageDto[];
+  public videos: VideoDto[];
+  public files: FileDto[];
 }
 
 export class FileDto {

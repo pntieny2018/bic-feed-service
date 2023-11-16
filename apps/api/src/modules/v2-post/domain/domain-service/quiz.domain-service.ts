@@ -376,12 +376,14 @@ export class QuizDomainService implements IQuizDomainService {
     try {
       quizEntity.setProcessing();
       await this._quizRepo.updateQuiz(quizEntity);
+
       const { questions, usage, model, maxTokens, completion } =
         await this._openAiAdapter.generateQuestions({
           content: rawContent,
           numberOfQuestions: quizEntity.get('numberOfQuestions'),
           numberOfAnswers: quizEntity.get('numberOfAnswers'),
         });
+
       if (questions.length === 0) {
         quizEntity.setFail({
           code: ERRORS.QUIZ_GENERATE_FAIL,
@@ -409,7 +411,6 @@ export class QuizDomainService implements IQuizDomainService {
       });
 
       quizEntity.setProcessed();
-      await this._quizRepo.updateQuiz(quizEntity);
     } catch (e) {
       let message = e.message || '';
       if (e.response?.data?.error?.message) {
@@ -419,9 +420,10 @@ export class QuizDomainService implements IQuizDomainService {
         code: ERRORS.QUIZ_GENERATE_FAIL,
         message,
       });
+    } finally {
+      await this._quizRepo.updateQuiz(quizEntity);
+      this._eventAdapter.publish(new QuizGeneratedEvent({ quizId: quizEntity.get('id') }));
     }
-    await this._quizRepo.updateQuiz(quizEntity);
-    this._eventAdapter.publish(new QuizGeneratedEvent({ quizId: quizEntity.get('id') }));
   }
 
   public async getQuizParticipant(

@@ -5,7 +5,8 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { ImageDto, SeriesDto, GetSeriesResponseDto } from '../../../dto';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../../binding/binding-media';
+import { SeriesDto, GetSeriesResponseDto } from '../../../dto';
 
 import { GetSeriesInContentQuery } from './get-series-in-content.query';
 
@@ -14,26 +15,23 @@ export class GetSeriesInContentHandler
   implements IQueryHandler<GetSeriesInContentQuery, GetSeriesResponseDto>
 {
   public constructor(
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService
+    private readonly _contentDomain: IContentDomainService
   ) {}
 
   public async execute(query: GetSeriesInContentQuery): Promise<GetSeriesResponseDto> {
     const { contentId, authUser } = query.payload;
 
-    const seriesEntites = await this._contentDomainService.getSeriesInContent(
-      contentId,
-      authUser.id
-    );
+    const seriesEntities = await this._contentDomain.getSeriesInContent(contentId, authUser.id);
 
-    const series = seriesEntites.map((seriesEntity) => {
+    const series = seriesEntities.map((seriesEntity) => {
       return new SeriesDto({
         id: seriesEntity.get('id'),
         title: seriesEntity.get('title'),
         summary: seriesEntity.get('summary'),
-        coverMedia: seriesEntity.get('cover')
-          ? new ImageDto(seriesEntity.get('cover')?.toObject())
-          : null,
+        coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       });
     });
 

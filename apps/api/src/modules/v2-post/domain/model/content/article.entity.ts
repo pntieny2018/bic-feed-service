@@ -102,6 +102,10 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     return this._props.title;
   }
 
+  public getCategories(): CategoryEntity[] {
+    return this._props.categories || [];
+  }
+
   public setCategories(categoryEntities: CategoryEntity[]): void {
     const entityIds = (this._props.categories || []).map((category) => category.get('id'));
     const newEntiyIds = (categoryEntities || []).map((category) => category.get('id'));

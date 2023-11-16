@@ -17,6 +17,7 @@ export type FindContentConditionOptions = {
   status?: CONTENT_STATUS;
   statuses?: CONTENT_STATUS[];
   inNewsfeedUserId?: string;
+  videoIdProcessing?: string;
 };
 
 export type FindContentIncludeOptions = {

@@ -15,7 +15,9 @@ import {
   SeenContentHandler,
   SaveContentHandler,
   UpdateContentSettingHandler,
+  ProcessGroupPrivacyUpdatedHandler,
 } from '../application/command/content';
+import { ProcessGroupStateUpdatedHandler } from '../application/command/content/process-group-state-updated';
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -23,6 +25,7 @@ import {
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  PostVideoProcessedHandler,
 } from '../application/command/post';
 import {
   AddSeriesItemsHandler,
@@ -46,6 +49,16 @@ import {
   PostScheduledEventHandler,
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
+import {
+  FilePostDeletedEventHandler,
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+} from '../application/event-handler/set-file-state';
+import {
+  VideoPostDeletedEventHandler,
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
+} from '../application/event-handler/set-video-state';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -75,6 +88,8 @@ import {
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
+import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
+import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
 import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
@@ -83,7 +98,10 @@ import {
   POST_FACTORY_TOKEN,
   SERIES_FACTORY_TOKEN,
 } from '../domain/factory/interface';
-import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  POST_GROUP_REPOSITORY_TOKEN,
+} from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
 import {
@@ -99,6 +117,7 @@ import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
+import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
@@ -117,6 +136,12 @@ export const postProvider = [
   PostScheduledEventHandler,
   PostDeletedEventHandler,
   PostUpdatedEventHandler,
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+  FilePostDeletedEventHandler,
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
+  VideoPostDeletedEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -129,17 +154,19 @@ export const postProvider = [
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
 
   MarkReadImportantContentHandler,
-  UpdateContentSettingHandler,
+  PinContentHandler,
+  ProcessGroupPrivacyUpdatedHandler,
+  ProcessGroupStateUpdatedHandler,
+  ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
   SeenContentHandler,
-  PinContentHandler,
   SaveContentHandler,
+  UpdateContentSettingHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -147,6 +174,7 @@ export const postProvider = [
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
+  PostVideoProcessedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
@@ -193,6 +221,10 @@ export const postProvider = [
     provide: SERIES_DOMAIN_SERVICE_TOKEN,
     useClass: SeriesDomainService,
   },
+  {
+    provide: NEWSFEED_DOMAIN_SERVICE_TOKEN,
+    useClass: NewsfeedDomainService,
+  },
 
   /** Domain Factory */
   {
@@ -235,5 +267,9 @@ export const postProvider = [
   {
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
+  },
+  {
+    provide: POST_GROUP_REPOSITORY_TOKEN,
+    useClass: PostGroupRepository,
   },
 ];

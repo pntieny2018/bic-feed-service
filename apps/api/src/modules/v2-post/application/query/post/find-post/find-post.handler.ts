@@ -9,7 +9,6 @@ import {
   SERIES_DOMAIN_SERVICE_TOKEN,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { SeriesEntity } from '../../../../domain/model/content';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -50,20 +49,9 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
 
     const mentionUsers = await this._userAdapter.getUsersByIds(postEntity.get('mentionUserIds'));
 
-    let series: SeriesEntity[];
-    if (postEntity.get('seriesIds')?.length) {
-      series = await this._seriesDomainService.findSeriesByIds(postEntity.get('seriesIds'));
-    }
-
-    const reactionsCount = await this._reactionDomainService.getAndCountReactionByContentIds([
-      postEntity.getId(),
-    ]);
-
     return this._contentBinding.postBinding(postEntity, {
       groups,
       mentionUsers,
-      series: series as SeriesEntity[],
-      reactionsCount: reactionsCount.get(postEntity.getId()),
       authUser,
     });
   }

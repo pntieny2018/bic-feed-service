@@ -298,7 +298,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       shouldIncludeSeries: true,
     })) as ArticleEntity | PostEntity;
 
-    if (!content) {
+    if (!content || content.isHidden()) {
       throw new ContentNotFoundException();
     }
 
@@ -351,7 +351,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       mustIncludeGroup: true,
     })) as ArticleEntity | PostEntity;
 
-    if (!content) {
+    if (!content || content.isHidden()) {
       throw new ContentNotFoundException();
     }
 

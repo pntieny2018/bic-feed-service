@@ -22,6 +22,8 @@ import { UserModuleV2 } from '../v2-user/user.module';
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
+import { GroupConsumer } from './driving-apdater/consumer/group.consumer';
+import { MediaConsumer } from './driving-apdater/consumer/media.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -50,6 +52,9 @@ import {
   sharedProvider,
   tagProvider,
 } from './provider';
+import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
+import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consumer';
+import { workerProvider } from './provider/worker.provider';
 
 @Module({
   imports: [
@@ -84,6 +89,10 @@ import {
     CommentController,
     SeriesController,
     QuizController,
+    MediaConsumer,
+    PublishOrRemovePostToNewsfeedConsumer,
+    GroupConsumer,
+    FollowConsumer,
   ],
   providers: [
     ...adapterProvider,
@@ -101,6 +110,7 @@ import {
     ...sharedProvider,
     ...tagProvider,
     QuizProcessor,
+    ...workerProvider,
   ],
   exports: [
     ...quizProvider,

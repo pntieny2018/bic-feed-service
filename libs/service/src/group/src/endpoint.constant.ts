@@ -6,5 +6,6 @@ export const GROUP_ENDPOINT = {
     USER_PERMISSIONS: '/internal/users/:userId/permissions',
     CHECK_CUD_TAG: '/internal/users/:userId/can-cud-tags/:rootGroupId',
     USER_ROLE_IN_GROUPS: '/internal/groups/users',
+    USERS_IN_GROUPS: '/internal/groups/ids/users',
   },
 };

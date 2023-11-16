@@ -1,9 +1,9 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
-import { REACTION_TARGET } from '../../data-type';
-import { ContentHasSeenEvent, ReactionNotifyEvent } from '../event';
+import { ContentHasSeenEvent, ReactionCreatedEvent, ReactionDeletedEvent } from '../event';
 import {
   ReactionNotFoundException,
   ReactionNotHaveAuthorityException,
@@ -40,12 +40,14 @@ export class ReactionDomainService implements IReactionDomainService {
   ) {}
 
   public async getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>> {
-    if (props.target === REACTION_TARGET.COMMENT) {
-      return this._commentReactionRepository.getPagination(props);
-    }
-
-    if (props.target === REACTION_TARGET.POST || props.target === REACTION_TARGET.ARTICLE) {
-      return this._postReactionRepository.getPagination(props);
+    switch (props.target) {
+      case CONTENT_TARGET.COMMENT:
+        return this._commentReactionRepository.getPagination(props);
+      case CONTENT_TARGET.POST:
+      case CONTENT_TARGET.ARTICLE:
+        return this._postReactionRepository.getPagination(props);
+      default:
+        throw new ReactionTargetNotExistingException();
     }
   }
 
@@ -56,17 +58,17 @@ export class ReactionDomainService implements IReactionDomainService {
   }
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
-    const { reactionName, createdBy, target, targetId } = input;
+    const { reactionName, authUser, target, targetId } = input;
     const reactionEntity = this._reactionFactory.create({
       target,
       reactionName,
-      createdBy,
+      createdBy: authUser.id,
       targetId: targetId,
     });
 
     switch (target) {
-      case REACTION_TARGET.POST:
-      case REACTION_TARGET.ARTICLE:
+      case CONTENT_TARGET.POST:
+      case CONTENT_TARGET.ARTICLE:
         await this._postReactionRepository.create(reactionEntity);
         this.eventBus.publish(
           new ContentHasSeenEvent({
@@ -75,14 +77,14 @@ export class ReactionDomainService implements IReactionDomainService {
           })
         );
         break;
-      case REACTION_TARGET.COMMENT:
+      case CONTENT_TARGET.COMMENT:
         await this._commentReactionRepository.create(reactionEntity);
         break;
       default:
         throw new ReactionTargetNotExistingException();
     }
 
-    this.eventBus.publish(new ReactionNotifyEvent(reactionEntity, 'create'));
+    this.eventBus.publish(new ReactionCreatedEvent(reactionEntity));
     return reactionEntity;
   }
 
@@ -95,11 +97,11 @@ export class ReactionDomainService implements IReactionDomainService {
     };
 
     switch (target) {
-      case REACTION_TARGET.COMMENT:
+      case CONTENT_TARGET.COMMENT:
         conditions['commentId'] = targetId;
         break;
-      case REACTION_TARGET.POST:
-      case REACTION_TARGET.ARTICLE:
+      case CONTENT_TARGET.POST:
+      case CONTENT_TARGET.ARTICLE:
         conditions['postId'] = targetId;
         break;
       default:
@@ -107,7 +109,7 @@ export class ReactionDomainService implements IReactionDomainService {
     }
 
     const reaction =
-      target === REACTION_TARGET.COMMENT
+      target === CONTENT_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne(conditions)
         : await this._postReactionRepository.findOne(conditions);
 
@@ -119,12 +121,12 @@ export class ReactionDomainService implements IReactionDomainService {
       throw new ReactionNotHaveAuthorityException();
     }
 
-    if (target === REACTION_TARGET.COMMENT) {
+    if (target === CONTENT_TARGET.COMMENT) {
       await this._commentReactionRepository.delete(reaction.get('id'));
     } else {
       await this._postReactionRepository.delete(reaction.get('id'));
     }
 
-    this.eventBus.publish(new ReactionNotifyEvent(reaction, 'delete'));
+    this.eventBus.publish(new ReactionDeletedEvent(reaction));
   }
 }

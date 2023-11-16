@@ -7,7 +7,12 @@ import {
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
   ICommentNotificationApplicationService,
   IContentNotificationApplicationService,
+  IReactionNotificationApplicationService,
   PostNotificationPayload,
+  REACTION_NOTIFICATION_APPLICATION_SERVICE,
+  ReactionCommentNotificationPayload,
+  ReactionContentNotificationPayload,
+  ReactionReplyCommentNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
   SeriesDeletedNotificationPayload,
@@ -22,7 +27,9 @@ export class NotificationAdapter implements INotificationAdapter {
     @Inject(CONTENT_NOTIFICATION_APPLICATION_SERVICE)
     private readonly _contentNotiApp: IContentNotificationApplicationService,
     @Inject(COMMENT_NOTIFICATION_APPLICATION_SERVICE)
-    private readonly _commentNotiApp: ICommentNotificationApplicationService
+    private readonly _commentNotiApp: ICommentNotificationApplicationService,
+    @Inject(REACTION_NOTIFICATION_APPLICATION_SERVICE)
+    private readonly _reactionNotiApp: IReactionNotificationApplicationService
   ) {}
 
   public async sendPostNotification(payload: PostNotificationPayload): Promise<void> {
@@ -67,6 +74,24 @@ export class NotificationAdapter implements INotificationAdapter {
     payload: SeriesChangedItemNotificationPayload
   ): Promise<void> {
     return this._contentNotiApp.sendSeriesChangedItemNotification(payload);
+  }
+
+  public async sendReactionContentNotification(
+    payload: ReactionContentNotificationPayload
+  ): Promise<void> {
+    return this._reactionNotiApp.sendReactionContentNotification(payload);
+  }
+
+  public async sendReactionCommentNotification(
+    payload: ReactionCommentNotificationPayload
+  ): Promise<void> {
+    return this._reactionNotiApp.sendReactionCommentNotification(payload);
+  }
+
+  public async sendReactionReplyCommentNotification(
+    payload: ReactionReplyCommentNotificationPayload
+  ): Promise<void> {
+    return this._reactionNotiApp.sendReactionReplyCommentNotification(payload);
   }
 
   public async sendCommentNotification(payload: CommentNotificationPayload): Promise<void> {

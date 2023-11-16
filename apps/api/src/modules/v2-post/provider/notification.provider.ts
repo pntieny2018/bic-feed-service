@@ -11,7 +11,10 @@ import {
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,
   NotiSeriesSameOwnerChangedEventHandler,
-} from '../application/event-handler/notification';
+  NotiCreatedReactionEventHandler,
+  NotiDeletedReactionEventHandler,
+  NotiPostVideoFailedEventHandler,
+} from '../application/event-handler/send-notification';
 
 export const notificationProvider = [
   /** Application Event Handler */
@@ -22,6 +25,7 @@ export const notificationProvider = [
   NotiPostDeletedEventHandler,
   NotiPostPublishedEventHandler,
   NotiPostUpdatedEventHandler,
+  NotiPostVideoFailedEventHandler,
 
   NotiSeriesDeletedEventHandler,
   NotiSeriesPublishedEventHandler,
@@ -30,4 +34,7 @@ export const notificationProvider = [
   NotiSeriesItemsAddedEventHandler,
   NotiSeriesItemsRemovedEventHandler,
   NotiSeriesSameOwnerChangedEventHandler,
+
+  NotiCreatedReactionEventHandler,
+  NotiDeletedReactionEventHandler,
 ];

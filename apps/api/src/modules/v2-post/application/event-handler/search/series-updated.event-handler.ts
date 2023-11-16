@@ -6,11 +6,13 @@ import { uniq } from 'lodash';
 import { SearchService } from '../../../../search/search.service';
 import { SeriesUpdatedEvent } from '../../../domain/event';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
-import { ImageDto } from '../../dto';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../binding/binding-media';
 
 @EventsHandlerAndLog(SeriesUpdatedEvent)
 export class SearchSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEvent> {
   public constructor(
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     // TODO: Change to Adapter
@@ -38,9 +40,7 @@ export class SearchSeriesUpdatedEventHandler implements IEventHandler<SeriesUpda
         title: seriesEntity.getTitle(),
         type: seriesEntity.getType(),
         items: seriesEntity.get('items'),
-        coverMedia: seriesEntity.get('cover')
-          ? new ImageDto(seriesEntity.get('cover').toObject())
-          : null,
+        coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       },
     ]);
   }
