@@ -1,3 +1,4 @@
+import { Optional } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -8,10 +9,11 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
 import { v4 as uuid_v4 } from 'uuid';
-import { ReportContentModel } from './report-content.model';
+
 import { ReportTo } from '../../modules/report-content/contstants';
+
+import { ReportContentModel } from './report-content.model';
 
 export interface IReportContentDetailAttribute {
   id?: string;
@@ -20,9 +22,9 @@ export interface IReportContentDetailAttribute {
   reportId?: string;
   targetId: string;
   targetType: string;
-  reasonType: string;
+  reasonType?: string;
   reason?: string;
-  createdBy: string;
+  createdBy?: string;
   status?: string;
   createdAt?: Date;
   updatedAt?: Date;
