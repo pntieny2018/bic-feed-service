@@ -41,7 +41,11 @@ export class BaseUserDto {
   public avatar: string;
 
   public constructor(data: Partial<BaseUserDto>) {
-    Object.assign(this, data);
+    this.id = data.id;
+    this.username = data.username;
+    this.fullname = data.fullname;
+    this.email = data.email;
+    this.avatar = data.avatar;
   }
 }
 

@@ -11,10 +11,7 @@ import {
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { ArticleEntity, PostEntity } from '../../../../domain/model/content';
-import {
-  IReportContentValidator,
-  REPORT_CONTENT_VALIDATOR_TOKEN,
-} from '../../../../domain/validator/interface';
+import { IManageValidator, MANAGE_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import {
   COMMENT_BINDING_TOKEN,
   CONTENT_BINDING_TOKEN,
@@ -40,14 +37,14 @@ export class GetReportDetailsHandler
     private readonly _contentDomainService: IContentDomainService,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
-    @Inject(REPORT_CONTENT_VALIDATOR_TOKEN)
-    private readonly _reportContentValidator: IReportContentValidator
+    @Inject(MANAGE_VALIDATOR_TOKEN)
+    private readonly _manageValidator: IManageValidator
   ) {}
 
   public async execute(query: GetReportDetailsQuery): Promise<GetReportContentDetailsDto> {
     const { rootGroupId, reportId, authUser } = query.payload;
 
-    await this._reportContentValidator.canManageReportContent({
+    await this._manageValidator.validateManageReportContent({
       rootGroupId,
       userId: authUser.id,
     });
@@ -55,7 +52,7 @@ export class GetReportDetailsHandler
     const reportEntity = await this._reportDomainService.getReport(reportId);
 
     let contentDto: PostDto | ArticleDto = null;
-    let commentDto: CommentBaseDto | null = null;
+    let commentDto: CommentBaseDto = null;
 
     switch (reportEntity.get('targetType')) {
       case CONTENT_TARGET.COMMENT:

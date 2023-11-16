@@ -26,11 +26,11 @@ export class ReportDto {
   }
 }
 
-export class ReportForManageDto extends ReportDto {
+export class ReportForManagerDto extends ReportDto {
   public content: string;
   public targetActor: BaseUserDto;
 
-  public constructor(data: Partial<ReportForManageDto>) {
+  public constructor(data: Partial<ReportForManagerDto>) {
     super(data);
     Object.assign(this, data);
   }

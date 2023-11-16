@@ -6,12 +6,9 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import {
-  IReportContentValidator,
-  REPORT_CONTENT_VALIDATOR_TOKEN,
-} from '../../../../domain/validator/interface';
+import { IManageValidator, MANAGE_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../../../binding';
-import { ReportForManageDto } from '../../../dto';
+import { ReportForManagerDto } from '../../../dto';
 
 import { GetListReportsQuery } from './get-list-reports.query';
 
@@ -22,14 +19,16 @@ export class GetListReportsHandler implements IQueryHandler<GetListReportsQuery>
     private readonly _reportRepo: IReportRepository,
     @Inject(REPORT_BINDING_TOKEN)
     private readonly _reportBinding: IReportBinding,
-    @Inject(REPORT_CONTENT_VALIDATOR_TOKEN)
-    private readonly _reportContentValidator: IReportContentValidator
+    @Inject(MANAGE_VALIDATOR_TOKEN)
+    private readonly _manageValidator: IManageValidator
   ) {}
 
-  public async execute(query: GetListReportsQuery): Promise<PaginatedResponse<ReportForManageDto>> {
+  public async execute(
+    query: GetListReportsQuery
+  ): Promise<PaginatedResponse<ReportForManagerDto>> {
     const { authUser, groupId, limit, before, after } = query.payload;
 
-    await this._reportContentValidator.canManageReportContent({
+    await this._manageValidator.validateManageReportContent({
       rootGroupId: groupId,
       userId: authUser.id,
     });
@@ -41,7 +40,7 @@ export class GetListReportsHandler implements IQueryHandler<GetListReportsQuery>
       after,
     });
 
-    const reports = await this._reportBinding.bindingReportsForManage(rows);
+    const reports = await this._reportBinding.bindingReportsForManager(rows);
 
     return {
       list: reports,

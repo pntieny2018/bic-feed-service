@@ -6,7 +6,7 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { GetReportContentDetailsDto, ReportForManageDto } from '../../application/dto';
+import { GetReportContentDetailsDto, ReportForManagerDto } from '../../application/dto';
 import { GetListReportsQuery, GetReportDetailsQuery } from '../../application/query/admin-manage';
 
 @ApiTags('v2 admin manage')
@@ -30,7 +30,7 @@ export class ManageController {
     @AuthUser() authUser: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Query() paginateOption: PaginatedArgs
-  ): Promise<PaginatedResponse<ReportForManageDto>> {
+  ): Promise<PaginatedResponse<ReportForManagerDto>> {
     return this._queryBus.execute(
       new GetListReportsQuery({ groupId: rootGroupId, authUser, ...paginateOption })
     );

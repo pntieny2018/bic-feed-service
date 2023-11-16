@@ -41,7 +41,7 @@ import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consume
 import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
 import {
   adapterProvider,
-  adminManageProvider,
+  manageProvider,
   categoryProvider,
   commentProvider,
   feedProvider,
@@ -116,7 +116,7 @@ import { workerProvider } from './provider/worker.provider';
     ...tagProvider,
     QuizProcessor,
     ...workerProvider,
-    ...adminManageProvider,
+    ...manageProvider,
   ],
   exports: [
     ...quizProvider,
