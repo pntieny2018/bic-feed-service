@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
 import { On } from '../../common/decorators';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { CreateReportEvent } from '../../events/report/create-report.event';
@@ -6,14 +7,14 @@ import { CommentService } from '../../modules/comment';
 import { PostService } from '../../modules/post/post.service';
 import { TargetType } from '../../modules/report-content/contstants';
 import { SearchService } from '../../modules/search/search.service';
-import { NotificationService, TypeActivity, VerbActivity } from '../../notification';
-import { ReportActivityService } from '../../notification/activities';
-import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
-import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../modules/v2-group/application';
+import { NotificationService, TypeActivity, VerbActivity } from '../../notification';
+import { ReportActivityService } from '../../notification/activities';
+import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
+import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 
 @Injectable()
 export class ReportContentListener {
@@ -86,6 +87,7 @@ export class ReportContentListener {
         meta: {
           report: {
             adminInfos: filterAdminInfo,
+            content: payload.content,
           },
         },
       },

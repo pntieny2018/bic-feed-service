@@ -22,7 +22,7 @@ export class ReportNotificationApplicationService implements IReportNotification
   public async sendReportCreatedNotification(
     payload: ReportCreatedNotificationPayload
   ): Promise<void> {
-    const { actor, report, adminInfos } = payload;
+    const { actor, report, adminInfos, content } = payload;
 
     const commentObject = this._createReportActivityObject(report, actor);
     const activity = this._createReportActivity(commentObject);
@@ -34,7 +34,7 @@ export class ReportNotificationApplicationService implements IReportNotification
         event: ReportCreated,
         data: activity,
         meta: {
-          report: { adminInfos },
+          report: { adminInfos, content },
         },
       },
     };
