@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
-import { TypeActivity, VerbActivity } from '../../notification.constants';
+
 import { UserDto } from '../../../modules/v2-user/application';
+import { TypeActivity, VerbActivity } from '../../notification.constants';
 
 export class ActivityObject {
   public id: string;
@@ -31,6 +32,7 @@ export class ReportObject {
   public targetType: string;
   public details: Record<string, any>[];
   public status: string;
+  public actorsReported: UserDto[];
 }
 
 export class SettingObject {
