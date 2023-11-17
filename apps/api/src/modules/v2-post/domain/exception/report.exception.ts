@@ -1,6 +1,6 @@
 import { DomainException } from '@beincom/domain';
 
-import { ERRORS } from '../../../../common/constants/errors';
+import { ERRORS } from '../../../../common/constants';
 
 export class ReportOwnContentException extends DomainException {
   public static code = ERRORS.REPORT_OWN_CONTENT;
