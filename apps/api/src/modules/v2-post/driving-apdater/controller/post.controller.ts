@@ -38,6 +38,7 @@ import {
   SchedulePostRequestDto,
   UpdatePostRequestDto,
 } from '../dto/request';
+import { ContentNotFoundException } from '../../domain/exception';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -159,6 +160,7 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto
   ): Promise<PostDto> {
+    throw new ContentNotFoundException();
     const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }

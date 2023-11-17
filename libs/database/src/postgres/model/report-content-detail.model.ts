@@ -1,4 +1,4 @@
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -45,7 +45,7 @@ export class ReportContentDetailModel extends Model<
   public createdBy: string;
 
   @Column
-  public reportTo: ReportTo;
+  public reportTo: string;
 
   @ForeignKey(() => ReportContentModel)
   @Column

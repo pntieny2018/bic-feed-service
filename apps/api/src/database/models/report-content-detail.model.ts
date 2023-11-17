@@ -8,7 +8,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import { v4 as uuid_v4 } from 'uuid';
 import { ReportContentModel } from './report-content.model';
 import { ReportTo } from '../../modules/report-content/contstants';
@@ -53,7 +53,9 @@ export class ReportContentDetailModel
   @Column
   public createdBy: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reportTo: ReportTo;
 
   @ForeignKey(() => ReportContentModel)

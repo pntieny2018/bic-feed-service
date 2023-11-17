@@ -71,7 +71,9 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @Column
   public url: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: MediaType;
 
   @AllowNull(false)
@@ -109,7 +111,9 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @Column
   public extension?: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: MediaStatus;
 
   @Default(0)

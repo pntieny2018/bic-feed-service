@@ -8,7 +8,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import { v4 as uuid_v4 } from 'uuid';
 import { IsUUID } from 'class-validator';
 import { TargetType } from '../../modules/report-content/contstants';
@@ -46,7 +46,9 @@ export class ReportContentModel
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: TargetType;
 
   @Column

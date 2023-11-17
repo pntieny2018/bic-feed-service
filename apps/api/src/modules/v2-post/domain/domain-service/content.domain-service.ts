@@ -431,6 +431,7 @@ export class ContentDomainService implements IContentDomainService {
           mustIncludeSaved: {
             userId: authUserId,
           },
+          mustIncludeGroup: true,
         },
         orderOptions: {
           isSavedDateByDesc: true,

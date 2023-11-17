@@ -1,6 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -34,7 +34,7 @@ export class ReportContentModel extends Model<
   public targetId: string;
 
   @Column
-  public targetType: CONTENT_TARGET;
+  public targetType: string;
 
   @Column
   public authorId: string;

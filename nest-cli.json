@@ -2,6 +2,15 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "apps/api/src",
   "projects": {
+    "api": {
+      "type": "application",
+      "root": "apps/api",
+      "entryFile": "main",
+      "sourceRoot": "apps/api/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api/tsconfig.app.json"
+      }
+    },
     "redis": {
       "type": "library",
       "root": "libs/redis",
@@ -18,24 +27,6 @@
       "sourceRoot": "libs/sentry/src",
       "compilerOptions": {
         "tsConfigPath": "libs/sentry/tsconfig.lib.json"
-      }
-    },
-    "api": {
-      "type": "application",
-      "root": "apps/api",
-      "entryFile": "main",
-      "sourceRoot": "apps/api/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/api/tsconfig.app.json"
-      }
-    },
-    "content-worker": {
-      "type": "application",
-      "root": "apps/content-worker",
-      "entryFile": "main",
-      "sourceRoot": "apps/content-worker/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/content-worker/tsconfig.app.json"
       }
     },
     "kafka": {
@@ -106,11 +97,11 @@
     "assets": [
       {
         "include": "i18n/**/*",
-        "outDir": "dist/apps/api/apps/api/src",
+        "outDir": "dist/apps/api",
         "watchAssets": true
       }
     ],
-    "webpack": false,
+    "webpack": true,
     "tsConfigPath": "apps/api/tsconfig.app.json"
   },
   "monorepo": true,

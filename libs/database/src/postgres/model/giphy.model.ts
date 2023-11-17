@@ -1,4 +1,4 @@
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import { Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 export enum GiphyType {
@@ -18,6 +18,8 @@ export class GiphyModel extends Model<GiphyAttributes, InferCreationAttributes<G
   public id: string;
 
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: GiphyType;
 }

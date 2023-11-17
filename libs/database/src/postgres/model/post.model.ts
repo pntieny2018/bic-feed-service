@@ -92,7 +92,9 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public mentions: string[];
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: CONTENT_TYPE;
 
   @AllowNull(true)
@@ -100,10 +102,14 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public summary: string;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public lang?: LANGUAGE;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public privacy: PRIVACY;
 
   @Column({
@@ -132,7 +138,9 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public cover?: string;
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: CONTENT_STATUS;
 
   @AllowNull(true)

@@ -46,7 +46,9 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
   @Column
   public url: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: MEDIA_TYPE;
 
   @AllowNull(false)
@@ -84,7 +86,9 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
   @Column
   public extension?: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: MEDIA_PROCESS_STATUS;
 
   @Default(0)
