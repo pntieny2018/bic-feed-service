@@ -4,7 +4,7 @@ services:
     image: bein_stream_dev:1.0.0
     build:
       context: .
-      target: development
+      target: builder
       dockerfile: ./Dockerfile
     command: "nest start --watch"
     volumes:
