@@ -1635,10 +1635,10 @@
   dependencies:
     eventemitter2 "6.4.9"
 
-"@nestjs/mapped-types@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/mapped-types/-/mapped-types-1.0.1.tgz#78b62041c7a407db4a90eb140567321602bed18e"
-  integrity sha512-NFvofzSinp00j5rzUd4tf+xi9od6383iY0JP7o0Bnu1fuItAUkWBgc4EKuIQ3D+c2QI3i9pG1kDWAeY27EMGtg==
+"@nestjs/mapped-types@2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@nestjs/mapped-types/-/mapped-types-2.0.3.tgz#f400432da6c98d02b94b14e893fd7fa46c152403"
+  integrity sha512-40Zdqg98lqoF0+7ThWIZFStxgzisK6GG22+1ABO4kZiGF/Tu2FE+DYLw+Q9D94vcFWizJ+MSjNN4ns9r6hIGxw==
 
 "@nestjs/microservices@^8.4.1":
   version "8.4.7"
@@ -1685,14 +1685,16 @@
   dependencies:
     uuid "8.3.2"
 
-"@nestjs/swagger@^5.2.0":
-  version "5.2.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/swagger/-/swagger-5.2.1.tgz#0fbd5dbc84aeebc2912009cce1309d4bebe9a52c"
-  integrity sha512-7dNa08WCnTsW/oAk3Ujde+z64JMfNm19DhpXasFR8oJp/9pggYAbYU927HpA+GJsSFJX6adjIRZsCKUqaGWznw==
+"@nestjs/swagger@^7.1.16":
+  version "7.1.16"
+  resolved "https://registry.yarnpkg.com/@nestjs/swagger/-/swagger-7.1.16.tgz#110dac7f2ae9bbf04943fba51df4fa4b47a66ef3"
+  integrity sha512-f9KBk/BX9MUKPTj7tQNYJ124wV/jP5W2lwWHLGwe/4qQXixuDOo39zP55HIJ44LE7S04B7BOeUOo9GBJD/vRcw==
   dependencies:
-    "@nestjs/mapped-types" "1.0.1"
+    "@nestjs/mapped-types" "2.0.3"
+    js-yaml "4.1.0"
     lodash "4.17.21"
     path-to-regexp "3.2.0"
+    swagger-ui-dist "5.9.1"
 
 "@nestjs/terminus@^9.1.1":
   version "9.2.2"
@@ -4442,7 +4444,7 @@ dotenv@^16.0.0:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.3.1.tgz#369034de7d7e5b120972693352a3bf112172cc3e"
   integrity sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==
 
-dottie@^2.0.0, dottie@^2.0.4:
+dottie@^2.0.0, dottie@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/dottie/-/dottie-2.0.6.tgz#34564ebfc6ec5e5772272d466424ad5b696484d4"
   integrity sha512-iGCHkfUc5kFekGiqhe8B/mdaurD+lakO9txNnTvKtA6PISrw86LgqHvRzWYPyoE2Ph5aMIrCw9/uko6XHTKCwA==
@@ -6597,6 +6599,13 @@ js-tokens@^4.0.0:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
+js-yaml@4.1.0, js-yaml@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.0.tgz#c1fb65f8f5017901cdd2c951864ba18458a10602"
+  integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
+  dependencies:
+    argparse "^2.0.1"
+
 js-yaml@^3.13.1:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
@@ -6604,13 +6613,6 @@ js-yaml@^3.13.1:
   dependencies:
     argparse "^1.0.7"
     esprima "^4.0.0"
-
-js-yaml@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.0.tgz#c1fb65f8f5017901cdd2c951864ba18458a10602"
-  integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
-  dependencies:
-    argparse "^2.0.1"
 
 jsdom@^16.6.0:
   version "16.7.0"
@@ -7385,10 +7387,10 @@ nestjs-cls@^3.3.1:
   resolved "https://registry.yarnpkg.com/nestjs-cls/-/nestjs-cls-3.5.0.tgz#fac945405d07d22345d7a6f1fc72994752a496d5"
   integrity sha512-C7JX4Q8scpmCl4fZsNjx2JS50rL1fhdx2mckkZo300dUviVLiYMmy5Q0bXnrwW2cquk78mi9Vd3WlGuYCrExDQ==
 
-nestjs-i18n@^10.2.1:
-  version "10.3.1"
-  resolved "https://registry.yarnpkg.com/nestjs-i18n/-/nestjs-i18n-10.3.1.tgz#44708d7d8c2ea677c345f331d755c3b3ddafaf5a"
-  integrity sha512-yyGf0eroBWAvpWusQMFUehSisLt/bhOs4y4WJOfc0yRG6qRx0bdHJt0IyrIO/O/NAeQj1DDvgHYsWhnv+04U8A==
+nestjs-i18n@^10.3.1:
+  version "10.3.7"
+  resolved "https://registry.yarnpkg.com/nestjs-i18n/-/nestjs-i18n-10.3.7.tgz#f5bf0cd7b4c600d5af197e51ed6e8b64e9b32339"
+  integrity sha512-zapq3b9sKonfD8C2OL6AdZTJzhjQQHeUJ4dWnI2TEnVe2g3k41+ibrNRDvUlbb3YsIMolvhgV4PKMDAZRCvtoQ==
   dependencies:
     accept-language-parser "^1.5.0"
     chokidar "^3.5.3"
@@ -7819,7 +7821,7 @@ pg-cloudflare@^1.1.1:
   resolved "https://registry.yarnpkg.com/pg-cloudflare/-/pg-cloudflare-1.1.1.tgz#e6d5833015b170e23ae819e8c5d7eaedb472ca98"
   integrity sha512-xWPagP/4B6BgFO+EKz3JONXv3YDgvkbVrGw2mTo3D6tVDQRh1e7cqVGvyR3BE+eQgAvx1XhW/iEASj4/jCWl3Q==
 
-pg-connection-string@^2.6.0, pg-connection-string@^2.6.2:
+pg-connection-string@^2.6.1, pg-connection-string@^2.6.2:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/pg-connection-string/-/pg-connection-string-2.6.2.tgz#713d82053de4e2bd166fab70cd4f26ad36aab475"
   integrity sha512-ch6OwaeaPYcova4kKZ15sbJ2hKb/VP48ZD2gE7i1J+L4MspCtBMAx8nMgz7bksc7IojCIIWuEhHibSMFH8m8oA==
@@ -7829,7 +7831,7 @@ pg-int8@1.0.1:
   resolved "https://registry.yarnpkg.com/pg-int8/-/pg-int8-1.0.1.tgz#943bd463bf5b71b4170115f80f8efc9a0c0eb78c"
   integrity sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==
 
-pg-native@^3.0.0:
+pg-native@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/pg-native/-/pg-native-3.0.1.tgz#84b488a4f3c29c29ea9b4fa8bf03a75a5bc4f353"
   integrity sha512-LBVNWkNh0fVx/cienARRP2y22J5OpUsKBe0TpxzAx3arEUUdIs77aLSAHS3scS7SMaqc+OkG40CEu5fN0/cjIw==
@@ -8461,7 +8463,7 @@ secure-json-parse@^2.4.0:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.2.tgz#48d55db737c3287cd4835e17fa13feace1c41ef8"
   integrity sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==
 
-semver@7.5.4, semver@7.x, semver@^7.3.2, semver@^7.3.4, semver@^7.3.5, semver@^7.3.7, semver@^7.3.8, semver@^7.5.1, semver@^7.5.2, semver@^7.5.3:
+semver@7.5.4, semver@7.x, semver@^7.3.2, semver@^7.3.4, semver@^7.3.5, semver@^7.3.7, semver@^7.3.8, semver@^7.5.1, semver@^7.5.2, semver@^7.5.3, semver@^7.5.4:
   version "7.5.4"
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.5.4.tgz#483986ec4ed38e1c6c48c34894a9182dbff68a6e"
   integrity sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==
@@ -8554,21 +8556,21 @@ sequelize@^4.42.0:
     wkx "^0.4.1"
 
 sequelize@^6.17.0:
-  version "6.32.1"
-  resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-6.32.1.tgz#8e8669a8d6cf711d2d94b33cc721928fad7487f6"
-  integrity sha512-3Iv0jruv57Y0YvcxQW7BE56O7DC1BojcfIrqh6my+IQwde+9u/YnuYHzK+8kmZLhLvaziRT1eWu38nh9yVwn/g==
+  version "6.35.0"
+  resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-6.35.0.tgz#70a1fa28aff73403ce85c1da1155c6f851a88c2a"
+  integrity sha512-cnxnmjUfphGfSKCwTtNZ3YD/F35fqMTNPw/Qe9xsMij49t6LkW2G57sNQkuKac8fkQgSX+M8OZOQsxCS6dnUwQ==
   dependencies:
     "@types/debug" "^4.1.8"
     "@types/validator" "^13.7.17"
     debug "^4.3.4"
-    dottie "^2.0.4"
+    dottie "^2.0.6"
     inflection "^1.13.4"
     lodash "^4.17.21"
     moment "^2.29.4"
     moment-timezone "^0.5.43"
-    pg-connection-string "^2.6.0"
+    pg-connection-string "^2.6.1"
     retry-as-promised "^7.0.4"
-    semver "^7.5.1"
+    semver "^7.5.4"
     sequelize-pool "^7.1.0"
     toposort-class "^1.0.1"
     uuid "^8.3.2"
@@ -9062,10 +9064,15 @@ supports-preserve-symlinks-flag@^1.0.0:
   resolved "https://registry.yarnpkg.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
+swagger-ui-dist@5.9.1:
+  version "5.9.1"
+  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-5.9.1.tgz#d0bcd614e3752da02df141846348f84468ae815e"
+  integrity sha512-5zAx+hUwJb9T3EAntc7TqYkV716CMqG6sZpNlAAMOMWkNXRYxGkN8ADIvD55dQZ10LxN90ZM/TQmN7y1gpICnw==
+
 swagger-ui-dist@>=4.11.0:
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-5.4.2.tgz#ff7b936bdfc84673a1823a0f05f3a933ba7ccd4c"
-  integrity sha512-vT5QxP/NOr9m4gLZl+SpavWI3M9Fdh30+Sdw9rEtZbkqNmNNEPhjXas2xTD9rsJYYdLzAiMfwXvtooWH3xbLJA==
+  version "5.10.0"
+  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-5.10.0.tgz#5ead451df863bca60bb76b02d9370205c1e8879e"
+  integrity sha512-PBTn5qDOQVtU29hrx74km86SnK3/mFtF3grI98y575y1aRpxiuStRTIvsfXFudPFkLofHU7H9a+fKrP+Oayc3g==
 
 swagger-ui-express@^4.3.0:
   version "4.6.3"
