@@ -20,6 +20,7 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
           references: { model: 'posts', key: 'id' },
+          onDelete: 'CASCADE',
         },
         count: {
           type: Sequelize.INTEGER(),
@@ -29,7 +30,6 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-          onDelete: 'CASCADE',
         },
         updated_at: {
           type: Sequelize.DATE,
