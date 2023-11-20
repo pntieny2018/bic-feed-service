@@ -18,7 +18,7 @@ export type CommentCreatedNotificationPayload = {
   prevCommentActivities: CommentExtendedDto[];
 };
 
-export type CommentReplyCreatedNotificationPayload = {
+export type ChildCommentCreatedNotificationPayload = {
   actor: UserDto;
   comment: CommentBaseDto;
   content: PostDto | ArticleDto;
@@ -33,7 +33,7 @@ export type CommentUpdatedNotificationPayload = {
   commentRecipient: CommentRecipientDto;
 };
 
-export type CommentReplyUpdatedNotificationPayload = {
+export type ChildCommentUpdatedNotificationPayload = {
   actor: UserDto;
   comment: CommentBaseDto;
   content: PostDto | ArticleDto;
@@ -49,12 +49,12 @@ export type CommentDeletedNotificationPayload = {
 
 export interface ICommentNotificationApplicationService {
   sendCommentCreatedNotification(payload: CommentCreatedNotificationPayload): Promise<void>;
-  sendCommentReplyCreatedNotification(
-    payload: CommentReplyCreatedNotificationPayload
+  sendChildCommentCreatedNotification(
+    payload: ChildCommentCreatedNotificationPayload
   ): Promise<void>;
   sendCommentUpdatedNotification(payload: CommentUpdatedNotificationPayload): Promise<void>;
-  sendCommentReplyUpdatedNotification(
-    payload: CommentReplyUpdatedNotificationPayload
+  sendChildCommentUpdatedNotification(
+    payload: ChildCommentUpdatedNotificationPayload
   ): Promise<void>;
   sendCommentDeletedNotification(payload: CommentDeletedNotificationPayload): Promise<void>;
 }

@@ -19,8 +19,8 @@ import {
   CommentCreatedNotificationPayload,
   CommentUpdatedNotificationPayload,
   CommentDeletedNotificationPayload,
-  CommentReplyCreatedNotificationPayload,
-  CommentReplyUpdatedNotificationPayload,
+  ChildCommentCreatedNotificationPayload,
+  ChildCommentUpdatedNotificationPayload,
 } from '../../../v2-notification/application/application-services/interface';
 
 export const NOTIFICATION_ADAPTER = 'NOTIFICATION_ADAPTER';
@@ -51,12 +51,12 @@ export interface INotificationAdapter {
   sendSeriesChangedItemNotification(payload: SeriesChangedItemNotificationPayload): Promise<void>;
 
   sendCommentCreatedNotification(payload: CommentCreatedNotificationPayload): Promise<void>;
-  sendCommentReplyCreatedNotification(
-    payload: CommentReplyCreatedNotificationPayload
+  sendChildCommentCreatedNotification(
+    payload: ChildCommentCreatedNotificationPayload
   ): Promise<void>;
   sendCommentUpdatedNotification(payload: CommentUpdatedNotificationPayload): Promise<void>;
-  sendCommentReplyUpdatedNotification(
-    payload: CommentReplyUpdatedNotificationPayload
+  sendChildCommentUpdatedNotification(
+    payload: ChildCommentUpdatedNotificationPayload
   ): Promise<void>;
   sendCommentDeletedNotification(payload: CommentDeletedNotificationPayload): Promise<void>;
 

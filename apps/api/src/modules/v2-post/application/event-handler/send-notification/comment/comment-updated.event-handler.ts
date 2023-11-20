@@ -84,7 +84,7 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       recipientObj.replyCommentRecipient.mentionedUserIdsInComment = newMentions;
       const replyCommentRecipient = recipientObj.replyCommentRecipient;
 
-      return this._notiAdapter.sendCommentReplyUpdatedNotification({
+      return this._notiAdapter.sendChildCommentUpdatedNotification({
         ...payload,
         parentComment: parentCommentDto,
         replyCommentRecipient,

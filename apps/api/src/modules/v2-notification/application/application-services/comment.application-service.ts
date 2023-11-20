@@ -20,10 +20,10 @@ import {
 } from '../dto';
 
 import {
+  ChildCommentCreatedNotificationPayload,
+  ChildCommentUpdatedNotificationPayload,
   CommentCreatedNotificationPayload,
   CommentDeletedNotificationPayload,
-  CommentReplyCreatedNotificationPayload,
-  CommentReplyUpdatedNotificationPayload,
   CommentUpdatedNotificationPayload,
   ICommentNotificationApplicationService,
 } from './interface';
@@ -80,8 +80,8 @@ export class CommentNotificationApplicationService
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
   }
 
-  public async sendCommentReplyCreatedNotification(
-    payload: CommentReplyCreatedNotificationPayload
+  public async sendChildCommentCreatedNotification(
+    payload: ChildCommentCreatedNotificationPayload
   ): Promise<void> {
     const { actor, comment, content, parentComment, replyCommentRecipient } = payload;
 
@@ -134,8 +134,8 @@ export class CommentNotificationApplicationService
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.COMMENT, kafkaPayload);
   }
 
-  public async sendCommentReplyUpdatedNotification(
-    payload: CommentReplyUpdatedNotificationPayload
+  public async sendChildCommentUpdatedNotification(
+    payload: ChildCommentUpdatedNotificationPayload
   ): Promise<void> {
     const { actor, comment, content, parentComment, replyCommentRecipient } = payload;
 

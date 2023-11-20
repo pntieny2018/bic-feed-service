@@ -4,11 +4,11 @@ import {
   ArticleDeletedNotificationPayload,
   ArticlePublishedNotificationPayload,
   ArticleUpdatedNotificationPayload,
+  ChildCommentCreatedNotificationPayload,
+  ChildCommentUpdatedNotificationPayload,
   COMMENT_NOTIFICATION_APPLICATION_SERVICE,
   CommentCreatedNotificationPayload,
   CommentDeletedNotificationPayload,
-  CommentReplyCreatedNotificationPayload,
-  CommentReplyUpdatedNotificationPayload,
   CommentUpdatedNotificationPayload,
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
   ICommentNotificationApplicationService,
@@ -144,10 +144,10 @@ export class NotificationAdapter implements INotificationAdapter {
     return this._commentNotiApp.sendCommentCreatedNotification(payload);
   }
 
-  public async sendCommentReplyCreatedNotification(
-    payload: CommentReplyCreatedNotificationPayload
+  public async sendChildCommentCreatedNotification(
+    payload: ChildCommentCreatedNotificationPayload
   ): Promise<void> {
-    return this._commentNotiApp.sendCommentReplyCreatedNotification(payload);
+    return this._commentNotiApp.sendChildCommentCreatedNotification(payload);
   }
 
   public async sendCommentUpdatedNotification(
@@ -156,10 +156,10 @@ export class NotificationAdapter implements INotificationAdapter {
     return this._commentNotiApp.sendCommentUpdatedNotification(payload);
   }
 
-  public async sendCommentReplyUpdatedNotification(
-    payload: CommentReplyUpdatedNotificationPayload
+  public async sendChildCommentUpdatedNotification(
+    payload: ChildCommentUpdatedNotificationPayload
   ): Promise<void> {
-    return this._commentNotiApp.sendCommentReplyUpdatedNotification(payload);
+    return this._commentNotiApp.sendChildCommentUpdatedNotification(payload);
   }
 
   public async sendCommentDeletedNotification(

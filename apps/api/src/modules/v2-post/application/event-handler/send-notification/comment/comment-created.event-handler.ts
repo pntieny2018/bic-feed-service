@@ -102,7 +102,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
       const replyCommentRecipient = recipientObj.replyCommentRecipient;
 
-      return this._notiAdapter.sendCommentReplyCreatedNotification({
+      return this._notiAdapter.sendChildCommentCreatedNotification({
         ...payload,
         replyCommentRecipient,
         parentComment: parentCommentDto,
