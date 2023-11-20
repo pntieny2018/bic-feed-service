@@ -108,5 +108,6 @@ export const ERRORS = {
   RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
 
   // REPORT
+  REPORT_NOT_FOUND: 'report.not_found',
   REPORT_OWN_CONTENT: 'report.own_content',
 };

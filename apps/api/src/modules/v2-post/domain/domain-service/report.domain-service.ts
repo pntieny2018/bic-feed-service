@@ -16,19 +16,27 @@ import {
   REPORT_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
+  IReportValidator,
+  REPORT_VALIDATOR_TOKEN,
+} from '../validator/interface';
 
 import {
   CreateReportCommentProps,
   CreateReportContentProps,
   CreateReportProps,
   IReportDomainService,
+  ProcessReportProps,
 } from './interface';
 
 export class ReportDomainService implements IReportDomainService {
   public constructor(
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
+    @Inject(REPORT_VALIDATOR_TOKEN)
+    private readonly _reportValidator: IReportValidator,
     @Inject(REPORT_REPOSITORY_TOKEN)
     private readonly _reportRepo: IReportRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -136,5 +144,22 @@ export class ReportDomainService implements IReportDomainService {
         total: reasonTypeDetails.length,
       };
     });
+  }
+
+  public async ignoreReport(input: ProcessReportProps): Promise<void> {
+    const { reportId, groupId } = input;
+
+    const reportEntity = await this._reportRepo.findOne({
+      where: { id: reportId, status: REPORT_STATUS.CREATED },
+      include: { details: true },
+    });
+
+    this._reportValidator.validateReportInGroup(reportEntity, groupId);
+
+    reportEntity.updateStatus(REPORT_STATUS.IGNORED);
+
+    if (reportEntity.isChanged()) {
+      await this._reportRepo.update(reportEntity);
+    }
   }
 }

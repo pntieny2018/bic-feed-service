@@ -15,10 +15,17 @@ export type CreateReportProps = {
 export type CreateReportContentProps = CreateReportProps & { content: PostEntity | ArticleEntity };
 export type CreateReportCommentProps = CreateReportProps & { comment: CommentEntity };
 
+export type ProcessReportProps = {
+  authUser: UserDto;
+  reportId: string;
+  groupId: string;
+};
+
 export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
   countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[];
+  ignoreReport(input: ProcessReportProps): Promise<void>;
 }
 
 export const REPORT_DOMAIN_SERVICE_TOKEN = 'REPORT_DOMAIN_SERVICE_TOKEN';
