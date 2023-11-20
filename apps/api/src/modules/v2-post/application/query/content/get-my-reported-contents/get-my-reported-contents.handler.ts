@@ -4,8 +4,8 @@ import { PaginatedResponse } from '@libs/database/postgres/common';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { EntityHelper } from 'apps/api/src/common/helpers';
 
+import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,

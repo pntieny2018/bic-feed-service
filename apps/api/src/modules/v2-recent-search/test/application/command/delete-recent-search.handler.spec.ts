@@ -1,8 +1,8 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
 
+import { createMockUserDto } from '../../../../v2-post/test/mock';
 import { DeleteRecentSearchHandler } from '../../../aplication/command/delete-recent-search/delete-recent-search.handler';
 import {
   IRecentSearchDomainService,
