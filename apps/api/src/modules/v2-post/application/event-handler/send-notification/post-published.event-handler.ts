@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { KAFKA_TOPIC, PostHasBeenPublished } from '../../../../../common/constants';
+import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { PostPublishedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { PostEntity, SeriesEntity } from '../../../domain/model/content';
@@ -28,12 +28,12 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       const postDto = await this._contentBinding.postBinding(postEntity, {
-        actor,
-        authUser: actor,
+        actor: authUser,
+        authUser,
       });
 
       const contentWithArchivedGroups =
@@ -55,8 +55,8 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
       const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
       await this._notiAdapter.sendPostNotification({
-        event: PostHasBeenPublished,
-        actor,
+        event: event.getEventName(),
+        actor: authUser,
         post: postDto,
         ignoreUserIds: seriesActorIds,
       });

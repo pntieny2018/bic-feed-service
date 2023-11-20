@@ -180,7 +180,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostScheduledEvent({ postEntity, actor }));
+      this.event.publish(new PostScheduledEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -230,7 +230,7 @@ export class PostDomainService implements IPostDomainService {
         postEntity.setMarkReadImportant();
       }
 
-      this.event.publish(new PostPublishedEvent({ postEntity, actor }));
+      this.event.publish(new PostPublishedEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -273,7 +273,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
+      this.event.publish(new PostUpdatedEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -313,7 +313,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoFailedEvent({ postEntity, actor }));
+      this.event.publish(new PostVideoFailedEvent({ postEntity, authUser: actor }));
     }
   }
 
@@ -348,7 +348,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoSuccessEvent({ postEntity, actor }));
+      this.event.publish(new PostVideoSuccessEvent({ postEntity, authUser: actor }));
     }
 
     if (!isScheduledPost) {
@@ -409,7 +409,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new PostDeletedEvent({ postEntity, actor: authUser }));
+    this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
   }
 
   private async _validateAndSetPostAttributes(

@@ -14,13 +14,13 @@ export class VideoPostVideoSuccessEventHandler implements IEventHandler<PostVide
   ) {}
 
   public async handle(event: PostVideoSuccessEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     const videoIds = postEntity.get('media').videos.map((video) => video.get('id'));
 
     await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED, {
       key: null,
-      value: { videoIds, userId: actor.id },
+      value: { videoIds, userId: authUser.id },
     });
   }
 }

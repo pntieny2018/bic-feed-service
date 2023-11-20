@@ -42,7 +42,7 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
   ) {}
 
   public async handle(event: ReportCreatedEvent): Promise<void> {
-    const { report, actor } = event.payload;
+    const { report, authUser } = event.payload;
 
     const reportDto = this._reportBinding.binding(report);
 
@@ -105,7 +105,7 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
 
     await this._notiAdapter.sendReportCreatedNotification({
       report: reportDto,
-      actor,
+      actor: authUser,
       adminInfos: groupAdminMap,
       content,
       actorsReported,

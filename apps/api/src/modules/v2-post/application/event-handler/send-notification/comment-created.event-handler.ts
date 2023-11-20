@@ -45,10 +45,10 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
   ) {}
 
   public async handle(event: CommentCreatedEvent): Promise<void> {
-    const { comment, actor } = event.payload;
+    const { comment, authUser } = event.payload;
 
     const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor,
+      actor: authUser,
     });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
@@ -58,13 +58,13 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
     if (!content || content.isHidden()) {
       throw new ContentNotFoundException();
     }
-    const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
+    const contentDto = (await this._contentBinding.contentsBinding([content], authUser))[0] as
       | PostDto
       | ArticleDto;
 
     const payload: CommentNotificationPayload = {
       event: CommentCreatedEvent.event,
-      actor: ObjectHelper.omit(['groups', 'permissions'], actor) as UserDto,
+      actor: ObjectHelper.omit(['groups', 'permissions'], authUser) as UserDto,
       comment: commentDto,
       content: contentDto,
     };
@@ -78,7 +78,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
     const recipient = await this._commentDomainService.getRelevantUserIdsInComment({
       commentEntity: comment,
-      userId: actor.id,
+      userId: authUser.id,
       contentDto,
       cb: (comments) => {
         prevComments.push(...comments);

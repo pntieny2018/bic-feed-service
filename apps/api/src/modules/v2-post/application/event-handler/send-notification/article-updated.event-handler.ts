@@ -3,7 +3,6 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { ArticleHasBeenUpdated } from '../../../../../common/constants';
 import { ArticleUpdatedEvent } from '../../../domain/event';
 import { ArticleEntity, SeriesEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
@@ -25,7 +24,7 @@ export class NotiArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
   ) {}
 
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
-    const { articleEntity, actor } = event;
+    const { articleEntity, authUser } = event.payload;
 
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
@@ -49,23 +48,20 @@ export class NotiArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
     })) as SeriesEntity[];
 
     const articleDto = await this._contentBinding.articleBinding(articleEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     const oldArticleDto = await this._contentBinding.articleAttributesBinding(
       articleEntity.getSnapshot(),
-      {
-        actor,
-        authUser: actor,
-      }
+      { actor: authUser, authUser }
     );
 
     const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
     await this._notiAdapter.sendArticleNotification({
-      event: ArticleHasBeenUpdated,
-      actor,
+      event: event.getEventName(),
+      actor: authUser,
       article: articleDto,
       oldArticle: oldArticleDto,
       ignoreUserIds: seriesActorIds,

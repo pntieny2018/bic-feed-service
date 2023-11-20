@@ -120,7 +120,7 @@ export class ReportDomainService implements IReportDomainService {
       await this._reportRepo.create(reportEntity);
     }
 
-    this._event.publish(new ReportCreatedEvent({ report: reportEntity, actor: authUser }));
+    this._event.publish(new ReportCreatedEvent({ report: reportEntity, authUser: authUser }));
   }
 
   public countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[] {

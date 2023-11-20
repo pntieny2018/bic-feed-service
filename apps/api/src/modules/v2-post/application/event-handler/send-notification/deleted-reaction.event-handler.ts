@@ -4,7 +4,6 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { ReactionHasBeenRemoved } from '../../../../../common/constants';
 import { ReactionDeletedEvent } from '../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content';
@@ -50,14 +49,14 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
   ) {}
 
   public async handle(event: ReactionDeletedEvent): Promise<void> {
-    const { reactionEntity } = event;
+    const { reactionEntity } = event.payload;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
 
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
 
     const payload: any = {
-      event: ReactionHasBeenRemoved,
+      event: event.getEventName(),
       actor: reactionActor,
       reaction: reactionDto,
     };

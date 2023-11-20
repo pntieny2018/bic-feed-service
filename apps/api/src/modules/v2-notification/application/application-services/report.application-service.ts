@@ -1,7 +1,7 @@
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 
-import { KAFKA_TOPIC, ReportCreated } from '../../../../common/constants';
+import { KAFKA_TOPIC, ReportHasBeenCreated } from '../../../../common/constants';
 import { ReportDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
@@ -31,7 +31,7 @@ export class ReportNotificationApplicationService implements IReportNotification
       key: report.id,
       value: {
         actor,
-        event: ReportCreated,
+        event: ReportHasBeenCreated,
         data: activity,
         meta: {
           report: { adminInfos, content },

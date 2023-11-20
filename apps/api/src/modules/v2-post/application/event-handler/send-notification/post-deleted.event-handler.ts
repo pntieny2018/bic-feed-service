@@ -2,7 +2,6 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { PostHasBeenDeleted } from '../../../../../common/constants';
 import { PostDeletedEvent } from '../../../domain/event';
 import {
   INotificationAdapter,
@@ -20,16 +19,16 @@ export class NotiPostDeletedEventHandler implements IEventHandler<PostDeletedEve
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     const postDto = await this._contentBinding.postBinding(postEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     await this._notiAdapter.sendPostNotification({
-      event: PostHasBeenDeleted,
-      actor,
+      event: event.getEventName(),
+      actor: authUser,
       post: postDto,
     });
   }

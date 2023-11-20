@@ -24,14 +24,14 @@ export class NotiSeriesSameOwnerChangedEventHandler
   ) {}
 
   public async handle(event: SeriesSameOwnerChangedEvent): Promise<void> {
-    const { authUser, content, series: seriesEntitesWithState } = event.payload;
+    const { authUser, content, series: seriesEntitiesWithState } = event.payload;
 
     const item =
       content instanceof PostEntity
         ? await this._contentBinding.postBinding(content, { authUser })
         : await this._contentBinding.articleBinding(content, { authUser });
     const seriesWithStateDto = await Promise.all(
-      seriesEntitesWithState.map(async (entity) => ({
+      seriesEntitiesWithState.map(async (entity) => ({
         ...(await this._contentBinding.seriesBinding(entity.item, { authUser })),
         state: entity.state,
       }))
