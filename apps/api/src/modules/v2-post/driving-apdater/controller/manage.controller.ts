@@ -3,7 +3,9 @@ import { UserDto } from '@libs/service/user';
 import { Controller, Get, Param, ParseUUIDPipe, Query, Version } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { instanceToInstance } from 'class-transformer';
 
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { GetReportContentDetailsDto, ReportForManagerDto } from '../../application/dto';
@@ -49,6 +51,10 @@ export class ManageController {
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Param('reportId', ParseUUIDPipe) reportId: string
   ): Promise<GetReportContentDetailsDto> {
-    return this._queryBus.execute(new GetReportDetailsQuery({ rootGroupId, reportId, authUser }));
+    const contentDetail = await this._queryBus.execute(
+      new GetReportDetailsQuery({ rootGroupId, reportId, authUser })
+    );
+
+    return instanceToInstance(contentDetail, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

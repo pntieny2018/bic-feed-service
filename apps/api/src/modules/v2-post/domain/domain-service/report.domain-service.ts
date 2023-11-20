@@ -138,7 +138,7 @@ export class ReportDomainService implements IReportDomainService {
     });
   }
 
-  public async getReport(id: string): Promise<ReportEntity> {
+  public async getReportById(id: string): Promise<ReportEntity> {
     const report = await this._reportRepo.findOne({
       where: { id },
     });

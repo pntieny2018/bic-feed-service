@@ -49,7 +49,7 @@ export class GetReportDetailsHandler
       userId: authUser.id,
     });
 
-    const reportEntity = await this._reportDomainService.getReport(reportId);
+    const reportEntity = await this._reportDomainService.getReportById(reportId);
 
     let contentDto: PostDto | ArticleDto = null;
     let commentDto: CommentBaseDto = null;
@@ -64,7 +64,7 @@ export class GetReportDetailsHandler
         });
         break;
       case CONTENT_TARGET.POST:
-        const post = await this._contentDomainService.getVisibleContent(
+        const post = await this._contentDomainService.getReportContentById(
           reportEntity.get('targetId')
         );
         contentDto = await this._contentBinding.postBinding(post as PostEntity, {
@@ -73,7 +73,7 @@ export class GetReportDetailsHandler
 
         break;
       case CONTENT_TARGET.ARTICLE:
-        const article = await this._contentDomainService.getVisibleContent(
+        const article = await this._contentDomainService.getReportContentById(
           reportEntity.get('targetId')
         );
         contentDto = await this._contentBinding.articleBinding(article as ArticleEntity, {
