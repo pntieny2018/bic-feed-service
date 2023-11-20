@@ -5,10 +5,6 @@ import { IEventHandler } from '@nestjs/cqrs';
 
 import { SeriesUpdatedEvent } from '../../../../domain/event';
 import {
-  CONTENT_REPOSITORY_TOKEN,
-  IContentRepository,
-} from '../../../../domain/repositoty-interface';
-import {
   GROUP_ADAPTER,
   IGroupAdapter,
   INotificationAdapter,
@@ -19,8 +15,6 @@ import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 @EventsHandlerAndLog(SeriesUpdatedEvent)
 export class NotiSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEvent> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
     @Inject(GROUP_ADAPTER)
@@ -30,7 +24,7 @@ export class NotiSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
   ) {}
 
   public async handle(event: SeriesUpdatedEvent): Promise<void> {
-    const { seriesEntity, actor } = event;
+    const { seriesEntity, authUser } = event.payload;
 
     if (seriesEntity.isHidden()) {
       return;
@@ -50,21 +44,21 @@ export class NotiSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
       newGroupAdminIds,
       oldGroupAdminIds
     );
-    const notiGroupAdminIds = filterGroupAdminIds.filter((id) => id !== actor.id);
+    const notiGroupAdminIds = filterGroupAdminIds.filter((id) => id !== authUser.id);
 
     if (!notiGroupAdminIds.length) {
       return;
     }
 
     const seriesDto = await this._contentBinding.seriesBinding(seriesEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     const oldGroups = await this._groupAdapter.getGroupsByIds(oldSeries.groupIds);
 
     await this._notiAdapter.sendSeriesUpdatedNotification({
-      actor,
+      actor: authUser,
       series: seriesDto,
       oldSeries: {
         ...oldSeries,
@@ -73,7 +67,7 @@ export class NotiSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
         totalUsersSeen: oldSeries.aggregation?.totalUsersSeen,
         quiz: null,
         items: null,
-        actor,
+        actor: authUser,
       },
       targetUserIds: notiGroupAdminIds,
     });

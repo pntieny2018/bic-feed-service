@@ -1,3 +1,4 @@
+import { ORDER } from '@beincom/constants';
 import { FindOptions } from '@libs/database/postgres';
 import {
   CursorPaginationProps,
@@ -173,7 +174,13 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     findOptions: FindOptions<M>,
     paginationProps: CursorPaginationProps
   ): Promise<CursorPaginationResult<M>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order, column } = paginationProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+      column = 'createdAt',
+    } = paginationProps;
 
     const attributes = this._buildSelect(findOptions);
     const include = this._buildInclude(findOptions);

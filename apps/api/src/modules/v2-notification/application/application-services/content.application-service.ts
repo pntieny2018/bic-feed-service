@@ -12,12 +12,12 @@ import {
   PostHasBeenPublished,
   PostHasBeenUpdated,
   PostVideoHasBeenFailed,
-  SeriesAddItem,
-  SeriesChangeItems,
+  SeriesHasBeenAddItem,
+  SeriesHasBeenChangeItems,
   SeriesHasBeenDeleted,
   SeriesHasBeenPublished,
   SeriesHasBeenUpdated,
-  SeriesRemoveItem,
+  SeriesHasBeenRemoveItem,
 } from '../../../../common/constants';
 import { ArticleDto, PostDto, SeriesDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
@@ -376,7 +376,7 @@ export class ContentNotificationApplicationService
       key: series.id,
       value: {
         actor,
-        event: SeriesAddItem,
+        event: SeriesHasBeenAddItem,
         data: activity,
         meta: {
           series: { isSendToContentCreator, context },
@@ -399,7 +399,7 @@ export class ContentNotificationApplicationService
       key: series.id,
       value: {
         actor,
-        event: SeriesRemoveItem,
+        event: SeriesHasBeenRemoveItem,
         data: activity,
         meta: {
           series: { isSendToContentCreator, contentIsDeleted },
@@ -443,7 +443,7 @@ export class ContentNotificationApplicationService
       key: series[0].id,
       value: {
         actor,
-        event: SeriesChangeItems,
+        event: SeriesHasBeenChangeItems,
         data: activity,
         meta: {
           series: {},

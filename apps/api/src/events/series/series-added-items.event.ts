@@ -1,10 +1,10 @@
 import { IEvent } from '../../common/interfaces';
 import { UserDto } from '../../modules/v2-user/application';
-import { SeriesAddItem } from '../../common/constants';
+import { SeriesHasBeenAddItem } from '../../common/constants';
 
 export class SeriesAddedItemsEvent implements IEvent<ISeriesAddItemsPayload> {
   public payload: ISeriesAddItemsPayload;
-  protected static event = SeriesAddItem;
+  protected static event = SeriesHasBeenAddItem;
 
   public constructor(payload: ISeriesAddItemsPayload) {
     Object.assign(this, {

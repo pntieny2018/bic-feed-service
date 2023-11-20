@@ -2,7 +2,7 @@ import { PERMISSION_KEY } from '@beincom/constants';
 import { Ability, subject } from '@casl/ability';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { permissionToCommonName, SUBJECT } from '../../common/constants/casl.constant';
+import { permissionToCommonName, SUBJECT } from '../../common/constants';
 import { DomainForbiddenException } from '../../common/exceptions';
 import {
   IPost,

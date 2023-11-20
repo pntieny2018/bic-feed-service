@@ -1,3 +1,7 @@
+// content
+export const ContentHasBeenSeen = 'content.has.been.seen';
+export const ContentAttachedSeries = 'content.attached.series';
+
 // post
 export const PostWillBeCreated = 'post.will.be.created';
 export const PostWillBeUpdated = 'post.will.be.updated';
@@ -11,18 +15,23 @@ export const PostVideoHasBeenPublished = 'post_video.has.been.published';
 export const PostVideoHasBeenFailed = 'post_video.has.been.failed';
 export const PostsArchivedOrRestoredByGroup = 'post.archived_or_restored_by_group';
 
+// article
 export const ArticleHasBeenUpdated = 'article.has.been.updated';
 export const ArticleHasBeenPublished = 'article.has.been.published';
 export const ArticleHasBeenDeleted = 'article.has.been.deleted';
 export const ArticleVideoHasBeenPublished = 'article_video.has.been.published';
 export const ArticleVideoHasBeenFailed = 'article_video.has.been.failed';
 
+// series
 export const SeriesHasBeenUpdated = 'series.has.been.updated';
 export const SeriesHasBeenPublished = 'series.has.been.published';
 export const SeriesHasBeenDeleted = 'series.has.been.deleted';
-export const SeriesAddItem = 'series.has.been.added_item';
-export const SeriesChangeItems = 'series.has.been.changed_items';
-export const SeriesRemoveItem = 'series.has.been.removed_item';
+export const SeriesHasBeenAddItem = 'series.has.been.added_item';
+export const SeriesHasBeenChangeItems = 'series.has.been.changed_items';
+export const SeriesHasBeenRemoveItem = 'series.has.been.removed_item';
+export const SeriesHasBeenReorderItem = 'series.has.been.reorder_item';
+export const SeriesHasBeenSameOwnerChanged = 'series.has.been.same_owner_changed';
+
 // comment
 export const CommentWillBeCreated = 'comment.will.be.created';
 export const CommentWillBeUpdated = 'comment.will.be.updated';
@@ -44,7 +53,7 @@ export const ReactionHasBeenCreated = 'reaction.has.been.created';
 export const ReactionHasBeenRemoved = 'reaction.has.been.removed';
 
 // report
-export const ReportCreated = 'report.has.been.created';
+export const ReportHasBeenCreated = 'report.has.been.created';
 export const ReportContentHasBeenApproved = 'report.has.been.approved';
 // ws
 export const OnWebSocketConnect = 'on.websocket.connect';

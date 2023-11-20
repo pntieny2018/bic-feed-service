@@ -44,10 +44,10 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
   ) {}
 
   public async handle(event: CommentUpdatedEvent): Promise<void> {
-    const { comment, actor, oldComment } = event.payload;
+    const { comment, authUser, oldComment } = event.payload;
 
     const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor,
+      actor: authUser,
     });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
@@ -58,12 +58,12 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       throw new ContentNotFoundException();
     }
 
-    const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
+    const contentDto = (await this._contentBinding.contentsBinding([content], authUser))[0] as
       | PostDto
       | ArticleDto;
 
     const payload = {
-      actor,
+      actor: authUser,
       comment: commentDto,
       content: contentDto,
     };

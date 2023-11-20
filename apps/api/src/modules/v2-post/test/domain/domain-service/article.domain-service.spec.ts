@@ -140,7 +140,7 @@ describe('Article domain service', () => {
       });
 
       expect(eventBus$.publish).toBeCalledWith(
-        new ArticleDeletedEvent(articleEntityMock, userMock)
+        new ArticleDeletedEvent({ articleEntity: articleEntityMock, authUser: userMock })
       );
     });
 
@@ -243,7 +243,7 @@ describe('Article domain service', () => {
       });
       expect(contentRepository.update).toBeCalledWith(articleEntityMock);
       expect(eventBus$.publish).toBeCalledWith(
-        new ArticleUpdatedEvent(articleEntityMock, userMock)
+        new ArticleUpdatedEvent({ articleEntity: articleEntityMock, authUser: userMock })
       );
     });
 
@@ -306,7 +306,7 @@ describe('Article domain service', () => {
       });
       expect(contentRepository.update).toBeCalledWith(articleEntityMock);
       expect(eventBus$.publish).toBeCalledWith(
-        new ArticlePublishedEvent(articleEntityMock, userMock)
+        new ArticlePublishedEvent({ articleEntity: articleEntityMock, authUser: userMock })
       );
       expect(result).toEqual(articleEntityMock);
     });

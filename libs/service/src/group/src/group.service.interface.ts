@@ -32,14 +32,6 @@ export interface IGroupService {
     pagination?: { offset?: number; limit?: number }
   ): Promise<GroupMember[]>;
 
-  getCommunityAdmins(
-    rootGroupIds: string[],
-    pagination?: { offset?: number; limit?: number }
-  ): Promise<{
-    admins: Record<string, string[]>;
-    owners: Record<string, string[]>;
-  }>;
-
   getUserRoleInGroups(
     groupIds: string[],
     roles: ROLE_TYPE[]

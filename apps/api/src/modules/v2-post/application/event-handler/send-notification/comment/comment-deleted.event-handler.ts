@@ -35,10 +35,10 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
   ) {}
 
   public async handle(event: CommentDeletedEvent): Promise<void> {
-    const { comment, actor } = event.payload;
+    const { comment, authUser } = event.payload;
 
     const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor,
+      actor: authUser,
     });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
@@ -49,12 +49,12 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
       throw new ContentNotFoundException();
     }
 
-    const contentDto = (await this._contentBinding.contentsBinding([content], actor))[0] as
+    const contentDto = (await this._contentBinding.contentsBinding([content], authUser))[0] as
       | PostDto
       | ArticleDto;
 
     const payload: CommentDeletedNotificationPayload = {
-      actor,
+      actor: authUser,
       comment: commentDto,
       content: contentDto,
     };

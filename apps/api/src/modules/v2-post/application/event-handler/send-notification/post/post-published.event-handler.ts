@@ -31,12 +31,12 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       const postDto = await this._contentBinding.postBinding(postEntity, {
-        actor,
-        authUser: actor,
+        actor: authUser,
+        authUser,
       });
 
       const contentWithArchivedGroups =
@@ -58,7 +58,7 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
       const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
       await this._notiAdapter.sendPostPublishedNotification({
-        actor,
+        actor: authUser,
         post: postDto,
         ignoreUserIds: seriesActorIds,
       });

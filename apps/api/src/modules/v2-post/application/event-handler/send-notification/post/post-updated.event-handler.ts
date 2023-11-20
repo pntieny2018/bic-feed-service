@@ -27,7 +27,7 @@ export class NotiPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;
@@ -51,19 +51,19 @@ export class NotiPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
     })) as SeriesEntity[];
 
     const postDto = await this._contentBinding.postBinding(postEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     const oldPostDto = await this._contentBinding.postAttributesBinding(postEntity.getSnapshot(), {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
     await this._notiAdapter.sendPostUpdatedNotification({
-      actor,
+      actor: authUser,
       post: postDto,
       oldPost: oldPostDto,
       ignoreUserIds: seriesActorIds,

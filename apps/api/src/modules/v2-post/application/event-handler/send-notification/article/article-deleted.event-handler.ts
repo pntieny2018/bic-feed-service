@@ -19,15 +19,15 @@ export class NotiArticleDeletedEventHandler implements IEventHandler<ArticleDele
   ) {}
 
   public async handle(event: ArticleDeletedEvent): Promise<void> {
-    const { articleEntity, actor } = event;
+    const { articleEntity, authUser } = event.payload;
 
     const articleDto = await this._contentBinding.articleBinding(articleEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     await this._notiAdapter.sendArticleDeletedNotification({
-      actor,
+      actor: authUser,
       article: articleDto,
     });
   }

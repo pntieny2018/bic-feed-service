@@ -45,6 +45,7 @@ class NotificationMetaPayloadDto<T> {
       [rootGroupId: string]: string[];
     };
     creatorId?: string;
+    content?: string;
   };
 
   public post?: {

@@ -1,6 +1,6 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { UserDto } from '@libs/service/user';
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 import {
@@ -14,8 +14,6 @@ import { ArticleEntity } from '../../../domain/model/content';
 
 @EventsHandlerAndLog(ArticleDeletedEvent)
 export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
-  private readonly _logger = new Logger(ArticleDeletedEventHandler.name);
-
   public constructor(
     @Inject(TAG_DOMAIN_SERVICE_TOKEN)
     private readonly _tagDomain: ITagDomainService,
@@ -24,21 +22,21 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
   ) {}
 
   public async handle(event: ArticleDeletedEvent): Promise<void> {
-    const { articleEntity, actor } = event;
+    const { articleEntity, authUser } = event.payload;
 
     if (!articleEntity.isPublished()) {
       return;
     }
 
     await this._tagDomain.decreaseTotalUsedByContent(articleEntity);
-    this._processSeriesItemsChanged(articleEntity, actor);
+    this._processSeriesItemsChanged(articleEntity, authUser);
   }
 
-  private _processSeriesItemsChanged(articleEntity: ArticleEntity, actor: UserDto): void {
+  private _processSeriesItemsChanged(articleEntity: ArticleEntity, authUser: UserDto): void {
     const seriesIds = articleEntity.getSeriesIds();
     for (const seriesId of seriesIds) {
       this._seriesDomain.sendSeriesItemsRemovedEvent({
-        authUser: actor,
+        authUser,
         seriesId,
         item: articleEntity,
         contentIsDeleted: true,

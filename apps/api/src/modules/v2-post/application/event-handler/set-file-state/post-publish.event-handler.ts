@@ -14,14 +14,14 @@ export class FilePostPublishedEventHandler implements IEventHandler<PostPublishe
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     const fileIds = postEntity.get('media').files.map((file) => file.get('id'));
 
     if (fileIds.length) {
       await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED, {
         key: null,
-        value: { fileIds, userId: actor.id },
+        value: { fileIds, userId: authUser.id },
       });
     }
   }

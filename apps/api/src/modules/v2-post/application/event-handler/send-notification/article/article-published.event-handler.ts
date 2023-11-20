@@ -27,15 +27,15 @@ export class NotiArticlePublishedEventHandler implements IEventHandler<ArticlePu
   ) {}
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
-    const { articleEntity, actor } = event;
+    const { articleEntity, authUser } = event.payload;
 
     if (!articleEntity.isPublished()) {
       return;
     }
 
     const articleDto = await this._contentBinding.articleBinding(articleEntity, {
-      actor,
-      authUser: actor,
+      actor: authUser,
+      authUser,
     });
 
     const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
@@ -57,7 +57,7 @@ export class NotiArticlePublishedEventHandler implements IEventHandler<ArticlePu
     const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
     await this._notiAdapter.sendArticlePublishedNotification({
-      actor,
+      actor: authUser,
       article: articleDto,
       ignoreUserIds: seriesActorIds,
     });

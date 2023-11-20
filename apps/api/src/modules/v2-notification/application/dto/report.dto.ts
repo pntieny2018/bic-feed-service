@@ -9,6 +9,7 @@ export class ReportObjectDto {
   public targetType: CONTENT_TARGET;
   public status: REPORT_STATUS;
   public details: ReportDetailObjectDto[];
+  public actorsReported: ActorObjectDto[];
 
   public constructor(data: ReportObjectDto) {
     this.id = data.id;
@@ -16,6 +17,7 @@ export class ReportObjectDto {
     this.targetType = data.targetType;
     this.status = data.status;
     this.details = data.details.map((detail) => new ReportDetailObjectDto(detail));
+    this.actorsReported = data.actorsReported.map((actor) => new ActorObjectDto(actor));
   }
 }
 

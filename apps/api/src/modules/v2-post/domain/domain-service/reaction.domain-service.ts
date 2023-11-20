@@ -84,7 +84,7 @@ export class ReactionDomainService implements IReactionDomainService {
         throw new ReactionTargetNotExistingException();
     }
 
-    this.eventBus.publish(new ReactionCreatedEvent(reactionEntity));
+    this.eventBus.publish(new ReactionCreatedEvent({ reactionEntity }));
     return reactionEntity;
   }
 
@@ -108,25 +108,25 @@ export class ReactionDomainService implements IReactionDomainService {
         throw new ReactionTargetNotExistingException();
     }
 
-    const reaction =
+    const reactionEntity =
       target === CONTENT_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne(conditions)
         : await this._postReactionRepository.findOne(conditions);
 
-    if (!reaction) {
+    if (!reactionEntity) {
       throw new ReactionNotFoundException();
     }
 
-    if (reaction.get('createdBy') !== userId) {
+    if (reactionEntity.get('createdBy') !== userId) {
       throw new ReactionNotHaveAuthorityException();
     }
 
     if (target === CONTENT_TARGET.COMMENT) {
-      await this._commentReactionRepository.delete(reaction.get('id'));
+      await this._commentReactionRepository.delete(reactionEntity.get('id'));
     } else {
-      await this._postReactionRepository.delete(reaction.get('id'));
+      await this._postReactionRepository.delete(reactionEntity.get('id'));
     }
 
-    this.eventBus.publish(new ReactionDeletedEvent(reaction));
+    this.eventBus.publish(new ReactionDeletedEvent({ reactionEntity }));
   }
 }

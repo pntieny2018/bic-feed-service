@@ -4,7 +4,6 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { ReactionHasBeenCreated } from '../../../../../../common/constants';
 import { ReactionCreatedEvent } from '../../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../../domain/exception';
 import { ContentEntity } from '../../../../domain/model/content';
@@ -50,14 +49,14 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
   ) {}
 
   public async handle(event: ReactionCreatedEvent): Promise<void> {
-    const { reactionEntity } = event;
+    const { reactionEntity } = event.payload;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
 
     const reactionDto = await this._reactionBinding.binding(reactionEntity);
 
     const payload: any = {
-      event: ReactionHasBeenCreated,
+      event: event.getEventName(),
       actor: reactionActor,
       reaction: reactionDto,
     };
