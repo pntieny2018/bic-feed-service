@@ -17,3 +17,4 @@ export * from './created-reaction.event-handler';
 export * from './deleted-reaction.event-handler';
 export * from './post-video-process-fail.event-handler';
 export * from './report-created.event-handler';
+export * from './report-hidden.event-handler';

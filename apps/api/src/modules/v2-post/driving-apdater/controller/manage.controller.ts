@@ -53,7 +53,7 @@ export class ManageController {
   @ApiOkResponse({ description: 'Process report successfully' })
   @Put(ROUTES.MANAGE_REPORTS.PROCESS.PATH)
   @Version(ROUTES.MANAGE_REPORTS.PROCESS.VERSIONS)
-  public async ignoreReport(
+  public async processReport(
     @Req() req: Request,
     @AuthUser() authUser: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,

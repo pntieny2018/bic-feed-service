@@ -4,7 +4,7 @@ import { UserDto } from '@libs/service/user';
 import { ReportReasonCountDto } from '../../../application/dto';
 import { CommentEntity } from '../../model/comment';
 import { ArticleEntity, PostEntity } from '../../model/content';
-import { ReportDetailAttributes } from '../../model/report';
+import { ReportDetailAttributes, ReportEntity } from '../../model/report';
 
 export type CreateReportProps = {
   authUser: UserDto;
@@ -25,6 +25,8 @@ export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
   countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[];
+  getContentOfTargetReported(report: ReportEntity): Promise<string>;
+  getGroupIdsOfTargetReported(report: ReportEntity): Promise<string[]>;
   ignoreReport(input: ProcessReportProps): Promise<void>;
   hideReport(input: ProcessReportProps): Promise<void>;
 }

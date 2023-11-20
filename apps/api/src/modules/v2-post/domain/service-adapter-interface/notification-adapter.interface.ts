@@ -11,7 +11,7 @@ import {
   ReactionContentNotificationPayload,
   ReactionCommentNotificationPayload,
   ReactionReplyCommentNotificationPayload,
-  ReportCreatedNotificationPayload,
+  ReportNotificationPayload,
 } from '../../../v2-notification/application/application-services/interface';
 
 export const NOTIFICATION_ADAPTER = 'NOTIFICATION_ADAPTER';
@@ -35,5 +35,6 @@ export interface INotificationAdapter {
 
   sendCommentNotification(payload: CommentNotificationPayload): Promise<void>;
 
-  sendReportCreatedNotification(payload: ReportCreatedNotificationPayload): Promise<void>;
+  sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void>;
+  sendReportHiddenNotification(payload: ReportNotificationPayload): Promise<void>;
 }
