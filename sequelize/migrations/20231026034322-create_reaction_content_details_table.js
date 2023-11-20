@@ -29,6 +29,7 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+          onDelete: 'CASCADE',
         },
         updated_at: {
           type: Sequelize.DATE,
