@@ -325,12 +325,8 @@ export const ROUTES = {
       PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/statistics', // old: /reports/:reportId/statistics/:targetId
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
-    IGNORE: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/ignore', // old: /reports/status
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
-    },
-    HIDE: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/hide', // old: /reports/status
+    PROCESS: {
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/status', // old: /reports/status
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },

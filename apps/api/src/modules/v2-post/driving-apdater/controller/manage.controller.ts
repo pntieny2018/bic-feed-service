@@ -1,8 +1,20 @@
 import { PaginatedArgs, PaginatedResponse } from '@libs/database/postgres/common';
+import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { UserDto } from '@libs/service/user';
-import { Controller, Get, Param, ParseUUIDPipe, Put, Query, Version } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Put,
+  Query,
+  Req,
+  Version,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
@@ -37,39 +49,27 @@ export class ManageController {
     );
   }
 
-  @ApiOperation({ summary: 'Community admin ignores the content/comment report' })
-  @ApiOkResponse({ description: 'Ignore report successfully' })
-  @ResponseMessages({
-    success: 'Ignore report successfully',
-    error: 'Ignore report failed',
-  })
-  @Put(ROUTES.MANAGE_REPORTS.IGNORE.PATH)
-  @Version(ROUTES.MANAGE_REPORTS.IGNORE.VERSIONS)
+  @ApiOperation({ summary: 'Community admin process the content/comment report' })
+  @ApiOkResponse({ description: 'Process report successfully' })
+  @Put(ROUTES.MANAGE_REPORTS.PROCESS.PATH)
+  @Version(ROUTES.MANAGE_REPORTS.PROCESS.VERSIONS)
   public async ignoreReport(
+    @Req() req: Request,
     @AuthUser() authUser: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
-    @Param('reportId', ParseUUIDPipe) reportId: string
-  ): Promise<PaginatedResponse<ReportForManagerDto>> {
-    return this._commandBus.execute(
-      new IgnoreReportCommand({ groupId: rootGroupId, reportId, authUser })
-    );
-  }
-
-  @ApiOperation({ summary: 'Community admin hides the content/comment report' })
-  @ApiOkResponse({ description: 'Hide report successfully' })
-  @ResponseMessages({
-    success: 'Hide report successfully',
-    error: 'Hide report failed',
-  })
-  @Put(ROUTES.MANAGE_REPORTS.HIDE.PATH)
-  @Version(ROUTES.MANAGE_REPORTS.HIDE.VERSIONS)
-  public async hideReport(
-    @AuthUser() authUser: UserDto,
-    @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
-    @Param('reportId', ParseUUIDPipe) reportId: string
-  ): Promise<PaginatedResponse<ReportForManagerDto>> {
-    return this._commandBus.execute(
-      new HideReportCommand({ groupId: rootGroupId, reportId, authUser })
-    );
+    @Param('reportId', ParseUUIDPipe) reportId: string,
+    @Body('status') status: Omit<REPORT_STATUS, REPORT_STATUS.CREATED>
+  ): Promise<void> {
+    if (status === REPORT_STATUS.IGNORED) {
+      req.message = 'message.report.ignored_success';
+      return this._commandBus.execute(
+        new IgnoreReportCommand({ groupId: rootGroupId, reportId, authUser })
+      );
+    } else {
+      req.message = 'message.report.hidden_success';
+      return this._commandBus.execute(
+        new HideReportCommand({ groupId: rootGroupId, reportId, authUser })
+      );
+    }
   }
 }
