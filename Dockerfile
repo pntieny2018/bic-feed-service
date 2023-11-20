@@ -34,12 +34,12 @@ ENV NODE_ENV production
 RUN apk add --no-cache tini && yarn global add sequelize-cli
 
 # Copy entrypoint script
-COPY --chown=node:node --chmod=500 entrypoint.sh ./
+COPY --chown=node:node --chmod=765 entrypoint.sh ./
 
 # Copy built files from the builder stage
 COPY --chown=node:node --from=builder ${WORKDIR}/.sequelizerc ./.sequelizerc
-COPY --chown=node:node --from=builder ${WORKDIR}/sequelize ./sequelize
 COPY --chown=node:node --from=builder ${WORKDIR}/node_modules ./node_modules
+COPY --chown=node:node --from=builder ${WORKDIR}/sequelize ./sequelize
 COPY --chown=node:node --from=builder ${WORKDIR}/dist/apps/api ./dist
 
 # Running the container as a non-root user
