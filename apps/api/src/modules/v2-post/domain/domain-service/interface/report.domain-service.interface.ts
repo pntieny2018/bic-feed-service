@@ -26,6 +26,7 @@ export interface IReportDomainService {
   reportComment(input: CreateReportCommentProps): Promise<void>;
   countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[];
   ignoreReport(input: ProcessReportProps): Promise<void>;
+  hideReport(input: ProcessReportProps): Promise<void>;
 }
 
 export const REPORT_DOMAIN_SERVICE_TOKEN = 'REPORT_DOMAIN_SERVICE_TOKEN';

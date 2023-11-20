@@ -5,7 +5,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
 import { ReportReasonCountDto } from '../../application/dto';
-import { ReportCreatedEvent } from '../event';
+import { ReportHiddenEvent, ReportCreatedEvent } from '../event';
 import { ContentNotFoundException } from '../exception';
 import { PostEntity } from '../model/content';
 import { ReportDetailAttributes, ReportEntity } from '../model/report';
@@ -161,5 +161,24 @@ export class ReportDomainService implements IReportDomainService {
     if (reportEntity.isChanged()) {
       await this._reportRepo.update(reportEntity);
     }
+  }
+
+  public async hideReport(input: ProcessReportProps): Promise<void> {
+    const { authUser, reportId, groupId } = input;
+
+    const reportEntity = await this._reportRepo.findOne({
+      where: { id: reportId, status: REPORT_STATUS.CREATED },
+      include: { details: true },
+    });
+
+    this._reportValidator.validateReportInGroup(reportEntity, groupId);
+
+    reportEntity.updateStatus(REPORT_STATUS.HIDDEN);
+
+    if (reportEntity.isChanged()) {
+      await this._reportRepo.update(reportEntity);
+    }
+
+    this._event.publish(new ReportHiddenEvent({ report: reportEntity, authUser }));
   }
 }

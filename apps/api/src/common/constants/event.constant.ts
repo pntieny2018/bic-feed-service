@@ -54,7 +54,8 @@ export const ReactionHasBeenRemoved = 'reaction.has.been.removed';
 
 // report
 export const ReportHasBeenCreated = 'report.has.been.created';
-export const ReportContentHasBeenApproved = 'report.has.been.approved';
+export const ReportHasBeenApproved = 'report.has.been.approved';
+
 // ws
 export const OnWebSocketConnect = 'on.websocket.connect';
 export const OnWebSocketDisconnect = 'on.websocket.disconnect';

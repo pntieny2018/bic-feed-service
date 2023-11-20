@@ -6,7 +6,7 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
-import { IgnoreReportCommand } from '../../application/command/report';
+import { HideReportCommand, IgnoreReportCommand } from '../../application/command/report';
 import { ReportForManagerDto } from '../../application/dto';
 import { GetListReportsQuery } from '../../application/query/admin-manage';
 
@@ -52,6 +52,24 @@ export class ManageController {
   ): Promise<PaginatedResponse<ReportForManagerDto>> {
     return this._commandBus.execute(
       new IgnoreReportCommand({ groupId: rootGroupId, reportId, authUser })
+    );
+  }
+
+  @ApiOperation({ summary: 'Community admin hides the content/comment report' })
+  @ApiOkResponse({ description: 'Hide report successfully' })
+  @ResponseMessages({
+    success: 'Hide report successfully',
+    error: 'Hide report failed',
+  })
+  @Put(ROUTES.MANAGE_REPORTS.HIDE.PATH)
+  @Version(ROUTES.MANAGE_REPORTS.HIDE.VERSIONS)
+  public async hideReport(
+    @AuthUser() authUser: UserDto,
+    @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
+    @Param('reportId', ParseUUIDPipe) reportId: string
+  ): Promise<PaginatedResponse<ReportForManagerDto>> {
+    return this._commandBus.execute(
+      new HideReportCommand({ groupId: rootGroupId, reportId, authUser })
     );
   }
 }

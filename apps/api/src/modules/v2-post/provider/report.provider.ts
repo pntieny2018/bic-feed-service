@@ -1,6 +1,6 @@
 import { REPORT_BINDING_TOKEN, ReportBinding } from '../application/binding';
 import { ReportContentHandler } from '../application/command/content';
-import { IgnoreReportHandler } from '../application/command/report';
+import { HideReportHandler, IgnoreReportHandler } from '../application/command/report';
 import { ReportCreatedEventHandler } from '../application/event-handler/content';
 import { GetListReportsHandler } from '../application/query/admin-manage';
 import { REPORT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
@@ -16,6 +16,7 @@ export const reportProvider = [
   ReportContentHandler,
   ReportContentHandler,
   IgnoreReportHandler,
+  HideReportHandler,
 
   /* Application Query */
   GetListReportsHandler,
