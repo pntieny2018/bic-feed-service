@@ -588,7 +588,7 @@ export class ContentRepository implements IContentRepository {
 
     const rows = await this._libContentRepo.cursorPaginate(
       {
-        select: ['id'],
+        select: ['id', 'createdAt'],
         where: {
           status: CONTENT_STATUS.PUBLISHED,
           isHidden: false,
