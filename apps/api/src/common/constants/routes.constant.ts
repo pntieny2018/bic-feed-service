@@ -263,6 +263,10 @@ export const ROUTES = {
       PATH: 'content/:contentId/save',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    UNSAVE_CONTENT: {
+      PATH: 'content/:contentId/unsave',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
   COMMENT: {
     GET_LIST: {

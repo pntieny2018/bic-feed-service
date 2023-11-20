@@ -58,7 +58,7 @@ export class ReportBinding implements IReportBinding {
       .map((entity) => entity.get('targetId'));
 
     if (commentIds.length) {
-      const comments = await this._commentRepository.findMany({ id: commentIds });
+      const comments = await this._commentRepository.findAll({ id: commentIds });
       commentMap = EntityHelper.entityArrayToMap(comments, 'id');
     }
 

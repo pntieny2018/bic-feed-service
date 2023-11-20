@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NotCommunityAdminException } from '../exception';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
-import { CanManageReportContentPayload, IManageValidator } from './interface';
+import { ValidateManageReportContentPayload, IManageValidator } from './interface';
 
 @Injectable()
 export class ManageValidator implements IManageValidator {
@@ -12,7 +12,9 @@ export class ManageValidator implements IManageValidator {
     private readonly _groupAdapter: IGroupAdapter
   ) {}
 
-  public async validateManageReportContent(props: CanManageReportContentPayload): Promise<void> {
+  public async validateManageReportContent(
+    props: ValidateManageReportContentPayload
+  ): Promise<void> {
     const { communityAdmin, owners } = await this._groupAdapter.getCommunityAdmins([
       props.rootGroupId,
     ]);
