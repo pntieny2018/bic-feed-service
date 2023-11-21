@@ -372,7 +372,7 @@ describe('ContentRepository', () => {
       const mockContentId = v4();
       await _contentRepo.delete(mockContentId);
 
-      expect(_libContentRepo.delete).toBeCalledWith({ where: { id: mockContentId }, force: true });
+      expect(_libContentRepo.destroyContent).toBeCalledWith(mockContentId);
     });
   });
 

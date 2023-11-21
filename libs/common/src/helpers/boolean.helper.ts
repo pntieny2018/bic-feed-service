@@ -1,5 +1,5 @@
 export class BooleanHelper {
-  public static convertStringToBoolean(value): boolean | null {
+  public static convertStringToBoolean(value: unknown): boolean | null {
     {
       if (value === 'true') {
         return true;

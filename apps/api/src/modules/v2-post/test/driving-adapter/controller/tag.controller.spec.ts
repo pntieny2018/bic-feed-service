@@ -87,7 +87,7 @@ describe('TagController', () => {
         new CreateTagCommand({
           groupId: createTagDto.groupId,
           name: createTagDto.name,
-          userId: userMock.id,
+          user: userMock,
         })
       );
     });
@@ -115,7 +115,7 @@ describe('TagController', () => {
         new UpdateTagCommand({
           id: tagMock.id,
           name: updateTagDto.name,
-          userId: userMock.id,
+          actor: userMock,
         })
       );
     });

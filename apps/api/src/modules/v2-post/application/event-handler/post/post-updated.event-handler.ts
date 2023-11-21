@@ -1,8 +1,8 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
-import { KAFKA_TOPIC } from 'apps/api/src/common/constants';
 
+import { KAFKA_TOPIC } from '../../../../../common/constants';
 import {
   ISeriesDomainService,
   ITagDomainService,

@@ -1,10 +1,10 @@
 import { CONTENT_STATUS } from '@beincom/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { EntityHelper } from 'apps/api/src/common/helpers';
 import { uniq } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { EntityHelper } from '../../../../common/helpers';
 import {
   SeriesPublishedEvent,
   SeriesUpdatedEvent,

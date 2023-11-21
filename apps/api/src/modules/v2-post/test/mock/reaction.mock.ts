@@ -47,6 +47,7 @@ export function createMockPostReactionRecord(
     id: v4(),
     postId: v4(),
     reactionName: 'bic_check_mark',
+    target: CONTENT_TARGET.POST,
     createdBy: v4(),
     createdAt: new Date(),
     ...data,
