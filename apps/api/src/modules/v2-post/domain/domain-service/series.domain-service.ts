@@ -504,12 +504,12 @@ export class SeriesDomainService implements ISeriesDomainService {
       );
 
       if (sameChangeSeriesOwnerIds.length) {
-        skipNotifyForAddSeriesIds = sameChangeSeriesOwnerIds.filter((ownerId) =>
-          addSeries.some((series) => series.get('createdBy') === ownerId)
-        );
-        skipNotifyForRemoveSeriesIds = sameChangeSeriesOwnerIds.filter((ownerId) =>
-          removeSeries.some((series) => series.get('createdBy') === ownerId)
-        );
+        skipNotifyForAddSeriesIds = addSeries
+          .filter((series) => sameChangeSeriesOwnerIds.includes(series.get('createdBy')))
+          .map((series) => series.getId());
+        skipNotifyForRemoveSeriesIds = removeSeries
+          .filter((series) => sameChangeSeriesOwnerIds.includes(series.get('createdBy')))
+          .map((series) => series.getId());
       }
     }
 
