@@ -4,7 +4,14 @@ import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import {
+  ArticleHasBeenDeleted,
+  ArticleHasBeenPublished,
+  ArticleHasBeenUpdated,
   KAFKA_TOPIC,
+  PostHasBeenDeleted,
+  PostHasBeenPublished,
+  PostHasBeenUpdated,
+  PostVideoHasBeenFailed,
   SeriesHasBeenAddItem,
   SeriesHasBeenChangeItems,
   SeriesHasBeenDeleted,
@@ -24,9 +31,14 @@ import {
 } from '../dto';
 
 import {
-  ArticleNotificationPayload,
+  ArticleDeletedNotificationPayload,
+  ArticlePublishedNotificationPayload,
+  ArticleUpdatedNotificationPayload,
   IContentNotificationApplicationService,
-  PostNotificationPayload,
+  PostDeletedNotificationPayload,
+  PostPublishedNotificationPayload,
+  PostUpdatedNotificationPayload,
+  PostVideoProcessFailedNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
   SeriesDeletedNotificationPayload,
@@ -43,8 +55,8 @@ export class ContentNotificationApplicationService
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
-  public async sendPostNotification(payload: PostNotificationPayload): Promise<void> {
-    const { event, actor, post, oldPost, ignoreUserIds } = payload;
+  public async sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void> {
+    const { actor, post } = payload;
 
     const postObject = this._createPostActivityObject(post);
     const activity = this._createPostActivity(postObject);
@@ -53,23 +65,87 @@ export class ContentNotificationApplicationService
       key: post.id,
       value: {
         actor,
-        event,
+        event: PostHasBeenDeleted,
         data: activity,
         meta: {},
       },
     });
-    if (oldPost) {
-      const oldPostObject = this._createPostActivityObject(oldPost);
-      const oldActivity = this._createPostActivity(oldPostObject);
-      kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
-        ? { ...kafkaPayload.value.meta.post, oldData: oldActivity }
-        : { oldData: oldActivity };
-    }
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+  }
+
+  public async sendPostPublishedNotification(
+    payload: PostPublishedNotificationPayload
+  ): Promise<void> {
+    const { actor, post, ignoreUserIds } = payload;
+
+    const postObject = this._createPostActivityObject(post);
+    const activity = this._createPostActivity(postObject);
+
+    const kafkaPayload = new NotificationPayloadDto<PostActivityObjectDto>({
+      key: post.id,
+      value: {
+        actor,
+        event: PostHasBeenPublished,
+        data: activity,
+        meta: {},
+      },
+    });
+
     if (ignoreUserIds?.length) {
       kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
         ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
         : { ignoreUserIds: ignoreUserIds };
     }
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+  }
+
+  public async sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void> {
+    const { actor, post, oldPost, ignoreUserIds } = payload;
+
+    const postObject = this._createPostActivityObject(post);
+    const activity = this._createPostActivity(postObject);
+
+    const kafkaPayload = new NotificationPayloadDto<PostActivityObjectDto>({
+      key: post.id,
+      value: {
+        actor,
+        event: PostHasBeenUpdated,
+        data: activity,
+        meta: {},
+      },
+    });
+    const oldPostObject = this._createPostActivityObject(oldPost);
+    const oldActivity = this._createPostActivity(oldPostObject);
+    kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+      ? { ...kafkaPayload.value.meta.post, oldData: oldActivity }
+      : { oldData: oldActivity };
+
+    kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+      ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
+      : { ignoreUserIds: ignoreUserIds };
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+  }
+
+  public async sendPostVideoProcessFailedNotification(
+    payload: PostVideoProcessFailedNotificationPayload
+  ): Promise<void> {
+    const { actor, post } = payload;
+
+    const postObject = this._createPostActivityObject(post);
+    const activity = this._createPostActivity(postObject);
+
+    const kafkaPayload = new NotificationPayloadDto<PostActivityObjectDto>({
+      key: post.id,
+      value: {
+        actor,
+        event: PostVideoHasBeenFailed,
+        data: activity,
+        meta: {},
+      },
+    });
 
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
@@ -102,8 +178,10 @@ export class ContentNotificationApplicationService
     });
   }
 
-  public async sendArticleNotification(payload: ArticleNotificationPayload): Promise<void> {
-    const { event, actor, article, oldArticle, ignoreUserIds } = payload;
+  public async sendArticleUpdatedNotification(
+    payload: ArticleUpdatedNotificationPayload
+  ): Promise<void> {
+    const { actor, article, oldArticle, ignoreUserIds } = payload;
 
     const articleObject = this._createArticleActivityObject(article);
     const activity = this._createArticleActivity(articleObject);
@@ -112,23 +190,66 @@ export class ContentNotificationApplicationService
       key: article.id,
       value: {
         actor,
-        event,
+        event: ArticleHasBeenUpdated,
         data: activity,
         meta: {},
       },
     });
-    if (oldArticle) {
-      const oldArticleObject = this._createArticleActivityObject(oldArticle);
-      const oldActivity = this._createArticleActivity(oldArticleObject);
-      kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
-        ? { ...kafkaPayload.value.meta.post, oldData: oldActivity }
-        : { oldData: oldActivity };
-    }
-    if (ignoreUserIds?.length) {
-      kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
-        ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
-        : { ignoreUserIds: ignoreUserIds };
-    }
+    const oldArticleObject = this._createArticleActivityObject(oldArticle);
+    const oldActivity = this._createArticleActivity(oldArticleObject);
+    kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+      ? { ...kafkaPayload.value.meta.post, oldData: oldActivity }
+      : { oldData: oldActivity };
+
+    kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+      ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
+      : { ignoreUserIds: ignoreUserIds };
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+  }
+
+  public async sendArticleDeletedNotification(
+    payload: ArticleDeletedNotificationPayload
+  ): Promise<void> {
+    const { actor, article } = payload;
+
+    const articleObject = this._createArticleActivityObject(article);
+    const activity = this._createArticleActivity(articleObject);
+
+    const kafkaPayload = new NotificationPayloadDto<ArticleActivityObjectDto>({
+      key: article.id,
+      value: {
+        actor,
+        event: ArticleHasBeenDeleted,
+        data: activity,
+        meta: {},
+      },
+    });
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+  }
+
+  public async sendArticlePublishedNotification(
+    payload: ArticlePublishedNotificationPayload
+  ): Promise<void> {
+    const { actor, article, ignoreUserIds } = payload;
+
+    const articleObject = this._createArticleActivityObject(article);
+    const activity = this._createArticleActivity(articleObject);
+
+    const kafkaPayload = new NotificationPayloadDto<ArticleActivityObjectDto>({
+      key: article.id,
+      value: {
+        actor,
+        event: ArticleHasBeenPublished,
+        data: activity,
+        meta: {},
+      },
+    });
+
+    kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
+      ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
+      : { ignoreUserIds: ignoreUserIds };
 
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }

@@ -18,7 +18,7 @@ export class ReportMapper {
       updatedBy: model.updatedBy,
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
-      details: model.details.map((detail) => ({
+      details: (model.details || []).map((detail) => ({
         id: detail.id,
         reportId: detail.reportId,
         targetId: detail.targetId,

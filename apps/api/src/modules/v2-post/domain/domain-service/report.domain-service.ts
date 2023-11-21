@@ -7,7 +7,7 @@ import { uniq } from 'lodash';
 
 import { ReportReasonCountDto } from '../../application/dto';
 import { ReportHiddenEvent, ReportCreatedEvent } from '../event';
-import { ContentNotFoundException } from '../exception';
+import { ContentNotFoundException, ReportNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity } from '../model/content';
 import { ReportDetailAttributes, ReportEntity } from '../model/report';
 import {
@@ -240,5 +240,17 @@ export class ReportDomainService implements IReportDomainService {
     }
 
     this._event.publish(new ReportHiddenEvent({ report: reportEntity, authUser }));
+  }
+
+  public async getReportById(id: string): Promise<ReportEntity> {
+    const report = await this._reportRepo.findOne({
+      where: { id },
+    });
+
+    if (!report) {
+      throw new ReportNotFoundException();
+    }
+
+    return report;
   }
 }

@@ -1,15 +1,24 @@
 import { Inject } from '@nestjs/common';
 
 import {
-  ArticleNotificationPayload,
+  ArticleDeletedNotificationPayload,
+  ArticlePublishedNotificationPayload,
+  ArticleUpdatedNotificationPayload,
+  ChildCommentCreatedNotificationPayload,
+  ChildCommentUpdatedNotificationPayload,
   COMMENT_NOTIFICATION_APPLICATION_SERVICE,
-  CommentNotificationPayload,
+  CommentCreatedNotificationPayload,
+  CommentDeletedNotificationPayload,
+  CommentUpdatedNotificationPayload,
   CONTENT_NOTIFICATION_APPLICATION_SERVICE,
   ICommentNotificationApplicationService,
   IContentNotificationApplicationService,
   IReactionNotificationApplicationService,
   IReportNotificationApplicationService,
-  PostNotificationPayload,
+  PostDeletedNotificationPayload,
+  PostPublishedNotificationPayload,
+  PostUpdatedNotificationPayload,
+  PostVideoProcessFailedNotificationPayload,
   REACTION_NOTIFICATION_APPLICATION_SERVICE,
   ReactionCommentNotificationPayload,
   ReactionContentNotificationPayload,
@@ -37,12 +46,42 @@ export class NotificationAdapter implements INotificationAdapter {
     private readonly _reportNotiApp: IReportNotificationApplicationService
   ) {}
 
-  public async sendPostNotification(payload: PostNotificationPayload): Promise<void> {
-    return this._contentNotiApp.sendPostNotification(payload);
+  public async sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void> {
+    return this._contentNotiApp.sendPostDeletedNotification(payload);
   }
 
-  public async sendArticleNotification(payload: ArticleNotificationPayload): Promise<void> {
-    return this._contentNotiApp.sendArticleNotification(payload);
+  public async sendPostPublishedNotification(
+    payload: PostPublishedNotificationPayload
+  ): Promise<void> {
+    return this._contentNotiApp.sendPostPublishedNotification(payload);
+  }
+
+  public async sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void> {
+    return this._contentNotiApp.sendPostUpdatedNotification(payload);
+  }
+
+  public async sendPostVideoProcessFailedNotification(
+    payload: PostVideoProcessFailedNotificationPayload
+  ): Promise<void> {
+    return this._contentNotiApp.sendPostVideoProcessFailedNotification(payload);
+  }
+
+  public async sendArticleUpdatedNotification(
+    payload: ArticleUpdatedNotificationPayload
+  ): Promise<void> {
+    return this._contentNotiApp.sendArticleUpdatedNotification(payload);
+  }
+
+  public async sendArticlePublishedNotification(
+    payload: ArticlePublishedNotificationPayload
+  ): Promise<void> {
+    return this._contentNotiApp.sendArticlePublishedNotification(payload);
+  }
+
+  public async sendArticleDeletedNotification(
+    payload: ArticleDeletedNotificationPayload
+  ): Promise<void> {
+    return this._contentNotiApp.sendArticleDeletedNotification(payload);
   }
 
   public async sendSeriesPublishedNotification(
@@ -99,8 +138,34 @@ export class NotificationAdapter implements INotificationAdapter {
     return this._reactionNotiApp.sendReactionReplyCommentNotification(payload);
   }
 
-  public async sendCommentNotification(payload: CommentNotificationPayload): Promise<void> {
-    return this._commentNotiApp.sendCommentNotification(payload);
+  public async sendCommentCreatedNotification(
+    payload: CommentCreatedNotificationPayload
+  ): Promise<void> {
+    return this._commentNotiApp.sendCommentCreatedNotification(payload);
+  }
+
+  public async sendChildCommentCreatedNotification(
+    payload: ChildCommentCreatedNotificationPayload
+  ): Promise<void> {
+    return this._commentNotiApp.sendChildCommentCreatedNotification(payload);
+  }
+
+  public async sendCommentUpdatedNotification(
+    payload: CommentUpdatedNotificationPayload
+  ): Promise<void> {
+    return this._commentNotiApp.sendCommentUpdatedNotification(payload);
+  }
+
+  public async sendChildCommentUpdatedNotification(
+    payload: ChildCommentUpdatedNotificationPayload
+  ): Promise<void> {
+    return this._commentNotiApp.sendChildCommentUpdatedNotification(payload);
+  }
+
+  public async sendCommentDeletedNotification(
+    payload: CommentDeletedNotificationPayload
+  ): Promise<void> {
+    return this._commentNotiApp.sendCommentDeletedNotification(payload);
   }
 
   public async sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void> {

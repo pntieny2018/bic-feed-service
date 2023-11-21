@@ -747,4 +747,18 @@ export class ContentDomainService implements IContentDomainService {
 
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
   }
+
+  public async getReportContentById(id: string): Promise<PostEntity | ArticleEntity> {
+    const contentEntity = (await this._contentRepository.findContentById(id, {
+      mustIncludeGroup: true,
+      shouldIncludeLinkPreview: true,
+      shouldIncludeSeries: true,
+    })) as PostEntity | ArticleEntity;
+
+    if (!contentEntity || !contentEntity.isVisible()) {
+      throw new ContentNotFoundException();
+    }
+
+    return contentEntity;
+  }
 }

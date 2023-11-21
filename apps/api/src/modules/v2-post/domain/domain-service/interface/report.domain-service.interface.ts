@@ -29,6 +29,7 @@ export interface IReportDomainService {
   getGroupIdsOfTargetReported(report: ReportEntity): Promise<string[]>;
   ignoreReport(input: ProcessReportProps): Promise<void>;
   hideReport(input: ProcessReportProps): Promise<void>;
+  getReportById(id: string): Promise<ReportEntity>;
 }
 
 export const REPORT_DOMAIN_SERVICE_TOKEN = 'REPORT_DOMAIN_SERVICE_TOKEN';
