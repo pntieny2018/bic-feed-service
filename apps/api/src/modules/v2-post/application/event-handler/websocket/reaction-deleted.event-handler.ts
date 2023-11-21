@@ -28,7 +28,7 @@ export class WsReactionDeletedEventHandler implements IEventHandler<ReactionDele
   ) {}
 
   public async handle(event: ReactionDeletedEvent): Promise<void> {
-    const { reactionEntity } = event;
+    const { reactionEntity } = event.payload;
 
     const targetId = reactionEntity.get('targetId');
     const reactionBinding = await this._reactionBinding.binding(reactionEntity);
