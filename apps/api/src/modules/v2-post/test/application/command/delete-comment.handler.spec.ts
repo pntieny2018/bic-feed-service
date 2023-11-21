@@ -1,109 +1,43 @@
-import { createMock } from '@golevelup/ts-jest';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Test, TestingModule } from '@nestjs/testing';
-import { I18nContext } from 'nestjs-i18n';
+/* eslint-disable @typescript-eslint/unbound-method */
+import { TestBed } from '@automock/jest';
 import { v4 } from 'uuid';
 
-import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter';
-import { CommentHasBeenDeletedEvent } from '../../../../../events/comment';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserApplicationService,
-} from '../../../../v2-user/application';
-import { ContentBinding } from '../../../application/binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../application/binding/binding-post/content.interface';
 import {
   DeleteCommentCommand,
   DeleteCommentCommandPayload,
   DeleteCommentHandler,
 } from '../../../application/command/comment';
-import { CommentDomainService } from '../../../domain/domain-service/comment.domain-service';
 import {
   COMMENT_DOMAIN_SERVICE_TOKEN,
+  CONTENT_DOMAIN_SERVICE_TOKEN,
   ICommentDomainService,
+  IContentDomainService,
 } from '../../../domain/domain-service/interface';
 import {
-  CommentNotFoundException,
   ContentAccessDeniedException,
-  ContentNotFoundException,
+  ContentNoCRUDPermissionException,
 } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/content';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
-  COMMENT_REPOSITORY_TOKEN,
-  CONTENT_REPOSITORY_TOKEN,
-  ICommentRepository,
-  IContentRepository,
-} from '../../../domain/repositoty-interface';
-import { ContentValidator } from '../../../domain/validator/content.validator';
-import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
-import { CommentRepository } from '../../../driven-adapter/repository/comment.repository';
-import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
-import { createMockCommentEntity } from '../../mock/comment.mock';
-import { postProps } from '../../mock/post.props.mock';
-import { createMockUserDto } from '../../mock/user.mock';
-
-const commentEntityMock = createMockCommentEntity();
-const userMock = createMockUserDto();
+  MockClass,
+  createMockCommentEntity,
+  createMockPostEntity,
+  createMockUserDto,
+} from '../../mock';
 
 describe('DeleteCommentHandler', () => {
   let handler: DeleteCommentHandler;
-  let repo: IContentRepository;
-  let domainService: ICommentDomainService;
-  let eventEmitter: InternalEventEmitterService;
-  let userApplicationService: IUserApplicationService;
-  let commentRepo: ICommentRepository;
+  let commentDomain: MockClass<ICommentDomainService>;
+  let contentDomain: MockClass<IContentDomainService>;
+  let contentValidator: MockClass<IContentValidator>;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DeleteCommentHandler,
-        EventEmitter2,
-        InternalEventEmitterService,
-        {
-          provide: CONTENT_REPOSITORY_TOKEN,
-          useValue: createMock<ContentRepository>(),
-        },
-        {
-          provide: CONTENT_VALIDATOR_TOKEN,
-          useValue: createMock<ContentValidator>(),
-        },
-        {
-          provide: COMMENT_DOMAIN_SERVICE_TOKEN,
-          useValue: createMock<CommentDomainService>(),
-        },
-        {
-          provide: USER_APPLICATION_TOKEN,
-          useValue: createMock<UserApplicationService>(),
-        },
-        {
-          provide: CONTENT_BINDING_TOKEN,
-          useValue: createMock<ContentBinding>(),
-        },
-        {
-          provide: COMMENT_REPOSITORY_TOKEN,
-          useValue: createMock<CommentRepository>(),
-        },
-      ],
-    }).compile();
+    const { unit, unitRef } = TestBed.create(DeleteCommentHandler).compile();
 
-    handler = module.get<DeleteCommentHandler>(DeleteCommentHandler);
-    repo = module.get<ContentRepository>(CONTENT_REPOSITORY_TOKEN);
-    domainService = module.get<CommentDomainService>(COMMENT_DOMAIN_SERVICE_TOKEN);
-    userApplicationService = module.get<UserApplicationService>(USER_APPLICATION_TOKEN);
-    eventEmitter = module.get<InternalEventEmitterService>(InternalEventEmitterService);
-    commentRepo = module.get<CommentRepository>(COMMENT_REPOSITORY_TOKEN);
-
-    jest.spyOn(I18nContext, 'current').mockImplementation(
-      () =>
-        ({
-          t: () => {},
-        } as any)
-    );
-
-    jest.spyOn(eventEmitter, 'emit').mockImplementation(() => ({
-      t: () => {},
-    }));
+    handler = unit;
+    commentDomain = unitRef.get(COMMENT_DOMAIN_SERVICE_TOKEN);
+    contentDomain = unitRef.get(CONTENT_DOMAIN_SERVICE_TOKEN);
+    contentValidator = unitRef.get(CONTENT_VALIDATOR_TOKEN);
   });
 
   afterEach(() => {
@@ -111,88 +45,70 @@ describe('DeleteCommentHandler', () => {
   });
 
   describe('execute', () => {
+    const mockActor = createMockUserDto();
+    const mockCommentId = v4();
+
+    const mockPayload: DeleteCommentCommandPayload = {
+      commentId: mockCommentId,
+      actor: mockActor,
+    };
+    const mockCommand = new DeleteCommentCommand(mockPayload);
+
     it('Should delete comment successfully', async () => {
-      const payload: DeleteCommentCommandPayload = {
-        id: commentEntityMock.get('id'),
-        actor: userMock,
-      };
-      const command = new DeleteCommentCommand(payload);
-      const postEntity = new PostEntity({ ...postProps, id: commentEntityMock.get('postId') });
-      const spyCommentRepo = jest
-        .spyOn(commentRepo, 'findOne')
-        .mockResolvedValue(commentEntityMock);
-      const spyDeleteComment = jest.spyOn(commentRepo, 'destroyComment').mockReturnThis();
-      const spyRepo = jest.spyOn(repo, 'findOne').mockResolvedValue(postEntity);
-      await handler.execute(command);
-      expect(spyRepo).toBeCalledWith({
-        where: { id: commentEntityMock.get('postId'), groupArchived: false, isHidden: false },
-        include: {
-          mustIncludeGroup: true,
-        },
+      const mockCommentEntity = createMockCommentEntity({
+        id: mockCommentId,
+        createdBy: mockActor.id,
       });
-      expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
-      expect(spyDeleteComment).toBeCalledWith(commentEntityMock.get('id'));
-      expect(eventEmitter.emit).toBeCalledWith(
-        new CommentHasBeenDeletedEvent({
-          actor: payload.actor,
-          comment: commentEntityMock,
-        })
-      );
+      const mockContentEntity = createMockPostEntity({ id: mockCommentEntity.get('postId') });
+
+      commentDomain.getVisibleComment.mockResolvedValue(mockCommentEntity);
+      contentDomain.getVisibleContent.mockResolvedValue(mockContentEntity);
+
+      await handler.execute(mockCommand);
+
+      expect(commentDomain.getVisibleComment).toBeCalledWith(mockCommentId);
+      expect(contentDomain.getVisibleContent).toBeCalledWith(mockCommentEntity.get('postId'));
+      expect(contentValidator.checkCanReadContent).toBeCalledWith(mockContentEntity, mockActor);
+      expect(commentDomain.delete).toBeCalledWith(mockCommentEntity, mockActor);
     });
 
-    it('Should throw comment not found', async () => {
-      const payload: DeleteCommentCommandPayload = {
-        id: commentEntityMock.get('id'),
-        actor: userMock,
-      };
-      const command = new DeleteCommentCommand(payload);
-      const spyCommentRepo = jest.spyOn(commentRepo, 'findOne').mockResolvedValue(null);
+    it('Should throw access denined', async () => {
+      const mockCommentEntity = createMockCommentEntity({ id: mockCommentId });
+
+      commentDomain.getVisibleComment.mockResolvedValue(mockCommentEntity);
+
       try {
-        await handler.execute(command);
+        await handler.execute(mockCommand);
       } catch (error) {
-        expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
-        expect(error).toBeInstanceOf(CommentNotFoundException);
+        expect(error).toBeInstanceOf(ContentAccessDeniedException);
+        expect(commentDomain.getVisibleComment).toBeCalledWith(mockCommentId);
+        expect(contentDomain.getVisibleContent).not.toBeCalled();
+        expect(contentValidator.checkCanReadContent).not.toBeCalled();
+        expect(commentDomain.delete).not.toBeCalled();
       }
     });
 
     it('Should throw content no CRUD permission', async () => {
-      const payload: DeleteCommentCommandPayload = {
-        id: commentEntityMock.get('id'),
-        actor: { ...userMock, id: v4() },
-      };
-      const command = new DeleteCommentCommand(payload);
-      const spyCommentRepo = jest
-        .spyOn(commentRepo, 'findOne')
-        .mockResolvedValue(commentEntityMock);
-      try {
-        await handler.execute(command);
-      } catch (error) {
-        expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
-        expect(error).toBeInstanceOf(ContentAccessDeniedException);
-      }
-    });
+      const mockCommentEntity = createMockCommentEntity({
+        id: mockCommentId,
+        createdBy: mockActor.id,
+      });
+      const mockContentEntity = createMockPostEntity({ id: mockCommentEntity.get('postId') });
 
-    it('Should throw exception not found content', async () => {
-      const payload: DeleteCommentCommandPayload = {
-        id: commentEntityMock.get('id'),
-        actor: userMock,
-      };
-      const command = new DeleteCommentCommand(payload);
-      const spyCommentRepo = jest
-        .spyOn(commentRepo, 'findOne')
-        .mockResolvedValue(commentEntityMock);
-      const spyRepo = jest.spyOn(repo, 'findOne').mockResolvedValue(null);
+      commentDomain.getVisibleComment.mockResolvedValue(mockCommentEntity);
+      contentDomain.getVisibleContent.mockResolvedValue(mockContentEntity);
+      contentValidator.checkCanReadContent.mockRejectedValue(
+        new ContentNoCRUDPermissionException()
+      );
+
       try {
-        await handler.execute(command);
+        await handler.execute(mockCommand);
       } catch (error) {
-        expect(spyRepo).toBeCalledWith({
-          where: { id: commentEntityMock.get('postId'), groupArchived: false, isHidden: false },
-          include: {
-            mustIncludeGroup: true,
-          },
-        });
-        expect(spyCommentRepo).toBeCalledWith({ id: commentEntityMock.get('id') });
-        expect(error).toBeInstanceOf(ContentNotFoundException);
+        expect(error).toBeInstanceOf(ContentNoCRUDPermissionException);
+        expect(commentDomain.getVisibleComment).toBeCalledWith(mockCommentId);
+        expect(contentDomain.getVisibleContent).toBeCalledWith(mockCommentEntity.get('postId'));
+        expect(contentValidator.checkCanReadContent).toBeCalledWith(mockContentEntity, mockActor);
+        expect(commentDomain.delete).not.toBeCalled();
       }
     });
   });

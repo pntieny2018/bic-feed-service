@@ -25,6 +25,7 @@ import {
   DeleteCommentCommandPayload,
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
+  ReportCommentCommand,
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
 } from '../../application/command/comment';
@@ -39,6 +40,7 @@ import {
 } from '../../application/query/comment';
 import {
   CreateCommentRequestDto,
+  CreateReportDto,
   GetCommentsAroundIdDto,
   GetListCommentsDto,
   ReplyCommentRequestDto,
@@ -215,6 +217,28 @@ export class CommentController {
         commentId,
         actor: user,
       } as DeleteCommentCommandPayload)
+    );
+  }
+
+  @ApiOperation({ summary: 'Report comment' })
+  @ApiOkResponse({ description: 'Reported comment successfully' })
+  @ResponseMessages({
+    success: 'Reported comment successfully',
+    error: 'Reported comment failed',
+  })
+  @Post(ROUTES.COMMENT.CREATE_REPORT.PATH)
+  @Version(ROUTES.COMMENT.CREATE_REPORT.VERSIONS)
+  public async reportComment(
+    @AuthUser() authUser: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() input: CreateReportDto
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new ReportCommentCommand({
+        authUser,
+        commentId,
+        ...input,
+      })
     );
   }
 }

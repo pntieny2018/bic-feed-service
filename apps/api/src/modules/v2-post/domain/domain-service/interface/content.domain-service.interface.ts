@@ -126,5 +126,7 @@ export interface IContentDomainService {
   updatePinnedContent(props: PinContentProps): Promise<void>;
   getAudiences(props: GetAudiencesProps): Promise<GroupAudience[]>;
   saveContent(contentId: string, authUser: UserDto): Promise<void>;
+  unsaveContent(contentId: string, userId: string): Promise<void>;
+  getReportContentById(id: string): Promise<PostEntity | ArticleEntity>;
 }
 export const CONTENT_DOMAIN_SERVICE_TOKEN = 'CONTENT_DOMAIN_SERVICE_TOKEN';

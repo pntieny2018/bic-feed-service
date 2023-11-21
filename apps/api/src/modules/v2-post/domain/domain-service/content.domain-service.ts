@@ -431,6 +431,7 @@ export class ContentDomainService implements IContentDomainService {
           mustIncludeSaved: {
             userId: authUserId,
           },
+          mustIncludeGroup: true,
         },
         orderOptions: {
           isSavedDateByDesc: true,
@@ -717,6 +718,16 @@ export class ContentDomainService implements IContentDomainService {
     return this._contentRepository.saveContent(authUser.id, contentId);
   }
 
+  public async unsaveContent(contentId: string, userId: string): Promise<void> {
+    const content = await this._contentRepository.findContentByIdInActiveGroup(contentId);
+
+    if (!content || !content.isPublished()) {
+      throw new ContentNotFoundException();
+    }
+
+    return this._contentRepository.unSaveContent(userId, contentId);
+  }
+
   public async getDraftContentByIds(
     ids: string[]
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
@@ -735,5 +746,19 @@ export class ContentDomainService implements IContentDomainService {
     });
 
     return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+  }
+
+  public async getReportContentById(id: string): Promise<PostEntity | ArticleEntity> {
+    const contentEntity = (await this._contentRepository.findContentById(id, {
+      mustIncludeGroup: true,
+      shouldIncludeLinkPreview: true,
+      shouldIncludeSeries: true,
+    })) as PostEntity | ArticleEntity;
+
+    if (!contentEntity || !contentEntity.isVisible()) {
+      throw new ContentNotFoundException();
+    }
+
+    return contentEntity;
   }
 }

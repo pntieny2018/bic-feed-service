@@ -1,6 +1,4 @@
 export * from './category.model';
-export * from './comment-edited-history.model';
-export * from './comment-media.model';
 export * from './comment-reaction.model';
 export * from './comment.model';
 export * from './failed-process-post.model';
@@ -11,9 +9,7 @@ export * from './media.model';
 export * from './mention.model';
 export * from './model.ctors';
 export * from './post-category.model';
-export * from './post-edited-history.model';
 export * from './post-group.model';
-export * from './post-media.model';
 export * from './post-reaction.model';
 export * from './post-series.model';
 export * from './post-tag.model';

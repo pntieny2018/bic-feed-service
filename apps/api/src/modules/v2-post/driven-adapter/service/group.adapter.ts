@@ -65,4 +65,28 @@ export class GroupAdapter implements IGroupAdapter {
 
     return ArrayHelper.arrayUnique(adminIds);
   }
+
+  public async getGroupAdminMap(groupIds: string[]): Promise<{ [groupId: string]: string[] }> {
+    const groupMembers = await this._groupService.getUserRoleInGroups(groupIds, [
+      ROLE_TYPE.GROUP_ADMIN,
+    ]);
+    const groupAdmins = groupMembers.groupAdmin;
+
+    return groupAdmins;
+  }
+
+  public async getCommunityAdmins(groupIds: string[]): Promise<{
+    communityAdmin: Record<string, string[]>;
+    owners: Record<string, string[]>;
+  }> {
+    const communityRoles = await this._groupService.getUserRoleInGroups(groupIds, [
+      ROLE_TYPE.COMMUNITY_ADMIN,
+      ROLE_TYPE.OWNER,
+    ]);
+
+    return {
+      communityAdmin: communityRoles.communityAdmin,
+      owners: communityRoles.owner,
+    };
+  }
 }

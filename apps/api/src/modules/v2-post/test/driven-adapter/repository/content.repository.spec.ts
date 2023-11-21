@@ -12,7 +12,7 @@ import {
   LibPostSeriesRepository,
   LibPostTagRepository,
   LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
+  LibUserReportContentDetailRepository,
   LibUserSavePostRepository,
   LibUserSeenPostRepository,
 } from '@libs/database/postgres/repository';
@@ -56,7 +56,7 @@ describe('ContentRepository', () => {
   let _libPostCategoryRepo: jest.Mocked<LibPostCategoryRepository>;
   let _libUserSeenPostRepo: jest.Mocked<LibUserSeenPostRepository>;
   let _libUserMarkReadPostRepo: jest.Mocked<LibUserMarkReadPostRepository>;
-  let _libUserReportContentRepo: jest.Mocked<LibUserReportContentRepository>;
+  let _libUserReportContentRepo: jest.Mocked<LibUserReportContentDetailRepository>;
   let _libUserSavePostRepo: jest.Mocked<LibUserSavePostRepository>;
   let _contentMapper: jest.Mocked<ContentMapper>;
 
@@ -82,7 +82,7 @@ describe('ContentRepository', () => {
     _libPostCategoryRepo = unitRef.get(LibPostCategoryRepository);
     _libUserSeenPostRepo = unitRef.get(LibUserSeenPostRepository);
     _libUserMarkReadPostRepo = unitRef.get(LibUserMarkReadPostRepository);
-    _libUserReportContentRepo = unitRef.get(LibUserReportContentRepository);
+    _libUserReportContentRepo = unitRef.get(LibUserReportContentDetailRepository);
     _libUserSavePostRepo = unitRef.get(LibUserSavePostRepository);
     _contentMapper = unitRef.get(ContentMapper);
 
@@ -372,7 +372,7 @@ describe('ContentRepository', () => {
       const mockContentId = v4();
       await _contentRepo.delete(mockContentId);
 
-      expect(_libContentRepo.delete).toBeCalledWith({ where: { id: mockContentId }, force: true });
+      expect(_libContentRepo.destroyContent).toBeCalledWith(mockContentId);
     });
   });
 

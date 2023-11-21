@@ -25,6 +25,7 @@ export class PostReactionMapper {
       id: entity.get('id'),
       postId: entity.get('targetId'),
       reactionName: entity.get('reactionName'),
+      target: entity.get('target'),
       createdAt: entity.get('createdAt'),
       createdBy: entity.get('createdBy'),
     };
