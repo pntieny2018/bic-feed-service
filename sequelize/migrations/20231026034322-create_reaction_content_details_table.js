@@ -20,6 +20,7 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
           references: { model: 'posts', key: 'id' },
+          onDelete: 'CASCADE',
         },
         count: {
           type: Sequelize.INTEGER(),
