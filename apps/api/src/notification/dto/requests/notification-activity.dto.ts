@@ -32,7 +32,6 @@ export class ReportObject {
   public targetType: string;
   public details: Record<string, any>[];
   public status: string;
-  public actorsReported: UserDto[];
 }
 
 export class SettingObject {

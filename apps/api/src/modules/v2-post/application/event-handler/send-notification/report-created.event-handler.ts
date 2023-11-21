@@ -15,7 +15,6 @@ import {
   NOTIFICATION_ADAPTER,
 } from '../../../domain/service-adapter-interface';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../../binding';
-import { ReportDetailDto } from '../../dto';
 
 @EventsHandlerAndLog(ReportCreatedEvent)
 export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreatedEvent> {
@@ -39,15 +38,6 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
     const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
 
     const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(report);
-    const groupIdsOfTargetReported = await this._reportDomain.getGroupIdsOfTargetReported(report);
-
-    reportDto.details = groupIdsOfTargetReported.map((groupId) => {
-      return new ReportDetailDto({
-        targetId: reportDto.targetId,
-        targetType: reportDto.targetType,
-        groupId,
-      });
-    });
 
     await this._notiAdapter.sendReportCreatedNotification({
       report: reportDto,
