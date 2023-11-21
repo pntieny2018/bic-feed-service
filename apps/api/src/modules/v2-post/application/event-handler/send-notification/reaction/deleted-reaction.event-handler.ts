@@ -4,21 +4,21 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
-import { ReactionCreatedEvent } from '../../../domain/event';
-import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
-import { ContentEntity } from '../../../domain/model/content';
+import { ReactionDeletedEvent } from '../../../../domain/event';
+import { CommentNotFoundException, ContentNotFoundException } from '../../../../domain/exception';
+import { ContentEntity } from '../../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
-} from '../../../domain/repositoty-interface';
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   IUserAdapter,
   NOTIFICATION_ADAPTER,
   USER_ADAPTER,
-} from '../../../domain/service-adapter-interface';
+} from '../../../../domain/service-adapter-interface';
 import {
   COMMENT_BINDING_TOKEN,
   CONTENT_BINDING_TOKEN,
@@ -26,11 +26,11 @@ import {
   IContentBinding,
   IReactionBinding,
   REACTION_BINDING_TOKEN,
-} from '../../binding';
-import { ArticleDto, CommentExtendedDto, PostDto } from '../../dto';
+} from '../../../binding';
+import { ArticleDto, CommentExtendedDto, PostDto } from '../../../dto';
 
-@EventsHandlerAndLog(ReactionCreatedEvent)
-export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCreatedEvent> {
+@EventsHandlerAndLog(ReactionDeletedEvent)
+export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDeletedEvent> {
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
@@ -48,7 +48,7 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
     private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: ReactionCreatedEvent): Promise<void> {
+  public async handle(event: ReactionDeletedEvent): Promise<void> {
     const { reactionEntity } = event.payload;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));

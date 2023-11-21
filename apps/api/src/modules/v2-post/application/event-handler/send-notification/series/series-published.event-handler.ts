@@ -2,14 +2,14 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesPublishedEvent } from '../../../domain/event';
+import { SeriesPublishedEvent } from '../../../../domain/event';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(SeriesPublishedEvent)
 export class NotiSeriesPublishedEventHandler implements IEventHandler<SeriesPublishedEvent> {

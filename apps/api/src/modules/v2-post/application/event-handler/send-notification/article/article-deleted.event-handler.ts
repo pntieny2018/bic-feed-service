@@ -2,12 +2,12 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { ArticleDeletedEvent } from '../../../domain/event';
+import { ArticleDeletedEvent } from '../../../../domain/event';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(ArticleDeletedEvent)
 export class NotiArticleDeletedEventHandler implements IEventHandler<ArticleDeletedEvent> {
@@ -26,8 +26,7 @@ export class NotiArticleDeletedEventHandler implements IEventHandler<ArticleDele
       authUser,
     });
 
-    await this._notiAdapter.sendArticleNotification({
-      event: event.getEventName(),
+    await this._notiAdapter.sendArticleDeletedNotification({
       actor: authUser,
       article: articleDto,
     });

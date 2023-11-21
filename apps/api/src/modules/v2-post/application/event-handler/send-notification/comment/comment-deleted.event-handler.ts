@@ -2,21 +2,24 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { CommentNotificationPayload } from '../../../../v2-notification/application/application-services/interface';
-import { CommentDeletedEvent } from '../../../domain/event/comment.event';
-import { ContentNotFoundException } from '../../../domain/exception';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { CommentDeletedNotificationPayload } from '../../../../../v2-notification/application/application-services/interface';
+import { CommentDeletedEvent } from '../../../../domain/event';
+import { ContentNotFoundException } from '../../../../domain/exception';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
+} from '../../../../domain/service-adapter-interface';
 import {
   COMMENT_BINDING_TOKEN,
   CONTENT_BINDING_TOKEN,
   ICommentBinding,
   IContentBinding,
-} from '../../binding';
-import { ArticleDto, PostDto } from '../../dto';
+} from '../../../binding';
+import { ArticleDto, PostDto } from '../../../dto';
 
 @EventsHandlerAndLog(CommentDeletedEvent)
 export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDeletedEvent> {
@@ -50,13 +53,12 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
       | PostDto
       | ArticleDto;
 
-    const payload: CommentNotificationPayload = {
-      event: CommentDeletedEvent.event,
+    const payload: CommentDeletedNotificationPayload = {
       actor: authUser,
       comment: commentDto,
       content: contentDto,
     };
 
-    await this._notiAdapter.sendCommentNotification(payload);
+    await this._notiAdapter.sendCommentDeletedNotification(payload);
   }
 }

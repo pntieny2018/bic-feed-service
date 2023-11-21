@@ -2,13 +2,13 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject, Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { SeriesSameOwnerChangedEvent } from '../../../domain/event';
-import { PostEntity } from '../../../domain/model/content';
+import { SeriesSameOwnerChangedEvent } from '../../../../domain/event';
+import { PostEntity } from '../../../../domain/model/content';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding/binding-post';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding/binding-post';
 
 @EventsHandlerAndLog(SeriesSameOwnerChangedEvent)
 export class NotiSeriesSameOwnerChangedEventHandler

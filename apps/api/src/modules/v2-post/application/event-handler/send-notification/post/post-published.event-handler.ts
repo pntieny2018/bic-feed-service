@@ -3,16 +3,19 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { KAFKA_TOPIC } from '../../../../../common/constants';
-import { PostPublishedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { KAFKA_TOPIC } from '../../../../../../common/constants';
+import { PostPublishedEvent } from '../../../../domain/event';
+import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../../domain/infra-adapter-interface';
+import { PostEntity, SeriesEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(PostPublishedEvent)
 export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishedEvent> {
@@ -54,8 +57,7 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
       })) as SeriesEntity[];
       const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
-      await this._notiAdapter.sendPostNotification({
-        event: event.getEventName(),
+      await this._notiAdapter.sendPostPublishedNotification({
         actor: authUser,
         post: postDto,
         ignoreUserIds: seriesActorIds,

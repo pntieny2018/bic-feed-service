@@ -3,14 +3,17 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { PostUpdatedEvent } from '../../../domain/event';
-import { PostEntity, SeriesEntity } from '../../../domain/model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import { PostUpdatedEvent } from '../../../../domain/event';
+import { PostEntity, SeriesEntity } from '../../../../domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
   NOTIFICATION_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../binding';
+} from '../../../../domain/service-adapter-interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 
 @EventsHandlerAndLog(PostUpdatedEvent)
 export class NotiPostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> {
@@ -59,8 +62,7 @@ export class NotiPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
 
     const seriesActorIds = (seriesEntities || []).map((series) => series.get('createdBy'));
 
-    await this._notiAdapter.sendPostNotification({
-      event: event.getEventName(),
+    await this._notiAdapter.sendPostUpdatedNotification({
       actor: authUser,
       post: postDto,
       oldPost: oldPostDto,

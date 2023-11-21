@@ -5,14 +5,14 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { ReportCreatedEvent } from '../../../domain/event';
-import { ArticleEntity, PostEntity } from '../../../domain/model/content';
+import { ReportCreatedEvent } from '../../../../domain/event';
+import { ArticleEntity, PostEntity } from '../../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
-} from '../../../domain/repositoty-interface';
+} from '../../../../domain/repositoty-interface';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -20,9 +20,9 @@ import {
   IUserAdapter,
   NOTIFICATION_ADAPTER,
   USER_ADAPTER,
-} from '../../../domain/service-adapter-interface';
-import { IReportBinding, REPORT_BINDING_TOKEN } from '../../binding';
-import { ReportDetailDto } from '../../dto';
+} from '../../../../domain/service-adapter-interface';
+import { IReportBinding, REPORT_BINDING_TOKEN } from '../../../binding';
+import { ReportDetailDto } from '../../../dto';
 
 @EventsHandlerAndLog(ReportCreatedEvent)
 export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreatedEvent> {
