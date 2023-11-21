@@ -1,10 +1,10 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { I18nContext } from 'nestjs-i18n';
 import { v4 } from 'uuid';
 
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
+import { createMockUserDto } from '../../../../v2-post/test/mock';
 import { IRecentSearchDomainService } from '../../../domain/domain-service/interface';
 import { RecentSearchDomainService } from '../../../domain/domain-service/recent-search.domain-service';
 import {

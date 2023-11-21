@@ -1,6 +1,10 @@
 import { ORDER } from '@beincom/constants';
-import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { ReportContentAttribute } from '@libs/database/postgres/model';
+import { CursorPaginationResult, getDatabaseConfig } from '@libs/database/postgres/common';
+import {
+  REPORT_STATUS,
+  ReportContentAttribute,
+  ReportContentDetailModel,
+} from '@libs/database/postgres/model';
 import {
   LibUserReportContentDetailRepository,
   LibUserReportContentRepository,
@@ -14,7 +18,8 @@ import {
   GetPaginationReportProps,
   FindOneReportProps,
   IReportRepository,
-} from '../../domain/repositoty-interface/report.repository.interface';
+  GetListReportsProps,
+} from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
 @Injectable()
@@ -156,5 +161,43 @@ export class ReportRepository implements IReportRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async getListReports(
+    props: GetListReportsProps
+  ): Promise<CursorPaginationResult<ReportEntity>> {
+    const { groupId, limit, before, after } = props;
+    const { schema } = getDatabaseConfig();
+
+    const { rows, meta } = await this._libReportRepo.cursorPaginate(
+      {
+        where: {
+          status: REPORT_STATUS.CREATED,
+        },
+        whereRaw: `id IN (
+          SELECT report_id FROM ${schema}.${ReportContentDetailModel.tableName} where group_id = '${groupId}'
+        )`,
+        include: [
+          {
+            model: ReportContentDetailModel,
+            as: 'details',
+            required: true,
+            where: {
+              groupId,
+            },
+          },
+        ],
+      },
+      {
+        limit,
+        before,
+        after,
+      }
+    );
+
+    return {
+      rows: rows.map((report) => this._reportMapper.toDomain(report.toJSON())),
+      meta,
+    };
   }
 }

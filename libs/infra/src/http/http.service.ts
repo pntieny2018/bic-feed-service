@@ -1,20 +1,27 @@
-import { HEADER_REQ_ID, HEADER_VERSION_KEY, REGEX_UID } from '@libs/common/constants';
+import {
+  HEADER_REQ_ID,
+  HEADER_VERSION_KEY,
+  IS_ENABLE_LOG,
+  REGEX_UID,
+} from '@libs/common/constants';
 import {
   IHttpServiceResponse,
   IHttpService,
   IHttpServiceRequestOptions,
   IHttpServiceOptions,
 } from '@libs/infra/http';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import axios, { AxiosResponse } from 'axios';
 import camelcaseKeys from 'camelcase-keys';
 import { merge } from 'lodash';
 import { ClsServiceManager } from 'nestjs-cls';
 import { v4 } from 'uuid';
 
+import { CustomLogger } from '../log';
+
 @Injectable()
 export class HttpService implements IHttpService {
-  private readonly _logger = new Logger(HttpService.name);
+  private readonly _logger = new CustomLogger(HttpService.name, IS_ENABLE_LOG);
   public constructor(private readonly options: IHttpServiceOptions) {
     this.options.headers = this.options.headers || {};
 

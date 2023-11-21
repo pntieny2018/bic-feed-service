@@ -4,6 +4,7 @@ import {
   CONTENT_TARGET,
 } from '@beincom/constants';
 import { REPORT_SCOPE, REPORT_STATUS } from '@libs/database/postgres/model';
+import { BaseUserDto } from '@libs/service/user';
 
 import { ArticleDto } from './article.dto';
 import { CommentBaseDto } from './comment.dto';
@@ -21,6 +22,16 @@ export class ReportDto {
   public details?: ReportDetailDto[];
 
   public constructor(data: Partial<ReportDto>) {
+    Object.assign(this, data);
+  }
+}
+
+export class ReportForManagerDto extends ReportDto {
+  public content: string;
+  public targetActor: BaseUserDto;
+
+  public constructor(data: Partial<ReportForManagerDto>) {
+    super(data);
     Object.assign(this, data);
   }
 }
@@ -52,4 +63,13 @@ export class ReportReasonCountDto {
 export class ReportTargetDto {
   public target: PostDto | ArticleDto | CommentBaseDto;
   public reasonCounts: ReportReasonCountDto[];
+}
+
+export class GetReportContentDetailsDto {
+  public content?: PostDto | ArticleDto;
+  public comment?: CommentBaseDto;
+
+  public constructor(data: Partial<GetReportContentDetailsDto>) {
+    Object.assign(this, data);
+  }
 }

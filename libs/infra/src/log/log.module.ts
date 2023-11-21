@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable no-console */
 import { HEADER_REQ_ID, HEADER_VERSION_KEY, IS_LOCAL } from '@libs/common/constants';
 import { Global, Module } from '@nestjs/common';
@@ -11,14 +12,13 @@ import { Logger, LoggerModule } from 'nestjs-pino';
     LoggerModule.forRootAsync({
       inject: [ClsService],
       useFactory: (cls: ClsService<{ requestId: string }>) => {
-        let reqId;
         return {
           forRoutes: ['*'],
           pinoHttp: {
             level: 'debug',
+            autoLogging: false,
             serializers: {
               req: (req: Request): any => {
-                reqId = req.headers[HEADER_REQ_ID] ?? cls?.getId();
                 return {
                   method: req.method,
                   url: req.url,
@@ -26,7 +26,7 @@ import { Logger, LoggerModule } from 'nestjs-pino';
                   params: req.params,
                   body: req.body,
                   headers: {
-                    [HEADER_REQ_ID]: reqId,
+                    [HEADER_REQ_ID]: req.headers[HEADER_REQ_ID] ?? cls?.getId(),
                     [HEADER_VERSION_KEY]: req.headers[HEADER_VERSION_KEY],
                   },
                 };
@@ -51,7 +51,7 @@ import { Logger, LoggerModule } from 'nestjs-pino';
                   context,
                   error: loggedError,
                   object: loggedObject,
-                  request_id: reqId,
+                  request_id: cls?.getId(),
                   response_time: responseTime ? `+${responseTime}ms` : undefined,
                 };
 

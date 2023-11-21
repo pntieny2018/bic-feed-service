@@ -593,69 +593,69 @@ export class ReportContentService {
       });
 
       await trx.commit();
-
-      let content = '';
-      let post: IPost = null;
-      switch (existedReport.targetType) {
-        case TargetType.COMMENT:
-          const comment = await this._commentService.findComment(existedReport.targetId);
-          post = await this._postService.findPost({
-            postId: comment.postId,
-          });
-          content = comment.content;
-          break;
-
-        case TargetType.ARTICLE:
-        case TargetType.POST:
-          post = await this._postService.findPost({
-            postId: existedReport.targetId,
-          });
-
-          content =
-            post.type === PostType.POST
-              ? StringHelper.removeMarkdownCharacter(post.content).slice(0, 200)
-              : StringHelper.removeMarkdownCharacter(post.title).slice(0, 200);
-          break;
-
-        default:
-          break;
-      }
-
-      const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
-      existedReport.details = postGroupIds.map((groupId) => {
-        return {
-          groupId,
-          reportId: existedReport.id,
-          reportTo: reportTo,
-          targetId: targetId,
-          targetType: targetType,
-          createdBy: user.id,
-          reasonType: reasonType,
-          reason: reason,
-        };
-      });
-
-      const detailJson = await this._reportContentDetailModel.findAll({
-        where: {
-          reportId: existedReport.id,
-        },
-      });
-      const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
-      const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
-
-      this._eventEmitter.emit(
-        new CreateReportEvent({
-          actor: user,
-          groupIds: groupIds,
-          ...existedReport,
-          content,
-          actorsReported,
-        })
-      );
     } catch (ex) {
       await trx.rollback();
       throw ex;
     }
+
+    let content = '';
+    let post: IPost = null;
+    switch (existedReport.targetType) {
+      case TargetType.COMMENT:
+        const comment = await this._commentService.findComment(existedReport.targetId);
+        post = await this._postService.findPost({
+          postId: comment.postId,
+        });
+        content = comment.content;
+        break;
+
+      case TargetType.ARTICLE:
+      case TargetType.POST:
+        post = await this._postService.findPost({
+          postId: existedReport.targetId,
+        });
+
+        content =
+          post.type === PostType.POST
+            ? StringHelper.removeMarkdownCharacter(post.content).slice(0, 200)
+            : StringHelper.removeMarkdownCharacter(post.title).slice(0, 200);
+        break;
+
+      default:
+        break;
+    }
+
+    const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
+    existedReport.details = postGroupIds.map((groupId) => {
+      return {
+        groupId,
+        reportId: existedReport.id,
+        reportTo: reportTo,
+        targetId: targetId,
+        targetType: targetType,
+        createdBy: user.id,
+        reasonType: reasonType,
+        reason: reason,
+      };
+    });
+
+    const detailJson = await this._reportContentDetailModel.findAll({
+      where: {
+        reportId: existedReport.id,
+      },
+    });
+    const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
+    const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
+
+    this._eventEmitter.emit(
+      new CreateReportEvent({
+        actor: user,
+        groupIds: groupIds,
+        ...existedReport,
+        content,
+        actorsReported,
+      })
+    );
   }
 
   public async createNewReport(
@@ -674,9 +674,9 @@ export class ReportContentService {
 
     // insert to two table need transaction
     const trx = await this._reportContentModel.sequelize.transaction();
-
+    let report: ReportContentModel = null;
     try {
-      const report = await this._reportContentModel.create(reportData, {
+      report = await this._reportContentModel.create(reportData, {
         returning: true,
       });
 
@@ -697,73 +697,77 @@ export class ReportContentService {
       });
 
       await trx.commit();
-
-      const detailJson = await this._reportContentDetailModel.findAll({
-        where: {
-          reportId: report.id,
-        },
-      });
-
-      const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
-      const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
-
-      const reportJson = report.toJSON();
-
-      let content = '';
-      let post: IPost = null;
-      switch (reportJson.targetType) {
-        case TargetType.COMMENT:
-          const comment = await this._commentService.findComment(reportJson.targetId);
-          post = await this._postService.findPost({
-            postId: reportJson.targetId,
-          });
-
-          content = comment.content;
-          break;
-
-        case TargetType.ARTICLE:
-        case TargetType.POST:
-          post = await this._postService.findPost({
-            postId: reportJson.targetId,
-          });
-
-          content =
-            post.type === PostType.POST
-              ? StringHelper.removeMarkdownCharacter(post.content).slice(0, 200)
-              : StringHelper.removeMarkdownCharacter(post.title).slice(0, 200);
-          break;
-
-        default:
-          break;
-      }
-
-      const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
-      reportJson.details = postGroupIds.map((groupId) => {
-        return {
-          groupId,
-          reportId: report.id,
-          reportTo: reportTo,
-          targetId: targetId,
-          targetType: targetType,
-          createdBy: user.id,
-          reasonType: reasonType,
-          reason: reason,
-        };
-      });
-
-      this._eventEmitter.emit(
-        new CreateReportEvent({
-          actor: user,
-          groupIds: groupIds,
-          ...reportJson,
-          content,
-          actorsReported,
-        })
-      );
     } catch (ex) {
       await trx.rollback();
       throw ex;
     }
+
+    if (!report) {
+      return;
+    }
+
+    const detailJson = await this._reportContentDetailModel.findAll({
+      where: {
+        reportId: report.id,
+      },
+    });
+
+    const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
+    const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
+
+    const reportJson = report.toJSON();
+
+    let content = '';
+    let post: IPost = null;
+    switch (reportJson.targetType) {
+      case TargetType.COMMENT:
+        const comment = await this._commentService.findComment(reportJson.targetId);
+        post = await this._postService.findPost({
+          postId: reportJson.targetId,
+        });
+
+        content = comment.content;
+        break;
+
+      case TargetType.ARTICLE:
+      case TargetType.POST:
+        post = await this._postService.findPost({
+          postId: reportJson.targetId,
+        });
+
+        content =
+          post.type === PostType.POST
+            ? StringHelper.removeMarkdownCharacter(post.content).slice(0, 200)
+            : StringHelper.removeMarkdownCharacter(post.title).slice(0, 200);
+        break;
+
+      default:
+        break;
+    }
+
+    const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
+    reportJson.details = postGroupIds.map((groupId) => {
+      return {
+        groupId,
+        reportId: report.id,
+        reportTo: reportTo,
+        targetId: targetId,
+        targetType: targetType,
+        createdBy: user.id,
+        reasonType: reasonType,
+        reason: reason,
+      };
+    });
+
+    this._eventEmitter.emit(
+      new CreateReportEvent({
+        actor: user,
+        groupIds: groupIds,
+        ...reportJson,
+        content,
+        actorsReported,
+      })
+    );
   }
 
   /**

@@ -28,7 +28,7 @@ export class WsReactionCreatedEventHandler implements IEventHandler<ReactionCrea
   ) {}
 
   public async handle(event: ReactionCreatedEvent): Promise<void> {
-    const { reactionEntity } = event;
+    const { reactionEntity } = event.payload;
 
     const targetId = reactionEntity.get('targetId');
     const reactionBinding = await this._reactionBinding.binding(reactionEntity);

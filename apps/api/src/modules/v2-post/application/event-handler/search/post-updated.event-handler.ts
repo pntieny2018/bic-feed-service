@@ -22,7 +22,7 @@ export class SearchPostUpdatedEventHandler implements IEventHandler<PostUpdatedE
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;
@@ -52,7 +52,7 @@ export class SearchPostUpdatedEventHandler implements IEventHandler<PostUpdatedE
         communityIds: postEntity.get('communityIds'),
         seriesIds,
         tags: (postEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
-        createdBy: actor.id,
+        createdBy: authUser.id,
         createdAt: postEntity.get('createdAt'),
         updatedAt: postEntity.get('updatedAt'),
         publishedAt: postEntity.get('publishedAt'),

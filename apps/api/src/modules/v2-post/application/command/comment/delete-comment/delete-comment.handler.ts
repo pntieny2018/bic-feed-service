@@ -16,9 +16,9 @@ import { DeleteCommentCommand } from './delete-comment.command';
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
   public constructor(
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _commentDomainService: ICommentDomainService,
+    private readonly _commentDomain: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    protected readonly _contentDomainService: IContentDomainService,
+    protected readonly _contentDomain: IContentDomainService,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator
   ) {}
@@ -26,16 +26,16 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
   public async execute(command: DeleteCommentCommand): Promise<void> {
     const { actor, commentId } = command.payload;
 
-    const comment = await this._commentDomainService.getVisibleComment(commentId);
+    const comment = await this._commentDomain.getVisibleComment(commentId);
 
     if (!comment.isOwner(actor.id)) {
       throw new ContentAccessDeniedException();
     }
 
-    const content = await this._contentDomainService.getVisibleContent(comment.get('postId'));
+    const content = await this._contentDomain.getVisibleContent(comment.get('postId'));
 
     await this._contentValidator.checkCanReadContent(content, actor);
 
-    return this._commentDomainService.delete(comment, actor);
+    return this._commentDomain.delete(comment, actor);
   }
 }

@@ -4,7 +4,7 @@ import {
   IPaginationArgs,
 } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsArray, IsInt, IsOptional, Min } from 'class-validator';
 
 export const PAGING_DEFAULT_LIMIT = 10;
@@ -19,6 +19,7 @@ export class PaginatedArgs implements IPaginationArgs {
   @Expose({
     name: 'limit',
   })
+  @Transform((value) => value?.value || PAGING_DEFAULT_LIMIT)
   @Type(() => Number)
   @IsInt()
   @Min(1)

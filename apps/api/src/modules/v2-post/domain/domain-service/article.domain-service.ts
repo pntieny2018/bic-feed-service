@@ -166,7 +166,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new ArticleDeletedEvent(articleEntity, actor));
+    this.event.publish(new ArticleDeletedEvent({ articleEntity, authUser: actor }));
   }
 
   public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
@@ -196,7 +196,7 @@ export class ArticleDomainService implements IArticleDomainService {
     this._articleValidator.validateArticleToPublish(articleEntity);
 
     await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticlePublishedEvent(articleEntity, actor));
+    this.event.publish(new ArticlePublishedEvent({ articleEntity, authUser: actor }));
 
     await this._contentDomainService.markSeen(articleEntity.get('id'), actor.id);
     articleEntity.increaseTotalSeen();
@@ -275,7 +275,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
-      this.event.publish(new ArticleUpdatedEvent(articleEntity, actor));
+      this.event.publish(new ArticleUpdatedEvent({ articleEntity, authUser: actor }));
     }
 
     return articleEntity;

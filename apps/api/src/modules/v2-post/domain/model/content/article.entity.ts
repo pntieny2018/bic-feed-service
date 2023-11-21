@@ -148,4 +148,8 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
   public isOverLimitedToAttachSeries(): boolean {
     return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
   }
+
+  public getContent(): string {
+    return this._props.content;
+  }
 }

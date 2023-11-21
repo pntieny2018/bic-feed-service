@@ -318,7 +318,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_DETAIL: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId', // old: /reports/:rootGroupId/content/:targetId
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId', // old: /reports/:rootGroupId/content/:targetId
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     STATISTIC: {

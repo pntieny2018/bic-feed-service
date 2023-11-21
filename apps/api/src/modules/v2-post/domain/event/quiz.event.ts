@@ -30,6 +30,10 @@ export class QuizParticipantStartedEvent implements IEventPayload {
   public constructor(data: QuizParticipantStartedEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return QuizParticipantStartedEvent.event;
+  }
 }
 
 export class QuizParticipantFinishedEvent implements IEventPayload {
@@ -40,9 +44,13 @@ export class QuizParticipantFinishedEvent implements IEventPayload {
   public constructor(data: QuizParticipantFinishedEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return QuizParticipantFinishedEvent.event;
+  }
 }
 
-export class QuizCreatedEvent {
+export class QuizCreatedEvent implements IEventPayload {
   public static event = QuizCreated;
 
   public payload: QuizEventPayload;
@@ -50,9 +58,13 @@ export class QuizCreatedEvent {
   public constructor(data: QuizEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return QuizCreatedEvent.event;
+  }
 }
 
-export class QuizGeneratedEvent {
+export class QuizGeneratedEvent implements IEventPayload {
   public static event = QuizGenerated;
 
   public payload: QuizEventPayload;
@@ -60,14 +72,22 @@ export class QuizGeneratedEvent {
   public constructor(data: QuizEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return QuizGeneratedEvent.event;
+  }
 }
 
-export class QuizRegenerateEvent {
+export class QuizRegenerateEvent implements IEventPayload {
   public static event = QuizRegenerate;
 
   public payload: QuizEventPayload;
 
   public constructor(data: QuizEventPayload) {
     this.payload = data;
+  }
+
+  public getEventName(): string {
+    return QuizRegenerateEvent.event;
   }
 }

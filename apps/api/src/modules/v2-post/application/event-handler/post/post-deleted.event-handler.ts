@@ -22,21 +22,21 @@ export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> 
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (!postEntity.isPublished()) {
       return;
     }
 
     await this._tagDomain.decreaseTotalUsedByContent(postEntity);
-    this._processSeriesItemsChanged(postEntity, actor);
+    this._processSeriesItemsChanged(postEntity, authUser);
   }
 
-  private _processSeriesItemsChanged(postEntity: PostEntity, actor: UserDto): void {
+  private _processSeriesItemsChanged(postEntity: PostEntity, authUser: UserDto): void {
     const seriesIds = postEntity.getSeriesIds();
     for (const seriesId of seriesIds) {
       this._seriesDomain.sendSeriesItemsRemovedEvent({
-        authUser: actor,
+        authUser,
         seriesId,
         item: postEntity,
         contentIsDeleted: true,

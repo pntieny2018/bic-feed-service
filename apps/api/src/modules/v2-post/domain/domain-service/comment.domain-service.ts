@@ -105,7 +105,7 @@ export class CommentDomainService implements ICommentDomainService {
     }
 
     const commentCreated = await this._commentRepository.createComment(commentEntity);
-    this.event.publish(new CommentCreatedEvent({ comment: commentCreated, actor: props.actor }));
+    this.event.publish(new CommentCreatedEvent({ comment: commentCreated, authUser: props.actor }));
     return commentCreated;
   }
 
@@ -129,12 +129,14 @@ export class CommentDomainService implements ICommentDomainService {
     }
 
     await this._commentRepository.update(commentEntity);
-    this.event.publish(new CommentUpdatedEvent({ comment: commentEntity, actor, oldComment }));
+    this.event.publish(
+      new CommentUpdatedEvent({ comment: commentEntity, authUser: actor, oldComment })
+    );
   }
 
   public async delete(comment: CommentEntity, actor: UserDto): Promise<void> {
     await this._commentRepository.destroyComment(comment.get('id'));
-    this.event.publish(new CommentDeletedEvent({ comment, actor }));
+    this.event.publish(new CommentDeletedEvent({ comment, authUser: actor }));
   }
 
   private async _getCommentsAroundChild(
