@@ -1,4 +1,5 @@
 import { PaginatedResponse } from '@libs/database/postgres/common';
+import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -30,8 +31,9 @@ export class GetListReportsHandler implements IQueryHandler<GetListReportsQuery>
 
     await this._reportValidator.checkPermissionManageReport(authUser.id, groupId);
 
-    const { rows, meta } = await this._reportRepo.getListReports({
-      groupId,
+    const { rows, meta } = await this._reportRepo.getPagination({
+      where: { groupId, status: REPORT_STATUS.CREATED },
+      include: { details: true },
       limit,
       before,
       after,

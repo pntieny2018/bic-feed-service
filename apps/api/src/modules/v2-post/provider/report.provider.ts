@@ -1,8 +1,10 @@
 import { REPORT_BINDING_TOKEN, ReportBinding } from '../application/binding';
+import { ReportCommentHandler } from '../application/command/comment';
 import { ReportContentHandler } from '../application/command/content';
 import { HideReportHandler, IgnoreReportHandler } from '../application/command/report';
 import { ReportCreatedEventHandler } from '../application/event-handler/content';
-import { GetListReportsHandler } from '../application/query/admin-manage';
+import { GetListReportsHandler, GetReportHandler } from '../application/query/admin-manage';
+import { GetMyReportedContentsHandler } from '../application/query/content';
 import { REPORT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { ReportDomainService } from '../domain/domain-service/report.domain-service';
 import { REPORT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
@@ -14,12 +16,15 @@ import { ReportRepository } from '../driven-adapter/repository';
 export const reportProvider = [
   /* Application Command */
   ReportContentHandler,
-  ReportContentHandler,
+  ReportCommentHandler,
   IgnoreReportHandler,
   HideReportHandler,
 
   /* Application Query */
+
+  GetMyReportedContentsHandler,
   GetListReportsHandler,
+  GetReportHandler,
 
   /* Application Event Handler */
   ReportCreatedEventHandler,

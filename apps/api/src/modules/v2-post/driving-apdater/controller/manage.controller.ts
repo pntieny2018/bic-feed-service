@@ -21,8 +21,8 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { HideReportCommand, IgnoreReportCommand } from '../../application/command/report';
-import { GetReportContentDetailsDto, ReportForManagerDto } from '../../application/dto';
-import { GetListReportsQuery, GetReportDetailsQuery } from '../../application/query/admin-manage';
+import { ReportForManagerDto, ReportTargetDto } from '../../application/dto';
+import { GetListReportsQuery, GetReportQuery } from '../../application/query/admin-manage';
 
 @ApiTags('v2 admin manage')
 @ApiSecurity('authorization')
@@ -63,12 +63,12 @@ export class ManageController {
     @AuthUser() authUser: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Param('reportId', ParseUUIDPipe) reportId: string
-  ): Promise<GetReportContentDetailsDto> {
-    const contentDetail = await this._queryBus.execute(
-      new GetReportDetailsQuery({ rootGroupId, reportId, authUser })
+  ): Promise<ReportTargetDto> {
+    const report = await this._queryBus.execute(
+      new GetReportQuery({ groupId: rootGroupId, reportId, authUser })
     );
 
-    return instanceToInstance(contentDetail, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(report, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Community admin process the content/comment report' })

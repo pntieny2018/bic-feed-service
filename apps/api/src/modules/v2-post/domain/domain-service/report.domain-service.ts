@@ -1,5 +1,6 @@
 import { CONTENT_REPORT_REASONS, CONTENT_TARGET } from '@beincom/constants';
-import { StringHelper } from '@libs/common/helpers';
+import { UserDto } from '@beincom/dto';
+import { ArrayHelper, StringHelper } from '@libs/common/helpers';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
@@ -18,7 +19,12 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../service-adapter-interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -48,6 +54,8 @@ export class ReportDomainService implements IReportDomainService {
     private readonly _commentRepo: ICommentRepository,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
 
     private readonly _event: EventBus
   ) {}
@@ -136,17 +144,31 @@ export class ReportDomainService implements IReportDomainService {
     this._event.publish(new ReportCreatedEvent({ report: reportEntity, authUser: authUser }));
   }
 
-  public countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[] {
+  public async countReportReasons(
+    reportDetails: ReportDetailAttributes[],
+    includeReporters?: boolean
+  ): Promise<ReportReasonCountDto[]> {
     const reasonTypes = uniq(reportDetails.map((detail) => detail.reasonType));
+
+    let reporterMap: Record<string, UserDto> = {};
+    if (includeReporters) {
+      const reporterIds = uniq(reportDetails.map((detail) => detail.createdBy));
+      const reporters = await this._userAdapter.getUsersByIds(reporterIds);
+      reporterMap = ArrayHelper.convertArrayToObject(reporters, 'id');
+    }
 
     return reasonTypes.map((reasonType) => {
       const reasonTypeDetails = reportDetails.filter((detail) => detail.reasonType === reasonType);
       const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonType);
 
+      const reporterIds = uniq(reasonTypeDetails.map((detail) => detail.createdBy));
+      const reporters = reporterIds.map((id) => reporterMap[id]);
+
       return {
         reasonType,
         description: reason?.description,
         total: reasonTypeDetails.length,
+        reporters: includeReporters ? reporters : undefined,
       };
     });
   }
@@ -179,31 +201,6 @@ export class ReportDomainService implements IReportDomainService {
     }
 
     return StringHelper.removeMarkdownCharacter(content).slice(0, 200);
-  }
-
-  public async getGroupIdsOfTargetReported(report: ReportEntity): Promise<string[]> {
-    const targetType = report.get('targetType');
-    const targetId = report.get('targetId');
-
-    let contentId;
-
-    if (targetType === CONTENT_TARGET.COMMENT) {
-      const comment = await this._commentRepo.findOne({ id: targetId });
-      if (!comment) {
-        throw new ContentNotFoundException();
-      }
-
-      contentId = comment.get('postId');
-    } else {
-      contentId = targetId;
-    }
-
-    const content = await this._contentRepo.findContentById(contentId, { mustIncludeGroup: true });
-    if (!content) {
-      throw new ContentNotFoundException();
-    }
-
-    return content.getGroupIds();
   }
 
   public async ignoreReport(input: ProcessReportProps): Promise<void> {

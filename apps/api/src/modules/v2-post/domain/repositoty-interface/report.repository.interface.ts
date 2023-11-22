@@ -24,6 +24,7 @@ export type GetPaginationReportProps = {
     targetType?: CONTENT_TARGET[];
     targetActorId?: string;
     status?: REPORT_STATUS;
+    groupId?: string;
   };
   include?: IncludeReportProps;
 } & CursorPaginationProps;
@@ -37,7 +38,6 @@ export interface IReportRepository {
   getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;
   create(reportEntity: ReportEntity): Promise<void>;
   update(reportEntity: ReportEntity): Promise<void>;
-  getListReports(props: GetListReportsProps): Promise<CursorPaginationResult<ReportEntity>>;
 }
 
 export const REPORT_REPOSITORY_TOKEN = 'REPORT_REPOSITORY_TOKEN';
