@@ -11,3 +11,4 @@ export * from './content-attached-series.event-handler';
 export * from './series-items-reordered.event-handler';
 export * from './series-items-added.event-handler';
 export * from './series-items-removed.event-handler';
+export * from './report-hidden.event-handler';
