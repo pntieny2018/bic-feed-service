@@ -43,7 +43,10 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import { ContentHasSeenEventHandler } from '../application/event-handler/content';
+import {
+  ContentHasSeenEventHandler,
+  ReportHiddenEventHandler,
+} from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -144,6 +147,7 @@ export const postProvider = [
   VideoPostUpdatedEventHandler,
   VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
+  ReportHiddenEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */

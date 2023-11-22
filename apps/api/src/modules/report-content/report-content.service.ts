@@ -3,7 +3,6 @@ import { RedisService } from '@libs/infra/redis';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { plainToInstance } from 'class-transformer';
-import { uniq } from 'lodash';
 import { Op, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
@@ -598,20 +597,17 @@ export class ReportContentService {
       throw ex;
     }
 
+    existedReport.details = details;
     let content = '';
-    let post: IPost = null;
     switch (existedReport.targetType) {
       case TargetType.COMMENT:
         const comment = await this._commentService.findComment(existedReport.targetId);
-        post = await this._postService.findPost({
-          postId: comment.postId,
-        });
         content = comment.content;
         break;
 
       case TargetType.ARTICLE:
       case TargetType.POST:
-        post = await this._postService.findPost({
+        const post = await this._postService.findPost({
           postId: existedReport.targetId,
         });
 
@@ -625,35 +621,12 @@ export class ReportContentService {
         break;
     }
 
-    const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
-    existedReport.details = postGroupIds.map((groupId) => {
-      return {
-        groupId,
-        reportId: existedReport.id,
-        reportTo: reportTo,
-        targetId: targetId,
-        targetType: targetType,
-        createdBy: user.id,
-        reasonType: reasonType,
-        reason: reason,
-      };
-    });
-
-    const detailJson = await this._reportContentDetailModel.findAll({
-      where: {
-        reportId: existedReport.id,
-      },
-    });
-    const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
-    const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
-
     this._eventEmitter.emit(
       new CreateReportEvent({
         actor: user,
         groupIds: groupIds,
         ...existedReport,
         content,
-        actorsReported,
       })
     );
   }
@@ -712,26 +685,18 @@ export class ReportContentService {
       },
     });
 
-    const actorReportedIds = uniq(detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy));
-    const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
-
     const reportJson = report.toJSON();
 
     let content = '';
-    let post: IPost = null;
     switch (reportJson.targetType) {
       case TargetType.COMMENT:
         const comment = await this._commentService.findComment(reportJson.targetId);
-        post = await this._postService.findPost({
-          postId: reportJson.targetId,
-        });
-
         content = comment.content;
         break;
 
       case TargetType.ARTICLE:
       case TargetType.POST:
-        post = await this._postService.findPost({
+        const post = await this._postService.findPost({
           postId: reportJson.targetId,
         });
 
@@ -745,27 +710,12 @@ export class ReportContentService {
         break;
     }
 
-    const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
-    reportJson.details = postGroupIds.map((groupId) => {
-      return {
-        groupId,
-        reportId: report.id,
-        reportTo: reportTo,
-        targetId: targetId,
-        targetType: targetType,
-        createdBy: user.id,
-        reasonType: reasonType,
-        reason: reason,
-      };
-    });
-
     this._eventEmitter.emit(
       new CreateReportEvent({
         actor: user,
         groupIds: groupIds,
         ...reportJson,
         content,
-        actorsReported,
       })
     );
   }
@@ -832,25 +782,11 @@ export class ReportContentService {
       for (const report of reports) {
         const reportJson = report.toJSON();
 
-        const detailJson = await this._reportContentDetailModel.findAll({
-          where: {
-            reportId: report.id,
-          },
-        });
-
-        const actorReportedIds = uniq(
-          detailJson.map((dt) => dt.toJSON()).map((dt) => dt.createdBy)
-        );
-        const actorsReported = await this._userAppService.findAllByIds(actorReportedIds);
-
         let content = '';
         let post: IPost = null;
         switch (reportJson.targetType) {
           case TargetType.COMMENT:
             const comment = await this._commentService.findComment(reportJson.targetId);
-            post = await this._postService.findPost({
-              postId: reportJson.targetId,
-            });
 
             content = comment.content;
             break;
@@ -871,24 +807,11 @@ export class ReportContentService {
             break;
         }
 
-        const postGroupIds = post?.groups.map((g) => g.groupId) ?? [];
-        reportJson.details = postGroupIds.map((groupId) => {
-          return {
-            groupId,
-            reportTo: reportDetails[0].reportTo,
-            targetId: reportJson.targetId,
-            targetType: reportJson.targetType,
-            createdBy: reportDetails[0].createdBy,
-            reasonType: reportDetails[0].reasonType,
-          };
-        });
-
         this._eventEmitter.emit(
           new ApproveReportEvent({
             actor: admin,
             ...reportJson,
             groupIds: groupIds,
-            actorsReported,
             content,
           })
         );

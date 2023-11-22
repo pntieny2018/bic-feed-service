@@ -7,7 +7,7 @@ import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { ReportCreatedEvent } from '../../../../domain/event';
+import { ReportHiddenEvent } from '../../../../domain/event';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -16,8 +16,8 @@ import {
 } from '../../../../domain/service-adapter-interface';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../../../binding';
 
-@EventsHandlerAndLog(ReportCreatedEvent)
-export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreatedEvent> {
+@EventsHandlerAndLog(ReportHiddenEvent)
+export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenEvent> {
   public constructor(
     @Inject(REPORT_BINDING_TOKEN)
     private readonly _reportBinding: IReportBinding,
@@ -29,7 +29,7 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
     private readonly _notiAdapter: INotificationAdapter
   ) {}
 
-  public async handle(event: ReportCreatedEvent): Promise<void> {
+  public async handle(event: ReportHiddenEvent): Promise<void> {
     const { report, authUser } = event.payload;
 
     const reportDto = this._reportBinding.binding(report);
@@ -39,7 +39,7 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
 
     const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(report);
 
-    await this._notiAdapter.sendReportCreatedNotification({
+    await this._notiAdapter.sendReportHiddenNotification({
       report: reportDto,
       actor: authUser,
       adminInfos: groupAdminMap,

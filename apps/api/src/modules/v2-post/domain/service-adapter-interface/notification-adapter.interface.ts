@@ -8,7 +8,6 @@ import {
   ReactionContentNotificationPayload,
   ReactionCommentNotificationPayload,
   ReactionReplyCommentNotificationPayload,
-  ReportCreatedNotificationPayload,
   ArticleUpdatedNotificationPayload,
   ArticlePublishedNotificationPayload,
   ArticleDeletedNotificationPayload,
@@ -21,6 +20,7 @@ import {
   CommentDeletedNotificationPayload,
   ChildCommentCreatedNotificationPayload,
   ChildCommentUpdatedNotificationPayload,
+  ReportNotificationPayload,
 } from '../../../v2-notification/application/application-services/interface';
 
 export const NOTIFICATION_ADAPTER = 'NOTIFICATION_ADAPTER';
@@ -60,5 +60,6 @@ export interface INotificationAdapter {
   ): Promise<void>;
   sendCommentDeletedNotification(payload: CommentDeletedNotificationPayload): Promise<void>;
 
-  sendReportCreatedNotification(payload: ReportCreatedNotificationPayload): Promise<void>;
+  sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void>;
+  sendReportHiddenNotification(payload: ReportNotificationPayload): Promise<void>;
 }

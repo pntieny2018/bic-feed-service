@@ -1,4 +1,3 @@
-import { UserDto } from '@libs/service/user';
 import { Injectable } from '@nestjs/common';
 
 import { ObjectHelper } from '../../common/helpers';
@@ -22,7 +21,6 @@ export class ReportActivityService {
     createdAt: Date;
     verb: VerbActivity;
     target: TypeActivity;
-    actorsReported: UserDto[];
   }): NotificationActivity {
     const activityObject: ActivityObject = {
       id: reportData.id,
@@ -32,7 +30,6 @@ export class ReportActivityService {
         targetType: reportData.targetType,
         details: reportData.details,
         status: reportData.status,
-        actorsReported: reportData.actorsReported,
       },
       createdAt: reportData.createdAt,
       updatedAt: reportData.createdAt,

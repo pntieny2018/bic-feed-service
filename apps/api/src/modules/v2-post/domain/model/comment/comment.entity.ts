@@ -120,4 +120,8 @@ export class CommentEntity extends DomainAggregateRoot<CommentAttributes> {
   public setChilds(childs: CursorPaginationResult<CommentEntity>): void {
     this._props.childs = childs;
   }
+
+  public hide(): void {
+    this._props.isHidden = true;
+  }
 }

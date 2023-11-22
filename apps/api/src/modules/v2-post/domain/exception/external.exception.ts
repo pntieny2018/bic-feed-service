@@ -45,6 +45,6 @@ export class NotCommunityAdminException extends DomainException {
 
   public constructor(message: string = null, error: any = null) {
     message = message || 'You are not community owner or admin';
-    super(NotGroupAdminException.code, message, error);
+    super(NotCommunityAdminException.code, message, error);
   }
 }

@@ -343,4 +343,8 @@ export class ContentEntity<
   public setReported(isReported: boolean): void {
     this._props.isReported = isReported;
   }
+
+  public hide(): void {
+    this._props.isHidden = true;
+  }
 }
