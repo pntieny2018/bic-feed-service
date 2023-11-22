@@ -76,7 +76,9 @@ export class ReportBinding implements IReportBinding {
       contentMap = EntityHelper.entityArrayToRecord(contents, 'id');
     }
 
-    return entities.map((entity) => {
+    const reports: ReportForManagerDto[] = [];
+
+    for (const entity of entities) {
       const targetId = entity.get('targetId');
       const targetType = entity.get('targetType');
 
@@ -85,9 +87,9 @@ export class ReportBinding implements IReportBinding {
           ? commentMap[targetId].get('content')
           : contentMap[targetId].getContent();
       const targetActor = new BaseUserDto(actorMap[entity.get('targetActorId')]);
-      const reasonCounts = this._reportDomain.countReportReasons(entity.getDetails());
+      const reasonCounts = await this._reportDomain.countReportReasons(entity.getDetails());
 
-      return {
+      reports.push({
         id: entity.get('id'),
         targetId: entity.get('targetId'),
         targetType: entity.get('targetType'),
@@ -99,7 +101,9 @@ export class ReportBinding implements IReportBinding {
         content,
         targetActor,
         reasonCounts,
-      };
-    });
+      });
+    }
+
+    return reports;
   }
 }

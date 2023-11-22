@@ -64,13 +64,19 @@ export class GetMyReportedContentsHandler
     const contentMap = ArrayHelper.convertArrayToObject(contents, 'id');
     const reportMap = EntityHelper.entityArrayToRecord(reportEntities, 'id');
 
+    const reports: ReportTargetDto[] = [];
+
+    for (const report of reportEntities) {
+      const target = contentMap[report.get('targetId')] as PostDto | ArticleDto;
+      const reasonCounts = await this._reportDomain.countReportReasons(
+        reportMap[report.get('id')].getDetails()
+      );
+
+      reports.push({ target, reasonCounts });
+    }
+
     return {
-      list: reportEntities.map((report) => ({
-        target: contentMap[report.get('targetId')] as PostDto | ArticleDto,
-        reasonCounts: this._reportDomain.countReportReasons(
-          reportMap[report.get('id')].getDetails()
-        ),
-      })),
+      list: reports,
       meta,
     };
   }

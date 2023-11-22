@@ -59,18 +59,10 @@ export class ReportReasonCountDto {
   public reasonType: CONTENT_REPORT_REASON_TYPE;
   public description: CONTENT_REPORT_REASON_DESCRIPTION;
   public total: number;
+  public reporters?: BaseUserDto[];
 }
 
 export class ReportTargetDto {
   public target: PostDto | ArticleDto | CommentBaseDto;
   public reasonCounts: ReportReasonCountDto[];
-}
-
-export class GetReportContentDetailsDto {
-  public content?: PostDto | ArticleDto;
-  public comment?: CommentBaseDto;
-
-  public constructor(data: Partial<GetReportContentDetailsDto>) {
-    Object.assign(this, data);
-  }
 }
