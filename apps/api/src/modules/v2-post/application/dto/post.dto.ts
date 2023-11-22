@@ -7,6 +7,7 @@ import { LinkPreviewDto } from './link-preview.dto';
 import { MediaDto } from './media.dto';
 import { QuizDto } from './quiz.dto';
 import { OwnerReactionDto, ReactionCount } from './reaction.dto';
+import { ReportReasonCountDto } from './report.dto';
 import { SeriesInContentDto } from './series.dto';
 import { TagDto } from './tag.dto';
 import { UserMentionDto } from './user-mention.dto';
@@ -46,6 +47,7 @@ export class PostDto {
   public highlight?: string;
   public titleHighlight?: string;
   public summaryHighlight?: string;
+  public reportReasonCounts?: ReportReasonCountDto[];
 
   public constructor(data: Partial<PostDto>) {
     Object.assign(this, data);
