@@ -163,15 +163,17 @@ export class ContentValidator implements IContentValidator {
     user: UserDto,
     groups?: GroupDto[]
   ): Promise<void> {
-    if (!post.isPublished() && post.isOwner(user.id)) {
+    if (post.isOwner(user.id)) {
       return;
     }
+
     if (post.isOpen() || post.isClosed()) {
       return;
     }
-    const groupAudienceIds = post.get('groupIds') ?? [];
 
+    const groupAudienceIds = post.get('groupIds') ?? [];
     const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
+
     if (isAdmin && !post.isDraft()) {
       return;
     }

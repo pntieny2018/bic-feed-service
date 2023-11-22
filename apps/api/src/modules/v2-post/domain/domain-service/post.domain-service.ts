@@ -121,6 +121,13 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNotFoundException();
     }
 
+    const groupAudienceIds = postEntity.get('groupIds') ?? [];
+    const isAdmin = await this._groupAdapter.isAdminInAnyGroups(authUserId, groupAudienceIds);
+
+    if ((postEntity.isScheduleFailed() || postEntity.isWaitingSchedule()) && !isAdmin) {
+      throw new ContentAccessDeniedException();
+    }
+
     if (!authUserId && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
     }

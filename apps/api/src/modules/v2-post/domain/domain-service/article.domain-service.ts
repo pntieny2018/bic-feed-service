@@ -26,6 +26,7 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
   ARTICLE_VALIDATOR_TOKEN,
   CATEGORY_VALIDATOR_TOKEN,
@@ -74,6 +75,9 @@ export class ArticleDomainService implements IArticleDomainService {
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
 
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
+
     private readonly event: EventBus
   ) {}
 
@@ -110,6 +114,13 @@ export class ArticleDomainService implements IArticleDomainService {
       articleEntity.isInArchivedGroups()
     ) {
       throw new ContentNotFoundException();
+    }
+
+    const groupAudienceIds = articleEntity.get('groupIds') ?? [];
+    const isAdmin = await this._groupAdapter.isAdminInAnyGroups(authUser.id, groupAudienceIds);
+
+    if ((articleEntity.isScheduleFailed() || articleEntity.isWaitingSchedule()) && !isAdmin) {
+      throw new ContentAccessDeniedException();
     }
 
     if (!authUser && !articleEntity.isOpen()) {
