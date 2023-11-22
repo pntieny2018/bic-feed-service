@@ -47,7 +47,7 @@ export class UpdateCommentReactionCountCommand implements CommandRunner {
           const reactionName = commentReaction.reactionName;
           const commentId = commentReaction.commentId;
 
-          await this._reactionCommentDetailsModel.upsert({
+          await this._reactionCommentDetailsModel.create({
             reactionName,
             commentId,
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
