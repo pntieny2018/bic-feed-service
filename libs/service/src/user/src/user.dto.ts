@@ -54,7 +54,22 @@ export class UserPermissionDto {
   public groups: { [groupId: string]: string[] };
 }
 
-export class UserDto extends BaseUserDto {
+export class UserDto {
+  @Expose()
+  public id: string;
+
+  @Expose()
+  public username: string;
+
+  @Expose()
+  public fullname: string;
+
+  @Expose()
+  public email: string;
+
+  @Expose()
+  public avatar: string;
+
   @Expose()
   public showingBadges?: ShowingBadgeDto[];
 
@@ -74,8 +89,6 @@ export class UserDto extends BaseUserDto {
   public groups?: string[];
 
   public constructor(data: Partial<UserDto>, excluded?: string[]) {
-    super(data);
-
     Object.assign(this, data);
     if (excluded?.length > 0) {
       excluded.forEach((key) => {
