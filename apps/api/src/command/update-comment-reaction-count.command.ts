@@ -3,7 +3,6 @@ import { ReactionCommentDetailsModel } from '@libs/database/postgres/model/react
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { Sequelize } from 'sequelize-typescript';
 
 import { getDatabaseConfig } from '../config/database';
 
@@ -37,32 +36,17 @@ export class UpdateCommentReactionCountCommand implements CommandRunner {
 
     try {
       this._logger.log('Start update reaction count for comments');
-      const commentReactions = await this._commentReactionModel.findAll({
-        attributes: [
-          'commentId',
-          'reactionName',
-          [this._commentReactionModel.sequelize.fn('COUNT', Sequelize.col('*')), 'count'],
-        ],
-        group: ['commentId', 'reactionName'],
-      });
 
-      if (commentReactions && commentReactions.length > 0) {
-        for (const commentReaction of commentReactions) {
-          const reactionName = commentReaction.reactionName;
-          const commentId = commentReaction.commentId;
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const reactionCount = commentReaction.getDataValue('count');
-
-          // use raw query instead of create method
-          await this._reactionCommentDetailsModel.sequelize.query(`
-                INSERT INTO ${schema}.reaction_comment_details (reaction_name, comment_id, count, created_at, updated_at)
-                VALUES ('${reactionName}', '${commentId}', ${reactionCount}, NOW(), NOW())
-                ON CONFLICT (reaction_name, comment_id)
-                DO UPDATE SET count = EXCLUDED.count, updated_at = NOW();
-            `);
-        }
-      }
+      await this._reactionCommentDetailsModel.sequelize.query(`
+        INSERT INTO ${schema}."reaction_comment_details" ("comment_id", "reaction_name", "count")
+        SELECT
+          "comment_id",
+          "reaction_name",
+          COUNT(*)
+        FROM
+            ${schema}."comments_reactions" AS "CommentReactionsModel"
+        GROUP BY "CommentReactionsModel"."comment_id", "CommentReactionsModel"."reaction_name"
+      `);
 
       this._logger.log('Update reaction count successfully');
     } catch (e) {

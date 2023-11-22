@@ -3,7 +3,6 @@ import { ReactionContentDetailsModel } from '@libs/database/postgres/model/react
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { Sequelize } from 'sequelize-typescript';
 
 import { getDatabaseConfig } from '../config/database';
 
@@ -39,32 +38,16 @@ export class UpdateContentReactionCountCommand implements CommandRunner {
     try {
       this._logger.log('Start update reaction count for contents');
 
-      const postReactions = await this._postReactionModel.findAll({
-        attributes: [
-          'postId',
-          'reactionName',
-          [this._postReactionModel.sequelize.fn('COUNT', Sequelize.col('*')), 'count'],
-        ],
-        group: ['postId', 'reactionName'],
-      });
-
-      if (postReactions && postReactions.length > 0) {
-        for (const postReaction of postReactions) {
-          const reactionName = postReaction.reactionName;
-          const contentId = postReaction.postId;
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const reactionCount = postReaction.getDataValue('count');
-
-          // use raw query to insert data
-          await this._reactionContentDetailsModel.sequelize.query(`
-                INSERT INTO ${schema}.reaction_content_details (reaction_name, content_id, count, created_at, updated_at)
-                VALUES ('${reactionName}', '${contentId}', ${reactionCount}, NOW(), NOW())
-                ON CONFLICT (reaction_name, content_id)
-                DO UPDATE SET count = EXCLUDED.count, updated_at = NOW();
-            `);
-        }
-      }
+      await this._reactionContentDetailsModel.sequelize.query(`
+        INSERT INTO ${schema}."reaction_content_details" ("content_id", "reaction_name", "count")
+        SELECT
+          "post_id",
+          "reaction_name",
+          COUNT(*)
+        FROM
+            ${schema}."posts_reactions" AS "PostReactionsModel"
+        GROUP BY "PostReactionsModel"."post_id", "PostReactionsModel"."reaction_name"
+      `);
 
       this._logger.log('Update reaction count successfully');
     } catch (e) {
