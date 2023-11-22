@@ -22,7 +22,7 @@ export function createMockReportRecord(
     updatedBy: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    details: [createMockReportDetailRecord({ id, targetId })],
+    details: [createMockReportDetailRecord({ targetId, reportId: id })],
     ...data,
   };
 }
