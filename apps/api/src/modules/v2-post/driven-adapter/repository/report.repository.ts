@@ -1,16 +1,13 @@
 import { ORDER } from '@beincom/constants';
-import { CursorPaginationResult, getDatabaseConfig } from '@libs/database/postgres/common';
-import {
-  REPORT_STATUS,
-  ReportContentAttribute,
-  ReportContentDetailModel,
-} from '@libs/database/postgres/model';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
+import { ReportContentAttribute } from '@libs/database/postgres/model';
 import {
   LibUserReportContentDetailRepository,
   LibUserReportContentRepository,
 } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
+import { uniq } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
 
 import { ReportEntity } from '../../domain/model/report';
@@ -18,7 +15,6 @@ import {
   GetPaginationReportProps,
   FindOneReportProps,
   IReportRepository,
-  GetListReportsProps,
 } from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
@@ -74,7 +70,7 @@ export class ReportRepository implements IReportRepository {
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
     const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
-    const { targetType, targetActorId, status } = input.where;
+    const { targetType, targetActorId, status, groupId } = input.where;
     const { details } = input.include || {};
 
     const condition: WhereOptions<ReportContentAttribute> = {};
@@ -86,6 +82,14 @@ export class ReportRepository implements IReportRepository {
     }
     if (status) {
       condition.status = status;
+    }
+    if (groupId) {
+      // TODO: optimize this query
+      const reportIds = await this._libReportDetailRepo.findMany({
+        where: { groupId: groupId },
+        select: ['reportId'],
+      });
+      condition.id = uniq(reportIds.map((item) => item.reportId));
     }
 
     const include = [];
@@ -161,43 +165,5 @@ export class ReportRepository implements IReportRepository {
       await transaction.rollback();
       throw error;
     }
-  }
-
-  public async getListReports(
-    props: GetListReportsProps
-  ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { groupId, limit, before, after } = props;
-    const { schema } = getDatabaseConfig();
-
-    const { rows, meta } = await this._libReportRepo.cursorPaginate(
-      {
-        where: {
-          status: REPORT_STATUS.CREATED,
-        },
-        whereRaw: `id IN (
-          SELECT report_id FROM ${schema}.${ReportContentDetailModel.tableName} where group_id = '${groupId}'
-        )`,
-        include: [
-          {
-            model: ReportContentDetailModel,
-            as: 'details',
-            required: true,
-            where: {
-              groupId,
-            },
-          },
-        ],
-      },
-      {
-        limit,
-        before,
-        after,
-      }
-    );
-
-    return {
-      rows: rows.map((report) => this._reportMapper.toDomain(report.toJSON())),
-      meta,
-    };
   }
 }

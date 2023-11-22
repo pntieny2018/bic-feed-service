@@ -16,7 +16,6 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { ArticleDto, PostDto, ReportTargetDto } from '../../../dto';
 
@@ -33,8 +32,6 @@ export class GetMyReportedContentsHandler
     private readonly _reportRepo: IReportRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
-    @Inject(GROUP_ADAPTER)
-    private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding
   ) {}

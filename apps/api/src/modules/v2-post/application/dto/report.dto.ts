@@ -29,6 +29,7 @@ export class ReportDto {
 export class ReportForManagerDto extends ReportDto {
   public content: string;
   public targetActor: BaseUserDto;
+  public reasonCounts: ReportReasonCountDto[];
 
   public constructor(data: Partial<ReportForManagerDto>) {
     super(data);
