@@ -19,6 +19,7 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
 
 import { CleanUpDeletedCommentRefCommand } from './clean-up-deleted-comment-ref.command';
 import { CleanUpDeletedContentRefCommand } from './clean-up-deleted-content-ref.command';
+import { CleanUpDeletedContentsCommand } from './clean-up-deleted-content.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
@@ -32,6 +33,7 @@ import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
 import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-important-post.command';
+import { MigratePostGroupIsHidden } from './migrate-post-group-is-hidden.command';
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
@@ -99,6 +101,8 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     UpdateContentReactionCountCommand,
     CleanUpDeletedContentRefCommand,
     CleanUpDeletedCommentRefCommand,
+    CleanUpDeletedContentsCommand,
+    MigratePostGroupIsHidden,
   ],
 })
 export class CommandModule {}
