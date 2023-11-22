@@ -297,6 +297,10 @@ export const ROUTES = {
       PATH: 'comments/:commentId/reports', // old: /reports/content
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
+    GET_REPORTS: {
+      PATH: 'comments/reports', // old: /reports/content
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
   },
   REACTION: {
     GET_LIST: {

@@ -263,3 +263,9 @@ export class UpdateCommentRequestDto {
   })
   public giphyId?: string;
 }
+
+export class GetMyReportedCommentsRequestDto extends PaginatedArgs {
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
+}
