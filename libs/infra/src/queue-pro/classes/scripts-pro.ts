@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { performance } from 'perf_hooks';
 
 import {
@@ -29,7 +30,7 @@ const packer = new Packr({
   encodeUndefinedAsNil: true,
 });
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
+/* eslint-disable-next-line @typescript-eslint/unbound-method */
 const pack = packer.pack;
 
 /**

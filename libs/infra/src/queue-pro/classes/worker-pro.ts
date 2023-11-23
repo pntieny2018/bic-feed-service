@@ -88,8 +88,8 @@ export class WorkerPro<
    * @param token - Token lock.
    * @param returnValue - The jobs success message.
    */
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  private async storeResult(jobId: string, token: string, returnValue: any) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention,
+  private async storeResult(jobId: string, token: string, returnValue: any): Promise<any> {
     const client = await this.connection.client;
 
     const result = await client['storeResult']([
