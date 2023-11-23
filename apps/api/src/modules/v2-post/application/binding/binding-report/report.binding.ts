@@ -82,12 +82,26 @@ export class ReportBinding implements IReportBinding {
       const targetId = entity.get('targetId');
       const targetType = entity.get('targetType');
 
-      const content =
-        targetType === CONTENT_TARGET.COMMENT
-          ? commentMap[targetId].get('content')
-          : contentMap[targetId].getContent();
       const targetActor = new BaseUserDto(actorMap[entity.get('targetActorId')]);
       const reasonCounts = await this._reportDomain.countReportReasons(entity.getDetails());
+
+      let content;
+      switch (targetType) {
+        case CONTENT_TARGET.COMMENT:
+          content = commentMap[targetId].get('content');
+          break;
+
+        case CONTENT_TARGET.POST:
+          content = contentMap[targetId].getContent();
+          break;
+
+        case CONTENT_TARGET.ARTICLE:
+          content = contentMap[targetId].getTitle();
+          break;
+
+        default:
+          break;
+      }
 
       reports.push({
         id: entity.get('id'),

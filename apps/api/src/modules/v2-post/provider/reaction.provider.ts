@@ -7,8 +7,6 @@ import {
 import { FindReactionsHandler } from '../application/query/reaction';
 import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { ReactionDomainService } from '../domain/domain-service/reaction.domain-service';
-import { REACTION_FACTORY_TOKEN } from '../domain/factory/interface/reaction.factory.interface';
-import { ReactionFactory } from '../domain/factory/reaction.factory';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   POST_REACTION_REPOSITORY_TOKEN,
@@ -41,10 +39,6 @@ export const reactionProvider = [
   {
     provide: REACTION_DOMAIN_SERVICE_TOKEN,
     useClass: ReactionDomainService,
-  },
-  {
-    provide: REACTION_FACTORY_TOKEN,
-    useClass: ReactionFactory,
   },
 
   /* Repository */
