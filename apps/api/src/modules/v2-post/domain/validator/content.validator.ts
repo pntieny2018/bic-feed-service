@@ -163,9 +163,14 @@ export class ContentValidator implements IContentValidator {
     user: UserDto,
     groups?: GroupDto[]
   ): Promise<void> {
-    if (!post.isPublished() && post.isOwner(user.id)) {
+    if (post.isOwner(user.id)) {
       return;
     }
+
+    if (post.isDraft() && post.isOwner(user.id)) {
+      throw new ContentNoCRUDPermissionException();
+    }
+
     if (post.isOpen() || post.isClosed()) {
       return;
     }

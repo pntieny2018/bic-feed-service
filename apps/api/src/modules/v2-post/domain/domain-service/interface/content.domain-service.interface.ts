@@ -97,7 +97,7 @@ export interface IContentDomainService {
   getContentIdsInTimeline(
     query: GetContentIdsInTimelineProps
   ): Promise<CursorPaginationResult<string>>;
-  getDraftIdsPagination(data: GetDraftsProps): Promise<CursorPaginationResult<string>>;
+  getDraftContentIdsPagination(data: GetDraftsProps): Promise<CursorPaginationResult<string>>;
   getDraftContentByIds(ids: string[]): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   getScheduledContent(
     input: GetScheduledContentProps

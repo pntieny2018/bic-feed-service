@@ -6,7 +6,7 @@ import {
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 import { uniq } from 'lodash';
 
@@ -47,8 +47,6 @@ import {
 } from './interface';
 
 export class ContentDomainService implements IContentDomainService {
-  private readonly _logger = new Logger(ContentDomainService.name);
-
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
@@ -96,7 +94,7 @@ export class ContentDomainService implements IContentDomainService {
     return null;
   }
 
-  public async getDraftIdsPagination(
+  public async getDraftContentIdsPagination(
     input: GetDraftsProps
   ): Promise<CursorPaginationResult<string>> {
     const { authUserId, isProcessing, type } = input;
@@ -485,13 +483,11 @@ export class ContentDomainService implements IContentDomainService {
       return [];
     }
 
-    const seriesEntites = (await this._contentRepository.findAll({
+    return (await this._contentRepository.findAll({
       where: {
         ids: seriesIds,
       },
     })) as SeriesEntity[];
-
-    return seriesEntites;
   }
 
   public async updateSetting(props: UpdateSettingsProps): Promise<void> {
