@@ -15,10 +15,22 @@ export type CreateReportProps = {
 export type CreateReportContentProps = CreateReportProps & { content: PostEntity | ArticleEntity };
 export type CreateReportCommentProps = CreateReportProps & { comment: CommentEntity };
 
+export type ProcessReportProps = {
+  authUser: UserDto;
+  reportId: string;
+  groupId: string;
+};
+
 export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
-  countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[];
+  countReportReasons(
+    reportDetails: ReportDetailAttributes[],
+    includeReporters?: boolean
+  ): Promise<ReportReasonCountDto[]>;
+  getContentOfTargetReported(report: ReportEntity): Promise<string>;
+  ignoreReport(input: ProcessReportProps): Promise<void>;
+  hideReport(input: ProcessReportProps): Promise<void>;
   getReportById(id: string): Promise<ReportEntity>;
 }
 

@@ -7,4 +7,4 @@ export * from './mention.validator.interface';
 export * from './post.validator.interface';
 export * from './quiz.validator.interface';
 export * from './reaction.validator.interface';
-export * from './manage.validator.interface';
+export * from './report.validator.interface';

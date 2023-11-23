@@ -24,7 +24,7 @@ import {
   ReactionContentNotificationPayload,
   ReactionReplyCommentNotificationPayload,
   REPORT_NOTIFICATION_APPLICATION_SERVICE,
-  ReportCreatedNotificationPayload,
+  ReportNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
   SeriesDeletedNotificationPayload,
@@ -168,9 +168,11 @@ export class NotificationAdapter implements INotificationAdapter {
     return this._commentNotiApp.sendCommentDeletedNotification(payload);
   }
 
-  public async sendReportCreatedNotification(
-    payload: ReportCreatedNotificationPayload
-  ): Promise<void> {
+  public async sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void> {
     return this._reportNotiApp.sendReportCreatedNotification(payload);
+  }
+
+  public async sendReportHiddenNotification(payload: ReportNotificationPayload): Promise<void> {
+    return this._reportNotiApp.sendReportHiddenNotification(payload);
   }
 }

@@ -1,40 +1,61 @@
 import { CONTENT_REPORT_REASONS, CONTENT_TARGET } from '@beincom/constants';
+import { UserDto } from '@beincom/dto';
+import { ArrayHelper, StringHelper } from '@libs/common/helpers';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
 import { ReportReasonCountDto } from '../../application/dto';
-import { ReportCreatedEvent } from '../event';
+import { ReportHiddenEvent, ReportCreatedEvent } from '../event';
 import { ContentNotFoundException, ReportNotFoundException } from '../exception';
-import { PostEntity } from '../model/content';
+import { ArticleEntity, PostEntity } from '../model/content';
 import { ReportDetailAttributes, ReportEntity } from '../model/report';
 import {
+  COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
+  ICommentRepository,
   IContentRepository,
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../validator/interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+  IUserAdapter,
+  USER_ADAPTER,
+} from '../service-adapter-interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
+  IReportValidator,
+  REPORT_VALIDATOR_TOKEN,
+} from '../validator/interface';
 
 import {
   CreateReportCommentProps,
   CreateReportContentProps,
   CreateReportProps,
   IReportDomainService,
+  ProcessReportProps,
 } from './interface';
 
 export class ReportDomainService implements IReportDomainService {
   public constructor(
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
+    @Inject(REPORT_VALIDATOR_TOKEN)
+    private readonly _reportValidator: IReportValidator,
     @Inject(REPORT_REPOSITORY_TOKEN)
     private readonly _reportRepo: IReportRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
+    @Inject(COMMENT_REPOSITORY_TOKEN)
+    private readonly _commentRepo: ICommentRepository,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter,
 
     private readonly _event: EventBus
   ) {}
@@ -123,19 +144,99 @@ export class ReportDomainService implements IReportDomainService {
     this._event.publish(new ReportCreatedEvent({ report: reportEntity, authUser: authUser }));
   }
 
-  public countReportReasons(reportDetails: ReportDetailAttributes[]): ReportReasonCountDto[] {
+  public async countReportReasons(
+    reportDetails: ReportDetailAttributes[],
+    includeReporters?: boolean
+  ): Promise<ReportReasonCountDto[]> {
     const reasonTypes = uniq(reportDetails.map((detail) => detail.reasonType));
+
+    let reporterMap: Record<string, UserDto> = {};
+    if (includeReporters) {
+      const reporterIds = uniq(reportDetails.map((detail) => detail.createdBy));
+      const reporters = await this._userAdapter.getUsersByIds(reporterIds);
+      reporterMap = ArrayHelper.convertArrayToObject(reporters, 'id');
+    }
 
     return reasonTypes.map((reasonType) => {
       const reasonTypeDetails = reportDetails.filter((detail) => detail.reasonType === reasonType);
       const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonType);
 
+      const reporterIds = uniq(reasonTypeDetails.map((detail) => detail.createdBy));
+      const reporters = reporterIds.map((id) => reporterMap[id]);
+
       return {
         reasonType,
         description: reason?.description,
         total: reasonTypeDetails.length,
+        reporters: includeReporters ? reporters : undefined,
       };
     });
+  }
+
+  public async getContentOfTargetReported(report: ReportEntity): Promise<string> {
+    const targetType = report.get('targetType');
+    const targetId = report.get('targetId');
+
+    let content = '';
+
+    switch (targetType) {
+      case CONTENT_TARGET.COMMENT: {
+        const comment = await this._commentRepo.findOne({ id: targetId });
+        content = comment?.get('content') || '';
+      }
+
+      case CONTENT_TARGET.POST: {
+        const post = (await this._contentRepo.findContentById(targetId)) as PostEntity;
+        return post?.get('content') || '';
+      }
+
+      case CONTENT_TARGET.ARTICLE: {
+        const article = (await this._contentRepo.findContentById(targetId)) as ArticleEntity;
+        content = article?.get('title') || '';
+      }
+
+      default: {
+        break;
+      }
+    }
+
+    return StringHelper.removeMarkdownCharacter(content).slice(0, 200);
+  }
+
+  public async ignoreReport(input: ProcessReportProps): Promise<void> {
+    const { reportId, groupId } = input;
+
+    const reportEntity = await this._reportRepo.findOne({
+      where: { id: reportId, status: REPORT_STATUS.CREATED },
+      include: { details: true },
+    });
+
+    this._reportValidator.validateReportInGroup(reportEntity, groupId);
+
+    reportEntity.updateStatus(REPORT_STATUS.IGNORED);
+
+    if (reportEntity.isChanged()) {
+      await this._reportRepo.update(reportEntity);
+    }
+  }
+
+  public async hideReport(input: ProcessReportProps): Promise<void> {
+    const { authUser, reportId, groupId } = input;
+
+    const reportEntity = await this._reportRepo.findOne({
+      where: { id: reportId, status: REPORT_STATUS.CREATED },
+      include: { details: true },
+    });
+
+    this._reportValidator.validateReportInGroup(reportEntity, groupId);
+
+    reportEntity.updateStatus(REPORT_STATUS.HIDDEN);
+
+    if (reportEntity.isChanged()) {
+      await this._reportRepo.update(reportEntity);
+    }
+
+    this._event.publish(new ReportHiddenEvent({ report: reportEntity, authUser }));
   }
 
   public async getReportById(id: string): Promise<ReportEntity> {

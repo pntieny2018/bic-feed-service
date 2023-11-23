@@ -43,7 +43,10 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import { ContentHasSeenEventHandler } from '../application/event-handler/content';
+import {
+  ContentHasSeenEventHandler,
+  ReportHiddenEventHandler,
+} from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -71,7 +74,6 @@ import {
   SearchContentsHandler,
   FindPinnedContentHandler,
   GetContentAudienceHandler,
-  GetMyReportedContentsHandler,
   GetScheduleContentHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
@@ -94,12 +96,6 @@ import {
 import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
-import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
-import {
-  ARTICLE_FACTORY_TOKEN,
-  POST_FACTORY_TOKEN,
-  SERIES_FACTORY_TOKEN,
-} from '../domain/factory/interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
   POST_GROUP_REPOSITORY_TOKEN,
@@ -144,6 +140,7 @@ export const postProvider = [
   VideoPostUpdatedEventHandler,
   VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
+  ReportHiddenEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -206,7 +203,6 @@ export const postProvider = [
   SearchSeriesHandler,
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
-  GetMyReportedContentsHandler,
 
   /** Domain Service */
   {
@@ -228,20 +224,6 @@ export const postProvider = [
   {
     provide: NEWSFEED_DOMAIN_SERVICE_TOKEN,
     useClass: NewsfeedDomainService,
-  },
-
-  /** Domain Factory */
-  {
-    provide: ARTICLE_FACTORY_TOKEN,
-    useClass: ArticleFactory,
-  },
-  {
-    provide: POST_FACTORY_TOKEN,
-    useClass: PostFactory,
-  },
-  {
-    provide: SERIES_FACTORY_TOKEN,
-    useClass: SeriesFactory,
   },
 
   /** Domain Validator */
