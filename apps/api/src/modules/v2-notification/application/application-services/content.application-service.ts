@@ -4,7 +4,6 @@ import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import {
-  KAFKA_TOPIC,
   SeriesAddItem,
   SeriesChangeItems,
   SeriesHasBeenDeleted,
@@ -34,6 +33,7 @@ import {
   SeriesRemovedItemNotificationPayload,
   SeriesUpdatedNotificationPayload,
 } from './interface';
+import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 export class ContentNotificationApplicationService
   implements IContentNotificationApplicationService

@@ -1,4 +1,15 @@
 export * from './express-extend';
-import env from 'dotenv';
+import { existsSync } from 'fs';
+import { config } from 'dotenv';
+import { join } from 'path';
 
-env.config();
+const pathEnv = join(__dirname, '.env');
+if (existsSync(pathEnv)) {
+  config({
+    path: pathEnv,
+  });
+} else {
+  config({
+    path: process.env.DOTENV_CONFIG_PATH,
+  });
+}

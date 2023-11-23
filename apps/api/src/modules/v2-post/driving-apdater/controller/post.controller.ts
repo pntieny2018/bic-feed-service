@@ -5,6 +5,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -39,6 +40,8 @@ import {
   UpdatePostRequestDto,
 } from '../dto/request';
 import { ContentNotFoundException } from '../../domain/exception';
+import { IKafkaService, KAFKA_SERVICE_TOKEN } from '@libs/infra/kafka';
+import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -48,7 +51,9 @@ import { ContentNotFoundException } from '../../domain/exception';
 export class PostController {
   public constructor(
     private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
+    private readonly _queryBus: QueryBus,
+    @Inject(KAFKA_SERVICE_TOKEN)
+    private readonly _kafkaService: IKafkaService
   ) {}
 
   @ApiOperation({ summary: 'Create draft post' })
@@ -67,6 +72,19 @@ export class PostController {
     );
 
     return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+  @Get('xxx')
+  public async test(): Promise<void> {
+    await this._kafkaService.sendMessages(KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED, [
+      {
+        key: 'test',
+        value: {
+          userId: '123',
+          contentId: '123',
+          action: 'publish',
+        },
+      },
+    ]);
   }
 
   @ApiOperation({ summary: 'Update post' })

@@ -2,7 +2,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
 
-import { IKafkaConfig } from '../../config/kafka';
 import { AuthorityModule } from '../authority';
 import { CommentModule } from '../comment';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
@@ -21,6 +20,7 @@ import { PostCronService } from './post-cron.service';
 import { PostHistoryService } from './post-history.service';
 import { PostController } from './post.controller';
 import { PostService } from './post.service';
+import { IKafkaConfig } from '@libs/infra/kafka/config';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');

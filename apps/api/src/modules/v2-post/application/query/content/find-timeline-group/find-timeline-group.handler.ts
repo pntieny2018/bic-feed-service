@@ -2,10 +2,6 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../../v2-group/application';
-import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
@@ -13,14 +9,18 @@ import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { FindTimelineGroupDto } from '../../../dto';
 
 import { FindTimelineGroupQuery } from './find-timeline-group.query';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '@api/modules/v2-post/domain/service-adapter-interface';
 
 @QueryHandler(FindTimelineGroupQuery)
 export class FindTimelineGroupHandler
   implements IQueryHandler<FindTimelineGroupQuery, FindTimelineGroupDto>
 {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
@@ -29,8 +29,8 @@ export class FindTimelineGroupHandler
 
   public async execute(query: FindTimelineGroupQuery): Promise<any> {
     const { authUser, groupId } = query.payload;
-    const group = await this._groupAppService.findOne(groupId);
-    const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+    const group = await this._groupAdapter.getGroupById(groupId);
+    const groupIds = this._groupAdapter.getGroupIdsAndChildIdsUserJoined(group, authUser.groups);
 
     const { rows: ids, meta: meta } = await this._contentDomainService.getContentIdsInTimeline({
       ...query.payload,

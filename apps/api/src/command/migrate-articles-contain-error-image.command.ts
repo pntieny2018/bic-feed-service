@@ -1,10 +1,10 @@
 import { Op, QueryTypes } from 'sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { PostModel, PostType } from '../database/models/post.model';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 interface ICommandOptions {
   rollback: boolean;
@@ -39,8 +39,11 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
     flags: '-r, --rollback [boolean]',
   })
   public async run(params: string[], options?: ICommandOptions): Promise<any> {
-    if (Boolean(options.rollback)) await this.rollBack();
-    else await this.migrateContent();
+    if (Boolean(options.rollback)) {
+      await this.rollBack();
+    } else {
+      await this.migrateContent();
+    }
     process.exit();
   }
 

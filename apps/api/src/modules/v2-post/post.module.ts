@@ -22,8 +22,6 @@ import { UserModuleV2 } from '../v2-user/user.module';
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
-import { GroupConsumer } from './driving-apdater/consumer/group.consumer';
-import { MediaConsumer } from './driving-apdater/consumer/media.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -52,30 +50,22 @@ import {
   sharedProvider,
   tagProvider,
 } from './provider';
-import { PublishOrRemovePostToNewsfeedConsumer } from './driving-apdater/worker-consumer/publish-remove-post-to-newsfeed.consumer';
-import { FollowConsumer } from './driving-apdater/worker-consumer/follow.consumer';
 import { workerProvider } from './provider/worker.provider';
-
+import { PublishOrRemovePostToNewsfeedConsumer } from '@api/modules/v2-post/driving-apdater/kafka-consumer/publish-remove-post-to-newsfeed.consumer';
 @Module({
   imports: [
-    HttpModule,
     CqrsModule,
-    DatabaseModule,
     AuthorityModule,
-    GroupModuleV2,
-    UserModuleV2,
-    MediaModule,
     KafkaModule,
-    forwardRef(() => SearchModule),
     NotificationModule,
     NotificationModuleV2,
     QueueModule,
     EventModule,
-    UserModule,
-    GroupModule,
-    LibMediaModule,
     OpenaiModule,
-    FeedModule,
+    GroupModule,
+    UserModule,
+    LibMediaModule,
+    forwardRef(() => SearchModule),
   ],
   controllers: [
     TagController,
@@ -89,10 +79,7 @@ import { workerProvider } from './provider/worker.provider';
     CommentController,
     SeriesController,
     QuizController,
-    MediaConsumer,
     PublishOrRemovePostToNewsfeedConsumer,
-    GroupConsumer,
-    FollowConsumer,
   ],
   providers: [
     ...adapterProvider,
@@ -113,7 +100,6 @@ import { workerProvider } from './provider/worker.provider';
     ...workerProvider,
   ],
   exports: [
-    ...quizProvider,
     {
       provide: CONTENT_BINDING_TOKEN,
       useClass: ContentBinding,

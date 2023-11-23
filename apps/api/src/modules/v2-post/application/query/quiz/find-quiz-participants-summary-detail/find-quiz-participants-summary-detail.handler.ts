@@ -3,10 +3,6 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { ArrayHelper } from '../../../../../../common/helpers';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-} from '../../../../../v2-user/application';
 import { ContentAccessDeniedException } from '../../../../domain/exception';
 import {
   CONTENT_REPOSITORY_TOKEN,
@@ -15,11 +11,12 @@ import {
 import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '../../../../domain/repositoty-interface/quiz-participant.repository.interface';
+} from '@api/modules/v2-post/domain/repositoty-interface';
 import { QuizParticipantSummaryDetailDto } from '../../../dto';
 
 import { FindQuizParticipantsSummaryDetailDto } from './find-quiz-participants-summary-detail.dto';
 import { FindQuizParticipantsSummaryDetailQuery } from './find-quiz-participants-summary-detail.query';
+import { IUserAdapter, USER_ADAPTER } from '@api/modules/v2-post/domain/service-adapter-interface';
 
 @QueryHandler(FindQuizParticipantsSummaryDetailQuery)
 export class FindQuizParticipantsSummaryDetailHandler
@@ -31,8 +28,8 @@ export class FindQuizParticipantsSummaryDetailHandler
     private readonly _contentRepo: IContentRepository,
     @Inject(QUIZ_PARTICIPANT_REPOSITORY_TOKEN)
     private readonly _quizParticipantRepo: IQuizParticipantRepository,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userAppService: IUserApplicationService
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(
@@ -55,7 +52,7 @@ export class FindQuizParticipantsSummaryDetailHandler
     const userIds = quizParticipantEntities.map((quizParticipantEntity) =>
       quizParticipantEntity.get('createdBy')
     );
-    const users = await this._userAppService.findAllByIds(userIds);
+    const users = await this._userAdapter.getUsersByIds(userIds);
     const userMap = ArrayHelper.convertArrayToObject(users, 'id');
 
     const quizParticipantSummaryDetails: QuizParticipantSummaryDetailDto[] =

@@ -9,12 +9,17 @@ export interface IAxiosConfig {
     maxRedirects: number;
     timeout: number;
   };
+  upload: {
+    baseUrl: string;
+    maxRedirects: number;
+    timeout: number;
+  };
   lambda: {
     baseUrl: string;
     maxRedirects: number;
     timeout: number;
   };
-  upload: {
+  notification: {
     baseUrl: string;
     maxRedirects: number;
     timeout: number;

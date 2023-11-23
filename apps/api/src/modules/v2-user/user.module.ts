@@ -3,11 +3,10 @@ import { HttpModule } from '@nestjs/axios';
 import { Module, Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { IAxiosConfig } from '../../config/axios';
-
 import { USER_APPLICATION_TOKEN, UserApplicationService } from './application';
 import { USER_REPOSITORY_TOKEN } from './domain/repositoty-interface/user.repository.interface';
 import { UserRepository } from './driven-adapter/repository/user.repository';
+import { IAxiosConfig } from '@libs/infra/http';
 
 const infrastructure: Provider[] = [
   {

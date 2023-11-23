@@ -5,7 +5,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
 
 import { ElasticsearchHelper } from '../../common/helpers';
-import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { CategoryModel } from '../../database/models/category.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -28,6 +27,7 @@ import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
 import { POST_VI_MAPPING } from './post_vi_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 
 interface ICommandOptions {
   oldIndex?: string;

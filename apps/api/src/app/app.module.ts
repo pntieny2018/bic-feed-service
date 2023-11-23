@@ -29,7 +29,6 @@ import { PostModule } from '../modules/post';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
-import { UploadModule } from '../modules/upload';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { NotificationModuleV2 } from '../modules/v2-notification/notification.module';
@@ -61,7 +60,6 @@ import { LibModule } from './lib.module';
     CommentModule,
     FeedModule,
     PostModule,
-    UploadModule,
     MediaModule,
     MentionModule,
     ListenerModule,

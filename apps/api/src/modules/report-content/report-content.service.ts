@@ -10,7 +10,6 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CACHE_KEYS } from '../../common/constants/casl.constant';
 import { PageDto } from '../../common/dto';
 import { ValidatorException } from '../../common/exceptions';
-import { getDatabaseConfig } from '../../config/database';
 import {
   IReportContentDetailAttribute,
   ReportContentDetailModel,
@@ -47,6 +46,7 @@ import {
   UpdateStatusReportDto,
 } from './dto';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class ReportContentService {

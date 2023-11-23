@@ -1,13 +1,16 @@
-import { ClientKafka } from '@nestjs/microservices';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../common/constants';
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
+import { IKafkaService, KAFKA_SERVICE_TOKEN } from '@libs/infra/kafka';
+import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @Injectable()
 export class NotificationService {
   private readonly _logger = new Logger(NotificationService.name);
 
-  public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
+  public constructor(
+    @Inject(KAFKA_SERVICE_TOKEN)
+    private readonly _kafkaProducer: IKafkaService
+  ) {}
 
   public async publishPostNotification<T>(payload: NotificationPayloadDto<T>): Promise<void> {
     this._logger.debug(`Sent event[${payload.value.event}]--- ${JSON.stringify(payload.value)}`);

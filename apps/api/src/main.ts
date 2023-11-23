@@ -9,7 +9,7 @@ import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import './common/extension';
-import { KafkaHealthBootstrap } from './modules/health/kafka-health.bootstrap';
+import { KafkaHealthBootstrap } from '@libs/common/health-check/kafka-health.bootstrap';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);

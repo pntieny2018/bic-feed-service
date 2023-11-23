@@ -1,7 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
 import { ArticleDto, CommentBaseDto, PostDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
@@ -15,6 +14,7 @@ import {
 } from '../dto';
 
 import { CommentNotificationPayload, ICommentNotificationApplicationService } from './interface';
+import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 export class CommentNotificationApplicationService
   implements ICommentNotificationApplicationService

@@ -9,7 +9,6 @@ import { Sequelize } from 'sequelize-typescript';
 
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
-import { MediaService } from '../media';
 
 import { PostService } from './post.service';
 
@@ -27,7 +26,6 @@ export class PostCronService {
 
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
-    private readonly _mediaService: MediaService,
     private readonly _sentryService: SentryService,
     private readonly _postService: PostService
   ) {}

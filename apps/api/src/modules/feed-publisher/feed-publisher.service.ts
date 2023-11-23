@@ -4,12 +4,12 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 
 import { ArrayHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { FollowService } from '../follow';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class FeedPublisherService {

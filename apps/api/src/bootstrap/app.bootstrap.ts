@@ -6,7 +6,7 @@ import { Logger, PinoLogger } from 'nestjs-pino';
 
 import { HttpExceptionFilter } from '../common/filters';
 import { HandleResponseInterceptor } from '../common/interceptors';
-import { IAppConfig } from '../config/app';
+import { IAppConfig } from '@libs/common/config/app';
 
 export class AppBootstrap {
   /**
