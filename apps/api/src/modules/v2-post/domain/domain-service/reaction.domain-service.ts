@@ -9,10 +9,6 @@ import {
   ReactionNotHaveAuthorityException,
   ReactionTargetNotExistingException,
 } from '../exception';
-import {
-  IReactionFactory,
-  REACTION_FACTORY_TOKEN,
-} from '../factory/interface/reaction.factory.interface';
 import { ReactionEntity } from '../model/reaction';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
@@ -34,8 +30,6 @@ export class ReactionDomainService implements IReactionDomainService {
     private readonly _postReactionRepository: IPostReactionRepository,
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepository: ICommentReactionRepository,
-    @Inject(REACTION_FACTORY_TOKEN)
-    private readonly _reactionFactory: IReactionFactory,
     private readonly eventBus: EventBus
   ) {}
 
@@ -59,7 +53,7 @@ export class ReactionDomainService implements IReactionDomainService {
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, authUser, target, targetId } = input;
-    const reactionEntity = this._reactionFactory.create({
+    const reactionEntity = ReactionEntity.create({
       target,
       reactionName,
       createdBy: authUser.id,
