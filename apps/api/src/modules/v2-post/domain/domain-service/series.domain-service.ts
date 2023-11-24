@@ -23,7 +23,6 @@ import {
   ContentNotFoundException,
   InvalidResourceImageException,
 } from '../exception';
-import { ISeriesFactory, SERIES_FACTORY_TOKEN } from '../factory/interface';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
@@ -58,8 +57,6 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _mediaDomainService: IMediaDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
-    @Inject(SERIES_FACTORY_TOKEN)
-    private readonly _seriesFactory: ISeriesFactory,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -84,11 +81,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
   public async create(input: CreateSeriesProps): Promise<SeriesEntity> {
     const { actor, title, summary, groupIds, coverMedia, setting } = input;
-    const seriesEntity = this._seriesFactory.createSeries({
-      userId: actor.id,
-      title,
-      summary,
-    });
+    const seriesEntity = SeriesEntity.create({ title, summary }, actor.id);
 
     seriesEntity.setSetting(setting);
     const state = seriesEntity.getState();
@@ -176,7 +169,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setCover(images[0]);
     }
 
-    this._contentValidator.checkCanReadContent(seriesEntity, actor);
+    await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
     const oldGroupIds = seriesEntity.get('groupIds');
     await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
@@ -243,7 +236,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    this._contentValidator.checkCanReadContent(seriesEntity, actor);
+    await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
     await this._contentValidator.checkCanCRUDContent(
       actor,
