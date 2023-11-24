@@ -11,6 +11,6 @@ class GetMyReportedCommentsPayload extends PaginatedArgs {
   public after?: string;
 }
 
-export class GetMyReportCommentsQuery implements IQuery {
+export class GetMyReportedCommentsQuery implements IQuery {
   public constructor(public readonly payload: GetMyReportedCommentsPayload) {}
 }

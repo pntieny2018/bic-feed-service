@@ -10,11 +10,7 @@ import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
 } from '../../../v2-notification/application/dto';
-import {
-  CommentCreatedEvent,
-  CommentDeletedEvent,
-  CommentUpdatedEvent,
-} from '../event/comment.event';
+import { CommentCreatedEvent, CommentDeletedEvent, CommentUpdatedEvent } from '../event';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
@@ -32,7 +28,6 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
   RelevantCommentProps,
-  REPORT_DOMAIN_SERVICE_TOKEN,
 } from './interface';
 
 @Injectable()
@@ -44,8 +39,6 @@ export class CommentDomainService implements ICommentDomainService {
     private readonly _commentRepository: ICommentRepository,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
-    private readonly _reportDomainService: ICommentDomainService,
 
     private readonly event: EventBus
   ) {}
@@ -433,7 +426,7 @@ export class CommentDomainService implements ICommentDomainService {
     }
   }
 
-  public async getReportedComment(commentId: string, authUserId: string): Promise<CommentEntity> {
+  public async getMyCommentById(commentId: string, authUserId: string): Promise<CommentEntity> {
     const comment = await this._commentRepository.findOne({
       id: commentId,
     });

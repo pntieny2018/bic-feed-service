@@ -124,6 +124,10 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
 
     const commentActor = await this._userAdapter.getUserById(commentEntity.get('createdBy'));
 
-    return (await this._commentBinding.commentsBinding([commentEntity], commentActor))[0];
+    return (
+      await this._commentBinding.commentsBinding([commentEntity], {
+        authUser: commentActor,
+      })
+    )[0];
   }
 }

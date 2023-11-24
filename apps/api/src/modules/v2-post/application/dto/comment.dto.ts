@@ -52,9 +52,6 @@ export class CommentBaseDto {
   @ApiProperty()
   public actor: UserDto;
 
-  @ApiProperty({ name: 'report_reasons_count' })
-  public reportReasonsCount: ReportReasonCountDto[];
-
   public constructor(data: Partial<CommentBaseDto>) {
     Object.assign(this, data);
   }
@@ -69,6 +66,9 @@ export class CommentExtendedDto extends CommentBaseDto {
 
   @ApiProperty({ name: 'reactions_count' })
   public reactionsCount?: ReactionCount[] = [];
+
+  @ApiProperty({ name: 'report_reasons_count' })
+  public reportReasonsCount: ReportReasonCountDto[];
 
   public constructor(data: Partial<CommentExtendedDto>) {
     super(data);

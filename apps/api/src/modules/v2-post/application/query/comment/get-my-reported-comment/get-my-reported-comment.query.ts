@@ -6,6 +6,6 @@ type GetCommentReportedQueryPayload = {
   authUser: UserDto;
 };
 
-export class GetCommentReportedQuery implements IQuery {
+export class GetMyReportedCommentQuery implements IQuery {
   public constructor(public readonly payload: GetCommentReportedQueryPayload) {}
 }

@@ -19,10 +19,10 @@ import {
 import { COMMENT_BINDING_TOKEN, ICommentBinding } from '../../../binding';
 import { CommentExtendedDto, ReportTargetDto } from '../../../dto';
 
-import { GetMyReportCommentsQuery } from './get-my-report-comments.query';
+import { GetMyReportedCommentsQuery } from './get-my-reported-comments.query';
 
-@QueryHandler(GetMyReportCommentsQuery)
-export class GetMyReportCommentsHandler implements IQueryHandler<GetMyReportCommentsQuery> {
+@QueryHandler(GetMyReportedCommentsQuery)
+export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReportedCommentsQuery> {
   public constructor(
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
     private readonly _reportDomain: IReportDomainService,
@@ -35,7 +35,7 @@ export class GetMyReportCommentsHandler implements IQueryHandler<GetMyReportComm
   ) {}
 
   public async execute(
-    query: GetMyReportCommentsQuery
+    query: GetMyReportedCommentsQuery
   ): Promise<PaginatedResponse<ReportTargetDto>> {
     const { authUser, limit, order, before, after } = query.payload;
 
@@ -55,7 +55,9 @@ export class GetMyReportCommentsHandler implements IQueryHandler<GetMyReportComm
     const commentIds = reportEntities.map((row) => row.get('targetId'));
     const commentEntities = await this._commentRepo.findAll({ id: commentIds });
 
-    const comments = await this._commentBinding.commentsBinding(commentEntities, authUser);
+    const comments = await this._commentBinding.commentsBinding(commentEntities, {
+      authUser,
+    });
 
     const commentMap = ArrayHelper.convertArrayToObject(comments, 'id');
     const reportMap = EntityHelper.entityArrayToRecord(reportEntities, 'id');

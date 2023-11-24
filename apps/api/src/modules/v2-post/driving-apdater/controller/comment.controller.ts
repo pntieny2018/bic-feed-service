@@ -32,6 +32,7 @@ import {
 } from '../../application/command/comment';
 import {
   CommentBaseDto,
+  CommentExtendedDto,
   FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
   ReportTargetDto,
@@ -39,8 +40,8 @@ import {
 import {
   FindCommentsAroundIdQuery,
   FindCommentsPaginationQuery,
-  GetCommentReportedQuery,
-  GetMyReportCommentsQuery,
+  GetMyReportedCommentQuery,
+  GetMyReportedCommentsQuery,
 } from '../../application/query/comment';
 import {
   CreateCommentRequestDto,
@@ -95,9 +96,9 @@ export class CommentController {
   public async getReportedComment(
     @AuthUser() authUser: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
-  ): Promise<CommentBaseDto> {
+  ): Promise<CommentExtendedDto> {
     const commentDto = await this._queryBus.execute(
-      new GetCommentReportedQuery({
+      new GetMyReportedCommentQuery({
         authUser,
         commentId,
       })
@@ -116,7 +117,7 @@ export class CommentController {
     @Query() query: GetMyReportedCommentsRequestDto
   ): Promise<PaginatedResponse<ReportTargetDto>> {
     const commentsReported = await this._queryBus.execute(
-      new GetMyReportCommentsQuery({
+      new GetMyReportedCommentsQuery({
         authUser,
         ...query,
       })
