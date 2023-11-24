@@ -13,10 +13,12 @@ import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { ClsModule } from 'nestjs-cls';
 import { v4 as uuid } from 'uuid';
 
-import { FollowConsumer } from './module/main/kafka-consumer/follow.consumer';
-import { GroupConsumer } from './module/main/kafka-consumer/group.consumer';
-import { MediaConsumer } from './module/main/kafka-consumer/media.consumer';
-import { PublishOrRemovePostToNewsfeedConsumer } from './module/main/kafka-consumer/publish-remove-post-to-newsfeed.consumer';
+import {
+  FollowConsumer,
+  GroupConsumer,
+  MediaConsumer,
+  PublishOrRemovePostToNewsfeedConsumer,
+} from './module/main/kafka-consumer';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');

@@ -1,10 +1,10 @@
+import { ProcessQuizParticipantResultCommand } from '@api/modules/v2-post/application/command/quiz';
+import { QuizParticipantResultJobDto } from '@api/modules/v2-post/application/dto';
 import { QUEUES } from '@libs/common/constants';
 import { ProcessorAndLog } from '@libs/infra/log';
 import { JobWithContext } from '@libs/infra/queue';
 import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
-import { QuizParticipantResultJobDto } from '@api/modules/v2-post/application/dto';
-import { ProcessQuizParticipantResultCommand } from '@api/modules/v2-post/application/command/quiz';
 
 @ProcessorAndLog(QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME)
 export class QuizParticipantProcessor {

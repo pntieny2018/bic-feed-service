@@ -1,10 +1,10 @@
+import { ProcessScheduledContentPublishingCommand } from '@api/modules/v2-post/application/command/content';
+import { ContentScheduledJobDto } from '@api/modules/v2-post/application/dto';
 import { QUEUES } from '@libs/common/constants';
 import { ProcessorAndLog } from '@libs/infra/log';
 import { JobWithContext } from '@libs/infra/queue';
 import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
-import { ContentScheduledJobDto } from '@api/modules/v2-post/application/dto';
-import { ProcessScheduledContentPublishingCommand } from '@api/modules/v2-post/application/command/content';
 
 @ProcessorAndLog(QUEUES.CONTENT_SCHEDULED.QUEUE_NAME)
 export class ArticleProcessor {
