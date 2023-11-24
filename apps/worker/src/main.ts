@@ -1,10 +1,11 @@
+import { KafkaHealthBootstrap } from '@libs/common/health-check/kafka-health.bootstrap';
 import { KafkaGateway } from '@libs/infra/kafka';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { WorkerModule } from './worker.module';
+
 import { WorkerBootstrap } from './app.bootstrap';
-import { KafkaHealthBootstrap } from '@libs/common/health-check/kafka-health.bootstrap';
+import { WorkerModule } from './worker.module';
 import './extension';
 
 async function bootstrap(): Promise<void> {

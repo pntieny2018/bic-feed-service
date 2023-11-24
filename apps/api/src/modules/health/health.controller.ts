@@ -1,3 +1,5 @@
+import { HealthLabel } from '@libs/common/health-check/health.constants';
+import { KafkaHealthIndicator, RedisHealthIndicator } from '@libs/common/health-check/indicators';
 import { Controller, Get } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import {
@@ -9,8 +11,6 @@ import {
 import { HealthCheckResult } from '@nestjs/terminus/dist/health-check/health-check-result.interface';
 import { HealthIndicatorResult } from '@nestjs/terminus/dist/health-indicator';
 import { Sequelize } from 'sequelize-typescript';
-import { KafkaHealthIndicator, RedisHealthIndicator } from '@libs/common/health-check/indicators';
-import { HealthLabel } from '@libs/common/health-check/health.constants';
 
 @Controller('health')
 export class HealthController {
