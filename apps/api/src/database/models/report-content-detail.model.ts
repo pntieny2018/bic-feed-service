@@ -46,7 +46,9 @@ export class ReportContentDetailModel
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: string;
 
   @Column
@@ -64,7 +66,9 @@ export class ReportContentDetailModel
   @Column
   public reportId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reasonType: string;
 
   @Column

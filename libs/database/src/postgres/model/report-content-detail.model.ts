@@ -36,7 +36,9 @@ export class ReportContentDetailModel extends Model<
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: CONTENT_TARGET;
 
   @Column
@@ -54,7 +56,9 @@ export class ReportContentDetailModel extends Model<
   @Column
   public reportId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reasonType: CONTENT_REPORT_REASON_TYPE;
 
   @Column
