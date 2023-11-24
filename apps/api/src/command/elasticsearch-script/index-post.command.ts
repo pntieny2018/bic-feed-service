@@ -1,3 +1,4 @@
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -27,7 +28,6 @@ import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
 import { POST_VI_MAPPING } from './post_vi_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
-import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 
 interface ICommandOptions {
   oldIndex?: string;

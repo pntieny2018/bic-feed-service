@@ -1,7 +1,8 @@
 export * from './express-extend';
 import { existsSync } from 'fs';
-import { config } from 'dotenv';
 import { join } from 'path';
+
+import { config } from 'dotenv';
 
 const pathEnv = join(__dirname, '.env');
 if (existsSync(pathEnv)) {

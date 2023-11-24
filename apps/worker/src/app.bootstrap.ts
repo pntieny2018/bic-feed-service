@@ -1,9 +1,9 @@
+import { IAppConfig } from '@libs/common/config/app';
 import { ENV } from '@libs/common/constants';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json } from 'express';
 import { Logger, PinoLogger } from 'nestjs-pino';
-import { IAppConfig } from '@libs/common/config/app';
 
 export class WorkerBootstrap {
   /**
