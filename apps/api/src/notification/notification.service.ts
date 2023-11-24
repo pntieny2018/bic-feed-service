@@ -1,7 +1,7 @@
+import { IKafkaService, KAFKA_SERVICE_TOKEN, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
-import { IKafkaService, KAFKA_SERVICE_TOKEN } from '@libs/infra/kafka';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @Injectable()
 export class NotificationService {

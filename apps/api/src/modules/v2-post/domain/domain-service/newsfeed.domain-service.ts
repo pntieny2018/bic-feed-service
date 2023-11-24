@@ -1,4 +1,5 @@
 import { ArrayHelper } from '@libs/common/helpers';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Logger } from '@nestjs/common';
 
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
@@ -15,7 +16,6 @@ import {
   DispatchContentsInGroupsToUserIdProps,
   INewsfeedDomainService,
 } from './interface/newsfeed.domain-service.interface';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
   private readonly _logger = new Logger(NewsfeedDomainService.name);

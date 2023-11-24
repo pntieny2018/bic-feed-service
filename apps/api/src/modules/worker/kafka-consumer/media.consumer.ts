@@ -1,10 +1,11 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Payload } from '@nestjs/microservices';
-import { PostVideoProcessedMessagePayload } from '../../v2-post/application/dto/message';
+
 import { PostVideoProcessedCommand } from '../../v2-post/application/command/post';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
+import { PostVideoProcessedMessagePayload } from '../../v2-post/application/dto/message';
 
 @Controller()
 export class MediaConsumer {

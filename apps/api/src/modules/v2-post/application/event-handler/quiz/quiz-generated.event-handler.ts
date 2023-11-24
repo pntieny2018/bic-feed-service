@@ -1,3 +1,4 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
@@ -10,7 +11,6 @@ import {
   IQuizRepository,
   QUIZ_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @EventsHandlerAndLog(QuizGeneratedEvent)
 export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEvent> {

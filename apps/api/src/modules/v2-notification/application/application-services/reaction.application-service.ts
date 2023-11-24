@@ -1,4 +1,4 @@
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Injectable } from '@nestjs/common';
 import { v4 } from 'uuid';
 

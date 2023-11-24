@@ -1,10 +1,9 @@
-import { IKafkaConsumerMessage } from '@libs/infra/kafka';
+import { PublishContentToNewsfeedCommand } from '@api/modules/v2-post/application/command/worker/publish-post-to-newsfeed';
+import { RemoveContentFromNewsfeedCommand } from '@api/modules/v2-post/application/command/worker/remove-post-from-newsfeed';
+import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { PublishContentToNewsfeedCommand } from '@api/modules/v2-post/application/command/worker/publish-post-to-newsfeed';
-import { RemoveContentFromNewsfeedCommand } from '@api/modules/v2-post/application/command/worker/remove-post-from-newsfeed';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @Controller()
 export class PublishOrRemovePostToNewsfeedConsumer {

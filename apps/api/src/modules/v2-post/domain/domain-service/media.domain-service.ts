@@ -1,4 +1,5 @@
 import { MEDIA_TYPE } from '@beincom/constants';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 import { difference, intersection } from 'lodash';
 
@@ -7,7 +8,6 @@ import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';
 
 import { IMediaDomainService } from './interface';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 export class MediaDomainService implements IMediaDomainService {
   public constructor(

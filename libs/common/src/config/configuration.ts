@@ -1,14 +1,15 @@
+import { getElasticsearchConfig, IElasticsearchConfig } from '@libs/common/config/elasticsearch';
+import { getRedisConfig, IRedisConfig } from '@libs/common/config/redis';
+import { getDatabaseConfig, IDatabaseConfig } from '@libs/database/postgres/config';
+import { IAxiosConfig } from '@libs/infra/http';
+import { getAxiosConfig } from '@libs/infra/http/config/axios.config';
+import { getKafkaConfig, IKafkaConfig } from '@libs/infra/kafka/config';
+
 import { getAppConfig, IAppConfig } from './app';
 import { getEventConfig, IEventConfig } from './event';
 import { getSentryConfig, ISentryConfig } from './sentry';
-import { getSwaggerConfig, ISwaggerConfig } from './swagger';
 import { getSocketIoConfig, ISocketIoConfig } from './socket-io';
-import { getDatabaseConfig, IDatabaseConfig } from '@libs/database/postgres/config';
-import { getRedisConfig, IRedisConfig } from '@libs/common/config/redis';
-import { IAxiosConfig } from '@libs/infra/http';
-import { getElasticsearchConfig, IElasticsearchConfig } from '@libs/common/config/elasticsearch';
-import { getKafkaConfig, IKafkaConfig } from '@libs/infra/kafka/config';
-import { getAxiosConfig } from '@libs/infra/http/config/axios.config';
+import { getSwaggerConfig, ISwaggerConfig } from './swagger';
 
 interface IConfiguration {
   app: IAppConfig;

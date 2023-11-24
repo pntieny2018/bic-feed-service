@@ -1,10 +1,10 @@
-import { IKafkaConsumerMessage } from '@libs/infra/kafka';
+import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+
 import { UserFollowGroupCommand } from '../../v2-post/application/command/worker/user-follow-group';
 import { UserUnfollowGroupCommand } from '../../v2-post/application/command/worker/user-unfollow-group';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @Controller()
 export class FollowConsumer {

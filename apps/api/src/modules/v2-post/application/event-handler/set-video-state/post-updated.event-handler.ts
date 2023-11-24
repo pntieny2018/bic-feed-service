@@ -1,10 +1,10 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 import { PostUpdatedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @EventsHandlerAndLog(PostUpdatedEvent)
 export class VideoPostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> {

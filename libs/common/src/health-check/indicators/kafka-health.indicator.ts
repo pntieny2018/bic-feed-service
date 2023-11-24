@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckError, HealthIndicator } from '@nestjs/terminus';
 import { Consumer } from '@nestjs/microservices/external/kafka.interface';
+import { HealthCheckError, HealthIndicator } from '@nestjs/terminus';
 import { HealthIndicatorResult } from '@nestjs/terminus/dist/health-indicator';
 
 @Injectable()

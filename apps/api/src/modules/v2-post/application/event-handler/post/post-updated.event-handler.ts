@@ -1,8 +1,8 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../common/constants';
 import {
   ISeriesDomainService,
   ITagDomainService,
@@ -11,7 +11,6 @@ import {
 } from '../../../domain/domain-service/interface';
 import { PostUpdatedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
 
 @EventsHandlerAndLog(PostUpdatedEvent)
 export class PostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> {

@@ -1,14 +1,13 @@
-import { IKafkaConsumerMessage } from '@libs/infra/kafka';
-import { EventPatternAndLog } from '@libs/infra/log';
-import { Controller, Logger } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { ProcessGroupPrivacyUpdatedCommand } from '@api/modules/v2-post/application/command/content';
+import { ProcessGroupStateUpdatedCommand } from '@api/modules/v2-post/application/command/content/process-group-state-updated';
 import {
   GroupPrivacyUpdatedMessagePayload,
   GroupStateUpdatedMessagePayload,
 } from '@api/modules/v2-post/application/dto/message';
-import { ProcessGroupPrivacyUpdatedCommand } from '@api/modules/v2-post/application/command/content';
-import { ProcessGroupStateUpdatedCommand } from '@api/modules/v2-post/application/command/content/process-group-state-updated';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
+import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
+import { EventPatternAndLog } from '@libs/infra/log';
+import { Controller, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 
 @Controller()
 export class GroupConsumer {

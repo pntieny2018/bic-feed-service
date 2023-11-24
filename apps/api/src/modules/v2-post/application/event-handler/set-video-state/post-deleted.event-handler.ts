@@ -1,4 +1,4 @@
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';

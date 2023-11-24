@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { ServerKafka } from '@nestjs/microservices';
+
 import { KafkaHealthIndicator } from './indicators';
 export class KafkaHealthBootstrap {
   public static init(app: INestApplication): void {

@@ -1,6 +1,6 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { StringHelper } from '@libs/common/helpers';
-import { KAFKA_TOPIC } from '@libs/infra/kafka/kafka.constant';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
