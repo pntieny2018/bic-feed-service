@@ -29,10 +29,6 @@ export type GetPaginationReportProps = {
   include?: IncludeReportProps;
 } & CursorPaginationProps;
 
-export type GetListReportsProps = CursorPaginationProps & {
-  groupId: string;
-};
-
 export interface IReportRepository {
   findOne(input: FindOneReportProps): Promise<ReportEntity>;
   getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;

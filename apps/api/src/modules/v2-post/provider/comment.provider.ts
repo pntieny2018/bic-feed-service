@@ -16,6 +16,7 @@ import {
 import {
   FindCommentsAroundIdHandler,
   FindCommentsPaginationHandler,
+  GetCommentReportedHandler,
   GetMyReportCommentsHandler,
 } from '../application/query/comment';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';
@@ -54,6 +55,7 @@ export const commentProvider = [
   FindCommentsPaginationHandler,
   FindCommentsAroundIdHandler,
   GetMyReportCommentsHandler,
+  GetCommentReportedHandler,
 
   CommentMapper,
 

@@ -10,7 +10,13 @@ import {
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
-import { CommentBaseDto, CommentExtendedDto, ReactionDto, UserMentionDto } from '../../dto';
+import {
+  CommentBaseDto,
+  CommentExtendedDto,
+  ReactionDto,
+  ReportReasonCountDto,
+  UserMentionDto,
+} from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
 
 import { ICommentBinding } from './comment.interface';
@@ -77,6 +83,7 @@ export class CommentBinding implements ICommentBinding {
     commentEntity: CommentEntity,
     dataBinding?: {
       actor?: UserDto;
+      reportReasonsCount?: ReportReasonCountDto[];
     }
   ): Promise<CommentBaseDto> {
     const userData = await this._getUsersBindingInComment([commentEntity], dataBinding?.actor);
@@ -98,6 +105,7 @@ export class CommentBinding implements ICommentBinding {
       updatedAt: commentEntity.get('updatedAt'),
       totalReply: commentEntity.get('totalReply'),
       actor,
+      reportReasonsCount: dataBinding?.reportReasonsCount,
     });
   }
 

@@ -58,5 +58,7 @@ export interface ICommentDomainService {
   getRelevantUserIdsInComment(
     props: RelevantCommentProps
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto>;
+
+  getReportedComment(commentId: string, authUserId: string): Promise<CommentEntity>;
 }
 export const COMMENT_DOMAIN_SERVICE_TOKEN = 'COMMENT_DOMAIN_SERVICE_TOKEN';

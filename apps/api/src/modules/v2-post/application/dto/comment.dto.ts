@@ -5,6 +5,7 @@ import { Transform } from 'class-transformer';
 
 import { MediaDto } from './media.dto';
 import { ReactionCount, ReactionDto } from './reaction.dto';
+import { ReportReasonCountDto } from './report.dto';
 import { UserMentionDto } from './user-mention.dto';
 
 export class CommentBaseDto {
@@ -50,6 +51,9 @@ export class CommentBaseDto {
 
   @ApiProperty()
   public actor: UserDto;
+
+  @ApiProperty({ name: 'report_reasons_count' })
+  public reportReasonsCount: ReportReasonCountDto[];
 
   public constructor(data: Partial<CommentBaseDto>) {
     Object.assign(this, data);

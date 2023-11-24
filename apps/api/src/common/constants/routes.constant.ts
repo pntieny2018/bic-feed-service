@@ -294,11 +294,15 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupported(),
     },
     CREATE_REPORT: {
-      PATH: 'comments/:commentId/reports', // old: /reports/content
+      PATH: 'comments/:commentId/reports',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
+    GET_REPORT: {
+      PATH: 'comments/report/:commentId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_REPORTS: {
-      PATH: 'comments/reports', // old: /reports/content
+      PATH: 'comments/reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },

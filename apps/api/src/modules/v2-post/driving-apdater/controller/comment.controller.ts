@@ -39,6 +39,7 @@ import {
 import {
   FindCommentsAroundIdQuery,
   FindCommentsPaginationQuery,
+  GetCommentReportedQuery,
   GetMyReportCommentsQuery,
 } from '../../application/query/comment';
 import {
@@ -84,6 +85,25 @@ export class CommentController {
       })
     );
     return instanceToInstance(data, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
+  }
+
+  @ApiOperation({ summary: 'Get comment was reported' })
+  @Get(ROUTES.COMMENT.GET_REPORT.PATH)
+  @Version(ROUTES.COMMENT.GET_REPORT.VERSIONS)
+  public async getReportedComment(
+    @AuthUser() authUser: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string
+  ): Promise<CommentBaseDto> {
+    const commentDto = await this._queryBus.execute(
+      new GetCommentReportedQuery({
+        authUser,
+        commentId,
+      })
+    );
+
+    return instanceToInstance(commentDto, {
       groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
     });
   }

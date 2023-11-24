@@ -1,6 +1,6 @@
 import { UserDto } from '../../../../v2-user/application';
 import { CommentEntity } from '../../../domain/model/comment';
-import { CommentBaseDto, CommentExtendedDto } from '../../dto';
+import { CommentBaseDto, CommentExtendedDto, ReportReasonCountDto } from '../../dto';
 
 export interface ICommentBinding {
   commentsBinding(
@@ -11,6 +11,7 @@ export interface ICommentBinding {
     commentEntity: CommentEntity,
     dataBinding?: {
       actor?: UserDto;
+      reportReasonsCount?: ReportReasonCountDto[];
     }
   ): Promise<CommentBaseDto>;
 }
