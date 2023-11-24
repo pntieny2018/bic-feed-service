@@ -4,7 +4,7 @@ import { ArrayHelper, StringHelper } from '@libs/common/helpers';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { uniq } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 
 import { ReportReasonCountDto } from '../../application/dto';
 import { ReportHiddenEvent, ReportCreatedEvent } from '../event';
@@ -159,6 +159,11 @@ export class ReportDomainService implements IReportDomainService {
 
     return reasonTypes.map((reasonType) => {
       const reasonTypeDetails = reportDetails.filter((detail) => detail.reasonType === reasonType);
+      const totalReasonWithUniqueReporter = uniqBy(
+        reasonTypeDetails,
+        (detail) => detail.createdBy
+      ).length;
+
       const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonType);
 
       const reporterIds = uniq(reasonTypeDetails.map((detail) => detail.createdBy));
@@ -167,7 +172,7 @@ export class ReportDomainService implements IReportDomainService {
       return {
         reasonType,
         description: reason?.description,
-        total: reasonTypeDetails.length,
+        total: totalReasonWithUniqueReporter,
         reporters: includeReporters ? reporters : undefined,
       };
     });
