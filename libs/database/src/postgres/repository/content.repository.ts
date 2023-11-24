@@ -23,13 +23,19 @@ import {
   FindContentProps,
   OrderOptions,
 } from '@libs/database/postgres/repository/interface/content.repository.interface';
-import { InjectConnection } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 
+import { ReportContentModel } from '../model';
+
 export class LibContentRepository extends BaseRepository<PostModel> {
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {
+  public constructor(
+    @InjectModel(ReportContentModel)
+    private readonly _reportContentModel: typeof ReportContentModel,
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize
+  ) {
     super(PostModel);
   }
 
@@ -55,7 +61,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async getPagination(
     getPaginationContentsProps: FindContentProps & CursorPaginationProps
   ): Promise<CursorPaginationResult<PostModel>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+    } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 
@@ -491,5 +502,26 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
           WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${groupArchived}
         )`;
+  }
+
+  public async destroyContent(id: string): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      await this._reportContentModel.destroy({
+        where: { targetId: id },
+        transaction,
+      });
+
+      await this.model.destroy({
+        where: { id },
+        force: true,
+        transaction: transaction,
+      });
+
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 }

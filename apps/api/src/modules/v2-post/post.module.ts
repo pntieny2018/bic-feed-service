@@ -7,6 +7,7 @@ import { OpenaiModule } from '@libs/service/openai';
 import { UserModule } from '@libs/service/user/user.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+
 import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
 import { SearchModule } from '../search';
@@ -19,6 +20,7 @@ import { ArticleController } from './driving-apdater/controller/article.controll
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
 import { ContentController } from './driving-apdater/controller/content.controller';
+import { ManageController } from './driving-apdater/controller/manage.controller';
 import { NewsFeedController } from './driving-apdater/controller/newsfeed.controller';
 import { PostController } from './driving-apdater/controller/post.controller';
 import { QuizController } from './driving-apdater/controller/quiz.controller';
@@ -38,6 +40,7 @@ import {
   postProvider,
   quizProvider,
   reactionProvider,
+  reportProvider,
   searchProvider,
   sharedProvider,
   tagProvider,
@@ -71,6 +74,7 @@ import { workerProvider } from './provider/worker.provider';
     CommentController,
     SeriesController,
     QuizController,
+    ManageController,
   ],
   providers: [
     ...adapterProvider,
@@ -84,6 +88,7 @@ import { workerProvider } from './provider/worker.provider';
     ...postProvider,
     ...quizProvider,
     ...reactionProvider,
+    ...reportProvider,
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,

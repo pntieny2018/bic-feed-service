@@ -14,7 +14,7 @@ export class FilePostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       const { attachFileIds, detachFileIds } = postEntity.getState();
@@ -22,14 +22,14 @@ export class FilePostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
       if (attachFileIds.length) {
         await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED, {
           key: null,
-          value: { fileIds: attachFileIds, userId: actor.id },
+          value: { fileIds: attachFileIds, userId: authUser.id },
         });
       }
 
       if (detachFileIds.length) {
         await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES, {
           key: null,
-          value: { fileIds: detachFileIds, userId: actor.id },
+          value: { fileIds: detachFileIds, userId: authUser.id },
         });
       }
     }

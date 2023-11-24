@@ -21,7 +21,7 @@ export class IncreaseReactionCountEventHandler implements IEventHandler<Reaction
   ) {}
 
   public async handle(event: ReactionCreatedEvent): Promise<void> {
-    const { reactionEntity } = event;
+    const { reactionEntity } = event.payload;
 
     switch (reactionEntity.get('target')) {
       case CONTENT_TARGET.COMMENT:

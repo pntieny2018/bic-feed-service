@@ -18,6 +18,10 @@ export const ERRORS = {
   // GROUP
   GROUP_NOT_EXISTING: 'group.not_existing',
   GROUP_NOT_MEMBER: 'group.not_member',
+  GROUP_NOT_ADMIN: 'group.not_admin',
+
+  // COMMUNITY
+  COMMUNITY_NOT_ADMIN: 'community.not_admin',
 
   USER_NOT_FOUND: 'user.not_found',
 
@@ -102,4 +106,8 @@ export const ERRORS = {
 
   // RECENT SEARCH
   RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
+
+  // REPORT
+  REPORT_NOT_FOUND: 'report.not_found',
+  REPORT_OWN_CONTENT: 'report.own_content',
 };

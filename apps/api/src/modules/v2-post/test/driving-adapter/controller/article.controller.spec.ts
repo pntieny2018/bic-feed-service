@@ -88,7 +88,7 @@ describe('ArticleController', () => {
 
     it('should auto save article successfully', () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
-      articleController.autoSave(userMock, 'id', mockUpdateArticleRequestDto);
+      articleController.autoSave('id', mockUpdateArticleRequestDto, userMock);
 
       expect(commandExecute).toBeCalledTimes(1);
       expect(commandExecute).toBeCalledWith(
@@ -112,7 +112,7 @@ describe('ArticleController', () => {
 
     it('should update article successfully', () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
-      articleController.update(userMock, 'id', mockUpdateArticleRequestDto);
+      articleController.update('id', mockUpdateArticleRequestDto, userMock);
 
       expect(commandExecute).toBeCalledTimes(1);
       expect(commandExecute).toBeCalledWith(
@@ -133,7 +133,7 @@ describe('ArticleController', () => {
 
     it('should publish article successfully', () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
-      articleController.publish(userMock, 'id', mockPublishArticleRequestDto);
+      articleController.publish('id', mockPublishArticleRequestDto, userMock);
 
       expect(commandExecute).toBeCalledTimes(1);
       expect(commandExecute).toBeCalledWith(
@@ -154,7 +154,7 @@ describe('ArticleController', () => {
 
     it('should schedule article successfully', () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
-      articleController.schedule(userMock, 'id', mockPublishArticleRequestDto);
+      articleController.schedule('id', mockPublishArticleRequestDto, userMock);
 
       expect(commandExecute).toBeCalledTimes(1);
       expect(commandExecute).toBeCalledWith(

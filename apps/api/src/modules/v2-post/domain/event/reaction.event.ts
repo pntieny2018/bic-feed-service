@@ -1,9 +1,35 @@
+import { IEventPayload } from '@libs/infra/event';
+
+import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../../../common/constants';
 import { ReactionEntity } from '../model/reaction';
 
-export class ReactionCreatedEvent {
-  public constructor(public readonly reactionEntity: ReactionEntity) {}
+interface ReactionEventPayload {
+  reactionEntity: ReactionEntity;
+}
+export class ReactionCreatedEvent implements IEventPayload {
+  public static event = ReactionHasBeenCreated;
+
+  public payload: ReactionEventPayload;
+
+  public constructor(data: ReactionEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ReactionCreatedEvent.event;
+  }
 }
 
-export class ReactionDeletedEvent {
-  public constructor(public readonly reactionEntity: ReactionEntity) {}
+export class ReactionDeletedEvent implements IEventPayload {
+  public static event = ReactionHasBeenRemoved;
+
+  public payload: ReactionEventPayload;
+
+  public constructor(data: ReactionEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ReactionDeletedEvent.event;
+  }
 }

@@ -9,6 +9,7 @@ import {
   CommentModel,
   CommentReactionModel,
   ReportContentDetailModel,
+  ReportContentModel,
 } from '@libs/database/postgres/model';
 import { BaseRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
@@ -28,6 +29,8 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
   public constructor(
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
+    @InjectModel(ReportContentModel)
+    private readonly _reportContentModel: typeof ReportContentModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
   ) {
     super(CommentModel);
@@ -189,6 +192,11 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
           commentId: [id, ...childCommentIds],
         },
         transaction: transaction,
+      });
+
+      await this._reportContentModel.destroy({
+        where: { targetId: [id, ...childCommentIds] },
+        transaction,
       });
 
       await this.delete({

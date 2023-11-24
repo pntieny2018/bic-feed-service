@@ -45,6 +45,8 @@ export interface ICommentRepository {
 
   findOne(where: WhereOptions<CommentAttributes>, options?: FindOneProps): Promise<CommentEntity>;
 
+  findAll(where: WhereOptions<CommentAttributes>): Promise<CommentEntity[]>;
+
   findPrevComments(commentId: string, contentId: string): Promise<CommentEntity[]>;
 
   getValidUsersFollow(userIds: string[], groupIds: string[]): Promise<string[]>;

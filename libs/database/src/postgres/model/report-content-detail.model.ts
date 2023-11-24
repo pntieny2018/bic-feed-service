@@ -1,3 +1,4 @@
+import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
 import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
@@ -13,7 +14,7 @@ import { v4 as uuid_v4 } from 'uuid';
 
 import { ReportContentModel } from './report-content.model';
 
-export enum ReportTo {
+export enum REPORT_SCOPE {
   GROUP = 'GROUP',
   COMMUNITY = 'COMMUNITY',
 }
@@ -36,7 +37,7 @@ export class ReportContentDetailModel extends Model<
   public targetId: string;
 
   @Column
-  public targetType: string;
+  public targetType: CONTENT_TARGET;
 
   @Column
   public groupId: string;
@@ -44,15 +45,17 @@ export class ReportContentDetailModel extends Model<
   @Column
   public createdBy: string;
 
-  @Column
-  public reportTo: string;
+  @Column({
+    type: DataTypes.STRING,
+  })
+  public reportTo: REPORT_SCOPE;
 
   @ForeignKey(() => ReportContentModel)
   @Column
   public reportId: string;
 
   @Column
-  public reasonType: string;
+  public reasonType: CONTENT_REPORT_REASON_TYPE;
 
   @Column
   public reason?: string;

@@ -1,5 +1,5 @@
+import { ArrayHelper } from '@libs/common/helpers';
 import { Inject, Logger } from '@nestjs/common';
-import { ArrayHelper } from 'apps/api/src/common/helpers';
 
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import {

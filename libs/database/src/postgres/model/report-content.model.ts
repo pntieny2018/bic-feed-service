@@ -13,7 +13,16 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { ReportContentDetailModel } from './report-content-detail.model';
+import {
+  ReportContentDetailAttributes,
+  ReportContentDetailModel,
+} from './report-content-detail.model';
+
+export enum REPORT_STATUS {
+  CREATED = 'CREATED',
+  IGNORED = 'IGNORED',
+  HIDDEN = 'HID',
+}
 
 export type ReportContentAttribute = InferAttributes<ReportContentModel>;
 @Table({
@@ -40,7 +49,7 @@ export class ReportContentModel extends Model<
   public authorId: string;
 
   @Column
-  public status?: string;
+  public status: REPORT_STATUS;
 
   @Column
   public updatedBy?: string;
@@ -54,5 +63,5 @@ export class ReportContentModel extends Model<
   public updatedAt?: Date;
 
   @HasMany(() => ReportContentDetailModel)
-  public details: ReportContentDetailModel[];
+  public details?: ReportContentDetailAttributes[];
 }

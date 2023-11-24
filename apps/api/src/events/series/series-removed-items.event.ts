@@ -1,12 +1,12 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 
-import { SeriesRemoveItem } from '../../common/constants';
+import { SeriesHasBeenRemoveItem } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 import { PostType } from '../../database/models/post.model';
 import { UserDto } from '../../modules/v2-user/application';
 
 export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayload> {
-  protected static event = SeriesRemoveItem;
+  protected static event = SeriesHasBeenRemoveItem;
 
   public payload: ISeriesRemovedItemsPayload;
 

@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { uniq } from 'lodash';
 
-import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel } from '../../../database/models/post.model';
@@ -24,11 +23,8 @@ import {
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../v2-user/application';
-import { GetPostEditedHistoryDto } from '../dto/requests';
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
-import { PostEditedHistoryDto } from '../dto/responses';
-import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
 
 @Injectable()
@@ -37,8 +33,6 @@ export class PostAppService {
 
   public constructor(
     private _postService: PostService,
-    private _postHistoryService: PostHistoryService,
-    private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
@@ -110,14 +104,6 @@ export class PostAppService {
 
   public async markSeenPost(postId: string, userId: string): Promise<void> {
     await this._postService.markSeenPost(postId, userId);
-  }
-
-  public getEditedHistory(
-    user: UserDto,
-    postId: string,
-    getPostEditedHistoryDto: GetPostEditedHistoryDto
-  ): Promise<PageDto<PostEditedHistoryDto>> {
-    return this._postHistoryService.getEditedHistory(user, postId, getPostEditedHistoryDto);
   }
 
   public async getUserGroup(groupId: string, userId: string, postId: string): Promise<any> {

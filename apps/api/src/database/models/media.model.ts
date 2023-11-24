@@ -10,12 +10,12 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
-import { CommentMediaModel } from './comment-media.model';
-import { CommentModel } from './comment.model';
-import { PostMediaModel } from './post-media.model';
-import { PostModel } from './post.model';
 import { v4 as uuid_v4 } from 'uuid';
+
 import { ThumbnailDto } from '../../modules/post/dto/responses/process-video-response.dto';
+
+import { CommentModel } from './comment.model';
+import { PostModel } from './post.model';
 
 export enum MediaType {
   VIDEO = 'video',
@@ -82,12 +82,6 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @CreatedAt
   public createdAt: Date;
-
-  @HasMany(() => PostMediaModel)
-  public posts: PostModel[];
-
-  @HasMany(() => CommentMediaModel)
-  public comments: CommentModel[];
 
   @HasMany(() => PostModel, {
     foreignKey: 'cover',
