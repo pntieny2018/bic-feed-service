@@ -4,8 +4,6 @@ import { CreateTagHandler, DeleteTagHandler, UpdateTagHandler } from '../applica
 import { FindTagsPaginationHandler } from '../application/query/tag';
 import { TagDomainService } from '../domain/domain-service';
 import { TAG_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
-import { TagFactory } from '../domain/factory';
-import { TAG_FACTORY_TOKEN } from '../domain/factory/interface';
 import { TAG_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
 import { TagMapper } from '../driven-adapter/mapper/tag.mapper';
 import { TagRepository } from '../driven-adapter/repository';
@@ -18,10 +16,6 @@ export const tagProvider = [
   {
     provide: TAG_DOMAIN_SERVICE_TOKEN,
     useClass: TagDomainService,
-  },
-  {
-    provide: TAG_FACTORY_TOKEN,
-    useClass: TagFactory,
   },
   LibTagRepository,
   TagMapper,
