@@ -42,8 +42,10 @@ export class ReportContentModel extends Model<
   @Column
   public targetId: string;
 
-  @Column
-  public targetType: string;
+  @Column({
+    type: DataTypes.STRING,
+  })
+  public targetType: CONTENT_TARGET;
 
   @Column
   public authorId: string;
