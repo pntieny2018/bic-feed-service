@@ -18,7 +18,6 @@ export class KafkaGateway {
     configService: ConfigService
   ): Promise<INestApplication> {
     const defaultConfig = configService.get<IKafkaConfig>('kafka');
-    console.log(defaultConfig);
     app.connectMicroservice<KafkaOptions>(
       {
         transport: Transport.KAFKA,
