@@ -3,9 +3,8 @@ import { ProcessorAndLog } from '@libs/infra/log';
 import { JobWithContext } from '@libs/infra/queue';
 import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
-
-import { ProcessScheduledContentPublishingCommand } from '../../application/command/content/process-scheduled-content-publishing';
-import { ContentScheduledJobDto } from '../../application/dto/queue.dto';
+import { ContentScheduledJobDto } from '@api/modules/v2-post/application/dto';
+import { ProcessScheduledContentPublishingCommand } from '@api/modules/v2-post/application/command/content';
 
 @ProcessorAndLog(QUEUES.CONTENT_SCHEDULED.QUEUE_NAME)
 export class ArticleProcessor {

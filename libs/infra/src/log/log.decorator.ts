@@ -199,7 +199,6 @@ export function EventPatternAndLog(topicName: string) {
 
       return result;
     };
-
-    EventPattern(topicName)(target, propertyKey, descriptor);
+    EventPattern(`${process.env.KAFKA_ENV}.${topicName}`)(target, propertyKey, descriptor);
   };
 }

@@ -3,9 +3,8 @@ import { ProcessorAndLog } from '@libs/infra/log';
 import { JobWithContext } from '@libs/infra/queue';
 import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
-
-import { ProcessGenerationQuizCommand } from '../../application/command/quiz';
-import { QuizGenerateJobDto } from '../../application/dto';
+import { QuizGenerateJobDto } from '@api/modules/v2-post/application/dto';
+import { ProcessGenerationQuizCommand } from '@api/modules/v2-post/application/command/quiz';
 
 @ProcessorAndLog(QUEUES.QUIZ_PENDING.QUEUE_NAME)
 export class QuizProcessor {

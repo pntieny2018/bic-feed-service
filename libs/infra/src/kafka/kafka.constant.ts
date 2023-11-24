@@ -1,33 +1,33 @@
 export const KAFKA_TOKEN = `KAFKA_TOKEN`;
-export const KAFKA_PRODUCER = `${process.env.KAFKA_ENV}.stream_producer`;
+export const KAFKA_PRODUCER = `stream_producer`;
 export const KAFKA_TOPIC = {
   BEIN_GROUP: {
-    USERS_FOLLOW_GROUPS: `${process.env.KAFKA_ENV}.bein_group.users_follow_groups`,
-    USERS_UNFOLLOW_GROUP: `${process.env.KAFKA_ENV}.bein_group.users_unfollow_group`,
-    UPDATED_PRIVACY_GROUP: `${process.env.KAFKA_ENV}.bein_group.group_privacy_has_been_updated`,
-    GROUP_STATE_HAS_BEEN_CHANGED: `${process.env.KAFKA_ENV}.bein_group.group_state_has_been_changed`,
+    USERS_FOLLOW_GROUPS: `bein_group.users_follow_groups`,
+    USERS_UNFOLLOW_GROUP: `bein_group.users_unfollow_group`,
+    UPDATED_PRIVACY_GROUP: `bein_group.group_privacy_has_been_updated`,
+    GROUP_STATE_HAS_BEEN_CHANGED: `bein_group.group_state_has_been_changed`,
   },
   BEIN_UPLOAD: {
-    VIDEO_HAS_BEEN_PROCESSED: `${process.env.KAFKA_ENV}.bein_upload.video_processing_end`,
+    VIDEO_HAS_BEEN_PROCESSED: `bein_upload.video_processing_end`,
     JOB: {
-      MARK_VIDEO_HAS_BEEN_USED: `${process.env.KAFKA_ENV}.bein_upload.job.mark_videos_has_been_used`,
-      DELETE_VIDEOS: `${process.env.KAFKA_ENV}.bein_upload.job.delete_videos`,
-      MARK_FILE_HAS_BEEN_USED: `${process.env.KAFKA_ENV}.bein_upload.job.mark_files_has_been_used`,
-      DELETE_FILES: `${process.env.KAFKA_ENV}.bein_upload.job.delete_files`,
+      MARK_VIDEO_HAS_BEEN_USED: `bein_upload.job.mark_videos_has_been_used`,
+      DELETE_VIDEOS: `bein_upload.job.delete_videos`,
+      MARK_FILE_HAS_BEEN_USED: `bein_upload.job.mark_files_has_been_used`,
+      DELETE_FILES: `bein_upload.job.delete_files`,
     },
   },
   STREAM: {
-    VIDEO_POST_PUBLIC: `${process.env.KAFKA_ENV}.bein_stream.video_post_has_been_created`,
-    POST: `${process.env.KAFKA_ENV}.bein_stream.post`,
-    COMMENT: `${process.env.KAFKA_ENV}.bein_stream.comment`,
-    REACTION: `${process.env.KAFKA_ENV}.bein_stream.reaction`,
-    REPORT: `${process.env.KAFKA_ENV}.bein_stream.report`,
+    VIDEO_POST_PUBLIC: `bein_stream.video_post_has_been_created`,
+    POST: `bein_stream.post`,
+    COMMENT: `bein_stream.comment`,
+    REACTION: `bein_stream.reaction`,
+    REPORT: `bein_stream.report`,
   },
   CONTENT: {
-    QUIZ_PROCESSED: `${process.env.KAFKA_ENV}.content_service.quiz_processed`,
-    POST_AUTO_SAVE: `${process.env.KAFKA_ENV}.content_service.post_auto_save`,
-    COMMENT_CHANGED: `${process.env.KAFKA_ENV}.content_service.comment_changed`,
-    SERIES_DELETED: `${process.env.KAFKA_ENV}.content_service.series_deleted`,
-    PUBLISH_OR_REMOVE_TO_NEWSFEED: `${process.env.KAFKA_ENV}.content_service.publish_or_remove_to_newsfeed`,
+    QUIZ_PROCESSED: `content_service.quiz_processed`,
+    POST_AUTO_SAVE: `content_service.post_auto_save`,
+    COMMENT_CHANGED: `content_service.comment_changed`,
+    SERIES_DELETED: `content_service.series_deleted`,
+    PUBLISH_OR_REMOVE_TO_NEWSFEED: `content_service.publish_or_remove_to_newsfeed`,
   },
 };

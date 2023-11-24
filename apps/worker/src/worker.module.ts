@@ -12,9 +12,26 @@ import { HEADER_REQ_ID } from '@libs/common/constants';
 import { v4 as uuid } from 'uuid';
 import { DatabaseModule } from '@api/database';
 import { HealthModule } from '@api/modules/health/health.module';
+import { KafkaOptions, Transport } from '@nestjs/microservices';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { IKafkaConfig } from '@libs/infra/kafka/config';
+import { configs } from '@libs/common/config/configuration';
+
+export const register = async (config: ConfigService): Promise<KafkaOptions> => {
+  const kafkaConfig = config.get<IKafkaConfig>('kafka');
+  return {
+    transport: Transport.KAFKA,
+    options: kafkaConfig,
+  };
+};
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      load: [configs],
+    }),
     ClsModule.forRoot({
       global: true,
       middleware: {
