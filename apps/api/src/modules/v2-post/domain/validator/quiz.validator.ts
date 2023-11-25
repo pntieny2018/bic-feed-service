@@ -1,12 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
+
 import { UserDto } from '../../../v2-user/application';
 import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from '../domain-service/interface';
 import { ContentAccessDeniedException } from '../exception';
-import {
-  CONTENT_VALIDATOR_TOKEN,
-  IContentValidator,
-  IQuizValidator,
-} from '@api/modules/v2-post/domain/validator/interface';
+
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator, IQuizValidator } from './interface';
 
 @Injectable()
 export class QuizValidator implements IQuizValidator {

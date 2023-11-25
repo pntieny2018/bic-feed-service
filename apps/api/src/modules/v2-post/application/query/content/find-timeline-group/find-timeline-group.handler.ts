@@ -5,14 +5,11 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { FindTimelineGroupDto } from '../../../dto';
 
 import { FindTimelineGroupQuery } from './find-timeline-group.query';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-} from '@api/modules/v2-post/domain/service-adapter-interface';
 
 @QueryHandler(FindTimelineGroupQuery)
 export class FindTimelineGroupHandler

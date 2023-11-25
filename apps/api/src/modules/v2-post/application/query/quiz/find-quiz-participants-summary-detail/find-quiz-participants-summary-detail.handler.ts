@@ -7,16 +7,14 @@ import { ContentAccessDeniedException } from '../../../../domain/exception';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
-} from '../../../../domain/repositoty-interface';
-import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
-} from '@api/modules/v2-post/domain/repositoty-interface';
+} from '../../../../domain/repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import { QuizParticipantSummaryDetailDto } from '../../../dto';
 
 import { FindQuizParticipantsSummaryDetailDto } from './find-quiz-participants-summary-detail.dto';
 import { FindQuizParticipantsSummaryDetailQuery } from './find-quiz-participants-summary-detail.query';
-import { IUserAdapter, USER_ADAPTER } from '@api/modules/v2-post/domain/service-adapter-interface';
 
 @QueryHandler(FindQuizParticipantsSummaryDetailQuery)
 export class FindQuizParticipantsSummaryDetailHandler
