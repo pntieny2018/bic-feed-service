@@ -1,43 +1,52 @@
-FROM node:16.14 AS development
+##------ARGUMENTS------##
+ARG NODE_VERSION=16.14.2
+ARG ALPINE_VERSION=alpine3.15
+ARG WORKDIR=/usr/src/app
 
-WORKDIR /usr/src/app
+##------BUILDER STAGE------## 
+FROM node:${NODE_VERSION} AS builder
 
-COPY package.json ./
+ARG WORKDIR
+WORKDIR ${WORKDIR}
 
-COPY yarn.lock ./
+# Install the NestJS CLI globally.
+RUN yarn global add @nestjs/cli
 
-RUN npm install -g @nestjs/cli
-
-RUN yarn
-
+# Install dependencies
+COPY package.json yarn.lock ./ 
+RUN yarn --frozen-lockfile
+     
+# Build the application and remove development dependencies
 COPY . .
+RUN yarn build && yarn --production --ignore-scripts --prefer-offline --frozen-lockfile
 
-RUN export NODE_OPTIONS="--max-old-space-size=5120"
+##------FINAL STAGE------## 
+FROM node:${NODE_VERSION}-${ALPINE_VERSION}
 
-RUN nest build
+ARG WORKDIR
+WORKDIR ${WORKDIR}
 
+# Set the Node.js environment to production.
+ENV NODE_ENV production
 
-FROM node:16.14 as production
+# Install Tini to handle signal and zombie processes.
+# And install Sequelize CLI globally for database migrations.
+RUN apk add --no-cache tini && yarn global add sequelize-cli
 
-ARG NODE_ENV=production
+# Copy entrypoint script
+COPY --chown=node:node --chmod=765 entrypoint.sh ./
 
-ENV NODE_ENV=${NODE_ENV}
+# Copy built files from the builder stage
+COPY --chown=node:node --from=builder ${WORKDIR}/.sequelizerc ./.sequelizerc
+COPY --chown=node:node --from=builder ${WORKDIR}/node_modules ./node_modules
+COPY --chown=node:node --from=builder ${WORKDIR}/sequelize ./sequelize
+COPY --chown=node:node --from=builder ${WORKDIR}/dist/apps/api ./dist
 
-WORKDIR /usr/src/app
+# Running the container as a non-root user
+USER node
 
-COPY package.json ./
+# Set the entry point for the container.
+ENTRYPOINT ["./entrypoint.sh"]
 
-COPY yarn.lock ./
-
-RUN yarn --production
-
-RUN yarn add @nestjs/swagger swagger-ui-express typescript ts-node  source-map-support
-
-COPY --from=development /usr/src/app/dist/apps/api ./dist
-
-COPY --from=development /usr/src/app/sequelize ./sequelize
-
-COPY --from=development /usr/src/app/.sequelizerc ./.sequelizerc
-
-
+# Default command to run when the container starts.
 CMD ["node", "dist/apps/api/src/main.js"]
