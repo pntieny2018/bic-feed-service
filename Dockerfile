@@ -1,6 +1,6 @@
 ##------ARGUMENTS------##
-ARG NODE_VERSION=16.14.2
-ARG ALPINE_VERSION=alpine3.15
+ARG NODE_VERSION=16.20.2
+ARG ALPINE_VERSION=alpine3.18
 ARG WORKDIR=/usr/src/app
 
 ##------BUILDER STAGE------## 
@@ -18,7 +18,8 @@ RUN yarn --frozen-lockfile
      
 # Build the application and remove development dependencies
 COPY . .
-RUN yarn build && yarn --production --ignore-scripts --prefer-offline --frozen-lockfile
+RUN yarn build \
+    && yarn --production --ignore-scripts --prefer-offline --frozen-lockfile
 
 ##------FINAL STAGE------## 
 FROM node:${NODE_VERSION}-${ALPINE_VERSION}
@@ -30,14 +31,16 @@ WORKDIR ${WORKDIR}
 ENV NODE_ENV production
 
 # Install Tini to handle signal and zombie processes.
+# Install Libpg libpq to support interface for PostgreSQL.
 # And install Sequelize CLI globally for database migrations.
-RUN apk add --no-cache tini && yarn global add sequelize-cli
+RUN apk add --no-cache tini libpq \
+    && yarn global add sequelize-cli
 
 # Copy entrypoint script
 COPY --chown=node:node --chmod=765 entrypoint.sh ./
+COPY --chown=node:node package.json .sequelizerc ./
 
 # Copy built files from the builder stage
-COPY --chown=node:node --from=builder ${WORKDIR}/.sequelizerc ./.sequelizerc
 COPY --chown=node:node --from=builder ${WORKDIR}/node_modules ./node_modules
 COPY --chown=node:node --from=builder ${WORKDIR}/sequelize ./sequelize
 COPY --chown=node:node --from=builder ${WORKDIR}/dist/apps/api ./dist
@@ -49,4 +52,4 @@ USER node
 ENTRYPOINT ["./entrypoint.sh"]
 
 # Default command to run when the container starts.
-CMD ["node", "dist/apps/api/src/main.js"]
+CMD ["node", "dist/main.js"]
