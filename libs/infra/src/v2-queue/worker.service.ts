@@ -1,6 +1,7 @@
+import { IWorkerService } from './interfaces';
 import { JobPro, WorkerPro, WorkerProOptions } from './shared';
 
-export class WorkerService {
+export class WorkerService implements IWorkerService {
   private _worker: WorkerPro;
 
   public constructor(
