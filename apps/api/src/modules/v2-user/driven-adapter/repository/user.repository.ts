@@ -5,12 +5,11 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { uniq } from 'lodash';
 import { lastValueFrom } from 'rxjs';
-
-import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
-import { AxiosHelper } from '../../../../common/helpers';
-import { IAxiosConfig } from '../../../../config/axios';
 import { UserEntity, UserProps } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
+import { AxiosHelper } from '@libs/common/helpers';
+import { CACHE_KEYS } from '@libs/common/constants';
+import { IAxiosConfig } from '@libs/infra/http';
 
 @Injectable()
 export class UserRepository implements IUserRepository {

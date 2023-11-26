@@ -1,22 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  AUTHORITY_APP_SERVICE_TOKEN,
-  IAuthorityAppService,
-} from '../../../authority/application/authority.app-service.interface';
+
 import { UserDto } from '../../../v2-user/application';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
-import { IQuizValidator } from './interface';
 import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from '../domain-service/interface';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from './interface';
 import { ContentAccessDeniedException } from '../exception';
+
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator, IQuizValidator } from './interface';
 
 @Injectable()
 export class QuizValidator implements IQuizValidator {
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected readonly _groupAppService: IGroupApplicationService,
-    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected readonly _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     protected readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_VALIDATOR_TOKEN)

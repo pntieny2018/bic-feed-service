@@ -2,12 +2,12 @@ import { flatten, uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner } from 'nest-commander';
 import { GroupPrivacy } from '../modules/v2-group/data-type';
 import { PostGroupModel } from '../database/models/post-group.model';
 import { IPost, PostModel, PostPrivacy, PostStatus } from '../database/models/post.model';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../modules/v2-group/application';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Command({ name: 'fix:content-privacy', description: 'Fix privacy for posts/article/series' })
 export class FixContentPrivacyCommand implements CommandRunner {

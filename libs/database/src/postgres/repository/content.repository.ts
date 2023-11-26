@@ -4,7 +4,6 @@ import {
   CursorPaginationProps,
   CursorPaginationResult,
   CursorPaginator,
-  getDatabaseConfig,
   PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
@@ -27,6 +26,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 import { ReportContentModel } from '../model';
 
@@ -61,7 +61,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async getPagination(
     getPaginationContentsProps: FindContentProps & CursorPaginationProps
   ): Promise<CursorPaginationResult<PostModel>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+    } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 

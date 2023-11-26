@@ -96,12 +96,6 @@ import {
 import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
-import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
-import {
-  ARTICLE_FACTORY_TOKEN,
-  POST_FACTORY_TOKEN,
-  SERIES_FACTORY_TOKEN,
-} from '../domain/factory/interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
   POST_GROUP_REPOSITORY_TOKEN,
@@ -122,12 +116,8 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
-import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
-  /** Processor */
-  ArticleProcessor,
-
   /** Application Cron Handler */
   ContentCron,
 
@@ -230,20 +220,6 @@ export const postProvider = [
   {
     provide: NEWSFEED_DOMAIN_SERVICE_TOKEN,
     useClass: NewsfeedDomainService,
-  },
-
-  /** Domain Factory */
-  {
-    provide: ARTICLE_FACTORY_TOKEN,
-    useClass: ArticleFactory,
-  },
-  {
-    provide: POST_FACTORY_TOKEN,
-    useClass: PostFactory,
-  },
-  {
-    provide: SERIES_FACTORY_TOKEN,
-    useClass: SeriesFactory,
   },
 
   /** Domain Validator */

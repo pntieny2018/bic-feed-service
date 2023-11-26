@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { getDatabaseConfig } from '../../config/database';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { isEmpty } from 'lodash';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class ReactionService {
@@ -26,7 +26,9 @@ export class ReactionService {
     for (const post of posts) {
       postIds.push(post.id);
     }
-    if (postIds.length === 0) return;
+    if (postIds.length === 0) {
+      return;
+    }
     const postReactionTable = PostReactionModel.tableName;
 
     const query = `SELECT 

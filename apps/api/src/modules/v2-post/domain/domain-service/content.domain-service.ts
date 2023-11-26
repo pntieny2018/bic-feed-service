@@ -37,7 +37,6 @@ import {
   GetContentIdsScheduleProps,
   GetDraftsProps,
   GetImportantContentIdsProps,
-  GetPostsSaved,
   GetScheduledContentProps,
   GroupAudience,
   IContentDomainService,
@@ -173,10 +172,6 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
-    if (isSaved) {
-      return this.getContentsSaved({ ...props, isOnNewsfeed: true });
-    }
-
     const { rows, meta } = await this._contentRepository.getPagination({
       select: ['id'],
       where: {
@@ -188,6 +183,13 @@ export class ContentDomainService implements IContentDomainService {
         type,
         createdBy: isMine ? authUserId : undefined,
       },
+      include: {
+        ...(isSaved && {
+          mustIncludeSaved: {
+            userId: authUserId,
+          },
+        }),
+      },
       limit,
       order,
       orderOptions: {
@@ -196,7 +198,6 @@ export class ContentDomainService implements IContentDomainService {
       before,
       after,
     });
-
     return {
       rows: rows.map((row) => row.getId()),
       meta,
@@ -223,10 +224,6 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds(props);
     }
 
-    if (isSaved) {
-      return this.getContentsSaved({ ...props });
-    }
-
     const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
         exclude: ['content'],
@@ -243,6 +240,11 @@ export class ContentDomainService implements IContentDomainService {
       },
       include: {
         mustIncludeGroup: true,
+        ...(isSaved && {
+          mustIncludeSaved: {
+            userId: authUserId,
+          },
+        }),
       },
       limit,
       order,
@@ -386,55 +388,6 @@ export class ContentDomainService implements IContentDomainService {
         orderOptions: {
           isImportantFirst: true,
           isPublishedByDesc: true,
-        },
-      },
-      {
-        offset,
-        limit: limit + 1,
-      }
-    );
-
-    const hasMore = rows.length > limit;
-
-    if (hasMore) {
-      rows.pop();
-    }
-
-    return {
-      rows: rows.map((row) => row.getId()),
-      meta: {
-        hasNextPage: hasMore,
-        endCursor: rows.length > 0 ? createCursor({ offset: limit + offset }) : undefined,
-      },
-    };
-  }
-
-  public async getContentsSaved(props: GetPostsSaved): Promise<CursorPaginationResult<string>> {
-    const { authUserId, isOnNewsfeed, groupIds, type, limit, after } = props;
-    const offset = getLimitFromAfter(after);
-
-    const rows = await this._contentRepository.findAll(
-      {
-        attributes: {
-          exclude: ['content'],
-        },
-        where: {
-          type,
-          groupIds,
-          isHidden: false,
-          groupArchived: false,
-          status: CONTENT_STATUS.PUBLISHED,
-          excludeReportedByUserId: authUserId,
-          inNewsfeedUserId: isOnNewsfeed ? authUserId : undefined,
-        },
-        include: {
-          mustIncludeSaved: {
-            userId: authUserId,
-          },
-          mustIncludeGroup: true,
-        },
-        orderOptions: {
-          isSavedDateByDesc: true,
         },
       },
       {

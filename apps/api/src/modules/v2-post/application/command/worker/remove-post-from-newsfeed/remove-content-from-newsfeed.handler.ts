@@ -7,8 +7,9 @@ import {
   IUserNewsfeedRepository,
   USER_NEWSFEED_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import { RemoveContentFromNewsfeedCommand } from './remove-content-from-newsfeed.command';
 import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
+
+import { RemoveContentFromNewsfeedCommand } from './remove-content-from-newsfeed.command';
 
 @CommandHandler(RemoveContentFromNewsfeedCommand)
 export class RemoveContentFromNewsfeedHandler

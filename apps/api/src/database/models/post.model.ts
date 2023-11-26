@@ -18,8 +18,6 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
-
-import { getDatabaseConfig } from '../../config/database';
 import { TargetType } from '../../modules/report-content/contstants';
 import { PostLang } from '../../modules/v2-post/data-type';
 
@@ -40,6 +38,7 @@ import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -172,7 +171,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public mentions: string[];
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: PostType;
 
   @AllowNull(true)
@@ -180,10 +181,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public summary: string;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public lang: PostLang;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public privacy: PostPrivacy;
 
   @Column({
@@ -212,7 +217,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public cover: string;
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: PostStatus;
 
   @AllowNull(true)

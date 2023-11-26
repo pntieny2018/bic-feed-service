@@ -20,7 +20,6 @@ import { CommentModule } from '../modules/comment';
 import { FeedModule } from '../modules/feed';
 import { FeedGeneratorModule } from '../modules/feed-generator';
 import { FeedPublisherModule } from '../modules/feed-publisher';
-import { FilterUserModule } from '../modules/filter-user';
 import { HealthModule } from '../modules/health/health.module';
 import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { InternalModule } from '../modules/internal';
@@ -30,7 +29,6 @@ import { PostModule } from '../modules/post';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
-import { UploadModule } from '../modules/upload';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { NotificationModuleV2 } from '../modules/v2-notification/notification.module';
@@ -58,12 +56,10 @@ import { LibModule } from './lib.module';
     }),
     DatabaseModule,
     HttpModule,
-    FilterUserModule,
     LibModule,
     CommentModule,
     FeedModule,
     PostModule,
-    UploadModule,
     MediaModule,
     MentionModule,
     ListenerModule,

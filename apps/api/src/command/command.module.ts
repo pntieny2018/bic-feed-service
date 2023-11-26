@@ -4,7 +4,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { LibModule } from '../app/lib.module';
-import { configs } from '../config/configuration';
 import { DatabaseModule } from '../database';
 import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publisher';
 import { FollowModule } from '../modules/follow';
@@ -13,7 +12,6 @@ import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
 import { SearchModule } from '../modules/search';
 import { TagModule } from '../modules/tag';
-import { UploadModule } from '../modules/upload';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 
@@ -40,11 +38,11 @@ import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { UpdateCommentReactionCountCommand } from './update-comment-reaction-count.command';
 import { UpdateContentReactionCountCommand } from './update-content-reaction-count.command';
-import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
+import { configs } from '@libs/common/config/configuration';
 
 @Module({
   imports: [
@@ -65,7 +63,6 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     TagModule,
     FeedPublisherModule,
     FollowModule,
-    UploadModule,
     PostgresModule,
   ],
   providers: [
@@ -82,7 +79,6 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     FixProcessingStatusPostCommand,
     UpdateNewsfeedCommand,
     FeedPublisherService,
-    UpdateContentTypeImageCommand,
     FixTotalUsersSeenCommand,
     MigrateCommentMentionsCommand,
     MigratePostMentionsCommand,

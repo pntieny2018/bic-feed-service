@@ -4,7 +4,7 @@ import { GROUP_REPOSITORY_TOKEN } from './domain/repositoty-interface/group.repo
 import { GroupRepository } from './driven-adapter/repository/group.repository';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { IAxiosConfig } from '../../config/axios';
+import { IAxiosConfig } from '@libs/infra/http';
 
 const infrastructure: Provider[] = [
   {
