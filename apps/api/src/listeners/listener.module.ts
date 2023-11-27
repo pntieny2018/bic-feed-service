@@ -12,6 +12,7 @@ import { SeriesModule } from '../modules/series';
 import { TagModule } from '../modules/tag';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { WebSocketModule } from '../modules/ws/ws.module';
 import { NotificationModule } from '../notification';
 
 import { ArticleListener } from './article';
@@ -31,6 +32,7 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
     PostModule,
     CommentModule,
     NotificationModule,
+    WebSocketModule,
     FeedPublisherModule,
     MediaModule,
     UserModuleV2,

@@ -35,6 +35,7 @@ import { NotificationModuleV2 } from '../modules/v2-notification/notification.mo
 import { PostModuleV2 } from '../modules/v2-post/post.module';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { WebSocketModule } from '../modules/ws/ws.module';
 import { NotificationModule } from '../notification';
 import { ReactionCountModule } from '../shared/reaction-count';
 
@@ -66,6 +67,7 @@ import { LibModule } from './lib.module';
     AuthorityModule,
     NotificationModule,
     NotificationModuleV2,
+    WebSocketModule,
     ReactionCountModule,
     FeedGeneratorModule,
     FeedPublisherModule,

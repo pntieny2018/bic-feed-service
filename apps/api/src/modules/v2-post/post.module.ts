@@ -12,6 +12,7 @@ import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
 import { SearchModule } from '../search';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
+import { WebSocketModule } from '../ws/ws.module';
 
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
@@ -44,6 +45,7 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
+  webSocketProvider,
 } from './provider';
 import { workerProvider } from './provider/worker.provider';
 
@@ -54,6 +56,7 @@ import { workerProvider } from './provider/worker.provider';
     KafkaModule,
     NotificationModule,
     NotificationModuleV2,
+    WebSocketModule,
     QueueModule,
     EventModule,
     OpenaiModule,
@@ -92,6 +95,7 @@ import { workerProvider } from './provider/worker.provider';
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,
+    ...webSocketProvider,
     ...workerProvider,
   ],
   exports: [
