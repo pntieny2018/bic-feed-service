@@ -167,7 +167,7 @@ export class ContentValidator implements IContentValidator {
       return;
     }
 
-    if (post.isDraft() && post.isOwner(user.id)) {
+    if (post.isDraft() && !post.isOwner(user.id)) {
       throw new ContentNoCRUDPermissionException();
     }
 

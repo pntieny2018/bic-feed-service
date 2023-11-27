@@ -1,21 +1,19 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { UserDto } from '@libs/service/user';
+import { Controller, Get, Param, ParseUUIDPipe, Query, Version } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY, VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
+import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { UserDto } from '../../../v2-user/application';
 import { FindTimelineGroupQuery } from '../../application/query/content';
 import { GetTimelineRequestDto } from '../dto/request';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')
-@Controller({
-  path: 'timeline',
-  version: VERSIONS_SUPPORTED,
-})
+@Controller()
 export class TimelineController {
   public constructor(private readonly _queryBus: QueryBus) {}
 
@@ -24,7 +22,8 @@ export class TimelineController {
     description: 'Get timeline in a group successfully.',
     type: PageDto,
   })
-  @Get('/:groupId')
+  @Get(ROUTES.TIMELINE.GET_LIST_IN_GROUP.PATH)
+  @Version(ROUTES.TIMELINE.GET_LIST_IN_GROUP.VERSIONS)
   public async getTimeline(
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @AuthUser(false) authUser: UserDto,

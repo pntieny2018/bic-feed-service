@@ -1,6 +1,8 @@
+import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions';
 import {
@@ -26,6 +28,7 @@ import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 import {
   ARTICLE_VALIDATOR_TOKEN,
   CATEGORY_VALIDATOR_TOKEN,
@@ -59,6 +62,8 @@ export class ArticleDomainService implements IArticleDomainService {
     private readonly _contentDomainService: IContentDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
     private readonly _mediaDomainService: IMediaDomainService,
+    @Inject(GROUP_ADAPTER)
+    protected readonly _groupAdapter: IGroupAdapter,
 
     @Inject(ARTICLE_VALIDATOR_TOKEN)
     private readonly _articleValidator: IArticleValidator,
@@ -187,13 +192,19 @@ export class ArticleDomainService implements IArticleDomainService {
     if (articleEntity.isPublished()) {
       return articleEntity;
     }
+    const groupIds = articleEntity.get('groupIds');
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
 
-    await this._setArticleEntityAttributes(articleEntity, payload, actor);
+    await this._setArticleEntityAttributes(articleEntity, groups, payload, actor);
     articleEntity.setPublish();
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      articleEntity.get('seriesIds'),
+      articleEntity.get('tags')
+    );
     await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
-    this._articleValidator.validateArticleToPublish(articleEntity);
+    await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     await this._contentRepository.update(articleEntity);
     this.event.publish(new ArticlePublishedEvent({ articleEntity, authUser: actor }));
@@ -228,13 +239,20 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ContentHasBeenPublishedException();
     }
 
-    await this._setArticleEntityAttributes(articleEntity, payload, actor);
+    const groupIds = articleEntity.get('groupIds');
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+
+    await this._setArticleEntityAttributes(articleEntity, groups, payload, actor);
 
     articleEntity.setWaitingSchedule(scheduledAt);
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      articleEntity.get('seriesIds'),
+      articleEntity.get('tags')
+    );
     await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
-    this._articleValidator.validateArticleToPublish(articleEntity);
+    await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
@@ -267,11 +285,18 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ArticleRequiredCoverException();
     }
 
-    await this._setArticleEntityAttributes(articleEntity, payload, actor);
+    const groupIds = articleEntity.get('groupIds');
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
 
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    await this._setArticleEntityAttributes(articleEntity, groups, payload, actor);
+
+    await this._contentValidator.validateSeriesAndTags(
+      groups,
+      articleEntity.get('seriesIds'),
+      articleEntity.get('tags')
+    );
     await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
-    this._articleValidator.validateArticleToPublish(articleEntity);
+    await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
@@ -307,10 +332,9 @@ export class ArticleDomainService implements IArticleDomainService {
     if (coverMedia && !coverMedia.id) {
       throw new ArticleRequiredCoverException();
     }
-
-    await this._setArticleEntityAttributes(articleEntity, payload, actor);
-
-    await this._articleValidator.validateArticle(articleEntity, actor);
+    const groupIds = articleEntity.get('groupIds');
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    await this._setArticleEntityAttributes(articleEntity, groups, payload, actor);
 
     if (!articleEntity.isChanged()) {
       return;
@@ -321,6 +345,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
   private async _setArticleEntityAttributes(
     articleEntity: ArticleEntity,
+    groups: GroupDto[],
     payload: ArticlePayload,
     actor: UserDto
   ): Promise<void> {
@@ -350,6 +375,11 @@ export class ArticleDomainService implements IArticleDomainService {
       }
       articleEntity.setCategories(newCategories);
     }
+
+    const communityIds = uniq(groups.map((group) => group.rootGroupId));
+
+    articleEntity.setCommunity(communityIds);
+    articleEntity.setPrivacyFromGroups(groups);
 
     articleEntity.updateAttribute({ ...restUpdate, seriesIds: restUpdate.seriesIds }, actor.id);
   }

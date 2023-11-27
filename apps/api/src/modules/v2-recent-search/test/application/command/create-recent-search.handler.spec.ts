@@ -2,10 +2,10 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
-import { RecentSearchDomainService } from '../../../../v2-post/domain/domain-service';
 import { createMockUserDto } from '../../../../v2-post/test/mock';
 import { CreateRecentSearchHandler } from '../../../aplication/command/create-recent-search/create-recent-search.handler';
 import { RECENT_SEARCH_DOMAIN_SERVICE_TOKEN } from '../../../domain/domain-service/interface';
+import { RecentSearchDomainService } from '../../../domain/domain-service/recent-search.domain-service';
 import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 import { RECENT_SEARCH_REPOSITORY_TOKEN } from '../../../driven-adapter/repository/interface/recent-search.repository.interface';
 import { RecentSearchRepository } from '../../../driven-adapter/repository/recent-search.repository';

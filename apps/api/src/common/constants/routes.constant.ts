@@ -330,4 +330,16 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },
+  NEWSFEED: {
+    GET_LIST: {
+      PATH: '/newsfeed',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
+  TIMELINE: {
+    GET_LIST_IN_GROUP: {
+      PATH: '/timeline/:groupId',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
 };
