@@ -1,6 +1,7 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
-import { ERRORS } from '../../../../common/constants/errors';
+
+import { ERRORS } from '../../../../common/constants';
 import { DomainNotFoundException } from '../../../../common/exceptions';
 
 export class CommentNotFoundException extends DomainNotFoundException {

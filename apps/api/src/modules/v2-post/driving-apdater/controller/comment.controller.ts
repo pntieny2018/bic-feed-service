@@ -1,3 +1,4 @@
+import { PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
@@ -31,18 +32,23 @@ import {
 } from '../../application/command/comment';
 import {
   CommentBaseDto,
+  CommentExtendedDto,
   FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
+  ReportTargetDto,
 } from '../../application/dto';
 import {
   FindCommentsAroundIdQuery,
   FindCommentsPaginationQuery,
+  GetMyReportedCommentQuery,
+  GetMyReportedCommentsQuery,
 } from '../../application/query/comment';
 import {
   CreateCommentRequestDto,
   CreateReportDto,
   GetCommentsAroundIdDto,
   GetListCommentsDto,
+  GetMyReportedCommentsRequestDto,
   ReplyCommentRequestDto,
   UpdateCommentRequestDto,
 } from '../dto/request';
@@ -82,6 +88,42 @@ export class CommentController {
     return instanceToInstance(data, {
       groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
     });
+  }
+
+  @ApiOperation({ summary: 'Get comment was reported' })
+  @Get(ROUTES.COMMENT.GET_REPORT.PATH)
+  @Version(ROUTES.COMMENT.GET_REPORT.VERSIONS)
+  public async getReportedComment(
+    @AuthUser() authUser: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string
+  ): Promise<CommentExtendedDto> {
+    const commentDto = await this._queryBus.execute(
+      new GetMyReportedCommentQuery({
+        authUser,
+        commentId,
+      })
+    );
+
+    return instanceToInstance(commentDto, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
+  }
+
+  @ApiOperation({ summary: 'Get my reported comments' })
+  @Get(ROUTES.COMMENT.GET_REPORTS.PATH)
+  @Version(ROUTES.COMMENT.GET_REPORTS.VERSIONS)
+  public async getMyReportedComments(
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetMyReportedCommentsRequestDto
+  ): Promise<PaginatedResponse<ReportTargetDto>> {
+    const commentsReported = await this._queryBus.execute(
+      new GetMyReportedCommentsQuery({
+        authUser,
+        ...query,
+      })
+    );
+
+    return instanceToInstance(commentsReported, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Get comments around a comment' })

@@ -2,6 +2,7 @@ import { CONTENT_TARGET } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import {
   IReportDomainService,
@@ -17,6 +18,7 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import { IReportValidator, REPORT_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import {
   COMMENT_BINDING_TOKEN,
@@ -44,7 +46,9 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepo: ICommentRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository
+    private readonly _contentRepo: IContentRepository,
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(query: GetReportQuery): Promise<ReportTargetDto> {
@@ -65,7 +69,10 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     const reportDetails = reportEntity.get('details');
 
     const target = await this._getReportTarget(targetId, targetType, authUser);
-    const reasonCounts = await this._reportDomain.countReportReasons(reportDetails, true);
+    const reporterIds = uniq(reportDetails.map((detail) => detail.createdBy));
+    const reporters = await this._userAdapter.getUsersByIds(reporterIds);
+
+    const reasonCounts = await this._reportDomain.countReportReasons(reportDetails, reporters);
 
     return { target, reasonCounts };
   }

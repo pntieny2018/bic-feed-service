@@ -7,7 +7,12 @@ import {
   ICommentDomainService,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../../domain/validator/interface';
+import {
+  COMMENT_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
+  ICommentValidator,
+  IContentValidator,
+} from '../../../../domain/validator/interface';
 import { COMMENT_BINDING_TOKEN, ICommentBinding } from '../../../binding';
 import { FindCommentsAroundIdDto } from '../../../dto';
 
@@ -25,13 +30,17 @@ export class FindCommentsAroundIdHandler
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    protected readonly _contentDomainService: IContentDomainService
+    protected readonly _contentDomainService: IContentDomainService,
+    @Inject(COMMENT_VALIDATOR_TOKEN)
+    private readonly _commentValidator: ICommentValidator
   ) {}
 
   public async execute(query: FindCommentsAroundIdQuery): Promise<FindCommentsAroundIdDto> {
     const { authUser, commentId, limit, targetChildLimit } = query.payload;
 
     const comment = await this._commentDomainService.getVisibleComment(commentId, authUser.id);
+
+    await this._commentValidator.validateNotHiddenComment(comment);
 
     const post = await this._contentDomainService.getVisibleContent(comment.get('postId'));
 
@@ -43,7 +52,9 @@ export class FindCommentsAroundIdHandler
       targetChildLimit,
     });
 
-    const commentsDto = await this._commentBinding.commentsBinding(rows, authUser);
+    const commentsDto = await this._commentBinding.commentsBinding(rows, {
+      authUser,
+    });
 
     return new FindCommentsAroundIdDto(commentsDto, meta);
   }
