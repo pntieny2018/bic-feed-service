@@ -26,7 +26,7 @@ export interface IReportDomainService {
   reportComment(input: CreateReportCommentProps): Promise<void>;
   countReportReasons(
     reportDetails: ReportDetailAttributes[],
-    includeReporters?: boolean
+    reporters?: UserDto[]
   ): Promise<ReportReasonCountDto[]>;
   getContentOfTargetReported(report: ReportEntity): Promise<string>;
   ignoreReport(input: ProcessReportProps): Promise<void>;

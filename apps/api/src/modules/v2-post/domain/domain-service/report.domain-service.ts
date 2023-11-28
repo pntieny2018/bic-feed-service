@@ -1,7 +1,7 @@
 import { CONTENT_REPORT_REASONS, CONTENT_TARGET } from '@beincom/constants';
-import { UserDto } from '@beincom/dto';
 import { ArrayHelper, StringHelper } from '@libs/common/helpers';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq, uniqBy } from 'lodash';
@@ -146,14 +146,12 @@ export class ReportDomainService implements IReportDomainService {
 
   public async countReportReasons(
     reportDetails: ReportDetailAttributes[],
-    includeReporters?: boolean
+    reporters?: UserDto[]
   ): Promise<ReportReasonCountDto[]> {
     const reasonTypes = uniq(reportDetails.map((detail) => detail.reasonType));
 
     let reporterMap: Record<string, UserDto> = {};
-    if (includeReporters) {
-      const reporterIds = uniq(reportDetails.map((detail) => detail.createdBy));
-      const reporters = await this._userAdapter.getUsersByIds(reporterIds);
+    if (reporters) {
       reporterMap = ArrayHelper.convertArrayToObject(reporters, 'id');
     }
 
@@ -167,13 +165,13 @@ export class ReportDomainService implements IReportDomainService {
       const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonType);
 
       const reporterIds = uniq(reasonTypeDetails.map((detail) => detail.createdBy));
-      const reporters = reporterIds.map((id) => reporterMap[id]);
+      const reasonReporters = reporterIds.map((id) => reporterMap[id]);
 
       return {
         reasonType,
         description: reason?.description,
         total: totalReasonWithUniqueReporter,
-        reporters: includeReporters ? reporters : undefined,
+        reporters: reporters ? reasonReporters : undefined,
       };
     });
   }

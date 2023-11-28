@@ -22,8 +22,10 @@ export * from './quiz.model';
 export * from './reaction-comment-details.model';
 export * from './reaction-content-details.model';
 export * from './recent-search.model';
-export * from './report-content-detail.model';
-export * from './report-content.model';
+export * from './report-content-detail.model'; // TODO: Remove this model
+export * from './report-content.model'; // TODO: Remove this model
+export * from './report-detail.model';
+export * from './report.model';
 export * from './tag.model';
 export * from './user-mark-read-post.model';
 export * from './user-newsfeed.model';

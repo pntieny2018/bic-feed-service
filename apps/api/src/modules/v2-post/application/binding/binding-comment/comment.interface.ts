@@ -5,7 +5,10 @@ import { CommentBaseDto, CommentExtendedDto } from '../../dto';
 export interface ICommentBinding {
   commentsBinding(
     commentEntities: CommentEntity[],
-    authUser?: UserDto
+    dataBinding?: {
+      authUser?: UserDto;
+      includeReportReasonsCount?: boolean;
+    }
   ): Promise<CommentExtendedDto[]>;
   commentBinding(
     commentEntity: CommentEntity,
