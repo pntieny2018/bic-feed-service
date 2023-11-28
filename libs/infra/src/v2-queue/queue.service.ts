@@ -2,7 +2,7 @@ import { randomStringGenerator } from '@nestjs/common/utils/random-string-genera
 import { Job } from 'bullmq';
 
 import { IQueueService, IQueueServiceConfig } from './interfaces/queue.interface';
-import { QueuePro } from './shared';
+import { JobsProOptions, QueuePro } from './shared';
 
 export class QueueService implements IQueueService {
   private _queue: QueuePro;
@@ -12,10 +12,10 @@ export class QueueService implements IQueueService {
     this._queue = new QueuePro(queueName, queueConfig);
   }
 
-  public async add<T>(data: T, groupId: string = randomStringGenerator()): Promise<void> {
-    await this._queue.add(this._config.queueName, data, {
-      group: { id: groupId },
-    });
+  public async add<T>(data: T, opts?: JobsProOptions): Promise<void> {
+    const defaultOptionWithGroup = { group: { id: randomStringGenerator() } };
+    const options = Object.assign(defaultOptionWithGroup, opts || {});
+    await this._queue.add(this._config.queueName, data, options);
   }
 
   public async get<T>(jobId: string): Promise<Job<T>> {

@@ -1,6 +1,6 @@
 import { Job } from 'bullmq';
 
-import { QueueProOptions } from '../shared';
+import { JobsProOptions, QueueProOptions } from '../shared';
 
 export interface IQueueServiceConfig {
   queueName: string;
@@ -8,7 +8,7 @@ export interface IQueueServiceConfig {
 }
 
 export interface IQueueService {
-  add<T>(data: T, groupId?: string): Promise<void>;
+  add<T>(job: T, opts?: JobsProOptions): Promise<void>;
   get<T>(jobId: string): Promise<Job<T>>;
   remove(jobId: string): Promise<boolean>;
   close(): Promise<void>;
