@@ -5,6 +5,8 @@ import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 
+import { NewsfeedAction } from '../data-type';
+
 @Controller()
 export class PublishOrRemovePostToNewsfeedConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}
@@ -14,17 +16,17 @@ export class PublishOrRemovePostToNewsfeedConsumer {
     message: IKafkaConsumerMessage<{
       userId: string;
       contentId: string;
-      action: 'publish' | 'remove';
+      action: NewsfeedAction;
     }>
   ): Promise<void> {
     const { userId, contentId, action } = message.value;
-    if (action === 'publish') {
+    if (action === NewsfeedAction.PUBLISH) {
       await this._commandBus.execute<PublishContentToNewsfeedCommand>(
         new PublishContentToNewsfeedCommand({ contentId, userId })
       );
     }
 
-    if (action === 'remove') {
+    if (action === NewsfeedAction.REMOVE) {
       await this._commandBus.execute<RemoveContentFromNewsfeedCommand>(
         new RemoveContentFromNewsfeedCommand({ contentId, userId })
       );

@@ -13,8 +13,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { Job } from 'bullmq';
 
 import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
+import { IProcessor } from './interface';
 import { ContentProcessor } from './processors';
-import { IProcessor } from './processors/processor.interface';
 
 const PROCESSORS = [ContentProcessor];
 

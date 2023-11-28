@@ -18,7 +18,7 @@ import {
   GroupConsumer,
   MediaConsumer,
   PublishOrRemovePostToNewsfeedConsumer,
-} from './module/kafka-consumer';
+} from './module/kafka-consumer/consumers';
 import { QueueProcessorModule } from './module/queue-processor';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {

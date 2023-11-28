@@ -5,6 +5,8 @@ import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 
+import { FollowAction } from '../data-type';
+
 @Controller()
 export class FollowConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}
@@ -14,17 +16,17 @@ export class FollowConsumer {
     message: IKafkaConsumerMessage<{
       userId: string;
       groupIds: string[];
-      verb: 'FOLLOW' | 'UNFOLLOW';
+      verb: FollowAction;
     }>
   ): Promise<void> {
     const { userId, groupIds, verb } = message.value;
-    if (verb === 'FOLLOW') {
+    if (verb === FollowAction.FOLLOW) {
       await this._commandBus.execute<UserFollowGroupCommand>(
         new UserFollowGroupCommand({ userId, groupIds })
       );
     }
 
-    if (verb === 'UNFOLLOW') {
+    if (verb === FollowAction.UNFOLLOW) {
       await this._commandBus.execute<UserUnfollowGroupCommand>(
         new UserUnfollowGroupCommand({ userId, groupIds })
       );

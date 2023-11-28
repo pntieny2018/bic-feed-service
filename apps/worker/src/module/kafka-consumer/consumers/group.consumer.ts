@@ -6,13 +6,11 @@ import {
 } from '@api/modules/v2-post/application/dto/message';
 import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
-import { Controller, Logger } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 
 @Controller()
 export class GroupConsumer {
-  private readonly _logger = new Logger(GroupConsumer.name);
-
   public constructor(private readonly _commandBus: CommandBus) {}
 
   @EventPatternAndLog(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)

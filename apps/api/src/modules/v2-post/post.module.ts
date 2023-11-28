@@ -14,9 +14,6 @@ import { QueuePublihserModule } from '../queue-publisher/queue-publisher.module'
 import { SearchModule } from '../search';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
 
-import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
-import { ContentDomainService } from './domain/domain-service/content.domain-service';
-import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -33,6 +30,7 @@ import {
   adapterProvider,
   categoryProvider,
   commentProvider,
+  elasticProvider,
   feedProvider,
   libRepositoryProvider,
   linkPreviewProvider,
@@ -45,8 +43,8 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
+  workerProvider,
 } from './provider';
-import { workerProvider } from './provider/worker.provider';
 
 @Module({
   imports: [
@@ -96,15 +94,6 @@ import { workerProvider } from './provider/worker.provider';
     ...tagProvider,
     ...workerProvider,
   ],
-  exports: [
-    {
-      provide: CONTENT_BINDING_TOKEN,
-      useClass: ContentBinding,
-    },
-    {
-      provide: CONTENT_DOMAIN_SERVICE_TOKEN,
-      useClass: ContentDomainService,
-    },
-  ],
+  exports: [...elasticProvider],
 })
 export class PostModuleV2 {}
