@@ -2,7 +2,7 @@ import { CONTENT_TARGET } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 
-import { ReportEntity } from '../model/report';
+import { ReportDetailAttributes, ReportEntity } from '../model/report';
 
 type IncludeReportProps = {
   details?: boolean;
@@ -29,11 +29,20 @@ export type GetPaginationReportProps = {
   include?: IncludeReportProps;
 } & CursorPaginationProps;
 
+export type FindReportDetailsProps = {
+  where: {
+    reportId?: string;
+    targetId?: string;
+    groupId?: string;
+  };
+};
+
 export interface IReportRepository {
   findOne(input: FindOneReportProps): Promise<ReportEntity>;
   getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;
   create(reportEntity: ReportEntity): Promise<void>;
   update(reportEntity: ReportEntity): Promise<void>;
+  findReportDetails(input: FindReportDetailsProps): Promise<ReportDetailAttributes[]>;
 }
 
 export const REPORT_REPOSITORY_TOKEN = 'REPORT_REPOSITORY_TOKEN';
