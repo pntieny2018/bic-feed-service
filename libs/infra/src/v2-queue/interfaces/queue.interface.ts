@@ -9,6 +9,7 @@ export interface IQueueServiceConfig {
 
 export interface IQueueService {
   add<T>(job: T, opts?: JobsProOptions): Promise<void>;
+  addBulk<T>(jobs: { data: T; opts?: JobsProOptions }[]): Promise<void>;
   get<T>(jobId: string): Promise<Job<T>>;
   remove(jobId: string): Promise<boolean>;
   close(): Promise<void>;

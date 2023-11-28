@@ -59,4 +59,4 @@ const createQueueServiceProviders = (services: string[]): Provider[] => {
     },
   ],
 })
-export class SenderModule {}
+export class QueuePublihserModule {}

@@ -15,6 +15,10 @@ export class BasePublisher implements IPublisher {
     await this._queue.add(job, opts);
   }
 
+  public async addBulk<T>(jobs: { data: T; opts?: JobsProOptions }[]): Promise<void> {
+    await this._queue.addBulk(jobs);
+  }
+
   public async remove(jobId: string): Promise<boolean> {
     return this._queue.remove(jobId);
   }

@@ -18,6 +18,15 @@ export class QueueService implements IQueueService {
     await this._queue.add(this._config.queueName, data, options);
   }
 
+  public async addBulk<T>(jobs: { data: T; opts?: JobsProOptions }[]): Promise<void> {
+    await this._queue.addBulk(
+      jobs.map((job) => ({
+        name: this._config.queueName,
+        ...job,
+      }))
+    );
+  }
+
   public async get<T>(jobId: string): Promise<Job<T>> {
     return this._queue.getJob(jobId);
   }

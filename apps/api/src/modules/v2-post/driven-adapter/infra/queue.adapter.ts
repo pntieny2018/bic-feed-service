@@ -4,6 +4,11 @@ import { Inject } from '@nestjs/common';
 import { JobId } from 'bull';
 
 import {
+  IPublisherFactoryService,
+  PUBLISHER_FACTORY_SERVICE,
+} from '../../../queue-publisher/application/interface';
+import { QueueName } from '../../../queue-publisher/data-type';
+import {
   ContentScheduledJobDto,
   QuizGenerateJobDto,
   QuizParticipantResultJobDto,
@@ -13,7 +18,9 @@ import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-ad
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
     @Inject(QUEUE_SERVICE_TOKEN)
-    private readonly _queueService: IQueueService
+    private readonly _queueService: IQueueService,
+    @Inject(PUBLISHER_FACTORY_SERVICE)
+    private readonly _publisherFactoryService: IPublisherFactoryService
   ) {}
 
   public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
@@ -50,12 +57,11 @@ export class QueueAdapter implements IQueueAdapter {
   }
 
   public async addContentScheduledJobs(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._queueService.addBulkJobs<ContentScheduledJobDto>(
+    await this._publisherFactoryService.addBulkJobs<ContentScheduledJobDto>(
+      QueueName.CONTENT_SCHEDULED,
       payloads.map(({ contentId, ownerId }) => ({
-        name: QUEUES.CONTENT_SCHEDULED.JOBS.PROCESS_CONTENT_SCHEDULED,
         data: { contentId, ownerId },
         opts: { jobId: contentId },
-        queue: { name: QUEUES.CONTENT_SCHEDULED.QUEUE_NAME },
       }))
     );
   }
