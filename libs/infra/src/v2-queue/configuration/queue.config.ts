@@ -24,7 +24,7 @@ export const getQueueConfig = (redisConfig: IRedisConfig): QueueProOptions => {
         maxLen: 10,
       },
     },
-    prefix: redisConfig.prefix,
+    prefix: `bullmq:${redisConfig.env}`,
     connection: {
       host: redisConfig.host,
       port: redisConfig.port,

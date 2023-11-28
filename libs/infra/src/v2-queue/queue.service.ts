@@ -22,7 +22,8 @@ export class QueueService implements IQueueService {
     await this._queue.addBulk(
       jobs.map((job) => ({
         name: this._config.queueName,
-        ...job,
+        data: job.data,
+        opts: job.opts,
       }))
     );
   }
