@@ -20,6 +20,8 @@ export enum REPORT_SCOPE {
 }
 
 export type ReportContentDetailAttributes = InferAttributes<ReportContentDetailModel>;
+
+// TODO: Remove this model
 @Table({
   tableName: 'report_content_details',
   paranoid: false,

@@ -20,6 +20,8 @@ import {
   LibReactionCommentDetailsRepository,
   LibReactionContentDetailsRepository,
   LibUserReportContentRepository,
+  LibReportRepository,
+  LibReportDetailRepository,
 } from '@libs/database/postgres/repository';
 
 export const libRepositoryProvider = [
@@ -51,4 +53,6 @@ export const libRepositoryProvider = [
   LibFollowRepository,
   LibUserNewsfeedRepository,
   LibUserSeenPostRepository,
+  LibReportRepository,
+  LibReportDetailRepository,
 ];
