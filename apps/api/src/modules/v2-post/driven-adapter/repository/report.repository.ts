@@ -1,6 +1,9 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { ReportContentAttribute } from '@libs/database/postgres/model';
+import {
+  ReportContentAttribute,
+  ReportContentDetailAttributes,
+} from '@libs/database/postgres/model';
 import {
   LibUserReportContentDetailRepository,
   LibUserReportContentRepository,
@@ -10,11 +13,12 @@ import { InjectConnection } from '@nestjs/sequelize';
 import { uniq } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
 
-import { ReportEntity } from '../../domain/model/report';
+import { ReportDetailAttributes, ReportEntity } from '../../domain/model/report';
 import {
   GetPaginationReportProps,
   FindOneReportProps,
   IReportRepository,
+  FindReportDetailsProps,
 } from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
@@ -165,5 +169,26 @@ export class ReportRepository implements IReportRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async findReportDetails(input: FindReportDetailsProps): Promise<ReportDetailAttributes[]> {
+    const { reportId, targetId, groupId } = input.where;
+
+    const condition: WhereOptions<ReportContentDetailAttributes> = {};
+    if (reportId) {
+      condition.reportId = reportId;
+    }
+    if (targetId) {
+      condition.targetId = targetId;
+    }
+    if (groupId) {
+      condition.groupId = groupId;
+    }
+
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: condition,
+    });
+
+    return reportDetails;
   }
 }
