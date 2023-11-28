@@ -24,3 +24,5 @@ export * from './user-report-content-detail.repository';
 export * from './user-save-post.repository';
 export * from './user-seen-post.repository';
 export * from './user-newsfeed.repository';
+export * from './report.repository';
+export * from './report-detail.repository';

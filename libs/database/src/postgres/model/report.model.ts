@@ -63,15 +63,15 @@ export class ReportModel extends Model<ReportAttribute, InferCreationAttributes<
   @Column({ type: DataTypes.UUID })
   public processedBy?: string;
 
-  @Column
+  @Column({ type: DataTypes.DATE })
   public processedAt?: Date;
 
   @CreatedAt
-  @Column
+  @Column({ type: DataTypes.DATE })
   public createdAt: Date;
 
   @UpdatedAt
-  @Column
+  @Column({ type: DataTypes.DATE })
   public updatedAt?: Date;
 
   @HasMany(() => ReportDetailModel)

@@ -38,14 +38,14 @@ export class ReportDetailModel extends Model<
   @Column({ type: DataTypes.ENUM({ values: Object.values(CONTENT_REPORT_REASON_TYPE) }) })
   public reasonType: CONTENT_REPORT_REASON_TYPE;
 
-  @Column
+  @Column({ type: DataTypes.STRING })
   public reason?: string;
 
   @CreatedAt
-  @Column
+  @Column({ type: DataTypes.DATE })
   public createdAt?: Date;
 
   @UpdatedAt
-  @Column
+  @Column({ type: DataTypes.DATE })
   public updatedAt?: Date;
 }
