@@ -30,9 +30,6 @@ const createQueueServiceProviders = (services: string[]): Provider[] => {
           public constructor(config: IQueueServiceConfig) {
             super(config);
           }
-          public async send(...args: any[]): Promise<void> {
-            return super.add(args);
-          }
         })({
           queueName,
           queueConfig,
