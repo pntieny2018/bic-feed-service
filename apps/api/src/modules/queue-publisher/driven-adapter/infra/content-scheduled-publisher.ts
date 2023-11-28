@@ -4,12 +4,12 @@ import { Inject } from '@nestjs/common';
 
 import {
   CONTENT_SCHEDULED_SERVICE_TOKEN,
-  CONTENT_SCHEDULED_TOKEN,
+  CONTENT_SCHEDULED_PUBLISHER_TOKEN,
 } from '../../data-type/constants';
 
 import { BasePublisher } from './base-publisher';
 
-@Component({ injectToken: CONTENT_SCHEDULED_TOKEN })
+@Component({ injectToken: CONTENT_SCHEDULED_PUBLISHER_TOKEN })
 export class ContentScheduledPublisher extends BasePublisher {
   public constructor(
     @Inject(CONTENT_SCHEDULED_SERVICE_TOKEN)

@@ -1,9 +1,13 @@
-import { CONTENT_SCHEDULED_SERVICE_TOKEN, CONTENT_SCHEDULED_TOKEN, QueueName } from './data-type';
+import {
+  CONTENT_SCHEDULED_SERVICE_TOKEN,
+  CONTENT_SCHEDULED_PUBLISHER_TOKEN,
+  QueueName,
+} from './data-type';
 
-export function queueNameToToken(queueName: QueueName): string {
+export function queueNameToPublisherToken(queueName: QueueName): string {
   switch (queueName) {
     case QueueName.CONTENT_SCHEDULED:
-      return CONTENT_SCHEDULED_TOKEN;
+      return CONTENT_SCHEDULED_PUBLISHER_TOKEN;
     default:
       break;
   }

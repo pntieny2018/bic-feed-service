@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 
 import { QueueName } from '../data-type';
 import { IPublisher } from '../domain/infra-interface';
-import { queueNameToToken } from '../utils';
+import { queueNameToPublisherToken } from '../utils';
 
 import { IPublisherFactoryService, JobWithConfiguration } from './interface';
 
@@ -15,7 +15,7 @@ export class PublisherFactoryService implements IPublisherFactoryService {
   public constructor(protected readonly moduleRef: ModuleRef) {}
 
   public factoryMethod(queue: QueueName): IPublisher {
-    return this.moduleRef.get<IPublisher>(queueNameToToken(queue), { strict: false });
+    return this.moduleRef.get<IPublisher>(queueNameToPublisherToken(queue), { strict: false });
   }
 
   public async addJob<T>(queue: QueueName, job: JobWithConfiguration<T>): Promise<void> {

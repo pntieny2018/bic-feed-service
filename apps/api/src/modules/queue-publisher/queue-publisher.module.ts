@@ -1,37 +1,25 @@
 import { IRedisConfig } from '@libs/common/config/redis';
-import {
-  IQueueServiceConfig,
-  IQueueService,
-  QueueService,
-  WrapperModule,
-} from '@libs/infra/v2-queue';
-import { getQueueConfig } from '@libs/infra/v2-queue/configuration';
+import { IQueueService, QueueService, WrapperModule, getQueueConfig } from '@libs/infra/v2-queue';
 import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { PublisherFactoryService } from './application';
 import { PUBLISHER_FACTORY_SERVICE } from './application/interface';
-import { QUEUE_ADAPTER_SERVICES } from './data-type/constants';
-import { ContentScheduledPublisher } from './driven-adapter/infra';
-import { adapterServiceToQueueName } from './utils';
+import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type/constants';
 
-const PUBLISHERS = [ContentScheduledPublisher];
+const PUBLISHER_TOKEN = QUEUE_ADAPTER_SERVICES.map(
+  (service) => service.PUBLISHER_TOKEN
+) as Provider[];
 
-const createQueueServiceProviders = (services: string[]): Provider[] => {
+const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => {
   return services.map((service) => {
     return {
-      provide: service,
+      provide: service.SERVICE_TOKEN,
       useFactory: (configService: ConfigService): IQueueService => {
         const redisConfig = configService.get<IRedisConfig>('redis');
         const queueConfig = getQueueConfig(redisConfig);
-        const queueName = adapterServiceToQueueName(service);
-
-        return new (class extends QueueService {
-          public constructor(config: IQueueServiceConfig) {
-            super(config);
-          }
-        })({
-          queueName,
+        return new QueueService({
+          queueName: service.QUEUE_NAME,
           queueConfig,
         });
       },
@@ -47,7 +35,7 @@ const createQueueServiceProviders = (services: string[]): Provider[] => {
       useClass: PublisherFactoryService,
     },
     ...createQueueServiceProviders(QUEUE_ADAPTER_SERVICES),
-    ...PUBLISHERS,
+    ...PUBLISHER_TOKEN,
   ],
   exports: [
     {
