@@ -12,13 +12,17 @@ export class WorkerService implements IWorkerService {
   ) {}
 
   public bindProcess<T>(handlers: {
-    process(queueName: string): string;
+    process(job: JobPro<T>): Promise<void>;
     onCompletedProcess(job: JobPro<T>): Promise<void>;
     onFailedProcess(job: JobPro<T>, error: Error, prev: string): Promise<void>;
   }): void {
     const { queueName, workerConfig } = this._config;
 
-    this._worker = new WorkerPro(queueName, handlers.process(queueName), workerConfig);
+    this._worker = new WorkerPro(
+      queueName,
+      async (job: JobPro) => handlers.process(job),
+      workerConfig
+    );
 
     this._worker.on('completed', async (job: JobPro) => handlers.onCompletedProcess(job));
 

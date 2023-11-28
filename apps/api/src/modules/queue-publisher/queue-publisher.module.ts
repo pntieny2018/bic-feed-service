@@ -6,10 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import { PublisherFactoryService } from './application';
 import { PUBLISHER_FACTORY_SERVICE } from './application/interface';
 import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type/constants';
+import { ContentScheduledPublisher } from './driven-adapter/infra';
 
-const PUBLISHER_TOKEN = QUEUE_ADAPTER_SERVICES.map(
-  (service) => service.PUBLISHER_TOKEN
-) as Provider[];
+const PUBLISHERS = [ContentScheduledPublisher];
 
 const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => {
   return services.map((service) => {
@@ -35,7 +34,7 @@ const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => 
       useClass: PublisherFactoryService,
     },
     ...createQueueServiceProviders(QUEUE_ADAPTER_SERVICES),
-    ...PUBLISHER_TOKEN,
+    ...PUBLISHERS,
   ],
   exports: [
     {

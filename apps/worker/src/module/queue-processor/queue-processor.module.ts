@@ -5,14 +5,18 @@ import {
   WrapperModule,
   getWorkerConfig,
 } from '@libs/infra/v2-queue';
+import { JobPro } from '@libs/infra/v2-queue/shared';
 import { Logger, OnModuleInit, Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
+import { CqrsModule } from '@nestjs/cqrs';
 import { Job } from 'bullmq';
 
 import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
+import { ContentProcessor } from './processors';
+import { IProcessor } from './processors/processor.interface';
 
-const PROCESSORS = WORKER_ADAPTER_SERVICES.map((worker) => worker.PROCESSOR_TOKEN) as Provider[];
+const PROCESSORS = [ContentProcessor];
 
 const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provider[] => {
   return workerConstants.map((worker) => ({
@@ -29,6 +33,7 @@ const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provi
 };
 
 @WrapperModule({
+  imports: [CqrsModule],
   providers: [...createChannelWorkerProviders(WORKER_ADAPTER_SERVICES), ...PROCESSORS],
   exports: [],
 })
@@ -42,13 +47,14 @@ export class QueueProcessorModule implements OnModuleInit {
       const handler = this._moduleRef.get<IWorkerService>(worker.WORKER_TOKEN);
       if (handler) {
         handler.bindProcess({
-          process: (): unknown => {
-            return worker.PROCESSOR_TOKEN;
+          process: async (job: Job): Promise<void> => {
+            const process = this._moduleRef.get<IProcessor>(worker.PROCESSOR_TOKEN);
+            await process.processMessage(job);
           },
           onCompletedProcess: async (job: Job): Promise<void> => {
             this._logger.debug(`Job has been processed with data: ${JSON.stringify(job.data)}`);
           },
-          onFailedProcess: async (job: Job, error: Error): Promise<void> => {
+          onFailedProcess: async (job: JobPro, error: Error): Promise<void> => {
             this._logger.debug(`Job has been failed with data: ${JSON.stringify(job.data)}`);
             this._logger.error(error);
           },
