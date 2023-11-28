@@ -36,6 +36,7 @@ import { MigrateMarkReadImportantPostCommand } from './migrate-mark-read-importa
 import { MigratePostGroupIsHidden } from './migrate-post-group-is-hidden.command';
 import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 import { MigratePublishedTimeContentCommand } from './migrate-published-time-content.command';
+import { MigrateReportStructure } from './migrate-report-structure.command';
 import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-articles.command';
 import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MoveMediaBucketCommand } from './move-media-bucket.command';
@@ -103,6 +104,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     CleanUpDeletedCommentRefCommand,
     CleanUpDeletedContentsCommand,
     MigratePostGroupIsHidden,
+    MigrateReportStructure,
   ],
 })
 export class CommandModule {}
