@@ -1,8 +1,4 @@
-import {
-  CONTENT_REPORT_REASON_DESCRIPTION,
-  CONTENT_REPORT_REASON_TYPE,
-  CONTENT_TARGET,
-} from '@beincom/constants';
+import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
@@ -23,8 +19,8 @@ import { ReportDetailAttributes, ReportDetailModel } from './report-detail.model
 
 type ReasonCount = {
   reasonType: CONTENT_REPORT_REASON_TYPE;
-  description: CONTENT_REPORT_REASON_DESCRIPTION;
   total: number;
+  reporterIds: string[];
 };
 
 export type ReportAttribute = InferAttributes<ReportModel>;

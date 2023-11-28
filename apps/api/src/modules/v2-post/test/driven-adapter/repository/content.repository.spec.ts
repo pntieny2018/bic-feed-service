@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { TestBed } from '@automock/jest';
-import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { PostGroupModel } from '@libs/database/postgres/model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import {
   LibContentRepository,
   LibPostCategoryRepository,
@@ -16,7 +15,7 @@ import {
   LibUserSavePostRepository,
   LibUserSeenPostRepository,
 } from '@libs/database/postgres/repository';
-import { Transaction, Op } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { v4 } from 'uuid';
 
@@ -29,12 +28,7 @@ import {
 } from '../../../domain/model/content';
 import { ContentMapper } from '../../../driven-adapter/mapper/content.mapper';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
-import {
-  createMockCategoryEntity,
-  createMockReportDetailRecord,
-  createMockTagEntity,
-  createMockTagRecord,
-} from '../../mock';
+import { createMockCategoryEntity, createMockTagEntity, createMockTagRecord } from '../../mock';
 import {
   createMockArticleEntity,
   createMockArticleRecord,
@@ -599,57 +593,6 @@ describe('ContentRepository', () => {
         [{ postId: mockContentId, userId: mockUserId }],
         { ignoreDuplicates: true }
       );
-    });
-  });
-
-  describe('getReportedContentIdsByUser', () => {
-    it('Should get reported content success', async () => {
-      const mockUserId = v4();
-      const mockTargetIds = [v4(), v4()];
-      const mockReportContents = mockTargetIds.map((targetId) =>
-        createMockReportDetailRecord({ targetId, createdBy: mockUserId })
-      );
-
-      _libUserReportContentRepo.findMany.mockResolvedValue(
-        mockReportContents as ReportContentDetailModel[]
-      );
-
-      const targetIds = await _contentRepo.getReportedContentIdsByUser({
-        reportUser: mockUserId,
-        target: [CONTENT_TARGET.POST],
-      });
-
-      expect(_libUserReportContentRepo.findMany).toBeCalledWith({
-        where: {
-          [Op.and]: [{ createdBy: mockUserId, targetType: [CONTENT_TARGET.POST] }],
-        },
-      });
-      expect(targetIds).toEqual(mockTargetIds);
-    });
-  });
-
-  describe('findUserIdsReportedTargetId', () => {
-    it('Should find user ids reported with target type success', async () => {
-      const mockTargetId = v4();
-      const mockTargetType = CONTENT_TARGET.POST;
-
-      const mockUserIds = [v4(), v4()];
-      const mockReportContents = mockUserIds.map((userId) =>
-        createMockReportDetailRecord({ targetId: mockTargetId, createdBy: userId })
-      );
-
-      _libUserReportContentRepo.findMany.mockResolvedValue(
-        mockReportContents as ReportContentDetailModel[]
-      );
-
-      const userIds = await _contentRepo.findUserIdsReportedTargetId(mockTargetId, mockTargetType);
-
-      expect(_libUserReportContentRepo.findMany).toBeCalledWith({
-        where: {
-          [Op.and]: [{ targetId: mockTargetId, targetType: mockTargetType }],
-        },
-      });
-      expect(userIds).toEqual(mockUserIds);
     });
   });
 

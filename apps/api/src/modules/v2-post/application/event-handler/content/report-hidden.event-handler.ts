@@ -3,8 +3,10 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
+import { EntityHelper } from '../../../../../common/helpers';
 import { ReportHiddenEvent } from '../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
+import { ReportEntity } from '../../../domain/model/report';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -22,45 +24,60 @@ export class ReportHiddenEventHandler implements IEventHandler<ReportHiddenEvent
   ) {}
 
   public async handle(event: ReportHiddenEvent): Promise<void> {
-    const { report } = event.payload;
+    const { reportEntities } = event.payload;
 
-    const targetType = report.get('targetType');
-    const targetId = report.get('targetId');
+    const commentReportEntities = reportEntities.filter(
+      (reportEntity) => reportEntity.get('targetType') == CONTENT_TARGET.COMMENT
+    );
+    const contentReportEntities = reportEntities.filter(
+      (reportEntity) => reportEntity.get('targetType') !== CONTENT_TARGET.COMMENT
+    );
 
-    switch (targetType) {
-      case CONTENT_TARGET.COMMENT: {
-        await this._hideComment(targetId);
-        break;
+    await this._hideComment(commentReportEntities);
+    await this._hideContent(contentReportEntities);
+  }
+
+  private async _hideComment(reportEntities: ReportEntity[]): Promise<void> {
+    if (!reportEntities?.length) {
+      return;
+    }
+
+    const reportEntityMapByCommentId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
+      reportEntities,
+      'targetId'
+    );
+
+    for (const commentId of Object.keys(reportEntityMapByCommentId)) {
+      const commentEntity = await this._commentRepo.findOne({ id: commentId });
+      if (!commentEntity) {
+        throw new CommentNotFoundException();
       }
 
-      case CONTENT_TARGET.POST:
-      case CONTENT_TARGET.ARTICLE: {
-        await this._hideContent(targetId);
-        break;
-      }
-
-      default:
-        break;
+      commentEntity.hide();
+      await this._commentRepo.update(commentEntity);
     }
   }
 
-  private async _hideComment(commentId: string): Promise<void> {
-    const commentEntity = await this._commentRepo.findOne({ id: commentId });
-    if (!commentEntity) {
-      throw new CommentNotFoundException();
+  private async _hideContent(reportEntities: ReportEntity[]): Promise<void> {
+    if (!reportEntities?.length) {
+      return;
     }
 
-    commentEntity.hide();
-    await this._commentRepo.update(commentEntity);
-  }
+    const reportEntityMapByContentId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
+      reportEntities,
+      'targetId'
+    );
 
-  private async _hideContent(contentId: string): Promise<void> {
-    const contentEntity = await this._contentRepo.findContentById(contentId);
-    if (!contentEntity) {
-      throw new ContentNotFoundException();
+    for (const contentId of Object.keys(reportEntityMapByContentId)) {
+      const contentEntity = await this._contentRepo.findContentById(contentId);
+      if (!contentEntity) {
+        throw new ContentNotFoundException();
+      }
+
+      contentEntity.hide();
+      await this._contentRepo.update(contentEntity);
+
+      // TODO: hide content to each group
     }
-
-    contentEntity.hide();
-    await this._contentRepo.update(contentEntity);
   }
 }

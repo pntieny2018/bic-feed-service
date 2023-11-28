@@ -5,7 +5,6 @@ import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
@@ -16,7 +15,12 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import { COMMENT_BINDING_TOKEN, ICommentBinding } from '../../../binding';
+import {
+  COMMENT_BINDING_TOKEN,
+  ICommentBinding,
+  IReportBinding,
+  REPORT_BINDING_TOKEN,
+} from '../../../binding';
 import { CommentExtendedDto, ReportTargetDto } from '../../../dto';
 
 import { GetMyReportedCommentsQuery } from './get-my-reported-comments.query';
@@ -31,7 +35,9 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepo: ICommentRepository,
     @Inject(COMMENT_BINDING_TOKEN)
-    private readonly _commentBinding: ICommentBinding
+    private readonly _commentBinding: ICommentBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding
   ) {}
 
   public async execute(
@@ -40,12 +46,9 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     const { authUser, limit, order, before, after } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
-      where: {
-        targetType: [CONTENT_TARGET.COMMENT],
-        targetActorId: authUser.id,
-        status: REPORT_STATUS.HIDDEN,
-      },
-      include: { details: true },
+      targetType: [CONTENT_TARGET.COMMENT],
+      targetActorId: authUser.id,
+      status: REPORT_STATUS.HIDDEN,
       limit,
       order,
       before,
@@ -60,16 +63,17 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     });
 
     const commentMap = ArrayHelper.convertArrayToObject(comments, 'id');
-    const reportMap = EntityHelper.entityArrayToRecord(reportEntities, 'id');
+
     const reports: ReportTargetDto[] = [];
 
     for (const report of reportEntities) {
       const target = commentMap[report.get('targetId')] as CommentExtendedDto;
-      const reasonCounts = await this._reportDomain.countReportReasons(
-        reportMap[report.get('id')].getDetails()
-      );
+      const reasonsCount = await this._reportDomain.countAllReportReasons(report.get('targetId'));
 
-      reports.push({ target, reasonCounts });
+      reports.push({
+        target,
+        reasonsCount: this._reportBinding.bindingReportReasonsCount(reasonsCount),
+      });
     }
 
     return {

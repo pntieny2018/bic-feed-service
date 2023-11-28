@@ -49,6 +49,7 @@ import {
 } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
+import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { IContentBinding } from './content.interface';
 
@@ -59,6 +60,8 @@ export class ContentBinding implements IContentBinding {
     private readonly _quizBinding: IQuizBinding,
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding,
 
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
     private readonly _reportDomain: IReportDomainService,
@@ -547,10 +550,8 @@ export class ContentBinding implements IContentBinding {
   private async _getReportReasonsCountBindingInContent(
     contentId: string
   ): Promise<ReportReasonCountDto[]> {
-    const reportDetails = await this._reportRepo.findReportDetails({
-      where: { targetId: contentId },
-    });
-    return this._reportDomain.countReportReasons(reportDetails);
+    const reasonsCount = await this._reportDomain.countAllReportReasons(contentId);
+    return this._reportBinding.bindingReportReasonsCount(reasonsCount);
   }
 
   public async postAttributesBinding(

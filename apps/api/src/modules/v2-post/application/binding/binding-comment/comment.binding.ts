@@ -1,6 +1,4 @@
-import { CONTENT_TARGET } from '@beincom/constants';
 import { PaginatedResponse } from '@libs/database/postgres/common';
-import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
@@ -14,8 +12,6 @@ import { CommentEntity } from '../../../domain/model/comment';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
-  IReportRepository,
-  REPORT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
 import {
@@ -26,6 +22,7 @@ import {
   UserMentionDto,
 } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
+import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { ICommentBinding } from './comment.interface';
 
@@ -34,14 +31,17 @@ export class CommentBinding implements ICommentBinding {
   public constructor(
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding,
+
+    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
+    private readonly _reportDomain: IReportDomainService,
+
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepo: ICommentReactionRepository,
+
     @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter,
-    @Inject(REPORT_REPOSITORY_TOKEN)
-    private readonly _reportRepo: IReportRepository,
-    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
-    private readonly _reportDomainService: IReportDomainService
+    private readonly _userAdapter: IUserAdapter
   ) {}
   public async commentsBinding(
     rows: CommentEntity[],
@@ -61,20 +61,8 @@ export class CommentBinding implements ICommentBinding {
 
       let reportReasonsCount: ReportReasonCountDto[] = [];
       if (dataBinding?.includeReportReasonsCount) {
-        const report = await this._reportRepo.findOne({
-          where: {
-            targetId: row.get('id'),
-            targetType: CONTENT_TARGET.COMMENT,
-            status: REPORT_STATUS.HIDDEN,
-          },
-          include: {
-            details: true,
-          },
-        });
-
-        reportReasonsCount = await this._reportDomainService.countReportReasons(
-          report.getDetails()
-        );
+        const reasonsCount = await this._reportDomain.countAllReportReasons(row.get('id'));
+        reportReasonsCount = this._reportBinding.bindingReportReasonsCount(reasonsCount);
       }
 
       return new CommentExtendedDto({
@@ -118,7 +106,6 @@ export class CommentBinding implements ICommentBinding {
     commentEntity: CommentEntity,
     dataBinding?: {
       actor?: UserDto;
-      reportReasonsCount?: ReportReasonCountDto[];
     }
   ): Promise<CommentBaseDto> {
     const userData = await this._getUsersBindingInComment([commentEntity], dataBinding?.actor);

@@ -2,7 +2,6 @@ import { CONTENT_TARGET } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { uniq } from 'lodash';
 
 import {
   IReportDomainService,
@@ -25,6 +24,8 @@ import {
   CONTENT_BINDING_TOKEN,
   ICommentBinding,
   IContentBinding,
+  IReportBinding,
+  REPORT_BINDING_TOKEN,
 } from '../../../binding';
 import { ArticleDto, CommentBaseDto, PostDto, ReportTargetDto } from '../../../dto';
 
@@ -37,10 +38,14 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding,
+
     @Inject(REPORT_VALIDATOR_TOKEN)
     private readonly _reportValidator: IReportValidator,
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
     private readonly _reportDomain: IReportDomainService,
+
     @Inject(REPORT_REPOSITORY_TOKEN)
     private readonly _reportRepo: IReportRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
@@ -56,25 +61,21 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
 
     await this._reportValidator.checkPermissionManageReport(authUser.id, groupId);
 
-    const reportEntity = await this._reportRepo.findOne({
-      where: { id: reportId },
-      include: { details: true },
-    });
+    const reportEntity = await this._reportRepo.findOne({ id: reportId });
     if (!reportEntity) {
       throw new ReportNotFoundException();
     }
 
     const targetId = reportEntity.get('targetId');
     const targetType = reportEntity.get('targetType');
-    const reportDetails = reportEntity.get('details');
 
     const target = await this._getReportTarget(targetId, targetType, authUser);
-    const reporterIds = uniq(reportDetails.map((detail) => detail.createdBy));
-    const reporters = await this._userAdapter.getUsersByIds(reporterIds);
 
-    const reasonCounts = await this._reportDomain.countReportReasons(reportDetails, reporters);
+    const reasonsCount = await this._reportDomain.countAllReportReasons(targetId);
+    const reasonsCountWithReporters =
+      await this._reportBinding.bindingReportReasonsCountWithReporters(reasonsCount);
 
-    return { target, reasonCounts };
+    return { target, reasonsCount: reasonsCountWithReporters };
   }
 
   private async _getReportTarget(
