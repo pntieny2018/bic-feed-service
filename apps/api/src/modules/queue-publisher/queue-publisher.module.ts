@@ -10,6 +10,7 @@ import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { PublisherFactoryService } from './application';
+import { PUBLISHER_FACTORY_SERVICE } from './application/interface';
 import { QUEUE_ADAPTER_SERVICES } from './data-type/constants';
 import { ContentScheduledPublisher } from './driven-adapter/infra';
 import { adapterServiceToQueueName } from './utils';
@@ -44,10 +45,18 @@ const createQueueServiceProviders = (services: string[]): Provider[] => {
 
 @WrapperModule({
   providers: [
-    PublisherFactoryService,
+    {
+      provide: PUBLISHER_FACTORY_SERVICE,
+      useClass: PublisherFactoryService,
+    },
     ...createQueueServiceProviders(QUEUE_ADAPTER_SERVICES),
     ...PUBLISHERS,
   ],
-  exports: [PublisherFactoryService],
+  exports: [
+    {
+      provide: PUBLISHER_FACTORY_SERVICE,
+      useClass: PublisherFactoryService,
+    },
+  ],
 })
 export class SenderModule {}

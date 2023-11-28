@@ -13,8 +13,8 @@ import { BasePublisher } from './base-publisher';
 export class ContentScheduledPublisher extends BasePublisher {
   public constructor(
     @Inject(CONTENT_SCHEDULED_SERVICE_TOKEN)
-    private readonly _service: IQueueService
+    private readonly _queueService: IQueueService
   ) {
-    super();
+    super(_queueService);
   }
 }
