@@ -7,7 +7,7 @@ import { Process } from '@nestjs/bull';
 import { CommandBus } from '@nestjs/cqrs';
 
 @ProcessorAndLog(QUEUES.CONTENT_SCHEDULED.QUEUE_NAME)
-export class ArticleProcessor {
+export class ContentProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   @Process(QUEUES.CONTENT_SCHEDULED.JOBS.PROCESS_CONTENT_SCHEDULED)

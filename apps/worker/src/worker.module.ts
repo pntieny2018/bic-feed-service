@@ -19,6 +19,7 @@ import {
   MediaConsumer,
   PublishOrRemovePostToNewsfeedConsumer,
 } from './module/main/kafka-consumer';
+import { QueueProcessorModule } from './module/main/queue-processor/queue-processor.module';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -52,6 +53,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     CqrsModule,
     PostModuleV2,
     HealthModule,
+    QueueProcessorModule,
   ],
   controllers: [
     FollowConsumer,
