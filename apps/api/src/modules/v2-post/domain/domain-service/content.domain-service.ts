@@ -129,7 +129,6 @@ export class ContentDomainService implements IContentDomainService {
     if (!ids.length) {
       return [];
     }
-    console.log('Get getContentByIds====');
     const contentEntities = await this._contentRepository.findAll({
       where: {
         ids,
