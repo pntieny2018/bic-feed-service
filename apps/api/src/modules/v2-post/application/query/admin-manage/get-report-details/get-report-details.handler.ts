@@ -86,7 +86,7 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     if (targetType === CONTENT_TARGET.COMMENT) {
       const commentEntity = await this._commentRepo.findOne({ id: targetId });
       return commentEntity
-        ? this._commentBinding.commentBinding(commentEntity, { actor: authUser })
+        ? this._commentBinding.commentBinding(commentEntity, { authUser })
         : null;
     }
 

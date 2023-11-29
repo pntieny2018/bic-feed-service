@@ -4,25 +4,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { createUrlFromId } from '../../../../giphy/giphy.util';
-import {
-  IReportDomainService,
-  REPORT_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
 import { CommentEntity } from '../../../domain/model/comment';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
-import {
-  CommentBaseDto,
-  CommentExtendedDto,
-  ReactionDto,
-  ReportReasonCountDto,
-  UserMentionDto,
-} from '../../dto';
+import { CommentBaseDto, CommentExtendedDto, ReactionDto, UserMentionDto } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
-import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { ICommentBinding } from './comment.interface';
 
@@ -31,11 +20,6 @@ export class CommentBinding implements ICommentBinding {
   public constructor(
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
-    @Inject(REPORT_BINDING_TOKEN)
-    private readonly _reportBinding: IReportBinding,
-
-    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
-    private readonly _reportDomain: IReportDomainService,
 
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepo: ICommentReactionRepository,
@@ -45,12 +29,11 @@ export class CommentBinding implements ICommentBinding {
   ) {}
   public async commentsBinding(
     rows: CommentEntity[],
-    dataBinding?: {
-      authUser?: UserDto;
-      includeReportReasonsCount?: boolean;
-    }
+    dataBinding: { authUser: UserDto }
   ): Promise<CommentExtendedDto[]> {
-    const userData = await this._getUsersBindingInComment(rows, dataBinding?.authUser);
+    const { authUser } = dataBinding;
+
+    const userData = await this._getUsersBindingInComment(rows, authUser);
 
     const reactionsCount = await this._commentReactionRepo.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
@@ -58,12 +41,6 @@ export class CommentBinding implements ICommentBinding {
 
     const result = rows.map(async (row) => {
       const { actor, mentionUsers } = userData[row.get('id')];
-
-      let reportReasonsCount: ReportReasonCountDto[] = [];
-      if (dataBinding?.includeReportReasonsCount) {
-        const reasonsCount = await this._reportDomain.countAllReportReasons(row.get('id'));
-        reportReasonsCount = this._reportBinding.bindingReportReasonsCount(reasonsCount);
-      }
 
       return new CommentExtendedDto({
         id: row.get('id'),
@@ -82,7 +59,7 @@ export class CommentBinding implements ICommentBinding {
         actor,
         child: row.get('childs')
           ? new PaginatedResponse(
-              await this.commentsBinding(row.get('childs').rows),
+              await this.commentsBinding(row.get('childs').rows, { authUser }),
               row.get('childs').meta
             )
           : undefined,
@@ -95,7 +72,6 @@ export class CommentBinding implements ICommentBinding {
             })
         ),
         reactionsCount: reactionsCount.get(row.get('id')) || [],
-        ...(dataBinding?.includeReportReasonsCount && { reportReasonsCount }),
       });
     });
 
@@ -104,11 +80,11 @@ export class CommentBinding implements ICommentBinding {
 
   public async commentBinding(
     commentEntity: CommentEntity,
-    dataBinding?: {
-      actor?: UserDto;
-    }
+    dataBinding: { authUser: UserDto }
   ): Promise<CommentBaseDto> {
-    const userData = await this._getUsersBindingInComment([commentEntity], dataBinding?.actor);
+    const { authUser } = dataBinding;
+
+    const userData = await this._getUsersBindingInComment([commentEntity], authUser);
 
     const { actor, mentionUsers } = userData[commentEntity.get('id')];
 
