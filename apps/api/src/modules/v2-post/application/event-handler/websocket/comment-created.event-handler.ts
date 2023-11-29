@@ -25,7 +25,7 @@ export class WsCommentCreatedEventHandler implements IEventHandler<CommentCreate
     const { comment, authUser } = event.payload;
 
     const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor: authUser,
+      authUser,
     });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
