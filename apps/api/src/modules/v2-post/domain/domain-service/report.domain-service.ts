@@ -115,7 +115,7 @@ export class ReportDomainService implements IReportDomainService {
     let reportEntity = await this._reportRepo.findOne({
       groupId: rootGroupId,
       targetId,
-      isProcessed: false,
+      status: REPORT_STATUS.CREATED,
     });
 
     const reportDetail = { reporterId, reasonType, reason };

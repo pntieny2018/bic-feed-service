@@ -4,7 +4,7 @@ import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { Sequelize, WhereOptions, Op } from 'sequelize';
+import { Sequelize, WhereOptions } from 'sequelize';
 
 import { ReportEntity } from '../../domain/model/report';
 import {
@@ -27,7 +27,7 @@ export class ReportRepository implements IReportRepository {
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
-    const { id, groupId, targetId, targetType, targetActorId, isProcessed } = input;
+    const { id, groupId, targetId, targetType, targetActorId, status } = input;
 
     const condition: WhereOptions<ReportAttribute> = {};
     if (id) {
@@ -45,8 +45,8 @@ export class ReportRepository implements IReportRepository {
     if (targetActorId) {
       condition.targetActorId = targetActorId;
     }
-    if (isProcessed !== undefined) {
-      condition.processedAt = isProcessed ? { [Op.ne]: null } : null;
+    if (status) {
+      condition.status = status;
     }
 
     const report = await this._libReportRepo.first({ where: condition });

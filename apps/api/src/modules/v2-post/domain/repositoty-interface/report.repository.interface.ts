@@ -11,7 +11,6 @@ export type FindOneReportProps = {
   targetType?: CONTENT_TARGET;
   targetActorId?: string;
   status?: REPORT_STATUS;
-  isProcessed?: boolean;
 };
 
 export type FindAllReportsProps = {

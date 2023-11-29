@@ -12,6 +12,8 @@ import {
   CONTENT_REPOSITORY_TOKEN,
   ICommentRepository,
   IContentRepository,
+  IPostGroupRepository,
+  POST_GROUP_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 
 @EventsHandlerAndLog(ReportHiddenEvent)
@@ -20,7 +22,9 @@ export class ReportHiddenEventHandler implements IEventHandler<ReportHiddenEvent
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepo: ICommentRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository
+    private readonly _contentRepo: IContentRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    private readonly _postGroupRepo: IPostGroupRepository
   ) {}
 
   public async handle(event: ReportHiddenEvent): Promise<void> {
@@ -63,6 +67,9 @@ export class ReportHiddenEventHandler implements IEventHandler<ReportHiddenEvent
       return;
     }
 
+    const contentIds = reportEntities.map((reportEntity) => reportEntity.get('targetId'));
+    await this._postGroupRepo.updateContentState(contentIds, true);
+
     const reportEntityMapByContentId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
       reportEntities,
       'targetId'
@@ -76,8 +83,6 @@ export class ReportHiddenEventHandler implements IEventHandler<ReportHiddenEvent
 
       contentEntity.hide();
       await this._contentRepo.update(contentEntity);
-
-      // TODO: hide content to each group
     }
   }
 }
