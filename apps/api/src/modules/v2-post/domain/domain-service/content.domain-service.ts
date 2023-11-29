@@ -173,6 +173,13 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
+    const orderOptions = isSaved
+      ? {
+          isSavedDateByDesc: true,
+        }
+      : {
+          isPublishedByDesc: true,
+        };
     const { rows, meta } = await this._contentRepository.getCursorPagination({
       select: ['id', 'type', 'publishedAt'],
       where: {
@@ -193,9 +200,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       limit,
       order,
-      orderOptions: {
-        isPublishedByDesc: true,
-      },
+      orderOptions,
       before,
       after,
     });
@@ -225,6 +230,14 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds(props);
     }
 
+    const orderOptions = isSaved
+      ? {
+          isSavedDateByDesc: true,
+        }
+      : {
+          isPublishedByDesc: true,
+        };
+
     const { rows, meta } = await this._contentRepository.getCursorPagination({
       select: ['id', 'type', 'publishedAt'],
       where: {
@@ -247,9 +260,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       limit,
       order,
-      orderOptions: {
-        isPublishedByDesc: true,
-      },
+      orderOptions,
       before,
       after,
     });
@@ -364,9 +375,7 @@ export class ContentDomainService implements IContentDomainService {
 
     const rows = await this._contentRepository.findAll(
       {
-        attributes: {
-          exclude: ['content'],
-        },
+        select: ['id', 'type', 'scheduledAt', 'createdAt', 'publishedAt'],
         where: {
           type,
           groupIds,

@@ -252,7 +252,7 @@ export class ContentBinding implements IContentBinding {
       },
       include: {
         shouldIncludeCategory: true,
-        shouldIncludeQuiz: true,
+        shouldIncludeQuiz: false,
         shouldIncludeGroup: true,
       },
     })) as (PostEntity | ArticleEntity)[];
@@ -344,7 +344,6 @@ export class ContentBinding implements IContentBinding {
     if (!contentEntities.length) {
       return [];
     }
-
     const result = [];
     for (const contentEntity of contentEntities) {
       if (contentEntity instanceof PostEntity) {

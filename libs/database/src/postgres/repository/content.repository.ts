@@ -150,7 +150,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
     if (orderOptions.isSavedDateByDesc) {
-      order.push(['userSavePosts', 'createdAt', ORDER.DESC]);
+      order.push(['userSavePosts.createdAt', ORDER.DESC]);
     }
     if (orderOptions.createdAtDesc) {
       order.push(['createdAt', ORDER.DESC]);
@@ -420,7 +420,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     const postSeriesModel = PostSeriesModel.tableName;
     return [
       `(
-        SELECT string_agg("postSeries".post_id::varchar, ',' order by zindex asc)
+        SELECT array_agg("postSeries".post_id order by zindex asc)
         FROM ${schema}.${postSeriesModel} as "postSeries"
         WHERE "PostModel"."id" = "postSeries"."series_id"
         )`,
@@ -458,15 +458,15 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     let conditionArchiveGroup = '';
     if (isBoolean(isArchived)) {
       conditionArchiveGroup = `AND EXISTS (
-        SELECT 1 FROM ${schema}.${postGroupTable} as seriesGroups
-          WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${isArchived}
+        SELECT 1 FROM ${schema}.${postGroupTable} as "seriesGroups"
+          WHERE "seriesGroups".post_id = "postSeries".series_id AND "seriesGroups".is_archived = ${isArchived}
         )`;
     }
     return [
       `(
-       SELECT string_agg(series_id::varchar, ',' order by "ownerReactions".created_at desc)
+       SELECT array_agg(series_id)
         FROM ${schema}.${postSeriesModel} AS "postSeries"
-        WHERE postSeries.post_id = "PostModel".id
+        WHERE "postSeries".post_id = "PostModel".id
         ${conditionArchiveGroup}
         )`,
       alias ? alias : 'seriesIds',
@@ -487,7 +487,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
                 )
         FROM ${schema}.${categoryModel} AS "category"
         INNER JOIN ${schema}.${postCategoryModel} as pc ON pc.category_id = category.id
-        WHERE quiz.post_id = "PostModel".id
+        WHERE pc.post_id = "PostModel".id
         )`,
       alias ? alias : 'categories',
     ];
@@ -497,21 +497,21 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     const { schema } = getDatabaseConfig();
     const postReactionModel = PostReactionModel.tableName;
     if (!userId) {
-      return [``, alias ? alias : 'ownerReaction'];
+      return [``, alias ? alias : 'ownerReactions'];
     }
     return [
       `(
         SELECT json_agg(
                           json_build_object(
                             'id',id,
-                            'reaction_name', reaction_name
+                            'reactionName', reaction_name
                           ) order by created_at asc
                 )
            FROM ${schema}.${postReactionModel} AS "ownerReactions"
            WHERE "PostModel"."id" = "ownerReactions"."post_id" AND
             "ownerReactions"."created_by" = ${this._sequelizeConnection.escape(userId)}
         )`,
-      alias ? alias : 'ownerReaction',
+      alias ? alias : 'ownerReactions',
     ];
   }
 
