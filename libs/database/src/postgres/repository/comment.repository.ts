@@ -1,8 +1,9 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import {
   createCursor,
   CursorPaginationResult,
   CursorPaginator,
+  PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
 import {
   CommentAttributes,
@@ -40,44 +41,45 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentModel>> {
     const { authUserId, limit, order, contentId, parentId, before, after } = input;
-    const findOptions: FindOptions = {
-      include: [
-        authUserId
-          ? {
-              model: CommentReactionModel,
-              as: 'ownerReactions',
-              on: {
-                [Op.and]: {
-                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                  created_by: authUserId,
+
+    const { rows, meta } = await this.cursorPaginate(
+      {
+        include: [
+          authUserId
+            ? {
+                model: CommentReactionModel,
+                as: 'ownerReactions',
+                on: {
+                  [Op.and]: {
+                    comment_id: { [Op.eq]: col(`CommentModel.id`) },
+                    created_by: authUserId,
+                  },
                 },
-              },
-            }
-          : {},
-      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
-      where: {
-        postId: contentId,
-        parentId: parentId,
-        isHidden: false,
-        ...(authUserId && {
-          [Op.and]: [
-            Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
+              }
+            : {},
+        ].filter((item) => Object.keys(item).length !== 0),
+        where: {
+          postId: contentId,
+          parentId: parentId,
+          isHidden: false,
+          ...(authUserId && {
+            [Op.and]: [
+              Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
             WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
               CONTENT_TARGET.COMMENT
             }' AND rp.created_by = ${this._sequelizeConnection.escape(authUserId)})`),
-          ],
-        }),
+            ],
+          }),
+        },
       },
-    };
-
-    const paginator = new CursorPaginator(
-      this.model,
-      ['createdAt'],
-      { before, after, limit },
-      order
+      {
+        after,
+        before,
+        limit,
+        order,
+        sortColumns: ['createdAt'],
+      }
     );
-
-    const { rows, meta } = await paginator.paginate(findOptions);
     return {
       rows,
       meta,

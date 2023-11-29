@@ -28,7 +28,7 @@ export class SearchSeriesItemsAddedEventHandler implements IEventHandler<SeriesI
     await this._postSearchService.updateAttributePostToSearch(
       { id: seriesEntity.getId(), lang: seriesEntity.get('lang') },
       {
-        items: seriesEntity.get('items'),
+        itemIds: seriesEntity.getItemIds(),
       }
     );
   }

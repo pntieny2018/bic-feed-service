@@ -69,7 +69,7 @@ export class ReportRepository implements IReportRepository {
   public async getPagination(
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
+    const { limit, before, after, order = ORDER.DESC, sortColumns = ['createdAt'] } = input;
     const { targetType, targetActorId, status, groupId } = input.where;
     const { details } = input.include || {};
 
@@ -106,7 +106,7 @@ export class ReportRepository implements IReportRepository {
         where: condition,
         ...(include.length && { include }),
       },
-      { limit, before, after, order, column }
+      { limit, before, after, order, sortColumns }
     );
     return {
       rows: rows.map((report) => this._reportMapper.toDomain(report)),

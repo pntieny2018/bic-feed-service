@@ -39,7 +39,7 @@ export class SearchSeriesUpdatedEventHandler implements IEventHandler<SeriesUpda
         summary: seriesEntity.get('summary'),
         title: seriesEntity.getTitle(),
         type: seriesEntity.getType(),
-        items: seriesEntity.get('items'),
+        itemIds: seriesEntity.getItemIds(),
         coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       },
     ]);

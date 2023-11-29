@@ -39,15 +39,8 @@ export const POST_JA_MAPPING = {
       seriesIds: {
         type: 'keyword',
       },
-      items: {
-        properties: {
-          id: {
-            type: 'keyword',
-          },
-          zindex: {
-            type: 'integer',
-          },
-        },
+      itemIds: {
+        type: 'keyword',
       },
       tags: {
         properties: {

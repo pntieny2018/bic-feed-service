@@ -99,7 +99,7 @@ export class ContentDomainService implements IContentDomainService {
     input: GetDraftsProps
   ): Promise<CursorPaginationResult<string>> {
     const { authUserId, isProcessing, type } = input;
-    const { rows, meta } = await this._contentRepository.getPagination({
+    const { rows, meta } = await this._contentRepository.getCursorPagination({
       ...input,
       where: {
         createdBy: authUserId,
@@ -129,6 +129,7 @@ export class ContentDomainService implements IContentDomainService {
     if (!ids.length) {
       return [];
     }
+    console.log('Get getContentByIds====');
     const contentEntities = await this._contentRepository.findAll({
       where: {
         ids,
@@ -172,8 +173,8 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
-    const { rows, meta } = await this._contentRepository.getPagination({
-      select: ['id'],
+    const { rows, meta } = await this._contentRepository.getCursorPagination({
+      select: ['id', 'type', 'publishedAt'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
@@ -224,10 +225,8 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds(props);
     }
 
-    const { rows, meta } = await this._contentRepository.getPagination({
-      attributes: {
-        exclude: ['content'],
-      },
+    const { rows, meta } = await this._contentRepository.getCursorPagination({
+      select: ['id', 'type', 'publishedAt'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
@@ -266,7 +265,7 @@ export class ContentDomainService implements IContentDomainService {
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
     const { beforeDate } = input;
 
-    return this._contentRepository.getPagination({
+    return this._contentRepository.getCursorPagination({
       ...input,
       where: {
         status: CONTENT_STATUS.WAITING_SCHEDULE,
@@ -322,6 +321,7 @@ export class ContentDomainService implements IContentDomainService {
   ): Promise<CursorPaginationResult<string>> {
     const { userId, groupId, limit, before, after, type, order } = params;
     const findOption: GetPaginationContentsProps = {
+      select: ['id', 'type', 'scheduledAt', 'createdAt', 'publishedAt'],
       where: {
         type,
         statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
@@ -348,7 +348,7 @@ export class ContentDomainService implements IContentDomainService {
       };
     }
 
-    const { rows, meta } = await this._contentRepository.getPagination(findOption);
+    const { rows, meta } = await this._contentRepository.getCursorPagination(findOption);
 
     return {
       rows: rows.map((row) => row.getId()),
