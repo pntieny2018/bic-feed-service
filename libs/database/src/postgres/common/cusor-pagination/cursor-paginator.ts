@@ -116,8 +116,9 @@ export class CursorPaginator<T extends Model> {
     if (!this.after && this.before) {
       order = this._reverseOrder(order);
     }
-
-    return this.cursorColumns.map((column) => [column as string, order]);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return this.cursorColumns.map((column) => [...(column as string).split('.'), order]);
   }
 
   private _getOperator(): symbol {
