@@ -170,6 +170,14 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
+    const orderOptions = isSaved
+      ? {
+          isSavedDateByDesc: true,
+        }
+      : {
+          isPublishedByDesc: true,
+        };
+
     const { rows, meta } = await this._contentRepository.getPagination({
       select: ['id'],
       where: {
@@ -190,9 +198,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       limit,
       order,
-      orderOptions: {
-        isPublishedByDesc: true,
-      },
+      orderOptions,
       before,
       after,
     });
@@ -222,6 +228,14 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds(props);
     }
 
+    const orderOptions = isSaved
+      ? {
+          isSavedDateByDesc: true,
+        }
+      : {
+          isPublishedByDesc: true,
+        };
+
     const { rows, meta } = await this._contentRepository.getPagination({
       attributes: {
         exclude: ['content'],
@@ -246,9 +260,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       limit,
       order,
-      orderOptions: {
-        isPublishedByDesc: true,
-      },
+      orderOptions,
       before,
       after,
     });
