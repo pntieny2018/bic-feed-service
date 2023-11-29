@@ -1,5 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { UserDto } from '@libs/service/user';
+import { REPORT_STATUS } from '@libs/database/postgres/model';
+import { BaseUserDto, UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -17,7 +18,6 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import { IReportValidator, REPORT_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import {
   COMMENT_BINDING_TOKEN,
@@ -51,9 +51,7 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepo: ICommentRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter
+    private readonly _contentRepo: IContentRepository
   ) {}
 
   public async execute(query: GetReportQuery): Promise<ReportTargetDto> {
@@ -61,7 +59,10 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
 
     await this._reportValidator.checkPermissionManageReport(authUser.id, groupId);
 
-    const reportEntity = await this._reportRepo.findOne({ id: reportId });
+    const reportEntity = await this._reportRepo.findOne({
+      id: reportId,
+      status: REPORT_STATUS.CREATED,
+    });
     if (!reportEntity) {
       throw new ReportNotFoundException();
     }
@@ -75,7 +76,10 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     const reasonsCountWithReporters =
       await this._reportBinding.bindingReportReasonsCountWithReporters(reasonsCount);
 
-    return { target, reasonsCount: reasonsCountWithReporters };
+    return {
+      target: { ...target, actor: target.actor ? new BaseUserDto(target.actor) : undefined },
+      reasonsCount: reasonsCountWithReporters,
+    };
   }
 
   private async _getReportTarget(

@@ -21,19 +21,19 @@ export class ReportNotificationApplicationService implements IReportNotification
   ) {}
 
   public async sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void> {
-    const { actor, reports, adminInfos, content } = payload;
+    const { actor, report, content } = payload;
 
-    const reportObject = this._createReportActivityObject(reports, actor);
+    const reportObject = this._createReportActivityObject(report, actor);
     const activity = this._createReportCreatedActivity(reportObject);
 
     const kafkaPayload = new NotificationPayloadDto<ReportActivityObjectDto>({
-      key: reports[0].targetId,
+      key: report.id,
       value: {
         actor,
         event: ReportHasBeenCreated,
         data: activity,
         meta: {
-          report: { adminInfos, content },
+          report: { content },
         },
       },
     });
@@ -42,19 +42,19 @@ export class ReportNotificationApplicationService implements IReportNotification
   }
 
   public async sendReportHiddenNotification(payload: ReportNotificationPayload): Promise<void> {
-    const { actor, reports, adminInfos, content } = payload;
+    const { actor, report, content } = payload;
 
-    const reportObject = this._createReportActivityObject(reports, actor);
+    const reportObject = this._createReportActivityObject(report, actor);
     const activity = this._createReportHiddenActivity(reportObject);
 
     const kafkaPayload = new NotificationPayloadDto<ReportActivityObjectDto>({
-      key: reports[0].targetId,
+      key: report.id,
       value: {
         actor,
         event: ReportHasBeenApproved,
         data: activity,
         meta: {
-          report: { adminInfos, content, creatorId: reports[0].targetActorId },
+          report: { content, creatorId: report.targetActorId },
         },
       },
     });
@@ -62,24 +62,22 @@ export class ReportNotificationApplicationService implements IReportNotification
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REPORT, kafkaPayload);
   }
 
-  // TODO: refactor after noti v3 release
-  // Keep code to test notification error
-  private _createReportActivityObject(
-    reports: ReportDto[],
-    actor: UserDto
-  ): ReportActivityObjectDto {
+  private _createReportActivityObject(report: ReportDto, actor: UserDto): ReportActivityObjectDto {
+    const reporterIds = report.reasonsCount
+      .map((reasonCount) => (reasonCount.reporters || []).map((reporter) => reporter.id))
+      .flat();
+    const reportDetails = reporterIds.map((reporterId) => ({
+      targetId: report.targetId,
+      groupId: report.groupId,
+      createdBy: reporterId,
+    }));
+
     return new ReportActivityObjectDto({
-      id: reports[0].id,
+      id: report.id,
       actor,
-      report: {
-        id: reports[0].id,
-        targetId: reports[0].targetId,
-        targetType: reports[0].targetType,
-        status: reports[0].status,
-        details: [],
-      },
-      createdAt: reports[0].createdAt,
-      updatedAt: reports[0].updatedAt,
+      report: { ...report, details: reportDetails },
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt,
     });
   }
 
