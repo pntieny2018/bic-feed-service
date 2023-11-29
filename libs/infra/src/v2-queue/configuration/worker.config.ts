@@ -6,13 +6,15 @@ import { getQueueConfig } from './queue.config';
 
 export const getWorkerConfig = (
   redisConfig: IRedisConfig,
-  concurrency: number
+  groupConcurrency: number
 ): WorkerProOptions => {
   const queueConfig = getQueueConfig(redisConfig);
   delete queueConfig.defaultJobOptions;
 
   return {
     ...queueConfig,
-    concurrency,
+    group: {
+      concurrency: groupConcurrency,
+    },
   };
 };
