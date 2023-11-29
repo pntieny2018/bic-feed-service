@@ -14,10 +14,8 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { instanceToInstance } from 'class-transformer';
 import { Request } from 'express';
 
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { HideReportCommand, IgnoreReportCommand } from '../../application/command/report';
@@ -64,11 +62,7 @@ export class ManageController {
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Param('reportId', ParseUUIDPipe) reportId: string
   ): Promise<ReportTargetDto> {
-    const report = await this._queryBus.execute(
-      new GetReportQuery({ groupId: rootGroupId, reportId, authUser })
-    );
-
-    return instanceToInstance(report, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return this._queryBus.execute(new GetReportQuery({ groupId: rootGroupId, reportId, authUser }));
   }
 
   @ApiOperation({ summary: 'Community admin process the content/comment report' })
