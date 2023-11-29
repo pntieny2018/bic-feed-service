@@ -21,7 +21,7 @@ import {
   IReportBinding,
   REPORT_BINDING_TOKEN,
 } from '../../../binding';
-import { CommentExtendedDto, ReportTargetDto } from '../../../dto';
+import { ReportTargetDto } from '../../../dto';
 
 import { GetMyReportedCommentsQuery } from './get-my-reported-comments.query';
 
@@ -63,18 +63,16 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     });
 
     const commentMap = ArrayHelper.convertArrayToObject(comments, 'id');
+    const reportReasonsCountMap = await this._reportDomain.getReportReasonsMapByTargetIds(
+      commentIds
+    );
 
-    const reports: ReportTargetDto[] = [];
-
-    for (const report of reportEntities) {
-      const target = commentMap[report.get('targetId')] as CommentExtendedDto;
-      const reasonsCount = await this._reportDomain.countAllReportReasons(report.get('targetId'));
-
-      reports.push({
-        target,
-        reasonsCount: this._reportBinding.bindingReportReasonsCount(reasonsCount),
-      });
-    }
+    const reports: ReportTargetDto[] = reportEntities.map((report) => ({
+      target: commentMap[report.get('targetId')],
+      reasonsCount: this._reportBinding.bindingReportReasonsCount(
+        reportReasonsCountMap[report.get('targetId')]
+      ),
+    }));
 
     return {
       list: reports,

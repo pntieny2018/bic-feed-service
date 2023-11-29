@@ -550,7 +550,7 @@ export class ContentBinding implements IContentBinding {
   private async _getReportReasonsCountBindingInContent(
     contentId: string
   ): Promise<ReportReasonCountDto[]> {
-    const reasonsCount = await this._reportDomain.countAllReportReasons(contentId);
+    const reasonsCount = await this._reportDomain.countReportReasonsByTargetId(contentId);
     return this._reportBinding.bindingReportReasonsCount(reasonsCount);
   }
 

@@ -23,7 +23,8 @@ export type ProcessReportProps = {
 export interface IReportDomainService {
   reportContent(input: CreateReportContentProps): Promise<void>;
   reportComment(input: CreateReportCommentProps): Promise<void>;
-  countAllReportReasons(targetId: string): Promise<ReasonCount[]>;
+  countReportReasonsByTargetId(targetId: string): Promise<ReasonCount[]>;
+  getReportReasonsMapByTargetIds(targetIds: string[]): Promise<Record<string, ReasonCount[]>>;
   getContentOfTargetReported(report: ReportEntity): Promise<string>;
   ignoreReport(input: ProcessReportProps): Promise<void>;
   hideReport(input: ProcessReportProps): Promise<void>;

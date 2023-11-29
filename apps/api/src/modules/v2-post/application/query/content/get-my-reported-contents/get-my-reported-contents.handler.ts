@@ -21,7 +21,7 @@ import {
   IReportBinding,
   REPORT_BINDING_TOKEN,
 } from '../../../binding';
-import { ArticleDto, PostDto, ReportTargetDto } from '../../../dto';
+import { ReportTargetDto } from '../../../dto';
 
 import { GetMyReportedContentsQuery } from './get-my-reported-contents.query';
 
@@ -65,18 +65,16 @@ export class GetMyReportedContentsHandler
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
     const contentMap = ArrayHelper.convertArrayToObject(contents, 'id');
+    const reportReasonsCountMap = await this._reportDomain.getReportReasonsMapByTargetIds(
+      contentIds
+    );
 
-    const reports: ReportTargetDto[] = [];
-
-    for (const report of reportEntities) {
-      const target = contentMap[report.get('targetId')] as PostDto | ArticleDto;
-      const reasonsCount = await this._reportDomain.countAllReportReasons(report.get('targetId'));
-
-      reports.push({
-        target,
-        reasonsCount: this._reportBinding.bindingReportReasonsCount(reasonsCount),
-      });
-    }
+    const reports: ReportTargetDto[] = reportEntities.map((report) => ({
+      target: contentMap[report.get('targetId')],
+      reasonsCount: this._reportBinding.bindingReportReasonsCount(
+        reportReasonsCountMap[report.get('targetId')]
+      ),
+    }));
 
     return {
       list: reports,

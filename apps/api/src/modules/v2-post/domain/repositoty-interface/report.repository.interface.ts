@@ -15,8 +15,8 @@ export type FindOneReportProps = {
 };
 
 export type FindAllReportsProps = {
-  groupId?: string;
-  targetId?: string;
+  groupIds?: string[];
+  targetIds?: string[];
   status?: REPORT_STATUS;
 };
 

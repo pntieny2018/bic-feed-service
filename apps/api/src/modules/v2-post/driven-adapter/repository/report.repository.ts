@@ -54,14 +54,14 @@ export class ReportRepository implements IReportRepository {
   }
 
   public async findAll(input: FindAllReportsProps): Promise<ReportEntity[]> {
-    const { groupId, targetId, status } = input;
+    const { groupIds, targetIds, status } = input;
 
     const condition: WhereOptions<ReportAttribute> = {};
-    if (groupId) {
-      condition.groupId = groupId;
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
     }
-    if (targetId) {
-      condition.targetId = targetId;
+    if (targetIds?.length) {
+      condition.targetId = targetIds;
     }
     if (status) {
       condition.status = status;

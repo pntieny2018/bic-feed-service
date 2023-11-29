@@ -40,7 +40,7 @@ export class GetMyReportedCommentHandler
 
     const comment = comments[0];
 
-    const reportReasonsCount = await this._reportDomain.countAllReportReasons(comment.id);
+    const reportReasonsCount = await this._reportDomain.countReportReasonsByTargetId(comment.id);
 
     return {
       ...comment,

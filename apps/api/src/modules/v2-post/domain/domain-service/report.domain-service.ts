@@ -6,6 +6,7 @@ import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq, sumBy } from 'lodash';
 
+import { EntityHelper } from '../../../../common/helpers';
 import { ReportHiddenEvent, ReportCreatedEvent } from '../event';
 import { ContentNotFoundException, ReportNotFoundException } from '../exception';
 import { ArticleEntity, PostEntity } from '../model/content';
@@ -136,8 +137,31 @@ export class ReportDomainService implements IReportDomainService {
     return reportEntity;
   }
 
-  public async countAllReportReasons(targetId: string): Promise<ReasonCount[]> {
-    const reportEntities = await this._reportRepo.findAll({ targetId });
+  public async countReportReasonsByTargetId(targetId: string): Promise<ReasonCount[]> {
+    const reportEntities = await this._reportRepo.findAll({ targetIds: [targetId] });
+    return this._countReportReasons(reportEntities);
+  }
+
+  public async getReportReasonsMapByTargetIds(
+    targetIds: string[]
+  ): Promise<Record<string, ReasonCount[]>> {
+    const reportEntities = await this._reportRepo.findAll({ targetIds });
+    const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
+      reportEntities,
+      'targetId'
+    );
+
+    const reasonsCountMap: Record<string, ReasonCount[]> = {};
+
+    for (const targetId of targetIds) {
+      const reportEntities = reportEntityMapByTargetId[targetId] || [];
+      reasonsCountMap[targetId] = this._countReportReasons(reportEntities);
+    }
+
+    return reasonsCountMap;
+  }
+
+  private _countReportReasons(reportEntities: ReportEntity[]): ReasonCount[] {
     const reasonsCounts = reportEntities
       .map((reportEntity) => reportEntity.getReasonsCount())
       .flat();
@@ -207,7 +231,7 @@ export class ReportDomainService implements IReportDomainService {
     authUser: UserDto
   ): Promise<ReportEntity[]> {
     const reportEntities = await this._reportRepo.findAll({
-      targetId,
+      targetIds: [targetId],
       status: REPORT_STATUS.CREATED,
     });
 
@@ -245,7 +269,7 @@ export class ReportDomainService implements IReportDomainService {
     authUser: UserDto
   ): Promise<ReportEntity[]> {
     const reportEntities = await this._reportRepo.findAll({
-      targetId,
+      targetIds: [targetId],
       status: REPORT_STATUS.CREATED,
     });
 
