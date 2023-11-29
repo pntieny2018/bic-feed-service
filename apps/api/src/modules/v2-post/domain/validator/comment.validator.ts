@@ -47,11 +47,9 @@ export class CommentValidator implements ICommentValidator {
 
   public async validateNotHiddenComment(comment: CommentEntity): Promise<void> {
     const report = await this._reportRepo.findOne({
-      where: {
-        targetId: comment.get('id'),
-        targetType: CONTENT_TARGET.COMMENT,
-        status: REPORT_STATUS.HIDDEN,
-      },
+      targetId: comment.get('id'),
+      targetType: CONTENT_TARGET.COMMENT,
+      status: REPORT_STATUS.HIDDEN,
     });
 
     if (report) {

@@ -6,7 +6,7 @@ export const REPORT_NOTIFICATION_APPLICATION_SERVICE = 'REPORT_NOTIFICATION_APPL
 
 export type ReportNotificationPayload = {
   actor: UserDto;
-  report: ReportDto;
+  reports: ReportDto[];
   adminInfos: {
     [rootGroupId: string]: string[];
   };

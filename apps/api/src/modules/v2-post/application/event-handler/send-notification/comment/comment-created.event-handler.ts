@@ -47,9 +47,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
   public async handle(event: CommentCreatedEvent): Promise<void> {
     const { comment, authUser } = event.payload;
 
-    const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor: authUser,
-    });
+    const commentDto = await this._commentBinding.commentBinding(comment, { authUser });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
       mustIncludeGroup: true,
@@ -88,7 +86,9 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       const parentComment = await this._commentDomainService.getVisibleComment(
         comment.get('parentId')
       );
-      const parentCommentDto = await this._commentBinding.commentBinding(parentComment);
+      const parentCommentDto = await this._commentBinding.commentBinding(parentComment, {
+        authUser,
+      });
 
       recipientObj.replyCommentRecipient = recipient as ReplyCommentRecipientDto;
       const { mentionedUserIdsInComment, mentionedUserIdsInParentComment } =
@@ -125,7 +125,9 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
       let prevCommentActivities: CommentExtendedDto[] = [];
       if (prevComments.length) {
-        prevCommentActivities = await this._commentBinding.commentsBinding(prevComments);
+        prevCommentActivities = await this._commentBinding.commentsBinding(prevComments, {
+          authUser,
+        });
       }
 
       return this._notiAdapter.sendCommentCreatedNotification({

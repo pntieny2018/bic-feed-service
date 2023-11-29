@@ -46,9 +46,7 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
   public async handle(event: CommentUpdatedEvent): Promise<void> {
     const { comment, authUser, oldComment } = event.payload;
 
-    const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor: authUser,
-    });
+    const commentDto = await this._commentBinding.commentBinding(comment, { authUser });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
       mustIncludeGroup: true,
@@ -80,7 +78,9 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       const parentComment = await this._commentDomainService.getVisibleComment(
         comment.get('parentId')
       );
-      const parentCommentDto = await this._commentBinding.commentBinding(parentComment);
+      const parentCommentDto = await this._commentBinding.commentBinding(parentComment, {
+        authUser,
+      });
       recipientObj.replyCommentRecipient.mentionedUserIdsInComment = newMentions;
       const replyCommentRecipient = recipientObj.replyCommentRecipient;
 

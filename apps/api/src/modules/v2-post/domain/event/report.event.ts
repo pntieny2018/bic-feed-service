@@ -5,7 +5,7 @@ import { ReportHasBeenApproved, ReportHasBeenCreated } from '../../../../common/
 import { ReportEntity } from '../model/report';
 
 interface ReportEventPayload {
-  report: ReportEntity;
+  reportEntities: ReportEntity[];
   authUser: UserDto;
 }
 
