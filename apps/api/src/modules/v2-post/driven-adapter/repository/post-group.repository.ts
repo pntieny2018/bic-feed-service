@@ -65,4 +65,12 @@ export class PostGroupRepository implements IPostGroupRepository {
 
     await this._libPostGroupRepo.update({ isArchived }, { where: { groupId: groupIds } });
   }
+
+  public async updateContentState(contentIds: string[], isHidden: boolean): Promise<void> {
+    if (!contentIds.length) {
+      return;
+    }
+
+    await this._libPostGroupRepo.update({ isHidden }, { where: { postId: contentIds } });
+  }
 }

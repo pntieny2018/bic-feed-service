@@ -5,7 +5,6 @@ import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
@@ -16,8 +15,13 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
-import { ArticleDto, PostDto, ReportTargetDto } from '../../../dto';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+  IReportBinding,
+  REPORT_BINDING_TOKEN,
+} from '../../../binding';
+import { ReportTargetDto } from '../../../dto';
 
 import { GetMyReportedContentsQuery } from './get-my-reported-contents.query';
 
@@ -33,7 +37,9 @@ export class GetMyReportedContentsHandler
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding
+    private readonly _contentBinding: IContentBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding
   ) {}
 
   public async execute(
@@ -42,12 +48,9 @@ export class GetMyReportedContentsHandler
     const { authUser, limit, order, before, after } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
-      where: {
-        targetType: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
-        targetActorId: authUser.id,
-        status: REPORT_STATUS.HIDDEN,
-      },
-      include: { details: true },
+      targetType: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
+      targetActorId: authUser.id,
+      status: REPORT_STATUS.HIDDEN,
       limit,
       order,
       before,
@@ -62,18 +65,16 @@ export class GetMyReportedContentsHandler
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
     const contentMap = ArrayHelper.convertArrayToObject(contents, 'id');
-    const reportMap = EntityHelper.entityArrayToRecord(reportEntities, 'id');
+    const reportReasonsCountMap = await this._reportDomain.getReportReasonsMapByTargetIds(
+      contentIds
+    );
 
-    const reports: ReportTargetDto[] = [];
-
-    for (const report of reportEntities) {
-      const target = contentMap[report.get('targetId')] as PostDto | ArticleDto;
-      const reasonCounts = await this._reportDomain.countReportReasons(
-        reportMap[report.get('id')].getDetails()
-      );
-
-      reports.push({ target, reasonCounts });
-    }
+    const reports: ReportTargetDto[] = reportEntities.map((report) => ({
+      target: contentMap[report.get('targetId')],
+      reasonsCount: this._reportBinding.bindingReportReasonsCount(
+        reportReasonsCountMap[report.get('targetId')]
+      ),
+    }));
 
     return {
       list: reports,

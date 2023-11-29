@@ -1,32 +1,25 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
-import {
-  ReportContentAttribute,
-  ReportContentDetailAttributes,
-} from '@libs/database/postgres/model';
-import {
-  LibUserReportContentDetailRepository,
-  LibUserReportContentRepository,
-} from '@libs/database/postgres/repository';
+import { ReportAttribute } from '@libs/database/postgres/model';
+import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { uniq } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
 
-import { ReportDetailAttributes, ReportEntity } from '../../domain/model/report';
+import { ReportEntity } from '../../domain/model/report';
 import {
   GetPaginationReportProps,
-  FindOneReportProps,
   IReportRepository,
-  FindReportDetailsProps,
+  FindOneReportProps,
+  FindAllReportsProps,
 } from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
 @Injectable()
 export class ReportRepository implements IReportRepository {
   public constructor(
-    private readonly _libReportRepo: LibUserReportContentRepository,
-    private readonly _libReportDetailRepo: LibUserReportContentDetailRepository,
+    private readonly _libReportRepo: LibReportRepository,
+    private readonly _libReportDetailRepo: LibReportDetailRepository,
     private readonly _reportMapper: ReportMapper,
 
     @InjectConnection()
@@ -34,12 +27,14 @@ export class ReportRepository implements IReportRepository {
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
-    const { id, targetId, targetType, targetActorId, status } = input.where;
-    const { details } = input.include || {};
+    const { id, groupId, targetId, targetType, targetActorId, status } = input;
 
-    const condition: WhereOptions<ReportContentAttribute> = {};
+    const condition: WhereOptions<ReportAttribute> = {};
     if (id) {
       condition.id = id;
+    }
+    if (groupId) {
+      condition.groupId = groupId;
     }
     if (targetId) {
       condition.targetId = targetId;
@@ -48,74 +43,32 @@ export class ReportRepository implements IReportRepository {
       condition.targetType = targetType;
     }
     if (targetActorId) {
-      condition.authorId = targetActorId;
+      condition.targetActorId = targetActorId;
     }
     if (status) {
       condition.status = status;
     }
 
-    const include = [];
-    if (details) {
-      include.push({
-        model: this._libReportDetailRepo.getModel(),
-        required: false,
-        as: 'details',
-      });
-    }
-
-    const report = await this._libReportRepo.first({
-      where: condition,
-      ...(include.length && { include }),
-    });
+    const report = await this._libReportRepo.first({ where: condition });
     return this._reportMapper.toDomain(report);
   }
 
-  public async getPagination(
-    input: GetPaginationReportProps
-  ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
-    const { targetType, targetActorId, status, groupId } = input.where;
-    const { details } = input.include || {};
+  public async findAll(input: FindAllReportsProps): Promise<ReportEntity[]> {
+    const { groupIds, targetIds, status } = input;
 
-    const condition: WhereOptions<ReportContentAttribute> = {};
-    if (targetType) {
-      condition.targetType = targetType;
+    const condition: WhereOptions<ReportAttribute> = {};
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
     }
-    if (targetActorId) {
-      condition.authorId = targetActorId;
+    if (targetIds?.length) {
+      condition.targetId = targetIds;
     }
     if (status) {
       condition.status = status;
     }
-    if (groupId) {
-      // TODO: optimize this query
-      const reportIds = await this._libReportDetailRepo.findMany({
-        where: { groupId: groupId },
-        select: ['reportId'],
-      });
-      condition.id = uniq(reportIds.map((item) => item.reportId));
-    }
 
-    const include = [];
-    if (details) {
-      include.push({
-        model: this._libReportDetailRepo.getModel(),
-        required: true,
-        as: 'details',
-      });
-    }
-
-    const { rows, meta } = await this._libReportRepo.cursorPaginate(
-      {
-        where: condition,
-        ...(include.length && { include }),
-      },
-      { limit, before, after, order, column }
-    );
-    return {
-      rows: rows.map((report) => this._reportMapper.toDomain(report)),
-      meta,
-    };
+    const reports = await this._libReportRepo.findMany({ where: condition });
+    return reports.map((report) => this._reportMapper.toDomain(report));
   }
 
   public async create(reportEntity: ReportEntity): Promise<void> {
@@ -123,12 +76,11 @@ export class ReportRepository implements IReportRepository {
 
     try {
       const report = this._reportMapper.toPersistence(reportEntity);
-      const { details, ...reportData } = report;
+      await this._libReportRepo.create(report, { transaction });
 
-      await this._libReportRepo.create(reportData, { transaction });
-
-      if (details?.length) {
-        await this._libReportDetailRepo.bulkCreate(details, {
+      const { attachDetails } = reportEntity.getState();
+      if (attachDetails?.length) {
+        await this._libReportDetailRepo.bulkCreate(attachDetails, {
           ignoreDuplicates: true,
           transaction,
         });
@@ -146,10 +98,10 @@ export class ReportRepository implements IReportRepository {
 
     try {
       const report = this._reportMapper.toPersistence(reportEntity);
-      const { id, status } = report;
+      const { id, status, reasonsCount, processedBy, processedAt } = report;
 
       await this._libReportRepo.update(
-        { status },
+        { status, reasonsCount, processedBy, processedAt },
         {
           where: { id },
           transaction,
@@ -171,24 +123,33 @@ export class ReportRepository implements IReportRepository {
     }
   }
 
-  public async findReportDetails(input: FindReportDetailsProps): Promise<ReportDetailAttributes[]> {
-    const { reportId, targetId, groupId } = input.where;
+  public async getPagination(
+    input: GetPaginationReportProps
+  ): Promise<CursorPaginationResult<ReportEntity>> {
+    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
+    const { targetType, targetActorId, status, groupId } = input;
 
-    const condition: WhereOptions<ReportContentDetailAttributes> = {};
-    if (reportId) {
-      condition.reportId = reportId;
+    const condition: WhereOptions<ReportAttribute> = {};
+    if (targetType) {
+      condition.targetType = targetType;
     }
-    if (targetId) {
-      condition.targetId = targetId;
+    if (targetActorId) {
+      condition.targetActorId = targetActorId;
+    }
+    if (status) {
+      condition.status = status;
     }
     if (groupId) {
       condition.groupId = groupId;
     }
 
-    const reportDetails = await this._libReportDetailRepo.findMany({
-      where: condition,
-    });
-
-    return reportDetails;
+    const { rows, meta } = await this._libReportRepo.cursorPaginate(
+      { where: condition },
+      { limit, before, after, order, column }
+    );
+    return {
+      rows: rows.map((report) => this._reportMapper.toDomain(report)),
+      meta,
+    };
   }
 }

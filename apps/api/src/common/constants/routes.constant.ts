@@ -212,11 +212,11 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     GET_REPORTS: {
-      PATH: 'content/reports', // old: /reports/me/content
+      PATH: 'content/reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     CREATE_REPORT: {
-      PATH: 'content/:contentId/reports', // old: /reports/content
+      PATH: 'content/:contentId/reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_MENU_SETTINGS: {
@@ -298,7 +298,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_REPORT: {
-      PATH: 'comments/report/:commentId',
+      PATH: 'comments/:commentId/reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_REPORTS: {
@@ -322,19 +322,15 @@ export const ROUTES = {
   },
   MANAGE_REPORTS: {
     GET_LIST: {
-      PATH: 'manage/communities/:rootGroupId/content-reports', // old: /reports/review
+      PATH: 'manage/communities/:rootGroupId/content-reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_DETAIL: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId', // old: /reports/:rootGroupId/content/:targetId
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
-    },
-    STATISTIC: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/statistics', // old: /reports/:reportId/statistics/:targetId
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     PROCESS: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/status', // old: /reports/status
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/status',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },

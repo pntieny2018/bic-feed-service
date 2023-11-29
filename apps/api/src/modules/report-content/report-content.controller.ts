@@ -1,13 +1,3 @@
-import { ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import {
-  CreateReportDto,
-  GetBlockedContentOfMeDto,
-  GetReportDto,
-  ReportReviewResponsesDto,
-  StatisticsReportResponsesDto,
-  UpdateStatusReportDto,
-} from './dto';
-import { ReportContentService } from './report-content.service';
 import {
   Body,
   Controller,
@@ -19,12 +9,24 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
-import { UserDto } from '../v2-user/application';
-import { AuthUser, ResponseMessages } from '../../common/decorators';
+import { ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import { ReportStatus } from './contstants';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
+import { AuthUser, Deprecated, ResponseMessages } from '../../common/decorators';
+import { UserDto } from '../v2-user/application';
+
+import { ReportStatus } from './contstants';
+import {
+  CreateReportDto,
+  GetBlockedContentOfMeDto,
+  GetReportDto,
+  ReportReviewResponsesDto,
+  StatisticsReportResponsesDto,
+  UpdateStatusReportDto,
+} from './dto';
+import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
+import { ReportContentService } from './report-content.service';
 
 @ApiTags('Reports')
 @Controller({
@@ -36,6 +38,7 @@ export class ReportContentController {
   public constructor(private readonly _reportContentService: ReportContentService) {}
 
   @Get('/review')
+  @Deprecated()
   public async getContentsReported(
     @AuthUser() user: UserDto,
     @Query() getReportDto: GetReportDto
@@ -44,6 +47,7 @@ export class ReportContentController {
   }
 
   @Get('/me/content')
+  @Deprecated()
   public async getContentsBlockedOfMe(
     @AuthUser() user: UserDto,
     @Query() getOptions: GetBlockedContentOfMeDto
@@ -56,6 +60,7 @@ export class ReportContentController {
     description: 'Target id',
   })
   @Get('/:rootGroupId/content/:targetId')
+  @Deprecated()
   public async getDetailReportContent(
     @AuthUser() user: UserDto,
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
@@ -74,6 +79,7 @@ export class ReportContentController {
     description: 'Target id',
   })
   @Get(':reportId/statistics/:targetId')
+  @Deprecated()
   public async getStatistics(
     @AuthUser() user: UserDto,
     @Param('reportId', ParseUUIDPipe) reportId: string,
@@ -95,6 +101,7 @@ export class ReportContentController {
     success: 'message.content.reported_success',
   })
   @Post('/content')
+  @Deprecated()
   public async report(
     @AuthUser() user: UserDto,
     @Body() createReportDto: CreateReportDto
@@ -104,6 +111,7 @@ export class ReportContentController {
   }
 
   @Patch('/status')
+  @Deprecated()
   public async updateStatus(
     @AuthUser() user: UserDto,
     @Body() updateStatusReportDto: UpdateStatusReportDto,
