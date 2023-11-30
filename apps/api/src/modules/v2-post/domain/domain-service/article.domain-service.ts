@@ -121,7 +121,8 @@ export class ArticleDomainService implements IArticleDomainService {
 
     if (
       (articleEntity.isScheduleFailed() || articleEntity.isWaitingSchedule()) &&
-      (!isAdmin || !articleEntity.isOwner(authUser.id))
+      !isAdmin &&
+      !articleEntity.isOwner(authUser.id)
     ) {
       throw new ContentAccessDeniedException();
     }

@@ -126,7 +126,8 @@ export class PostDomainService implements IPostDomainService {
 
     if (
       (postEntity.isScheduleFailed() || postEntity.isWaitingSchedule()) &&
-      (!isAdmin || !postEntity.isOwner(authUserId))
+      !isAdmin &&
+      !postEntity.isOwner(authUserId)
     ) {
       throw new ContentAccessDeniedException();
     }
