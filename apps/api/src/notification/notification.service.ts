@@ -20,14 +20,6 @@ export class NotificationService {
     });
   }
 
-  public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    this._logger.debug(`Sent event[${payload.value.event}]--- ${JSON.stringify(payload.value)}`);
-    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.COMMENT, {
-      key: payload.key,
-      value: payload.value,
-    });
-  }
-
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: payload.key,

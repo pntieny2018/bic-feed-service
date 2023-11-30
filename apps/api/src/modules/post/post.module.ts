@@ -1,3 +1,4 @@
+import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
@@ -42,7 +43,14 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     TagModule,
   ],
   controllers: [PostController, ContentController, FeedBackupController],
-  providers: [PostService, PostBindingService, PostCronService, PostAppService],
+  providers: [
+    PostService,
+    PostBindingService,
+    PostCronService,
+    PostAppService,
+    LibReportRepository,
+    LibReportDetailRepository,
+  ],
   exports: [PostService, PostBindingService],
 })
 export class PostModule {}

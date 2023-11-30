@@ -46,7 +46,7 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     const { authUser, limit, order, before, after } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
-      targetType: [CONTENT_TARGET.COMMENT],
+      targetTypes: [CONTENT_TARGET.COMMENT],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
       limit,
