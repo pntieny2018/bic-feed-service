@@ -1,13 +1,13 @@
 name: internal
 run-name: ${{ github.ref_name }}
-# on:
-#   pull_request:
-#     types:
-#       - closed
-#     branches: ["internal"]
 on:
-  push:
-    branches: [ "refactor/BEIN-19728-CA-full-flow-sprint-52/build-worker-INTEGRATE-develop" ]
+  pull_request:
+    types:
+      - closed
+    branches: ["internal"]
+# on:
+#   push:
+#     branches: [ "refactor/BEIN-19728-CA-full-flow-sprint-52/build-worker-INTEGRATE-develop" ]
     paths-ignore:
       - 'serverless/**'
       - '.github/workflows/*-serverless.yml'
@@ -18,8 +18,8 @@ permissions:
 
 jobs:
   internal:
-    # if: ${{ github.ref_name == 'internal' }}
-    if: ${{ github.ref_name == 'refactor/BEIN-19728-CA-full-flow-sprint-52/build-worker-INTEGRATE-develop' }}
+    if: ${{ github.ref_name == 'internal' }}
+    # if: ${{ github.ref_name == 'refactor/BEIN-19728-CA-full-flow-sprint-52/build-worker-INTEGRATE-develop' }}
     runs-on: ubuntu-22.04
     outputs:
       api: ${{ steps.filter.outputs.api }}
