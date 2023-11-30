@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { PublisherFactoryService } from './application';
 import { PUBLISHER_FACTORY_SERVICE } from './application/interface';
-import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type/constants';
+import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type';
 import { ContentScheduledPublisher } from './driven-adapter/infra';
 
 const PUBLISHERS = [ContentScheduledPublisher];
