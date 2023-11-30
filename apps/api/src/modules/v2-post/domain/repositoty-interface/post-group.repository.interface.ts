@@ -16,6 +16,7 @@ export interface IPostGroupRepository {
   ): Promise<CursorPaginationResult<PostGroupAttributes>>;
 
   updateGroupState(groupIds: string[], isArchived: boolean): Promise<void>;
+  updateContentState(contentIds: string[], isHidden: boolean): Promise<void>;
 }
 
 export const POST_GROUP_REPOSITORY_TOKEN = 'POST_GROUP_REPOSITORY_TOKEN';
