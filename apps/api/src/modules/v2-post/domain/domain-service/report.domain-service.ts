@@ -137,15 +137,29 @@ export class ReportDomainService implements IReportDomainService {
     return reportEntity;
   }
 
-  public async countReportReasonsByTargetId(targetId: string): Promise<ReasonCount[]> {
+  public async countReportReasonsByTargetId(
+    targetId: string,
+    groupId?: string
+  ): Promise<ReasonCount[]> {
     const reportEntities = await this._reportRepo.findAll({ targetIds: [targetId] });
-    return this._countReportReasons(reportEntities);
+
+    if (!reportEntities.length) {
+      return [];
+    }
+
+    groupId = groupId || reportEntities[0].get('groupId');
+    return this._countReportReasonsPerGroup(reportEntities, groupId);
   }
 
   public async getReportReasonsMapByTargetIds(
     targetIds: string[]
   ): Promise<Record<string, ReasonCount[]>> {
     const reportEntities = await this._reportRepo.findAll({ targetIds });
+
+    if (!reportEntities.length) {
+      return {};
+    }
+
     const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
       reportEntities,
       'targetId'
@@ -155,14 +169,19 @@ export class ReportDomainService implements IReportDomainService {
 
     for (const targetId of targetIds) {
       const reportEntities = reportEntityMapByTargetId[targetId] || [];
-      reasonsCountMap[targetId] = this._countReportReasons(reportEntities);
+      const groupId = reportEntities[0].get('groupId');
+      reasonsCountMap[targetId] = this._countReportReasonsPerGroup(reportEntities, groupId);
     }
 
     return reasonsCountMap;
   }
 
-  private _countReportReasons(reportEntities: ReportEntity[]): ReasonCount[] {
+  private _countReportReasonsPerGroup(
+    reportEntities: ReportEntity[],
+    groupId: string
+  ): ReasonCount[] {
     const reasonsCounts = reportEntities
+      .filter((reportEntity) => reportEntity.get('groupId') === groupId)
       .map((reportEntity) => reportEntity.getReasonsCount())
       .flat();
 
