@@ -188,6 +188,37 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
+  public async checkCanReadNotPublishedContent(
+    contentEntity: ContentEntity,
+    userId: string
+  ): Promise<void> {
+    if (contentEntity.isPublished()) {
+      return;
+    }
+
+    const isOwner = contentEntity.isOwner(userId);
+    if (isOwner) {
+      return;
+    }
+
+    const isDraftContent = contentEntity.isDraft();
+    const isHiddenContent = contentEntity.isHidden();
+    if (isDraftContent || isHiddenContent) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const isScheduleContent = contentEntity.isScheduleFailed() || contentEntity.isWaitingSchedule();
+    if (isScheduleContent) {
+      const isAdmin = await this._groupAdapter.isAdminInAnyGroups(
+        userId,
+        contentEntity.getGroupIds()
+      );
+      if (!isAdmin) {
+        throw new ContentAccessDeniedException();
+      }
+    }
+  }
+
   public async validateSeriesAndTags(
     groups: GroupDto[] = [],
     seriesIds: string[],

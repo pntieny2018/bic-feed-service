@@ -106,25 +106,12 @@ export class ArticleDomainService implements IArticleDomainService {
       },
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
-      (articleEntity.isHidden() && !articleEntity.isOwner(authUser.id)) ||
-      articleEntity.isInArchivedGroups()
-    ) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || articleEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
 
-    const groupAudienceIds = articleEntity.get('groupIds') ?? [];
-    const isAdmin = await this._groupAdapter.isAdminInAnyGroups(authUser.id, groupAudienceIds);
-
-    if (
-      (articleEntity.isScheduleFailed() || articleEntity.isWaitingSchedule()) &&
-      (!isAdmin || !articleEntity.isOwner(authUser.id))
-    ) {
-      throw new ContentAccessDeniedException();
-    }
+    await this._contentValidator.checkCanReadNotPublishedContent(articleEntity, authUser.id);
 
     if (!authUser && !articleEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -164,7 +151,8 @@ export class ArticleDomainService implements IArticleDomainService {
       shouldIncludeSeries: true,
     });
 
-    if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle) {
       throw new ContentNotFoundException();
     }
     if (!articleEntity.isOwner(actor.id)) {
