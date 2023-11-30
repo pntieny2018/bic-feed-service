@@ -20,11 +20,22 @@ export type FindAllReportsProps = {
 };
 
 export type GetPaginationReportProps = {
-  targetType?: CONTENT_TARGET[];
+  targetTypes?: CONTENT_TARGET[];
   targetActorId?: string;
   status?: REPORT_STATUS;
   groupId?: string;
 } & CursorPaginationProps;
+
+export type GetReportedTargetIdsByReporterIdProps = {
+  reporterId: string;
+  groupIds?: string[];
+  targetTypes?: CONTENT_TARGET[];
+};
+
+export type GetReporterIdsByTargetIdProps = {
+  targetId: string;
+  groupIds?: string[];
+};
 
 export interface IReportRepository {
   create(reportEntity: ReportEntity): Promise<void>;
@@ -32,6 +43,9 @@ export interface IReportRepository {
   findOne(input: FindOneReportProps): Promise<ReportEntity>;
   findAll(input: FindAllReportsProps): Promise<ReportEntity[]>;
   getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;
+
+  getReportedTargetIdsByReporterId(input: GetReportedTargetIdsByReporterIdProps): Promise<string[]>;
+  getReporterIdsByTargetId(input: GetReporterIdsByTargetIdProps): Promise<string[]>;
 }
 
 export const REPORT_REPOSITORY_TOKEN = 'REPORT_REPOSITORY_TOKEN';

@@ -14,7 +14,6 @@ import { PostReactionModel } from '@libs/database/postgres/model/post-reaction.m
 import { PostSeriesModel } from '@libs/database/postgres/model/post-series.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { QuizModel } from '@libs/database/postgres/model/quiz.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.model';
 import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
@@ -28,12 +27,12 @@ import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 
-import { ReportContentModel } from '../model';
+import { ReportDetailModel, ReportModel } from '../model';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
   public constructor(
-    @InjectModel(ReportContentModel)
-    private readonly _reportContentModel: typeof ReportContentModel,
+    @InjectModel(ReportModel)
+    private readonly _reportModel: typeof ReportModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
   ) {
     super(PostModel);
@@ -457,13 +456,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   }
 
   private _excludeReportedByUser(userId: string): string {
-    const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    const reporterId = this._sequelizeConnection.escape(userId);
+
     return `NOT EXISTS ( 
-        SELECT target_id FROM ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this._sequelizeConnection.escape(
-            userId
-          )}
+        SELECT target_id FROM ${ReportModel.getTableName()} rp
+          WHERE rp.target_id = "PostModel".id AND 
+                rp.id IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${reporterId})
       )`;
   }
 
@@ -510,7 +508,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async destroyContent(id: string): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      await this._reportContentModel.destroy({
+      await this._reportModel.destroy({
         where: { targetId: id },
         transaction,
       });

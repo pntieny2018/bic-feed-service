@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
 import { createCursor, parseCursor } from '@libs/database/postgres/common';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
@@ -8,14 +8,12 @@ import { flatten, uniq } from 'lodash';
 
 import { ELASTICSEARCH_DEFAULT_SIZE_PAGE, IPostElasticsearch } from '../../../../../search';
 import { SearchService } from '../../../../../search/search.service';
-import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
-  IContentDomainService,
-} from '../../../../domain/domain-service/interface';
 import { SeriesEntity } from '../../../../domain/model/content';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
+  IReportRepository,
+  REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
 import {
   GROUP_ADAPTER,
@@ -32,15 +30,16 @@ export class SearchContentsBySeriesHandler
   implements IQueryHandler<SearchContentsBySeriesQuery, SearchContentsBySeriesDto>
 {
   public constructor(
-    private readonly _postSearchService: SearchService,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    private readonly _reportRepo: IReportRepository,
+
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomain: IContentDomainService
+    private readonly _postSearchService: SearchService
   ) {}
 
   public async execute(query: SearchContentsBySeriesQuery): Promise<SearchContentsBySeriesDto> {
@@ -74,9 +73,10 @@ export class SearchContentsBySeriesHandler
       });
     }
 
-    const excludeByIds = await this._contentDomain.getReportedContentIdsByUser(authUser.id, {
-      postTypes: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST],
+    const excludeByIds = await this._reportRepo.getReportedTargetIdsByReporterId({
+      reporterId: authUser.id,
       groupIds,
+      targetTypes: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
     });
 
     const response = await this._postSearchService.searchContents<IPostElasticsearch>({

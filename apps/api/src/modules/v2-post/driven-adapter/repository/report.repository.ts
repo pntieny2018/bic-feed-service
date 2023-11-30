@@ -4,6 +4,7 @@ import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
+import { uniq } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
 
 import { ReportEntity } from '../../domain/model/report';
@@ -12,6 +13,8 @@ import {
   IReportRepository,
   FindOneReportProps,
   FindAllReportsProps,
+  GetReportedTargetIdsByReporterIdProps,
+  GetReporterIdsByTargetIdProps,
 } from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
@@ -127,11 +130,11 @@ export class ReportRepository implements IReportRepository {
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
     const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
-    const { targetType, targetActorId, status, groupId } = input;
+    const { targetTypes, targetActorId, status, groupId } = input;
 
     const condition: WhereOptions<ReportAttribute> = {};
-    if (targetType) {
-      condition.targetType = targetType;
+    if (targetTypes?.length) {
+      condition.targetType = targetTypes;
     }
     if (targetActorId) {
       condition.targetActorId = targetActorId;
@@ -151,5 +154,64 @@ export class ReportRepository implements IReportRepository {
       rows: rows.map((report) => this._reportMapper.toDomain(report)),
       meta,
     };
+  }
+
+  public async getReportedTargetIdsByReporterId(
+    input: GetReportedTargetIdsByReporterIdProps
+  ): Promise<string[]> {
+    const { reporterId, groupIds, targetTypes } = input;
+
+    if (!reporterId) {
+      return [];
+    }
+
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId },
+      select: ['id'],
+    });
+
+    if (!reportDetails?.length) {
+      return [];
+    }
+
+    const reportIds = reportDetails.map((reportDetail) => reportDetail.id);
+    const condition: WhereOptions<ReportAttribute> = { id: reportIds };
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
+    }
+    if (targetTypes?.length) {
+      condition.targetType = targetTypes;
+    }
+
+    const reports = await this._libReportRepo.findMany({ where: condition, select: ['targetId'] });
+
+    return uniq(reports.map((report) => report.targetId));
+  }
+
+  public async getReporterIdsByTargetId(input: GetReporterIdsByTargetIdProps): Promise<string[]> {
+    const { targetId, groupIds } = input;
+
+    if (!targetId) {
+      return [];
+    }
+
+    const condition: WhereOptions<ReportAttribute> = { targetId };
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
+    }
+
+    const reports = await this._libReportRepo.findMany({ where: condition, select: ['id'] });
+
+    if (!reports?.length) {
+      return [];
+    }
+
+    const reportIds = reports.map((report) => report.id);
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { id: reportIds },
+      select: ['reporterId'],
+    });
+
+    return uniq(reportDetails.map((reportDetail) => reportDetail.reporterId));
   }
 }

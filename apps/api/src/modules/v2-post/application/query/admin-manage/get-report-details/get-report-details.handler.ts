@@ -72,7 +72,7 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
 
     const target = await this._getReportTarget(targetId, targetType, authUser);
 
-    const reasonsCount = await this._reportDomain.countReportReasonsByTargetId(targetId);
+    const reasonsCount = await this._reportDomain.countReportReasonsByTargetId(targetId, groupId);
     const reasonsCountWithReporters =
       await this._reportBinding.bindingReportReasonsCountWithReporters(reasonsCount);
 

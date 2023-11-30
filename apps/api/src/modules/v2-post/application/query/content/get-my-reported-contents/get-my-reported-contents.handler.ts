@@ -2,6 +2,7 @@ import { CONTENT_TARGET } from '@beincom/constants';
 import { ArrayHelper } from '@libs/common/helpers';
 import { PaginatedResponse } from '@libs/database/postgres/common';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
+import { BaseUserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -48,7 +49,7 @@ export class GetMyReportedContentsHandler
     const { authUser, limit, order, before, after } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
-      targetType: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
+      targetTypes: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
       limit,
@@ -69,12 +70,18 @@ export class GetMyReportedContentsHandler
       contentIds
     );
 
-    const reports: ReportTargetDto[] = reportEntities.map((report) => ({
-      target: contentMap[report.get('targetId')],
-      reasonsCount: this._reportBinding.bindingReportReasonsCount(
-        reportReasonsCountMap[report.get('targetId')]
-      ),
-    }));
+    const reports: ReportTargetDto[] = reportEntities.map((report) => {
+      const target = contentMap[report.get('targetId')];
+      const targetActor = target.actor ? new BaseUserDto(target.actor) : undefined;
+
+      const reportReasonsCount = reportReasonsCountMap[target.id];
+      const reasonsCount = this._reportBinding.bindingReportReasonsCount(reportReasonsCount);
+
+      return {
+        target: { ...target, actor: targetActor },
+        reasonsCount,
+      };
+    });
 
     return {
       list: reports,
