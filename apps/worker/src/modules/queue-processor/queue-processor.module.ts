@@ -25,7 +25,7 @@ const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provi
       const redisConfig = configService.get<IRedisConfig>('redis');
       return new WorkerService({
         queueName: worker.QUEUE_NAME,
-        workerConfig: getWorkerConfig(redisConfig, worker.GROUP_CONCURRENCY),
+        workerConfig: getWorkerConfig(redisConfig, worker.GROUP_CONCURRENCY, worker.CONCURRENCY),
       });
     },
     inject: [ConfigService],
