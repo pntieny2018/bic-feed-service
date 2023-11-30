@@ -49,7 +49,7 @@ export class GetMyReportedContentsHandler
     const { authUser, limit, order, before, after } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
-      targetType: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
+      targetTypes: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
       limit,

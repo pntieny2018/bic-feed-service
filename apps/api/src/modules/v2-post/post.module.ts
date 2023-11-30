@@ -22,6 +22,8 @@ import { UserModuleV2 } from '../v2-user/user.module';
 import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
 import { ContentDomainService } from './domain/domain-service/content.domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
+import { REPORT_REPOSITORY_TOKEN } from './domain/repositoty-interface';
+import { ReportRepository } from './driven-adapter/repository';
 import { GroupConsumer } from './driving-apdater/consumer/group.consumer';
 import { MediaConsumer } from './driving-apdater/consumer/media.consumer';
 import { ArticleController } from './driving-apdater/controller/article.controller';
@@ -125,6 +127,10 @@ import { workerProvider } from './provider/worker.provider';
     {
       provide: CONTENT_DOMAIN_SERVICE_TOKEN,
       useClass: ContentDomainService,
+    },
+    {
+      provide: REPORT_REPOSITORY_TOKEN, // TODO: remove after remove old search module
+      useClass: ReportRepository,
     },
   ],
 })
