@@ -101,7 +101,6 @@ jobs:
           HEAD=$(git rev-parse --short HEAD)
           git clone https://devops-bic:${{ env._BIC_CI_ARGOCD_TOKEN_GITHUB }}@github.com/${{ env.GITHUB_WORKPLACE }}/bic-kube.git
           cd bic-kube
-          git checkout BEIN-20723-Monorepo-Deployment-Content-Service
           set -e
           export COMMIT_SHA1=${{ github.sha }}
           envsubst <bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/${{ env.MICROSERVICE }}/version.patch.yaml >bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/${{ env.MICROSERVICE }}/version.yaml.out
@@ -176,7 +175,6 @@ jobs:
           HEAD=$(git rev-parse --short HEAD)
           git clone https://devops-bic:${{ env._BIC_CI_ARGOCD_TOKEN_GITHUB }}@github.com/${{ env.GITHUB_WORKPLACE }}/bic-kube.git
           cd bic-kube
-          git checkout BEIN-20723-Monorepo-Deployment-Content-Service
           set -e
           export COMMIT_SHA1=${{ github.sha }}
           envsubst <bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/${{ env.MICROSERVICE }}/version.patch.yaml >bic/services/${{ env.SERVICE }}/${{ env.ENVIRONMENT }}/${{ env.MICROSERVICE }}/version.yaml.out
