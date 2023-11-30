@@ -1,1 +1,1 @@
-export * from './content-scheduled-publisher';
+export * from './publisher.provider';

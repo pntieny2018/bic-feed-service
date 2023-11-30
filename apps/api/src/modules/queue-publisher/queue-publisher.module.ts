@@ -3,12 +3,12 @@ import { IQueueService, QueueService, WrapperModule, getQueueConfig } from '@lib
 import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { PublisherFactoryService } from './application';
-import { PUBLISHER_FACTORY_SERVICE } from './application/interface';
+import { APPLICATION_PUBLISHER_SERVICE } from './application/interface';
+import { PublisherService } from './application/publisher.service';
 import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type';
-import { ContentScheduledPublisher } from './driven-adapter/infra';
-
-const PUBLISHERS = [ContentScheduledPublisher];
+import { PUBLISHER_DOMAIN_SERVICE_TOKEN } from './domain/interface';
+import { PublisherDomainService } from './domain/publisher-domain.service';
+import { publisherProvider } from './driven-adapter/infra';
 
 const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => {
   return services.map((service) => {
@@ -30,16 +30,20 @@ const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => 
 @WrapperModule({
   providers: [
     {
-      provide: PUBLISHER_FACTORY_SERVICE,
-      useClass: PublisherFactoryService,
+      provide: APPLICATION_PUBLISHER_SERVICE,
+      useClass: PublisherService,
+    },
+    {
+      provide: PUBLISHER_DOMAIN_SERVICE_TOKEN,
+      useClass: PublisherDomainService,
     },
     ...createQueueServiceProviders(QUEUE_ADAPTER_SERVICES),
-    ...PUBLISHERS,
+    ...publisherProvider,
   ],
   exports: [
     {
-      provide: PUBLISHER_FACTORY_SERVICE,
-      useClass: PublisherFactoryService,
+      provide: APPLICATION_PUBLISHER_SERVICE,
+      useClass: PublisherService,
     },
   ],
 })

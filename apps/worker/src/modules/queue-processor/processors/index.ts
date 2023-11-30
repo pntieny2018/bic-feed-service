@@ -1,1 +1,1 @@
-export * from './content.processor';
+export * from './processor.provider';

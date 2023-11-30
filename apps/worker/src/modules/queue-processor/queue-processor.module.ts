@@ -14,9 +14,7 @@ import { Job } from 'bullmq';
 
 import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
 import { IProcessor } from './interface';
-import { ContentProcessor } from './processors';
-
-const PROCESSORS = [ContentProcessor];
+import { processorProvider } from './processors';
 
 const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provider[] => {
   return workerConstants.map((worker) => ({
@@ -34,7 +32,7 @@ const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provi
 
 @WrapperModule({
   imports: [CqrsModule],
-  providers: [...createChannelWorkerProviders(WORKER_ADAPTER_SERVICES), ...PROCESSORS],
+  providers: [...createChannelWorkerProviders(WORKER_ADAPTER_SERVICES), ...processorProvider],
   exports: [],
 })
 export class QueueProcessorModule implements OnModuleInit {

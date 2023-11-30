@@ -3,32 +3,28 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Job } from 'bullmq';
 
-import { CONTENT_SCHEDULED_PUBLISHER_TOKEN, IPublisher } from '../domain/infra-interface';
-
-import { IPublisherFactoryService, JobWithConfiguration } from './interface';
+import { CONTENT_SCHEDULED_PUBLISHER_TOKEN, IPublisher } from './infra-interface';
+import { IPublisherDomainService, JobWithConfiguration } from './interface';
 
 @Injectable()
-export class PublisherFactoryService implements IPublisherFactoryService {
-  private readonly _logger = new Logger(PublisherFactoryService.name);
+export class PublisherDomainService implements IPublisherDomainService {
+  private readonly _logger = new Logger(PublisherDomainService.name);
 
   public constructor(protected readonly moduleRef: ModuleRef) {}
 
-  public factoryMethod(queue: QueueName): IPublisher {
-    return this.moduleRef.get<IPublisher>(
-      PublisherFactoryService.queueNameToPublisherToken(queue),
-      {
-        strict: false,
-      }
-    );
-  }
-
-  public static queueNameToPublisherToken(queueName: QueueName): string {
+  public getPublisherToken(queueName: QueueName): string {
     switch (queueName) {
       case QueueName.CONTENT_SCHEDULED:
         return CONTENT_SCHEDULED_PUBLISHER_TOKEN;
       default:
-        break;
+        throw new Error(`Unknown queue name: ${queueName}`);
     }
+  }
+
+  public factoryMethod(queue: QueueName): IPublisher {
+    return this.moduleRef.get<IPublisher>(this.getPublisherToken(queue), {
+      strict: false,
+    });
   }
 
   public async addJob<T>(queue: QueueName, job: JobWithConfiguration<T>): Promise<void> {

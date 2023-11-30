@@ -5,8 +5,8 @@ import { Inject } from '@nestjs/common';
 import { JobId } from 'bull';
 
 import {
-  IPublisherFactoryService,
-  PUBLISHER_FACTORY_SERVICE,
+  APPLICATION_PUBLISHER_SERVICE,
+  IAppPublisherService,
 } from '../../../queue-publisher/application/interface';
 import {
   ContentScheduledJobDto,
@@ -19,8 +19,8 @@ export class QueueAdapter implements IQueueAdapter {
   public constructor(
     @Inject(QUEUE_SERVICE_TOKEN)
     private readonly _queueService: IQueueService,
-    @Inject(PUBLISHER_FACTORY_SERVICE)
-    private readonly _publisherFactoryService: IPublisherFactoryService
+    @Inject(APPLICATION_PUBLISHER_SERVICE)
+    private readonly _appPublisherService: IAppPublisherService
   ) {}
 
   public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
@@ -57,7 +57,7 @@ export class QueueAdapter implements IQueueAdapter {
   }
 
   public async addContentScheduledJobs(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._publisherFactoryService.addBulkJobs<ContentScheduledJobDto>(
+    await this._appPublisherService.addBulkJobs<ContentScheduledJobDto>(
       QueueName.CONTENT_SCHEDULED,
       payloads.map(({ contentId, ownerId }) => ({
         data: { contentId, ownerId },
