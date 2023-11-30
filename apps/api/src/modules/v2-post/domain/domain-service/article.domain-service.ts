@@ -119,7 +119,10 @@ export class ArticleDomainService implements IArticleDomainService {
     const groupAudienceIds = articleEntity.get('groupIds') ?? [];
     const isAdmin = await this._groupAdapter.isAdminInAnyGroups(authUser.id, groupAudienceIds);
 
-    if ((articleEntity.isScheduleFailed() || articleEntity.isWaitingSchedule()) && !isAdmin) {
+    if (
+      (articleEntity.isScheduleFailed() || articleEntity.isWaitingSchedule()) &&
+      (!isAdmin || !articleEntity.isOwner(authUser.id))
+    ) {
       throw new ContentAccessDeniedException();
     }
 
