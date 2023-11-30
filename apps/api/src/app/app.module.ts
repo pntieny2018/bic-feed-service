@@ -20,7 +20,6 @@ import { CommentModule } from '../modules/comment';
 import { FeedModule } from '../modules/feed';
 import { FeedGeneratorModule } from '../modules/feed-generator';
 import { FeedPublisherModule } from '../modules/feed-publisher';
-import { FilterUserModule } from '../modules/filter-user';
 import { HealthModule } from '../modules/health/health.module';
 import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { InternalModule } from '../modules/internal';
@@ -58,7 +57,6 @@ import { LibModule } from './lib.module';
     }),
     DatabaseModule,
     HttpModule,
-    FilterUserModule,
     LibModule,
     CommentModule,
     FeedModule,
