@@ -18,7 +18,6 @@ import { NIL } from 'uuid';
 
 import { EntityIdDto, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -43,7 +42,6 @@ import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { ReportTo, TargetType } from '../report-content/contstants';
@@ -65,6 +63,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class PostService {
@@ -105,8 +104,7 @@ export class PostService {
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
     protected readonly tagService: TagService,
     @InjectModel(UserSeenPostModel)
-    protected userSeenPostModel: typeof UserSeenPostModel,
-    protected mediaService: MediaService
+    protected userSeenPostModel: typeof UserSeenPostModel
   ) {}
 
   /**

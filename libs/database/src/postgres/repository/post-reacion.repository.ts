@@ -1,4 +1,4 @@
-import { getDatabaseConfig } from '@libs/database/postgres/common';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { PostReactionAttributes, PostReactionModel } from '@libs/database/postgres/model';
 import { BaseRepository } from '@libs/database/postgres/repository';
 import { InjectConnection } from '@nestjs/sequelize';

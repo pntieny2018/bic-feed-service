@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { RedisService } from '@libs/infra/redis';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -11,7 +12,6 @@ import { CACHE_KEYS } from '../../common/constants/casl.constant';
 import { PageDto } from '../../common/dto';
 import { ValidatorException } from '../../common/exceptions';
 import { StringHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { IPost, PostType } from '../../database/models/post.model';
 import {
   IReportContentDetailAttribute,

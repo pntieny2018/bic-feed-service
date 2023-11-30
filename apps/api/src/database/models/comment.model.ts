@@ -20,7 +20,6 @@ import {
 } from 'sequelize-typescript';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
-import { getDatabaseConfig } from '../../config/database';
 import { GetCommentsDto } from '../../modules/comment/dto/requests';
 import { TargetType } from '../../modules/report-content/contstants';
 import { UserDto } from '../../modules/v2-user/application';
@@ -29,6 +28,7 @@ import { CommentReactionModel, ICommentReaction } from './comment-reaction.model
 import { IMedia } from './media.model';
 import { IPost, PostModel } from './post.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export enum ActionEnum {
   INCREMENT = 'increment',

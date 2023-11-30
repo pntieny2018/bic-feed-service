@@ -1,3 +1,4 @@
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -5,7 +6,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
 
 import { ElasticsearchHelper } from '../../common/helpers';
-import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { CategoryModel } from '../../database/models/category.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostGroupModel } from '../../database/models/post-group.model';

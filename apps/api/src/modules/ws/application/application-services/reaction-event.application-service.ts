@@ -1,6 +1,6 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
 import { WS_TARGET_TYPE, WS_ACTIVITY_VERB } from '../../data-type';
 import { ReactionEvent, ReactionEventData } from '../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';

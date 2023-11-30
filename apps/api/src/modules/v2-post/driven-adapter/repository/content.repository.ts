@@ -1,10 +1,6 @@
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CONTENT_TARGET } from '@beincom/constants/lib/content';
-import {
-  CursorPaginationResult,
-  getDatabaseConfig,
-  PaginationProps,
-} from '@libs/database/postgres/common';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   PostGroupModel,
   PostModel,
@@ -47,6 +43,7 @@ import {
   IContentRepository,
 } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class ContentRepository implements IContentRepository {
