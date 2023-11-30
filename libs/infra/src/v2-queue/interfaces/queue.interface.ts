@@ -2,6 +2,7 @@ import { Job } from 'bullmq';
 
 import { JobsProOptions, QueueProOptions } from '../shared';
 
+export const CONTENT_SCHEDULED_SERVICE_TOKEN = 'CONTENT_SCHEDULED_SERVICE_TOKEN';
 export interface IQueueServiceConfig {
   queueName: string;
   queueConfig: QueueProOptions;

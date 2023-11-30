@@ -1,5 +1,6 @@
 import { QUEUES } from '@libs/common/constants';
 import { IQueueService, Job, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
+import { QueueName } from '@libs/infra/v2-queue';
 import { Inject } from '@nestjs/common';
 import { JobId } from 'bull';
 
@@ -7,7 +8,6 @@ import {
   IPublisherFactoryService,
   PUBLISHER_FACTORY_SERVICE,
 } from '../../../queue-publisher/application/interface';
-import { QueueName } from '../../../queue-publisher/data-type';
 import {
   ContentScheduledJobDto,
   QuizGenerateJobDto,

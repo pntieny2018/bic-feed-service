@@ -1,8 +1,6 @@
-import { QueueName } from './queue.enum';
-import { QueueConstants } from './types';
+import { CONTENT_SCHEDULED_SERVICE_TOKEN, QueueName } from '@libs/infra/v2-queue';
 
-export const CONTENT_SCHEDULED_PUBLISHER_TOKEN = 'CONTENT_SCHEDULED_PUBLISHER_TOKEN';
-export const CONTENT_SCHEDULED_SERVICE_TOKEN = 'CONTENT_SCHEDULED_SERVICE_TOKEN';
+import { QueueConstants } from './types';
 
 export const QUEUE_ADAPTER_SERVICES: QueueConstants[] = [
   {

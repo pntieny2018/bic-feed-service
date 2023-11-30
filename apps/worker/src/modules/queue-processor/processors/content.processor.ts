@@ -4,8 +4,7 @@ import { Component } from '@libs/infra/v2-queue/decorators';
 import { CommandBus } from '@nestjs/cqrs';
 import { Job } from 'bullmq';
 
-import { CONTENT_SCHEDULED_PROCESSOR_TOKEN } from '../data-type/constants';
-import { IProcessor } from '../interface';
+import { IProcessor, CONTENT_SCHEDULED_PROCESSOR_TOKEN } from '../interface';
 
 @Component({ injectToken: CONTENT_SCHEDULED_PROCESSOR_TOKEN })
 export class ContentProcessor implements IProcessor {

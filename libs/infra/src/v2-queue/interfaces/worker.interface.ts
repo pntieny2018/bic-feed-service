@@ -1,5 +1,7 @@
 import { JobPro } from '../shared';
 
+export const CONTENT_SCHEDULED_WORKER_TOKEN = 'CONTENT_SCHEDULED_WORKER_TOKEN';
+
 export interface IWorkerService {
   bindProcess<T>(handlers: {
     process(job: JobPro<T>): Promise<void>;

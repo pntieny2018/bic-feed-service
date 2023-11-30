@@ -1,9 +1,8 @@
-import { QueueName } from './queue.enum';
+import { CONTENT_SCHEDULED_WORKER_TOKEN, QueueName } from '@libs/infra/v2-queue';
+
+import { CONTENT_SCHEDULED_PROCESSOR_TOKEN } from '../interface';
+
 import { WorkerConstants } from './types';
-
-export const CONTENT_SCHEDULED_WORKER_TOKEN = 'CONTENT_SCHEDULED_WORKER_TOKEN';
-
-export const CONTENT_SCHEDULED_PROCESSOR_TOKEN = 'CONTENT_SCHEDULED_PROCESSOR_TOKEN';
 
 export const WORKER_ADAPTER_SERVICES: WorkerConstants[] = [
   {

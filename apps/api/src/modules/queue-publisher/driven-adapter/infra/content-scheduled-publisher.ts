@@ -1,11 +1,8 @@
-import { IQueueService } from '@libs/infra/v2-queue';
+import { CONTENT_SCHEDULED_SERVICE_TOKEN, IQueueService } from '@libs/infra/v2-queue';
 import { Component } from '@libs/infra/v2-queue/decorators';
 import { Inject } from '@nestjs/common';
 
-import {
-  CONTENT_SCHEDULED_SERVICE_TOKEN,
-  CONTENT_SCHEDULED_PUBLISHER_TOKEN,
-} from '../../data-type/constants';
+import { CONTENT_SCHEDULED_PUBLISHER_TOKEN } from '../../domain/infra-interface';
 
 import { BasePublisher } from './base-publisher';
 

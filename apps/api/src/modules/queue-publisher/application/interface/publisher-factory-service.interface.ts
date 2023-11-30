@@ -1,8 +1,7 @@
+import { QueueName } from '@libs/infra/v2-queue';
 import { Job } from 'bullmq';
 
-import { QueueName } from '../../data-type';
-
-export const PUBLISHER_FACTORY_SERVICE = 'PUBLISHER_FACTORY_SERVICE ';
+export const PUBLISHER_FACTORY_SERVICE = 'PUBLISHER_FACTORY_SERVICE';
 
 /**
  * @param delay An amount of milliseconds to wait until this job can be processed.

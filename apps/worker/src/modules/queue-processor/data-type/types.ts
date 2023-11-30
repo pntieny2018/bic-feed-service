@@ -1,6 +1,4 @@
-import { IGroupConcurrency } from '@libs/infra/v2-queue';
-
-import { QueueName } from './queue.enum';
+import { IGroupConcurrency, QueueName } from '@libs/infra/v2-queue';
 
 /**
  * @const CONCURRENCY
