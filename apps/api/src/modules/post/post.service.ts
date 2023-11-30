@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
@@ -63,7 +64,6 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class PostService {
