@@ -37,9 +37,7 @@ export class NotiCommentDeletedEventHandler implements IEventHandler<CommentDele
   public async handle(event: CommentDeletedEvent): Promise<void> {
     const { comment, authUser } = event.payload;
 
-    const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor: authUser,
-    });
+    const commentDto = await this._commentBinding.commentBinding(comment, { authUser });
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
       mustIncludeGroup: true,

@@ -1,4 +1,6 @@
 import { ORDER } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { ReportDetailModel, ReportModel } from '@libs/database/postgres/model';
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional, QueryTypes, Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
@@ -21,14 +23,11 @@ import {
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
 import { GetCommentsDto } from '../../modules/comment/dto/requests';
-import { TargetType } from '../../modules/report-content/contstants';
 import { UserDto } from '../../modules/v2-user/application';
 
 import { CommentReactionModel, ICommentReaction } from './comment-reaction.model';
 import { IMedia } from './media.model';
 import { IPost, PostModel } from './post.model';
-import { ReportContentDetailModel } from './report-content-detail.model';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -292,13 +291,15 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     const { limit } = getCommentsDto;
     const order = getCommentsDto.order ?? ORDER.DESC;
     const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
     let condition = await CommentModel._getCondition(getCommentsDto);
     condition += `AND "c".is_hidden = false AND NOT EXISTS ( 
-      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-      WHERE rp.target_id = "c".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
-        authUserId
-      )}
+      SELECT target_id FROM  ${ReportModel.getTableName()} rp
+        WHERE rp.target_id = "c".id AND 
+              target_type = 'COMMENT' AND 
+              rp.id = IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${this.sequelize.escape(
+      authUserId
+    )})
+            
     )`;
     let select = `SELECT "CommentModel".*`;
 
@@ -348,88 +349,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     return rows;
   }
 
-  public static async getListArroundId(
-    aroundId: string,
-    getCommentsDto: GetCommentsDto,
-    authUserId?: string
-  ): Promise<any[]> {
-    const { limit } = getCommentsDto;
-    const order = getCommentsDto.order ?? ORDER.DESC;
-    const { schema } = getDatabaseConfig();
-    const condition = await CommentModel._getCondition(getCommentsDto);
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
-    let select = `SELECT "CommentModel".*`;
-
-    if (authUserId) {
-      select += `,"ownerReactions"."id" AS "commentReactionId", 
-      "ownerReactions"."reaction_name" AS "reactionName",
-      "ownerReactions"."created_at" AS "reactCreatedAt"`;
-    }
-
-    const subSelect = `SELECT 
-    "c"."id",
-    "c"."parent_id" AS "parentId", 
-    "c"."post_id" AS "postId",
-    "c"."content", 
-    "c"."mentions", 
-    "c"."edited", 
-    "c"."media_json" as "media",
-    "c"."giphy_id" as "giphyId",
-    "c"."total_reply" AS "totalReply", 
-    "c"."created_by" AS "createdBy", 
-    "c"."updated_by" AS "updatedBy", 
-    "c"."created_at" AS "createdAt", 
-    "c"."updated_at" AS "updatedAt"`;
-
-    const query = `${select}
-    FROM (
-      (
-      ${subSelect}
-      FROM ${schema}."comments" AS "c"
-      WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
-      AND "c".is_hidden = false AND NOT EXISTS (
-        SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-        WHERE rp.target_id = "c".id AND target_type = '${
-          TargetType.COMMENT
-        }' AND rp.created_by = ${this.sequelize.escape(authUserId)}
-      )
-      ORDER BY "c"."created_at" DESC
-      OFFSET 0 LIMIT :limitTop
-      )
-      UNION ALL 
-      (
-        ${subSelect}
-        FROM ${schema}."comments" AS "c"
-        WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
-        AND "c".is_hidden = false AND NOT EXISTS ( 
-          SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "c".id AND target_type = '${
-            TargetType.COMMENT
-          }' AND rp.created_by = ${this.sequelize.escape(authUserId)}
-        )
-        ORDER BY "c"."created_at" ASC
-        OFFSET 0 LIMIT :limitBottom
-      )
-    ) AS "CommentModel"
-    ${
-      authUserId
-        ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId `
-        : ``
-    }
-    ORDER BY "CommentModel"."createdAt" ${order}`;
-    const rows: any[] = await this.sequelize.query(query, {
-      replacements: {
-        aroundId,
-        authUserId,
-        limitTop: limit + 1,
-        limitBottom: limit,
-      },
-      type: QueryTypes.SELECT,
-    });
-
-    return rows;
-  }
-
   public static async getChildByComments(
     comments: any[],
     authUserId: string,
@@ -437,7 +356,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   ): Promise<any[]> {
     const subQuery = [];
     const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
     for (const comment of comments) {
       subQuery.push(`(SELECT * 
       FROM (
@@ -458,10 +376,12 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         FROM ${schema}."comments" AS "CommentModel"
         WHERE "CommentModel"."parent_id" = ${this.sequelize.escape(comment.id)} 
         AND "CommentModel".is_hidden = false AND NOT EXISTS ( 
-          SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "CommentModel".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
-            authUserId
-          )}
+          SELECT target_id FROM  ${ReportModel.getTableName()} rp
+            WHERE rp.target_id = "CommentModel".id AND 
+                  target_type = 'COMMENT' AND 
+                  rp.id = IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${this.sequelize.escape(
+        authUserId
+      )})
         )
         ORDER BY "CommentModel"."created_at" DESC LIMIT :limit
       ) AS sub)`);

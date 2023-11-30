@@ -1,5 +1,6 @@
 import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
 import { REPORT_SCOPE, REPORT_STATUS } from '@libs/database/postgres/model';
+import { uniq } from 'lodash';
 import { v4, validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
@@ -8,11 +9,7 @@ import { DomainModelException } from '../../../../../common/exceptions';
 export type ReportDetailAttributes = {
   id: string;
   reportId: string;
-  targetId: string;
-  targetType: CONTENT_TARGET;
-  groupId: string;
-  createdBy: string;
-  reportTo: REPORT_SCOPE;
+  reporterId: string;
   reasonType: CONTENT_REPORT_REASON_TYPE;
   reason?: string;
   createdAt?: Date;
@@ -21,24 +18,30 @@ export type ReportDetailAttributes = {
 
 export type ReportAttributes = {
   id: string;
+  groupId: string;
+  reportTo: REPORT_SCOPE;
   targetId: string;
   targetType: CONTENT_TARGET;
   targetActorId: string;
+  reasonsCount: ReasonCount[];
   status: REPORT_STATUS;
-  updatedBy?: string;
+  processedBy?: string;
+  processedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
-  details?: ReportDetailAttributes[];
 };
 
-type CreateReportDetailProps = Pick<
-  ReportDetailAttributes,
-  'groupId' | 'createdBy' | 'reasonType' | 'reason'
->;
+export type ReasonCount = {
+  reasonType: CONTENT_REPORT_REASON_TYPE;
+  total: number;
+  reporterIds: string[];
+};
 
 type ReportState = {
   attachDetails?: ReportDetailAttributes[];
 };
+
+type AddReportDetailProps = Pick<ReportDetailAttributes, 'reporterId' | 'reasonType' | 'reason'>;
 
 export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
   protected _state: ReportState;
@@ -54,42 +57,12 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     };
   }
 
-  public static create(
-    report: Partial<ReportAttributes>,
-    details: CreateReportDetailProps[]
-  ): ReportEntity {
-    const { targetId, targetType, targetActorId, status } = report;
-
-    const reportId = v4();
-    const now = new Date();
-
-    return new ReportEntity({
-      id: reportId,
-      targetId,
-      targetType,
-      targetActorId,
-      status,
-      details: details.map((detail) => ({
-        id: v4(),
-        reportId,
-        targetId,
-        targetType,
-        groupId: detail.groupId,
-        createdBy: detail.createdBy,
-        reportTo: REPORT_SCOPE.COMMUNITY,
-        reasonType: detail.reasonType,
-        reason: detail.reason,
-        createdAt: now,
-        updatedAt: now,
-      })),
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-
   public validate(): void {
     if (this._props.id && !isUUID(this._props.id)) {
       throw new DomainModelException(`Report ID must be UUID`);
+    }
+    if (this._props.groupId && !isUUID(this._props.groupId)) {
+      throw new DomainModelException(`Group ID must be UUID`);
     }
     if (this._props.targetId && !isUUID(this._props.targetId)) {
       throw new DomainModelException(`Target ID must be UUID`);
@@ -99,12 +72,75 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     }
   }
 
+  public static create(
+    report: Partial<ReportAttributes>,
+    reportDetail: AddReportDetailProps
+  ): ReportEntity {
+    const { groupId, targetId, targetType, targetActorId } = report;
+    const { reporterId, reasonType } = reportDetail;
+
+    const reportId = v4();
+    const now = new Date();
+
+    const reportEntity = new ReportEntity({
+      id: reportId,
+      groupId,
+      reportTo: REPORT_SCOPE.COMMUNITY,
+      targetId,
+      targetType,
+      targetActorId,
+      reasonsCount: [{ reasonType: reasonType, total: 1, reporterIds: [reporterId] }],
+      status: REPORT_STATUS.CREATED,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    reportEntity.addReportDetail(reportDetail);
+
+    return reportEntity;
+  }
+
+  public increaseReasonsCount(reasonType: CONTENT_REPORT_REASON_TYPE, reporterId: string): void {
+    const isExistReasonType = this._props.reasonsCount.some(
+      (reasonCount) => reasonCount.reasonType === reasonType
+    );
+
+    if (isExistReasonType) {
+      this._props.reasonsCount = this._props.reasonsCount.map((reasonCount) =>
+        reasonCount.reasonType === reasonType
+          ? {
+              ...reasonCount,
+              total: reasonCount.total + 1,
+              reporterIds: uniq([...reasonCount.reporterIds, reporterId]),
+            }
+          : reasonCount
+      );
+    } else {
+      this._props.reasonsCount.push({ reasonType, total: 1, reporterIds: [reporterId] });
+    }
+  }
+
+  public addReportDetail(props: AddReportDetailProps): void {
+    const { reporterId, reasonType, reason } = props;
+    const now = new Date();
+
+    this._state.attachDetails.push({
+      id: v4(),
+      reportId: this._props.id,
+      reporterId,
+      reasonType,
+      reason,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
   public getState(): ReportState {
     return this._state;
   }
 
-  public getDetails(): ReportDetailAttributes[] {
-    return this._props.details || [];
+  public getReasonsCount(): ReasonCount[] {
+    return this._props.reasonsCount || [];
   }
 
   public isCreated(): boolean {
@@ -119,31 +155,9 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     return this._props.status === REPORT_STATUS.HIDDEN;
   }
 
-  public updateStatus(status: REPORT_STATUS): void {
+  public updateStatus(status: REPORT_STATUS, processedBy: string): void {
     this._props.status = status;
-  }
-
-  public addDetails(details: CreateReportDetailProps[]): void {
-    const newDetails = details.map((detail) => this._createDetail(detail));
-    this._props.details = [...this._props.details, ...newDetails];
-    this._state.attachDetails = newDetails;
-  }
-
-  private _createDetail(detail: CreateReportDetailProps): ReportDetailAttributes {
-    const { groupId, createdBy, reasonType, reason } = detail;
-
-    return {
-      id: v4(),
-      reportId: this._props.id,
-      targetId: this._props.targetId,
-      targetType: this._props.targetType,
-      groupId,
-      createdBy,
-      reportTo: REPORT_SCOPE.COMMUNITY,
-      reasonType,
-      reason,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    this._props.processedBy = processedBy;
+    this._props.processedAt = new Date();
   }
 }

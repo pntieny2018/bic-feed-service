@@ -1,13 +1,15 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
-import { uniq } from 'lodash';
 
+import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { ReportCreatedEvent } from '../../../../domain/event';
+import { ReportEntity } from '../../../../domain/model/report';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -30,20 +32,38 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
   ) {}
 
   public async handle(event: ReportCreatedEvent): Promise<void> {
-    const { report, authUser } = event.payload;
+    const { reportEntities, authUser } = event.payload;
 
-    const reportDto = this._reportBinding.binding(report);
+    const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
+      reportEntities,
+      'targetId'
+    );
 
-    const groupIds = uniq(reportDto.details.map((detail) => detail.groupId));
-    const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
+    for (const targetId of Object.keys(reportEntityMapByTargetId)) {
+      await this._sendNotificationByTargetId(reportEntityMapByTargetId[targetId], authUser);
+    }
+  }
 
-    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(report);
+  private async _sendNotificationByTargetId(
+    reportEntities: ReportEntity[],
+    authUser: UserDto
+  ): Promise<void> {
+    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(
+      reportEntities[0]
+    );
 
-    await this._notiAdapter.sendReportCreatedNotification({
-      report: reportDto,
-      actor: authUser,
-      adminInfos: groupAdminMap,
-      content: contentOfTargetReported,
-    });
+    for (const reportEntity of reportEntities) {
+      const reasonsCountWithReporters =
+        await this._reportBinding.bindingReportReasonsCountWithReporters(
+          reportEntity.get('reasonsCount')
+        );
+      const report = this._reportBinding.binding(reportEntity);
+
+      await this._notiAdapter.sendReportCreatedNotification({
+        report: { ...report, reasonsCount: reasonsCountWithReporters },
+        actor: authUser,
+        content: contentOfTargetReported,
+      });
+    }
   }
 }

@@ -1,3 +1,5 @@
+import { IAxiosConfig } from '@libs/infra/http';
+import { KafkaModule } from '@libs/infra/kafka';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -6,17 +8,13 @@ import { CommentModule } from '../modules/comment';
 import { PostModule } from '../modules/post';
 
 import {
-  CommentActivityService,
   PostActivityService,
   ReactionActivityService,
   ReportActivityService,
   SeriesActivityService,
 } from './activities';
-import { CommentDissociationService } from './dissociations';
 import { NotificationService } from './notification.service';
-import { CommentNotificationService, ContentNotificationService } from './services';
-import { IAxiosConfig } from '@libs/infra/http';
-import { KafkaModule } from '@libs/infra/kafka';
+import { ContentNotificationService } from './services';
 
 @Module({
   imports: [
@@ -40,9 +38,6 @@ import { KafkaModule } from '@libs/infra/kafka';
     NotificationService,
     PostActivityService,
     ReactionActivityService,
-    CommentActivityService,
-    CommentDissociationService,
-    CommentNotificationService,
     ContentNotificationService,
     SeriesActivityService,
   ],
@@ -53,9 +48,6 @@ import { KafkaModule } from '@libs/infra/kafka';
     NotificationService,
     PostActivityService,
     ReactionActivityService,
-    CommentActivityService,
-    CommentDissociationService,
-    CommentNotificationService,
     ContentNotificationService,
   ],
 })

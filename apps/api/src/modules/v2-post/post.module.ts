@@ -14,6 +14,8 @@ import { QueuePublihserModule } from '../queue-publisher/queue-publisher.module'
 import { SearchModule } from '../search';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
 
+import { REPORT_REPOSITORY_TOKEN } from './domain/repositoty-interface';
+import { ReportRepository } from './driven-adapter/repository';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -94,6 +96,12 @@ import {
     ...tagProvider,
     ...workerProvider,
   ],
-  exports: [...elasticProvider],
+  exports: [
+    {
+      provide: REPORT_REPOSITORY_TOKEN, // TODO: remove after remove old search module
+      useClass: ReportRepository,
+    },
+    ...elasticProvider,
+  ],
 })
 export class PostModuleV2 {}
