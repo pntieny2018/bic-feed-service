@@ -10,7 +10,6 @@ import { Logger, OnModuleInit, Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
-import { Job } from 'bullmq';
 
 import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
 import { IProcessor } from './interface';
@@ -45,11 +44,16 @@ export class QueueProcessorModule implements OnModuleInit {
       const handler = this._moduleRef.get<IWorkerService>(worker.WORKER_TOKEN);
       if (handler) {
         handler.bindProcess({
-          process: async (job: Job): Promise<void> => {
+          process: async (job: JobPro): Promise<void> => {
             const process = this._moduleRef.get<IProcessor>(worker.PROCESSOR_TOKEN);
+            const {
+              id,
+              opts: { group },
+            } = job;
+            this._logger.debug(`Start the job processing with id ${id} in group ${group.id}`);
             await process.processMessage(job);
           },
-          onCompletedProcess: async (job: Job): Promise<void> => {
+          onCompletedProcess: async (job: JobPro): Promise<void> => {
             this._logger.debug(`Job has been processed with data: ${JSON.stringify(job.data)}`);
           },
           onFailedProcess: async (job: JobPro, error: Error): Promise<void> => {
