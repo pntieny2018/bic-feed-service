@@ -28,6 +28,8 @@ export interface IContentValidator {
     postGroupsData?: GroupDto[]
   ): Promise<void>;
 
+  checkCanReadNotPublishedContent(contentEntity: ContentEntity, userId: string): Promise<void>;
+
   validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): Promise<void>;
 
   validateScheduleTime(scheduleAt: Date): void;

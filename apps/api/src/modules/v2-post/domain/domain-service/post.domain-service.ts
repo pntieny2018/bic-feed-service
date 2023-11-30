@@ -111,26 +111,12 @@ export class PostDomainService implements IPostDomainService {
       },
     });
 
-    if (
-      !postEntity ||
-      !(postEntity instanceof PostEntity) ||
-      (postEntity.isDraft() && !postEntity.isOwner(authUserId)) ||
-      (postEntity.isHidden() && !postEntity.isOwner(authUserId)) ||
-      postEntity.isInArchivedGroups()
-    ) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
 
-    const groupAudienceIds = postEntity.get('groupIds') ?? [];
-    const isAdmin = await this._groupAdapter.isAdminInAnyGroups(authUserId, groupAudienceIds);
-
-    if (
-      (postEntity.isScheduleFailed() || postEntity.isWaitingSchedule()) &&
-      !isAdmin &&
-      !postEntity.isOwner(authUserId)
-    ) {
-      throw new ContentAccessDeniedException();
-    }
+    await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUserId);
 
     if (!authUserId && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -313,7 +299,8 @@ export class PostDomainService implements IPostDomainService {
       shouldIncludeSeries: true,
     });
 
-    if (!postEntity || !(postEntity instanceof PostEntity)) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost) {
       throw new ContentNotFoundException();
     }
 
