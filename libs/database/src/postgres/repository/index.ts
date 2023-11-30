@@ -19,8 +19,6 @@ export * from './reaction-comment-details.repository';
 export * from './reaction-content-details.repository';
 export * from './tag.repository';
 export * from './user-mark-read-post.repository';
-export * from './user-report-content.repository';
-export * from './user-report-content-detail.repository';
 export * from './user-save-post.repository';
 export * from './user-seen-post.repository';
 export * from './user-newsfeed.repository';

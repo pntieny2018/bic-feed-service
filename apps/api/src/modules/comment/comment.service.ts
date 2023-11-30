@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
+
 import { PageDto } from '../../common/dto';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel, IComment } from '../../database/models/comment.model';
@@ -13,10 +14,11 @@ import { MentionService } from '../mention';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
+import { CommentNotFoundException } from '../v2-post/domain/exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+
 import { GetCommentsDto } from './dto/requests';
 import { CommentResponseDto } from './dto/response';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
-import { CommentNotFoundException } from '../v2-post/domain/exception';
 
 @Injectable()
 export class CommentService {
@@ -78,36 +80,6 @@ export class CommentService {
     return result;
   }
 
-  /**
-   * Get multiple comment by ids
-   */
-  public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
-    const responses = await this._commentModel.findAll({
-      attributes: {
-        include: [['media_json', 'media']],
-      },
-      order: [['createdAt', 'DESC']],
-      where: {
-        id: {
-          [Op.in]: commentIds,
-        },
-      },
-    });
-
-    if (!responses) {
-      throw new CommentNotFoundException();
-    }
-    const rawComment = responses.map((r) => r.toJSON());
-    await Promise.all([
-      this._mentionService.bindToComment(rawComment),
-      this._giphyService.bindUrlToComment(rawComment),
-      this.bindUserToComment(rawComment),
-    ]);
-
-    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
-      excludeExtraneousValues: true,
-    });
-  }
   /**
    * Get comment list
    */
@@ -173,7 +145,9 @@ export class CommentService {
     const rows: any[] = await CommentModel.getList(getCommentsDto, authUserId);
     const childGrouped = this._groupComments(rows);
     const hasNextPage = childGrouped.length === limit + 1;
-    if (hasNextPage) childGrouped.pop();
+    if (hasNextPage) {
+      childGrouped.pop();
+    }
     const commentsFiltered = childGrouped;
 
     const result = this._classTransformer.plainToInstance(CommentResponseDto, commentsFiltered, {
@@ -247,7 +221,9 @@ export class CommentService {
     for (const comment of comments) {
       const childList = childFormatted.filter((i) => i.parentId === comment.id);
       const hasNextPage = childList.length > limit;
-      if (hasNextPage) childList.pop();
+      if (hasNextPage) {
+        childList.pop();
+      }
       comment.child = new PageDto<CommentResponseDto>(childList, {
         limit,
         offset: 0,
