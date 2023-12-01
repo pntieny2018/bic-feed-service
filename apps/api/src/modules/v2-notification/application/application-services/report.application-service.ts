@@ -12,7 +12,11 @@ import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interfa
 import { NotificationActivityDto, NotificationPayloadDto } from '../dto';
 import { ReportActivityObjectDto } from '../dto/report.dto';
 
-import { IReportNotificationApplicationService, ReportNotificationPayload } from './interface';
+import {
+  IReportNotificationApplicationService,
+  ReportCreatedNotificationPayload,
+  ReportHiddenNotificationPayload,
+} from './interface';
 
 export class ReportNotificationApplicationService implements IReportNotificationApplicationService {
   public constructor(
@@ -20,10 +24,12 @@ export class ReportNotificationApplicationService implements IReportNotification
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
 
-  public async sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void> {
+  public async sendReportCreatedNotification(
+    payload: ReportCreatedNotificationPayload
+  ): Promise<void> {
     const { actor, report, content } = payload;
 
-    const reportObject = this._createReportActivityObject(report, actor);
+    const reportObject = this._createReportCreatedActivityObject(report, actor);
     const activity = this._createReportCreatedActivity(reportObject);
 
     const kafkaPayload = new NotificationPayloadDto<ReportActivityObjectDto>({
@@ -41,41 +47,24 @@ export class ReportNotificationApplicationService implements IReportNotification
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REPORT, kafkaPayload);
   }
 
-  public async sendReportHiddenNotification(payload: ReportNotificationPayload): Promise<void> {
-    const { actor, report, content } = payload;
-
-    const reportObject = this._createReportActivityObject(report, actor);
-    const activity = this._createReportHiddenActivity(reportObject);
-
-    const kafkaPayload = new NotificationPayloadDto<ReportActivityObjectDto>({
-      key: report.id,
-      value: {
-        actor,
-        event: ReportHasBeenApproved,
-        data: activity,
-        meta: {
-          report: { content, creatorId: report.targetActorId },
-        },
+  private _createReportCreatedActivityObject(
+    report: ReportDto,
+    actor: UserDto
+  ): ReportActivityObjectDto {
+    const reportDetails = [
+      {
+        targetId: report.targetId,
+        groupId: report.groupId,
       },
-    });
-
-    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REPORT, kafkaPayload);
-  }
-
-  private _createReportActivityObject(report: ReportDto, actor: UserDto): ReportActivityObjectDto {
-    const reporterIds = report.reasonsCount
-      .map((reasonCount) => (reasonCount.reporters || []).map((reporter) => reporter.id))
-      .flat();
-    const reportDetails = reporterIds.map((reporterId) => ({
-      targetId: report.targetId,
-      groupId: report.groupId,
-      createdBy: reporterId,
-    }));
+    ];
 
     return new ReportActivityObjectDto({
       id: report.id,
       actor,
-      report: { ...report, details: reportDetails },
+      report: {
+        ...report,
+        details: reportDetails,
+      },
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
     });
@@ -90,6 +79,56 @@ export class ReportNotificationApplicationService implements IReportNotification
       verb: VerbActivity.REPORT,
       target: TargetType.REPORT_CONTENT,
       createdAt: report.createdAt,
+    });
+  }
+
+  public async sendReportHiddenNotification(
+    payload: ReportHiddenNotificationPayload
+  ): Promise<void> {
+    const { actor, reports, content } = payload;
+
+    const reportObject = this._createReportHiddenActivityObject(reports, actor);
+    const activity = this._createReportHiddenActivity(reportObject);
+
+    const kafkaPayload = new NotificationPayloadDto<ReportActivityObjectDto>({
+      key: reports[0].targetId,
+      value: {
+        actor,
+        event: ReportHasBeenApproved,
+        data: activity,
+        meta: {
+          report: { content, creatorId: reports[0].targetActorId },
+        },
+      },
+    });
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.REPORT, kafkaPayload);
+  }
+
+  private _createReportHiddenActivityObject(
+    reports: ReportDto[],
+    actor: UserDto
+  ): ReportActivityObjectDto {
+    const report = reports[0];
+
+    const reporterIds = report.reasonsCount
+      .map((reasonCount) => (reasonCount.reporters || []).map((reporter) => reporter.id))
+      .flat();
+    const reportDetails = reports.map((report) => ({
+      targetId: report.targetId,
+      groupId: report.groupId,
+    }));
+
+    return new ReportActivityObjectDto({
+      id: report.id,
+      actor,
+      report: {
+        ...report,
+        details: reportDetails,
+        reporterIds,
+      },
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt,
     });
   }
 

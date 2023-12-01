@@ -46,6 +46,52 @@ export class ReportBinding implements IReportBinding {
     });
   }
 
+  public async bindingReportsWithReportersInReasonsCount(
+    entities: ReportEntity[]
+  ): Promise<ReportDto[]> {
+    const reporterIds = uniq(
+      entities
+        .map((entity) =>
+          entity
+            .getReasonsCount()
+            .map((reasonCount) => reasonCount.reporterIds)
+            .flat()
+        )
+        .flat()
+    );
+    let reporters = await this._userAdapter.getUsersByIds(reporterIds);
+    reporters = reporters.map((reporter) => new BaseUserDto(reporter));
+
+    return entities.map((entity) => {
+      const reasonsCountWithReporters = entity.getReasonsCount().map((reasonCount) => {
+        const reason = CONTENT_REPORT_REASONS.find(
+          (reason) => reason.id === reasonCount.reasonType
+        );
+        return {
+          reasonType: reasonCount.reasonType,
+          description: reason?.description,
+          total: reasonCount.total,
+          reporters: reporters.filter((reporter) => reasonCount.reporterIds.includes(reporter.id)),
+        };
+      });
+
+      return new ReportDto({
+        id: entity.get('id'),
+        groupId: entity.get('groupId'),
+        reportTo: entity.get('reportTo'),
+        targetId: entity.get('targetId'),
+        targetType: entity.get('targetType'),
+        targetActorId: entity.get('targetActorId'),
+        reasonsCount: reasonsCountWithReporters,
+        status: entity.get('status'),
+        processedBy: entity.get('processedBy'),
+        processedAt: entity.get('processedAt'),
+        createdAt: entity.get('createdAt'),
+        updatedAt: entity.get('updatedAt'),
+      });
+    });
+  }
+
   public async bindingReportsForManager(entities: ReportEntity[]): Promise<ReportForManagerDto[]> {
     let commentMap: Record<string, CommentEntity>;
     let contentMap: Record<string, PostEntity | ArticleEntity>;
