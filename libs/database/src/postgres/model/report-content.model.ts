@@ -1,6 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -25,6 +25,8 @@ export enum REPORT_STATUS {
 }
 
 export type ReportContentAttribute = InferAttributes<ReportContentModel>;
+
+// TODO: Remove this model
 @Table({
   tableName: 'report_contents',
   paranoid: false,
@@ -42,7 +44,9 @@ export class ReportContentModel extends Model<
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: CONTENT_TARGET;
 
   @Column

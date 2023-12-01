@@ -5,20 +5,10 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-  IUserAdapter,
-  USER_ADAPTER,
-} from '../../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { PostDto } from '../../../dto';
 
 import { PublishPostCommand } from './publish-post.command';
-import {
-  FOLLOW_REPOSITORY_TOKEN,
-  IFollowRepository,
-} from '../../../../domain/repositoty-interface';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -26,11 +16,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding,
-    @Inject(GROUP_ADAPTER)
-    private readonly _groupAdapter: IGroupAdapter,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter
+    private readonly _contentBinding: IContentBinding
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {

@@ -1,6 +1,5 @@
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
-import { uniq } from 'lodash';
 
 import { ContentEmptyContentException } from '../exception';
 import { ArticleEntity } from '../model/content';
@@ -17,26 +16,14 @@ export class ArticleValidator implements IArticleValidator {
     private readonly _contentValidator: IContentValidator
   ) {}
 
-  public async validateArticle(articleEntity: ArticleEntity, actor: UserDto): Promise<void> {
+  public async validateArticleToPublish(
+    articleEntity: ArticleEntity,
+    actor: UserDto
+  ): Promise<void> {
     const groupIds = articleEntity.get('groupIds');
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
-    const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
-    articleEntity.setCommunity(communityIds);
-    articleEntity.setPrivacyFromGroups(groups);
+    await this._contentValidator.validatePublishContent(articleEntity, actor, groupIds);
 
-    if (articleEntity.isPublished() || articleEntity.isWaitingSchedule()) {
-      await this._contentValidator.validatePublishContent(articleEntity, actor, groupIds);
-
-      await this._contentValidator.validateSeriesAndTags(
-        groups,
-        articleEntity.get('seriesIds'),
-        articleEntity.get('tags')
-      );
-    }
-  }
-
-  public validateArticleToPublish(articleEntity: ArticleEntity): void {
     if (!articleEntity.isValidArticleToPublish()) {
       throw new ContentEmptyContentException();
     }

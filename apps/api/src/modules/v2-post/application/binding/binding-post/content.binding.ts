@@ -1,10 +1,17 @@
-import { CONTENT_STATUS, PRIVACY } from '@beincom/constants';
+import { ReactionsCount } from '@api/common/types';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
+import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
-import { uniq } from 'lodash';
+import { instanceToInstance } from 'class-transformer';
+import { flatten, groupBy, uniq, pick } from 'lodash';
 
+import {
+  IReportDomainService,
+  REPORT_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import {
   PostEntity,
   SeriesEntity,
@@ -20,8 +27,10 @@ import {
   IContentRepository,
   IPostReactionRepository,
   IQuizParticipantRepository,
+  IReportRepository,
   POST_REACTION_REPOSITORY_TOKEN,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import {
   IUserAdapter,
@@ -39,11 +48,14 @@ import {
   TagDto,
   PostInSeriesDto,
   ArticleInSeriesDto,
+  ReportReasonCountDto,
+  ItemInSeries,
 } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
+import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
-import { IContentBinding } from './content.interface';
+import { IContentBinding } from './content.binding.interface';
 
 @Injectable()
 export class ContentBinding implements IContentBinding {
@@ -52,6 +64,11 @@ export class ContentBinding implements IContentBinding {
     private readonly _quizBinding: IQuizBinding,
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding,
+
+    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
+    private readonly _reportDomain: IReportDomainService,
 
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
@@ -59,6 +76,8 @@ export class ContentBinding implements IContentBinding {
     private readonly _quizParticipantRepo: IQuizParticipantRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepo: IPostReactionRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    private readonly _reportRepo: IReportRepository,
 
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
@@ -92,14 +111,21 @@ export class ContentBinding implements IContentBinding {
 
     const series = await this._getSeriesBindingInContent(postEntity.getSeriesIds());
 
-    const { quizHighestScore, quizDoing } = await this._getQuizBindingInContent(
-      postEntity.getId(),
+    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
+      [postEntity.getId()],
       authUser
     );
+    const quizHighestScore = quizzesHighestScoreMap[postEntity.getId()];
+    const quizDoing = quizzesDoingMap[postEntity.getId()];
 
     const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
       postEntity.getId(),
     ]);
+
+    let reportReasonsCount;
+    if (postEntity.isHidden() && postEntity.isOwner(authUser.id)) {
+      reportReasonsCount = await this._getReportReasonsCountBindingInContent(postEntity.getId());
+    }
 
     return new PostDto({
       id: postEntity.getId(),
@@ -139,6 +165,81 @@ export class ContentBinding implements IContentBinding {
         ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
         : undefined,
       quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      reportReasonsCount,
+    });
+  }
+
+  private async _postsBinding(
+    postsEntities: PostEntity[],
+    dataBinding: {
+      authUser: UserDto;
+      users: { [id: string]: UserDto };
+      groups: GroupDto[];
+      communities: GroupDto[];
+      quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
+      quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+      reactionsCount: Map<string, ReactionsCount>;
+    }
+  ): Promise<PostDto[]> {
+    if (!postsEntities.length) {
+      return [];
+    }
+
+    const {
+      authUser,
+      users,
+      groups,
+      communities,
+      quizzesHighestScoreMap,
+      quizzesDoingMap,
+      reactionsCount,
+    } = dataBinding;
+
+    return postsEntities.map((postEntity) => {
+      const postGroups = groups.filter((group) => postEntity.getGroupIds().includes(group.id));
+      const communityIds = uniq(postGroups.map((group) => group.rootGroupId));
+      const postCommunities = communities.filter((group) => communityIds.includes(group.id));
+      const quizHighestScore = quizzesHighestScoreMap[postEntity.getId()];
+      const quizDoing = quizzesDoingMap[postEntity.getId()];
+      const mentionUsers = Object.values(pick(users, postEntity.get('mentionUserIds')));
+
+      return new PostDto({
+        id: postEntity.getId(),
+        isReported: postEntity.get('isReported'),
+        isHidden: postEntity.isHidden(),
+        createdBy: postEntity.getCreatedBy(),
+        actor: this._mapActorUser(users[postEntity.getCreatedBy()]),
+        privacy: postEntity.get('privacy'),
+        status: postEntity.get('status'),
+        type: postEntity.getType(),
+        setting: postEntity.get('setting'),
+        media: this._mediaBinding.binding(postEntity.get('media')),
+        createdAt: postEntity.get('createdAt'),
+        updatedAt: postEntity.get('updatedAt'),
+        markedReadPost: postEntity.get('markedReadImportant'),
+        isSaved: postEntity.get('isSaved'),
+        ownerReactions: postEntity.get('ownerReactions'),
+        reactionsCount: reactionsCount.get(postEntity.getId()) || [],
+        publishedAt: postEntity.get('publishedAt'),
+        scheduledAt: postEntity.get('scheduledAt'),
+        audience: { groups: postGroups },
+        communities: postCommunities,
+        wordCount: postEntity.get('wordCount'),
+        commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
+        totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
+        content: postEntity.get('content'),
+        mentions: this.mapMentionWithUserInfo(mentionUsers),
+        linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
+        tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
+        quiz:
+          postEntity.get('quiz') && postEntity.get('quiz').isVisible(authUser.id)
+            ? this._quizBinding.binding(postEntity.get('quiz'))
+            : undefined,
+        quizHighestScore: quizHighestScore
+          ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
+          : undefined,
+        quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      });
     });
   }
 
@@ -170,10 +271,18 @@ export class ContentBinding implements IContentBinding {
       articleEntity.getId(),
     ]);
 
-    const { quizHighestScore, quizDoing } = await this._getQuizBindingInContent(
-      articleEntity.getId(),
+    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
+      [articleEntity.getId()],
       authUser
     );
+
+    const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
+    const quizDoing = quizzesDoingMap[articleEntity.getId()];
+
+    let reportReasonsCount;
+    if (articleEntity.isHidden() && articleEntity.isOwner(authUser.id)) {
+      reportReasonsCount = await this._getReportReasonsCountBindingInContent(articleEntity.getId());
+    }
 
     return new ArticleDto({
       id: articleEntity.get('id'),
@@ -219,6 +328,82 @@ export class ContentBinding implements IContentBinding {
         ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
         : undefined,
       quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      reportReasonsCount,
+    });
+  }
+
+  private async _articlesBinding(
+    articleEntities: ArticleEntity[],
+    dataBinding: {
+      authUser: UserDto;
+      users: { [id: string]: UserDto };
+      groups: GroupDto[];
+      communities: GroupDto[];
+      quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
+      quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+      reactionsCount: Map<string, ReactionsCount>;
+    }
+  ): Promise<ArticleDto[]> {
+    if (!articleEntities.length) {
+      return [];
+    }
+
+    const {
+      authUser,
+      users,
+      groups,
+      communities,
+      quizzesHighestScoreMap,
+      quizzesDoingMap,
+      reactionsCount,
+    } = dataBinding;
+
+    return articleEntities.map((articleEntity) => {
+      const articleGroups = groups.filter((group) =>
+        articleEntity.getGroupIds().includes(group.id)
+      );
+      const communityIds = uniq(articleGroups.map((group) => group.rootGroupId));
+      const articleCommunities = communities.filter((group) => communityIds.includes(group.id));
+      const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
+      const quizDoing = quizzesDoingMap[articleEntity.getId()];
+
+      return new ArticleDto({
+        id: articleEntity.get('id'),
+        isReported: articleEntity.get('isReported'),
+        isHidden: articleEntity.isHidden(),
+        createdBy: articleEntity.getCreatedBy(),
+        actor: this._mapActorUser(users[articleEntity.getCreatedBy()]),
+        privacy: articleEntity.get('privacy'),
+        status: articleEntity.get('status'),
+        type: articleEntity.getType(),
+        setting: articleEntity.get('setting'),
+        createdAt: articleEntity.get('createdAt'),
+        updatedAt: articleEntity.get('updatedAt'),
+        markedReadPost: articleEntity.get('markedReadImportant'),
+        isSaved: articleEntity.get('isSaved'),
+        ownerReactions: articleEntity.get('ownerReactions'),
+        reactionsCount: reactionsCount.get(articleEntity.getId()) || [],
+        publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
+          ? articleEntity.get('scheduledAt')
+          : articleEntity.get('publishedAt'),
+        scheduledAt: articleEntity.get('scheduledAt'),
+        audience: { groups: articleGroups },
+        communities: articleCommunities,
+        wordCount: articleEntity.get('wordCount'),
+        commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
+        totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
+        title: articleEntity.get('title'),
+        coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
+        tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
+        quiz:
+          articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(authUser.id)
+            ? this._quizBinding.binding(articleEntity.get('quiz'))
+            : undefined,
+        quizHighestScore: quizHighestScore
+          ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
+          : undefined,
+        quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      });
     });
   }
 
@@ -251,11 +436,6 @@ export class ContentBinding implements IContentBinding {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
       },
-      include: {
-        shouldIncludeCategory: true,
-        shouldIncludeQuiz: false,
-        shouldIncludeGroup: true,
-      },
     })) as (PostEntity | ArticleEntity)[];
     items.sort((a, b) => itemIds.indexOf(a.getId()) - itemIds.indexOf(b.getId()));
 
@@ -284,6 +464,77 @@ export class ContentBinding implements IContentBinding {
       summary: seriesEntity.get('summary'),
       items: bindingItems,
       coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
+    });
+  }
+
+  private async _seriesBinding(
+    seriesEntities: SeriesEntity[],
+    dataBinding: {
+      authUser: UserDto;
+      users: { [id: string]: UserDto };
+      groups: GroupDto[];
+      communities: GroupDto[];
+      reactionsCount: Map<string, ReactionsCount>;
+    }
+  ): Promise<SeriesDto[]> {
+    if (!seriesEntities.length) {
+      return [];
+    }
+
+    const { authUser, users, groups, communities, reactionsCount } = dataBinding;
+
+    const itemIds = uniq(flatten(seriesEntities.map((seriesEntity) => seriesEntity.getItemIds())));
+
+    const items = (await this._contentRepo.findAll({
+      where: {
+        ids: itemIds,
+        excludeReportedByUserId: authUser?.id,
+        isHidden: false,
+        status: CONTENT_STATUS.PUBLISHED,
+      },
+      select: ['id', 'type', 'title'],
+    })) as (PostEntity | ArticleEntity)[];
+
+    return seriesEntities.map((seriesEntity) => {
+      const seriesGroups = groups.filter((group) => seriesEntity.getGroupIds().includes(group.id));
+      const communityIds = uniq(seriesGroups.map((group) => group.rootGroupId));
+      const seriesCommunities = communities.filter((group) => communityIds.includes(group.id));
+      const itemIds = seriesEntity.getItemIds();
+      const seriesItems = items
+        .filter((item) => itemIds.includes(item.getId()))
+        .map(
+          (item) =>
+            new ItemInSeries({
+              id: item.getId(),
+              type: item.getType(),
+              title: item.getTitle(),
+            })
+        );
+      seriesItems.sort((a, b) => itemIds.indexOf(a.id) - itemIds.indexOf(b.id));
+      return new SeriesDto({
+        id: seriesEntity.get('id'),
+        isReported: seriesEntity.get('isReported'),
+        isHidden: seriesEntity.isHidden(),
+        createdBy: seriesEntity.getCreatedBy(),
+        actor: this._mapActorUser(users[seriesEntity.getCreatedBy()]),
+        privacy: seriesEntity.get('privacy'),
+        status: seriesEntity.get('status'),
+        type: seriesEntity.getType(),
+        setting: seriesEntity.get('setting'),
+        createdAt: seriesEntity.get('createdAt'),
+        updatedAt: seriesEntity.get('updatedAt'),
+        markedReadPost: seriesEntity.get('markedReadImportant'),
+        isSaved: seriesEntity.get('isSaved'),
+        publishedAt: seriesEntity.get('publishedAt'),
+        audience: { groups: seriesGroups },
+        communities: seriesCommunities,
+        commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
+        totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
+        title: seriesEntity.get('title'),
+        summary: seriesEntity.get('summary'),
+        items: seriesItems,
+        coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
+      });
     });
   }
 
@@ -345,21 +596,56 @@ export class ContentBinding implements IContentBinding {
     if (!contentEntities.length) {
       return [];
     }
+
+    const contents = groupBy(contentEntities, (content) => content.getType());
+    const postEntities = (contents[CONTENT_TYPE.POST] || []) as PostEntity[];
+    const articleEntities = (contents[CONTENT_TYPE.ARTICLE] || []) as ArticleEntity[];
+    const seriesEntities = (contents[CONTENT_TYPE.SERIES] || []) as SeriesEntity[];
+
+    const authorIds = contentEntities.map((contentEntity) => contentEntity.getCreatedBy());
+    const mentionUserIds = uniq(
+      flatten(postEntities.map((postEntity) => postEntity.get('mentionUserIds')))
+    );
+    const groupIds = uniq(
+      flatten(contentEntities.map((contentEntity) => contentEntity.getGroupIds()))
+    );
+    const contentIds = contentEntities.map((contentEntity) => contentEntity.getId());
+
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      uniq([...authorIds, ...mentionUserIds]),
+      authUser.id
+    );
+    const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
+
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    const accessGroups = this.filterSecretGroupCannotAccess(groups, authUser);
+
+    const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
+    const communities = await this._groupAdapter.getGroupsByIds(communityIds);
+
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(contentIds);
+
+    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
+      contentIds,
+      authUser
+    );
+
+    const dataBinding = {
+      authUser,
+      users: usersMap,
+      groups,
+      communities,
+      quizzesDoingMap,
+      quizzesHighestScoreMap,
+      reactionsCount,
+    };
+
     const result = [];
-    for (const contentEntity of contentEntities) {
-      if (contentEntity instanceof PostEntity) {
-        const postDto = await this.postBinding(contentEntity, { authUser });
-        result.push(postDto);
-      }
-      if (contentEntity instanceof ArticleEntity) {
-        const articleDto = await this.articleBinding(contentEntity, { authUser });
-        result.push(articleDto);
-      }
-      if (contentEntity instanceof SeriesEntity) {
-        const seriesDto = await this.seriesBinding(contentEntity, { authUser });
-        result.push(seriesDto);
-      }
-    }
+    const posts = await this._postsBinding(postEntities, dataBinding);
+    const articles = await this._articlesBinding(articleEntities, dataBinding);
+    const series = await this._seriesBinding(seriesEntities, dataBinding);
+
+    result.push(...posts, ...articles, ...series);
 
     return result;
   }
@@ -500,24 +786,41 @@ export class ContentBinding implements IContentBinding {
   }
 
   private async _getQuizBindingInContent(
-    contentId: string,
+    contentIds: string[],
     authUser: UserDto
-  ): Promise<{ quizHighestScore: QuizParticipantEntity; quizDoing: QuizParticipantEntity }> {
+  ): Promise<{
+    quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
+    quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+  }> {
     if (!authUser) {
-      return { quizHighestScore: null, quizDoing: null };
+      return { quizzesHighestScoreMap: null, quizzesDoingMap: null };
     }
 
-    const quizHighestScore =
-      await this._quizParticipantRepo.findQuizParticipantHighestScoreByContentIdAndUserId(
-        contentId,
+    const quizzesHighestScore =
+      await this._quizParticipantRepo.findQuizParticipantHighestScoreByContentIdsAndUserId(
+        contentIds,
         authUser.id
       );
-    const quizDoing = await this._quizParticipantRepo.findQuizParticipantDoingByContentIdAndUserId(
-      contentId,
-      authUser.id
-    );
+    const quizzesDoing =
+      await this._quizParticipantRepo.findQuizParticipantDoingByContentIdsAndUserId(
+        contentIds,
+        authUser.id
+      );
 
-    return { quizHighestScore, quizDoing };
+    const quizzesHighestScoreMap = ArrayHelper.convertArrayToObject(
+      quizzesHighestScore,
+      'contentId'
+    );
+    const quizzesDoingMap = ArrayHelper.convertArrayToObject(quizzesDoing, 'contentId');
+
+    return { quizzesHighestScoreMap, quizzesDoingMap };
+  }
+
+  private async _getReportReasonsCountBindingInContent(
+    contentId: string
+  ): Promise<ReportReasonCountDto[]> {
+    const reasonsCount = await this._reportDomain.countReportReasonsByTargetId(contentId);
+    return this._reportBinding.bindingReportReasonsCount(reasonsCount);
   }
 
   public async postAttributesBinding(
@@ -547,10 +850,13 @@ export class ContentBinding implements IContentBinding {
 
     const series = await this._getSeriesBindingInContent(postAttributes.seriesIds);
 
-    const { quizHighestScore, quizDoing } = await this._getQuizBindingInContent(
-      postAttributes.id,
+    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
+      [postAttributes.id],
       authUser
     );
+
+    const quizHighestScore = quizzesHighestScoreMap[postAttributes.id];
+    const quizDoing = quizzesDoingMap[postAttributes.id];
 
     const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
       postAttributes.id,
@@ -624,10 +930,13 @@ export class ContentBinding implements IContentBinding {
       articleAttributes.id,
     ]);
 
-    const { quizHighestScore, quizDoing } = await this._getQuizBindingInContent(
-      articleAttributes.id,
+    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
+      [articleAttributes.id],
       authUser
     );
+
+    const quizHighestScore = quizzesHighestScoreMap[articleAttributes.id];
+    const quizDoing = quizzesDoingMap[articleAttributes.id];
 
     return new ArticleDto({
       id: articleAttributes.id,
@@ -677,5 +986,9 @@ export class ContentBinding implements IContentBinding {
         : undefined,
       quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
     });
+  }
+
+  private _mapActorUser(user: UserDto): UserDto {
+    return instanceToInstance(user, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

@@ -10,11 +10,7 @@ import {
   CommentRecipientDto,
   ReplyCommentRecipientDto,
 } from '../../../v2-notification/application/dto';
-import {
-  CommentCreatedEvent,
-  CommentDeletedEvent,
-  CommentUpdatedEvent,
-} from '../event/comment.event';
+import { CommentCreatedEvent, CommentDeletedEvent, CommentUpdatedEvent } from '../event';
 import {
   CommentNotEmptyException,
   CommentNotFoundException,
@@ -428,5 +424,21 @@ export class CommentDomainService implements ICommentDomainService {
       this._logger.error(JSON.stringify(ex?.stack));
       return null;
     }
+  }
+
+  public async getMyCommentById(commentId: string, authUserId: string): Promise<CommentEntity> {
+    const comment = await this._commentRepository.findOne({
+      id: commentId,
+    });
+
+    if (!comment) {
+      throw new CommentNotFoundException();
+    }
+
+    if (comment.get('createdBy') !== authUserId) {
+      throw new CommentNotFoundException();
+    }
+
+    return comment;
   }
 }

@@ -1,8 +1,4 @@
-import {
-  CommentModel,
-  ReactionCommentDetailsModel,
-  ReportContentModel,
-} from '@libs/database/postgres/model';
+import { CommentModel, ReportContentModel } from '@libs/database/postgres/model';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
@@ -13,8 +9,6 @@ export class CleanUpDeletedCommentRefCommand implements CommandRunner {
   public constructor(
     @InjectModel(CommentModel)
     private _commentModel: typeof CommentModel,
-    @InjectModel(ReactionCommentDetailsModel)
-    private _reactionCommentDetailsModel: typeof ReactionCommentDetailsModel,
     @InjectModel(ReportContentModel)
     private _reportContentModel: typeof ReportContentModel
   ) {}

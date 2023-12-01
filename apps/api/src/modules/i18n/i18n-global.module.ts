@@ -16,7 +16,7 @@ import { LANGUAGE_HEADER } from '../../common/constants';
         return {
           fallbackLanguage: defaultLang || LANGUAGE.EN,
           loaderOptions: {
-            path: path.join(__dirname, '../../i18n/'),
+            path: path.join(__dirname, './i18n/'),
           },
         };
       },

@@ -19,6 +19,17 @@ export interface IQuizParticipantRepository {
     contentId: string,
     userId: string
   ): Promise<QuizParticipantEntity>;
+
+  findQuizParticipantHighestScoreByContentIdsAndUserId(
+    contentIds: string[],
+    userId: string
+  ): Promise<QuizParticipantEntity[]>;
+
+  findQuizParticipantDoingByContentIdsAndUserId(
+    contentIds: string[],
+    userId: string
+  ): Promise<QuizParticipantEntity[]>;
+
   getQuizParticipantHighestScoreGroupByUserId(
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]>;

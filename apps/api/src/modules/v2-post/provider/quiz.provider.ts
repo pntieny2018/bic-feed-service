@@ -36,7 +36,6 @@ import {
 import { QUIZ_VALIDATOR_TOKEN } from '../domain/validator/interface';
 import { QuizValidator } from '../domain/validator/quiz.validator';
 import { QuizParticipantRepository, QuizRepository } from '../driven-adapter/repository';
-import { QuizParticipantProcessor } from '../driving-apdater/queue-processor/quiz-participant.processor';
 
 export const quizProvider = [
   {
@@ -83,6 +82,4 @@ export const quizProvider = [
   QuizGeneratedEventHandler,
   QuizParticipantStartedEventHandler,
   QuizParticipantFinishedEventHandler,
-  /** Processor */
-  QuizParticipantProcessor,
 ];

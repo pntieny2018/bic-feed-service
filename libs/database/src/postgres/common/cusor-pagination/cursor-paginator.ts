@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { StringHelper } from '@libs/common/helpers';
 import { Attributes, FindOptions, Model, ModelStatic, Op, Order, WhereOptions } from 'sequelize';
 
 import { CursorPaginationResult, CursorParam, PaginatedArgs } from '../../common';
@@ -34,6 +35,7 @@ export class CursorPaginator<T extends Model> {
 
   public async paginate(query: FindOptions): Promise<CursorPaginationResult<T>> {
     const paginationQuery = this._getPaginationQuery();
+
     query.order = this._buildOrder();
 
     const paginationWhere: WhereOptions | undefined = paginationQuery
@@ -44,7 +46,9 @@ export class CursorPaginator<T extends Model> {
       ...query,
       where: paginationWhere,
       limit: this.limit + 1,
+      subQuery: false,
     };
+
     const rows = await this.modelClass.findAll(paginationQueryOptions);
 
     const hasMore = rows.length > this.limit;
@@ -96,15 +100,20 @@ export class CursorPaginator<T extends Model> {
   }
 
   private _encode(row: T): string {
-    const attributes = Object.keys(this.modelClass.getAttributes());
-    const encodeColumn = this.cursorColumns.filter((column) =>
-      attributes.includes(column as string)
-    );
-    const payload = encodeColumn.reduce((returnValue, column) => {
-      return {
-        ...returnValue,
-        [column]: row.getDataValue(column),
-      };
+    const payload = this.cursorColumns.reduce((returnValue, orderItem) => {
+      let field;
+      if (typeof orderItem === 'object' && orderItem) {
+        field = `${orderItem['as']}.${[orderItem['field']]}`;
+        if (Array.isArray(row[orderItem['as']])) {
+          return { ...returnValue, [field]: row[orderItem['as']][0][orderItem['field']] };
+        } else {
+          return { ...returnValue, [field]: row[orderItem['as']][orderItem['field']] };
+        }
+      } else {
+        field = orderItem;
+      }
+
+      return { ...returnValue, [field]: row[field] };
     }, {});
 
     return createCursor(payload);
@@ -116,7 +125,9 @@ export class CursorPaginator<T extends Model> {
       order = this._reverseOrder(order);
     }
 
-    return this.cursorColumns.map((column) => [column as string, order]);
+    return this.cursorColumns.map((column) => {
+      return typeof column === 'string' ? [column, order] : [column['as'], column['field'], order];
+    });
   }
 
   private _getOperator(): symbol {
@@ -133,35 +144,43 @@ export class CursorPaginator<T extends Model> {
 
   private _isValidCursor(cursors: CursorParam): boolean {
     const cursorKeys = Object.keys(cursors);
-    const attributes = Object.keys(this.modelClass.getAttributes());
-    return cursorKeys.every((column) => attributes.includes(column));
+    return cursorKeys.length === this.cursorColumns.length;
   }
 
   private _recursivelyGetPaginationQuery(
     cursors: CursorParam,
-    cursorColumns: (keyof Attributes<T>)[],
+    cursorColumns: (keyof Attributes<T> | object)[],
     operator: symbol
   ): WhereOptions {
-    const attributes = Object.keys(this.modelClass.getAttributes());
-    const encodeColumn = cursorColumns.filter((column) => attributes.includes(column as string));
+    let key: string;
+    let cursorColumnKey: string;
+    if (typeof cursorColumns[0] === 'object') {
+      key = `${cursorColumns[0]['as']}.${cursorColumns[0]['field']}`;
+      cursorColumnKey = `$${cursorColumns[0]['as']}.${StringHelper.camelToSnakeCase(
+        cursorColumns[0]['field']
+      )}$`;
+    } else {
+      key = cursorColumns[0] as string;
+      cursorColumnKey = key;
+    }
 
-    if (encodeColumn.length === 1) {
+    if (cursorColumns.length === 1) {
       return {
-        [encodeColumn[0]]: {
-          [operator]: cursors[encodeColumn[0] as string],
+        [cursorColumnKey]: {
+          [operator]: cursors[key],
         },
       };
     } else {
       return {
         [Op.or]: [
           {
-            [encodeColumn[0]]: {
-              [operator]: cursors[encodeColumn[0] as string],
+            [cursorColumnKey]: {
+              [operator]: cursors[key],
             },
           },
           {
-            [encodeColumn[0]]: cursors[encodeColumn[0] as string],
-            ...this._recursivelyGetPaginationQuery(cursors, encodeColumn.slice(1), operator),
+            [cursorColumnKey]: cursors[key],
+            ...this._recursivelyGetPaginationQuery(cursors, cursorColumns.slice(1), operator),
           },
         ],
       };

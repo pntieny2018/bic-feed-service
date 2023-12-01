@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '../../../../common/exceptions';
 import { EntityHelper } from '../../../../common/helpers';
 import {
   SeriesPublishedEvent,
@@ -21,8 +21,8 @@ import {
   ContentAccessDeniedException,
   ContentNoCRUDPermissionException,
   ContentNotFoundException,
+  InvalidResourceImageException,
 } from '../exception';
-import { InvalidResourceImageException } from '../exception/media.exception';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
@@ -169,7 +169,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setCover(images[0]);
     }
 
-    this._contentValidator.checkCanReadContent(seriesEntity, actor);
+    await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
     const oldGroupIds = seriesEntity.get('groupIds');
     await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
@@ -236,7 +236,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    this._contentValidator.checkCanReadContent(seriesEntity, actor);
+    await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
     await this._contentValidator.checkCanCRUDContent(
       actor,
@@ -497,12 +497,12 @@ export class SeriesDomainService implements ISeriesDomainService {
       );
 
       if (sameChangeSeriesOwnerIds.length) {
-        skipNotifyForAddSeriesIds = sameChangeSeriesOwnerIds.filter((ownerId) =>
-          addSeries.some((series) => series.get('createdBy') === ownerId)
-        );
-        skipNotifyForRemoveSeriesIds = sameChangeSeriesOwnerIds.filter((ownerId) =>
-          removeSeries.some((series) => series.get('createdBy') === ownerId)
-        );
+        skipNotifyForAddSeriesIds = addSeries
+          .filter((series) => sameChangeSeriesOwnerIds.includes(series.get('createdBy')))
+          .map((series) => series.getId());
+        skipNotifyForRemoveSeriesIds = removeSeries
+          .filter((series) => sameChangeSeriesOwnerIds.includes(series.get('createdBy')))
+          .map((series) => series.getId());
       }
     }
 

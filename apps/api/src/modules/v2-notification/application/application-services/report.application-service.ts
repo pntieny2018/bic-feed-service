@@ -1,11 +1,8 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 
-import {
-  KAFKA_TOPIC,
-  ReportHasBeenApproved,
-  ReportHasBeenCreated,
-} from '../../../../common/constants';
+import { ReportHasBeenApproved, ReportHasBeenCreated } from '../../../../common/constants';
 import { ReportDto } from '../../../v2-post/application/dto';
 import { TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
@@ -21,7 +18,7 @@ export class ReportNotificationApplicationService implements IReportNotification
   ) {}
 
   public async sendReportCreatedNotification(payload: ReportNotificationPayload): Promise<void> {
-    const { actor, report, adminInfos, content } = payload;
+    const { actor, report, content } = payload;
 
     const reportObject = this._createReportActivityObject(report, actor);
     const activity = this._createReportCreatedActivity(reportObject);
@@ -33,7 +30,7 @@ export class ReportNotificationApplicationService implements IReportNotification
         event: ReportHasBeenCreated,
         data: activity,
         meta: {
-          report: { adminInfos, content },
+          report: { content },
         },
       },
     });
@@ -42,7 +39,7 @@ export class ReportNotificationApplicationService implements IReportNotification
   }
 
   public async sendReportHiddenNotification(payload: ReportNotificationPayload): Promise<void> {
-    const { actor, report, adminInfos, content } = payload;
+    const { actor, report, content } = payload;
 
     const reportObject = this._createReportActivityObject(report, actor);
     const activity = this._createReportHiddenActivity(reportObject);
@@ -54,7 +51,7 @@ export class ReportNotificationApplicationService implements IReportNotification
         event: ReportHasBeenApproved,
         data: activity,
         meta: {
-          report: { adminInfos, content, creatorId: report.targetActorId },
+          report: { content, creatorId: report.targetActorId },
         },
       },
     });
@@ -63,10 +60,19 @@ export class ReportNotificationApplicationService implements IReportNotification
   }
 
   private _createReportActivityObject(report: ReportDto, actor: UserDto): ReportActivityObjectDto {
+    const reporterIds = report.reasonsCount
+      .map((reasonCount) => (reasonCount.reporters || []).map((reporter) => reporter.id))
+      .flat();
+    const reportDetails = reporterIds.map((reporterId) => ({
+      targetId: report.targetId,
+      groupId: report.groupId,
+      createdBy: reporterId,
+    }));
+
     return new ReportActivityObjectDto({
       id: report.id,
       actor,
-      report: { ...report, details: report.details || [] },
+      report: { ...report, details: reportDetails },
       createdAt: report.createdAt,
       updatedAt: report.updatedAt,
     });

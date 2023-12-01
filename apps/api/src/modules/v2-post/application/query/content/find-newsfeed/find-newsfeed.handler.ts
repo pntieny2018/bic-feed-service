@@ -5,9 +5,8 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
-import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
-import { FindNewsfeedDto } from '../../../dto/newsfeed.dto';
+import { ContentBinding, CONTENT_BINDING_TOKEN } from '../../../binding';
+import { FindNewsfeedDto } from '../../../dto';
 
 import { FindNewsfeedQuery } from './find-newsfeed.query';
 
@@ -33,7 +32,6 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       authUserId,
     });
     const result = await this._contentBinding.contentsBinding(contentEntities, payload.authUser);
-
     return {
       list: result,
       meta,

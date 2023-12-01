@@ -60,9 +60,6 @@ export interface IContentRepository {
   hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
 
-  getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]>;
-  findUserIdsReportedTargetId(targetId: string, contentTarget?: CONTENT_TARGET): Promise<string[]>;
-
   findPinnedContentIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
   pinContent(contentId: string, groupIds: string[]): Promise<void>;

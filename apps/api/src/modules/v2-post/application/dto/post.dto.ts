@@ -1,3 +1,4 @@
+import { ReactionsCount } from '@api/common/types';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
@@ -6,7 +7,8 @@ import { PickType } from '@nestjs/swagger';
 import { LinkPreviewDto } from './link-preview.dto';
 import { MediaDto } from './media.dto';
 import { QuizDto } from './quiz.dto';
-import { OwnerReactionDto, ReactionCount } from './reaction.dto';
+import { OwnerReactionDto } from './reaction.dto';
+import { ReportReasonCountDto } from './report.dto';
 import { SeriesInContentDto } from './series.dto';
 import { TagDto } from './tag.dto';
 import { UserMentionDto } from './user-mention.dto';
@@ -27,7 +29,7 @@ export class PostDto {
   public markedReadPost: boolean; // markedReadImportant
   public isSaved: boolean;
   public ownerReactions: OwnerReactionDto[];
-  public reactionsCount: ReactionCount[];
+  public reactionsCount: ReactionsCount;
   public publishedAt?: Date;
   public scheduledAt?: Date;
   public audience: { groups: GroupDto[] }; // groupIds
@@ -47,6 +49,7 @@ export class PostDto {
   public highlight?: string;
   public titleHighlight?: string;
   public summaryHighlight?: string;
+  public reportReasonsCount?: ReportReasonCountDto[];
 
   public constructor(data: Partial<PostDto>) {
     Object.assign(this, data);
@@ -92,5 +95,16 @@ export class PostInSeriesDto extends PickType(PostDto, [
 ]) {
   public constructor(data: Partial<PostInSeriesDto>) {
     super(data);
+  }
+}
+
+export class ItemInSeries {
+  public id: string;
+  public title: string;
+  public createdBy: string;
+  public type: CONTENT_TYPE;
+
+  public constructor(data: Partial<ItemInSeries>) {
+    Object.assign(this, data);
   }
 }

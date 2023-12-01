@@ -1,16 +1,15 @@
-import { CONTENT_TARGET, ORDER } from '@beincom/constants';
+import { CONTENT_TARGET } from '@beincom/constants';
 import {
   createCursor,
   CursorPaginationResult,
   CursorPaginator,
-  PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
 import {
   CommentAttributes,
   CommentModel,
   CommentReactionModel,
-  ReportContentDetailModel,
-  ReportContentModel,
+  ReportDetailModel,
+  ReportModel,
 } from '@libs/database/postgres/model';
 import { BaseRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
@@ -30,8 +29,8 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
   public constructor(
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    @InjectModel(ReportContentModel)
-    private readonly _reportContentModel: typeof ReportContentModel,
+    @InjectModel(ReportModel)
+    private readonly _reportModel: typeof ReportModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
   ) {
     super(CommentModel);
@@ -41,45 +40,50 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
     input: GetPaginationCommentProps
   ): Promise<CursorPaginationResult<CommentModel>> {
     const { authUserId, limit, order, contentId, parentId, before, after } = input;
-
-    const { rows, meta } = await this.cursorPaginate(
-      {
-        include: [
-          authUserId
-            ? {
-                model: CommentReactionModel,
-                as: 'ownerReactions',
-                on: {
-                  [Op.and]: {
-                    comment_id: { [Op.eq]: col(`CommentModel.id`) },
-                    created_by: authUserId,
-                  },
+    const findOptions: FindOptions = {
+      include: [
+        authUserId
+          ? {
+              model: CommentReactionModel,
+              as: 'ownerReactions',
+              on: {
+                [Op.and]: {
+                  comment_id: { [Op.eq]: col(`CommentModel.id`) },
+                  created_by: authUserId,
                 },
-              }
-            : {},
-        ].filter((item) => Object.keys(item).length !== 0),
-        where: {
-          postId: contentId,
-          parentId: parentId,
-          isHidden: false,
-          ...(authUserId && {
-            [Op.and]: [
-              Sequelize.literal(`NOT EXISTS (SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
-            WHERE rp.target_id = "CommentModel"."id" AND rp.target_type = '${
-              CONTENT_TARGET.COMMENT
-            }' AND rp.created_by = ${this._sequelizeConnection.escape(authUserId)})`),
-            ],
-          }),
-        },
+              },
+            }
+          : {},
+      ].filter((item) => Object.keys(item).length !== 0) as Includeable[],
+      where: {
+        postId: contentId,
+        parentId: parentId,
+        isHidden: false,
+        ...(authUserId && {
+          [Op.and]: [
+            Sequelize.literal(
+              `NOT EXISTS (
+                SELECT target_id FROM ${ReportModel.getTableName()} as rp
+                  WHERE rp.target_id = "CommentModel"."id" AND 
+                        rp.target_type = '${CONTENT_TARGET.COMMENT}' AND 
+                        rp.id IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${this._sequelizeConnection.escape(
+                authUserId
+              )})
+              )`
+            ),
+          ],
+        }),
       },
-      {
-        after,
-        before,
-        limit,
-        order,
-        sortColumns: ['createdAt'],
-      }
+    };
+
+    const paginator = new CursorPaginator(
+      this.model,
+      ['createdAt'],
+      { before, after, limit },
+      order
     );
+
+    const { rows, meta } = await paginator.paginate(findOptions);
     return {
       rows,
       meta,
@@ -157,17 +161,16 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
   ): Promise<CommentModel> {
     const findOptions: FindOptions = { where };
     if (options?.excludeReportedByUserId) {
+      const reporterId = this._sequelizeConnection.escape(options.excludeReportedByUserId);
       findOptions.where = {
         ...where,
         [Op.and]: [
           Sequelize.literal(
             `NOT EXISTS ( 
-              SELECT target_id FROM ${ReportContentDetailModel.getTableName()} as rp
-                WHERE rp.target_id = "CommentModel".id AND rp.target_type = '${
-                  CONTENT_TARGET.COMMENT
-                }' AND rp.created_by = ${this._sequelizeConnection.escape(
-              options.excludeReportedByUserId
-            )}
+              SELECT target_id FROM ${ReportModel.getTableName()} as rp
+                WHERE rp.target_id = "CommentModel".id AND 
+                      rp.target_type = '${CONTENT_TARGET.COMMENT}' AND 
+                      rp.id = IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${reporterId})
             )`
           ),
         ],
@@ -196,7 +199,7 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
         transaction: transaction,
       });
 
-      await this._reportContentModel.destroy({
+      await this._reportModel.destroy({
         where: { targetId: [id, ...childCommentIds] },
         transaction,
       });

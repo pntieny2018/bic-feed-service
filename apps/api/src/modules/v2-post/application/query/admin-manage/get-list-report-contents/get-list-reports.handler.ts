@@ -32,8 +32,8 @@ export class GetListReportsHandler implements IQueryHandler<GetListReportsQuery>
     await this._reportValidator.checkPermissionManageReport(authUser.id, groupId);
 
     const { rows, meta } = await this._reportRepo.getPagination({
-      where: { groupId, status: REPORT_STATUS.CREATED },
-      include: { details: true },
+      groupId,
+      status: REPORT_STATUS.CREATED,
       limit,
       before,
       after,

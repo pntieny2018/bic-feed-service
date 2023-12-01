@@ -2,14 +2,15 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
-  FOLLOW_REPOSITORY_TOKEN,
-  IFollowRepository,
-} from '../../../../domain/repositoty-interface';
-import { UserFollowGroupCommand } from './user-follow-group.command';
-import {
   INewsfeedDomainService,
   NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface/newsfeed.domain-service.interface';
+import {
+  FOLLOW_REPOSITORY_TOKEN,
+  IFollowRepository,
+} from '../../../../domain/repositoty-interface';
+
+import { UserFollowGroupCommand } from './user-follow-group.command';
 
 @CommandHandler(UserFollowGroupCommand)
 export class UserFollowGroupHandler implements ICommandHandler<UserFollowGroupCommand, void> {

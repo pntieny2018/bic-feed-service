@@ -97,7 +97,7 @@ export interface IContentDomainService {
   getContentIdsInTimeline(
     query: GetContentIdsInTimelineProps
   ): Promise<CursorPaginationResult<string>>;
-  getDraftIdsPagination(data: GetDraftsProps): Promise<CursorPaginationResult<string>>;
+  getDraftContentIdsPagination(data: GetDraftsProps): Promise<CursorPaginationResult<string>>;
   getDraftContentByIds(ids: string[]): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   getScheduledContent(
     input: GetScheduledContentProps
@@ -106,13 +106,6 @@ export interface IContentDomainService {
     contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getReportedContentIdsByUser(
-    reportUser: string,
-    options?: {
-      postTypes?: CONTENT_TYPE[];
-      groupIds?: string[];
-    }
-  ): Promise<string[]>;
   getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;

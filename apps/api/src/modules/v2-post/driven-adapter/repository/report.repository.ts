@@ -1,10 +1,7 @@
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
-import { ReportContentAttribute } from '@libs/database/postgres/model';
-import {
-  LibUserReportContentDetailRepository,
-  LibUserReportContentRepository,
-} from '@libs/database/postgres/repository';
+import { ReportAttribute } from '@libs/database/postgres/model';
+import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { uniq } from 'lodash';
@@ -13,16 +10,19 @@ import { Sequelize, WhereOptions } from 'sequelize';
 import { ReportEntity } from '../../domain/model/report';
 import {
   GetPaginationReportProps,
-  FindOneReportProps,
   IReportRepository,
+  FindOneReportProps,
+  FindAllReportsProps,
+  GetReportedTargetIdsByReporterIdProps,
+  GetReporterIdsByTargetIdProps,
 } from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
 @Injectable()
 export class ReportRepository implements IReportRepository {
   public constructor(
-    private readonly _libReportRepo: LibUserReportContentRepository,
-    private readonly _libReportDetailRepo: LibUserReportContentDetailRepository,
+    private readonly _libReportRepo: LibReportRepository,
+    private readonly _libReportDetailRepo: LibReportDetailRepository,
     private readonly _reportMapper: ReportMapper,
 
     @InjectConnection()
@@ -30,12 +30,14 @@ export class ReportRepository implements IReportRepository {
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
-    const { id, targetId, targetType, targetActorId, status } = input.where;
-    const { details } = input.include || {};
+    const { id, groupId, targetId, targetType, targetActorId, status } = input;
 
-    const condition: WhereOptions<ReportContentAttribute> = {};
+    const condition: WhereOptions<ReportAttribute> = {};
     if (id) {
       condition.id = id;
+    }
+    if (groupId) {
+      condition.groupId = groupId;
     }
     if (targetId) {
       condition.targetId = targetId;
@@ -44,74 +46,32 @@ export class ReportRepository implements IReportRepository {
       condition.targetType = targetType;
     }
     if (targetActorId) {
-      condition.authorId = targetActorId;
+      condition.targetActorId = targetActorId;
     }
     if (status) {
       condition.status = status;
     }
 
-    const include = [];
-    if (details) {
-      include.push({
-        model: this._libReportDetailRepo.getModel(),
-        required: false,
-        as: 'details',
-      });
-    }
-
-    const report = await this._libReportRepo.first({
-      where: condition,
-      ...(include.length && { include }),
-    });
+    const report = await this._libReportRepo.first({ where: condition });
     return this._reportMapper.toDomain(report);
   }
 
-  public async getPagination(
-    input: GetPaginationReportProps
-  ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { limit, before, after, order = ORDER.DESC, sortColumns = ['createdAt'] } = input;
-    const { targetType, targetActorId, status, groupId } = input.where;
-    const { details } = input.include || {};
+  public async findAll(input: FindAllReportsProps): Promise<ReportEntity[]> {
+    const { groupIds, targetIds, status } = input;
 
-    const condition: WhereOptions<ReportContentAttribute> = {};
-    if (targetType) {
-      condition.targetType = targetType;
+    const condition: WhereOptions<ReportAttribute> = {};
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
     }
-    if (targetActorId) {
-      condition.authorId = targetActorId;
+    if (targetIds?.length) {
+      condition.targetId = targetIds;
     }
     if (status) {
       condition.status = status;
     }
-    if (groupId) {
-      // TODO: optimize this query
-      const reportIds = await this._libReportDetailRepo.findMany({
-        where: { groupId: groupId },
-        select: ['reportId'],
-      });
-      condition.id = uniq(reportIds.map((item) => item.reportId));
-    }
 
-    const include = [];
-    if (details) {
-      include.push({
-        model: this._libReportDetailRepo.getModel(),
-        required: true,
-        as: 'details',
-      });
-    }
-
-    const { rows, meta } = await this._libReportRepo.cursorPaginate(
-      {
-        where: condition,
-        ...(include.length && { include }),
-      },
-      { limit, before, after, order, sortColumns }
-    );
-    return {
-      rows: rows.map((report) => this._reportMapper.toDomain(report)),
-      meta,
-    };
+    const reports = await this._libReportRepo.findMany({ where: condition });
+    return reports.map((report) => this._reportMapper.toDomain(report));
   }
 
   public async create(reportEntity: ReportEntity): Promise<void> {
@@ -119,12 +79,11 @@ export class ReportRepository implements IReportRepository {
 
     try {
       const report = this._reportMapper.toPersistence(reportEntity);
-      const { details, ...reportData } = report;
+      await this._libReportRepo.create(report, { transaction });
 
-      await this._libReportRepo.create(reportData, { transaction });
-
-      if (details?.length) {
-        await this._libReportDetailRepo.bulkCreate(details, {
+      const { attachDetails } = reportEntity.getState();
+      if (attachDetails?.length) {
+        await this._libReportDetailRepo.bulkCreate(attachDetails, {
           ignoreDuplicates: true,
           transaction,
         });
@@ -142,10 +101,10 @@ export class ReportRepository implements IReportRepository {
 
     try {
       const report = this._reportMapper.toPersistence(reportEntity);
-      const { id, status } = report;
+      const { id, status, reasonsCount, processedBy, processedAt } = report;
 
       await this._libReportRepo.update(
-        { status },
+        { status, reasonsCount, processedBy, processedAt },
         {
           where: { id },
           transaction,
@@ -165,5 +124,94 @@ export class ReportRepository implements IReportRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async getPagination(
+    input: GetPaginationReportProps
+  ): Promise<CursorPaginationResult<ReportEntity>> {
+    const { limit, before, after, order = ORDER.DESC, sortColumns = ['createdAt'] } = input;
+    const { targetTypes, targetActorId, status, groupId } = input;
+
+    const condition: WhereOptions<ReportAttribute> = {};
+    if (targetTypes?.length) {
+      condition.targetType = targetTypes;
+    }
+    if (targetActorId) {
+      condition.targetActorId = targetActorId;
+    }
+    if (status) {
+      condition.status = status;
+    }
+    if (groupId) {
+      condition.groupId = groupId;
+    }
+
+    const { rows, meta } = await this._libReportRepo.cursorPaginate(
+      { where: condition },
+      { limit, before, after, order, sortColumns }
+    );
+    return {
+      rows: rows.map((report) => this._reportMapper.toDomain(report)),
+      meta,
+    };
+  }
+
+  public async getReportedTargetIdsByReporterId(
+    input: GetReportedTargetIdsByReporterIdProps
+  ): Promise<string[]> {
+    const { reporterId, groupIds, targetTypes } = input;
+
+    if (!reporterId) {
+      return [];
+    }
+
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId },
+      select: ['id'],
+    });
+
+    if (!reportDetails?.length) {
+      return [];
+    }
+
+    const reportIds = reportDetails.map((reportDetail) => reportDetail.id);
+    const condition: WhereOptions<ReportAttribute> = { id: reportIds };
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
+    }
+    if (targetTypes?.length) {
+      condition.targetType = targetTypes;
+    }
+
+    const reports = await this._libReportRepo.findMany({ where: condition, select: ['targetId'] });
+
+    return uniq(reports.map((report) => report.targetId));
+  }
+
+  public async getReporterIdsByTargetId(input: GetReporterIdsByTargetIdProps): Promise<string[]> {
+    const { targetId, groupIds } = input;
+
+    if (!targetId) {
+      return [];
+    }
+
+    const condition: WhereOptions<ReportAttribute> = { targetId };
+    if (groupIds?.length) {
+      condition.groupId = groupIds;
+    }
+
+    const reports = await this._libReportRepo.findMany({ where: condition, select: ['id'] });
+
+    if (!reports?.length) {
+      return [];
+    }
+
+    const reportIds = reports.map((report) => report.id);
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { id: reportIds },
+      select: ['reporterId'],
+    });
+
+    return uniq(reportDetails.map((reportDetail) => reportDetail.reporterId));
   }
 }

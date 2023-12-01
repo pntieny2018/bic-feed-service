@@ -16,6 +16,8 @@ import { CommentEntity } from '../../../../domain/model/comment';
 import {
   CONTENT_REPOSITORY_TOKEN,
   IContentRepository,
+  IReportRepository,
+  REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
 import {
   INotificationAdapter,
@@ -32,26 +34,29 @@ import { ArticleDto, CommentExtendedDto, PostDto } from '../../../dto';
 @EventsHandlerAndLog(CommentCreatedEvent)
 export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCreatedEvent> {
   public constructor(
-    @Inject(NOTIFICATION_ADAPTER)
-    private readonly _notiAdapter: INotificationAdapter,
     @Inject(COMMENT_BINDING_TOKEN)
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
+
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _commentDomainService: ICommentDomainService,
+    private readonly _commentDomain: ICommentDomainService,
+
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository
+    private readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    private readonly _reportRepo: IReportRepository,
+
+    @Inject(NOTIFICATION_ADAPTER)
+    private readonly _notiAdapter: INotificationAdapter
   ) {}
 
   public async handle(event: CommentCreatedEvent): Promise<void> {
     const { comment, authUser } = event.payload;
 
-    const commentDto = await this._commentBinding.commentBinding(comment, {
-      actor: authUser,
-    });
+    const commentDto = await this._commentBinding.commentBinding(comment, { authUser });
 
-    const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
+    const content = await this._contentRepo.findContentByIdInActiveGroup(commentDto.postId, {
       mustIncludeGroup: true,
     });
 
@@ -75,7 +80,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
     const prevComments: CommentEntity[] = [];
 
-    const recipient = await this._commentDomainService.getRelevantUserIdsInComment({
+    const recipient = await this._commentDomain.getRelevantUserIdsInComment({
       commentEntity: comment,
       userId: authUser.id,
       contentDto,
@@ -85,10 +90,10 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
     });
 
     if (comment.isChildComment()) {
-      const parentComment = await this._commentDomainService.getVisibleComment(
-        comment.get('parentId')
-      );
-      const parentCommentDto = await this._commentBinding.commentBinding(parentComment);
+      const parentComment = await this._commentDomain.getVisibleComment(comment.get('parentId'));
+      const parentCommentDto = await this._commentBinding.commentBinding(parentComment, {
+        authUser,
+      });
 
       recipientObj.replyCommentRecipient = recipient as ReplyCommentRecipientDto;
       const { mentionedUserIdsInComment, mentionedUserIdsInParentComment } =
@@ -125,7 +130,9 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
 
       let prevCommentActivities: CommentExtendedDto[] = [];
       if (prevComments.length) {
-        prevCommentActivities = await this._commentBinding.commentsBinding(prevComments);
+        prevCommentActivities = await this._commentBinding.commentsBinding(prevComments, {
+          authUser,
+        });
       }
 
       return this._notiAdapter.sendCommentCreatedNotification({
@@ -141,7 +148,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       return [];
     }
 
-    const userIdsReported = await this._contentRepository.findUserIdsReportedTargetId(targetId);
+    const userIdsReported = await this._reportRepo.getReporterIdsByTargetId({ targetId });
 
     return userIds.filter((userId) => !userIdsReported.includes(userId));
   }

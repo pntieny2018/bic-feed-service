@@ -1,6 +1,7 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { IEventHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { SearchService } from '../../../../search/search.service';
 import { ReportHiddenEvent } from '../../../domain/event';
@@ -13,15 +14,19 @@ export class SearchReportHiddenEventHandler implements IEventHandler<ReportHidde
   ) {}
 
   public async handle(event: ReportHiddenEvent): Promise<void> {
-    const { report } = event.payload;
+    const { reportEntities } = event.payload;
 
-    const targetType = report.get('targetType');
-    const targetId = report.get('targetId');
+    const contentReportEntities = reportEntities.filter(
+      (reportEntity) => reportEntity.get('targetType') !== CONTENT_TARGET.COMMENT
+    );
 
-    if (targetType === CONTENT_TARGET.COMMENT) {
+    if (!contentReportEntities.length) {
       return;
     }
 
-    await this._postSearchService.deletePostsToSearch([{ id: targetId }]);
+    const contentIds = uniq(
+      contentReportEntities.map((reportEntity) => reportEntity.get('targetId'))
+    );
+    await this._postSearchService.deletePostsToSearch(contentIds.map((id) => ({ id })));
   }
 }
