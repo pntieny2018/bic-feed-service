@@ -24,6 +24,7 @@ export type GetPaginationReportProps = {
   targetActorId?: string;
   status?: REPORT_STATUS;
   groupId?: string;
+  isDistinctTarget?: boolean;
 } & CursorPaginationProps;
 
 export type GetReportedTargetIdsByReporterIdProps = {
