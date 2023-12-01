@@ -3,8 +3,6 @@ import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/commo
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { PostType } from '../../../../database/models/post.model';
-
 import {
   ArticleInSeriesDto,
   ImageDto,
@@ -61,7 +59,7 @@ export class FindItemsBySeriesDto {
     items: {
       id: string;
       title: string;
-      type: PostType;
+      type: CONTENT_TYPE;
     }[];
   }[];
   public constructor(data: FindItemsBySeriesDto) {

@@ -2,9 +2,7 @@ import { UserDto } from '@libs/service/user';
 import { Controller, Get, Query, Version } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser } from '../../../../common/decorators';
 import { FindNewsfeedQuery } from '../../application/query/content';
@@ -24,7 +22,7 @@ export class NewsFeedController {
     @Query() dto: NewsfeedRequestDto
   ): Promise<any> {
     const { type, isSaved, isMine, isImportant, limit, before, after } = dto;
-    const data = await this._queryBus.execute(
+    return this._queryBus.execute(
       new FindNewsfeedQuery({
         type,
         isSaved,
@@ -36,6 +34,5 @@ export class NewsFeedController {
         authUser,
       })
     );
-    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

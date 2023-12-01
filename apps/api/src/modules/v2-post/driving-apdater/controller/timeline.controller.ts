@@ -2,9 +2,7 @@ import { UserDto } from '@libs/service/user';
 import { Controller, Get, Param, ParseUUIDPipe, Query, Version } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { instanceToInstance } from 'class-transformer';
 
-import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
@@ -30,7 +28,7 @@ export class TimelineController {
     @Query() getTimelineDto: GetTimelineRequestDto
   ): Promise<any> {
     const { type, isSaved, isMine, isImportant, limit, before, after } = getTimelineDto;
-    const data = await this._queryBus.execute(
+    return this._queryBus.execute(
       new FindTimelineGroupQuery({
         type,
         isSaved,
@@ -43,6 +41,5 @@ export class TimelineController {
         authUser,
       })
     );
-    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }

@@ -2,7 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ContentBinding } from '../../../../application/binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../../application/binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN } from '../../../../application/binding/binding-post/content.binding.interface';
 import { FindArticleHandler } from '../../../../application/query/article';
 import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
