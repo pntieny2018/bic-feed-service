@@ -1,4 +1,5 @@
 import { Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { DataTypes } from 'sequelize';
 
 export enum GiphyType {
   GIF = 'gif',
@@ -20,6 +21,8 @@ export class GiphyModel extends Model implements IGiphy {
   public id: string;
 
   @PrimaryKey
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: GiphyType;
 }

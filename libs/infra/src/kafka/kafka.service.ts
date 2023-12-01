@@ -23,7 +23,7 @@ export class KafkaService implements IKafkaService {
   }
 
   public emit(topic: string, payload: IKafkaProducerMessage): void {
-    const topicName = `${topic}`;
+    const topicName = `${process.env.KAFKA_ENV}.${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
@@ -54,7 +54,7 @@ export class KafkaService implements IKafkaService {
   }
 
   public sendMessages(topic: string, messages: IKafkaProducerMessage[]): void {
-    const topicName = `${topic}`;
+    const topicName = `${process.env.KAFKA_ENV}.${topic}`;
     const headers = {
       [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };

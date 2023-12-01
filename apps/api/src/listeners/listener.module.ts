@@ -4,7 +4,6 @@ import { ArticleModule } from '../modules/article';
 import { CommentModule } from '../modules/comment';
 import { FeedModule } from '../modules/feed';
 import { FeedPublisherModule } from '../modules/feed-publisher';
-import { FilterUserModule } from '../modules/filter-user';
 import { FollowModule } from '../modules/follow';
 import { MediaModule } from '../modules/media';
 import { PostModule } from '../modules/post';
@@ -13,10 +12,10 @@ import { SeriesModule } from '../modules/series';
 import { TagModule } from '../modules/tag';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { WebSocketModule } from '../modules/ws/ws.module';
 import { NotificationModule } from '../notification';
 
 import { ArticleListener } from './article';
-import { CommentListener } from './comment';
 import { ReportContentListener } from './report';
 import {
   SeriesAddedItemsListener,
@@ -28,11 +27,11 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
 @Module({
   imports: [
     FollowModule,
-    FilterUserModule,
     GroupModuleV2,
     PostModule,
     CommentModule,
     NotificationModule,
+    WebSocketModule,
     FeedPublisherModule,
     MediaModule,
     UserModuleV2,
@@ -43,7 +42,6 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
     TagModule,
   ],
   providers: [
-    CommentListener,
     ArticleListener,
     SeriesAddedItemsListener,
     SeriesRemovedItemsListener,

@@ -174,9 +174,10 @@ export class ContentValidator implements IContentValidator {
     if (post.isOpen() || post.isClosed()) {
       return;
     }
-    const groupAudienceIds = post.get('groupIds') ?? [];
 
+    const groupAudienceIds = post.get('groupIds') ?? [];
     const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
+
     if (isAdmin && !post.isDraft()) {
       return;
     }
@@ -188,6 +189,37 @@ export class ContentValidator implements IContentValidator {
         throw new ContentRequireGroupException(null, { requireGroups: groups });
       }
       throw new ContentNoCRUDPermissionException();
+    }
+  }
+
+  public async checkCanReadNotPublishedContent(
+    contentEntity: ContentEntity,
+    userId: string
+  ): Promise<void> {
+    if (contentEntity.isPublished()) {
+      return;
+    }
+
+    const isOwner = contentEntity.isOwner(userId);
+    if (isOwner) {
+      return;
+    }
+
+    const isDraftContent = contentEntity.isDraft();
+    const isHiddenContent = contentEntity.isHidden();
+    if (isDraftContent || isHiddenContent) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const isScheduleContent = contentEntity.isScheduleFailed() || contentEntity.isWaitingSchedule();
+    if (isScheduleContent) {
+      const isAdmin = await this._groupAdapter.isAdminInAnyGroups(
+        userId,
+        contentEntity.getGroupIds()
+      );
+      if (!isAdmin) {
+        throw new ContentAccessDeniedException();
+      }
     }
   }
 

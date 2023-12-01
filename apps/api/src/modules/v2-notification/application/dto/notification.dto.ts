@@ -41,9 +41,6 @@ export class NotificationPayloadDto<T> {
 
 class NotificationMetaPayloadDto<T> {
   public report?: {
-    adminInfos?: {
-      [rootGroupId: string]: string[];
-    };
     creatorId?: string;
     content?: string;
   };

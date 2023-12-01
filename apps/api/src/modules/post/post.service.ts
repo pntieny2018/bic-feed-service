@@ -1,9 +1,12 @@
 import { ORDER } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { ReportAttribute } from '@libs/database/postgres/model';
+import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { isBoolean } from 'lodash';
+import { isBoolean, uniq } from 'lodash';
 import {
   FindAttributeOptions,
   FindOptions,
@@ -18,7 +21,6 @@ import { NIL } from 'uuid';
 
 import { EntityIdDto, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -35,15 +37,12 @@ import {
   PostStatus,
   PostType,
 } from '../../database/models/post.model';
-import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { ReportTo, TargetType } from '../report-content/contstants';
@@ -101,12 +100,11 @@ export class PostService {
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
-    @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
     protected readonly tagService: TagService,
     @InjectModel(UserSeenPostModel)
     protected userSeenPostModel: typeof UserSeenPostModel,
-    protected mediaService: MediaService
+    private readonly _libReportRepo: LibReportRepository,
+    private readonly _libReportDetailRepo: LibReportDetailRepository
   ) {}
 
   /**
@@ -997,74 +995,6 @@ export class PostService {
     });
   }
 
-  public async getPostIdsInNewsFeed(
-    userId: string,
-    filters: {
-      offset: number;
-      limit: number;
-      isImportant?: boolean;
-      type?: PostType;
-      createdBy?: string;
-    }
-  ): Promise<string[]> {
-    const { offset, limit, isImportant, type, createdBy } = filters;
-    const conditions = {
-      status: PostStatus.PUBLISHED,
-      isHidden: false,
-      [Op.and]: [
-        this.postModel.notIncludePostsReported(userId, {
-          mainTableAlias: '"PostModel"',
-          type: [TargetType.ARTICLE, TargetType.POST],
-        }),
-      ],
-    };
-    const order = [];
-    if (isImportant) {
-      conditions['isImportant'] = true;
-      order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
-    }
-    if (createdBy) {
-      conditions['createdBy'] = createdBy;
-    }
-    order.push(['createdAt', 'desc']);
-
-    if (type) {
-      conditions['type'] = type;
-    }
-
-    const posts = await this.postModel.findAll({
-      attributes: ['id', PostModel.loadMarkReadPost(userId)],
-      include: [
-        {
-          model: UserNewsFeedModel,
-          as: 'userNewsfeeds',
-          required: true,
-          attributes: [],
-          where: {
-            userId,
-          },
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: true,
-          attributes: [],
-          where: {
-            isArchived: false,
-          },
-        },
-      ],
-      subQuery: false,
-      where: conditions,
-      order,
-      group: '"PostModel"."id"',
-      offset,
-      limit,
-    });
-
-    return posts.map((post) => post.id);
-  }
-
   public async getPostsByIds(
     ids: string[],
     userId: string | null,
@@ -1203,71 +1133,6 @@ export class PostService {
     return posts.map((post) => post.id);
   }
 
-  public async getPostIdsInGroupIds(
-    groupIds: string[],
-    filters: {
-      offset: number;
-      limit: number;
-      authUserId: string;
-      isImportant?: boolean;
-      type?: PostType;
-    }
-  ): Promise<string[]> {
-    const { offset, limit, authUserId, isImportant, type } = filters;
-    const conditions = {
-      status: PostStatus.PUBLISHED,
-      isHidden: false,
-    };
-
-    if (authUserId) {
-      conditions[Op.and] = [
-        this.postModel.notIncludePostsReported(authUserId, {
-          mainTableAlias: '"PostModel"',
-          type: [TargetType.ARTICLE, TargetType.POST],
-        }),
-      ];
-    }
-    const order = [];
-    const attributes: any = ['id'];
-    if (isImportant) {
-      conditions['isImportant'] = true;
-      order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
-      attributes.push(PostModel.loadMarkReadPost(authUserId));
-    } else {
-      order.push([this.sequelizeConnection.literal('"isImportant"'), 'desc']);
-      attributes.push(PostModel.loadImportant(authUserId));
-    }
-    order.push(['createdAt', 'desc']);
-
-    if (type) {
-      conditions['type'] = type;
-    }
-
-    const posts = await this.postModel.findAll({
-      attributes,
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: true,
-          attributes: [],
-          where: {
-            groupId: groupIds,
-            isArchived: false,
-          },
-        },
-      ],
-      subQuery: false,
-      where: conditions,
-      order,
-      group: 'id',
-      offset,
-      limit,
-    });
-
-    return posts.map((post) => post.id);
-  }
-
   public async getTotalDraft(user: UserDto): Promise<number> {
     return this.postModel.count({
       where: {
@@ -1358,24 +1223,28 @@ export class PostService {
     if (!userId) {
       return [];
     }
-    const { groupIds } = options ?? {};
-    const condition = {
-      [Op.and]: [
-        {
-          createdBy: userId,
-          targetType: targetTypes,
-        },
-      ],
-    };
 
-    if (groupIds) {
-      //condition[''] improve later
-    }
-    const rows = await this.reportContentDetailModel.findAll({
-      where: condition,
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId: userId },
+      select: ['id'],
     });
 
-    return rows.map((row) => row.targetId);
+    if (!reportDetails?.length) {
+      return [];
+    }
+
+    const reportIds = reportDetails.map((reportDetail) => reportDetail.id);
+    const condition: WhereOptions<ReportAttribute> = { id: reportIds };
+    if (options?.groupIds?.length) {
+      condition.groupId = options.groupIds;
+    }
+    if (targetTypes?.length) {
+      condition.targetType = targetTypes;
+    }
+
+    const reports = await this._libReportRepo.findMany({ where: condition, select: ['targetId'] });
+
+    return uniq(reports.map((report) => report.targetId));
   }
 
   public async getPostsByFilter(

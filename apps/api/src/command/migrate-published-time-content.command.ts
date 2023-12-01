@@ -1,9 +1,9 @@
 import { QueryTypes } from 'sequelize';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { getDatabaseConfig } from '../config/database';
 import { Command, CommandRunner } from 'nest-commander';
 import { PostModel, PostStatus } from '../database/models/post.model';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Command({
   name: 'migrate:published-time-content',

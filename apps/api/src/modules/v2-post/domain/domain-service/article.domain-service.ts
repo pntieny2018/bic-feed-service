@@ -79,6 +79,9 @@ export class ArticleDomainService implements IArticleDomainService {
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
 
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter,
+
     private readonly event: EventBus
   ) {}
 
@@ -107,15 +110,12 @@ export class ArticleDomainService implements IArticleDomainService {
       },
     });
 
-    if (
-      !articleEntity ||
-      !(articleEntity instanceof ArticleEntity) ||
-      (articleEntity.isDraft() && !articleEntity.isOwner(authUser.id)) ||
-      (articleEntity.isHidden() && !articleEntity.isOwner(authUser.id)) ||
-      articleEntity.isInArchivedGroups()
-    ) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle || articleEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
+
+    await this._contentValidator.checkCanReadNotPublishedContent(articleEntity, authUser.id);
 
     if (!authUser && !articleEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -155,7 +155,8 @@ export class ArticleDomainService implements IArticleDomainService {
       shouldIncludeSeries: true,
     });
 
-    if (!articleEntity || !(articleEntity instanceof ArticleEntity)) {
+    const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
+    if (!isArticle) {
       throw new ContentNotFoundException();
     }
     if (!articleEntity.isOwner(actor.id)) {

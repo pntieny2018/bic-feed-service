@@ -116,12 +116,8 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
-import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
 
 export const postProvider = [
-  /** Processor */
-  ArticleProcessor,
-
   /** Application Cron Handler */
   ContentCron,
 

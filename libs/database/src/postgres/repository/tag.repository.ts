@@ -1,8 +1,8 @@
-import { getDatabaseConfig } from '@libs/database/postgres/common';
 import { PostTagModel, PostModel, TagModel } from '@libs/database/postgres/model';
 import { BaseRepository } from '@libs/database/postgres/repository';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export class LibTagRepository extends BaseRepository<TagModel> {
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {

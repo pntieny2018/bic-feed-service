@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/sequelize';
 import { QueryTypes } from 'sequelize';
 import { CommentModel } from '../database/models/comment.model';
 import { PostModel } from '../database/models/post.model';
-import { getDatabaseConfig } from '../config/database';
 import { NIL } from 'uuid';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 @Command({
   name: 'fix:comment-replies-count',
   description: 'Migration data reply count and related posts',

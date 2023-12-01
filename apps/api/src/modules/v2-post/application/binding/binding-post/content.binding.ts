@@ -8,6 +8,10 @@ import { instanceToInstance } from 'class-transformer';
 import { flatten, groupBy, uniq } from 'lodash';
 
 import {
+  IReportDomainService,
+  REPORT_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
+import {
   PostEntity,
   SeriesEntity,
   ArticleEntity,
@@ -22,8 +26,10 @@ import {
   IContentRepository,
   IPostReactionRepository,
   IQuizParticipantRepository,
+  IReportRepository,
   POST_REACTION_REPOSITORY_TOKEN,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
 import {
   IUserAdapter,
@@ -41,9 +47,11 @@ import {
   TagDto,
   PostInSeriesDto,
   ArticleInSeriesDto,
+  ReportReasonCountDto,
 } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
+import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { IContentBinding } from './content.binding.interface';
 
@@ -54,6 +62,11 @@ export class ContentBinding implements IContentBinding {
     private readonly _quizBinding: IQuizBinding,
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding,
+
+    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
+    private readonly _reportDomain: IReportDomainService,
 
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
@@ -61,6 +74,8 @@ export class ContentBinding implements IContentBinding {
     private readonly _quizParticipantRepo: IQuizParticipantRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepo: IPostReactionRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    private readonly _reportRepo: IReportRepository,
 
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
@@ -105,6 +120,11 @@ export class ContentBinding implements IContentBinding {
       postEntity.getId(),
     ]);
 
+    let reportReasonsCount;
+    if (postEntity.isHidden() && postEntity.isOwner(authUser.id)) {
+      reportReasonsCount = await this._getReportReasonsCountBindingInContent(postEntity.getId());
+    }
+
     return new PostDto({
       id: postEntity.getId(),
       isReported: postEntity.get('isReported'),
@@ -142,6 +162,7 @@ export class ContentBinding implements IContentBinding {
         ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
         : undefined,
       quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      reportReasonsCount,
     });
   }
 
@@ -261,6 +282,11 @@ export class ContentBinding implements IContentBinding {
 
     const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
     const quizDoing = quizzesDoingMap[articleEntity.getId()];
+      
+    let reportReasonsCount;
+    if (articleEntity.isHidden() && articleEntity.isOwner(authUser.id)) {
+      reportReasonsCount = await this._getReportReasonsCountBindingInContent(articleEntity.getId());
+    }
 
     return new ArticleDto({
       id: articleEntity.get('id'),
@@ -306,6 +332,7 @@ export class ContentBinding implements IContentBinding {
         ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
         : undefined,
       quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      reportReasonsCount,
     });
   }
 
@@ -758,6 +785,13 @@ export class ContentBinding implements IContentBinding {
     const quizzesDoingMap = ArrayHelper.convertArrayToObject(quizzesDoing, 'contentId');
 
     return { quizzesHighestScoreMap, quizzesDoingMap };
+  }
+
+  private async _getReportReasonsCountBindingInContent(
+    contentId: string
+  ): Promise<ReportReasonCountDto[]> {
+    const reasonsCount = await this._reportDomain.countReportReasonsByTargetId(contentId);
+    return this._reportBinding.bindingReportReasonsCount(reasonsCount);
   }
 
   public async postAttributesBinding(

@@ -106,13 +106,6 @@ export interface IContentDomainService {
     contentId: string,
     userId: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getReportedContentIdsByUser(
-    reportUser: string,
-    options?: {
-      postTypes?: CONTENT_TYPE[];
-      groupIds?: string[];
-    }
-  ): Promise<string[]>;
   getScheduleContentIds(props: GetContentIdsScheduleProps): Promise<CursorPaginationResult<string>>;
   getSeriesInContent(contentId: string, authUserId: string): Promise<SeriesEntity[]>;
   updateSetting(props: UpdateSettingsProps): Promise<void>;

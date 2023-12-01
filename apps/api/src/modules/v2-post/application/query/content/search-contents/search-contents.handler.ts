@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { createCursor, parseCursor } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
@@ -8,6 +9,10 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
+import {
+  IReportRepository,
+  REPORT_REPOSITORY_TOKEN,
+} from '../../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import {
@@ -25,13 +30,18 @@ export class SearchContentsHandler
   implements IQueryHandler<SearchContentsQuery, SearchContentsDto>
 {
   public constructor(
-    private readonly _postSearchService: SearchService,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
+
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomain: IContentDomainService,
+
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    private readonly _reportRepo: IReportRepository,
+
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
-    @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding
+    private readonly _postSearchService: SearchService
   ) {}
 
   public async execute(query: SearchContentsQuery): Promise<SearchContentsDto> {
@@ -61,9 +71,10 @@ export class SearchContentsHandler
       }
     }
 
-    const excludeByIds = await this._contentDomainService.getReportedContentIdsByUser(authUser.id, {
-      postTypes: contentTypes,
+    const excludeByIds = await this._reportRepo.getReportedTargetIdsByReporterId({
+      reporterId: authUser.id,
       groupIds,
+      targetTypes: contentTypes as unknown as CONTENT_TARGET[],
     });
 
     const response = await this._postSearchService.searchContents<IPostElasticsearch>({
@@ -91,7 +102,7 @@ export class SearchContentsHandler
       });
     }
 
-    const contentEntities = await this._contentDomainService.getContentByIds({
+    const contentEntities = await this._contentDomain.getContentByIds({
       ids: source.map((item) => item.id),
       authUserId: authUser.id,
     });

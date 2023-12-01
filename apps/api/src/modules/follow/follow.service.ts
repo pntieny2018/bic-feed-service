@@ -4,10 +4,10 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { getDatabaseConfig } from '../../config/database';
 import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { FollowsDto } from './dto/response/follows.dto';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class FollowService {

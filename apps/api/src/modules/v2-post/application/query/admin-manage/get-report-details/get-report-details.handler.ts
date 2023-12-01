@@ -1,5 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
-import { UserDto } from '@libs/service/user';
+import { REPORT_STATUS } from '@libs/database/postgres/model';
+import { BaseUserDto, UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -23,6 +24,8 @@ import {
   CONTENT_BINDING_TOKEN,
   ICommentBinding,
   IContentBinding,
+  IReportBinding,
+  REPORT_BINDING_TOKEN,
 } from '../../../binding';
 import { ArticleDto, CommentBaseDto, PostDto, ReportTargetDto } from '../../../dto';
 
@@ -35,10 +38,14 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     private readonly _commentBinding: ICommentBinding,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding,
+
     @Inject(REPORT_VALIDATOR_TOKEN)
     private readonly _reportValidator: IReportValidator,
     @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
     private readonly _reportDomain: IReportDomainService,
+
     @Inject(REPORT_REPOSITORY_TOKEN)
     private readonly _reportRepo: IReportRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
@@ -53,8 +60,8 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     await this._reportValidator.checkPermissionManageReport(authUser.id, groupId);
 
     const reportEntity = await this._reportRepo.findOne({
-      where: { id: reportId },
-      include: { details: true },
+      id: reportId,
+      status: REPORT_STATUS.CREATED,
     });
     if (!reportEntity) {
       throw new ReportNotFoundException();
@@ -62,12 +69,17 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
 
     const targetId = reportEntity.get('targetId');
     const targetType = reportEntity.get('targetType');
-    const reportDetails = reportEntity.get('details');
 
     const target = await this._getReportTarget(targetId, targetType, authUser);
-    const reasonCounts = await this._reportDomain.countReportReasons(reportDetails, true);
 
-    return { target, reasonCounts };
+    const reasonsCount = await this._reportDomain.countReportReasonsByTargetId(targetId, groupId);
+    const reasonsCountWithReporters =
+      await this._reportBinding.bindingReportReasonsCountWithReporters(reasonsCount);
+
+    return {
+      target: { ...target, actor: target.actor ? new BaseUserDto(target.actor) : undefined },
+      reasonsCount: reasonsCountWithReporters,
+    };
   }
 
   private async _getReportTarget(
@@ -78,7 +90,7 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
     if (targetType === CONTENT_TARGET.COMMENT) {
       const commentEntity = await this._commentRepo.findOne({ id: targetId });
       return commentEntity
-        ? this._commentBinding.commentBinding(commentEntity, { actor: authUser })
+        ? this._commentBinding.commentBinding(commentEntity, { authUser })
         : null;
     }
 

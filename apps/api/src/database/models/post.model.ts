@@ -1,3 +1,4 @@
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
@@ -19,8 +20,6 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { getDatabaseConfig } from '../../config/database';
-import { TargetType } from '../../modules/report-content/contstants';
 import { PostLang } from '../../modules/v2-post/data-type';
 
 import { CategoryModel, ICategory } from './category.model';
@@ -35,7 +34,6 @@ import { PostSeriesModel } from './post-series.model';
 import { IPostTag, PostTagModel } from './post-tag.model';
 import { IQuizParticipant, QuizParticipantModel } from './quiz-participant.model';
 import { IQuiz, QuizModel } from './quiz.model';
-import { ReportContentDetailModel } from './report-content-detail.model';
 import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
@@ -172,7 +170,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public mentions: string[];
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: PostType;
 
   @AllowNull(true)
@@ -180,10 +180,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public summary: string;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public lang: PostLang;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public privacy: PostPrivacy;
 
   @Column({
@@ -212,7 +216,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public cover: string;
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: PostStatus;
 
   @AllowNull(true)
@@ -382,17 +388,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
-  public static excludeReportedByUser(userId: string): Literal {
-    const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
-    return Sequelize.literal(
-      `NOT EXISTS ( 
-        SELECT target_id FROM ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this.sequelize.escape(userId)}
-      )`
-    );
-  }
-
   public static filterSavedByUser(userId: string): Literal {
     const { schema } = getDatabaseConfig();
     const userSavePostTable = UserSavePostModel.tableName;
@@ -424,35 +419,5 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
             WHERE g.post_id = "PostModel".id  AND g.is_archived = ${groupArchived}
         )`
     );
-  }
-
-  public static notIncludePostsReported(
-    userId: string,
-    options?: {
-      mainTableAlias?: string;
-      type?: TargetType[];
-    }
-  ): Literal {
-    if (!userId) {
-      return Sequelize.literal(`1 = 1`);
-    }
-    const { mainTableAlias, type } = options ?? {
-      mainTableAlias: 'PostModel',
-      type: [],
-    };
-    const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
-    let condition = `WHERE rp.target_id = ${mainTableAlias}.id AND rp.created_by = ${this.sequelize.escape(
-      userId
-    )}`;
-
-    if (type.length) {
-      condition += ` AND target_type IN (${type.map((item) => `'${item}'`).join(',')})`;
-    }
-
-    return Sequelize.literal(`NOT EXISTS ( 
-      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-        ${condition}
-    )`);
   }
 }

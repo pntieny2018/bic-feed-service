@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { NotCommunityAdminException, ReportNotFoundException } from '../exception';
-import { ReportEntity } from '../model/report';
+import { NotCommunityAdminException } from '../exception';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
 import { IReportValidator } from './interface';
@@ -21,17 +20,6 @@ export class ReportValidator implements IReportValidator {
 
     if (!isCommunityAdmin && !isCommunityOwner) {
       throw new NotCommunityAdminException();
-    }
-  }
-
-  public validateReportInGroup(reportEntity: ReportEntity, groupId: string): void {
-    if (!reportEntity) {
-      throw new ReportNotFoundException();
-    }
-
-    const isReportInGroup = reportEntity.getDetails().some((detail) => detail.groupId == groupId);
-    if (!isReportInGroup) {
-      throw new ReportNotFoundException('Report not found in this group');
     }
   }
 }

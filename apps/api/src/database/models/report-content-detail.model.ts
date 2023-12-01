@@ -1,4 +1,4 @@
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -46,7 +46,9 @@ export class ReportContentDetailModel
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: string;
 
   @Column
@@ -55,14 +57,18 @@ export class ReportContentDetailModel
   @Column
   public createdBy: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reportTo: ReportTo;
 
   @ForeignKey(() => ReportContentModel)
   @Column
   public reportId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reasonType: string;
 
   @Column

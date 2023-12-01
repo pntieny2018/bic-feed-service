@@ -13,7 +13,7 @@ import {
 import { PostModel } from './post.model';
 import { Literal } from 'sequelize/types/utils';
 import { PostGroupModel } from './post-group.model';
-import { getDatabaseConfig } from '../../config/database';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export interface IPostSeries {
   postId: string;
