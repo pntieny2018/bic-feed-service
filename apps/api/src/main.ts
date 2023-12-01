@@ -9,10 +9,15 @@ import { AppModule } from './app/app.module';
 import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
+import { bootstrapCLI } from './command';
 
 import './common/extension';
 
 async function bootstrap(): Promise<void> {
+  if (process.env.TRIGGER_CLI === 'true') {
+    return bootstrapCLI();
+  }
+
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new TracingInterceptor());
 
