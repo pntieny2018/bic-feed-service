@@ -35,6 +35,7 @@ export class PostDto {
   public wordCount: number;
   public commentsCount: number;
   public totalUsersSeen: number;
+  public title: string;
   public content: string;
   public mentions: UserMentionDto; // mentionUserIds
   public linkPreview?: LinkPreviewDto;

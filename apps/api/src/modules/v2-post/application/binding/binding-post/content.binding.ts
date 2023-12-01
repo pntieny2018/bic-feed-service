@@ -125,6 +125,7 @@ export class ContentBinding implements IContentBinding {
       wordCount: postEntity.get('wordCount'),
       commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
+      title: postEntity.get('title'),
       content: postEntity.get('content'),
       mentions: mentionUsers,
       linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),

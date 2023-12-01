@@ -145,6 +145,7 @@ export class ContentMapper {
         files: (post.mediaJson?.files || []).map((file) => new FileEntity(file)),
         videos: (post.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
       },
+      title: post.title,
       content: post.content,
       mentionUserIds: post.mentions || [],
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
