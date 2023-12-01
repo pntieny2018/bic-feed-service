@@ -8,6 +8,7 @@ import {
   VERSION_1_9_0,
   VERSION_1_10_0,
   VERSION_1_11_0,
+  VERSION_1_12_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -213,11 +214,11 @@ export const ROUTES = {
     },
     GET_REPORTS: {
       PATH: 'content/reports',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     CREATE_REPORT: {
       PATH: 'content/:contentId/reports',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     GET_MENU_SETTINGS: {
       PATH: 'content/:contentId/menu-settings',
@@ -295,15 +296,15 @@ export const ROUTES = {
     },
     CREATE_REPORT: {
       PATH: 'comments/:commentId/reports',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     GET_REPORT: {
       PATH: 'comments/:commentId/reports',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     GET_REPORTS: {
       PATH: 'comments/reports',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
   },
   REACTION: {
@@ -323,15 +324,15 @@ export const ROUTES = {
   MANAGE_REPORTS: {
     GET_LIST: {
       PATH: 'manage/communities/:rootGroupId/content-reports',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     GET_DETAIL: {
       PATH: 'manage/communities/:rootGroupId/content-reports/:reportId',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     PROCESS: {
       PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/status',
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
   },
 };
