@@ -39,11 +39,10 @@ RUN apk add --no-cache tini libpq
 
 # Copy entrypoint script
 COPY --chown=node:node --chmod=765 entrypoint.sh ./
-COPY --chown=node:node package.json .sequelizerc ./
+COPY --chown=node:node package.json ./
 
 # Copy built files from the builder stage
 COPY --chown=node:node --from=builder ${WORKDIR}/node_modules ./node_modules
-COPY --chown=node:node --from=builder ${WORKDIR}/sequelize ./sequelize
 COPY --chown=node:node --from=builder ${WORKDIR}/dist/apps/${APP_NAME} ./dist
 
 # Running the container as a non-root user

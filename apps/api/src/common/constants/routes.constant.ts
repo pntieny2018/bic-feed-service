@@ -197,75 +197,75 @@ export const ROUTES = {
   },
   CONTENT: {
     GET_SCHEDULE: {
-      PATH: 'content/schedule',
+      PATH: 'contents/schedule',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_TOTAL_DRAFT: {
-      PATH: 'content/total-draft',
+      PATH: 'contents/total-draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_SERIES: {
-      PATH: 'content/:contentId/series',
+      PATH: 'contents/:contentId/series',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_DRAFTS: {
-      PATH: 'content/draft',
+      PATH: 'contents/draft',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     GET_REPORTS: {
-      PATH: 'content/reports',
+      PATH: 'contents/reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     CREATE_REPORT: {
-      PATH: 'content/:contentId/reports',
+      PATH: 'contents/:contentId/reports',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     GET_MENU_SETTINGS: {
-      PATH: 'content/:contentId/menu-settings',
+      PATH: 'contents/:contentId/menu-settings',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
     },
     SEARCH_CONTENTS: {
-      PATH: 'content/',
+      PATH: 'contents/',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
     },
     MARK_AS_READ: {
-      PATH: 'content/:contentId/mark-as-read',
+      PATH: 'contents/:contentId/mark-as-read',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     VALIDATE_SERIES_TAGS: {
-      PATH: 'content/validate-series-tags',
+      PATH: 'contents/validate-series-tags',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UPDATE_SETTINGS: {
-      PATH: 'content/:contentId/setting',
+      PATH: 'contents/:contentId/setting',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     REORDER_PIN_CONTENT: {
-      PATH: 'content/pinned-content/groups/:groupId/order',
+      PATH: 'contents/pinned-content/groups/:groupId/order',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_PINNED_CONTENT: {
-      PATH: 'content/pinned-content/groups/:groupId',
+      PATH: 'contents/pinned-content/groups/:groupId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     SEEN_CONTENT: {
-      PATH: 'content/:contentId/seen',
+      PATH: 'contents/:contentId/seen',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     PIN_CONTENT: {
-      PATH: 'content/pinned-content/:contentId',
+      PATH: 'contents/pinned-content/:contentId',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_AUDIENCE: {
-      PATH: 'content/:contentId/audiences',
+      PATH: 'contents/:contentId/audiences',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     SAVE_CONTENT: {
-      PATH: 'content/:contentId/save',
+      PATH: 'contents/:contentId/save',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UNSAVE_CONTENT: {
-      PATH: 'content/:contentId/unsave',
+      PATH: 'contents/:contentId/unsave',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
