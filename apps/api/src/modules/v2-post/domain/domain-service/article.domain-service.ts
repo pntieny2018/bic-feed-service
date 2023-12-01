@@ -79,9 +79,6 @@ export class ArticleDomainService implements IArticleDomainService {
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
 
-    @Inject(GROUP_ADAPTER)
-    private readonly _groupAdapter: IGroupAdapter,
-
     private readonly event: EventBus
   ) {}
 
