@@ -12,6 +12,7 @@ on:
 permissions:
   contents: read    # This is required for actions/checkout
   id-token: write   # This is required for requesting the JWT
+  pull-requests: read # This is required for action dorny/paths-filter@v2
 
 jobs:
   develop:
