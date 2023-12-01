@@ -52,6 +52,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       include: include.length > 0 ? include : undefined,
       order: options.order,
       group: options.group,
+      subQuery: options.subQuery || false,
     });
   }
 
@@ -179,18 +180,19 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       before,
       limit = PAGING_DEFAULT_LIMIT,
       order = ORDER.DESC,
-      column = 'createdAt',
+      sortColumns = ['createdAt'],
     } = paginationProps;
 
     const attributes = this._buildSelect(findOptions);
     const include = this._buildInclude(findOptions);
     const where = this._buildWhere(findOptions);
 
-    const paginator = new CursorPaginator(this.model, [column], { before, after, limit }, order);
+    const paginator = new CursorPaginator(this.model, sortColumns, { before, after, limit }, order);
     const { rows, meta } = await paginator.paginate({
       attributes,
       where,
       include: include.length > 0 ? include : undefined,
+      subQuery: false,
     });
 
     return {

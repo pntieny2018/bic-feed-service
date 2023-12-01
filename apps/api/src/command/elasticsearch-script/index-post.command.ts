@@ -230,10 +230,7 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.items = post.items.map((article) => ({
-              id: article.id,
-              zindex: article['PostSeriesModel'].zindex,
-            }));
+            item.itemIds = post.items.map((item) => item.id);
             item.coverMedia = post.coverJson;
           }
           insertDataPosts.push(item);

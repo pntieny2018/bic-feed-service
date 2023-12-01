@@ -161,12 +161,12 @@ export class ElasticsearchQueryBuilder {
   }
 
   private _getItemInSeriesFilter(filterItemIds: string[]): any {
-    const { items } = ELASTIC_POST_MAPPING_PATH;
+    const { itemIds } = ELASTIC_POST_MAPPING_PATH;
     if (filterItemIds && filterItemIds?.length) {
       return [
         {
           terms: {
-            [items.id]: filterItemIds,
+            [itemIds]: filterItemIds,
           },
         },
       ];

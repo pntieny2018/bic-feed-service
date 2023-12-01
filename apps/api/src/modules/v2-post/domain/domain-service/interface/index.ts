@@ -1,5 +1,4 @@
 export * from './article.domain-service.interface';
-export * from './category.domain-service.interface';
 export * from './comment.domain-service.interface';
 export * from './content.domain-service.interface';
 export * from './link-preview.domain-service.interface';

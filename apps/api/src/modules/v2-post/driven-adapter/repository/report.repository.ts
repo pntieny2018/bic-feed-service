@@ -129,7 +129,7 @@ export class ReportRepository implements IReportRepository {
   public async getPagination(
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
+    const { limit, before, after, order = ORDER.DESC, sortColumns = ['createdAt'] } = input;
     const { targetTypes, targetActorId, status, groupId } = input;
 
     const condition: WhereOptions<ReportAttribute> = {};
@@ -148,7 +148,7 @@ export class ReportRepository implements IReportRepository {
 
     const { rows, meta } = await this._libReportRepo.cursorPaginate(
       { where: condition },
-      { limit, before, after, order, column }
+      { limit, before, after, order, sortColumns }
     );
     return {
       rows: rows.map((report) => this._reportMapper.toDomain(report)),

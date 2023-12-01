@@ -9,13 +9,12 @@ import {
   IContentRepository,
   IFollowRepository,
 } from '../repositoty-interface';
-import { IUserAdapter, USER_ADAPTER } from '../service-adapter-interface';
 
 import {
   DispatchContentIdToGroupsProps,
   DispatchContentsInGroupsToUserIdProps,
   INewsfeedDomainService,
-} from './interface/newsfeed.domain-service.interface';
+} from './interface';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
   private readonly _logger = new Logger(NewsfeedDomainService.name);
@@ -25,8 +24,6 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
     private readonly _followRepo: IFollowRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter,
     @Inject(KAFKA_ADAPTER)
     private readonly _kafkaAdapter: IKafkaAdapter
   ) {}
