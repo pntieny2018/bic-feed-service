@@ -1,3 +1,4 @@
+import { ReactionsCount } from '@api/common/types';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
@@ -5,7 +6,7 @@ import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
-import { flatten, groupBy, uniq } from 'lodash';
+import { flatten, groupBy, uniq, pick } from 'lodash';
 
 import {
   IReportDomainService,
@@ -48,6 +49,7 @@ import {
   PostInSeriesDto,
   ArticleInSeriesDto,
   ReportReasonCountDto,
+  ItemInSeries,
 } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
 import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
@@ -166,51 +168,46 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
-  private async _postsBinding(postsEntities: PostEntity[], authUser: UserDto): Promise<PostDto[]> {
+  private async _postsBinding(
+    postsEntities: PostEntity[],
+    dataBinding: {
+      authUser: UserDto;
+      users: { [id: string]: UserDto };
+      groups: GroupDto[];
+      communities: GroupDto[];
+      quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
+      quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+      reactionsCount: Map<string, ReactionsCount>;
+    }
+  ): Promise<PostDto[]> {
     if (!postsEntities.length) {
       return [];
     }
-    const authorIds = postsEntities.map((postEntity) => postEntity.getCreatedBy());
-    const mentionUserIds = uniq(
-      flatten(postsEntities.map((postEntity) => postEntity.get('mentionUserIds')))
-    );
-    const groupIds = uniq(flatten(postsEntities.map((postEntity) => postEntity.getGroupIds())));
-    const postIds = postsEntities.map((postEntity) => postEntity.getId());
 
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq([...authorIds, ...mentionUserIds]),
-      authUser.id
-    );
-    const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
-
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
-    const accessGroups = this.filterSecretGroupCannotAccess(groups, authUser);
-
-    const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
-    const communities = await this._groupAdapter.getGroupsByIds(communityIds);
-
-    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(postIds);
-
-    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
-      postIds,
-      authUser
-    );
+    const {
+      authUser,
+      users,
+      groups,
+      communities,
+      quizzesHighestScoreMap,
+      quizzesDoingMap,
+      reactionsCount,
+    } = dataBinding;
 
     return postsEntities.map((postEntity) => {
-      const postGroups = accessGroups.filter((group) =>
-        postEntity.getGroupIds().includes(group.id)
-      );
+      const postGroups = groups.filter((group) => postEntity.getGroupIds().includes(group.id));
       const communityIds = uniq(postGroups.map((group) => group.rootGroupId));
       const postCommunities = communities.filter((group) => communityIds.includes(group.id));
       const quizHighestScore = quizzesHighestScoreMap[postEntity.getId()];
       const quizDoing = quizzesDoingMap[postEntity.getId()];
+      const mentionUsers = Object.values(pick(users, postEntity.get('mentionUserIds')));
 
       return new PostDto({
         id: postEntity.getId(),
         isReported: postEntity.get('isReported'),
         isHidden: postEntity.isHidden(),
         createdBy: postEntity.getCreatedBy(),
-        actor: this._mapActorUser(usersMap[postEntity.getCreatedBy()]),
+        actor: this._mapActorUser(users[postEntity.getCreatedBy()]),
         privacy: postEntity.get('privacy'),
         status: postEntity.get('status'),
         type: postEntity.getType(),
@@ -230,9 +227,7 @@ export class ContentBinding implements IContentBinding {
         commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
         totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
         content: postEntity.get('content'),
-        mentions: this.mapMentionWithUserInfo(
-          users.filter((user) => mentionUserIds.includes(user.id))
-        ),
+        mentions: this.mapMentionWithUserInfo(mentionUsers),
         linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
         tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
         quiz:
@@ -282,7 +277,7 @@ export class ContentBinding implements IContentBinding {
 
     const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
     const quizDoing = quizzesDoingMap[articleEntity.getId()];
-      
+
     let reportReasonsCount;
     if (articleEntity.isHidden() && articleEntity.isOwner(authUser.id)) {
       reportReasonsCount = await this._getReportReasonsCountBindingInContent(articleEntity.getId());
@@ -338,37 +333,32 @@ export class ContentBinding implements IContentBinding {
 
   private async _articlesBinding(
     articleEntities: ArticleEntity[],
-    authUser: UserDto
+    dataBinding: {
+      authUser: UserDto;
+      users: { [id: string]: UserDto };
+      groups: GroupDto[];
+      communities: GroupDto[];
+      quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
+      quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+      reactionsCount: Map<string, ReactionsCount>;
+    }
   ): Promise<ArticleDto[]> {
     if (!articleEntities.length) {
       return [];
     }
-    const authorIds = articleEntities.map((postEntity) => postEntity.getCreatedBy());
-    const articleIds = articleEntities.map((articleEntity) => articleEntity.getId());
 
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq(authorIds),
-      authUser.id
-    );
-    const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
-
-    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(articleIds);
-    const groupIds = uniq(
-      flatten(articleEntities.map((articleEntity) => articleEntity.getGroupIds()))
-    );
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
-    const accessGroups = this.filterSecretGroupCannotAccess(groups, authUser);
-
-    const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
-    const communities = await this._groupAdapter.getGroupsByIds(communityIds);
-
-    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
-      articleIds,
-      authUser
-    );
+    const {
+      authUser,
+      users,
+      groups,
+      communities,
+      quizzesHighestScoreMap,
+      quizzesDoingMap,
+      reactionsCount,
+    } = dataBinding;
 
     return articleEntities.map((articleEntity) => {
-      const articleGroups = accessGroups.filter((group) =>
+      const articleGroups = groups.filter((group) =>
         articleEntity.getGroupIds().includes(group.id)
       );
       const communityIds = uniq(articleGroups.map((group) => group.rootGroupId));
@@ -381,7 +371,7 @@ export class ContentBinding implements IContentBinding {
         isReported: articleEntity.get('isReported'),
         isHidden: articleEntity.isHidden(),
         createdBy: articleEntity.getCreatedBy(),
-        actor: this._mapActorUser(usersMap[articleEntity.getCreatedBy()]),
+        actor: this._mapActorUser(users[articleEntity.getCreatedBy()]),
         privacy: articleEntity.get('privacy'),
         status: articleEntity.get('status'),
         type: articleEntity.getType(),
@@ -478,28 +468,21 @@ export class ContentBinding implements IContentBinding {
 
   private async _seriesBinding(
     seriesEntities: SeriesEntity[],
-    authUser: UserDto
+    dataBinding: {
+      authUser: UserDto;
+      users: { [id: string]: UserDto };
+      groups: GroupDto[];
+      communities: GroupDto[];
+      reactionsCount: Map<string, ReactionsCount>;
+    }
   ): Promise<SeriesDto[]> {
     if (!seriesEntities.length) {
       return [];
     }
 
-    const authorIds = seriesEntities.map((seriesEntity) => seriesEntity.getCreatedBy());
-    const groupIds = uniq(
-      flatten(seriesEntities.map((seriesEntity) => seriesEntity.getGroupIds()))
-    );
+    const { authUser, users, groups, communities, reactionsCount } = dataBinding;
+
     const itemIds = uniq(flatten(seriesEntities.map((seriesEntity) => seriesEntity.getItemIds())));
-
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq(authorIds),
-      authUser.id
-    );
-    const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
-    const accessGroups = this.filterSecretGroupCannotAccess(groups, authUser);
-
-    const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
-    const communities = await this._groupAdapter.getGroupsByIds(communityIds);
 
     const items = (await this._contentRepo.findAll({
       where: {
@@ -508,24 +491,31 @@ export class ContentBinding implements IContentBinding {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
       },
-      select: ['id', 'type', 'content', 'title'],
+      select: ['id', 'type', 'title'],
     })) as (PostEntity | ArticleEntity)[];
 
     return seriesEntities.map((seriesEntity) => {
-      const seriesGroups = accessGroups.filter((group) =>
-        seriesEntity.getGroupIds().includes(group.id)
-      );
+      const seriesGroups = groups.filter((group) => seriesEntity.getGroupIds().includes(group.id));
       const communityIds = uniq(seriesGroups.map((group) => group.rootGroupId));
       const seriesCommunities = communities.filter((group) => communityIds.includes(group.id));
       const itemIds = seriesEntity.getItemIds();
-      const seriesItems = items.filter((item) => itemIds.includes(item.getId()));
-      seriesItems.sort((a, b) => itemIds.indexOf(a.getId()) - itemIds.indexOf(b.getId()));
+      const seriesItems = items
+        .filter((item) => itemIds.includes(item.getId()))
+        .map(
+          (item) =>
+            new ItemInSeries({
+              id: item.getId(),
+              type: item.getType(),
+              title: item.getTitle(),
+            })
+        );
+      seriesItems.sort((a, b) => itemIds.indexOf(a.id) - itemIds.indexOf(b.id));
       return new SeriesDto({
         id: seriesEntity.get('id'),
         isReported: seriesEntity.get('isReported'),
         isHidden: seriesEntity.isHidden(),
         createdBy: seriesEntity.getCreatedBy(),
-        actor: this._mapActorUser(usersMap[seriesEntity.getCreatedBy()]),
+        actor: this._mapActorUser(users[seriesEntity.getCreatedBy()]),
         privacy: seriesEntity.get('privacy'),
         status: seriesEntity.get('status'),
         type: seriesEntity.getType(),
@@ -541,7 +531,7 @@ export class ContentBinding implements IContentBinding {
         totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
         title: seriesEntity.get('title'),
         summary: seriesEntity.get('summary'),
-        items: seriesItems as unknown as (PostInSeriesDto | ArticleInSeriesDto)[],
+        items: seriesItems,
         coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       });
     });
@@ -611,10 +601,48 @@ export class ContentBinding implements IContentBinding {
     const articleEntities = (contents[CONTENT_TYPE.ARTICLE] || []) as ArticleEntity[];
     const seriesEntities = (contents[CONTENT_TYPE.SERIES] || []) as SeriesEntity[];
 
+    const authorIds = contentEntities.map((contentEntity) => contentEntity.getCreatedBy());
+    const mentionUserIds = uniq(
+      flatten(postEntities.map((postEntity) => postEntity.get('mentionUserIds')))
+    );
+    const groupIds = uniq(
+      flatten(contentEntities.map((contentEntity) => contentEntity.getGroupIds()))
+    );
+    const contentIds = contentEntities.map((contentEntity) => contentEntity.getId());
+
+    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
+      uniq([...authorIds, ...mentionUserIds]),
+      authUser.id
+    );
+    const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
+
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    const accessGroups = this.filterSecretGroupCannotAccess(groups, authUser);
+
+    const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
+    const communities = await this._groupAdapter.getGroupsByIds(communityIds);
+
+    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(contentIds);
+
+    const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
+      contentIds,
+      authUser
+    );
+
+    const dataBinding = {
+      authUser,
+      users: usersMap,
+      groups,
+      communities,
+      quizzesDoingMap,
+      quizzesHighestScoreMap,
+      reactionsCount,
+    };
+
     const result = [];
-    const posts = await this._postsBinding(postEntities, authUser);
-    const articles = await this._articlesBinding(articleEntities, authUser);
-    const series = await this._seriesBinding(seriesEntities, authUser);
+    const posts = await this._postsBinding(postEntities, dataBinding);
+    const articles = await this._articlesBinding(articleEntities, dataBinding);
+    const series = await this._seriesBinding(seriesEntities, dataBinding);
 
     result.push(...posts, ...articles, ...series);
 

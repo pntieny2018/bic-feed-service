@@ -32,7 +32,6 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       authUserId,
     });
     const result = await this._contentBinding.contentsBinding(contentEntities, payload.authUser);
-
     return {
       list: result,
       meta,

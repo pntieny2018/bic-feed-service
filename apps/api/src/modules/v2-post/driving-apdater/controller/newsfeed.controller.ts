@@ -22,6 +22,7 @@ export class NewsFeedController {
     @Query() dto: NewsfeedRequestDto
   ): Promise<any> {
     const { type, isSaved, isMine, isImportant, limit, before, after } = dto;
+
     return this._queryBus.execute(
       new FindNewsfeedQuery({
         type,

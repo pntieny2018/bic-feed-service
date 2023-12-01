@@ -6,6 +6,7 @@ import { UserDto } from '@libs/service/user';
 import {
   ArticleInSeriesDto,
   ImageDto,
+  ItemInSeries,
   MediaDto,
   PostInSeriesDto,
   PostSettingDto,
@@ -33,7 +34,7 @@ export class SeriesDto {
   public totalUsersSeen: number;
   public title: string;
   public summary: string;
-  public items?: (PostInSeriesDto | ArticleInSeriesDto)[];
+  public items?: (PostInSeriesDto | ArticleInSeriesDto | ItemInSeries)[];
   public quiz?: QuizDto;
   public coverMedia?: ImageDto;
   public highlight?: string;
