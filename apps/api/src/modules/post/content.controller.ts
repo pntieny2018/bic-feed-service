@@ -27,7 +27,7 @@ import { PostResponseDto } from './dto/responses';
 @ApiTags('Content')
 @Controller({
   version: VERSIONS_SUPPORTED,
-  path: 'contents',
+  path: ['content', 'contents'],
 })
 export class ContentController {
   public constructor(private _postAppService: PostAppService) {}
