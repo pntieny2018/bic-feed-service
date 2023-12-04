@@ -5,5 +5,5 @@ export type CursorPaginationProps = {
   before?: string;
   after?: string;
   order?: ORDER;
-  column?: string;
+  sortColumns?: string[];
 };

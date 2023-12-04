@@ -91,7 +91,9 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public mentions: string[];
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: CONTENT_TYPE;
 
   @AllowNull(true)
@@ -99,10 +101,14 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public summary: string;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public lang?: LANGUAGE;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public privacy: PRIVACY;
 
   @Column({
@@ -131,7 +137,9 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public cover?: string;
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: CONTENT_STATUS;
 
   @AllowNull(true)
@@ -193,9 +201,6 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @HasMany(() => PostSeriesModel, 'postId')
   public postSeries?: PostSeriesAttributes[];
 
-  @HasMany(() => PostSeriesModel, 'seriesId')
-  public itemIds?: PostSeriesAttributes[];
-
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: PostAttributes[];
 
@@ -249,4 +254,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
     foreignKey: 'postId',
   })
   public failedPostReasons?: FailedProcessPostAttributes[];
+
+  public seriesIds?: string[];
+  public itemIds?: string[];
 }

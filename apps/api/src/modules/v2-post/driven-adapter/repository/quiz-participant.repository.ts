@@ -177,6 +177,40 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
     return this._quizParticipantMapper.toDomain(quizParticipant);
   }
 
+  public async findQuizParticipantHighestScoreByContentIdsAndUserId(
+    contentIds: string[],
+    userId: string
+  ): Promise<QuizParticipantEntity[]> {
+    const quizParticipant = await this._libQuizParticipantRepo.findMany({
+      where: {
+        postId: contentIds,
+        createdBy: userId,
+        isHighest: true,
+      },
+    });
+
+    return quizParticipant.map((quizParticipant) =>
+      this._quizParticipantMapper.toDomain(quizParticipant)
+    );
+  }
+
+  public async findQuizParticipantDoingByContentIdsAndUserId(
+    contentIds: string[],
+    userId: string
+  ): Promise<QuizParticipantEntity[]> {
+    const quizParticipant = await this._libQuizParticipantRepo.findMany({
+      where: {
+        postId: contentIds,
+        createdBy: userId,
+        finishedAt: null,
+      },
+    });
+
+    return quizParticipant.map((quizParticipant) =>
+      this._quizParticipantMapper.toDomain(quizParticipant)
+    );
+  }
+
   public async getQuizParticipantHighestScoreGroupByUserId(
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]> {
@@ -216,7 +250,7 @@ export class QuizParticipantRepository implements IQuizParticipantRepository {
         before,
         after,
         order,
-        column: 'createdAt',
+        sortColumns: ['createdAt'],
       }
     );
 

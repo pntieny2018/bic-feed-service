@@ -1,8 +1,9 @@
+import { IAxiosConfig } from '@libs/infra/http';
+import { KafkaModule } from '@libs/infra/kafka';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { IAxiosConfig } from '../config/axios';
 import { CommentModule } from '../modules/comment';
 import { PostModule } from '../modules/post';
 
@@ -19,6 +20,7 @@ import { ContentNotificationService } from './services';
   imports: [
     PostModule,
     CommentModule,
+    KafkaModule,
     HttpModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {

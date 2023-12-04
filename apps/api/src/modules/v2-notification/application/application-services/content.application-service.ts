@@ -1,5 +1,6 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { StringHelper } from '@libs/common/helpers';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 import { v4 } from 'uuid';
 
@@ -7,7 +8,6 @@ import {
   ArticleHasBeenDeleted,
   ArticleHasBeenPublished,
   ArticleHasBeenUpdated,
-  KAFKA_TOPIC,
   PostHasBeenDeleted,
   PostHasBeenPublished,
   PostHasBeenUpdated,

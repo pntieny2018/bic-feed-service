@@ -38,7 +38,7 @@ export class SearchSeriesPublishedEventHandler implements IEventHandler<SeriesPu
         isHidden: seriesEntity.isHidden(),
         communityIds,
         type: seriesEntity.getType(),
-        items: [],
+        itemIds: [],
         coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       },
     ]);

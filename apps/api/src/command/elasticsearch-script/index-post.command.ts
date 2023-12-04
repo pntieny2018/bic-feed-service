@@ -1,3 +1,4 @@
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -5,7 +6,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
 
 import { ElasticsearchHelper } from '../../common/helpers';
-import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { CategoryModel } from '../../database/models/category.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -230,10 +230,7 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.items = post.items.map((article) => ({
-              id: article.id,
-              zindex: article['PostSeriesModel'].zindex,
-            }));
+            item.itemIds = post.items.map((item) => item.id);
             item.coverMedia = post.coverJson;
           }
           insertDataPosts.push(item);

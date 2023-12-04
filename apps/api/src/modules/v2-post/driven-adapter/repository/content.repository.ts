@@ -1,9 +1,6 @@
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
-import {
-  CursorPaginationResult,
-  getDatabaseConfig,
-  PaginationProps,
-} from '@libs/database/postgres/common';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { PostGroupModel, PostModel } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
@@ -308,11 +305,10 @@ export class ContentRepository implements IContentRepository {
     return content;
   }
 
-  public async getPagination(
+  public async getCursorPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<ArticleEntity | PostEntity | SeriesEntity>> {
     const { rows, meta } = await this._libContentRepo.getPagination(getPaginationContentsProps);
-
     return {
       rows: rows.map((row) => this._contentMapper.toDomain(row)),
       meta,
@@ -556,7 +552,7 @@ export class ContentRepository implements IContentRepository {
       {
         after,
         limit,
-        column: 'createdAt',
+        sortColumns: ['createdAt'],
         order: ORDER.DESC,
       }
     );

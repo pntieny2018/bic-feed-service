@@ -239,7 +239,7 @@ describe('QuizRepository', () => {
             },
           ],
         },
-        { limit: 10, order: ORDER.DESC, column: 'createdAt' }
+        { limit: 10, order: ORDER.DESC, sortColumns: ['createdAt'] }
       );
       expect(_quizMapper.toDomain).toBeCalledWith(mockQuizRecord);
       expect(result).toEqual({

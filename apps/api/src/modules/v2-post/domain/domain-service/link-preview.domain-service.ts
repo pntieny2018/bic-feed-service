@@ -1,13 +1,10 @@
 import { Inject, Logger } from '@nestjs/common';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewEntity } from '../model/link-preview';
 import { ILinkPreviewRepository, LINK_PREVIEW_REPOSITORY_TOKEN } from '../repositoty-interface';
 
-import {
-  ILinkPreviewDomainService,
-  LinkPreviewProps,
-} from './interface/link-preview.domain-service.interface';
+import { ILinkPreviewDomainService, LinkPreviewProps } from './interface';
 
 export class LinkPreviewDomainService implements ILinkPreviewDomainService {
   private readonly _logger = new Logger(LinkPreviewDomainService.name);

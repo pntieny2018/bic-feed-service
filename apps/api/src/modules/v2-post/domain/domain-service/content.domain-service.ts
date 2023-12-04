@@ -6,7 +6,7 @@ import {
   getLimitFromAfter,
 } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 import { uniq } from 'lodash';
 
@@ -51,8 +51,6 @@ import {
 } from './interface';
 
 export class ContentDomainService implements IContentDomainService {
-  private readonly _logger = new Logger(ContentDomainService.name);
-
   public constructor(
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
@@ -104,11 +102,11 @@ export class ContentDomainService implements IContentDomainService {
     return null;
   }
 
-  public async getDraftIdsPagination(
+  public async getDraftContentIdsPagination(
     input: GetDraftsProps
   ): Promise<CursorPaginationResult<string>> {
     const { authUserId, isProcessing, type } = input;
-    const { rows, meta } = await this._contentRepo.getPagination({
+    const { rows, meta } = await this._contentRepo.getCursorPagination({
       ...input,
       where: {
         createdBy: authUserId,
@@ -181,8 +179,15 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
     }
 
-    const { rows, meta } = await this._contentRepo.getPagination({
-      select: ['id'],
+    const orderOptions = isSaved
+      ? {
+          isSavedDateByDesc: true,
+        }
+      : {
+          isPublishedByDesc: true,
+        };
+    const { rows, meta } = await this._contentRepo.getCursorPagination({
+      select: ['id', 'type', 'publishedAt'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
@@ -201,9 +206,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       limit,
       order,
-      orderOptions: {
-        isPublishedByDesc: true,
-      },
+      orderOptions,
       before,
       after,
     });
@@ -233,10 +236,16 @@ export class ContentDomainService implements IContentDomainService {
       return this.getImportantContentIds(props);
     }
 
-    const { rows, meta } = await this._contentRepo.getPagination({
-      attributes: {
-        exclude: ['content'],
-      },
+    const orderOptions = isSaved
+      ? {
+          isSavedDateByDesc: true,
+        }
+      : {
+          isPublishedByDesc: true,
+        };
+
+    const { rows, meta } = await this._contentRepo.getCursorPagination({
+      select: ['id', 'type', 'publishedAt'],
       where: {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
@@ -257,9 +266,7 @@ export class ContentDomainService implements IContentDomainService {
       },
       limit,
       order,
-      orderOptions: {
-        isPublishedByDesc: true,
-      },
+      orderOptions,
       before,
       after,
     });
@@ -275,7 +282,7 @@ export class ContentDomainService implements IContentDomainService {
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>> {
     const { beforeDate } = input;
 
-    return this._contentRepo.getPagination({
+    return this._contentRepo.getCursorPagination({
       ...input,
       where: {
         status: CONTENT_STATUS.WAITING_SCHEDULE,
@@ -305,6 +312,7 @@ export class ContentDomainService implements IContentDomainService {
   ): Promise<CursorPaginationResult<string>> {
     const { userId, groupId, limit, before, after, type, order } = params;
     const findOption: GetPaginationContentsProps = {
+      select: ['id', 'type', 'scheduledAt', 'createdAt', 'publishedAt'],
       where: {
         type,
         statuses: [CONTENT_STATUS.WAITING_SCHEDULE, CONTENT_STATUS.SCHEDULE_FAILED],
@@ -331,7 +339,7 @@ export class ContentDomainService implements IContentDomainService {
       };
     }
 
-    const { rows, meta } = await this._contentRepo.getPagination(findOption);
+    const { rows, meta } = await this._contentRepo.getCursorPagination(findOption);
 
     return {
       rows: rows.map((row) => row.getId()),
@@ -347,9 +355,7 @@ export class ContentDomainService implements IContentDomainService {
 
     const rows = await this._contentRepo.findAll(
       {
-        attributes: {
-          exclude: ['content'],
-        },
+        select: ['id', 'type', 'scheduledAt', 'createdAt', 'publishedAt'],
         where: {
           type,
           groupIds,
@@ -421,13 +427,11 @@ export class ContentDomainService implements IContentDomainService {
       return [];
     }
 
-    const seriesEntites = (await this._contentRepo.findAll({
+    return (await this._contentRepo.findAll({
       where: {
         ids: seriesIds,
       },
     })) as SeriesEntity[];
-
-    return seriesEntites;
   }
 
   public async updateSetting(props: UpdateSettingsProps): Promise<void> {

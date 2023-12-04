@@ -1,7 +1,7 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Injectable } from '@nestjs/common';
 import { v4 } from 'uuid';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
 import {
   ArticleDto,
   CommentExtendedDto,

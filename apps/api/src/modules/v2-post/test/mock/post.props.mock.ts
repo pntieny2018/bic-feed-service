@@ -20,6 +20,7 @@ export const postProps: PostAttributes = {
     canComment: true,
     canReact: true,
   },
+  title: 'This is a post',
   content: 'This is a post',
   mentionUserIds: [],
   groupIds: ['b01fb58e-9299-4a0e-a55f-9839293fb42a', 'a29bfb75-4d07-4f7c-9bb1-e1fdffead4ec'],

@@ -1,5 +1,5 @@
 import { Node } from 'slate';
-
+import { Remarkable } from 'remarkable';
 export class StringHelper {
   /**
    * Convert camel case string to snake case string
@@ -127,5 +127,64 @@ export class StringHelper {
 
   public static containsOnlySpace(str: string): boolean {
     return str.trim().length === 0;
+  }
+
+  public static createRemarkableParser() {
+    const mdParser = new Remarkable({
+      html: false, // Disable HTML tags in source
+      breaks: true, // convert `/n` to `<br />`
+      linkTarget: '_blank', // Add target="_blank" to links
+    });
+    mdParser.inline.ruler.enable([
+      'ins', // md.render('++underline++') // => '<p><ins>underline</ins></p>'
+      'mark', // md.render('==marked==') // => '<p><mark>marked</mark></p>'
+    ]);
+
+    return mdParser;
+  }
+
+  public static getRawTextFromMarkdown(content?: string | null): string {
+    let result = '';
+    if (!content) {
+      return result;
+    }
+
+    const remarkableParser = this.createRemarkableParser();
+
+    try {
+      const elements = remarkableParser.parse(content || '', {});
+      for (let i = 0; i < elements.length; i += 1) {
+        // Guard against content not available to extract
+        const token = elements[i];
+        if (token?.type !== 'inline') {
+          continue;
+        }
+        const childToken = token.children;
+        if (!childToken) {
+          continue;
+        }
+        // Get text blocks from child tokens
+        const rawTextFromMarkdown = childToken
+          .map((child) => {
+            if (child.type === 'text') {
+              return child.content;
+            }
+            if (child.type === 'softbreak') {
+              return '\n';
+            }
+            if (child.type === 'hardbreak') {
+              return '\n';
+            }
+            return '';
+          })
+          .join('');
+        result += rawTextFromMarkdown;
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('🚀 ~ getRawTextFromMarkdown:', error);
+    }
+
+    return result;
   }
 }

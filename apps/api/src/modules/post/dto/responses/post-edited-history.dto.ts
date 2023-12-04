@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsDateString, IsUUID } from 'class-validator';
-import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 
 export class PostEditedHistoryDto {

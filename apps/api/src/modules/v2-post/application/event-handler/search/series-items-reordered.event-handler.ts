@@ -30,7 +30,7 @@ export class SearchSeriesItemsReorderedEventHandler
     await this._postSearchService.updateAttributePostToSearch(
       { id: seriesEntity.getId(), lang: seriesEntity.get('lang') },
       {
-        items: seriesEntity.get('items'),
+        itemIds: seriesEntity.getItemIds(),
       }
     );
   }
