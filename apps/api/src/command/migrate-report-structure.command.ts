@@ -1,7 +1,7 @@
-import { CONTENT_REPORT_REASONS } from '@beincom/constants';
 import {
   REPORT_SCOPE,
   REPORT_STATUS,
+  ReasonCount,
   ReportAttribute,
   ReportContentDetailModel,
   ReportContentModel,
@@ -184,17 +184,17 @@ export class MigrateReportStructure implements CommandRunner {
     this._logger.log(`Created ${affectedCount} report details`);
   }
 
-  private _calculateReasonsCount(reportDetails: ReportContentDetailModel[]): any {
+  private _calculateReasonsCount(reportDetails: ReportContentDetailModel[]): ReasonCount[] {
     const reasonTypes = uniq(reportDetails.map((detail) => detail.reasonType));
 
     return reasonTypes.map((reasonType) => {
       const reasonTypeDetails = reportDetails.filter((detail) => detail.reasonType === reasonType);
-      const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonType);
+      const reporterIds = uniq(reasonTypeDetails.map((detail) => detail.createdBy));
 
       return {
         reasonType,
-        description: reason?.description,
         total: reasonTypeDetails.length,
+        reporterIds,
       };
     });
   }
