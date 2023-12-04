@@ -150,7 +150,10 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
     if (orderOptions.isSavedDateByDesc) {
-      order.push(['userSavePosts', 'createdAt', ORDER.DESC]);
+      order.push([
+        { model: UserSavePostModel, as: 'userSavePosts', field: 'createdAt' },
+        ORDER.DESC,
+      ]);
     }
     if (orderOptions.createdAtDesc) {
       order.push(['createdAt', ORDER.DESC]);
