@@ -27,6 +27,7 @@ import { ExportUserContentDataCommand } from './export-user-content-data.command
 import { FixCommentCountCommand } from './fix-comment-count.command';
 import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.command';
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
+import { FixMissingReporterCommand } from './fix-missing-report-data.command';
 import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
@@ -105,6 +106,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     CleanUpDeletedContentsCommand,
     MigratePostGroupIsHidden,
     MigrateReportStructure,
+    FixMissingReporterCommand,
   ],
 })
 export class CommandModule {}
