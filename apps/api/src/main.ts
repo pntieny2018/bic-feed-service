@@ -1,7 +1,4 @@
-import { KafkaHealthBootstrap } from '@libs/common/health-check/kafka-health.bootstrap';
-import { KafkaGateway } from '@libs/infra/kafka';
 import { TracingInterceptor } from '@libs/infra/log';
-import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
@@ -25,12 +22,6 @@ async function bootstrap(): Promise<void> {
 
   ClassValidatorBootstrap.init(app, AppModule);
   SwaggerBootstrap.init(app, configService);
-  KafkaGateway.init(app, configService)
-    .then((app) => {
-      Logger.debug('Kafka Gateway initialized');
-      KafkaHealthBootstrap.init(app);
-    })
-    .catch((ex) => Logger.debug(JSON.stringify(ex?.stack)));
   await AppBootstrap.init(app, configService);
 }
 
