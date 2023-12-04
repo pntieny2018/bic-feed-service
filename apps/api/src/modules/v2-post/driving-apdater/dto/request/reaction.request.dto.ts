@@ -1,4 +1,4 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
@@ -6,7 +6,6 @@ import { emoji } from 'node-emoji';
 import { NIL as NIL_UUID } from 'uuid';
 
 import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
-import { REACTION_TARGET } from '../../../data-type';
 
 export class CreateReactionRequestDto {
   @ApiProperty({
@@ -23,7 +22,7 @@ export class CreateReactionRequestDto {
 
   @ApiProperty({ example: 'POST' })
   @IsNotEmpty()
-  public target: REACTION_TARGET;
+  public target: CONTENT_TARGET;
 
   @ApiProperty({
     type: String,
@@ -46,7 +45,7 @@ export class DeleteReactionRequestDto {
   @ApiProperty({ example: 'POST' })
   @IsNotEmpty()
   @Expose()
-  public target: REACTION_TARGET;
+  public target: CONTENT_TARGET;
 
   @ApiProperty({ example: 'dd41bad0-9699-493a-b8cd-c0cea072f373', name: 'target_id' })
   @IsUUID()
@@ -100,9 +99,9 @@ export class GetReactionRequestDto {
   public targetId: string;
 
   @ApiProperty({
-    enum: REACTION_TARGET,
+    enum: CONTENT_TARGET,
   })
-  public target: REACTION_TARGET;
+  public target: CONTENT_TARGET;
 
   @ApiProperty({
     required: false,

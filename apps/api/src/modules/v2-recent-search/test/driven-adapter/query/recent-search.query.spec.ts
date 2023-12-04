@@ -1,10 +1,10 @@
 import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
 
 import { RecentSearchModel } from '../../../../../database/models/recent-search.model';
+import { createMockUserDto } from '../../../../v2-post/test/mock';
 import {
   IRecentSearchFactory,
   RECENT_SEARCH_FACTORY_TOKEN,

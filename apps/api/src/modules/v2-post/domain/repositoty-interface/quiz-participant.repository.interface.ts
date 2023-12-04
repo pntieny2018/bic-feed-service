@@ -15,6 +15,10 @@ export interface IQuizParticipantRepository {
     contentId: string,
     userId: string
   ): Promise<QuizParticipantEntity>;
+  findQuizParticipantDoingByContentIdAndUserId(
+    contentId: string,
+    userId: string
+  ): Promise<QuizParticipantEntity>;
   getQuizParticipantHighestScoreGroupByUserId(
     contentId: string
   ): Promise<{ createdBy: string; score: number }[]>;
@@ -22,14 +26,6 @@ export interface IQuizParticipantRepository {
     contentId: string,
     paginationProps: CursorPaginationProps
   ): Promise<CursorPaginationResult<QuizParticipantEntity>>;
-  getMapQuizParticipantHighestScoreGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantEntity>>;
-  getMapQuizParticipantsDoingGroupByContentId(
-    contentIds: string[],
-    userId: string
-  ): Promise<Map<string, QuizParticipantEntity>>;
 }
 
 export const QUIZ_PARTICIPANT_REPOSITORY_TOKEN = 'QUIZ_PARTICIPANT_REPOSITORY_TOKEN';

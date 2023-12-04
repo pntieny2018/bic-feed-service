@@ -1,12 +1,13 @@
+import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
-import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler } from '@nestjs/cqrs';
 
 import { SearchService } from '../../../../search/search.service';
 import { SeriesItemsAddedEvent } from '../../../domain/event';
 import { SeriesEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 
-@EventsHandler(SeriesItemsAddedEvent)
+@EventsHandlerAndLog(SeriesItemsAddedEvent)
 export class SearchSeriesItemsAddedEventHandler implements IEventHandler<SeriesItemsAddedEvent> {
   public constructor(
     private readonly _postSearchService: SearchService,

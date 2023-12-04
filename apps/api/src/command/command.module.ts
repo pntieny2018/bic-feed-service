@@ -1,3 +1,4 @@
+import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { LogModule } from '@libs/infra/log';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -16,9 +17,8 @@ import { UploadModule } from '../modules/upload';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 
-import { CleanArticleCommand } from './clean-article.command';
-import { CleanDraftPostCommand } from './clean-draft-posts.command';
-import { CleanUpDeletedSeriesCommand } from './clean-up-deleted-series.command';
+import { CleanUpDeletedCommentRefCommand } from './clean-up-deleted-comment-ref.command';
+import { CleanUpDeletedContentRefCommand } from './clean-up-deleted-content-ref.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
@@ -28,7 +28,6 @@ import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.comma
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
 import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
-import { FixSetActorHasSeenPostCommand } from './fix-set-actor-has-seen-post.command';
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { MigrateArticlesContainErrorImageCommand } from './migrate-articles-contain-error-image.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
@@ -39,6 +38,8 @@ import { MigrateScheduledTimeArticlesCommand } from './migrate-scheduled-time-ar
 import { MigrateWordCountCommand } from './migrate-word-count.command';
 import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
+import { UpdateCommentReactionCountCommand } from './update-comment-reaction-count.command';
+import { UpdateContentReactionCountCommand } from './update-content-reaction-count.command';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
@@ -65,6 +66,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     FeedPublisherModule,
     FollowModule,
     UploadModule,
+    PostgresModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -73,8 +75,6 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     FixCommentRepliesCountCommand,
     UpdatePrivacyPostCommand,
     UpdateMediaDomainCommand,
-    CleanArticleCommand,
-    CleanDraftPostCommand,
     IndexPostCommand,
     MoveMediaBucketCommand,
     UpdateTagTotalUsedCommand,
@@ -95,8 +95,10 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigratePublishedTimeContentCommand,
     ExportReactionCountDataCommand,
     ExportInvalidTagNameCommand,
-    CleanUpDeletedSeriesCommand,
-    FixSetActorHasSeenPostCommand,
+    UpdateCommentReactionCountCommand,
+    UpdateContentReactionCountCommand,
+    CleanUpDeletedContentRefCommand,
+    CleanUpDeletedCommentRefCommand,
   ],
 })
 export class CommandModule {}

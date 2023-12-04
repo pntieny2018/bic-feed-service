@@ -18,7 +18,7 @@ export class ContentActivityObjectDto {
   // for Post/Article reaction
   public reaction?: ReactionObjectDto;
   public reactionsOfActor?: ReactionObjectDto[];
-  public reactionsCount?: ReactionsCountObjectDto;
+  public reactionsCount?: ReactionsCountObjectDto[];
 
   // for Series change item
   public state?: 'add' | 'remove';

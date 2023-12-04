@@ -8,6 +8,7 @@ export * from './newsfeed.request.dto';
 export * from './post.request.dto';
 export * from './quiz.request.dto';
 export * from './reaction.request.dto';
+export * from './report.request.dto';
 export * from './series.request.dto';
 export * from './tag.request.dto';
 export * from './timeline.request.dto';

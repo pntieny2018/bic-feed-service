@@ -1,4 +1,3 @@
-import { CONTENT_TARGET } from '@beincom/constants';
 import {
   PostReactionAttributes,
   PostReactionModel,
@@ -13,10 +12,11 @@ export class PostReactionMapper {
     if (model === null) {
       return null;
     }
+
     return new ReactionEntity({
       ...model.toJSON(),
       targetId: model.postId,
-      target: CONTENT_TARGET.POST,
+      target: model.target,
     });
   }
 
@@ -25,6 +25,7 @@ export class PostReactionMapper {
       id: entity.get('id'),
       postId: entity.get('targetId'),
       reactionName: entity.get('reactionName'),
+      target: entity.get('target'),
       createdAt: entity.get('createdAt'),
       createdBy: entity.get('createdBy'),
     };

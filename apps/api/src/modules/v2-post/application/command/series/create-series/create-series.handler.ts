@@ -9,10 +9,7 @@ import {
   ContentEmptyGroupException,
   SeriesRequiredCoverException,
 } from '../../../../domain/exception';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { CreateSeriesDto } from '../../../dto';
 
 import { CreateSeriesCommand } from './create-series.command';

@@ -7,25 +7,28 @@ import { SearchService } from '../../../../search/search.service';
 import { ArticleUpdatedEvent } from '../../../domain/event';
 import { ArticleEntity } from '../../../domain/model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
-import { ImageDto, TagDto } from '../../dto';
+import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../binding/binding-media';
+import { TagDto } from '../../dto';
 
 @EventsHandlerAndLog(ArticleUpdatedEvent)
 export class SearchArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedEvent> {
   public constructor(
+    @Inject(MEDIA_BINDING_TOKEN)
+    private readonly _mediaBinding: IMediaBinding,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    private readonly _contentRepo: IContentRepository,
     // TODO: Change to Adapter
     private readonly _postSearchService: SearchService
   ) {}
 
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
-    const { articleEntity } = event;
+    const { articleEntity } = event.payload;
 
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
+    const contentWithArchivedGroups = (await this._contentRepo.findContentByIdInArchivedGroup(
       articleEntity.getId(),
       { shouldIncludeSeries: true }
     )) as ArticleEntity;
@@ -51,7 +54,7 @@ export class SearchArticleUpdatedEventHandler implements IEventHandler<ArticleUp
         publishedAt: articleEntity.get('publishedAt'),
         title: articleEntity.getTitle(),
         summary: articleEntity.get('summary'),
-        coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
+        coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
         categories: (articleEntity.get('categories') || []).map((item) => ({
           id: item.get('id'),
           name: item.get('name'),

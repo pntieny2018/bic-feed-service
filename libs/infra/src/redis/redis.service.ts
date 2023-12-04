@@ -1,12 +1,15 @@
+import { IS_ENABLE_LOG } from '@libs/common/constants';
 import { StringHelper } from '@libs/common/helpers';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
+
+import { CustomLogger } from '../log';
 
 import { REDIS_STORE_INSTANCE_TOKEN } from './redis-store.constants';
 
 @Injectable()
 export class RedisService {
-  private readonly _logger = new Logger(RedisService.name);
+  private readonly _logger = new CustomLogger(RedisService.name, IS_ENABLE_LOG);
   public constructor(
     @Inject(REDIS_STORE_INSTANCE_TOKEN)
     private readonly _store: Redis.Cluster | Redis.Redis
@@ -38,16 +41,18 @@ export class RedisService {
     try {
       return StringHelper.isJson(result) ? (JSON.parse(result) as T) : (result as unknown as T);
     } catch (e) {
+      this._logger.error(e?.message);
       return null;
     }
   }
 
   public async hgetall<T>(key: string): Promise<T> {
-    const result = await this._store.hgetall(key);
-    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'HGETALL', key, result })}`);
     try {
+      const result = await this._store.hgetall(key);
+      this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'HGETALL', key, result })}`);
       return result as unknown as T;
     } catch (e) {
+      this._logger.error(e?.message);
       return null;
     }
   }
