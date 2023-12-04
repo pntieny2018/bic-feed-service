@@ -8,12 +8,18 @@ export type ReportCreatedNotificationPayload = {
   actor: UserDto;
   report: ReportDto;
   content: string;
+  adminInfos: {
+    [rootGroupId: string]: string[];
+  };
 };
 
 export type ReportHiddenNotificationPayload = {
   actor: UserDto;
   reports: ReportDto[];
   content: string;
+  adminInfos: {
+    [rootGroupId: string]: string[];
+  };
 };
 
 export interface IReportNotificationApplicationService {

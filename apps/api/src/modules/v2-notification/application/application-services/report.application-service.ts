@@ -27,7 +27,7 @@ export class ReportNotificationApplicationService implements IReportNotification
   public async sendReportCreatedNotification(
     payload: ReportCreatedNotificationPayload
   ): Promise<void> {
-    const { actor, report, content } = payload;
+    const { actor, report, content, adminInfos } = payload;
 
     const reportObject = this._createReportCreatedActivityObject(report, actor);
     const activity = this._createReportCreatedActivity(reportObject);
@@ -39,7 +39,7 @@ export class ReportNotificationApplicationService implements IReportNotification
         event: ReportHasBeenCreated,
         data: activity,
         meta: {
-          report: { content },
+          report: { content, adminInfos },
         },
       },
     });
@@ -85,7 +85,7 @@ export class ReportNotificationApplicationService implements IReportNotification
   public async sendReportHiddenNotification(
     payload: ReportHiddenNotificationPayload
   ): Promise<void> {
-    const { actor, reports, content } = payload;
+    const { actor, reports, content, adminInfos } = payload;
 
     const reportObject = this._createReportHiddenActivityObject(reports, actor);
     const activity = this._createReportHiddenActivity(reportObject);
@@ -97,7 +97,7 @@ export class ReportNotificationApplicationService implements IReportNotification
         event: ReportHasBeenApproved,
         data: activity,
         meta: {
-          report: { content, creatorId: reports[0].targetActorId },
+          report: { content, creatorId: reports[0].targetActorId, adminInfos },
         },
       },
     });

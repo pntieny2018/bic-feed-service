@@ -1,6 +1,7 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { EntityHelper } from '../../../../../../common/helpers';
 import {
@@ -33,6 +34,9 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
   public async handle(event: ReportHiddenEvent): Promise<void> {
     const { reportEntities, authUser } = event.payload;
 
+    const groupIds = uniq(reportEntities.map((reportEntity) => reportEntity.get('groupId')));
+    const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
+
     const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
       reportEntities,
       'targetId'
@@ -43,11 +47,18 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
 
       const contentOfTarget = await this._reportDomain.getContentOfTargetReported(entities[0]);
       const reports = await this._reportBinding.bindingReportsWithReportersInReasonsCount(entities);
+      const adminInfos = entities
+        .map((entity) => entity.get('groupId'))
+        .reduce((acc, groupId) => {
+          acc[groupId] = groupAdminMap[groupId];
+          return acc;
+        }, {});
 
       await this._notiAdapter.sendReportHiddenNotification({
         reports,
         actor: authUser,
         content: contentOfTarget,
+        adminInfos,
       });
     }
   }
