@@ -4,12 +4,10 @@ import { HealthModule } from '@api/modules/health/health.module';
 import { PostModuleV2 } from '@api/modules/v2-post/post.module';
 import { configs } from '@libs/common/config/configuration';
 import { HEADER_REQ_ID } from '@libs/common/constants';
-import { IKafkaConfig } from '@libs/infra/kafka/config';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
-import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { ClsModule } from 'nestjs-cls';
 import { v4 as uuid } from 'uuid';
 
@@ -19,14 +17,6 @@ import {
   MediaConsumer,
   PublishOrRemovePostToNewsfeedConsumer,
 } from './module/main/kafka-consumer';
-
-export const register = async (config: ConfigService): Promise<KafkaOptions> => {
-  const kafkaConfig = config.get<IKafkaConfig>('kafka');
-  return {
-    transport: Transport.KAFKA,
-    options: kafkaConfig,
-  };
-};
 
 @Module({
   imports: [
