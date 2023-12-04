@@ -536,7 +536,8 @@ export class LibContentRepository extends BaseRepository<PostModel> {
             )}
         )`;
   }
-
+  //t1: 2
+  //t2: 2, 4,5
   private _filterInNewsfeedUser(userId: string): string {
     const { schema } = getDatabaseConfig();
     const userNewsFeedTable = UserNewsFeedModel.tableName;
