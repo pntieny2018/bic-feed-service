@@ -1,5 +1,5 @@
 import { HealthLabel } from '@libs/common/health-check/health.constants';
-import { KafkaHealthIndicator, RedisHealthIndicator } from '@libs/common/health-check/indicators';
+import { RedisHealthIndicator } from '@libs/common/health-check/indicators';
 import { Controller, Get } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import {
@@ -19,7 +19,6 @@ export class HealthController {
     private readonly _healthCheckService: HealthCheckService,
     private readonly _memoryHealthIndicator: MemoryHealthIndicator,
     private readonly _sequelizeHealthIndicator: SequelizeHealthIndicator,
-    private readonly _kafkaHealthIndicator: KafkaHealthIndicator,
     private readonly _redisHealthIndicator: RedisHealthIndicator
   ) {}
 
@@ -45,8 +44,6 @@ export class HealthController {
           connection: this._connection,
           timeout: 5000,
         }),
-      async (): Promise<HealthIndicatorResult> =>
-        this._kafkaHealthIndicator.isHealthy(HealthLabel.KAFKA_KEY),
       async (): Promise<HealthIndicatorResult> =>
         this._redisHealthIndicator.isHealthy(HealthLabel.REDIS_KEY),
     ]);
