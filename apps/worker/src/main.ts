@@ -10,8 +10,6 @@ import './extension';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(WorkerModule);
-  //app.useGlobalInterceptors(new TracingInterceptor());
-
   const configService = app.get<ConfigService>(ConfigService);
 
   KafkaGateway.init(app, configService)
