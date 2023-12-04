@@ -52,6 +52,7 @@ export class GetMyReportedContentsHandler
       targetTypes: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
+      isDistinctTarget: true,
       limit,
       order,
       before,
