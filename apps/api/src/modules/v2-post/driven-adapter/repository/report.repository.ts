@@ -208,7 +208,7 @@ export class ReportRepository implements IReportRepository {
 
     const reportIds = reports.map((report) => report.id);
     const reportDetails = await this._libReportDetailRepo.findMany({
-      where: { id: reportIds },
+      where: { reportId: reportIds },
       select: ['reporterId'],
     });
 
