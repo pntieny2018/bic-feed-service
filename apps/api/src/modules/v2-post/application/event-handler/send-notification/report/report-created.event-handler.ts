@@ -53,14 +53,8 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
     );
 
     for (const reportEntity of reportEntities) {
-      const reasonsCountWithReporters =
-        await this._reportBinding.bindingReportReasonsCountWithReporters(
-          reportEntity.get('reasonsCount')
-        );
-      const report = this._reportBinding.binding(reportEntity);
-
       await this._notiAdapter.sendReportCreatedNotification({
-        report: { ...report, reasonsCount: reasonsCountWithReporters },
+        report: this._reportBinding.binding(reportEntity),
         actor: authUser,
         content: contentOfTargetReported,
       });
