@@ -73,4 +73,20 @@ export class ArrayHelper {
   public static convertObjectKeysToCamelCase(arr: any[]): any {
     return arr.map((obj) => ObjectHelper.convertKeysToCamelCase(obj));
   }
+
+  public static convertArrayToArrayRecord<T>(array: T[], key: string): Record<string, T[]> {
+    return array.reduce((record, item) => {
+      const recordKey = item[key];
+
+      let existedRecordItem = record[recordKey];
+      if (!existedRecordItem) {
+        existedRecordItem = [item];
+      } else {
+        existedRecordItem.push(item);
+      }
+
+      record[recordKey] = existedRecordItem;
+      return record;
+    }, {});
+  }
 }

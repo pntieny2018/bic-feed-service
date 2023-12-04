@@ -2,10 +2,10 @@ import { CONTENT_TARGET } from '@beincom/constants';
 import { ArrayHelper } from '@libs/common/helpers';
 import { PaginatedResponse } from '@libs/database/postgres/common';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
+import { BaseUserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
@@ -16,8 +16,13 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
-import { ArticleDto, PostDto, ReportTargetDto } from '../../../dto';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+  IReportBinding,
+  REPORT_BINDING_TOKEN,
+} from '../../../binding';
+import { ReportTargetDto } from '../../../dto';
 
 import { GetMyReportedContentsQuery } from './get-my-reported-contents.query';
 
@@ -33,7 +38,9 @@ export class GetMyReportedContentsHandler
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding
+    private readonly _contentBinding: IContentBinding,
+    @Inject(REPORT_BINDING_TOKEN)
+    private readonly _reportBinding: IReportBinding
   ) {}
 
   public async execute(
@@ -42,12 +49,10 @@ export class GetMyReportedContentsHandler
     const { authUser, limit, order, before, after } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
-      where: {
-        targetType: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
-        targetActorId: authUser.id,
-        status: REPORT_STATUS.HIDDEN,
-      },
-      include: { details: true },
+      targetTypes: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
+      targetActorId: authUser.id,
+      status: REPORT_STATUS.HIDDEN,
+      isDistinctTarget: true,
       limit,
       order,
       before,
@@ -62,18 +67,22 @@ export class GetMyReportedContentsHandler
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 
     const contentMap = ArrayHelper.convertArrayToObject(contents, 'id');
-    const reportMap = EntityHelper.entityArrayToRecord(reportEntities, 'id');
+    const reportReasonsCountMap = await this._reportDomain.getReportReasonsMapByTargetIds(
+      contentIds
+    );
 
-    const reports: ReportTargetDto[] = [];
+    const reports: ReportTargetDto[] = reportEntities.map((report) => {
+      const target = contentMap[report.get('targetId')];
+      const targetActor = target.actor ? new BaseUserDto(target.actor) : undefined;
 
-    for (const report of reportEntities) {
-      const target = contentMap[report.get('targetId')] as PostDto | ArticleDto;
-      const reasonCounts = await this._reportDomain.countReportReasons(
-        reportMap[report.get('id')].getDetails()
-      );
+      const reportReasonsCount = reportReasonsCountMap[target.id];
+      const reasonsCount = this._reportBinding.bindingReportReasonsCount(reportReasonsCount);
 
-      reports.push({ target, reasonCounts });
-    }
+      return {
+        target: { ...target, actor: targetActor },
+        reasonsCount,
+      };
+    });
 
     return {
       list: reports,

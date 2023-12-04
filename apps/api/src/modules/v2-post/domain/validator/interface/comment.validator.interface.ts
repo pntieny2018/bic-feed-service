@@ -1,5 +1,5 @@
-import { CommentEntity } from '../../model/comment';
 import { UserDto } from '../../../../v2-user/application';
+import { CommentEntity } from '../../model/comment';
 
 export type UpdateCommentProps = {
   id: string;
@@ -16,6 +16,7 @@ export type UpdateCommentProps = {
 
 export interface ICommentValidator {
   getUpdateMasks(props: UpdateCommentProps, comment: CommentEntity): string[];
+  validateNotHiddenComment(comment: CommentEntity): Promise<void>;
 }
 
 export const COMMENT_VALIDATOR_TOKEN = 'COMMENT_VALIDATOR_TOKEN';

@@ -20,15 +20,19 @@ export class CommentBinding implements ICommentBinding {
   public constructor(
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
+
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepo: ICommentReactionRepository,
+
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
   public async commentsBinding(
     rows: CommentEntity[],
-    authUser?: UserDto
+    dataBinding: { authUser: UserDto }
   ): Promise<CommentExtendedDto[]> {
+    const { authUser } = dataBinding;
+
     const userData = await this._getUsersBindingInComment(rows, authUser);
 
     const reactionsCount = await this._commentReactionRepo.getAndCountReactionByComments(
@@ -37,6 +41,7 @@ export class CommentBinding implements ICommentBinding {
 
     const result = rows.map(async (row) => {
       const { actor, mentionUsers } = userData[row.get('id')];
+
       return new CommentExtendedDto({
         id: row.get('id'),
         postId: row.get('postId'),
@@ -54,7 +59,7 @@ export class CommentBinding implements ICommentBinding {
         actor,
         child: row.get('childs')
           ? new PaginatedResponse(
-              await this.commentsBinding(row.get('childs').rows),
+              await this.commentsBinding(row.get('childs').rows, { authUser }),
               row.get('childs').meta
             )
           : undefined,
@@ -75,11 +80,11 @@ export class CommentBinding implements ICommentBinding {
 
   public async commentBinding(
     commentEntity: CommentEntity,
-    dataBinding?: {
-      actor?: UserDto;
-    }
+    dataBinding: { authUser: UserDto }
   ): Promise<CommentBaseDto> {
-    const userData = await this._getUsersBindingInComment([commentEntity], dataBinding?.actor);
+    const { authUser } = dataBinding;
+
+    const userData = await this._getUsersBindingInComment([commentEntity], authUser);
 
     const { actor, mentionUsers } = userData[commentEntity.get('id')];
 

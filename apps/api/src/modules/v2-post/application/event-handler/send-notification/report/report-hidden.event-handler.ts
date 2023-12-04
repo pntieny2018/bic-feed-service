@@ -3,11 +3,13 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
+import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { ReportHiddenEvent } from '../../../../domain/event';
+import { ReportEntity } from '../../../../domain/model/report';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -30,20 +32,34 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
   ) {}
 
   public async handle(event: ReportHiddenEvent): Promise<void> {
-    const { report, authUser } = event.payload;
+    const { reportEntities, authUser } = event.payload;
 
-    const reportDto = this._reportBinding.binding(report);
-
-    const groupIds = uniq(reportDto.details.map((detail) => detail.groupId));
+    const groupIds = uniq(reportEntities.map((reportEntity) => reportEntity.get('groupId')));
     const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
 
-    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(report);
+    const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
+      reportEntities,
+      'targetId'
+    );
 
-    await this._notiAdapter.sendReportHiddenNotification({
-      report: reportDto,
-      actor: authUser,
-      adminInfos: groupAdminMap,
-      content: contentOfTargetReported,
-    });
+    for (const targetId of Object.keys(reportEntityMapByTargetId)) {
+      const entities = reportEntityMapByTargetId[targetId];
+
+      const contentOfTarget = await this._reportDomain.getContentOfTargetReported(entities[0]);
+      const reports = await this._reportBinding.bindingReportsWithReportersInReasonsCount(entities);
+      const adminInfos = entities
+        .map((entity) => entity.get('groupId'))
+        .reduce((acc, groupId) => {
+          acc[groupId] = groupAdminMap[groupId];
+          return acc;
+        }, {});
+
+      await this._notiAdapter.sendReportHiddenNotification({
+        reports,
+        actor: authUser,
+        content: contentOfTarget,
+        adminInfos,
+      });
+    }
   }
 }

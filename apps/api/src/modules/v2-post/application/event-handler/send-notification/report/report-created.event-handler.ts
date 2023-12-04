@@ -1,13 +1,16 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
+import { EntityHelper } from '../../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { ReportCreatedEvent } from '../../../../domain/event';
+import { ReportEntity } from '../../../../domain/model/report';
 import {
   GROUP_ADAPTER,
   IGroupAdapter,
@@ -30,20 +33,41 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
   ) {}
 
   public async handle(event: ReportCreatedEvent): Promise<void> {
-    const { report, authUser } = event.payload;
+    const { reportEntities, authUser } = event.payload;
 
-    const reportDto = this._reportBinding.binding(report);
-
-    const groupIds = uniq(reportDto.details.map((detail) => detail.groupId));
+    const groupIds = uniq(reportEntities.map((reportEntity) => reportEntity.get('groupId')));
     const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
 
-    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(report);
+    const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
+      reportEntities,
+      'targetId'
+    );
 
-    await this._notiAdapter.sendReportCreatedNotification({
-      report: reportDto,
-      actor: authUser,
-      adminInfos: groupAdminMap,
-      content: contentOfTargetReported,
-    });
+    for (const targetId of Object.keys(reportEntityMapByTargetId)) {
+      await this._sendNotificationByTargetId(
+        reportEntityMapByTargetId[targetId],
+        authUser,
+        groupAdminMap
+      );
+    }
+  }
+
+  private async _sendNotificationByTargetId(
+    reportEntities: ReportEntity[],
+    authUser: UserDto,
+    groupAdminMap: { [groupId: string]: string[] }
+  ): Promise<void> {
+    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(
+      reportEntities[0]
+    );
+
+    for (const reportEntity of reportEntities) {
+      await this._notiAdapter.sendReportCreatedNotification({
+        report: this._reportBinding.binding(reportEntity),
+        actor: authUser,
+        content: contentOfTargetReported,
+        adminInfos: { [reportEntity.get('groupId')]: groupAdminMap[reportEntity.get('groupId')] },
+      });
+    }
   }
 }

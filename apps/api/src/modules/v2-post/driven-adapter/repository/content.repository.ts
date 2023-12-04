@@ -1,21 +1,15 @@
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
-import { CONTENT_TARGET } from '@beincom/constants/lib/content';
 import {
   CursorPaginationResult,
   getDatabaseConfig,
   PaginationProps,
 } from '@libs/database/postgres/common';
-import {
-  PostGroupModel,
-  PostModel,
-  ReportContentDetailAttributes,
-} from '@libs/database/postgres/model';
+import { PostGroupModel, PostModel } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,
   LibPostGroupRepository,
   LibPostSeriesRepository,
   LibUserMarkReadPostRepository,
-  LibUserReportContentDetailRepository,
   LibUserSeenPostRepository,
   LibContentRepository,
   LibPostTagRepository,
@@ -28,7 +22,7 @@ import {
 } from '@libs/database/postgres/repository/interface';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
+import { Sequelize, Transaction } from 'sequelize';
 
 import { ContentNotFoundException } from '../../domain/exception';
 import {
@@ -43,7 +37,6 @@ import {
 } from '../../domain/model/content';
 import {
   GetCursorPaginationPostIdsInGroup,
-  GetReportContentIdsProps,
   IContentRepository,
 } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
@@ -60,7 +53,6 @@ export class ContentRepository implements IContentRepository {
     private readonly _libPostCategoryRepo: LibPostCategoryRepository,
     private readonly _libUserSeenPostRepo: LibUserSeenPostRepository,
     private readonly _libUserMarkReadPostRepo: LibUserMarkReadPostRepository,
-    private readonly _libUserReportContentRepo: LibUserReportContentDetailRepository,
     private readonly _libUserSavePostRepo: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper
   ) {}
@@ -368,47 +360,6 @@ export class ContentRepository implements IContentRepository {
       ],
       { ignoreDuplicates: true }
     );
-  }
-
-  public async getReportedContentIdsByUser(props: GetReportContentIdsProps): Promise<string[]> {
-    if (!props.reportUser) {
-      return [];
-    }
-    const condition: WhereOptions<ReportContentDetailAttributes> = {
-      [Op.and]: [
-        {
-          createdBy: props.reportUser,
-          ...(props.target && props.target.length && { targetType: props.target }),
-          ...(props.groupIds && props.groupIds.length && { groupId: props.groupIds }),
-        },
-      ],
-    };
-
-    const rows = await this._libUserReportContentRepo.findMany({
-      where: condition,
-    });
-
-    return rows.map((row) => row.targetId);
-  }
-
-  public async findUserIdsReportedTargetId(
-    targetId: string,
-    contentTarget?: CONTENT_TARGET
-  ): Promise<string[]> {
-    const condition: WhereOptions<ReportContentDetailAttributes> = {
-      [Op.and]: [
-        {
-          targetId,
-          ...(contentTarget && { targetType: contentTarget }),
-        },
-      ],
-    };
-
-    const reports = await this._libUserReportContentRepo.findMany({
-      where: condition,
-    });
-
-    return (reports || []).map((report) => report.createdBy);
   }
 
   public async findPinnedContentIdsByGroupId(groupId: string): Promise<string[]> {

@@ -44,6 +44,9 @@ export class PostGroupModel extends Model<
   @Column
   public pinnedIndex?: number;
 
+  @Column
+  public isHidden?: boolean;
+
   @CreatedAt
   @Column
   public createdAt?: Date;

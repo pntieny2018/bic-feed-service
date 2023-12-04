@@ -4,40 +4,49 @@ import { REPORT_STATUS } from '@libs/database/postgres/model';
 
 import { ReportEntity } from '../model/report';
 
-type IncludeReportProps = {
-  details?: boolean;
+export type FindOneReportProps = {
+  id?: string;
+  groupId?: string;
+  targetId?: string;
+  targetType?: CONTENT_TARGET;
+  targetActorId?: string;
+  status?: REPORT_STATUS;
 };
 
-export type FindOneReportProps = {
-  where: {
-    id?: string;
-    targetId?: string;
-    targetType?: CONTENT_TARGET;
-    targetActorId?: string;
-    status?: REPORT_STATUS;
-  };
-  include?: IncludeReportProps;
+export type FindAllReportsProps = {
+  groupIds?: string[];
+  targetIds?: string[];
+  status?: REPORT_STATUS;
 };
 
 export type GetPaginationReportProps = {
-  where: {
-    targetType?: CONTENT_TARGET[];
-    targetActorId?: string;
-    status?: REPORT_STATUS;
-    groupId?: string;
-  };
-  include?: IncludeReportProps;
+  targetTypes?: CONTENT_TARGET[];
+  targetActorId?: string;
+  status?: REPORT_STATUS;
+  groupId?: string;
+  isDistinctTarget?: boolean;
 } & CursorPaginationProps;
 
-export type GetListReportsProps = CursorPaginationProps & {
-  groupId: string;
+export type GetReportedTargetIdsByReporterIdProps = {
+  reporterId: string;
+  groupIds?: string[];
+  targetTypes?: CONTENT_TARGET[];
+};
+
+export type GetReporterIdsByTargetIdProps = {
+  targetId: string;
+  groupIds?: string[];
 };
 
 export interface IReportRepository {
-  findOne(input: FindOneReportProps): Promise<ReportEntity>;
-  getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;
   create(reportEntity: ReportEntity): Promise<void>;
   update(reportEntity: ReportEntity): Promise<void>;
+  findOne(input: FindOneReportProps): Promise<ReportEntity>;
+  findAll(input: FindAllReportsProps): Promise<ReportEntity[]>;
+  getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;
+
+  getReportedTargetIdsByReporterId(input: GetReportedTargetIdsByReporterIdProps): Promise<string[]>;
+  getReporterIdsByTargetId(input: GetReporterIdsByTargetIdProps): Promise<string[]>;
 }
 
 export const REPORT_REPOSITORY_TOKEN = 'REPORT_REPOSITORY_TOKEN';

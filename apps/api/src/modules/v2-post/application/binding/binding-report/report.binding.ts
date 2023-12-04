@@ -1,17 +1,13 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_REPORT_REASONS, CONTENT_TARGET } from '@beincom/constants';
 import { ArrayHelper } from '@libs/common/helpers';
 import { BaseUserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { uniq } from 'lodash';
 
 import { EntityHelper } from '../../../../../common/helpers';
-import {
-  IReportDomainService,
-  REPORT_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface';
 import { CommentEntity } from '../../../domain/model/comment';
 import { ArticleEntity, PostEntity } from '../../../domain/model/content';
-import { ReportEntity } from '../../../domain/model/report';
+import { ReasonCount, ReportEntity } from '../../../domain/model/report';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -19,14 +15,12 @@ import {
   IContentRepository,
 } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
-import { ReportDto, ReportForManagerDto } from '../../dto';
+import { ReportDto, ReportForManagerDto, ReportReasonCountDto } from '../../dto';
 
 import { IReportBinding } from './report.interface';
 
 export class ReportBinding implements IReportBinding {
   public constructor(
-    @Inject(REPORT_DOMAIN_SERVICE_TOKEN)
-    private readonly _reportDomain: IReportDomainService,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
     @Inject(CONTENT_REPOSITORY_TOKEN)
@@ -38,14 +32,63 @@ export class ReportBinding implements IReportBinding {
   public binding(entity: ReportEntity): ReportDto {
     return new ReportDto({
       id: entity.get('id'),
+      groupId: entity.get('groupId'),
+      reportTo: entity.get('reportTo'),
       targetId: entity.get('targetId'),
       targetType: entity.get('targetType'),
       targetActorId: entity.get('targetActorId'),
+      reasonsCount: this.bindingReportReasonsCount(entity.getReasonsCount()),
       status: entity.get('status'),
-      updatedBy: entity.get('updatedBy'),
+      processedBy: entity.get('processedBy'),
+      processedAt: entity.get('processedAt'),
       createdAt: entity.get('createdAt'),
       updatedAt: entity.get('updatedAt'),
-      details: entity.getDetails(),
+    });
+  }
+
+  public async bindingReportsWithReportersInReasonsCount(
+    entities: ReportEntity[]
+  ): Promise<ReportDto[]> {
+    const reporterIds = uniq(
+      entities
+        .map((entity) =>
+          entity
+            .getReasonsCount()
+            .map((reasonCount) => reasonCount.reporterIds)
+            .flat()
+        )
+        .flat()
+    );
+    let reporters = await this._userAdapter.getUsersByIds(reporterIds);
+    reporters = reporters.map((reporter) => new BaseUserDto(reporter));
+
+    return entities.map((entity) => {
+      const reasonsCountWithReporters = entity.getReasonsCount().map((reasonCount) => {
+        const reason = CONTENT_REPORT_REASONS.find(
+          (reason) => reason.id === reasonCount.reasonType
+        );
+        return {
+          reasonType: reasonCount.reasonType,
+          description: reason?.description,
+          total: reasonCount.total,
+          reporters: reporters.filter((reporter) => reasonCount.reporterIds.includes(reporter.id)),
+        };
+      });
+
+      return new ReportDto({
+        id: entity.get('id'),
+        groupId: entity.get('groupId'),
+        reportTo: entity.get('reportTo'),
+        targetId: entity.get('targetId'),
+        targetType: entity.get('targetType'),
+        targetActorId: entity.get('targetActorId'),
+        reasonsCount: reasonsCountWithReporters,
+        status: entity.get('status'),
+        processedBy: entity.get('processedBy'),
+        processedAt: entity.get('processedAt'),
+        createdAt: entity.get('createdAt'),
+        updatedAt: entity.get('updatedAt'),
+      });
     });
   }
 
@@ -83,7 +126,7 @@ export class ReportBinding implements IReportBinding {
       const targetType = entity.get('targetType');
 
       const targetActor = new BaseUserDto(actorMap[entity.get('targetActorId')]);
-      const reasonCounts = await this._reportDomain.countReportReasons(entity.getDetails());
+      const reasonsCount = this.bindingReportReasonsCount(entity.getReasonsCount());
 
       let content;
       switch (targetType) {
@@ -105,19 +148,59 @@ export class ReportBinding implements IReportBinding {
 
       reports.push({
         id: entity.get('id'),
+        groupId: entity.get('groupId'),
+        reportTo: entity.get('reportTo'),
         targetId: entity.get('targetId'),
         targetType: entity.get('targetType'),
         targetActorId: entity.get('targetActorId'),
+        reasonsCount,
         status: entity.get('status'),
-        updatedBy: entity.get('updatedBy'),
+        processedBy: entity.get('processedBy'),
+        processedAt: entity.get('processedAt'),
         createdAt: entity.get('createdAt'),
         updatedAt: entity.get('updatedAt'),
         content,
         targetActor,
-        reasonCounts,
       });
     }
 
     return reports;
+  }
+
+  public bindingReportReasonsCount(reasonsCount: ReasonCount[]): ReportReasonCountDto[] {
+    if (!reasonsCount?.length) {
+      return [];
+    }
+
+    return reasonsCount.map((reasonCount) => {
+      const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonCount.reasonType);
+      return {
+        reasonType: reasonCount.reasonType,
+        description: reason?.description,
+        total: reasonCount.total,
+      };
+    });
+  }
+
+  public async bindingReportReasonsCountWithReporters(
+    reasonsCount: ReasonCount[]
+  ): Promise<ReportReasonCountDto[]> {
+    if (!reasonsCount?.length) {
+      return [];
+    }
+
+    const reporterIds = uniq(reasonsCount.map((reasonCount) => reasonCount.reporterIds).flat());
+    let reporters = await this._userAdapter.getUsersByIds(reporterIds);
+    reporters = reporters.map((reporter) => new BaseUserDto(reporter));
+
+    return reasonsCount.map((reasonCount) => {
+      const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonCount.reasonType);
+      return {
+        reasonType: reasonCount.reasonType,
+        description: reason?.description,
+        total: reasonCount.total,
+        reporters: reporters.filter((reporter) => reasonCount.reporterIds.includes(reporter.id)),
+      };
+    });
   }
 }

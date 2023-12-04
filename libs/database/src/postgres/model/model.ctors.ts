@@ -23,6 +23,8 @@ import { ReactionContentDetailsModel } from './reaction-content-details.model';
 import { RecentSearchModel } from './recent-search.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
 import { ReportContentModel } from './report-content.model';
+import { ReportDetailModel } from './report-detail.model';
+import { ReportModel } from './report.model';
 import { TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
@@ -52,8 +54,10 @@ export const MODEL_CTORS = [
   QuizQuestionModel,
 
   RecentSearchModel,
-  ReportContentDetailModel,
-  ReportContentModel,
+  ReportContentDetailModel, // TODO: remove this model
+  ReportContentModel, // TODO: remove this model
+  ReportDetailModel,
+  ReportModel,
   TagModel,
   UserMarkReadPostModel,
   UserNewsFeedModel,

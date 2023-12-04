@@ -191,6 +191,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       attributes,
       where,
       include: include.length > 0 ? include : undefined,
+      group: findOptions.group,
     });
 
     return {
