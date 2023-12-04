@@ -101,7 +101,11 @@ export class IndexPostCommand implements CommandRunner {
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
     await this._deleteAllDocuments();
-    await this._indexPost();
+    try {
+      await this._indexPost();
+    } catch (e) {
+      console.log(e);
+    }
 
     process.exit();
   }
@@ -194,7 +198,8 @@ export class IndexPostCommand implements CommandRunner {
         hasMore = false;
       } else {
         const insertDataPosts = [];
-        for (const post of posts) {
+        for (const postData of posts) {
+          const post = postData.toJSON();
           const groupIds = post.groups.map((group) => group.groupId);
           const groups = await this.groupAppService.findAllByIds(groupIds);
           const communityIds = groups.map((group) => group.rootGroupId);
@@ -219,7 +224,7 @@ export class IndexPostCommand implements CommandRunner {
             item.content = post.content;
             item.media = post.mediaJson;
             item.mentionUserIds = post.mentions;
-            item.seriesIds = post.postSeries.map((series) => series.seriesId);
+            item.seriesIds = post.seriesIds;
           }
           if (post.type === CONTENT_TYPE.ARTICLE) {
             item.title = post.title;
@@ -235,9 +240,8 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === CONTENT_TYPE.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.itemIds = post.items.map((item) => item.id);
+            item.itemIds = post.itemIds;
             item.coverMedia = post.coverJson;
-            delete item.seriesIds;
           }
           console.log('item', item);
           insertDataPosts.push(item);
@@ -275,7 +279,7 @@ export class IndexPostCommand implements CommandRunner {
           ],
           [
             Sequelize.literal(`(
-              SELECT array_agg("ps".series)
+              SELECT array_agg("ps".series_id)
               FROM ${postSeriesModel} as "ps"
               WHERE "PostModel"."id" = "ps"."post_id"
             )`),

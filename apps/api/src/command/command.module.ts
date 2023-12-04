@@ -46,6 +46,7 @@ import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
 import { configs } from '@libs/common/config/configuration';
+import { MigratePostTitleCommand } from '@api/command/migrate-post-title.command';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { configs } from '@libs/common/config/configuration';
     CleanUpDeletedContentsCommand,
     MigratePostGroupIsHidden,
     MigrateReportStructure,
+    MigratePostTitleCommand,
   ],
 })
 export class CommandModule {}
