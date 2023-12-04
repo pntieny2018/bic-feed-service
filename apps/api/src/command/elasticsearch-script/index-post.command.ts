@@ -268,7 +268,7 @@ export class IndexPostCommand implements CommandRunner {
           [
             Sequelize.literal(`(
               SELECT array_agg("postSeries".post_id order by zindex asc)
-              FROM }.${postSeriesModel} as "postSeries"
+              FROM ${postSeriesModel} as "postSeries"
               WHERE "PostModel"."id" = "postSeries"."series_id"
             )`),
             'itemIds',
@@ -276,7 +276,7 @@ export class IndexPostCommand implements CommandRunner {
           [
             Sequelize.literal(`(
               SELECT array_agg("ps".series)
-              FROM }.${postSeriesModel} as "ps"
+              FROM ${postSeriesModel} as "ps"
               WHERE "PostModel"."id" = "ps"."post_id"
             )`),
             'seriesIds',
