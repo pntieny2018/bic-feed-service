@@ -551,7 +551,7 @@ export class ContentBinding implements IContentBinding {
       if (item instanceof PostEntity) {
         return {
           id: item.getId(),
-          content: item.get('content'),
+          title: item.getTitle(),
           createdBy: item.getCreatedBy(),
           createdAt: item.get('createdAt'),
           publishedAt: item.get('publishedAt'),

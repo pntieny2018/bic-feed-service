@@ -82,7 +82,7 @@ export class CreateDraftPostDto {
 
 export class PostInSeriesDto extends PickType(PostDto, [
   'id',
-  'content',
+  'title',
   'createdBy',
   'createdAt',
   'publishedAt',

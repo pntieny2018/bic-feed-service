@@ -6,11 +6,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
 
 import { ElasticsearchHelper } from '../../common/helpers';
-import { CategoryModel } from '../../database/models/category.model';
-import { LinkPreviewModel } from '../../database/models/link-preview.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { PostSeriesModel } from '../../database/models/post-series.model';
-import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
 import { PostBindingService } from '../../modules/post/post-binding.service';
 import { PostService } from '../../modules/post/post.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
@@ -28,6 +23,16 @@ import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
 import { POST_VI_MAPPING } from './post_vi_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
+import { Sequelize } from 'sequelize';
+import {
+  CategoryModel,
+  LinkPreviewModel,
+  PostGroupModel,
+  PostModel,
+  PostSeriesModel,
+} from '@libs/database/postgres/model';
+import { PostStatus } from '@api/modules/v2-post/data-type';
+import { CONTENT_TYPE } from '@beincom/constants';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -210,13 +215,13 @@ export class IndexPostCommand implements CommandRunner {
             name: tag.name,
             groupId: tag.groupId,
           }));
-          if (post.type === PostType.POST) {
+          if (post.type === CONTENT_TYPE.POST) {
             item.content = post.content;
             item.media = post.mediaJson;
             item.mentionUserIds = post.mentions;
             item.seriesIds = post.postSeries.map((series) => series.seriesId);
           }
-          if (post.type === PostType.ARTICLE) {
+          if (post.type === CONTENT_TYPE.ARTICLE) {
             item.title = post.title;
             item.summary = post.summary;
             item.content = post.content;
@@ -225,14 +230,16 @@ export class IndexPostCommand implements CommandRunner {
               id: category.id,
               name: category.name,
             }));
-            item.seriesIds = post.postSeries.map((series) => series.seriesId);
+            item.seriesIds = post.seriesIds;
           }
-          if (post.type === PostType.SERIES) {
+          if (post.type === CONTENT_TYPE.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
             item.itemIds = post.items.map((item) => item.id);
             item.coverMedia = post.coverJson;
+            delete item.seriesIds;
           }
+          console.log('item', item);
           insertDataPosts.push(item);
         }
         const { totalCreated, totalUpdated } = await this.postSearchService.addPostsToSearch(
@@ -253,12 +260,30 @@ export class IndexPostCommand implements CommandRunner {
     this._logger.log(`Done. Total created: ${created} - total updated: ${updated} / ${total}`);
   }
 
-  private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
-    const attributes = {
-      exclude: ['updatedBy'],
-    };
+  private async _getPostsToSync(offset: number, limit: number): Promise<PostModel[]> {
+    const postSeriesModel = PostSeriesModel.getTableName();
     const rows = await this._postModel.findAll({
-      attributes,
+      attributes: {
+        include: [
+          [
+            Sequelize.literal(`(
+              SELECT array_agg("postSeries".post_id order by zindex asc)
+              FROM }.${postSeriesModel} as "postSeries"
+              WHERE "PostModel"."id" = "postSeries"."series_id"
+            )`),
+            'itemIds',
+          ],
+          [
+            Sequelize.literal(`(
+              SELECT array_agg("ps".series)
+              FROM }.${postSeriesModel} as "ps"
+              WHERE "PostModel"."id" = "ps"."post_id"
+            )`),
+            'seriesIds',
+          ],
+        ],
+        exclude: ['updatedBy'],
+      },
       include: [
         {
           model: PostGroupModel,
@@ -268,33 +293,11 @@ export class IndexPostCommand implements CommandRunner {
           where: { isArchived: false },
         },
         {
-          model: PostModel,
-          as: 'items',
-          required: false,
-          through: { attributes: ['zindex', 'createdAt'] },
-          attributes: [
-            'id',
-            'title',
-            'summary',
-            'createdBy',
-            'canComment',
-            'canReact',
-            'importantExpiredAt',
-          ],
-          where: { status: 'PUBLISHED', isHidden: false },
-        },
-        {
           model: CategoryModel,
           as: 'categories',
           required: false,
           through: { attributes: [] },
           attributes: ['id', 'name'],
-        },
-        {
-          model: PostSeriesModel,
-          as: 'postSeries',
-          required: false,
-          attributes: ['seriesId'],
         },
         { model: LinkPreviewModel, as: 'linkPreview', required: false },
       ],
@@ -304,7 +307,7 @@ export class IndexPostCommand implements CommandRunner {
       },
       offset,
       limit,
-      order: [['publishedAt', 'desc']],
+      order: [['publishedAt', 'asc']],
     });
     return rows;
   }

@@ -44,6 +44,7 @@ export class SearchPostUpdatedEventHandler implements IEventHandler<PostUpdatedE
       {
         id: postEntity.getId(),
         type: postEntity.getType(),
+        title: postEntity.get('title'),
         content: postEntity.get('content'),
         media: this._mediaBinding.binding(postEntity.get('media')),
         isHidden: postEntity.isHidden(),
