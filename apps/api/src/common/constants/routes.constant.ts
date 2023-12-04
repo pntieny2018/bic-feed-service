@@ -233,7 +233,7 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     VALIDATE_SERIES_TAGS: {
-      PATH: ['content/validate-series-tags', 'contents/:contentId/mark-as-read'],
+      PATH: ['content/validate-series-tags', 'contents/validate-series-tags'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UPDATE_SETTINGS: {
