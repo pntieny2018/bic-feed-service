@@ -1,10 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import {
-  ILinkPreviewFactory,
-  LINK_PREVIEW_FACTORY_TOKEN,
-} from '../factory/interface/link-preview.factory.interface';
 import { LinkPreviewEntity } from '../model/link-preview';
 import { ILinkPreviewRepository, LINK_PREVIEW_REPOSITORY_TOKEN } from '../repositoty-interface';
 
@@ -18,9 +14,7 @@ export class LinkPreviewDomainService implements ILinkPreviewDomainService {
 
   public constructor(
     @Inject(LINK_PREVIEW_REPOSITORY_TOKEN)
-    private readonly _linkPreviewRepo: ILinkPreviewRepository,
-    @Inject(LINK_PREVIEW_FACTORY_TOKEN)
-    private readonly _linkPreviewFactory: ILinkPreviewFactory
+    private readonly _linkPreviewRepo: ILinkPreviewRepository
   ) {}
 
   public async findOrUpsert(input: LinkPreviewProps): Promise<LinkPreviewEntity> {

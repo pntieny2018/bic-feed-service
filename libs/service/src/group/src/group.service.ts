@@ -110,39 +110,6 @@ export class GroupService implements IGroupService {
     return [...new Set(response.flat())];
   }
 
-  public async getCommunityAdmins(
-    rootGroupIds: string[],
-    pagination?: { offset?: number; limit?: number }
-  ): Promise<{
-    admins: Record<string, string[]>;
-    owners: Record<string, string[]>;
-  }> {
-    try {
-      const offset = pagination?.offset || 0;
-      const limit = pagination?.limit || 50;
-      const params = `group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
-
-      const response = await this._httpService.get(
-        `${GROUP_ENDPOINT.INTERNAL.COMMUNITY_ADMINS}?${params}`
-      );
-
-      if (response.status !== HttpStatus.OK) {
-        return {
-          admins: {},
-          owners: {},
-        };
-      }
-      this._logger.debug(JSON.stringify(response.data));
-      return response.data['data'];
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex));
-      return {
-        admins: {},
-        owners: {},
-      };
-    }
-  }
-
   public async getUserRoleInGroups(
     groupIds: string[],
     roles: ROLE_TYPE[]

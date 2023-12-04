@@ -1,7 +1,9 @@
+import { PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -24,6 +26,7 @@ import {
   ReportContentCommand,
   SaveContentCommand,
   SeenContentCommand,
+  UnsaveContentCommand,
   UpdateContentSettingCommand,
 } from '../../application/command/content';
 import { ValidateSeriesTagsCommand } from '../../application/command/tag';
@@ -35,6 +38,7 @@ import {
   GetSeriesResponseDto,
   MenuSettingsDto,
   PostDto,
+  ReportTargetDto,
   SearchContentsDto,
   SeriesDto,
 } from '../../application/dto';
@@ -43,6 +47,7 @@ import {
   FindPinnedContentQuery,
   GetContentAudienceQuery,
   GetMenuSettingsQuery,
+  GetMyReportedContentsQuery,
   GetSeriesInContentQuery,
   GetTotalDraftQuery,
   SearchContentsQuery,
@@ -52,6 +57,7 @@ import {
   CreateReportDto,
   GetAudienceContentDto,
   GetDraftContentsRequestDto,
+  GetMyReportedContentsRequestDto,
   GetScheduleContentsQueryDto,
   PinContentDto,
   PostSettingRequestDto,
@@ -393,6 +399,28 @@ export class ContentController {
     );
   }
 
+  @ApiOperation({ summary: 'unsave post' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Unsave post successfully',
+  })
+  @ResponseMessages({
+    success: 'message.content.unsaved_success',
+  })
+  @Delete(ROUTES.CONTENT.UNSAVE_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.UNSAVE_CONTENT.VERSIONS)
+  public async unSave(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string
+  ): Promise<void> {
+    return this._commandBus.execute<UnsaveContentCommand>(
+      new UnsaveContentCommand({
+        authUser,
+        contentId,
+      })
+    );
+  }
+
   @ApiOperation({ summary: 'Report content' })
   @ApiOkResponse({ description: 'Reported content successfully' })
   @ResponseMessages({
@@ -411,6 +439,21 @@ export class ContentController {
         authUser,
         contentId,
         ...input,
+      })
+    );
+  }
+
+  @ApiOperation({ summary: 'Get my reported contents' })
+  @Get(ROUTES.CONTENT.GET_REPORTS.PATH)
+  @Version(ROUTES.CONTENT.GET_REPORTS.VERSIONS)
+  public async getMyReportedContents(
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetMyReportedContentsRequestDto
+  ): Promise<PaginatedResponse<ReportTargetDto>> {
+    return this._queryBus.execute(
+      new GetMyReportedContentsQuery({
+        authUser,
+        ...query,
       })
     );
   }

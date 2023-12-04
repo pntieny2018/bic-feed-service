@@ -1,8 +1,8 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
-import { KAFKA_TOPIC } from 'apps/api/src/common/constants';
 
+import { KAFKA_TOPIC } from '../../../../../common/constants';
 import {
   ISeriesDomainService,
   ITagDomainService,
@@ -24,11 +24,14 @@ export class PostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> 
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       await this._tagDomain.updateTagsUsedByContent(postEntity);
-      await this._seriesDomain.sendContentUpdatedSeriesEvent({ content: postEntity, actor });
+      await this._seriesDomain.sendContentUpdatedSeriesEvent({
+        content: postEntity,
+        actor: authUser,
+      });
     }
 
     if (postEntity.isProcessing() && postEntity.getVideoIdProcessing()) {

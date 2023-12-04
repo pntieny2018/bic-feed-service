@@ -427,6 +427,11 @@ export function createMockSeriesEntity(data: Partial<PostAttributes> = {}): Seri
     title: series.title,
     summary: series.summary,
     itemIds: (series.itemIds || []).sort((a, b) => a.zindex - b.zindex).map((item) => item.postId),
+    items: (series.itemIds || [])
+      .sort((a, b) => {
+        return a.zindex - b.zindex;
+      })
+      .map((item) => ({ id: item.postId, zindex: item.zindex })),
     cover: series.coverJson ? new ImageEntity(series.coverJson) : null,
   });
 }

@@ -18,7 +18,7 @@ export class SearchSeriesItemsReorderedEventHandler
   ) {}
 
   public async handle(event: SeriesItemsReorderedEvent): Promise<void> {
-    const { seriesId } = event;
+    const { seriesId } = event.payload;
     const seriesEntity = (await this._contentRepository.findContentByIdInActiveGroup(seriesId, {
       shouldIncludeItems: true,
     })) as SeriesEntity;

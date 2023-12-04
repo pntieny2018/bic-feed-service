@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -32,21 +31,6 @@ import { PostResponseDto } from './dto/responses';
 })
 export class ContentController {
   public constructor(private _postAppService: PostAppService) {}
-
-  @ApiOperation({ summary: 'unsave post' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @ResponseMessages({
-    success: 'message.content.unsaved_success',
-  })
-  @Delete('/:postId/unsave')
-  public async unSave(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.unSavePost(user, postId);
-  }
 
   @ApiOperation({ summary: 'Mark seen post' })
   @ApiParam({

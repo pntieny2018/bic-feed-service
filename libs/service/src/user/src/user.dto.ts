@@ -24,6 +24,31 @@ export class ShowingBadgeDto {
   public community: CommunityInfo;
 }
 
+export class BaseUserDto {
+  @Expose()
+  public id: string;
+
+  @Expose()
+  public username: string;
+
+  @Expose()
+  public fullname: string;
+
+  @Expose()
+  public email: string;
+
+  @Expose()
+  public avatar: string;
+
+  public constructor(data: Partial<BaseUserDto>) {
+    this.id = data.id;
+    this.username = data.username;
+    this.fullname = data.fullname;
+    this.email = data.email;
+    this.avatar = data.avatar;
+  }
+}
+
 export class UserPermissionDto {
   public communities: { [commId: string]: string[] };
   public groups: { [groupId: string]: string[] };

@@ -5,6 +5,8 @@ import { QuizParticipantEntity } from '../../../domain/model/quiz-participant';
 import { QuizParticipantMapper } from '../../../driven-adapter/mapper/quiz-participant.mapper';
 import { createMockQuizParticipantEntity, createMockQuizParticipationRecord } from '../../mock';
 
+jest.useFakeTimers();
+
 describe('QuizParticipantMapper', () => {
   let _quizParticipantMapper: QuizParticipantMapper;
 

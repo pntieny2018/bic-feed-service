@@ -1,5 +1,6 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
+import { PostModel } from '@libs/database/postgres/model';
 import {
   LibPostReactionRepository,
   LibReactionContentDetailsRepository,
@@ -29,7 +30,24 @@ export class PostReactionRepository implements IPostReactionRepository {
   public async findOne(input: FindOnePostReactionProps): Promise<ReactionEntity> {
     const postReaction = await this._libPostReactionRepo.first({
       where: input,
+      include: [
+        {
+          model: PostModel,
+          as: 'post',
+          required: false,
+          select: ['type'],
+        },
+      ],
     });
+
+    if (!postReaction) {
+      return null;
+    }
+
+    postReaction.target =
+      postReaction.post?.type === CONTENT_TYPE.ARTICLE
+        ? CONTENT_TARGET.ARTICLE
+        : CONTENT_TARGET.POST;
     return this._postReactionMapper.toDomain(postReaction);
   }
 
@@ -72,7 +90,7 @@ export class PostReactionRepository implements IPostReactionRepository {
   public async getPagination(
     input: GetPaginationPostReactionProps
   ): Promise<PaginationResult<ReactionEntity>> {
-    const { targetId, latestId, limit, order, reactionName } = input;
+    const { targetId, target, latestId, limit, order, reactionName } = input;
 
     const conditions = {};
     const symbol = order === ORDER.DESC ? Op.lte : Op.gte;
@@ -91,7 +109,12 @@ export class PostReactionRepository implements IPostReactionRepository {
       limit,
       order: [['createdAt', order]],
     });
-    const result = rows.map((row) => this._postReactionMapper.toDomain(row));
+
+    const result = rows.map((row) => {
+      row.target = target;
+      return this._postReactionMapper.toDomain(row);
+    });
+
     return {
       rows: result,
       total: count,

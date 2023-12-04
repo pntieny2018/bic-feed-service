@@ -24,9 +24,14 @@ export type GetPaginationReportProps = {
     targetType?: CONTENT_TARGET[];
     targetActorId?: string;
     status?: REPORT_STATUS;
+    groupId?: string;
   };
   include?: IncludeReportProps;
 } & CursorPaginationProps;
+
+export type GetListReportsProps = CursorPaginationProps & {
+  groupId: string;
+};
 
 export interface IReportRepository {
   findOne(input: FindOneReportProps): Promise<ReportEntity>;

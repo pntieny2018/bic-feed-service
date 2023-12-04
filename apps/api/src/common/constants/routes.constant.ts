@@ -263,6 +263,10 @@ export const ROUTES = {
       PATH: 'content/:contentId/save',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
+    UNSAVE_CONTENT: {
+      PATH: 'content/:contentId/unsave',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
   },
   COMMENT: {
     GET_LIST: {
@@ -314,19 +318,15 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_DETAIL: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId', // old: /reports/:rootGroupId/content/:targetId
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId', // old: /reports/:rootGroupId/content/:targetId
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     STATISTIC: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId/statistics', // old: /reports/:reportId/statistics/:targetId
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/statistics', // old: /reports/:reportId/statistics/:targetId
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
-    IGNORE: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId/ignore', // old: /reports/status
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
-    },
-    HIDE: {
-      PATH: 'manage/communities/:rootGroupId/content-reports/:targetId/hide', // old: /reports/status
+    PROCESS: {
+      PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/status', // old: /reports/status
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },

@@ -12,7 +12,7 @@ export class SearchSeriesDeletedEventHandler implements IEventHandler<SeriesDele
   ) {}
 
   public async handle(event: SeriesDeletedEvent): Promise<void> {
-    const { seriesEntity } = event;
+    const { seriesEntity } = event.payload;
 
     await this._postSearchService.deletePostsToSearch([{ id: seriesEntity.getId() }]);
 

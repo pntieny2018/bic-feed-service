@@ -1,4 +1,4 @@
-import { ReportCreated } from '../../common/constants';
+import { ReportHasBeenCreated } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 import { IReportContentAttribute } from '../../database/models/report-content.model';
 import { UserDto } from '../../modules/v2-user/application';
@@ -6,10 +6,11 @@ import { UserDto } from '../../modules/v2-user/application';
 export type CreateReportEventPayload = IReportContentAttribute & {
   actor: UserDto;
   groupIds: string[];
+  content: string;
 };
 
 export class CreateReportEvent implements IEvent<CreateReportEventPayload> {
-  public static event = ReportCreated;
+  public static event = ReportHasBeenCreated;
 
   public payload: CreateReportEventPayload;
 

@@ -1,12 +1,15 @@
+import { IS_ENABLE_LOG } from '@libs/common/constants';
 import { StringHelper } from '@libs/common/helpers';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
+
+import { CustomLogger } from '../log';
 
 import { REDIS_STORE_INSTANCE_TOKEN } from './redis-store.constants';
 
 @Injectable()
 export class RedisService {
-  private readonly _logger = new Logger(RedisService.name);
+  private readonly _logger = new CustomLogger(RedisService.name, IS_ENABLE_LOG);
   public constructor(
     @Inject(REDIS_STORE_INSTANCE_TOKEN)
     private readonly _store: Redis.Cluster | Redis.Redis

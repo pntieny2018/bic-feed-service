@@ -9,10 +9,6 @@ import {
   ReactionNotHaveAuthorityException,
   ReactionTargetNotExistingException,
 } from '../exception';
-import {
-  IReactionFactory,
-  REACTION_FACTORY_TOKEN,
-} from '../factory/interface/reaction.factory.interface';
 import { ReactionEntity } from '../model/reaction';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
@@ -34,8 +30,6 @@ export class ReactionDomainService implements IReactionDomainService {
     private readonly _postReactionRepository: IPostReactionRepository,
     @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
     private readonly _commentReactionRepository: ICommentReactionRepository,
-    @Inject(REACTION_FACTORY_TOKEN)
-    private readonly _reactionFactory: IReactionFactory,
     private readonly eventBus: EventBus
   ) {}
 
@@ -59,7 +53,7 @@ export class ReactionDomainService implements IReactionDomainService {
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, authUser, target, targetId } = input;
-    const reactionEntity = this._reactionFactory.create({
+    const reactionEntity = ReactionEntity.create({
       target,
       reactionName,
       createdBy: authUser.id,
@@ -84,7 +78,7 @@ export class ReactionDomainService implements IReactionDomainService {
         throw new ReactionTargetNotExistingException();
     }
 
-    this.eventBus.publish(new ReactionCreatedEvent(reactionEntity));
+    this.eventBus.publish(new ReactionCreatedEvent({ reactionEntity }));
     return reactionEntity;
   }
 
@@ -108,25 +102,25 @@ export class ReactionDomainService implements IReactionDomainService {
         throw new ReactionTargetNotExistingException();
     }
 
-    const reaction =
+    const reactionEntity =
       target === CONTENT_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne(conditions)
         : await this._postReactionRepository.findOne(conditions);
 
-    if (!reaction) {
+    if (!reactionEntity) {
       throw new ReactionNotFoundException();
     }
 
-    if (reaction.get('createdBy') !== userId) {
+    if (reactionEntity.get('createdBy') !== userId) {
       throw new ReactionNotHaveAuthorityException();
     }
 
     if (target === CONTENT_TARGET.COMMENT) {
-      await this._commentReactionRepository.delete(reaction.get('id'));
+      await this._commentReactionRepository.delete(reactionEntity.get('id'));
     } else {
-      await this._postReactionRepository.delete(reaction.get('id'));
+      await this._postReactionRepository.delete(reactionEntity.get('id'));
     }
 
-    this.eventBus.publish(new ReactionDeletedEvent(reaction));
+    this.eventBus.publish(new ReactionDeletedEvent({ reactionEntity }));
   }
 }

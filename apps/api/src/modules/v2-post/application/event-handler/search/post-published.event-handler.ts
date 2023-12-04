@@ -22,7 +22,7 @@ export class SearchPostPublishedEventHandler implements IEventHandler<PostPublis
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (!postEntity.isPublished()) {
       return;
@@ -50,7 +50,7 @@ export class SearchPostPublishedEventHandler implements IEventHandler<PostPublis
         communityIds: postEntity.get('communityIds'),
         seriesIds,
         tags: (postEntity.get('tags') || []).map((tag) => new TagDto(tag.toObject())),
-        createdBy: actor.id,
+        createdBy: authUser.id,
         createdAt: postEntity.get('createdAt'),
         updatedAt: postEntity.get('updatedAt'),
         publishedAt: postEntity.get('publishedAt'),

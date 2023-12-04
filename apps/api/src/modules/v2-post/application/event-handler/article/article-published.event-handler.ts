@@ -24,21 +24,21 @@ export class ArticlePublishedEventHandler implements IEventHandler<ArticlePublis
   ) {}
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
-    const { articleEntity, actor } = event;
+    const { articleEntity, authUser } = event.payload;
 
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
 
     await this._tagDomain.increaseTotalUsedByContent(articleEntity);
-    this._processSeriesItemsChanged(articleEntity, actor);
+    this._processSeriesItemsChanged(articleEntity, authUser);
   }
 
-  private _processSeriesItemsChanged(articleEntity: ArticleEntity, actor: UserDto): void {
+  private _processSeriesItemsChanged(articleEntity: ArticleEntity, authUser: UserDto): void {
     const seriesIds = articleEntity.getSeriesIds();
     for (const seriesId of seriesIds) {
       this._seriesDomain.sendSeriesItemsAddedEvent({
-        authUser: actor,
+        authUser,
         seriesId,
         item: articleEntity,
         context: 'publish',

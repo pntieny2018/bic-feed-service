@@ -19,7 +19,8 @@ module.exports = {
         content_id: {
           type: Sequelize.UUID,
           allowNull: false,
-          references: { model: 'posts', key: 'id' }
+          references: { model: 'posts', key: 'id' },
+          onDelete: 'CASCADE',
         },
         count: {
           type: Sequelize.INTEGER(),

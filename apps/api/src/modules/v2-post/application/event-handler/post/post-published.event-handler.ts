@@ -10,7 +10,6 @@ import {
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { PostPublishedEvent } from '../../../domain/event';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import { PostEntity } from '../../../domain/model/content';
 
 @EventsHandlerAndLog(PostPublishedEvent)
@@ -19,25 +18,23 @@ export class PostPublishedEventHandler implements IEventHandler<PostPublishedEve
     @Inject(TAG_DOMAIN_SERVICE_TOKEN)
     private readonly _tagDomain: ITagDomainService,
     @Inject(SERIES_DOMAIN_SERVICE_TOKEN)
-    private readonly _seriesDomain: ISeriesDomainService,
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    private readonly _seriesDomain: ISeriesDomainService
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, actor } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       await this._tagDomain.increaseTotalUsedByContent(postEntity);
-      this._processSeriesItemsChanged(postEntity, actor);
+      this._processSeriesItemsChanged(postEntity, authUser);
     }
   }
 
-  private _processSeriesItemsChanged(postEntity: PostEntity, actor: UserDto): void {
+  private _processSeriesItemsChanged(postEntity: PostEntity, authUser: UserDto): void {
     const seriesIds = postEntity.getSeriesIds();
     for (const seriesId of seriesIds) {
       this._seriesDomain.sendSeriesItemsAddedEvent({
-        authUser: actor,
+        authUser,
         seriesId,
         item: postEntity,
         context: 'publish',

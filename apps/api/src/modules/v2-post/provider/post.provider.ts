@@ -16,6 +16,7 @@ import {
   SaveContentHandler,
   UpdateContentSettingHandler,
   ProcessGroupPrivacyUpdatedHandler,
+  UnsaveContentHandler,
 } from '../application/command/content';
 import { ProcessGroupStateUpdatedHandler } from '../application/command/content/process-group-state-updated';
 import {
@@ -42,7 +43,10 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import { ContentHasSeenEventHandler } from '../application/event-handler/content';
+import {
+  ContentHasSeenEventHandler,
+  ReportHiddenEventHandler,
+} from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -70,8 +74,8 @@ import {
   SearchContentsHandler,
   FindPinnedContentHandler,
   GetContentAudienceHandler,
+  GetScheduleContentHandler,
 } from '../application/query/content';
-import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
   FindItemsBySeriesHandler,
@@ -87,17 +91,11 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
-import { NEWSFEED_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/newsfeed.domain-service.interface';
 import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
-import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
-import {
-  ARTICLE_FACTORY_TOKEN,
-  POST_FACTORY_TOKEN,
-  SERIES_FACTORY_TOKEN,
-} from '../domain/factory/interface';
 import {
   CONTENT_REPOSITORY_TOKEN,
   POST_GROUP_REPOSITORY_TOKEN,
@@ -142,6 +140,7 @@ export const postProvider = [
   VideoPostUpdatedEventHandler,
   VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
+  ReportHiddenEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -166,6 +165,7 @@ export const postProvider = [
   ReorderPinnedContentHandler,
   SeenContentHandler,
   SaveContentHandler,
+  UnsaveContentHandler,
   UpdateContentSettingHandler,
 
   AutoSavePostHandler,
@@ -224,20 +224,6 @@ export const postProvider = [
   {
     provide: NEWSFEED_DOMAIN_SERVICE_TOKEN,
     useClass: NewsfeedDomainService,
-  },
-
-  /** Domain Factory */
-  {
-    provide: ARTICLE_FACTORY_TOKEN,
-    useClass: ArticleFactory,
-  },
-  {
-    provide: POST_FACTORY_TOKEN,
-    useClass: PostFactory,
-  },
-  {
-    provide: SERIES_FACTORY_TOKEN,
-    useClass: SeriesFactory,
   },
 
   /** Domain Validator */

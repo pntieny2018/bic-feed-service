@@ -31,7 +31,7 @@ import { ContentMapper } from '../../../driven-adapter/mapper/content.mapper';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
 import {
   createMockCategoryEntity,
-  createMockReportContentDetailRecord,
+  createMockReportDetailRecord,
   createMockTagEntity,
   createMockTagRecord,
 } from '../../mock';
@@ -372,7 +372,7 @@ describe('ContentRepository', () => {
       const mockContentId = v4();
       await _contentRepo.delete(mockContentId);
 
-      expect(_libContentRepo.delete).toBeCalledWith({ where: { id: mockContentId }, force: true });
+      expect(_libContentRepo.destroyContent).toBeCalledWith(mockContentId);
     });
   });
 
@@ -607,7 +607,7 @@ describe('ContentRepository', () => {
       const mockUserId = v4();
       const mockTargetIds = [v4(), v4()];
       const mockReportContents = mockTargetIds.map((targetId) =>
-        createMockReportContentDetailRecord({ targetId, createdBy: mockUserId })
+        createMockReportDetailRecord({ targetId, createdBy: mockUserId })
       );
 
       _libUserReportContentRepo.findMany.mockResolvedValue(
@@ -635,7 +635,7 @@ describe('ContentRepository', () => {
 
       const mockUserIds = [v4(), v4()];
       const mockReportContents = mockUserIds.map((userId) =>
-        createMockReportContentDetailRecord({ targetId: mockTargetId, createdBy: userId })
+        createMockReportDetailRecord({ targetId: mockTargetId, createdBy: userId })
       );
 
       _libUserReportContentRepo.findMany.mockResolvedValue(

@@ -6,14 +6,16 @@ import {
   LibUserReportContentRepository,
 } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
-import { WhereOptions } from 'sequelize';
+import { InjectConnection } from '@nestjs/sequelize';
+import { uniq } from 'lodash';
+import { Sequelize, WhereOptions } from 'sequelize';
 
 import { ReportEntity } from '../../domain/model/report';
 import {
   GetPaginationReportProps,
   FindOneReportProps,
   IReportRepository,
-} from '../../domain/repositoty-interface/report.repository.interface';
+} from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
 @Injectable()
@@ -21,7 +23,10 @@ export class ReportRepository implements IReportRepository {
   public constructor(
     private readonly _libReportRepo: LibUserReportContentRepository,
     private readonly _libReportDetailRepo: LibUserReportContentDetailRepository,
-    private readonly _reportMapper: ReportMapper
+    private readonly _reportMapper: ReportMapper,
+
+    @InjectConnection()
+    private readonly _sequelizeConnection: Sequelize
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
@@ -49,7 +54,7 @@ export class ReportRepository implements IReportRepository {
     if (details) {
       include.push({
         model: this._libReportDetailRepo.getModel(),
-        required: true,
+        required: false,
         as: 'details',
       });
     }
@@ -65,7 +70,7 @@ export class ReportRepository implements IReportRepository {
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
     const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
-    const { targetType, targetActorId, status } = input.where;
+    const { targetType, targetActorId, status, groupId } = input.where;
     const { details } = input.include || {};
 
     const condition: WhereOptions<ReportContentAttribute> = {};
@@ -77,6 +82,14 @@ export class ReportRepository implements IReportRepository {
     }
     if (status) {
       condition.status = status;
+    }
+    if (groupId) {
+      // TODO: optimize this query
+      const reportIds = await this._libReportDetailRepo.findMany({
+        where: { groupId: groupId },
+        select: ['reportId'],
+      });
+      condition.id = uniq(reportIds.map((item) => item.reportId));
     }
 
     const include = [];
@@ -102,24 +115,55 @@ export class ReportRepository implements IReportRepository {
   }
 
   public async create(reportEntity: ReportEntity): Promise<void> {
-    const report = this._reportMapper.toPersistence(reportEntity);
-    const { details, ...reportData } = report;
+    const transaction = await this._sequelizeConnection.transaction();
 
-    await this._libReportRepo.create(reportData);
+    try {
+      const report = this._reportMapper.toPersistence(reportEntity);
+      const { details, ...reportData } = report;
 
-    if (details?.length) {
-      await this._libReportDetailRepo.bulkCreate(details, { ignoreDuplicates: true });
+      await this._libReportRepo.create(reportData, { transaction });
+
+      if (details?.length) {
+        await this._libReportDetailRepo.bulkCreate(details, {
+          ignoreDuplicates: true,
+          transaction,
+        });
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
   }
 
   public async update(reportEntity: ReportEntity): Promise<void> {
-    const report = this._reportMapper.toPersistence(reportEntity);
-    const { id, status, details } = report;
+    const transaction = await this._sequelizeConnection.transaction();
 
-    await this._libReportRepo.update({ status }, { where: { id } });
+    try {
+      const report = this._reportMapper.toPersistence(reportEntity);
+      const { id, status } = report;
 
-    if (details?.length) {
-      await this._libReportDetailRepo.bulkCreate(details, { ignoreDuplicates: true });
+      await this._libReportRepo.update(
+        { status },
+        {
+          where: { id },
+          transaction,
+        }
+      );
+
+      const { attachDetails } = reportEntity.getState();
+      if (attachDetails?.length) {
+        await this._libReportDetailRepo.bulkCreate(attachDetails, {
+          ignoreDuplicates: true,
+          transaction,
+        });
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
   }
 }

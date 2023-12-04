@@ -21,7 +21,7 @@ export class DecreaseReactionCountEventHandler implements IEventHandler<Reaction
   ) {}
 
   public async handle(event: ReactionDeletedEvent): Promise<void> {
-    const { reactionEntity } = event;
+    const { reactionEntity } = event.payload;
 
     switch (reactionEntity.get('target')) {
       case CONTENT_TARGET.COMMENT:

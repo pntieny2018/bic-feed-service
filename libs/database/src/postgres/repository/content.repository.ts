@@ -61,7 +61,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async getPagination(
     getPaginationContentsProps: FindContentProps & CursorPaginationProps
   ): Promise<CursorPaginationResult<PostModel>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+    } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 
