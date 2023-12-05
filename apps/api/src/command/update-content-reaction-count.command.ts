@@ -1,10 +1,9 @@
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { PostReactionModel } from '@libs/database/postgres/model';
 import { ReactionContentDetailsModel } from '@libs/database/postgres/model/reaction-content-details.model';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
-
-import { getDatabaseConfig } from '../config/database';
 
 interface ICommandOptions {
   rollback: boolean;
