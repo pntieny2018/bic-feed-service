@@ -7,24 +7,24 @@ export class ReportObjectDto {
   public targetId: string;
   public targetType: CONTENT_TARGET;
   public details: ReportDetailObjectDto[];
+  public reporterIds?: string[]; // for report hidden
 
   public constructor(data: ReportObjectDto) {
     this.id = data.id;
     this.targetId = data.targetId;
     this.targetType = data.targetType;
     this.details = data.details.map((detail) => new ReportDetailObjectDto(detail));
+    this.reporterIds = data.reporterIds;
   }
 }
 
 export class ReportDetailObjectDto {
   public targetId: string;
   public groupId: string;
-  public createdBy: string;
 
   public constructor(data: ReportDetailObjectDto) {
     this.targetId = data.targetId;
     this.groupId = data.groupId;
-    this.createdBy = data.createdBy;
   }
 }
 

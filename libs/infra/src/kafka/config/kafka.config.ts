@@ -24,4 +24,5 @@ export const getKafkaConfig = (): IKafkaConfig => ({
   consumer: {
     groupId: process.env.KAFKA_CONSUMER_GROUP_ID,
   },
+  producerOnlyMode: process.env.KAFKA_PRODUCER_ONLY_MODE === 'true' || false,
 });

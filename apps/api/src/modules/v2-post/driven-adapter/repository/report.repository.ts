@@ -4,7 +4,7 @@ import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { uniq } from 'lodash';
+import { uniq, isBoolean } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
 
 import { ReportEntity } from '../../domain/model/report';
@@ -129,8 +129,8 @@ export class ReportRepository implements IReportRepository {
   public async getPagination(
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
-    const { limit, before, after, order = ORDER.DESC, sortColumns = ['createdAt'] } = input;
-    const { targetTypes, targetActorId, status, groupId } = input;
+    const { limit, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
+    const { targetTypes, targetActorId, status, groupId, isDistinctTarget } = input;
 
     const condition: WhereOptions<ReportAttribute> = {};
     if (targetTypes?.length) {
@@ -147,9 +147,19 @@ export class ReportRepository implements IReportRepository {
     }
 
     const { rows, meta } = await this._libReportRepo.cursorPaginate(
-      { where: condition },
-      { limit, before, after, order, sortColumns }
+      {
+        where: condition,
+        ...(isBoolean(isDistinctTarget) && {
+          selectRaw: [
+            ['DISTINCT(target_id)', 'targetId'],
+            ['MAX(created_at)', 'createdAt'],
+          ],
+          group: ['target_id'],
+        }),
+      },
+      { limit, before, after, order, column }
     );
+
     return {
       rows: rows.map((report) => this._reportMapper.toDomain(report)),
       meta,
@@ -208,7 +218,7 @@ export class ReportRepository implements IReportRepository {
 
     const reportIds = reports.map((report) => report.id);
     const reportDetails = await this._libReportDetailRepo.findMany({
-      where: { id: reportIds },
+      where: { reportId: reportIds },
       select: ['reporterId'],
     });
 

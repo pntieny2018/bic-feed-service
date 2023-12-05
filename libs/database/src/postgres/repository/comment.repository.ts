@@ -170,7 +170,7 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
               SELECT target_id FROM ${ReportModel.getTableName()} as rp
                 WHERE rp.target_id = "CommentModel".id AND 
                       rp.target_type = '${CONTENT_TARGET.COMMENT}' AND 
-                      rp.id = IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${reporterId})
+                      rp.id IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${reporterId})
             )`
           ),
         ],

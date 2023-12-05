@@ -43,6 +43,7 @@ class NotificationMetaPayloadDto<T> {
   public report?: {
     creatorId?: string;
     content?: string;
+    adminInfos?: { [groupId: string]: string[] }; // TODO: remove when noti v3 is ready
   };
 
   public post?: {

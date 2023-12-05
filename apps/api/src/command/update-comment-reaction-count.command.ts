@@ -1,9 +1,9 @@
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { CommentReactionModel } from '@libs/database/postgres/model';
 import { ReactionCommentDetailsModel } from '@libs/database/postgres/model/reaction-comment-details.model';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { Sequelize } from 'sequelize-typescript';
 
 interface ICommandOptions {
   rollback: boolean;
@@ -30,35 +30,28 @@ export class UpdateCommentReactionCountCommand implements CommandRunner {
     if (Boolean(options.rollback)) {
       return this.rollBack();
     }
+    const databaseConfig = getDatabaseConfig();
+    const schema = databaseConfig.schema;
 
     try {
       this._logger.log('Start update reaction count for comments');
-      const commentReactions = await this._commentReactionModel.findAll({
-        attributes: [
-          'commentId',
-          'reactionName',
-          [this._commentReactionModel.sequelize.fn('COUNT', Sequelize.col('*')), 'count'],
-        ],
-        group: ['commentId', 'reactionName'],
-      });
 
-      if (commentReactions && commentReactions.length > 0) {
-        for (const commentReaction of commentReactions) {
-          const reactionName = commentReaction.reactionName;
-          const commentId = commentReaction.commentId;
-
-          await this._reactionCommentDetailsModel.upsert({
-            reactionName,
-            commentId,
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            count: commentReaction.getDataValue('count'),
-          });
-        }
-      }
+      await this._reactionCommentDetailsModel.sequelize.query(`
+        INSERT INTO ${schema}."reaction_comment_details" ("comment_id", "reaction_name", "count")
+        SELECT
+          "comment_id",
+          "reaction_name",
+          COUNT(*)
+        FROM
+            ${schema}."comments_reactions" AS "CommentReactionsModel"
+        GROUP BY "CommentReactionsModel"."comment_id", "CommentReactionsModel"."reaction_name"
+      `);
 
       this._logger.log('Update reaction count successfully');
-    } catch (e) {}
+    } catch (e) {
+      this._logger.error(e.message);
+      this._logger.error(JSON.stringify(e?.stack));
+    }
     process.exit();
   }
 

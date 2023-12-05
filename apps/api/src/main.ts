@@ -1,7 +1,4 @@
-import { KafkaHealthBootstrap } from '@libs/common/health-check/kafka-health.bootstrap';
-import { KafkaGateway } from '@libs/infra/kafka';
 import { TracingInterceptor } from '@libs/infra/log';
-import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
@@ -9,10 +6,15 @@ import { AppModule } from './app/app.module';
 import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
+import { bootstrapCLI } from './command';
 
 import './common/extension';
 
 async function bootstrap(): Promise<void> {
+  if (process.env.TRIGGER_CLI === 'true') {
+    return bootstrapCLI();
+  }
+
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new TracingInterceptor());
 
@@ -20,12 +22,6 @@ async function bootstrap(): Promise<void> {
 
   ClassValidatorBootstrap.init(app, AppModule);
   SwaggerBootstrap.init(app, configService);
-  KafkaGateway.init(app, configService)
-    .then((app) => {
-      Logger.debug('Kafka Gateway initialized');
-      KafkaHealthBootstrap.init(app);
-    })
-    .catch((ex) => Logger.debug(JSON.stringify(ex?.stack)));
   await AppBootstrap.init(app, configService);
 }
 

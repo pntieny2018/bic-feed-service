@@ -16,4 +16,5 @@ export interface IKafkaConfig {
   subscribe?: Omit<ConsumerSubscribeTopic, 'topic'>;
   producer?: ProducerConfig;
   send?: Omit<ProducerRecord, 'topic' | 'messages'>;
+  producerOnlyMode?: boolean;
 }

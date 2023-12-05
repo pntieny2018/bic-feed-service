@@ -52,7 +52,6 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       include: include.length > 0 ? include : undefined,
       order: options.order,
       group: options.group,
-      subQuery: options.subQuery || false,
     });
   }
 
@@ -193,6 +192,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       where,
       include: include.length > 0 ? include : undefined,
       subQuery: false,
+      group: findOptions.group,
     });
 
     return {

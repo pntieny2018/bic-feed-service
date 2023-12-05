@@ -33,14 +33,4 @@ export class UserUnfollowGroupHandler implements ICommandHandler<UserUnfollowGro
       action: 'remove',
     });
   }
-
-  private async _filterGroupIdsUserNeedFollowed(
-    userId: string,
-    groupIds: string[]
-  ): Promise<string[]> {
-    const groupIdsUserFollowed = await this._followRepo.findGroupIdsUserFollowed(userId);
-
-    const currentGroupIds = new Set(groupIdsUserFollowed);
-    return groupIds.filter((groupId) => !currentGroupIds.has(groupId));
-  }
 }

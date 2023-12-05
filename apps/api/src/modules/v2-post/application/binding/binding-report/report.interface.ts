@@ -3,6 +3,7 @@ import { ReportDto, ReportForManagerDto, ReportReasonCountDto } from '../../dto'
 
 export interface IReportBinding {
   binding(reportEntity: ReportEntity): ReportDto;
+  bindingReportsWithReportersInReasonsCount(entities: ReportEntity[]): Promise<ReportDto[]>;
   bindingReportsForManager(entities: ReportEntity[]): Promise<ReportForManagerDto[]>;
   bindingReportReasonsCount(reasonsCount: ReasonCount[]): ReportReasonCountDto[];
   bindingReportReasonsCountWithReporters(
