@@ -4,12 +4,7 @@ import { Inject, Logger } from '@nestjs/common';
 
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
-import {
-  GROUP_ADAPTER,
-  IGroupAdapter,
-  IUserAdapter,
-  USER_ADAPTER,
-} from '../service-adapter-interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
 import {
   DispatchContentIdToGroupsProps,
@@ -23,8 +18,6 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(KAFKA_ADAPTER)
