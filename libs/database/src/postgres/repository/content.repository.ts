@@ -6,6 +6,8 @@ import {
   PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostCategoryModel, ReportDetailModel, ReportModel } from '@libs/database/postgres/model';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
 import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
 import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
@@ -24,8 +26,6 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
-import { PostCategoryModel, ReportDetailModel, ReportModel } from '@libs/database/postgres/model';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
   public constructor(
@@ -84,6 +84,8 @@ export class LibContentRepository extends BaseRepository<PostModel> {
 
   protected buildFindOptions(options: FindContentProps): FindOptions<PostModel> {
     const findOptions: FindOptions<PostModel> = {};
+    findOptions.subQuery = true;
+
     const subSelect = this._buildSubSelect(options);
 
     findOptions.where = this._buildWhereOptions(options);
