@@ -4,7 +4,6 @@ import {
   CursorPaginationProps,
   CursorPaginationResult,
   CursorPaginator,
-  getDatabaseConfig,
   PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
@@ -26,6 +25,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 import { ReportDetailModel, ReportModel } from '../model';
 

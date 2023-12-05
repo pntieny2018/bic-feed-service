@@ -1,8 +1,8 @@
 import { MEDIA_TYPE } from '@beincom/constants';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 import { difference, intersection } from 'lodash';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';

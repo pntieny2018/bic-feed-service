@@ -1,9 +1,6 @@
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
-import {
-  CursorPaginationResult,
-  getDatabaseConfig,
-  PaginationProps,
-} from '@libs/database/postgres/common';
+import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { PostGroupModel, PostModel } from '@libs/database/postgres/model';
 import {
   LibPostCategoryRepository,

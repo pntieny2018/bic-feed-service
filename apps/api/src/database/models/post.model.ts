@@ -1,3 +1,4 @@
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
@@ -19,7 +20,6 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { getDatabaseConfig } from '../../config/database';
 import { PostLang } from '../../modules/v2-post/data-type';
 
 import { CategoryModel, ICategory } from './category.model';
@@ -170,7 +170,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public mentions: string[];
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: PostType;
 
   @AllowNull(true)
@@ -178,10 +180,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public summary: string;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public lang: PostLang;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public privacy: PostPrivacy;
 
   @Column({
@@ -210,7 +216,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public cover: string;
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: PostStatus;
 
   @AllowNull(true)

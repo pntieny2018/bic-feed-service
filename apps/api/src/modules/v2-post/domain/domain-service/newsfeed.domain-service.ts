@@ -1,7 +1,7 @@
 import { ArrayHelper } from '@libs/common/helpers';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Logger } from '@nestjs/common';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import {
