@@ -29,7 +29,7 @@ export class FindTimelineGroupHandler
     const group = await this._groupAdapter.getGroupById(groupId);
     const groupIds = this._groupAdapter.getGroupIdsAndChildIdsUserJoined(group, authUser.groups);
 
-    const { rows: ids, meta: meta } = await this._contentDomainService.getContentIdsInTimeline({
+    const { rows: ids, meta } = await this._contentDomainService.getContentIdsInTimeline({
       ...query.payload,
       groupIds,
       authUserId: authUser.id,

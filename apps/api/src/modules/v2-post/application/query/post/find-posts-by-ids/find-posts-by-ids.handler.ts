@@ -6,7 +6,7 @@ import {
   IContentDomainService,
 } from '../../../../domain/domain-service/interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.binding.interface';
 import { ArticleDto, PostDto, SeriesDto } from '../../../dto';
 
 import { FindPostsByIdsQuery } from './find-posts-by-ids.query';

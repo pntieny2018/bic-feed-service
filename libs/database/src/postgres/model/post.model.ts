@@ -201,9 +201,6 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   @HasMany(() => PostSeriesModel, 'postId')
   public postSeries?: PostSeriesAttributes[];
 
-  @HasMany(() => PostSeriesModel, 'seriesId')
-  public itemIds?: PostSeriesAttributes[];
-
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: PostAttributes[];
 
@@ -257,4 +254,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
     foreignKey: 'postId',
   })
   public failedPostReasons?: FailedProcessPostAttributes[];
+
+  public seriesIds?: string[];
+  public itemIds?: string[];
 }

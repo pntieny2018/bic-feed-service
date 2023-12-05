@@ -82,7 +82,7 @@ describe('PostGroupRepository', () => {
             groupId: mockGroupIds,
           },
         },
-        { limit: 10, order: ORDER.DESC, column: 'createdAt' }
+        { limit: 10, order: ORDER.DESC, sortColumns: ['createdAt'] }
       );
       expect(result).toEqual({ rows: mockPostGroupRecords, meta: {} });
     });

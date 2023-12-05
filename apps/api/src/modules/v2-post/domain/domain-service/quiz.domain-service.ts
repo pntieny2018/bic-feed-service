@@ -32,10 +32,7 @@ import {
   IQuizParticipantRepository,
   QUIZ_PARTICIPANT_REPOSITORY_TOKEN,
 } from '../repositoty-interface';
-import {
-  IOpenAIAdapter,
-  OPEN_AI_ADAPTER,
-} from '../service-adapter-interface/openai-adapter.interface';
+import { IOpenAIAdapter, OPEN_AI_ADAPTER } from '../service-adapter-interface';
 import { IQuizValidator, QUIZ_VALIDATOR_TOKEN } from '../validator/interface';
 
 import {

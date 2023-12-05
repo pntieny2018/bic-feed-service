@@ -36,7 +36,14 @@ export class PostGroupRepository implements IPostGroupRepository {
   public async getPagination(
     input: GetPaginationPostGroupProps
   ): Promise<CursorPaginationResult<PostGroupAttributes>> {
-    const { where, limit = 1000, before, after, order = ORDER.DESC, column = 'createdAt' } = input;
+    const {
+      where,
+      limit = 1000,
+      before,
+      after,
+      order = ORDER.DESC,
+      sortColumns = ['createdAt'],
+    } = input;
     const { groupIds, isArchived, isDistinctContent } = where;
 
     const { rows, meta } = await this._libPostGroupRepo.cursorPaginate(
@@ -52,7 +59,7 @@ export class PostGroupRepository implements IPostGroupRepository {
           ],
         }),
       },
-      { limit, before, after, order, column }
+      { limit, before, after, order, sortColumns }
     );
 
     return { rows, meta };

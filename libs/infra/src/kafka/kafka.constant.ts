@@ -33,4 +33,7 @@ export const KAFKA_TOPIC = {
     SERIES_DELETED: `content_service.series_deleted`,
     PUBLISH_OR_REMOVE_TO_NEWSFEED: `content_service.publish_or_remove_to_newsfeed`,
   },
+  BEIN_NOTIFICATION: {
+    WS_EVENT: `.ws-event`,
+  },
 };

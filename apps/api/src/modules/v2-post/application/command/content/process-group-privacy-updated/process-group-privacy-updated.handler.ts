@@ -45,7 +45,10 @@ export class ProcessGroupPrivacyUpdatedHandler
       return;
     }
 
-    const { rows, meta } = await this._contentRepository.getPagination({
+    const { rows, meta } = await this._contentRepository.getCursorPagination({
+      attributes: {
+        exclude: ['content', 'mentions', 'mediaJson', 'summary', 'coverJson'],
+      },
       where: {
         groupIds: [groupId],
       },
