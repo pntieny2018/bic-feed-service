@@ -13,5 +13,6 @@ export * from './report.provider';
 export * from './search.provider';
 export * from './shared.provider';
 export * from './tag.provider';
+export * from './websocket.provider';
 export * from './elastic.provider';
 export * from './worker.provider';

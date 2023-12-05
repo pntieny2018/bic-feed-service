@@ -49,6 +49,7 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
       targetTypes: [CONTENT_TARGET.COMMENT],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
+      isDistinctTarget: true,
       limit,
       order,
       before,

@@ -9,6 +9,7 @@ import {
   FOLLOW_REPOSITORY_TOKEN,
   IFollowRepository,
 } from '../../../../domain/repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 
 import { UserFollowGroupCommand } from './user-follow-group.command';
 
@@ -19,7 +20,10 @@ export class UserFollowGroupHandler implements ICommandHandler<UserFollowGroupCo
     private readonly _newsfeedDomainService: INewsfeedDomainService,
 
     @Inject(FOLLOW_REPOSITORY_TOKEN)
-    private readonly _followRepo: IFollowRepository
+    private readonly _followRepo: IFollowRepository,
+
+    @Inject(USER_ADAPTER)
+    private readonly _userAdapter: IUserAdapter
   ) {}
 
   public async execute(command: UserFollowGroupCommand): Promise<void> {
@@ -42,7 +46,7 @@ export class UserFollowGroupHandler implements ICommandHandler<UserFollowGroupCo
     userId: string,
     groupIds: string[]
   ): Promise<string[]> {
-    const groupIdsUserFollowed = await this._followRepo.findGroupIdsUserFollowed(userId);
+    const groupIdsUserFollowed = await this._userAdapter.getGroupIdsJoinedByUserId(userId);
 
     const currentGroupIds = new Set(groupIdsUserFollowed);
     return groupIds.filter((groupId) => !currentGroupIds.has(groupId));

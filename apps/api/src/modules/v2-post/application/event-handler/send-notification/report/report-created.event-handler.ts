@@ -2,6 +2,7 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { EntityHelper } from '../../../../../../common/helpers';
 import {
@@ -34,35 +35,38 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
   public async handle(event: ReportCreatedEvent): Promise<void> {
     const { reportEntities, authUser } = event.payload;
 
+    const groupIds = uniq(reportEntities.map((reportEntity) => reportEntity.get('groupId')));
+    const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
+
     const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
       reportEntities,
       'targetId'
     );
 
     for (const targetId of Object.keys(reportEntityMapByTargetId)) {
-      await this._sendNotificationByTargetId(reportEntityMapByTargetId[targetId], authUser);
+      await this._sendNotificationByTargetId(
+        reportEntityMapByTargetId[targetId],
+        authUser,
+        groupAdminMap
+      );
     }
   }
 
   private async _sendNotificationByTargetId(
     reportEntities: ReportEntity[],
-    authUser: UserDto
+    authUser: UserDto,
+    groupAdminMap: { [groupId: string]: string[] }
   ): Promise<void> {
     const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(
       reportEntities[0]
     );
 
     for (const reportEntity of reportEntities) {
-      const reasonsCountWithReporters =
-        await this._reportBinding.bindingReportReasonsCountWithReporters(
-          reportEntity.get('reasonsCount')
-        );
-      const report = this._reportBinding.binding(reportEntity);
-
       await this._notiAdapter.sendReportCreatedNotification({
-        report: { ...report, reasonsCount: reasonsCountWithReporters },
+        report: this._reportBinding.binding(reportEntity),
         actor: authUser,
         content: contentOfTargetReported,
+        adminInfos: { [reportEntity.get('groupId')]: groupAdminMap[reportEntity.get('groupId')] },
       });
     }
   }

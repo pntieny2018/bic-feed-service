@@ -1,7 +1,7 @@
 import { EventsHandlerAndLog } from '@libs/infra/log';
-import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
+import { uniq } from 'lodash';
 
 import { EntityHelper } from '../../../../../../common/helpers';
 import {
@@ -34,35 +34,31 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
   public async handle(event: ReportHiddenEvent): Promise<void> {
     const { reportEntities, authUser } = event.payload;
 
+    const groupIds = uniq(reportEntities.map((reportEntity) => reportEntity.get('groupId')));
+    const groupAdminMap = await this._groupAdapter.getGroupAdminMap(groupIds);
+
     const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
       reportEntities,
       'targetId'
     );
 
     for (const targetId of Object.keys(reportEntityMapByTargetId)) {
-      await this._sendNotificationByTargetId(reportEntityMapByTargetId[targetId], authUser);
-    }
-  }
+      const entities = reportEntityMapByTargetId[targetId];
 
-  private async _sendNotificationByTargetId(
-    reportEntities: ReportEntity[],
-    authUser: UserDto
-  ): Promise<void> {
-    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(
-      reportEntities[0]
-    );
-
-    for (const reportEntity of reportEntities) {
-      const reasonsCountWithReporters =
-        await this._reportBinding.bindingReportReasonsCountWithReporters(
-          reportEntity.get('reasonsCount')
-        );
-      const report = this._reportBinding.binding(reportEntity);
+      const contentOfTarget = await this._reportDomain.getContentOfTargetReported(entities[0]);
+      const reports = await this._reportBinding.bindingReportsWithReportersInReasonsCount(entities);
+      const adminInfos = entities
+        .map((entity) => entity.get('groupId'))
+        .reduce((acc, groupId) => {
+          acc[groupId] = groupAdminMap[groupId];
+          return acc;
+        }, {});
 
       await this._notiAdapter.sendReportHiddenNotification({
-        report: { ...report, reasonsCount: reasonsCountWithReporters },
+        reports,
         actor: authUser,
-        content: contentOfTargetReported,
+        content: contentOfTarget,
+        adminInfos,
       });
     }
   }
