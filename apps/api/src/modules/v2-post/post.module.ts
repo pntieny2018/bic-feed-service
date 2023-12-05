@@ -47,7 +47,6 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
-  webSocketProvider,
 } from './provider';
 import { workerProvider } from './provider/worker.provider';
 
@@ -97,7 +96,6 @@ import { workerProvider } from './provider/worker.provider';
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,
-    ...webSocketProvider,
     ...workerProvider,
   ],
   exports: [
