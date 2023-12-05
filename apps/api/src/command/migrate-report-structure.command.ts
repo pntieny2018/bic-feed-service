@@ -90,10 +90,11 @@ export class MigrateReportStructure implements CommandRunner {
       const report = reportMapById[reportId];
       const reportDetails = reportDetailMapByReportId[reportId];
 
-      const reasonsCount = this._calculateReasonsCount(reportDetails);
-
       const groupIds = uniq(reportDetails.map((detail) => detail.groupId));
       const newReports: ReportAttribute[] = groupIds.map((groupId, index) => {
+        const reasonsCount = this._calculateReasonsCount(
+          reportDetails.filter((detail) => detail.groupId === groupId)
+        );
         return {
           id: index === 0 ? reportId : uuidv4(),
           groupId,
@@ -147,21 +148,24 @@ export class MigrateReportStructure implements CommandRunner {
 
     for (const targetId of Object.keys(reportMapByTargetId)) {
       const reports = reportMapByTargetId[targetId];
-      const reportDetails = reportDetailMapByTargetId[targetId];
+      const oldReportDetails = reportDetailMapByTargetId[targetId];
 
       const newReportDetails: ReportDetailAttributes[] = reports
         .map((report) => {
-          return reportDetails.map((detail) => {
-            return {
-              id: uuidv4(),
-              reportId: report.id,
-              reporterId: detail.createdBy,
-              reasonType: detail.reasonType,
-              reason: detail.reason,
-              createdAt: detail.createdAt,
-              updatedAt: detail.updatedAt,
-            };
-          });
+          return oldReportDetails
+            .filter((detail) => detail.groupId === report.groupId)
+            .map((detail) => {
+              return {
+                id: uuidv4(),
+                reportId: report.id,
+                targetId: report.targetId,
+                reporterId: detail.createdBy,
+                reasonType: detail.reasonType,
+                reason: detail.reason,
+                createdAt: detail.createdAt,
+                updatedAt: detail.updatedAt,
+              };
+            });
         })
         .flat();
 
@@ -173,11 +177,11 @@ export class MigrateReportStructure implements CommandRunner {
       const createdAt = `'${detail.createdAt.toISOString()}'::timestamp`;
       const updatedAt = detail.updatedAt ? `'${detail.updatedAt.toISOString()}'::timestamp` : null;
 
-      return `('${detail.id}', '${detail.reportId}', '${detail.reporterId}', '${detail.reasonType}', ${reason}, ${createdAt}, ${updatedAt})`;
+      return `('${detail.id}', '${detail.reportId}', '${detail.targetId}', '${detail.reporterId}', '${detail.reasonType}', ${reason}, ${createdAt}, ${updatedAt})`;
     });
 
     const [, affectedCount] = await this._reportDetailModel.sequelize.query(
-      `INSERT INTO ${this._reportDetailModel.getTableName()} ("id", "report_id", "reporter_id", "reason_type", "reason", "created_at", "updated_at") VALUES ${insertReportDetailData.join(
+      `INSERT INTO ${this._reportDetailModel.getTableName()} ("id", "report_id", "target_id", "reporter_id", "reason_type", "reason", "created_at", "updated_at") VALUES ${insertReportDetailData.join(
         `,`
       )};`
     );

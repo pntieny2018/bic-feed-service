@@ -118,7 +118,7 @@ export class ReportDomainService implements IReportDomainService {
       status: REPORT_STATUS.CREATED,
     });
 
-    const reportDetail = { reporterId, reasonType, reason };
+    const reportDetail = { targetId, reporterId, reasonType, reason };
 
     if (reportEntity) {
       reportEntity.increaseReasonsCount(reasonType, reporterId);
