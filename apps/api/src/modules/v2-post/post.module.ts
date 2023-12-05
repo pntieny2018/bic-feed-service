@@ -47,6 +47,7 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
+  webSocketProvider,
 } from './provider';
 import { workerProvider } from './provider/worker.provider';
 
@@ -81,6 +82,7 @@ import { workerProvider } from './provider/worker.provider';
     ManageController,
   ],
   providers: [
+    ...webSocketProvider, // NOTE: Temporarily only turned on in the dev/stg environment
     ...adapterProvider,
     ...categoryProvider,
     ...commentProvider,
@@ -108,7 +110,7 @@ import { workerProvider } from './provider/worker.provider';
       useClass: ContentDomainService,
     },
     {
-      provide: REPORT_REPOSITORY_TOKEN, // TODO: remove after remove old search module
+      provide: REPORT_REPOSITORY_TOKEN,
       useClass: ReportRepository,
     },
   ],
