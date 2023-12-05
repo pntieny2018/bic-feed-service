@@ -110,7 +110,7 @@ import { workerProvider } from './provider/worker.provider';
       useClass: ContentDomainService,
     },
     {
-      provide: REPORT_REPOSITORY_TOKEN,
+      provide: REPORT_REPOSITORY_TOKEN, // TODO: remove after remove old search module
       useClass: ReportRepository,
     },
   ],
