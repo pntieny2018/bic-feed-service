@@ -33,6 +33,9 @@ export class ReportDetailModel extends Model<
   public reportId: string;
 
   @Column({ type: DataTypes.UUID })
+  public targetId: string;
+
+  @Column({ type: DataTypes.UUID })
   public reporterId: string;
 
   @Column({ type: DataTypes.ENUM({ values: Object.values(CONTENT_REPORT_REASON_TYPE) }) })

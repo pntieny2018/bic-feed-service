@@ -112,7 +112,7 @@ export class NotiCommentUpdatedEventHandler implements IEventHandler<CommentUpda
       return [];
     }
 
-    const userIdsReported = await this._reportRepo.getReporterIdsByTargetId({ targetId });
+    const userIdsReported = await this._reportRepo.getReporterIdsByTargetId(targetId);
 
     return userIds.filter((userId) => !userIdsReported.includes(userId));
   }
