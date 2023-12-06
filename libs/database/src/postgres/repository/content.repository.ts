@@ -460,7 +460,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
 
     return `NOT EXISTS ( 
               SELECT target_id FROM ${ReportDetailModel.getTableName()} rcd
-              WHERE rcd.reporter_id = ${reporterId}
+              WHERE rcd.target_id = "PostModel".id AND rcd.reporter_id = ${reporterId}
             )`;
   }
 
