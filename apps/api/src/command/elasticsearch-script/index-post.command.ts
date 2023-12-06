@@ -221,6 +221,7 @@ export class IndexPostCommand implements CommandRunner {
             groupId: tag.groupId,
           }));
           if (post.type === CONTENT_TYPE.POST) {
+            item.title = post.title;
             item.content = post.content;
             item.media = post.mediaJson;
             item.mentionUserIds = post.mentions;
