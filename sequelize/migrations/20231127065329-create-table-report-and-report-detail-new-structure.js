@@ -77,6 +77,10 @@ module.exports = {
           references: { model: 'reports', key: 'id' },
           onDelete: 'CASCADE',
         },
+        target_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+        },
         reporter_id: {
           type: Sequelize.UUID,
           allowNull: false,

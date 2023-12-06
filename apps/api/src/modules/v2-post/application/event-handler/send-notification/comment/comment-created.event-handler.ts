@@ -148,7 +148,7 @@ export class NotiCommentCreatedEventHandler implements IEventHandler<CommentCrea
       return [];
     }
 
-    const userIdsReported = await this._reportRepo.getReporterIdsByTargetId({ targetId });
+    const userIdsReported = await this._reportRepo.getReporterIdsByTargetId(targetId);
 
     return userIds.filter((userId) => !userIdsReported.includes(userId));
   }

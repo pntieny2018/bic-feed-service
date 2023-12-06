@@ -14,7 +14,6 @@ import {
   FindOneReportProps,
   FindAllReportsProps,
   GetReportedTargetIdsByReporterIdProps,
-  GetReporterIdsByTargetIdProps,
 } from '../../domain/repositoty-interface';
 import { ReportMapper } from '../mapper';
 
@@ -198,27 +197,13 @@ export class ReportRepository implements IReportRepository {
     return uniq(reports.map((report) => report.targetId));
   }
 
-  public async getReporterIdsByTargetId(input: GetReporterIdsByTargetIdProps): Promise<string[]> {
-    const { targetId, groupIds } = input;
-
+  public async getReporterIdsByTargetId(targetId: string): Promise<string[]> {
     if (!targetId) {
       return [];
     }
 
-    const condition: WhereOptions<ReportAttribute> = { targetId };
-    if (groupIds?.length) {
-      condition.groupId = groupIds;
-    }
-
-    const reports = await this._libReportRepo.findMany({ where: condition, select: ['id'] });
-
-    if (!reports?.length) {
-      return [];
-    }
-
-    const reportIds = reports.map((report) => report.id);
     const reportDetails = await this._libReportDetailRepo.findMany({
-      where: { reportId: reportIds },
+      where: { targetId },
       select: ['reporterId'],
     });
 
