@@ -1,6 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
-import { BaseUserDto, UserDto } from '@libs/service/user';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -77,7 +77,7 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
       await this._reportBinding.bindingReportReasonsCountWithReporters(reasonsCount);
 
     return {
-      target: { ...target, actor: target.actor ? new BaseUserDto(target.actor) : undefined },
+      target,
       reasonsCount: reasonsCountWithReporters,
     };
   }

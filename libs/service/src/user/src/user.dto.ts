@@ -40,7 +40,7 @@ export class BaseUserDto {
   @Expose()
   public avatar: string;
 
-  public constructor(data: Partial<BaseUserDto>) {
+  public constructor(data: Partial<BaseUserDto> = {}) {
     this.id = data.id;
     this.username = data.username;
     this.fullname = data.fullname;
@@ -88,8 +88,18 @@ export class UserDto {
   @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
   public groups?: string[];
 
-  public constructor(data: Partial<UserDto>, excluded?: string[]) {
-    Object.assign(this, data);
+  public constructor(data: Partial<UserDto> = {}, excluded?: string[]) {
+    this.id = data.id;
+    this.username = data.username;
+    this.fullname = data.fullname;
+    this.email = data.email;
+    this.avatar = data.avatar;
+    this.showingBadges = data.showingBadges;
+    this.isDeactivated = data.isDeactivated;
+    this.isVerified = data.isVerified;
+    this.permissions = data.permissions;
+    this.groups = data.groups;
+
     if (excluded?.length > 0) {
       excluded.forEach((key) => {
         delete this[key];

@@ -167,10 +167,10 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
         [Op.and]: [
           Sequelize.literal(
             `NOT EXISTS ( 
-              SELECT target_id FROM ${ReportModel.getTableName()} as rp
-                WHERE rp.target_id = "CommentModel".id AND 
-                      rp.target_type = '${CONTENT_TARGET.COMMENT}' AND 
-                      rp.id IN (SELECT report_id FROM ${ReportDetailModel.getTableName()} rcd WHERE rcd.reporter_id = ${reporterId})
+              SELECT target_id FROM ${ReportDetailModel.getTableName()} as rcd
+                WHERE rcd.target_id = "CommentModel".id AND 
+                      rcd.target_type = '${CONTENT_TARGET.COMMENT}' AND 
+                      rcd.reporter_id = ${reporterId}
             )`
           ),
         ],

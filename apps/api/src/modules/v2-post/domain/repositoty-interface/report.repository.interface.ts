@@ -33,11 +33,6 @@ export type GetReportedTargetIdsByReporterIdProps = {
   targetTypes?: CONTENT_TARGET[];
 };
 
-export type GetReporterIdsByTargetIdProps = {
-  targetId: string;
-  groupIds?: string[];
-};
-
 export interface IReportRepository {
   create(reportEntity: ReportEntity): Promise<void>;
   update(reportEntity: ReportEntity): Promise<void>;
@@ -46,7 +41,7 @@ export interface IReportRepository {
   getPagination(input: GetPaginationReportProps): Promise<CursorPaginationResult<ReportEntity>>;
 
   getReportedTargetIdsByReporterId(input: GetReportedTargetIdsByReporterIdProps): Promise<string[]>;
-  getReporterIdsByTargetId(input: GetReporterIdsByTargetIdProps): Promise<string[]>;
+  getReporterIdsByTargetId(targetId: string): Promise<string[]>;
 }
 
 export const REPORT_REPOSITORY_TOKEN = 'REPORT_REPOSITORY_TOKEN';

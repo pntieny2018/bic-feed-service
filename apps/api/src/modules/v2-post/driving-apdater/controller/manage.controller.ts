@@ -1,3 +1,4 @@
+import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { PaginatedArgs, PaginatedResponse } from '@libs/database/postgres/common';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { UserDto } from '@libs/service/user';
@@ -14,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { instanceToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { ROUTES } from '../../../../common/constants/routes.constant';
@@ -62,7 +64,10 @@ export class ManageController {
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Param('reportId', ParseUUIDPipe) reportId: string
   ): Promise<ReportTargetDto> {
-    return this._queryBus.execute(new GetReportQuery({ groupId: rootGroupId, reportId, authUser }));
+    const report = await this._queryBus.execute(
+      new GetReportQuery({ groupId: rootGroupId, reportId, authUser })
+    );
+    return instanceToInstance(report, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Community admin process the content/comment report' })

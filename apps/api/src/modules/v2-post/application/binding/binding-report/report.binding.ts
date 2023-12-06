@@ -1,6 +1,5 @@
 import { CONTENT_REPORT_REASONS, CONTENT_TARGET } from '@beincom/constants';
 import { ArrayHelper } from '@libs/common/helpers';
-import { BaseUserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { uniq } from 'lodash';
 
@@ -59,8 +58,7 @@ export class ReportBinding implements IReportBinding {
         )
         .flat()
     );
-    let reporters = await this._userAdapter.getUsersByIds(reporterIds);
-    reporters = reporters.map((reporter) => new BaseUserDto(reporter));
+    const reporters = await this._userAdapter.getUsersByIds(reporterIds);
 
     return entities.map((entity) => {
       const reasonsCountWithReporters = entity.getReasonsCount().map((reasonCount) => {
@@ -125,7 +123,7 @@ export class ReportBinding implements IReportBinding {
       const targetId = entity.get('targetId');
       const targetType = entity.get('targetType');
 
-      const targetActor = new BaseUserDto(actorMap[entity.get('targetActorId')]);
+      const targetActor = actorMap[entity.get('targetActorId')];
       const reasonsCount = this.bindingReportReasonsCount(entity.getReasonsCount());
 
       let content;
@@ -190,8 +188,7 @@ export class ReportBinding implements IReportBinding {
     }
 
     const reporterIds = uniq(reasonsCount.map((reasonCount) => reasonCount.reporterIds).flat());
-    let reporters = await this._userAdapter.getUsersByIds(reporterIds);
-    reporters = reporters.map((reporter) => new BaseUserDto(reporter));
+    const reporters = await this._userAdapter.getUsersByIds(reporterIds);
 
     return reasonsCount.map((reasonCount) => {
       const reason = CONTENT_REPORT_REASONS.find((reason) => reason.id === reasonCount.reasonType);
