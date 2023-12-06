@@ -11,13 +11,8 @@ import { ClsModule } from 'nestjs-cls';
 import { v4 as uuid } from 'uuid';
 
 import { HealthModule } from './modules/health/health.module';
-import {
-  FollowConsumer,
-  GroupConsumer,
-  MediaConsumer,
-  PublishOrRemovePostToNewsfeedConsumer,
-} from './modules/kafka-consumer/consumers';
-import { QueueProcessorModule } from './modules/queue-processor';
+import { ConsumerModule } from './modules/kafka-consumer/consumer.module';
+import { ProcessorModule } from './modules/queue-processor/processor.module';
 
 @Module({
   imports: [
@@ -42,14 +37,9 @@ import { QueueProcessorModule } from './modules/queue-processor';
     CqrsModule,
     PostModuleV2,
     HealthModule,
-    QueueProcessorModule,
+    ProcessorModule,
+    ConsumerModule,
     KafkaModule,
-  ],
-  controllers: [
-    FollowConsumer,
-    PublishOrRemovePostToNewsfeedConsumer,
-    MediaConsumer,
-    GroupConsumer,
   ],
   providers: [],
   exports: [],

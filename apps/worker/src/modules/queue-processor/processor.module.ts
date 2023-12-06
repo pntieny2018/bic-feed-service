@@ -13,7 +13,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
 import { IProcessor } from './interface';
-import { processorProvider } from './processors';
+import { processorProvider } from './processor.provider';
 
 const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provider[] => {
   return workerConstants.map((worker) => ({
@@ -34,8 +34,8 @@ const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provi
   providers: [...createChannelWorkerProviders(WORKER_ADAPTER_SERVICES), ...processorProvider],
   exports: [],
 })
-export class QueueProcessorModule implements OnModuleInit {
-  private readonly _logger = new Logger(QueueProcessorModule.name);
+export class ProcessorModule implements OnModuleInit {
+  private readonly _logger = new Logger(ProcessorModule.name);
 
   public constructor(private readonly _moduleRef: ModuleRef) {}
 
