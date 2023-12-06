@@ -49,7 +49,7 @@ export class ReportDomainService implements IReportDomainService {
     const { authUser, content, reasonType, reason } = input;
 
     const groups = await this._groupAdapter.getGroupsByIds(content.getGroupIds());
-    const rootGroupIds = groups.map((group) => group.rootGroupId);
+    const rootGroupIds = uniq(groups.map((group) => group.rootGroupId));
 
     const reportEntities = await Promise.all(
       rootGroupIds.map((rootGroupId) =>
@@ -81,7 +81,7 @@ export class ReportDomainService implements IReportDomainService {
     await this._contentValidator.checkCanReadContent(contentEntity, authUser);
 
     const groups = await this._groupAdapter.getGroupsByIds(contentEntity.getGroupIds());
-    const rootGroupIds = groups.map((group) => group.rootGroupId);
+    const rootGroupIds = uniq(groups.map((group) => group.rootGroupId));
 
     const reportEntities = await Promise.all(
       rootGroupIds.map((rootGroupId) =>
@@ -118,7 +118,7 @@ export class ReportDomainService implements IReportDomainService {
       status: REPORT_STATUS.CREATED,
     });
 
-    const reportDetail = { reporterId, reasonType, reason };
+    const reportDetail = { targetId, reporterId, reasonType, reason };
 
     if (reportEntity) {
       reportEntity.increaseReasonsCount(reasonType, reporterId);

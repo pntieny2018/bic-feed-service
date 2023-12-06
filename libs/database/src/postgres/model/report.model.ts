@@ -17,7 +17,7 @@ import { REPORT_SCOPE } from './report-content-detail.model';
 import { REPORT_STATUS } from './report-content.model';
 import { ReportDetailAttributes, ReportDetailModel } from './report-detail.model';
 
-type ReasonCount = {
+export type ReasonCount = {
   reasonType: CONTENT_REPORT_REASON_TYPE;
   total: number;
   reporterIds: string[];

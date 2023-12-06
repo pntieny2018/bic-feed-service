@@ -9,6 +9,7 @@ import { DomainModelException } from '../../../../../common/exceptions';
 export type ReportDetailAttributes = {
   id: string;
   reportId: string;
+  targetId: string;
   reporterId: string;
   reasonType: CONTENT_REPORT_REASON_TYPE;
   reason?: string;
@@ -41,7 +42,10 @@ type ReportState = {
   attachDetails?: ReportDetailAttributes[];
 };
 
-type AddReportDetailProps = Pick<ReportDetailAttributes, 'reporterId' | 'reasonType' | 'reason'>;
+type AddReportDetailProps = Pick<
+  ReportDetailAttributes,
+  'targetId' | 'reporterId' | 'reasonType' | 'reason'
+>;
 
 export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
   protected _state: ReportState;
@@ -121,12 +125,13 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
   }
 
   public addReportDetail(props: AddReportDetailProps): void {
-    const { reporterId, reasonType, reason } = props;
+    const { targetId, reporterId, reasonType, reason } = props;
     const now = new Date();
 
     this._state.attachDetails.push({
       id: v4(),
       reportId: this._props.id,
+      targetId,
       reporterId,
       reasonType,
       reason,

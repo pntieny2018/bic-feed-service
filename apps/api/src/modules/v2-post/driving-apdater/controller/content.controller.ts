@@ -450,11 +450,12 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Query() query: GetMyReportedContentsRequestDto
   ): Promise<PaginatedResponse<ReportTargetDto>> {
-    return this._queryBus.execute(
+    const reports = await this._queryBus.execute(
       new GetMyReportedContentsQuery({
         authUser,
         ...query,
       })
     );
+    return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 }
