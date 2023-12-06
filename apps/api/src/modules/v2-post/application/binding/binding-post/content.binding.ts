@@ -436,6 +436,10 @@ export class ContentBinding implements IContentBinding {
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
       },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeCategory: true,
+      },
     })) as (PostEntity | ArticleEntity)[];
     items.sort((a, b) => itemIds.indexOf(a.getId()) - itemIds.indexOf(b.getId()));
 
