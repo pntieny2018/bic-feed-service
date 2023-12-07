@@ -1,7 +1,8 @@
-import { SearchService } from '@api/modules/search/search.service';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { format, startOfWeek, subWeeks } from 'date-fns';
 import { filter, keyBy, mapValues } from 'lodash';
+
+import { SearchService } from '../../../../../search/search.service';
 
 import { CountContentPerWeekQuery } from './count-content-per-week.query';
 
