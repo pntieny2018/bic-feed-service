@@ -35,8 +35,9 @@ export class MigratePostTitleCommand implements CommandRunner {
         }
 
         offset += limit;
-        console.log(`Updated ${count} posts. DONE!`);
       } catch (e) {}
+
+      console.log(`Updated ${count} posts. DONE!`);
     }
   }
 }
