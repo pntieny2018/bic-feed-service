@@ -26,7 +26,7 @@ import { InternalModule } from '../modules/internal';
 import { MediaModule } from '../modules/media';
 import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
-import { QueuePublihserModule } from '../modules/queue-publisher/queue-publisher.module';
+import { QueuePublisherModule } from '../modules/queue-publisher/queue-publisher.module';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
@@ -90,7 +90,7 @@ import { LibModule } from './lib.module';
     I18nGlobalModule,
     PostgresModule,
     UserModule,
-    QueuePublihserModule,
+    QueuePublisherModule,
   ],
   controllers: [AppController],
   providers: [],

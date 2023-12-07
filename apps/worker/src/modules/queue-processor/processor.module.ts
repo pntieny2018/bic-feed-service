@@ -11,18 +11,17 @@ import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 
-import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
-import { IProcessor } from './interface';
-import { processorProvider } from './provider';
+import { IProcessor, WorkerAdapters } from './interface';
+import { WORKER_ADAPTER_SERVICES, processorProvider } from './provider';
 
-const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provider[] => {
-  return workerConstants.map((worker) => ({
-    provide: worker.WORKER_TOKEN,
+const createChannelWorkerProviders = (adapters: WorkerAdapters[]): Provider[] => {
+  return adapters.map((adapter) => ({
+    provide: adapter.workerToken,
     useFactory: (configService: ConfigService): IWorkerService => {
       const redisConfig = configService.get<IRedisConfig>('redis');
       return new WorkerService({
-        queueName: worker.QUEUE_NAME,
-        workerConfig: getWorkerConfig(redisConfig, worker.GROUP_CONCURRENCY, worker.CONCURRENCY),
+        queueName: adapter.queueName,
+        workerConfig: getWorkerConfig(redisConfig, adapter.groupConcurrency, adapter.concurrency),
       });
     },
     inject: [ConfigService],
@@ -40,12 +39,12 @@ export class ProcessorModule implements OnModuleInit {
   public constructor(private readonly _moduleRef: ModuleRef) {}
 
   public onModuleInit(): void {
-    for (const worker of WORKER_ADAPTER_SERVICES) {
-      const handler = this._moduleRef.get<IWorkerService>(worker.WORKER_TOKEN);
+    for (const adapter of WORKER_ADAPTER_SERVICES) {
+      const handler = this._moduleRef.get<IWorkerService>(adapter.workerToken);
       if (handler) {
         handler.bindProcess({
           process: async (job: JobPro): Promise<void> => {
-            const process = this._moduleRef.get<IProcessor>(worker.PROCESSOR_TOKEN);
+            const process = this._moduleRef.get<IProcessor>(adapter.processorToken);
             const {
               id,
               opts: { group },
@@ -65,8 +64,8 @@ export class ProcessorModule implements OnModuleInit {
     }
     process.on('beforeExit', async () => {
       this._logger.log('Application shutdown, stop worker');
-      for (const worker of WORKER_ADAPTER_SERVICES) {
-        const handler = this._moduleRef.get<WorkerService>(worker.WORKER_TOKEN);
+      for (const adapter of WORKER_ADAPTER_SERVICES) {
+        const handler = this._moduleRef.get<WorkerService>(adapter.workerToken);
         if (handler) {
           await handler.close();
         }

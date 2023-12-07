@@ -9,7 +9,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
-import { QueuePublihserModule } from '../queue-publisher/queue-publisher.module';
+import { QueuePublisherModule } from '../queue-publisher/queue-publisher.module';
 import { SearchModule } from '../search';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
 import { WebSocketModule } from '../ws/ws.module';
@@ -62,7 +62,7 @@ import {
     UserModule,
     LibMediaModule,
     forwardRef(() => SearchModule),
-    QueuePublihserModule,
+    QueuePublisherModule,
   ],
   controllers: [
     TagController,

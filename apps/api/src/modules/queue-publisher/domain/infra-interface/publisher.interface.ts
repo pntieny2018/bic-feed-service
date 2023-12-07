@@ -1,7 +1,9 @@
-import { JobWithConfiguration } from '@libs/infra/v2-queue';
+import { JobWithConfiguration, QueueName } from '@libs/infra/v2-queue';
 
-export const CONTENT_SCHEDULED_PUBLISHER_TOKEN = 'CONTENT_SCHEDULED_PUBLISHER_TOKEN';
-
+export interface QueueAdapters {
+  queueName: QueueName;
+  serviceToken: string;
+}
 export interface IPublisher {
   has(jobId: string): Promise<boolean>;
   add<T>(job: JobWithConfiguration<T>): Promise<void>;
