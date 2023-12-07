@@ -180,10 +180,9 @@ export class ContentBinding implements IContentBinding {
       quizzesDoingMap: { [key: string]: QuizParticipantEntity };
       reactionsCount: Map<string, ReactionsCount>;
     }
-  ): Promise<Map<string, PostDto>> {
-    const postsMap = new Map<string, PostDto>();
+  ): Promise<PostDto[]> {
     if (!postsEntities.length) {
-      return postsMap;
+      return [];
     }
 
     const {
@@ -196,7 +195,7 @@ export class ContentBinding implements IContentBinding {
       reactionsCount,
     } = dataBinding;
 
-    postsEntities.forEach((postEntity) => {
+    return postsEntities.map((postEntity) => {
       const postGroups = groups.filter((group) => postEntity.getGroupIds().includes(group.id));
       const communityIds = uniq(postGroups.map((group) => group.rootGroupId));
       const postCommunities = communities.filter((group) => communityIds.includes(group.id));
@@ -204,52 +203,44 @@ export class ContentBinding implements IContentBinding {
       const quizDoing = quizzesDoingMap[postEntity.getId()];
       const mentionUsers = Object.values(pick(users, postEntity.get('mentionUserIds')));
 
-      postsMap.set(
-        postEntity.getId(),
-        new PostDto({
-          id: postEntity.getId(),
-          isReported: postEntity.get('isReported'),
-          isHidden: postEntity.isHidden(),
-          createdBy: postEntity.getCreatedBy(),
-          actor: this._mapActorUser(users[postEntity.getCreatedBy()]),
-          privacy: postEntity.get('privacy'),
-          status: postEntity.get('status'),
-          type: postEntity.getType(),
-          setting: postEntity.get('setting'),
-          media: this._mediaBinding.binding(postEntity.get('media')),
-          createdAt: postEntity.get('createdAt'),
-          updatedAt: postEntity.get('updatedAt'),
-          markedReadPost: postEntity.get('markedReadImportant'),
-          isSaved: postEntity.get('isSaved'),
-          ownerReactions: postEntity.get('ownerReactions'),
-          reactionsCount: reactionsCount.get(postEntity.getId()) || [],
-          publishedAt: postEntity.get('publishedAt'),
-          scheduledAt: postEntity.get('scheduledAt'),
-          audience: { groups: postGroups },
-          communities: postCommunities,
-          wordCount: postEntity.get('wordCount'),
-          commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
-          totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-          content: postEntity.get('content'),
-          mentions: this.mapMentionWithUserInfo(mentionUsers),
-          linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
-          tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
-          quiz:
-            postEntity.get('quiz') && postEntity.get('quiz').isVisible(authUser.id)
-              ? this._quizBinding.binding(postEntity.get('quiz'))
-              : undefined,
-          quizHighestScore: quizHighestScore
-            ? {
-                quizParticipantId: quizHighestScore.get('id'),
-                score: quizHighestScore.get('score'),
-              }
+      return new PostDto({
+        id: postEntity.getId(),
+        isReported: postEntity.get('isReported'),
+        isHidden: postEntity.isHidden(),
+        createdBy: postEntity.getCreatedBy(),
+        actor: this._mapActorUser(users[postEntity.getCreatedBy()]),
+        privacy: postEntity.get('privacy'),
+        status: postEntity.get('status'),
+        type: postEntity.getType(),
+        setting: postEntity.get('setting'),
+        media: this._mediaBinding.binding(postEntity.get('media')),
+        createdAt: postEntity.get('createdAt'),
+        updatedAt: postEntity.get('updatedAt'),
+        markedReadPost: postEntity.get('markedReadImportant'),
+        isSaved: postEntity.get('isSaved'),
+        ownerReactions: postEntity.get('ownerReactions'),
+        reactionsCount: reactionsCount.get(postEntity.getId()) || [],
+        publishedAt: postEntity.get('publishedAt'),
+        scheduledAt: postEntity.get('scheduledAt'),
+        audience: { groups: postGroups },
+        communities: postCommunities,
+        wordCount: postEntity.get('wordCount'),
+        commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
+        totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
+        content: postEntity.get('content'),
+        mentions: this.mapMentionWithUserInfo(mentionUsers),
+        linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
+        tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
+        quiz:
+          postEntity.get('quiz') && postEntity.get('quiz').isVisible(authUser.id)
+            ? this._quizBinding.binding(postEntity.get('quiz'))
             : undefined,
-          quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
-        })
-      );
+        quizHighestScore: quizHighestScore
+          ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
+          : undefined,
+        quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      });
     });
-
-    return postsMap;
   }
 
   public async articleBinding(
@@ -352,10 +343,9 @@ export class ContentBinding implements IContentBinding {
       quizzesDoingMap: { [key: string]: QuizParticipantEntity };
       reactionsCount: Map<string, ReactionsCount>;
     }
-  ): Promise<Map<string, ArticleDto>> {
-    const articlesMap = new Map<string, ArticleDto>();
+  ): Promise<ArticleDto[]> {
     if (!articleEntities.length) {
-      return articlesMap;
+      return [];
     }
 
     const {
@@ -368,7 +358,7 @@ export class ContentBinding implements IContentBinding {
       reactionsCount,
     } = dataBinding;
 
-    articleEntities.forEach((articleEntity) => {
+    return articleEntities.map((articleEntity) => {
       const articleGroups = groups.filter((group) =>
         articleEntity.getGroupIds().includes(group.id)
       );
@@ -377,52 +367,44 @@ export class ContentBinding implements IContentBinding {
       const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
       const quizDoing = quizzesDoingMap[articleEntity.getId()];
 
-      articlesMap.set(
-        articleEntity.getId(),
-        new ArticleDto({
-          id: articleEntity.get('id'),
-          isReported: articleEntity.get('isReported'),
-          isHidden: articleEntity.isHidden(),
-          createdBy: articleEntity.getCreatedBy(),
-          actor: this._mapActorUser(users[articleEntity.getCreatedBy()]),
-          privacy: articleEntity.get('privacy'),
-          status: articleEntity.get('status'),
-          type: articleEntity.getType(),
-          setting: articleEntity.get('setting'),
-          createdAt: articleEntity.get('createdAt'),
-          updatedAt: articleEntity.get('updatedAt'),
-          markedReadPost: articleEntity.get('markedReadImportant'),
-          isSaved: articleEntity.get('isSaved'),
-          ownerReactions: articleEntity.get('ownerReactions'),
-          reactionsCount: reactionsCount.get(articleEntity.getId()) || [],
-          publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
-            ? articleEntity.get('scheduledAt')
-            : articleEntity.get('publishedAt'),
-          scheduledAt: articleEntity.get('scheduledAt'),
-          audience: { groups: articleGroups },
-          communities: articleCommunities,
-          wordCount: articleEntity.get('wordCount'),
-          commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
-          totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
-          title: articleEntity.get('title'),
-          coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
-          tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
-          quiz:
-            articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(authUser.id)
-              ? this._quizBinding.binding(articleEntity.get('quiz'))
-              : undefined,
-          quizHighestScore: quizHighestScore
-            ? {
-                quizParticipantId: quizHighestScore.get('id'),
-                score: quizHighestScore.get('score'),
-              }
+      return new ArticleDto({
+        id: articleEntity.get('id'),
+        isReported: articleEntity.get('isReported'),
+        isHidden: articleEntity.isHidden(),
+        createdBy: articleEntity.getCreatedBy(),
+        actor: this._mapActorUser(users[articleEntity.getCreatedBy()]),
+        privacy: articleEntity.get('privacy'),
+        status: articleEntity.get('status'),
+        type: articleEntity.getType(),
+        setting: articleEntity.get('setting'),
+        createdAt: articleEntity.get('createdAt'),
+        updatedAt: articleEntity.get('updatedAt'),
+        markedReadPost: articleEntity.get('markedReadImportant'),
+        isSaved: articleEntity.get('isSaved'),
+        ownerReactions: articleEntity.get('ownerReactions'),
+        reactionsCount: reactionsCount.get(articleEntity.getId()) || [],
+        publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
+          ? articleEntity.get('scheduledAt')
+          : articleEntity.get('publishedAt'),
+        scheduledAt: articleEntity.get('scheduledAt'),
+        audience: { groups: articleGroups },
+        communities: articleCommunities,
+        wordCount: articleEntity.get('wordCount'),
+        commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
+        totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
+        title: articleEntity.get('title'),
+        coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
+        tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
+        quiz:
+          articleEntity.get('quiz') && articleEntity.get('quiz').isVisible(authUser.id)
+            ? this._quizBinding.binding(articleEntity.get('quiz'))
             : undefined,
-          quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
-        })
-      );
+        quizHighestScore: quizHighestScore
+          ? { quizParticipantId: quizHighestScore.get('id'), score: quizHighestScore.get('score') }
+          : undefined,
+        quizDoing: quizDoing ? { quizParticipantId: quizDoing.get('id') } : undefined,
+      });
     });
-
-    return articlesMap;
   }
 
   public async seriesBinding(
@@ -498,10 +480,9 @@ export class ContentBinding implements IContentBinding {
       communities: GroupDto[];
       reactionsCount: Map<string, ReactionsCount>;
     }
-  ): Promise<Map<string, SeriesDto>> {
-    const seriesMap = new Map<string, SeriesDto>();
+  ): Promise<SeriesDto[]> {
     if (!seriesEntities.length) {
-      return seriesMap;
+      return [];
     }
 
     const { authUser, users, groups, communities, reactionsCount } = dataBinding;
@@ -518,7 +499,7 @@ export class ContentBinding implements IContentBinding {
       select: ['id', 'type', 'title'],
     })) as (PostEntity | ArticleEntity)[];
 
-    seriesEntities.forEach((seriesEntity) => {
+    return seriesEntities.map((seriesEntity) => {
       const seriesGroups = groups.filter((group) => seriesEntity.getGroupIds().includes(group.id));
       const communityIds = uniq(seriesGroups.map((group) => group.rootGroupId));
       const seriesCommunities = communities.filter((group) => communityIds.includes(group.id));
@@ -534,35 +515,31 @@ export class ContentBinding implements IContentBinding {
             })
         );
       seriesItems.sort((a, b) => itemIds.indexOf(a.id) - itemIds.indexOf(b.id));
-      seriesMap.set(
-        seriesEntity.getId(),
-        new SeriesDto({
-          id: seriesEntity.get('id'),
-          isReported: seriesEntity.get('isReported'),
-          isHidden: seriesEntity.isHidden(),
-          createdBy: seriesEntity.getCreatedBy(),
-          actor: this._mapActorUser(users[seriesEntity.getCreatedBy()]),
-          privacy: seriesEntity.get('privacy'),
-          status: seriesEntity.get('status'),
-          type: seriesEntity.getType(),
-          setting: seriesEntity.get('setting'),
-          createdAt: seriesEntity.get('createdAt'),
-          updatedAt: seriesEntity.get('updatedAt'),
-          markedReadPost: seriesEntity.get('markedReadImportant'),
-          isSaved: seriesEntity.get('isSaved'),
-          publishedAt: seriesEntity.get('publishedAt'),
-          audience: { groups: seriesGroups },
-          communities: seriesCommunities,
-          commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
-          totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
-          title: seriesEntity.get('title'),
-          summary: seriesEntity.get('summary'),
-          items: seriesItems,
-          coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
-        })
-      );
+      return new SeriesDto({
+        id: seriesEntity.get('id'),
+        isReported: seriesEntity.get('isReported'),
+        isHidden: seriesEntity.isHidden(),
+        createdBy: seriesEntity.getCreatedBy(),
+        actor: this._mapActorUser(users[seriesEntity.getCreatedBy()]),
+        privacy: seriesEntity.get('privacy'),
+        status: seriesEntity.get('status'),
+        type: seriesEntity.getType(),
+        setting: seriesEntity.get('setting'),
+        createdAt: seriesEntity.get('createdAt'),
+        updatedAt: seriesEntity.get('updatedAt'),
+        markedReadPost: seriesEntity.get('markedReadImportant'),
+        isSaved: seriesEntity.get('isSaved'),
+        publishedAt: seriesEntity.get('publishedAt'),
+        audience: { groups: seriesGroups },
+        communities: seriesCommunities,
+        commentsCount: seriesEntity.get('aggregation')?.commentsCount || 0,
+        totalUsersSeen: seriesEntity.get('aggregation')?.totalUsersSeen || 0,
+        title: seriesEntity.get('title'),
+        summary: seriesEntity.get('summary'),
+        items: seriesItems,
+        coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
+      });
     });
-    return seriesMap;
   }
 
   public async seriesItemBinding(
@@ -667,20 +644,28 @@ export class ContentBinding implements IContentBinding {
       reactionsCount,
     };
 
-    const posts = await this._postsBinding(postEntities, dataBinding);
-    const articles = await this._articlesBinding(articleEntities, dataBinding);
-    const series = await this._seriesBinding(seriesEntities, dataBinding);
+    const result = [];
+    const postsMap = ArrayHelper.convertArrayToObject(
+      await this._postsBinding(postEntities, dataBinding),
+      'id'
+    );
+    const articlesMap = ArrayHelper.convertArrayToObject(
+      await this._articlesBinding(articleEntities, dataBinding),
+      'id'
+    );
+    const series = ArrayHelper.convertArrayToObject(
+      await this._seriesBinding(seriesEntities, dataBinding),
+      'id'
+    );
 
     return contentEntities.map((contentEntity) => {
       if (contentEntity instanceof PostEntity) {
-        return posts.get(contentEntity.getId());
+        return postsMap[contentEntity.getId()];
       }
       if (contentEntity instanceof ArticleEntity) {
-        return articles.get(contentEntity.getId());
+        return articlesMap[contentEntity.getId()];
       }
-      if (contentEntity instanceof SeriesEntity) {
-        return series.get(contentEntity.getId());
-      }
+      return series[contentEntity.getId()];
     });
   }
 
