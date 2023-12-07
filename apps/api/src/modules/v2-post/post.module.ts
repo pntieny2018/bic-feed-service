@@ -1,6 +1,5 @@
 import { EventModule } from '@libs/infra/event';
 import { KafkaModule } from '@libs/infra/kafka';
-import { QueueModule } from '@libs/infra/queue';
 import { GroupModule } from '@libs/service/group/group.module';
 import { MediaModule as LibMediaModule } from '@libs/service/media/media.module';
 import { OpenaiModule } from '@libs/service/openai';
@@ -57,7 +56,6 @@ import {
     NotificationModule,
     NotificationModuleV2,
     WebSocketModule,
-    QueueModule,
     EventModule,
     OpenaiModule,
     GroupModule,
