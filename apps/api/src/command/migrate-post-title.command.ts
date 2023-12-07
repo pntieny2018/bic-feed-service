@@ -38,6 +38,7 @@ export class MigratePostTitleCommand implements CommandRunner {
       } catch (e) {}
 
       console.log(`Updated ${count} posts. DONE!`);
+      process.exit();
     }
   }
 }
