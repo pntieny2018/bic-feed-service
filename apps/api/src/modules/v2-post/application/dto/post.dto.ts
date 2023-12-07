@@ -29,7 +29,7 @@ export class PostDto {
   public markedReadPost: boolean; // markedReadImportant
   public isSaved: boolean;
   public ownerReactions: OwnerReactionDto[];
-  public reactionsCount: ReactionsCount;
+  public reactionsCount: ReactionsCount[];
   public publishedAt?: Date;
   public scheduledAt?: Date;
   public audience: { groups: GroupDto[] }; // groupIds
