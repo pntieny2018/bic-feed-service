@@ -18,6 +18,7 @@ export type PostSettingAttributes = {
 
 export type ContentAttributes = {
   id: string;
+  title: string;
   isReported: boolean;
   isHidden: boolean;
   createdBy: string;
@@ -346,5 +347,9 @@ export class ContentEntity<
 
   public hide(): void {
     this._props.isHidden = true;
+  }
+
+  public getTitle(): string {
+    return this._props.title;
   }
 }

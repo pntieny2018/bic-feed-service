@@ -520,7 +520,7 @@ describe('ContentRepository', () => {
       });
       _contentMapper.toDomain.mockReturnValue(mockPostEntity);
 
-      const posts = await _contentRepo.getPagination({
+      const posts = await _contentRepo.getCursorPagination({
         where: { type: CONTENT_TYPE.POST },
         limit: 10,
       });

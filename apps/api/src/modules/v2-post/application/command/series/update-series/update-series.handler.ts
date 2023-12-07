@@ -12,7 +12,7 @@ import {
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+} from '../../../binding/binding-post/content.binding.interface';
 import { SeriesDto } from '../../../dto';
 
 import { UpdateSeriesCommand } from './update-series.command';

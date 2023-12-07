@@ -39,15 +39,8 @@ export const POST_ES_MAPPING = {
           },
         },
       },
-      items: {
-        properties: {
-          id: {
-            type: 'keyword',
-          },
-          zindex: {
-            type: 'integer',
-          },
-        },
+      itemIds: {
+        type: 'keyword',
       },
       seriesIds: {
         type: 'keyword',

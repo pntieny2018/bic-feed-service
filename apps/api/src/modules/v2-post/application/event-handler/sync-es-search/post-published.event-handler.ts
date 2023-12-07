@@ -43,6 +43,7 @@ export class SearchPostPublishedEventHandler implements IEventHandler<PostPublis
         id: postEntity.getId(),
         type: postEntity.getType(),
         content: postEntity.get('content'),
+        title: postEntity.get('title'),
         media: this._mediaBinding.binding(postEntity.get('media')),
         isHidden: postEntity.isHidden(),
         mentionUserIds: postEntity.get('mentionUserIds'),

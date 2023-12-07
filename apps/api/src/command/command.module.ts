@@ -1,4 +1,3 @@
-import { configs } from '@libs/common/config/configuration';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { LogModule } from '@libs/infra/log';
 import { Module } from '@nestjs/common';
@@ -46,6 +45,8 @@ import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
+import { configs } from '@libs/common/config/configuration';
+import { MigratePostTitleCommand } from '@api/command/migrate-post-title.command';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     CleanUpDeletedContentsCommand,
     MigratePostGroupIsHidden,
     MigrateReportStructure,
+    MigratePostTitleCommand,
   ],
 })
 export class CommandModule {}

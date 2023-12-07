@@ -29,7 +29,7 @@ describe('ContentDomainService', () => {
   describe('getScheduleContentIds', () => {
     it('should get schedule contentIds', async () => {
       jest
-        .spyOn(contentRepository, 'getPagination')
+        .spyOn(contentRepository, 'getCursorPagination')
         .mockResolvedValueOnce({ rows: [articleEntityMock], meta: {} });
 
       const result = await contentDomainService.getScheduleContentIds({
