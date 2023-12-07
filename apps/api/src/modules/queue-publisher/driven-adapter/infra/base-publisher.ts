@@ -1,6 +1,4 @@
-import { IQueueService } from '@libs/infra/v2-queue';
-import { JobsProOptions } from '@libs/infra/v2-queue/shared';
-import { Job } from 'bullmq';
+import { IQueueService, JobWithConfiguration } from '@libs/infra/v2-queue';
 
 import { IPublisher } from '../../domain/infra-interface';
 
@@ -11,11 +9,11 @@ export class BasePublisher implements IPublisher {
     this._queue = _queue;
   }
 
-  public async add<T>(job: T, opts?: JobsProOptions): Promise<void> {
-    await this._queue.add(job, opts);
+  public async add<T>(job: JobWithConfiguration<T>): Promise<void> {
+    await this._queue.add(job);
   }
 
-  public async addBulk<T>(jobs: { data: T; opts?: JobsProOptions }[]): Promise<void> {
+  public async addBulk<T>(jobs: JobWithConfiguration<T>[]): Promise<void> {
     await this._queue.addBulk(jobs);
   }
 
@@ -23,7 +21,7 @@ export class BasePublisher implements IPublisher {
     return this._queue.remove(jobId);
   }
 
-  public async get<T>(jobId: string): Promise<Job<T>> {
-    return this._queue.get(jobId);
+  public async has(jobId: string): Promise<boolean> {
+    return this._queue.has(jobId);
   }
 }

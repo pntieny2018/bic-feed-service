@@ -1,10 +1,9 @@
-import { QueueName } from '@libs/infra/v2-queue';
+import { JobWithConfiguration, QueueName } from '@libs/infra/v2-queue';
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Job } from 'bullmq';
 
 import { CONTENT_SCHEDULED_PUBLISHER_TOKEN, IPublisher } from './infra-interface';
-import { IPublisherDomainService, JobWithConfiguration } from './interface';
+import { IPublisherDomainService } from './interface';
 
 @Injectable()
 export class PublisherDomainService implements IPublisherDomainService {
@@ -27,10 +26,14 @@ export class PublisherDomainService implements IPublisherDomainService {
     });
   }
 
-  public async addJob<T>(queue: QueueName, job: JobWithConfiguration<T>): Promise<void> {
-    const { data, opts } = job;
+  public async hasJob(queue: QueueName, jobId: string): Promise<boolean> {
     const publisher = this.factoryMethod(queue);
-    await publisher.add(data, opts);
+    return publisher.has(jobId);
+  }
+
+  public async addJob<T>(queue: QueueName, job: JobWithConfiguration<T>): Promise<void> {
+    const publisher = this.factoryMethod(queue);
+    await publisher.add(job);
     this._logger.debug(`Added a job to queue ${queue}`);
   }
 
@@ -38,13 +41,6 @@ export class PublisherDomainService implements IPublisherDomainService {
     const publisher = this.factoryMethod(queue);
     await publisher.addBulk(jobs);
     this._logger.debug(`Added ${jobs.length} jobs to queue ${queue}`);
-  }
-
-  public async getJob<T>(queue: QueueName, jobId: string): Promise<Job<T>> {
-    const publisher = this.factoryMethod(queue);
-    const job = await publisher.get<T>(jobId);
-    this._logger.debug(`Get job in queue ${queue}, jobId: ${jobId}`);
-    return job;
   }
 
   public async removeJob(queue: QueueName, jobId: string): Promise<boolean> {

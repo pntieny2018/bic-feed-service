@@ -1,10 +1,10 @@
-import { JobsProOptions } from '@libs/infra/v2-queue/shared';
-import { Job } from 'bullmq';
+import { JobWithConfiguration } from '@libs/infra/v2-queue';
 
 export const CONTENT_SCHEDULED_PUBLISHER_TOKEN = 'CONTENT_SCHEDULED_PUBLISHER_TOKEN';
+
 export interface IPublisher {
-  add<T>(data: T, opts?: JobsProOptions): Promise<void>;
-  addBulk<T>(jobs: { data: T; opts?: JobsProOptions }[]): Promise<void>;
-  get<T>(jobId: string): Promise<Job<T>>;
+  has(jobId: string): Promise<boolean>;
+  add<T>(job: JobWithConfiguration<T>): Promise<void>;
+  addBulk<T>(jobs: JobWithConfiguration<T>[]): Promise<void>;
   remove(jobId: string): Promise<boolean>;
 }
