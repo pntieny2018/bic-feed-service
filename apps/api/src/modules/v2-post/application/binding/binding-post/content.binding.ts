@@ -645,13 +645,28 @@ export class ContentBinding implements IContentBinding {
     };
 
     const result = [];
-    const posts = await this._postsBinding(postEntities, dataBinding);
-    const articles = await this._articlesBinding(articleEntities, dataBinding);
-    const series = await this._seriesBinding(seriesEntities, dataBinding);
+    const postsMap = ArrayHelper.convertArrayToObject(
+      await this._postsBinding(postEntities, dataBinding),
+      'id'
+    );
+    const articlesMap = ArrayHelper.convertArrayToObject(
+      await this._articlesBinding(articleEntities, dataBinding),
+      'id'
+    );
+    const series = ArrayHelper.convertArrayToObject(
+      await this._seriesBinding(seriesEntities, dataBinding),
+      'id'
+    );
 
-    result.push(...posts, ...articles, ...series);
-
-    return result;
+    return contentEntities.map((contentEntity) => {
+      if (contentEntity instanceof PostEntity) {
+        return postsMap[contentEntity.getId()];
+      }
+      if (contentEntity instanceof ArticleEntity) {
+        return articlesMap[contentEntity.getId()];
+      }
+      return series[contentEntity.getId()];
+    });
   }
 
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
