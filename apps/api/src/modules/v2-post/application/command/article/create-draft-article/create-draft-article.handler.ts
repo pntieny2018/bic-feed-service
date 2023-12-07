@@ -5,6 +5,7 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { ArticleDto } from '../../../dto';
 
@@ -18,14 +19,17 @@ export class CreateDraftArticleHandler
     @Inject(ARTICLE_DOMAIN_SERVICE_TOKEN)
     private readonly _articleDomainService: IArticleDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding
+    private readonly _contentBinding: IContentBinding,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter
   ) {}
 
   public async execute(command: CreateDraftArticleCommand): Promise<ArticleDto> {
-    const { authUser } = command.payload;
+    const { authUser, groupIds } = command.payload;
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     const articleEntity = await this._articleDomainService.createDraft({
       userId: authUser.id,
-      groups: [],
+      groups,
     });
 
     return this._contentBinding.articleBinding(articleEntity, {
