@@ -5,20 +5,20 @@ import { ConfigService } from '@nestjs/config';
 
 import { APPLICATION_PUBLISHER_SERVICE } from './application/interface';
 import { PublisherService } from './application/publisher.service';
-import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type';
+import { QueueAdapters } from './domain/infra-interface';
 import { PUBLISHER_DOMAIN_SERVICE_TOKEN } from './domain/interface';
 import { PublisherDomainService } from './domain/publisher-domain.service';
-import { publisherProvider } from './provider';
+import { QUEUE_ADAPTER_SERVICES, publisherProvider } from './provider';
 
-const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => {
-  return services.map((service) => {
+const createQueueServiceProviders = (adapters: QueueAdapters[]): Provider[] => {
+  return adapters.map((adapter) => {
     return {
-      provide: service.SERVICE_TOKEN,
+      provide: adapter.serviceToken,
       useFactory: (configService: ConfigService): IQueueService => {
         const redisConfig = configService.get<IRedisConfig>('redis');
         const queueConfig = getQueueConfig(redisConfig);
         return new QueueService({
-          queueName: service.QUEUE_NAME,
+          queueName: adapter.queueName,
           queueConfig,
         });
       },
@@ -47,4 +47,4 @@ const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => 
     },
   ],
 })
-export class QueuePublihserModule {}
+export class QueuePublisherModule {}
