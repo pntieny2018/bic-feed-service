@@ -1,4 +1,3 @@
-import { ReactionsCount } from '@api/common/types';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
@@ -7,7 +6,7 @@ import { PickType } from '@nestjs/swagger';
 import { LinkPreviewDto } from './link-preview.dto';
 import { MediaDto } from './media.dto';
 import { QuizDto } from './quiz.dto';
-import { OwnerReactionDto } from './reaction.dto';
+import { OwnerReactionDto, ReactionCount } from './reaction.dto';
 import { ReportReasonCountDto } from './report.dto';
 import { SeriesInContentDto } from './series.dto';
 import { TagDto } from './tag.dto';
@@ -29,7 +28,7 @@ export class PostDto {
   public markedReadPost: boolean; // markedReadImportant
   public isSaved: boolean;
   public ownerReactions: OwnerReactionDto[];
-  public reactionsCount: ReactionsCount;
+  public reactionsCount: ReactionCount[];
   public publishedAt?: Date;
   public scheduledAt?: Date;
   public audience: { groups: GroupDto[] }; // groupIds
