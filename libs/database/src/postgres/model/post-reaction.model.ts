@@ -1,6 +1,8 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
+  BelongsTo,
   Column,
   CreatedAt,
   Default,
@@ -11,8 +13,7 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { MediaModel } from './media.model';
-import { PostModel } from './post.model';
+import { PostAttributes, PostModel } from './post.model';
 
 export type PostReactionAttributes = InferAttributes<PostReactionModel>;
 @Table({
@@ -34,7 +35,6 @@ export class PostReactionModel extends Model<
   @Column
   public postId: string;
 
-  @ForeignKey(() => MediaModel)
   @Column
   public reactionName: string;
 
@@ -44,4 +44,9 @@ export class PostReactionModel extends Model<
   @Column
   @CreatedAt
   public createdAt?: Date;
+
+  @BelongsTo(() => PostModel)
+  public post?: PostAttributes;
+
+  public target?: CONTENT_TARGET;
 }

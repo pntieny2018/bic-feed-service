@@ -15,7 +15,10 @@ import {
   SeenContentHandler,
   SaveContentHandler,
   UpdateContentSettingHandler,
+  ProcessGroupPrivacyUpdatedHandler,
+  UnsaveContentHandler,
 } from '../application/command/content';
+import { ProcessGroupStateUpdatedHandler } from '../application/command/content/process-group-state-updated';
 import {
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -23,6 +26,7 @@ import {
   PublishPostHandler,
   SchedulePostHandler,
   UpdatePostHandler,
+  PostVideoProcessedHandler,
 } from '../application/command/post';
 import {
   AddSeriesItemsHandler,
@@ -39,13 +43,26 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import { ContentHasSeenEventHandler } from '../application/event-handler/content';
+import {
+  ContentHasSeenEventHandler,
+  ReportHiddenEventHandler,
+} from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
   PostUpdatedEventHandler,
 } from '../application/event-handler/post';
+import {
+  FilePostDeletedEventHandler,
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+} from '../application/event-handler/set-file-state';
+import {
+  VideoPostDeletedEventHandler,
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
+} from '../application/event-handler/set-video-state';
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -57,8 +74,8 @@ import {
   SearchContentsHandler,
   FindPinnedContentHandler,
   GetContentAudienceHandler,
+  GetScheduleContentHandler,
 } from '../application/query/content';
-import { GetScheduleContentHandler } from '../application/query/content/get-schedule-content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
   FindItemsBySeriesHandler,
@@ -74,16 +91,15 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
   SERIES_DOMAIN_SERVICE_TOKEN,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../domain/domain-service/interface';
+import { NewsfeedDomainService } from '../domain/domain-service/newsfeed.domain-service';
 import { PostDomainService } from '../domain/domain-service/post.domain-service';
 import { SeriesDomainService } from '../domain/domain-service/series.domain-service';
-import { ArticleFactory, PostFactory, SeriesFactory } from '../domain/factory';
 import {
-  ARTICLE_FACTORY_TOKEN,
-  POST_FACTORY_TOKEN,
-  SERIES_FACTORY_TOKEN,
-} from '../domain/factory/interface';
-import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+  CONTENT_REPOSITORY_TOKEN,
+  POST_GROUP_REPOSITORY_TOKEN,
+} from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
 import {
@@ -99,12 +115,9 @@ import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
-import { ArticleProcessor } from '../driving-apdater/queue-processor/article.processor';
+import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 
 export const postProvider = [
-  /** Processor */
-  ArticleProcessor,
-
   /** Application Cron Handler */
   ContentCron,
 
@@ -117,6 +130,13 @@ export const postProvider = [
   PostScheduledEventHandler,
   PostDeletedEventHandler,
   PostUpdatedEventHandler,
+  FilePostPublishedEventHandler,
+  FilePostUpdatedEventHandler,
+  FilePostDeletedEventHandler,
+  VideoPostUpdatedEventHandler,
+  VideoPostVideoSuccessEventHandler,
+  VideoPostDeletedEventHandler,
+  ReportHiddenEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -129,17 +149,20 @@ export const postProvider = [
   AutoSaveArticleHandler,
   CreateDraftArticleHandler,
   DeleteArticleHandler,
-  ProcessScheduledContentPublishingHandler,
   PublishArticleHandler,
   ScheduleArticleHandler,
   UpdateArticleHandler,
 
   MarkReadImportantContentHandler,
-  UpdateContentSettingHandler,
+  PinContentHandler,
+  ProcessGroupPrivacyUpdatedHandler,
+  ProcessGroupStateUpdatedHandler,
+  ProcessScheduledContentPublishingHandler,
   ReorderPinnedContentHandler,
   SeenContentHandler,
-  PinContentHandler,
   SaveContentHandler,
+  UnsaveContentHandler,
+  UpdateContentSettingHandler,
 
   AutoSavePostHandler,
   CreateDraftPostHandler,
@@ -147,6 +170,7 @@ export const postProvider = [
   SchedulePostHandler,
   UpdatePostHandler,
   DeletePostHandler,
+  PostVideoProcessedHandler,
 
   CreateSeriesHandler,
   DeleteSeriesHandler,
@@ -193,19 +217,9 @@ export const postProvider = [
     provide: SERIES_DOMAIN_SERVICE_TOKEN,
     useClass: SeriesDomainService,
   },
-
-  /** Domain Factory */
   {
-    provide: ARTICLE_FACTORY_TOKEN,
-    useClass: ArticleFactory,
-  },
-  {
-    provide: POST_FACTORY_TOKEN,
-    useClass: PostFactory,
-  },
-  {
-    provide: SERIES_FACTORY_TOKEN,
-    useClass: SeriesFactory,
+    provide: NEWSFEED_DOMAIN_SERVICE_TOKEN,
+    useClass: NewsfeedDomainService,
   },
 
   /** Domain Validator */
@@ -235,5 +249,9 @@ export const postProvider = [
   {
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
+  },
+  {
+    provide: POST_GROUP_REPOSITORY_TOKEN,
+    useClass: PostGroupRepository,
   },
 ];

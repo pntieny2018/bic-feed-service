@@ -1,9 +1,9 @@
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Logger } from '@nestjs/common';
-import { EntityHelper } from 'apps/api/src/common/helpers';
 import { cloneDeep } from 'lodash';
 
 import { DatabaseException } from '../../../../common/exceptions';
+import { EntityHelper } from '../../../../common/helpers';
 import { TagDuplicateNameException, TagUsedException } from '../exception';
 import { ArticleEntity, PostEntity } from '../model/content';
 import { TagEntity } from '../model/tag';

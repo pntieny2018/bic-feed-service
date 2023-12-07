@@ -26,7 +26,6 @@ import { LinkPreviewAttributes, LinkPreviewModel } from './link-preview.model';
 import { MediaAttributes, MediaModel } from './media.model';
 import { PostCategoryAttributes, PostCategoryModel } from './post-category.model';
 import { PostGroupAttributes, PostGroupModel } from './post-group.model';
-import { PostMediaModel } from './post-media.model';
 import { PostReactionAttributes, PostReactionModel } from './post-reaction.model';
 import { PostSeriesAttributes, PostSeriesModel } from './post-series.model';
 import { PostTagAttributes, PostTagModel } from './post-tag.model';
@@ -92,7 +91,9 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public mentions: string[];
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: CONTENT_TYPE;
 
   @AllowNull(true)
@@ -100,10 +101,14 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public summary: string;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public lang?: LANGUAGE;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public privacy: PRIVACY;
 
   @Column({
@@ -132,7 +137,9 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public cover?: string;
 
   @AllowNull(false)
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: CONTENT_STATUS;
 
   @AllowNull(true)
@@ -175,9 +182,6 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
 
   @HasMany(() => CommentModel)
   public comments?: CommentAttributes[];
-
-  @BelongsToMany(() => MediaModel, () => PostMediaModel)
-  public media?: MediaAttributes[];
 
   @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
   public categories?: CategoryAttributes[];

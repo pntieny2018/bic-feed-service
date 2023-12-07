@@ -1,9 +1,9 @@
+import { ORDER } from '@beincom/constants';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 
-import { OrderEnum } from '../../../../../common/dto';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import {
   CommentNotFoundException,
@@ -49,7 +49,7 @@ describe('CommentController', () => {
     it('should return an array of comments', async () => {
       const listCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-        order: OrderEnum.DESC,
+        order: ORDER.DESC,
       } as GetListCommentsDto;
       jest.spyOn(query, 'execute').mockImplementation(() =>
         Promise.resolve({
@@ -65,8 +65,9 @@ describe('CommentController', () => {
       });
       expect(query.execute).toBeCalledWith({
         payload: {
+          contentId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
           postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-          order: OrderEnum.DESC,
+          order: ORDER.DESC,
           authUser: userMock,
         },
       });
@@ -75,7 +76,7 @@ describe('CommentController', () => {
     it('should throw NotFoundException when post not found', async () => {
       const listCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-        order: OrderEnum.DESC,
+        order: ORDER.DESC,
       } as GetListCommentsDto;
       jest
         .spyOn(query, 'execute')
@@ -89,7 +90,7 @@ describe('CommentController', () => {
     it('should throw error', async () => {
       const listCommentDto = {
         postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
-        order: OrderEnum.DESC,
+        order: ORDER.DESC,
         before: '1',
       } as GetListCommentsDto;
       jest.spyOn(query, 'execute').mockImplementation(() => Promise.reject(new Error()));
@@ -223,6 +224,7 @@ describe('CommentController', () => {
       expect(res).toEqual(commentMock);
       expect(command.execute).toBeCalledWith({
         payload: {
+          contentId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
           postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
           content: 'sample content',
           actor: userMock,
@@ -328,6 +330,7 @@ describe('CommentController', () => {
       expect(res).toEqual(commentMock);
       expect(command.execute).toBeCalledWith({
         payload: {
+          contentId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
           postId: 'b114b2dd-39b4-43ae-8643-c9e3228feeb5',
           parentId: '7a821691-64cb-4846-9933-d31cbe5ce558',
           content: '1',
@@ -433,7 +436,7 @@ describe('CommentController', () => {
       );
       expect(command.execute).toBeCalledWith({
         payload: {
-          id: '7a821691-64cb-4846-9933-d31cbe5ce558',
+          commentId: '7a821691-64cb-4846-9933-d31cbe5ce558',
           content: '1',
           actor: userMock,
           media: {
@@ -514,7 +517,7 @@ describe('CommentController', () => {
       await commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558');
       expect(command.execute).toBeCalledWith({
         payload: {
-          id: '7a821691-64cb-4846-9933-d31cbe5ce558',
+          commentId: '7a821691-64cb-4846-9933-d31cbe5ce558',
           actor: userMock,
         },
       });

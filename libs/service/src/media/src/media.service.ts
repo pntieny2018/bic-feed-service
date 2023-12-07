@@ -82,6 +82,7 @@ export class MediaService implements IMediaService {
               width: i.properties.width,
               height: i.properties.height,
               size: i.properties.size,
+              duration: i.properties.duration,
               thumbnails: i.thumbnails,
               createdBy: i.userId,
               status: i.status,

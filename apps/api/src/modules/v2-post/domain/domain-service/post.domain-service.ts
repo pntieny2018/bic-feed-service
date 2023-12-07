@@ -1,15 +1,18 @@
+import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { LinkPreviewDto, MediaDto } from '../../application/dto';
+import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
   ContentHasSeenEvent,
   PostDeletedEvent,
   PostPublishedEvent,
   PostScheduledEvent,
   PostUpdatedEvent,
+  PostVideoFailedEvent,
+  PostVideoSuccessEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -54,6 +57,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
+  UpdateVideoProcessProps,
 } from './interface';
 
 export class PostDomainService implements IPostDomainService {
@@ -176,7 +180,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostScheduledEvent({ postEntity, actor }));
+      this.event.publish(new PostScheduledEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -216,7 +220,7 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
 
-      if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
+      if (postEntity.isNotUsersSeen()) {
         await this._contentDomainService.markSeen(postId, actor.id);
         postEntity.increaseTotalSeen();
       }
@@ -226,7 +230,7 @@ export class PostDomainService implements IPostDomainService {
         postEntity.setMarkReadImportant();
       }
 
-      this.event.publish(new PostPublishedEvent({ postEntity, actor }));
+      this.event.publish(new PostPublishedEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -269,10 +273,92 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
+      this.event.publish(new PostUpdatedEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
+  }
+
+  public async updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, videoId, actor } = props;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    await this._setNewMedia(postEntity, {
+      images: [],
+      files: [],
+      videos: [
+        {
+          id: videoId,
+        },
+      ],
+    });
+
+    const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
+    const status = isScheduledPost ? CONTENT_STATUS.SCHEDULE_FAILED : CONTENT_STATUS.DRAFT;
+
+    postEntity.setStatus(status);
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+      this.event.publish(new PostVideoFailedEvent({ postEntity, authUser: actor }));
+    }
+  }
+
+  public async updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, videoId, actor } = props;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
+
+    await this._setNewMedia(postEntity, {
+      images: [],
+      files: [],
+      videos: [
+        {
+          id: videoId,
+        },
+      ],
+    });
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+      this.event.publish(new PostVideoSuccessEvent({ postEntity, authUser: actor }));
+    }
+
+    if (!isScheduledPost) {
+      await this.publish({
+        payload: {
+          id: postEntity.get('id'),
+        },
+        actor,
+      });
+    }
   }
 
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
@@ -287,6 +373,10 @@ export class PostDomainService implements IPostDomainService {
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isHidden() || postEntity.isPublished()) {
       return;
+    }
+
+    if (!postEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
     }
 
     await this._validateAndSetPostAttributes(postEntity, props.payload, actor, false);
@@ -319,7 +409,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new PostDeletedEvent({ postEntity, actor: authUser }));
+    this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
   }
 
   private async _validateAndSetPostAttributes(
@@ -341,6 +431,10 @@ export class PostDomainService implements IPostDomainService {
     const currentLinkPreviewUrl = postEntity.get('linkPreview')?.get('url');
     if (linkPreview && linkPreview.url !== currentLinkPreviewUrl) {
       await this._setNewLinkPreview(postEntity, linkPreview);
+    }
+
+    if (payload.status) {
+      postEntity.setStatus(payload.status);
     }
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
@@ -381,12 +475,11 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setLinkPreview(linkPreviewEntity);
   }
 
-  private async _setNewMedia(postEntity: PostEntity, media: MediaDto): Promise<void> {
+  private async _setNewMedia(postEntity: PostEntity, media: MediaRequestDto): Promise<void> {
     const ownerId = postEntity.get('createdBy');
 
     const imageEntities = postEntity.get('media').images;
     const fileEntities = postEntity.get('media').files;
-    const videoEntities = postEntity.get('media').videos;
 
     const newImageIds = media?.images?.map((image) => image.id) || [];
     const newFileIds = media?.files?.map((file) => file.id) || [];
@@ -405,11 +498,7 @@ export class PostDomainService implements IPostDomainService {
       newFileIds,
       ownerId
     );
-    const videos = await this._mediaDomainService.getAvailableVideos(
-      videoEntities,
-      newVideoIds,
-      ownerId
-    );
+    const videos = await this._mediaDomainService.getAvailableVideos(newVideoIds, ownerId);
 
     postEntity.setMedia({
       files,

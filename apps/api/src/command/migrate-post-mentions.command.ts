@@ -2,7 +2,7 @@ import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { QueryTypes } from 'sequelize';
 import { PostModel } from '../database/models/post.model';
-import { getDatabaseConfig } from '../config/database';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 //npx ts-node -r tsconfig-paths/register src/command/cli.ts migrate:post-mentions
 //node dist/src/command/cli.js es:post-mentions

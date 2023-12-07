@@ -1,8 +1,8 @@
 import { MEDIA_TYPE } from '@beincom/constants';
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 import { difference, intersection } from 'lodash';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';
@@ -17,26 +17,13 @@ export class MediaDomainService implements IMediaDomainService {
     private readonly _mediaAdapter: IMediaAdapter
   ) {}
 
-  public async getAvailableVideos(
-    videoEntities: VideoEntity[],
-    videosIds: string[],
-    ownerId: string
-  ): Promise<VideoEntity[]> {
+  public async getAvailableVideos(videosIds: string[], ownerId: string): Promise<VideoEntity[]> {
     if (!videosIds || videosIds?.length === 0) {
       return [];
     }
 
-    videoEntities = videoEntities || [];
-    const currentVideoIds = videoEntities.map((e) => e.get('id'));
-    const notChangedIds = intersection(currentVideoIds, videosIds);
-    const addingVideoIds = difference(videosIds, currentVideoIds);
-    let result = videoEntities.filter((e) => notChangedIds.includes(e.get('id')));
-
-    if (addingVideoIds.length) {
-      const videos = await this._mediaAdapter.findVideosByIds(addingVideoIds);
-      const availableVideos = videos.filter((video) => video.isOwner(ownerId));
-      result = result.concat(availableVideos);
-    }
+    const videos = await this._mediaAdapter.findVideosByIds(videosIds);
+    const result = videos.filter((video) => video.isOwner(ownerId));
 
     return result.sort((a, b) => videosIds.indexOf(a.get('id')) - videosIds.indexOf(b.get('id')));
   }

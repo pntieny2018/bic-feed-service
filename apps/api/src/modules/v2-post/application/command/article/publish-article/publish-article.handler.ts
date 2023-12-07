@@ -5,10 +5,7 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
-import {
-  CONTENT_BINDING_TOKEN,
-  IContentBinding,
-} from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../binding';
 import { ArticleDto } from '../../../dto';
 
 import { PublishArticleCommand } from './publish-article.command';

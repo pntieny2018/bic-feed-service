@@ -4,7 +4,6 @@ import {
   CursorPaginationProps,
   CursorPaginationResult,
   CursorPaginator,
-  getDatabaseConfig,
   PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
@@ -15,7 +14,6 @@ import { PostReactionModel } from '@libs/database/postgres/model/post-reaction.m
 import { PostSeriesModel } from '@libs/database/postgres/model/post-series.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { QuizModel } from '@libs/database/postgres/model/quiz.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.model';
 import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
@@ -24,12 +22,19 @@ import {
   FindContentProps,
   OrderOptions,
 } from '@libs/database/postgres/repository/interface/content.repository.interface';
-import { InjectConnection } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
 import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+
+import { ReportDetailModel, ReportModel } from '../model';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {
+  public constructor(
+    @InjectModel(ReportModel)
+    private readonly _reportModel: typeof ReportModel,
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize
+  ) {
     super(PostModel);
   }
 
@@ -55,7 +60,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async getPagination(
     getPaginationContentsProps: FindContentProps & CursorPaginationProps
   ): Promise<CursorPaginationResult<PostModel>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+    } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 
@@ -140,7 +150,10 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
     if (orderOptions.isSavedDateByDesc) {
-      order.push(['userSavePosts', 'createdAt', ORDER.DESC]);
+      order.push([
+        { model: UserSavePostModel, as: 'userSavePosts', field: 'createdAt' },
+        ORDER.DESC,
+      ]);
     }
     if (orderOptions.createdAtDesc) {
       order.push(['createdAt', ORDER.DESC]);
@@ -366,6 +379,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         );
       }
 
+      if (options.where.videoIdProcessing) {
+        conditions.push({
+          videoIdProcessing: options.where.videoIdProcessing,
+        });
+      }
+
       if (
         isBoolean(options.where.groupArchived) &&
         !options.include?.shouldIncludeGroup &&
@@ -437,14 +456,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   }
 
   private _excludeReportedByUser(userId: string): string {
-    const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    const reporterId = this._sequelizeConnection.escape(userId);
+
     return `NOT EXISTS ( 
-        SELECT target_id FROM ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this._sequelizeConnection.escape(
-            userId
-          )}
-      )`;
+              SELECT target_id FROM ${ReportDetailModel.getTableName()} rcd
+              WHERE rcd.target_id = "PostModel".id AND rcd.reporter_id = ${reporterId}
+            )`;
   }
 
   private _filterSavedByUser(userId: string): string {
@@ -485,5 +502,26 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
           WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${groupArchived}
         )`;
+  }
+
+  public async destroyContent(id: string): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      await this._reportModel.destroy({
+        where: { targetId: id },
+        transaction,
+      });
+
+      await this.model.destroy({
+        where: { id },
+        force: true,
+        transaction: transaction,
+      });
+
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 }

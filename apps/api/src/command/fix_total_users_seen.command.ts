@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../database/models/post.model';
@@ -7,7 +6,6 @@ import { ModelHelper } from '../common/helpers/model.helper';
 
 @Command({ name: 'fix:post:total-users-seen', description: 'Fix total users seen for all posts' })
 export class FixTotalUsersSeenCommand implements CommandRunner {
-  private _logger = new Logger(FixTotalUsersSeenCommand.name);
   public constructor(
     @InjectModel(PostModel) private _postModel: typeof PostModel,
     @InjectModel(UserSeenPostModel) private _userSeenPostModel: typeof UserSeenPostModel
@@ -29,7 +27,7 @@ export class FixTotalUsersSeenCommand implements CommandRunner {
     for (const post of allPosts) {
       await post.update({ totalUsersSeen: mapUsersSeenPosts[post.id] || 0 });
     }
-    this._logger.log(`Done. Total: ${allPosts.length}`);
+    console.log('Done.');
     process.exit();
   }
 }

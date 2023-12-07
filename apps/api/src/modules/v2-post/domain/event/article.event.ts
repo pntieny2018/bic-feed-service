@@ -1,23 +1,55 @@
+import { IEventPayload } from '@libs/infra/event';
+
+import {
+  ArticleHasBeenDeleted,
+  ArticleHasBeenPublished,
+  ArticleHasBeenUpdated,
+} from '../../../../common/constants';
 import { UserDto } from '../../../v2-user/application';
 import { ArticleEntity } from '../model/content';
 
-export class ArticleDeletedEvent {
-  public constructor(
-    public readonly articleEntity: ArticleEntity,
-    public readonly actor: UserDto
-  ) {}
+interface ArticleEventPayload {
+  articleEntity: ArticleEntity;
+  authUser: UserDto;
+}
+export class ArticleDeletedEvent implements IEventPayload {
+  public static event = ArticleHasBeenDeleted;
+
+  public payload: ArticleEventPayload;
+
+  public constructor(data: ArticleEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ArticleDeletedEvent.event;
+  }
 }
 
-export class ArticleUpdatedEvent {
-  public constructor(
-    public readonly articleEntity: ArticleEntity,
-    public readonly actor: UserDto
-  ) {}
+export class ArticleUpdatedEvent implements IEventPayload {
+  public static event = ArticleHasBeenUpdated;
+
+  public payload: ArticleEventPayload;
+
+  public constructor(data: ArticleEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ArticleUpdatedEvent.event;
+  }
 }
 
-export class ArticlePublishedEvent {
-  public constructor(
-    public readonly articleEntity: ArticleEntity,
-    public readonly actor: UserDto
-  ) {}
+export class ArticlePublishedEvent implements IEventPayload {
+  public static event = ArticleHasBeenPublished;
+
+  public payload: ArticleEventPayload;
+
+  public constructor(data: ArticleEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ArticlePublishedEvent.event;
+  }
 }

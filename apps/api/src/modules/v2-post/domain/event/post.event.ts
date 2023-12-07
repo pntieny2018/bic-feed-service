@@ -6,12 +6,14 @@ import {
   PostHasBeenPublished,
   PostHasBeenScheduled,
   PostHasBeenUpdated,
+  PostVideoHasBeenFailed,
+  PostVideoHasBeenPublished,
 } from '../../../../common/constants';
 import { PostEntity } from '../model/content';
 
 interface PostEventPayload {
   postEntity: PostEntity;
-  actor: UserDto;
+  authUser: UserDto;
 }
 
 export class PostPublishedEvent implements IEventPayload {
@@ -21,6 +23,10 @@ export class PostPublishedEvent implements IEventPayload {
 
   public constructor(data: PostEventPayload) {
     this.payload = data;
+  }
+
+  public getEventName(): string {
+    return PostPublishedEvent.event;
   }
 }
 
@@ -32,6 +38,10 @@ export class PostScheduledEvent implements IEventPayload {
   public constructor(data: PostEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return PostScheduledEvent.event;
+  }
 }
 
 export class PostDeletedEvent implements IEventPayload {
@@ -42,6 +52,10 @@ export class PostDeletedEvent implements IEventPayload {
   public constructor(data: PostEventPayload) {
     this.payload = data;
   }
+
+  public getEventName(): string {
+    return PostDeletedEvent.event;
+  }
 }
 
 export class PostUpdatedEvent implements IEventPayload {
@@ -51,5 +65,37 @@ export class PostUpdatedEvent implements IEventPayload {
 
   public constructor(data: PostEventPayload) {
     this.payload = data;
+  }
+
+  public getEventName(): string {
+    return PostUpdatedEvent.event;
+  }
+}
+
+export class PostVideoSuccessEvent implements IEventPayload {
+  public static event = PostVideoHasBeenPublished;
+
+  public payload: PostEventPayload;
+
+  public constructor(data: PostEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return PostVideoSuccessEvent.event;
+  }
+}
+
+export class PostVideoFailedEvent implements IEventPayload {
+  public static event = PostVideoHasBeenFailed;
+
+  public payload: PostEventPayload;
+
+  public constructor(data: PostEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return PostVideoFailedEvent.event;
   }
 }

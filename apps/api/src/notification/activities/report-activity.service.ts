@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
+
 import { ObjectHelper } from '../../common/helpers';
-import { TypeActivity, VerbActivity } from '../notification.constants';
 import { TargetType } from '../../modules/report-content/contstants';
 import {
   ActivityObject,
   ActorObject,
   NotificationActivity,
 } from '../dto/requests/notification-activity.dto';
+import { TypeActivity, VerbActivity } from '../notification.constants';
 
 @Injectable()
 export class ReportActivityService {

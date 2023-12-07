@@ -192,10 +192,13 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     const currentVideoIds = (this._props.media.videos || []).map((video) => video.get('id'));
     for (const video of videos) {
       if (!currentVideoIds.includes(video.get('id'))) {
-        if (!video.isProcessed()) {
-          this._props.videoIdProcessing = video.get('id');
-        }
         this._state.attachVideoIds.push(video.get('id'));
+      }
+
+      if (!video.isProcessed()) {
+        this._props.videoIdProcessing = video.get('id');
+      } else {
+        this._props.videoIdProcessing = null;
       }
     }
 
@@ -213,5 +216,9 @@ export class PostEntity extends ContentEntity<PostAttributes> {
 
   public isOverLimitedToAttachSeries(): boolean {
     return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
+  }
+
+  public getContent(): string {
+    return this._props.content;
   }
 }

@@ -4,12 +4,12 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 
 import { ArrayHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { FollowService } from '../follow';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class FeedPublisherService {
@@ -135,12 +135,13 @@ export class FeedPublisherService {
         )} and keep: ${JSON.stringify(oldGroupIds)}`
       );
       while (true) {
-        const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
-          attachedGroupIds,
-          oldGroupIds,
-          latestFollowId,
-          1000
-        );
+        const { userIds, latestFollowId: lastId } =
+          await this._followService.findUsersFollowedGroupIds(
+            attachedGroupIds,
+            oldGroupIds,
+            latestFollowId,
+            1000
+          );
         if (userIds.length) {
           await this.attachPostToUserIds(userIds, postId);
           this._logger.debug(
@@ -163,12 +164,13 @@ export class FeedPublisherService {
         )} and keep: ${JSON.stringify(newGroupIds)}`
       );
       while (true) {
-        const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
-          detachedGroupIds,
-          newGroupIds,
-          latestFollowId,
-          1000
-        );
+        const { userIds, latestFollowId: lastId } =
+          await this._followService.findUsersFollowedGroupIds(
+            detachedGroupIds,
+            newGroupIds,
+            latestFollowId,
+            1000
+          );
         if (userIds.length) {
           await this.detachPostFromUserIds(userIds, postId);
         }

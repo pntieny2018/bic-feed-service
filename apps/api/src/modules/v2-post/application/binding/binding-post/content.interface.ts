@@ -1,8 +1,13 @@
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
 
-import { ReactionsCount } from '../../../../../common/types';
-import { PostEntity, SeriesEntity, ArticleEntity } from '../../../domain/model/content';
+import {
+  PostEntity,
+  SeriesEntity,
+  ArticleEntity,
+  PostAttributes,
+  ArticleAttributes,
+} from '../../../domain/model/content';
 import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
 
 export interface IContentBinding {
@@ -12,9 +17,16 @@ export interface IContentBinding {
       actor?: UserDto;
       mentionUsers?: UserDto[];
       groups?: GroupDto[];
-      series?: SeriesEntity[];
       authUser: UserDto;
-      reactionsCount?: ReactionsCount;
+    }
+  ): Promise<PostDto>;
+  postAttributesBinding(
+    postAttributes: PostAttributes,
+    dataBinding: {
+      actor?: UserDto;
+      mentionUsers?: UserDto[];
+      groups?: GroupDto[];
+      authUser: UserDto;
     }
   ): Promise<PostDto>;
 
@@ -29,6 +41,14 @@ export interface IContentBinding {
 
   articleBinding(
     articleEntity: ArticleEntity,
+    dataBinding: {
+      actor?: UserDto;
+      groups?: GroupDto[];
+      authUser: UserDto;
+    }
+  ): Promise<ArticleDto>;
+  articleAttributesBinding(
+    articleAttributes: ArticleAttributes,
     dataBinding: {
       actor?: UserDto;
       groups?: GroupDto[];

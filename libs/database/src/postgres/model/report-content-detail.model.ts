@@ -1,4 +1,5 @@
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -13,12 +14,14 @@ import { v4 as uuid_v4 } from 'uuid';
 
 import { ReportContentModel } from './report-content.model';
 
-export enum ReportTo {
+export enum REPORT_SCOPE {
   GROUP = 'GROUP',
   COMMUNITY = 'COMMUNITY',
 }
 
 export type ReportContentDetailAttributes = InferAttributes<ReportContentDetailModel>;
+
+// TODO: Remove this model
 @Table({
   tableName: 'report_content_details',
   paranoid: false,
@@ -35,8 +38,10 @@ export class ReportContentDetailModel extends Model<
   @Column
   public targetId: string;
 
-  @Column
-  public targetType: string;
+  @Column({
+    type: DataTypes.STRING,
+  })
+  public targetType: CONTENT_TARGET;
 
   @Column
   public groupId: string;
@@ -44,15 +49,19 @@ export class ReportContentDetailModel extends Model<
   @Column
   public createdBy: string;
 
-  @Column
-  public reportTo: ReportTo;
+  @Column({
+    type: DataTypes.STRING,
+  })
+  public reportTo: REPORT_SCOPE;
 
   @ForeignKey(() => ReportContentModel)
   @Column
   public reportId: string;
 
-  @Column
-  public reasonType: string;
+  @Column({
+    type: DataTypes.STRING,
+  })
+  public reasonType: CONTENT_REPORT_REASON_TYPE;
 
   @Column
   public reason?: string;
