@@ -11,6 +11,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
   itemIds: 'itemsIds',
   seriesIds: 'seriesIds',
   groupIds: 'groupIds',
+  communityIds: 'communityIds',
   title: {
     default: 'title.default',
     ascii: 'title.ascii',

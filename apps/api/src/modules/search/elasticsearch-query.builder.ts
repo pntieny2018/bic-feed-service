@@ -7,7 +7,7 @@ import { StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { RULES } from '../v2-post/constant';
 
-import { IPostSearchQuery } from './interfaces';
+import { ICountContentsInCommunityQuery, IPostSearchQuery } from './interfaces';
 
 @Injectable()
 export class ElasticsearchQueryBuilder {
@@ -56,6 +56,21 @@ export class ElasticsearchQueryBuilder {
 
     body['sort'] = [...this._getSort(keyword)];
 
+    return body;
+  }
+
+  public buildPayloadCountContentsInCommunity(query: ICountContentsInCommunityQuery): BodyES {
+    const { startTime, endTime, rootGroupIds } = query;
+    const body: BodyES = {
+      query: {
+        bool: {
+          filter: [
+            ...this._getCommunityFilter(rootGroupIds),
+            ...this._getFilterTime(startTime, endTime),
+          ],
+        },
+      },
+    };
     return body;
   }
 
@@ -152,6 +167,21 @@ export class ElasticsearchQueryBuilder {
         {
           terms: {
             [groupIds]: filterGroupIds,
+          },
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  private _getCommunityFilter(filterCommunityIds: string[]): any {
+    const { communityIds } = ELASTIC_POST_MAPPING_PATH;
+    if (filterCommunityIds && filterCommunityIds?.length) {
+      return [
+        {
+          terms: {
+            [communityIds]: filterCommunityIds,
           },
         },
       ];
