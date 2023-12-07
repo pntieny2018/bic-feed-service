@@ -1,13 +1,12 @@
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { SentryService } from '@libs/infra/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { FollowModel, IFollow } from '../../database/models/follow.model';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+
 import { FollowsDto } from './dto/response/follows.dto';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class FollowService {
@@ -16,9 +15,7 @@ export class FollowService {
   private _logger = new Logger(FollowService.name);
 
   public constructor(
-    @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
     @InjectConnection() private _sequelize: Sequelize,
-    private _eventEmitter: InternalEventEmitterService,
     @InjectModel(FollowModel) private _followModel: typeof FollowModel,
     private readonly _sentryService: SentryService
   ) {}

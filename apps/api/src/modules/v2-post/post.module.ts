@@ -10,13 +10,11 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
+import { QueuePublihserModule } from '../queue-publisher/queue-publisher.module';
 import { SearchModule } from '../search';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
 import { WebSocketModule } from '../ws/ws.module';
 
-import { CONTENT_BINDING_TOKEN, ContentBinding } from './application/binding';
-import { ContentDomainService } from './domain/domain-service/content.domain-service';
-import { CONTENT_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface';
 import { REPORT_REPOSITORY_TOKEN } from './domain/repositoty-interface';
 import { ReportRepository } from './driven-adapter/repository';
 import { ArticleController } from './driving-apdater/controller/article.controller';
@@ -35,6 +33,7 @@ import {
   adapterProvider,
   categoryProvider,
   commentProvider,
+  elasticProvider,
   feedProvider,
   libRepositoryProvider,
   linkPreviewProvider,
@@ -47,8 +46,8 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
+  workerProvider,
 } from './provider';
-import { workerProvider } from './provider/worker.provider';
 
 @Module({
   imports: [
@@ -65,6 +64,7 @@ import { workerProvider } from './provider/worker.provider';
     UserModule,
     LibMediaModule,
     forwardRef(() => SearchModule),
+    QueuePublihserModule,
   ],
   controllers: [
     TagController,
@@ -100,17 +100,10 @@ import { workerProvider } from './provider/worker.provider';
   ],
   exports: [
     {
-      provide: CONTENT_BINDING_TOKEN,
-      useClass: ContentBinding,
-    },
-    {
-      provide: CONTENT_DOMAIN_SERVICE_TOKEN,
-      useClass: ContentDomainService,
-    },
-    {
       provide: REPORT_REPOSITORY_TOKEN, // TODO: remove after remove old search module
       useClass: ReportRepository,
     },
+    ...elasticProvider,
   ],
 })
 export class PostModuleV2 {}
