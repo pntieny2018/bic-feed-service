@@ -8,7 +8,7 @@ import {
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../../domain/validator/interface';
 import { ContentBinding } from '../../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.interface';
+import { CONTENT_BINDING_TOKEN } from '../../../binding/binding-post/content.binding.interface';
 import { ArticleDto } from '../../../dto';
 
 import { FindArticleQuery } from './find-article.query';
@@ -32,7 +32,6 @@ export class FindArticleHandler implements IQueryHandler<FindArticleQuery, Artic
     const groups = await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds'));
 
     await this._postValidator.checkCanReadContent(articleEntity, authUser, groups);
-
 
     return this._contentBinding.articleBinding(articleEntity, {
       groups,

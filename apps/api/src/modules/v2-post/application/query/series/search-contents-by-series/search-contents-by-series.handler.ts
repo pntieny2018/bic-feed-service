@@ -129,7 +129,6 @@ export class SearchContentsBySeriesHandler
         summary: item.summary,
         categories: item.categories,
         media: item.media,
-        content: item.content,
         audience: {
           groups: (item.groupIds || [])
             .filter((groupId) => audienceMapper.has(groupId))
@@ -140,7 +139,6 @@ export class SearchContentsBySeriesHandler
         publishedAt: item.publishedAt,
       });
     });
-
     return new SearchContentsBySeriesDto(series, {
       total,
       hasNextPage: limit <= source.length,

@@ -10,7 +10,6 @@ import { TagEntity } from '../tag';
 import { ContentEntity, ContentAttributes } from './content.entity';
 
 export type ArticleAttributes = ContentAttributes & {
-  title: string;
   summary: string;
   content: string;
   categories: CategoryEntity[];
@@ -96,10 +95,6 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
 
   public setSeriesIds(seriesIds: string[]): void {
     this._props.seriesIds = seriesIds;
-  }
-
-  public getTitle(): string {
-    return this._props.title;
   }
 
   public getCategories(): CategoryEntity[] {

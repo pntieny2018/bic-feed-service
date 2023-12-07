@@ -22,6 +22,7 @@ export function createMockContentEntity(data: Partial<PostAttributes> = {}): Con
   return new ContentEntity({
     id: v4(),
     groupIds: data.groups ? data.groups.map((group) => group.groupId) : [v4()],
+    title: data.title,
     content: data.content || '1111',
     createdBy: data.createdBy || ownerId,
     updatedBy: data.updatedBy || ownerId,
@@ -145,6 +146,7 @@ export function createMockPostEntity(data: Partial<PostAttributes> = {}): PostEn
       files: (post.mediaJson?.files || []).map(createMockFileEntity),
       videos: (post.mediaJson?.videos || []).map(createMockVideoEntity),
     },
+    title: post.title,
     content: post.content,
     mentionUserIds: post.mentions || [],
     linkPreview: post.linkPreview ? createMockLinkPreviewEntity(post.linkPreview) : undefined,
@@ -426,12 +428,7 @@ export function createMockSeriesEntity(data: Partial<PostAttributes> = {}): Seri
     postGroups: series.groups || [],
     title: series.title,
     summary: series.summary,
-    itemIds: (series.itemIds || []).sort((a, b) => a.zindex - b.zindex).map((item) => item.postId),
-    items: (series.itemIds || [])
-      .sort((a, b) => {
-        return a.zindex - b.zindex;
-      })
-      .map((item) => ({ id: item.postId, zindex: item.zindex })),
+    itemIds: series.itemIds || [],
     cover: series.coverJson ? new ImageEntity(series.coverJson) : null,
   });
 }

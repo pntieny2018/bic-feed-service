@@ -311,7 +311,7 @@ describe('QuizParticipantRepository', () => {
         {
           where: { postId: mockContentId, isHighest: true, finishedAt: { [Op.ne]: null } },
         },
-        { limit: 10, order: ORDER.DESC, column: 'createdAt' }
+        { limit: 10, order: ORDER.DESC, sortColumns: ['createdAt'] }
       );
       expect(_quizParticipantMapper.toDomain).toBeCalledWith(mockQuizParticipantRecord);
       expect(result).toEqual({

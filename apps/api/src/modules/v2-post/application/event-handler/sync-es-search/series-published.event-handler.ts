@@ -4,12 +4,12 @@ import { IEventHandler } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
 
 import { SearchService } from '../../../../search/search.service';
-import { SeriesUpdatedEvent } from '../../../domain/event';
+import { SeriesPublishedEvent } from '../../../domain/event';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../../binding/binding-media';
 
-@EventsHandlerAndLog(SeriesUpdatedEvent)
-export class SearchSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdatedEvent> {
+@EventsHandlerAndLog(SeriesPublishedEvent)
+export class SearchSeriesPublishedEventHandler implements IEventHandler<SeriesPublishedEvent> {
   public constructor(
     @Inject(MEDIA_BINDING_TOKEN)
     private readonly _mediaBinding: IMediaBinding,
@@ -19,27 +19,26 @@ export class SearchSeriesUpdatedEventHandler implements IEventHandler<SeriesUpda
     private readonly _postSearchService: SearchService
   ) {}
 
-  public async handle(event: SeriesUpdatedEvent): Promise<void> {
+  public async handle(event: SeriesPublishedEvent): Promise<void> {
     const { seriesEntity, authUser } = event.payload;
 
     const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
     const communityIds = uniq(groups.map((group) => group.rootGroupId));
 
-    await this._postSearchService.updatePostsToSearch([
+    await this._postSearchService.addPostsToSearch([
       {
         id: seriesEntity.getId(),
-        groupIds: seriesEntity.getGroupIds(),
-        communityIds,
         createdAt: seriesEntity.get('createdAt'),
         updatedAt: seriesEntity.get('updatedAt'),
         publishedAt: seriesEntity.get('publishedAt'),
         createdBy: authUser.id,
-        isHidden: seriesEntity.isHidden(),
-        lang: seriesEntity.get('lang'),
-        summary: seriesEntity.get('summary'),
         title: seriesEntity.getTitle(),
+        summary: seriesEntity.get('summary'),
+        groupIds: seriesEntity.getGroupIds(),
+        isHidden: seriesEntity.isHidden(),
+        communityIds,
         type: seriesEntity.getType(),
-        items: seriesEntity.get('items'),
+        itemIds: [],
         coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       },
     ]);

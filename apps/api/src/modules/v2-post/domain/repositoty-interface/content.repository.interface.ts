@@ -50,7 +50,7 @@ export interface IContentRepository {
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getPagination(
+  getCursorPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostEntity | ArticleEntity | SeriesEntity>>;
 

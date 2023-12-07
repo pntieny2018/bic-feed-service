@@ -166,7 +166,7 @@ export class QuizRepository implements IQuizRepository {
         before,
         after,
         order,
-        column: 'createdAt',
+        sortColumns: ['createdAt'],
       }
     );
 
