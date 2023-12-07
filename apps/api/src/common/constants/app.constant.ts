@@ -18,6 +18,7 @@ export const VERSIONS_SUPPORTED = [
   VERSION_1_10_0,
   VERSION_1_11_0,
   VERSION_1_12_0,
+  VERSION_1_13_0,
 ];
 
 export const CRON_RUN_SCHEDULED_CONTENT = '0,30 * * * *';
