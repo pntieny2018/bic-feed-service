@@ -1,4 +1,10 @@
-import { CONTENT_SCHEDULED_SERVICE_TOKEN, QueueName } from '@libs/infra/v2-queue';
+import { QueueName } from '@libs/infra/v2-queue';
+
+import {
+  CONTENT_SCHEDULED_SERVICE_TOKEN,
+  QUIZ_PARTICIPANT_SERVICE_TOKEN,
+  QUIZ_PENDING_SERVICE_TOKEN,
+} from '../provider';
 
 import { QueueConstants } from './types';
 
@@ -6,5 +12,13 @@ export const QUEUE_ADAPTER_SERVICES: QueueConstants[] = [
   {
     QUEUE_NAME: QueueName.CONTENT_SCHEDULED,
     SERVICE_TOKEN: CONTENT_SCHEDULED_SERVICE_TOKEN,
+  },
+  {
+    QUEUE_NAME: QueueName.QUIZ_PENDING,
+    SERVICE_TOKEN: QUIZ_PENDING_SERVICE_TOKEN,
+  },
+  {
+    QUEUE_NAME: QueueName.QUIZ_PARTICIPANT_RESULT,
+    SERVICE_TOKEN: QUIZ_PARTICIPANT_SERVICE_TOKEN,
   },
 ];

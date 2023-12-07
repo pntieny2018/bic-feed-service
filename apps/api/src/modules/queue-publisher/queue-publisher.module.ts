@@ -8,7 +8,7 @@ import { PublisherService } from './application/publisher.service';
 import { QUEUE_ADAPTER_SERVICES, QueueConstants } from './data-type';
 import { PUBLISHER_DOMAIN_SERVICE_TOKEN } from './domain/interface';
 import { PublisherDomainService } from './domain/publisher-domain.service';
-import { publisherProvider } from './driven-adapter/infra';
+import { publisherProvider } from './provider';
 
 const createQueueServiceProviders = (services: QueueConstants[]): Provider[] => {
   return services.map((service) => {
