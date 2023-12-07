@@ -104,7 +104,7 @@ export class IndexPostCommand implements CommandRunner {
     try {
       await this._indexPost();
     } catch (e) {
-      console.log(e);
+      this._logger.error(JSON.stringify(e?.stack));
     }
 
     process.exit();
@@ -244,7 +244,6 @@ export class IndexPostCommand implements CommandRunner {
             item.itemIds = post.itemIds;
             item.coverMedia = post.coverJson;
           }
-          console.log('item', item);
           insertDataPosts.push(item);
         }
         const { totalCreated, totalUpdated } = await this.postSearchService.addPostsToSearch(
