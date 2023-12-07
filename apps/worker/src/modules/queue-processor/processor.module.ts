@@ -13,7 +13,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 import { WORKER_ADAPTER_SERVICES, WorkerConstants } from './data-type';
 import { IProcessor } from './interface';
-import { processorProvider } from './processor.provider';
+import { processorProvider } from './provider';
 
 const createChannelWorkerProviders = (workerConstants: WorkerConstants[]): Provider[] => {
   return workerConstants.map((worker) => ({
