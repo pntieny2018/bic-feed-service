@@ -216,6 +216,10 @@ export const ROUTES = {
       PATH: ['content/reports', 'contents/reports'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
+    COUNT_CONTENT_PER_WEEK: {
+      PATH: ['content/count-content-per-week', 'contents/count-content-per-week'],
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
+    },
     CREATE_REPORT: {
       PATH: ['content/:contentId/reports', 'contents/:contentId/reports'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),

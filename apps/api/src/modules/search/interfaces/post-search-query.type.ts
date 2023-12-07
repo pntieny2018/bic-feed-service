@@ -47,3 +47,14 @@ export type IPaginationSearchResult<T> = {
 
   cursor?: number[];
 };
+
+export type ICountContentsInCommunityQuery = {
+  startTime: string;
+  endTime: string;
+  rootGroupIds: string[];
+};
+
+export type ICountContentsInCommunityResult = {
+  key: string;
+  doc_count: number;
+}[];
