@@ -36,6 +36,7 @@ export type ContentAttributes = {
   updatedAt: Date;
   markedReadImportant?: boolean;
   isSaved?: boolean;
+  isSeen?: boolean;
   ownerReactions?: { id: string; reactionName: string }[];
   errorLog?: any;
   publishedAt?: Date;
@@ -174,6 +175,10 @@ export class ContentEntity<
 
   public getType(): CONTENT_TYPE {
     return this._props.type;
+  }
+
+  public getIsSeen(): boolean {
+    return this._props.isSeen;
   }
 
   public getGroupIds(): string[] {
