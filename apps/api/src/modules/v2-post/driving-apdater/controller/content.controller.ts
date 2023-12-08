@@ -41,6 +41,7 @@ import {
   ReportTargetDto,
   SearchContentsDto,
   SeriesDto,
+  WelcomeContentDto,
 } from '../../application/dto';
 import {
   FindDraftContentsQuery,
@@ -50,6 +51,7 @@ import {
   GetMyReportedContentsQuery,
   GetSeriesInContentQuery,
   GetTotalDraftQuery,
+  GetWelcomeContentsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
@@ -64,8 +66,6 @@ import {
   SearchContentsRequestDto,
   ValidateSeriesTagDto,
 } from '../dto/request';
-import { WelcomeContentDto } from '@api/modules/v2-post/application/dto/welcome-content.dto';
-import { GetWelcomeContentsQuery } from '@api/modules/v2-post/application/query/content/get-welcome-content';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
