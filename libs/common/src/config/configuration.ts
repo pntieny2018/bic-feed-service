@@ -1,5 +1,5 @@
 import { getElasticsearchConfig, IElasticsearchConfig } from '@libs/common/config/elasticsearch';
-import { getRedisConfig, IRedisConfig } from '@libs/common/config/redis';
+import { getRedisConfig, getRedisContentConfig, IRedisConfig } from '@libs/common/config/redis';
 import { getDatabaseConfig, IDatabaseConfig } from '@libs/database/postgres/config';
 import { IAxiosConfig } from '@libs/infra/http';
 import { getAxiosConfig } from '@libs/infra/http/config/axios.config';
@@ -14,6 +14,7 @@ import { getSwaggerConfig, ISwaggerConfig } from './swagger';
 interface IConfiguration {
   app: IAppConfig;
   redis: IRedisConfig;
+  redisContent: IRedisConfig;
   swagger: ISwaggerConfig;
   database: IDatabaseConfig;
   axios: IAxiosConfig;
@@ -27,6 +28,7 @@ interface IConfiguration {
 export const configs = (): IConfiguration => ({
   app: getAppConfig(),
   redis: getRedisConfig(),
+  redisContent: getRedisContentConfig(),
   swagger: getSwaggerConfig(),
   database: getDatabaseConfig(),
   axios: getAxiosConfig(),

@@ -1,4 +1,8 @@
 import { DomainEventModule } from '@beincom/nest-domain-event';
+import { configs } from '@libs/common/config/configuration';
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
+import { IRedisConfig } from '@libs/common/config/redis';
+import { ISentryConfig } from '@libs/common/config/sentry';
 import { HttpModule as LibHttpModule, IAxiosConfig } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
 import { RedisModule } from '@libs/infra/redis';
@@ -11,10 +15,6 @@ import { RewriteFrames } from '@sentry/integrations';
 import * as Sentry from '@sentry/node';
 
 import { InternalEventEmitterModule } from './custom/event-emitter';
-import { configs } from '@libs/common/config/configuration';
-import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
-import { ISentryConfig } from '@libs/common/config/sentry';
-import { IRedisConfig } from '@libs/common/config/redis';
 
 @Global()
 @Module({
@@ -91,12 +91,22 @@ import { IRedisConfig } from '@libs/common/config/redis';
     RedisModule.registerAsync({
       useFactory: async (configService: ConfigService) => {
         const redisConfig = configService.get<IRedisConfig>('redis');
+        const redisContentConfig = configService.get<IRedisConfig>('redisContent');
         const sslConfig = redisConfig.ssl
           ? {
               tls: {
                 host: redisConfig.host,
                 port: redisConfig.port,
                 password: redisConfig.password,
+              },
+            }
+          : {};
+        const redisContentSslConfig = redisContentConfig.ssl
+          ? {
+              tls: {
+                host: redisContentConfig.host,
+                port: redisContentConfig.port,
+                password: redisContentConfig.password,
               },
             }
           : {};
@@ -108,6 +118,13 @@ import { IRedisConfig } from '@libs/common/config/redis';
             port: redisConfig.port,
             password: redisConfig.password,
             ...sslConfig,
+          },
+          redisContentOptions: {
+            keyPrefix: redisContentConfig.prefix,
+            host: redisContentConfig.host,
+            port: redisContentConfig.port,
+            password: redisContentConfig.password,
+            ...redisContentSslConfig,
           },
         };
       },

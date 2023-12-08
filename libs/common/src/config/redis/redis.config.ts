@@ -8,3 +8,12 @@ export const getRedisConfig = (): IRedisConfig => ({
   ssl: process.env.REDIS_SSL === 'true',
   prefix: `${process.env.REDIS_ENV}:` || '',
 });
+
+export const getRedisContentConfig = (): IRedisConfig => ({
+  db: parseInt(process.env.REDIS_CONTENT_DB) || 0,
+  host: process.env.REDIS_CONTENT_HOST,
+  port: parseInt(process.env.REDIS_CONTENT_PORT),
+  password: process.env.REDIS_CONTENT_PASSWORD,
+  ssl: process.env.REDIS_CONTENT_SSL === 'true',
+  prefix: `${process.env.REDIS_CONTENT_ENV}:` || '',
+});

@@ -5,6 +5,7 @@ export type RedisStoreModuleOptions = {
   clusterMode?: boolean;
   nodes?: ClusterNode[];
   redisOptions?: RedisOptions;
+  redisContentOptions?: RedisOptions;
   clusterOptions?: ClusterOptions;
 };
 
