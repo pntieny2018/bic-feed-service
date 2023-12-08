@@ -23,17 +23,11 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     super(props);
   }
 
-  public static create({
-    groupIds,
-    userId,
-  }: {
-    groupIds: string[];
-    userId: string;
-  }): ArticleEntity {
+  public static create(userId: string): ArticleEntity {
     const now = new Date();
     return new ArticleEntity({
       id: v4(),
-      groupIds,
+      groupIds: [],
       content: null,
       title: null,
       summary: null,
