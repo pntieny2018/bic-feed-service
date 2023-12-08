@@ -14,6 +14,7 @@ export class RedisService {
     @Inject(REDIS_STORE_INSTANCE_TOKEN)
     private readonly _store: Cluster | Redis
   ) {}
+
   public getClient(): Cluster | Redis {
     return this._store;
   }
@@ -87,34 +88,14 @@ export class RedisService {
   }
 
   public async reset(): Promise<'OK'> {
-    return this._store.flushdb();
+    return await this._store.flushdb();
   }
 
   public async keys(pattern: string): Promise<string[]> {
-    return this._store.keys(pattern);
+    return await this._store.keys(pattern);
   }
 
   public async existKey(key: string): Promise<boolean> {
     return (await this._store.exists(key)) === 1;
-  }
-
-  public async storeJson<T>(key: string, value: T, path?: string, nx?: boolean): Promise<any> {
-    return this._store.call(
-      'JSON.SET',
-      key,
-      `${path ? `$.${path}` : '$'}`,
-      JSON.stringify(value),
-      ...(nx ? ['NX'] : [])
-    );
-  }
-
-  public async getJson<T>(key: string, path?: string): Promise<T> {
-    const result = await this._store.call('JSON.GET', key, `${path ? `$.${path}` : '$'}`);
-    return JSON.parse(result as string);
-  }
-
-  public async mgetJson<T>(keys: string[]): Promise<T[]> {
-    const result = await this._store.call('JSON.MGET', ...keys, '$');
-    return (result as any[]).filter((r) => !!r);
   }
 }
