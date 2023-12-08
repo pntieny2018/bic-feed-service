@@ -51,6 +51,7 @@ describe('CreateDraftArticleHandler', () => {
       const result = await handler.execute({
         payload: {
           authUser: userMock,
+          groupIds: [],
         },
       });
 
