@@ -197,75 +197,78 @@ export const ROUTES = {
   },
   CONTENT: {
     GET_SCHEDULE: {
-      PATH: 'content/schedule',
+      PATH: ['content/schedule', 'contents/schedule'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
     GET_TOTAL_DRAFT: {
-      PATH: 'content/total-draft',
+      PATH: ['content/total-draft', 'contents/total-draft'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_SERIES: {
-      PATH: 'content/:contentId/series',
+      PATH: ['content/:contentId/series', 'contents/:contentId/series'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_DRAFTS: {
-      PATH: 'content/draft',
+      PATH: ['content/draft', 'contents/draft'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     GET_REPORTS: {
-      PATH: 'content/reports',
+      PATH: ['content/reports', 'contents/reports'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     CREATE_REPORT: {
-      PATH: 'content/:contentId/reports',
+      PATH: ['content/:contentId/reports', 'contents/:contentId/reports'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
     GET_MENU_SETTINGS: {
-      PATH: 'content/:contentId/menu-settings',
+      PATH: ['content/:contentId/menu-settings', 'contents/:contentId/menu-settings'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
     },
     SEARCH_CONTENTS: {
-      PATH: 'content/',
+      PATH: ['content', 'contents'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_9_0),
     },
     MARK_AS_READ: {
-      PATH: 'content/:contentId/mark-as-read',
+      PATH: ['content/:contentId/mark-as-read', 'contents/:contentId/mark-as-read'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     VALIDATE_SERIES_TAGS: {
-      PATH: 'content/validate-series-tags',
+      PATH: ['content/validate-series-tags', 'contents/validate-series-tags'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UPDATE_SETTINGS: {
-      PATH: 'content/:contentId/setting',
+      PATH: ['content/:contentId/setting', 'contents/:contentId/setting'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     REORDER_PIN_CONTENT: {
-      PATH: 'content/pinned-content/groups/:groupId/order',
+      PATH: [
+        'content/pinned-content/groups/:groupId/order',
+        'contents/pinned-content/groups/:groupId/order',
+      ],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_PINNED_CONTENT: {
-      PATH: 'content/pinned-content/groups/:groupId',
+      PATH: ['content/pinned-content/groups/:groupId', 'contents/pinned-content/groups/:groupId'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     SEEN_CONTENT: {
-      PATH: 'content/:contentId/seen',
+      PATH: ['content/:contentId/seen', 'contents/:contentId/seen'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     PIN_CONTENT: {
-      PATH: 'content/pinned-content/:contentId',
+      PATH: ['content/pinned-content/:contentId', 'contents/pinned-content/:contentId'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     GET_AUDIENCE: {
-      PATH: 'content/:contentId/audiences',
+      PATH: ['content/:contentId/audiences', 'contents/:contentId/audiences'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_10_0),
     },
     SAVE_CONTENT: {
-      PATH: 'content/:contentId/save',
+      PATH: ['content/:contentId/save', 'contents/:contentId/save'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
     UNSAVE_CONTENT: {
-      PATH: 'content/:contentId/unsave',
+      PATH: ['content/:contentId/unsave', 'contents/:contentId/unsave'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
     },
   },
@@ -333,6 +336,18 @@ export const ROUTES = {
     PROCESS: {
       PATH: 'manage/communities/:rootGroupId/content-reports/:reportId/status',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
+    },
+  },
+  NEWSFEED: {
+    GET_LIST: {
+      PATH: '/newsfeed',
+      VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
+  TIMELINE: {
+    GET_LIST_IN_GROUP: {
+      PATH: '/timeline/:groupId',
+      VERSIONS: AppHelper.getVersionsSupported(),
     },
   },
 };

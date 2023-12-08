@@ -4,6 +4,7 @@ import {
   GROUP_ADAPTER,
   MEDIA_ADAPTER,
   NOTIFICATION_ADAPTER,
+  WEBSOCKET_ADAPTER,
 } from '../domain/service-adapter-interface';
 import { OPEN_AI_ADAPTER } from '../domain/service-adapter-interface/openai-adapter.interface';
 import { KafkaAdapter, QueueAdapter, EventAdapter } from '../driven-adapter/infra';
@@ -13,6 +14,7 @@ import {
   NotificationAdapter,
   OpenAIAdapter,
   UserAdapter,
+  WebsocketAdapter,
 } from '../driven-adapter/service';
 
 export const adapterProvider = [
@@ -47,5 +49,9 @@ export const adapterProvider = [
   {
     provide: USER_ADAPTER,
     useClass: UserAdapter,
+  },
+  {
+    provide: WEBSOCKET_ADAPTER,
+    useClass: WebsocketAdapter,
   },
 ];

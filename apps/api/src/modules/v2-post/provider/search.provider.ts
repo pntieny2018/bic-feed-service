@@ -13,7 +13,7 @@ import {
   SearchSeriesItemsRemovedEventHandler,
   SearchSeriesItemsReorderedEventHandler,
   SearchReportHiddenEventHandler,
-} from '../application/event-handler/search';
+} from '../application/event-handler/sync-es-search';
 
 export const searchProvider = [
   /** Application Event Handler */

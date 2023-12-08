@@ -1,4 +1,5 @@
 import { CONTENT_STATUS } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
@@ -115,15 +116,12 @@ export class PostDomainService implements IPostDomainService {
       },
     });
 
-    if (
-      !postEntity ||
-      !(postEntity instanceof PostEntity) ||
-      (postEntity.isDraft() && !postEntity.isOwner(authUserId)) ||
-      (postEntity.isHidden() && !postEntity.isOwner(authUserId)) ||
-      postEntity.isInArchivedGroups()
-    ) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
+
+    await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUserId);
 
     if (!authUserId && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -157,7 +155,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async schedule(input: SchedulePostProps): Promise<PostEntity> {
     const { payload, actor } = input;
-    const { id, scheduledAt } = payload;
+    const { id, scheduledAt, groupIds } = payload;
 
     const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
       mustIncludeGroup: true,
@@ -173,8 +171,10 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isPublished()) {
       throw new ContentHasBeenPublishedException();
     }
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
 
-    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+    await this._setPostAttributes(postEntity, groups, payload, actor);
+    await this._validatePost(postEntity, groups, payload, actor);
 
     postEntity.setWaitingSchedule(scheduledAt);
 
@@ -188,7 +188,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async publish(input: PublishPostProps): Promise<PostEntity> {
     const { payload, actor } = input;
-    const { id: postId } = payload;
+    const { id: postId, groupIds } = payload;
 
     const postEntity = await this._contentRepository.findContentByIdInActiveGroup(postId, {
       mustIncludeGroup: true,
@@ -204,8 +204,10 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isPublished()) {
       return postEntity;
     }
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
 
-    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+    await this._setPostAttributes(postEntity, groups, payload, actor);
+    await this._validatePost(postEntity, groups, payload, actor);
 
     if (postEntity.isWaitingSchedule() && postEntity.hasVideoProcessing()) {
       throw new PostVideoProcessingException();
@@ -265,7 +267,12 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNoPublishYetException();
     }
 
-    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+    const groups = await this._groupAdapter.getGroupsByIds(
+      payload.groupIds || postEntity.get('groupIds')
+    );
+
+    await this._setPostAttributes(postEntity, groups, payload, actor);
+    await this._validatePost(postEntity, groups, payload, actor);
 
     if (postEntity.hasVideoProcessing() && !postEntity.isWaitingSchedule()) {
       postEntity.setProcessing();
@@ -378,8 +385,13 @@ export class PostDomainService implements IPostDomainService {
     if (!postEntity.isOwner(actor.id)) {
       throw new ContentAccessDeniedException();
     }
+    const groups = await this._groupAdapter.getGroupsByIds(
+      payload.groupIds || postEntity.get('groupIds')
+    );
 
-    await this._validateAndSetPostAttributes(postEntity, props.payload, actor, false);
+    await this._setPostAttributes(postEntity, groups, props.payload, actor);
+    await this._validatePost(postEntity, groups, props.payload, actor, false);
+
     if (!postEntity.isChanged()) {
       return;
     }
@@ -392,7 +404,8 @@ export class PostDomainService implements IPostDomainService {
       shouldIncludeSeries: true,
     });
 
-    if (!postEntity || !(postEntity instanceof PostEntity)) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost) {
       throw new ContentNotFoundException();
     }
 
@@ -412,13 +425,14 @@ export class PostDomainService implements IPostDomainService {
     this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
   }
 
-  private async _validateAndSetPostAttributes(
+  private async _setPostAttributes(
     postEntity: PostEntity,
+    groups: GroupDto[],
     payload: PostPayload,
-    actor: UserDto,
-    validatePublishContent = true
+    actor: UserDto
   ): Promise<void> {
-    const { content, seriesIds, tagIds, groupIds, media, mentionUserIds, linkPreview } = payload;
+    const { content, seriesIds, tagIds, groupIds, media, mentionUserIds, linkPreview, status } =
+      payload;
 
     if (tagIds) {
       await this._setNewTags(postEntity, tagIds);
@@ -433,17 +447,26 @@ export class PostDomainService implements IPostDomainService {
       await this._setNewLinkPreview(postEntity, linkPreview);
     }
 
-    if (payload.status) {
+    if (status) {
       postEntity.setStatus(payload.status);
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
+    postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
+    postEntity.setPrivacyFromGroups(groups);
+  }
+
+  private async _validatePost(
+    postEntity: PostEntity,
+    groups: GroupDto[],
+    payload: PostPayload,
+    actor: UserDto,
+    validatePublishContent = true
+  ): Promise<void> {
+    const { mentionUserIds } = payload;
+
     const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
       withGroupJoined: true,
     });
-
-    postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
-    postEntity.setPrivacyFromGroups(groups);
 
     validatePublishContent &&
       (await this._postValidator.validatePublishContent(

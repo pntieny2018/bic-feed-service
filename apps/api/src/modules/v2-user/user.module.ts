@@ -1,9 +1,8 @@
+import { IAxiosConfig } from '@libs/infra/http';
 import { RedisModule } from '@libs/infra/redis';
 import { HttpModule } from '@nestjs/axios';
 import { Module, Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-import { IAxiosConfig } from '../../config/axios';
 
 import { USER_APPLICATION_TOKEN, UserApplicationService } from './application';
 import { USER_REPOSITORY_TOKEN } from './domain/repositoty-interface/user.repository.interface';

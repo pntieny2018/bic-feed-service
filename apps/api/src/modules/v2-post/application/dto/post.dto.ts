@@ -36,6 +36,7 @@ export class PostDto {
   public wordCount: number;
   public commentsCount: number;
   public totalUsersSeen: number;
+  public title: string;
   public content: string;
   public mentions: UserMentionDto; // mentionUserIds
   public linkPreview?: LinkPreviewDto;
@@ -80,7 +81,7 @@ export class CreateDraftPostDto {
 
 export class PostInSeriesDto extends PickType(PostDto, [
   'id',
-  'content',
+  'title',
   'createdBy',
   'createdAt',
   'publishedAt',
@@ -93,5 +94,16 @@ export class PostInSeriesDto extends PickType(PostDto, [
 ]) {
   public constructor(data: Partial<PostInSeriesDto>) {
     super(data);
+  }
+}
+
+export class ItemInSeries {
+  public id: string;
+  public title: string;
+  public createdBy: string;
+  public type: CONTENT_TYPE;
+
+  public constructor(data: Partial<ItemInSeries>) {
+    Object.assign(this, data);
   }
 }

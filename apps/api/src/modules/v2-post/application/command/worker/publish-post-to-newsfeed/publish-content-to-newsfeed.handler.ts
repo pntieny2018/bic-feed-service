@@ -7,6 +7,7 @@ import {
   IUserNewsfeedRepository,
   USER_NEWSFEED_REPOSITORY_TOKEN,
 } from '../../../../domain/repositoty-interface';
+
 import { PublishContentToNewsfeedCommand } from './publish-content-to-newsfeed.command';
 
 @CommandHandler(PublishContentToNewsfeedCommand)

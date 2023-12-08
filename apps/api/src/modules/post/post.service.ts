@@ -1,4 +1,5 @@
 import { ORDER } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
@@ -20,7 +21,6 @@ import { NIL } from 'uuid';
 
 import { EntityIdDto, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -43,7 +43,6 @@ import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { ReportTo, TargetType } from '../report-content/contstants';
@@ -104,7 +103,6 @@ export class PostService {
     protected readonly tagService: TagService,
     @InjectModel(UserSeenPostModel)
     protected userSeenPostModel: typeof UserSeenPostModel,
-    protected mediaService: MediaService,
     private readonly _libReportRepo: LibReportRepository,
     private readonly _libReportDetailRepo: LibReportDetailRepository
   ) {}

@@ -1,5 +1,5 @@
 import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -38,7 +38,9 @@ export class ReportContentDetailModel extends Model<
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: CONTENT_TARGET;
 
   @Column
@@ -47,14 +49,18 @@ export class ReportContentDetailModel extends Model<
   @Column
   public createdBy: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reportTo: REPORT_SCOPE;
 
   @ForeignKey(() => ReportContentModel)
   @Column
   public reportId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reasonType: CONTENT_REPORT_REASON_TYPE;
 
   @Column

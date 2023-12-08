@@ -8,7 +8,7 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-grou
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
-} from '../../v2-post/application/binding/binding-post/content.interface';
+} from '../../v2-post/application/binding/binding-post/content.binding.interface';
 import { ArticleDto, ContentHighlightDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,

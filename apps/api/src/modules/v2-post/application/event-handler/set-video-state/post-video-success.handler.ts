@@ -1,8 +1,8 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { PostVideoSuccessEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 
