@@ -9,6 +9,7 @@ import {
   VERSION_1_10_0,
   VERSION_1_11_0,
   VERSION_1_12_0,
+  VERSION_1_13_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -270,6 +271,10 @@ export const ROUTES = {
     UNSAVE_CONTENT: {
       PATH: ['content/:contentId/unsave', 'contents/:contentId/unsave'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
+    GET_WELCOME_CONTENT: {
+      PATH: 'contents/welcome',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
     },
   },
   COMMENT: {
