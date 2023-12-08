@@ -20,6 +20,7 @@ import { ArticleController } from './driving-apdater/controller/article.controll
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
 import { ContentController } from './driving-apdater/controller/content.controller';
+import { InternalController } from './driving-apdater/controller/internal.controller';
 import { ManageController } from './driving-apdater/controller/manage.controller';
 import { NewsFeedController } from './driving-apdater/controller/newsfeed.controller';
 import { PostController } from './driving-apdater/controller/post.controller';
@@ -78,6 +79,7 @@ import {
     SeriesController,
     QuizController,
     ManageController,
+    InternalController,
   ],
   providers: [
     ...webSocketProvider, // NOTE: Temporarily only turned on in the dev/stg environment

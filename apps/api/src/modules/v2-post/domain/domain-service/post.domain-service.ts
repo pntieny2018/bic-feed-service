@@ -448,6 +448,8 @@ export class PostDomainService implements IPostDomainService {
       postEntity.setStatus(payload.status);
     }
 
+    postEntity.setCommunity(groups.map((group) => group.rootGroupId));
+
     postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
     postEntity.setPrivacyFromGroups(groups);
   }
