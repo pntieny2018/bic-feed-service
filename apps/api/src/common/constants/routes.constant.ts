@@ -9,6 +9,7 @@ import {
   VERSION_1_10_0,
   VERSION_1_11_0,
   VERSION_1_12_0,
+  VERSION_1_13_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -216,10 +217,6 @@ export const ROUTES = {
       PATH: ['content/reports', 'contents/reports'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
     },
-    COUNT_CONTENT_PER_WEEK: {
-      PATH: ['content/count-content-per-week', 'contents/count-content-per-week'],
-      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
-    },
     CREATE_REPORT: {
       PATH: ['content/:contentId/reports', 'contents/:contentId/reports'],
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
@@ -352,6 +349,12 @@ export const ROUTES = {
     GET_LIST_IN_GROUP: {
       PATH: '/timeline/:groupId',
       VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
+  INTERNAL: {
+    COUNT_CONTENTS_PER_WEEK: {
+      PATH: '/internal/contents/average_weekly_count',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
     },
   },
 };
