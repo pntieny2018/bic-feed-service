@@ -1,6 +1,10 @@
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
 import {
+  CacheDecreaseReactionCountEventHandler,
+  CacheIncreaseReactionCountEventHandler,
+} from '../application/event-handler/cache-reaction-content';
+import {
   DecreaseReactionCountEventHandler,
   IncreaseReactionCountEventHandler,
 } from '../application/event-handler/update-reaction-count';
@@ -13,8 +17,7 @@ import {
 } from '../domain/repositoty-interface';
 import { REACTION_VALIDATOR_TOKEN } from '../domain/validator/interface';
 import { ReactionValidator } from '../domain/validator/reaction.validator';
-import { CommentReactionMapper } from '../driven-adapter/mapper/comment-reaction.mapper';
-import { PostReactionMapper } from '../driven-adapter/mapper/post-reaction.mapper';
+import { CommentReactionMapper, PostReactionMapper } from '../driven-adapter/mapper';
 import { CommentReactionRepository, PostReactionRepository } from '../driven-adapter/repository';
 
 export const reactionProvider = [
@@ -34,6 +37,8 @@ export const reactionProvider = [
   /* Application Event handler */
   IncreaseReactionCountEventHandler,
   DecreaseReactionCountEventHandler,
+  CacheIncreaseReactionCountEventHandler,
+  CacheDecreaseReactionCountEventHandler,
 
   /* Domain Service */
   {
