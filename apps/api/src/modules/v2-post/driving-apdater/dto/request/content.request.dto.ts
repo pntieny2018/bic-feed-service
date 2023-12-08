@@ -14,6 +14,7 @@ import {
   IsUUID,
   ValidateIf,
 } from 'class-validator';
+import { validate as isValidUUID } from 'uuid';
 
 import { PublishArticleRequestDto } from './article.request.dto';
 
@@ -244,4 +245,31 @@ export class GetMyReportedContentsRequestDto extends PaginatedArgs {
   @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
   @IsEnum(ORDER)
   public order: ORDER = ORDER.DESC;
+}
+
+export class CountContentPerWeekRequestDto {
+  @ApiProperty({
+    type: String,
+    name: 'root_group_ids',
+    example: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8,986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e',
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => value.split(',').filter((v) => isValidUUID(v)))
+  @Expose({
+    name: 'root_group_ids',
+  })
+  public rootGroupIds: string[];
+
+  // TODO: for support multiple metrics
+  @ApiProperty({
+    type: String,
+    name: 'metrics',
+    example: 'average_weekly_count',
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => value.split(','))
+  @Expose({
+    name: 'metrics',
+  })
+  public metrics: string[];
 }

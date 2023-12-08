@@ -75,6 +75,7 @@ import {
   FindPinnedContentHandler,
   GetContentAudienceHandler,
   GetScheduleContentHandler,
+  CountContentPerWeekHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
@@ -201,6 +202,8 @@ export const postProvider = [
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
   GetWelcomeContentsHandler,
+
+  CountContentPerWeekHandler,
 
   /** Domain Service */
   {
