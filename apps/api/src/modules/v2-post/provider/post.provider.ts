@@ -198,6 +198,7 @@ export const postProvider = [
   SearchSeriesHandler,
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
+
   CountContentPerWeekHandler,
 
   /** Domain Service */

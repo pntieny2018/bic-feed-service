@@ -43,7 +43,6 @@ import {
   SeriesDto,
 } from '../../application/dto';
 import {
-  CountContentPerWeekQuery,
   FindDraftContentsQuery,
   FindPinnedContentQuery,
   GetContentAudienceQuery,
@@ -55,7 +54,6 @@ import {
 } from '../../application/query/content';
 import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
 import {
-  CountContentPerWeekRequestDto,
   CreateReportDto,
   GetAudienceContentDto,
   GetDraftContentsRequestDto,
@@ -253,19 +251,6 @@ export class ContentController {
       new SearchContentsQuery({ authUser: user, ...searchContentsRequestDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-  }
-
-  @ApiOperation({ summary: 'Count number content per week in community' })
-  @Get(ROUTES.CONTENT.COUNT_CONTENT_PER_WEEK.PATH)
-  @Version(ROUTES.CONTENT.COUNT_CONTENT_PER_WEEK.VERSIONS)
-  public async countContentPerWeek(
-    @Query() query: CountContentPerWeekRequestDto
-  ): Promise<Record<string, number>> {
-    return this._queryBus.execute(
-      new CountContentPerWeekQuery({
-        rootGroupIds: query.rootGroupIds,
-      })
-    );
   }
 
   @ApiOperation({ summary: 'Mark as read' })
