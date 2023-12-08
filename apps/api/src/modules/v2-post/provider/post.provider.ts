@@ -76,6 +76,7 @@ import {
   GetContentAudienceHandler,
   GetScheduleContentHandler,
   CountContentPerWeekHandler,
+  GetWelcomeContentsHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
@@ -117,7 +118,6 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
-import { GetWelcomeContentsHandler } from '@api/modules/v2-post/application/query/content/get-welcome-content';
 
 export const postProvider = [
   /** Application Cron Handler */

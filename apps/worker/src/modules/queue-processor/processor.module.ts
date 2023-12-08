@@ -12,7 +12,14 @@ import { ModuleRef } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { IProcessor, WorkerAdapters } from './interface';
-import { WORKER_ADAPTER_SERVICES, processorProvider } from './provider';
+import { ContentProcessor, QuizParticipantProcessor, QuizPendingProcessor } from './processors';
+import { WORKER_ADAPTER_SERVICES } from './provider';
+
+export const processorInstances = [
+  ContentProcessor,
+  QuizPendingProcessor,
+  QuizParticipantProcessor,
+];
 
 const createChannelWorkerProviders = (adapters: WorkerAdapters[]): Provider[] => {
   return adapters.map((adapter) => ({
@@ -30,7 +37,7 @@ const createChannelWorkerProviders = (adapters: WorkerAdapters[]): Provider[] =>
 
 @WrapperModule({
   imports: [CqrsModule],
-  providers: [...createChannelWorkerProviders(WORKER_ADAPTER_SERVICES), ...processorProvider],
+  providers: [...createChannelWorkerProviders(WORKER_ADAPTER_SERVICES), ...processorInstances],
   exports: [],
 })
 export class ProcessorModule implements OnModuleInit {
