@@ -129,7 +129,7 @@ export class ArticleDomainService implements IArticleDomainService {
     const { groups, userId } = input;
 
     const articleEntity = ArticleEntity.create({
-      groupIds: groups.map((group) => group.id),
+      groupIds: [],
       userId,
     });
 
