@@ -3,9 +3,9 @@ import { Inject } from '@nestjs/common';
 
 import { IPublisherDomainService, PUBLISHER_DOMAIN_SERVICE_TOKEN } from '../domain/interface';
 
-import { IAppPublisherService } from './interface';
+import { IPublisherApplicationService } from './interface';
 
-export class PublisherService implements IAppPublisherService {
+export class PublisherApplicationService implements IPublisherApplicationService {
   public constructor(
     @Inject(PUBLISHER_DOMAIN_SERVICE_TOKEN)
     private readonly _publisherDomainService: IPublisherDomainService

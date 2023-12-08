@@ -1,1 +1,1 @@
-export * from './publisher-service.interface';
+export * from './publisher.application-service.interface';

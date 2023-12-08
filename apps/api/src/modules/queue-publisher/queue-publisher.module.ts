@@ -3,8 +3,8 @@ import { IQueueService, QueueService, WrapperModule, getQueueConfig } from '@lib
 import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { APPLICATION_PUBLISHER_SERVICE } from './application/interface';
-import { PublisherService } from './application/publisher.service';
+import { PUBLISHER_APPLICATION_SERVICE } from './application/interface';
+import { PublisherApplicationService } from './application/publisher.application-service';
 import { QueueAdapters } from './domain/infra-interface';
 import { PUBLISHER_DOMAIN_SERVICE_TOKEN } from './domain/interface';
 import { PublisherDomainService } from './domain/publisher-domain.service';
@@ -30,8 +30,8 @@ const createQueueServiceProviders = (adapters: QueueAdapters[]): Provider[] => {
 @WrapperModule({
   providers: [
     {
-      provide: APPLICATION_PUBLISHER_SERVICE,
-      useClass: PublisherService,
+      provide: PUBLISHER_APPLICATION_SERVICE,
+      useClass: PublisherApplicationService,
     },
     {
       provide: PUBLISHER_DOMAIN_SERVICE_TOKEN,
@@ -42,8 +42,8 @@ const createQueueServiceProviders = (adapters: QueueAdapters[]): Provider[] => {
   ],
   exports: [
     {
-      provide: APPLICATION_PUBLISHER_SERVICE,
-      useClass: PublisherService,
+      provide: PUBLISHER_APPLICATION_SERVICE,
+      useClass: PublisherApplicationService,
     },
   ],
 })
