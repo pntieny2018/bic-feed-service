@@ -7,6 +7,7 @@ import {
   ARTICLE_DOMAIN_SERVICE_TOKEN,
   IArticleDomainService,
 } from '../../../../domain/domain-service/interface';
+import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 import { createMockArticleDto, createMockArticleEntity, createMockUserDto } from '../../../mock';
 
 import clearAllMocks = jest.clearAllMocks;
@@ -31,6 +32,10 @@ describe('CreateDraftArticleHandler', () => {
         {
           provide: CONTENT_BINDING_TOKEN,
           useValue: createMock<IContentBinding>(),
+        },
+        {
+          provide: GROUP_ADAPTER,
+          useValue: createMock<IGroupAdapter>(),
         },
       ],
     }).compile();
