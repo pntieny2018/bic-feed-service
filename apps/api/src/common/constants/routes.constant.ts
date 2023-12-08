@@ -353,7 +353,7 @@ export const ROUTES = {
   },
   INTERNAL: {
     COUNT_CONTENTS_PER_WEEK: {
-      PATH: '/internal/contents/average_weekly_count',
+      PATH: '/internal/contents/statistics',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
     },
   },

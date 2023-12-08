@@ -259,4 +259,17 @@ export class CountContentPerWeekRequestDto {
     name: 'root_group_ids',
   })
   public rootGroupIds: string[];
+
+  // TODO: for support multiple metrics
+  @ApiProperty({
+    type: String,
+    name: 'metrics',
+    example: 'average_weekly_count',
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => value.split(','))
+  @Expose({
+    name: 'metrics',
+  })
+  public metrics: string[];
 }
