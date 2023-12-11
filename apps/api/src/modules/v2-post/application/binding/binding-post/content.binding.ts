@@ -393,6 +393,7 @@ export class ContentBinding implements IContentBinding {
         commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
         totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
         title: articleEntity.get('title'),
+        summary: articleEntity.get('summary'),
         coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
         tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
         quiz:
