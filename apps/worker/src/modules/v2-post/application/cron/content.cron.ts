@@ -12,8 +12,8 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   GetScheduledContentProps,
   IContentDomainService,
-} from '../domain/domain-service/interface';
-import { IQueueAdapter, QUEUE_ADAPTER } from '../domain/infra-adapter-interface';
+} from '../../domain/domain-service/interface';
+import { IQueueAdapter, QUEUE_ADAPTER } from '../../domain/infra-adapter-interface';
 
 @Injectable()
 export class ContentCron {

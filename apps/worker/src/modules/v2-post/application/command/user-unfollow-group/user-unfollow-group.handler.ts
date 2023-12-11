@@ -4,11 +4,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   INewsfeedDomainService,
   NEWSFEED_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface/newsfeed.domain-service.interface';
-import {
-  FOLLOW_REPOSITORY_TOKEN,
-  IFollowRepository,
-} from '../../../../domain/repositoty-interface';
+} from '../../../domain/domain-service/interface';
+import { FOLLOW_REPOSITORY_TOKEN, IFollowRepository } from '../../../domain/repositoty-interface';
 
 import { UserUnfollowGroupCommand } from './user-unfollow-group.command';
 

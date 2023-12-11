@@ -4,12 +4,9 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   INewsfeedDomainService,
   NEWSFEED_DOMAIN_SERVICE_TOKEN,
-} from '../../../../domain/domain-service/interface/newsfeed.domain-service.interface';
-import {
-  FOLLOW_REPOSITORY_TOKEN,
-  IFollowRepository,
-} from '../../../../domain/repositoty-interface';
-import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
+} from '../../../domain/domain-service/interface';
+import { FOLLOW_REPOSITORY_TOKEN, IFollowRepository } from '../../../domain/repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
 
 import { UserFollowGroupCommand } from './user-follow-group.command';
 

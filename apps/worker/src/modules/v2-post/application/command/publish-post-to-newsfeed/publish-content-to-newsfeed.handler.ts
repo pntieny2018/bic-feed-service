@@ -6,7 +6,7 @@ import {
   IContentRepository,
   IUserNewsfeedRepository,
   USER_NEWSFEED_REPOSITORY_TOKEN,
-} from '../../../../domain/repositoty-interface';
+} from '../../../domain/repositoty-interface';
 
 import { PublishContentToNewsfeedCommand } from './publish-content-to-newsfeed.command';
 
@@ -26,9 +26,10 @@ export class PublishContentToNewsfeedHandler
     const { contentId, userId } = command.payload;
 
     const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
-    if (!content || !content.isPublished() || content.isHidden()) {
+    if (!content || !Boolean(content.publishedAt) || content.isHidden) {
       return;
     }
+
     const hasPublishedNewsfeed = await this._userNewsfeedRepo.hasPublishedContentIdToUserId(
       contentId,
       userId

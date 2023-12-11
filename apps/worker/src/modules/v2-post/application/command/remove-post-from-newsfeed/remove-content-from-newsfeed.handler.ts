@@ -6,8 +6,8 @@ import {
   IContentRepository,
   IUserNewsfeedRepository,
   USER_NEWSFEED_REPOSITORY_TOKEN,
-} from '../../../../domain/repositoty-interface';
-import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
+} from '../../../domain/repositoty-interface';
+import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
 
 import { RemoveContentFromNewsfeedCommand } from './remove-content-from-newsfeed.command';
 
