@@ -125,7 +125,7 @@ export class ContentMapper {
       postGroups: post.groups || [],
       quiz: post.quiz
         ? new QuizEntity({
-            ...post.quiz,
+            ...post.quiz[0],
             contentId: post.quiz.postId,
             questions: (post.quiz.questions || []).map(
               (question) => new QuizQuestionEntity(question)
@@ -190,7 +190,7 @@ export class ContentMapper {
       postGroups: post.groups || [],
       quiz: post.quiz
         ? new QuizEntity({
-            ...post.quiz,
+            ...post.quiz[0],
             contentId: post.quiz.postId,
             questions: (post.quiz.questions || []).map(
               (question) => new QuizQuestionEntity(question)
