@@ -100,7 +100,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
   }
 
   public async delete(options: DestroyOptions<M>): Promise<number> {
-    return this.model.destroy(options);
+    return this.model.destroy({ ...options, individualHooks: true });
   }
 
   public async bulkCreate(
