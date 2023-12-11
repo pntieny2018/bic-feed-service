@@ -16,7 +16,7 @@ export class RedisContentService extends BaseRedisService {
     super(_store, new CustomLogger(RedisContentService.name, IS_ENABLE_LOG));
   }
 
-  public async storeJson<T>(key: string, value: T, path?: string, nx?: boolean): Promise<any> {
+  public async setJson<T>(key: string, value: T, path?: string, nx?: boolean): Promise<any> {
     return this._store.call(
       'JSON.SET',
       key,

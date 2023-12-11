@@ -9,6 +9,7 @@ import {
   ArticleDeletedEvent,
   ArticlePublishedEvent,
   ArticleUpdatedEvent,
+  ContentDeleteCacheEvent,
   ContentHasSeenEvent,
 } from '../event';
 import {
@@ -170,6 +171,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     await this._contentRepository.delete(id);
     this.event.publish(new ArticleDeletedEvent({ articleEntity, authUser: actor }));
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
@@ -299,6 +301,7 @@ export class ArticleDomainService implements IArticleDomainService {
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
       this.event.publish(new ArticleUpdatedEvent({ articleEntity, authUser: actor }));
+      this.event.publish(new ContentDeleteCacheEvent({ contentId: articleEntity.getId() }));
     }
 
     return articleEntity;

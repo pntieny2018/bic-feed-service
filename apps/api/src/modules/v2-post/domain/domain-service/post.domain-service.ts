@@ -7,6 +7,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
+  ContentDeleteCacheEvent,
   ContentHasSeenEvent,
   PostDeletedEvent,
   PostPublishedEvent,
@@ -281,6 +282,7 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
       this.event.publish(new PostUpdatedEvent({ postEntity, authUser: actor }));
+      this.event.publish(new ContentDeleteCacheEvent({ contentId: postEntity.getId() }));
     }
 
     return postEntity;
@@ -423,6 +425,7 @@ export class PostDomainService implements IPostDomainService {
 
     await this._contentRepository.delete(id);
     this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   private async _setPostAttributes(

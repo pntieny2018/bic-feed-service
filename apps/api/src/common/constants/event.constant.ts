@@ -1,6 +1,7 @@
 // content
 export const ContentHasBeenSeen = 'content.has.been.seen';
 export const ContentAttachedSeries = 'content.attached.series';
+export const ContentDeleteCache = 'content.delete.cache';
 
 // post
 export const PostWillBeCreated = 'post.will.be.created';

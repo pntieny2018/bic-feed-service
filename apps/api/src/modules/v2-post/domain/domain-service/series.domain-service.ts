@@ -16,6 +16,7 @@ import {
   SeriesItemsRemovedPayload,
   SeriesItemsAddedPayload,
   ContentAttachedSeriesEvent,
+  ContentDeleteCacheEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -210,6 +211,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     }
 
     this.event.publish(new SeriesUpdatedEvent({ seriesEntity, authUser: actor }));
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
 
     return seriesEntity;
   }
@@ -247,6 +249,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentRepository.delete(seriesEntity.get('id'));
 
     this.event.publish(new SeriesDeletedEvent({ seriesEntity, authUser: actor }));
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public async findItemsInSeries(
@@ -317,6 +320,7 @@ export class SeriesDomainService implements ISeriesDomainService {
         context: 'add',
       })
     );
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public async removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void> {
@@ -359,6 +363,7 @@ export class SeriesDomainService implements ISeriesDomainService {
         contentIsDeleted: false,
       })
     );
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public async reorderSeriesItems(input: ReorderSeriesItemsProps): Promise<void> {
@@ -385,6 +390,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentRepository.reorderPostsSeries(id, itemIds);
 
     this.event.publish(new SeriesItemsReorderedEvent(id));
+    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public sendSeriesItemsAddedEvent(input: SeriesItemsAddedPayload): void {

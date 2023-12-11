@@ -1,6 +1,10 @@
 import { IEventPayload } from '@libs/infra/event';
 
-import { ContentAttachedSeries, ContentHasBeenSeen } from '../../../../common/constants';
+import {
+  ContentAttachedSeries,
+  ContentDeleteCache,
+  ContentHasBeenSeen,
+} from '../../../../common/constants';
 
 interface ContentHasSeenEventPayload {
   contentId: string;
@@ -36,5 +40,21 @@ export class ContentAttachedSeriesEvent implements IEventPayload {
 
   public getEventName(): string {
     return ContentAttachedSeriesEvent.event;
+  }
+}
+
+export class ContentDeleteCacheEvent implements IEventPayload {
+  public static event = ContentDeleteCache;
+
+  public payload: {
+    contentId: string;
+  };
+
+  public constructor(data: { contentId: string }) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ContentDeleteCacheEvent.event;
   }
 }

@@ -1,3 +1,5 @@
+import { ContentDeleteCacheEventHandler } from '@api/modules/v2-post/application/event-handler/cache-content';
+
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
@@ -137,6 +139,9 @@ export const postProvider = [
   VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
+
+  /** Cache Content Event Handler */
+  ContentDeleteCacheEventHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
