@@ -6,6 +6,9 @@ import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Payload } from '@nestjs/microservices';
 
+/**
+ * TODO: Move commands to worker folder
+ */
 @Controller()
 export class MediaConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}

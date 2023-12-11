@@ -33,9 +33,9 @@ import { ProcessorModule } from './modules/queue-processor/processor.module';
       },
     }),
     PostgresModule,
-    LibModule,
+    LibModule, // TODO: Move lib to libs module
     CqrsModule,
-    PostModuleV2,
+    PostModuleV2, // TODO: Use v2-post module from worker
     HealthModule,
     ProcessorModule,
     ConsumerModule,
