@@ -37,7 +37,6 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
-import { ContentCron } from '../application/cron';
 import {
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
@@ -118,9 +117,6 @@ import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 
 export const postProvider = [
-  /** Application Cron Handler */
-  ContentCron,
-
   /** Application Event Handler */
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
