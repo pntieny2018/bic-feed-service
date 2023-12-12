@@ -5,12 +5,15 @@ import { CONTENT_BINDING_TOKEN, ContentBinding } from '../../../binding';
 import { SeriesDto } from '../../../dto';
 
 import { FindSeriesQuery } from './find-series.query';
-import { ISeriesDomainService } from '@api/modules/v2-post/domain/domain-service/interface';
+import {
+  ISeriesDomainService,
+  SERIES_DOMAIN_SERVICE_TOKEN,
+} from '@api/modules/v2-post/domain/domain-service/interface';
 
 @QueryHandler(FindSeriesQuery)
 export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesDto> {
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN) private readonly _seriesDomain: ISeriesDomainService,
+    @Inject(SERIES_DOMAIN_SERVICE_TOKEN) private readonly _seriesDomain: ISeriesDomainService,
     @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
   ) {}
 
