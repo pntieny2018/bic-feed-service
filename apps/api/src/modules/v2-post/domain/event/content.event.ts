@@ -1,8 +1,8 @@
 import { IEventPayload } from '@libs/infra/event';
 
-import { ContentAttachedSeries, ContentHasBeenSeen } from '../../../../common/constants';
+import { ContentAttachedSeries, ContentGetDetail } from '../../../../common/constants';
 
-interface ContentHasSeenEventPayload {
+interface CContentGetDetailEventPayload {
   contentId: string;
   userId: string;
 }
@@ -11,17 +11,17 @@ interface ContentAttachedSeriesEventPayload {
   contentId: string;
 }
 
-export class ContentHasSeenEvent implements IEventPayload {
-  public static event = ContentHasBeenSeen;
+export class ContentGetDetailEvent implements IEventPayload {
+  public static event = ContentGetDetail;
 
-  public payload: ContentHasSeenEventPayload;
+  public payload: CContentGetDetailEventPayload;
 
-  public constructor(data: ContentHasSeenEventPayload) {
+  public constructor(data: CContentGetDetailEventPayload) {
     this.payload = data;
   }
 
   public getEventName(): string {
-    return ContentHasSeenEvent.event;
+    return ContentGetDetailEvent.event;
   }
 }
 

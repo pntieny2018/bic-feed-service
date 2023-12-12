@@ -39,15 +39,18 @@ export class GetWelcomeContentsHandler
     });
 
     const contentMap = ArrayHelper.convertArrayToObject(
-      contentEntities.map((contentEntity) => ({
-        id: contentEntity.getId(),
-        title: contentEntity.getTitle(),
-        type: contentEntity.getType(),
-        isSeen: contentEntity.getIsSeen(),
-      })),
+      contentEntities.map((contentEntity) => {
+        console.log('contentEntity', contentEntity);
+        return {
+          id: contentEntity.getId(),
+          title: contentEntity.getTitle(),
+          type: contentEntity.getType(),
+          isSeen: contentEntity.getIsSeen(),
+        };
+      }),
       'id'
     );
-
+    console.log('contentMap', contentMap);
     return STATIC_WELCOME_CONTENTS.map(
       (item) =>
         new WelcomeContentDto({

@@ -52,7 +52,7 @@ import {
   GetTotalDraftQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
-import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
+import { GetScheduleContentQuery } from '@api/modules/v2-post/application/query/content';
 import {
   CreateReportDto,
   GetAudienceContentDto,
