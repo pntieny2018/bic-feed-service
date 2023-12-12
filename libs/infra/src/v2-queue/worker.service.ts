@@ -14,7 +14,7 @@ export class WorkerService implements IWorkerService {
   public bindProcess<T>(handlers: {
     process(job: JobPro<T>): Promise<void>;
     onCompletedProcess(job: JobPro<T>): Promise<void>;
-    onFailedProcess(job: JobPro<T>, error: Error, prev: string): Promise<void>;
+    onFailedProcess(job: JobPro<T>, error: Error): Promise<void>;
   }): void {
     const { queueName, workerConfig } = this._config;
 
@@ -26,9 +26,7 @@ export class WorkerService implements IWorkerService {
 
     this._worker.on('completed', async (job: JobPro) => handlers.onCompletedProcess(job));
 
-    this._worker.on('failed', async (job: JobPro, error, prev) =>
-      handlers.onFailedProcess(job, error, prev)
-    );
+    this._worker.on('failed', async (job: JobPro, error) => handlers.onFailedProcess(job, error));
   }
 
   public async close(): Promise<void> {
