@@ -40,7 +40,6 @@ export class GetWelcomeContentsHandler
 
     const contentMap = ArrayHelper.convertArrayToObject(
       contentEntities.map((contentEntity) => {
-        console.log('contentEntity', contentEntity);
         return {
           id: contentEntity.getId(),
           title: contentEntity.getTitle(),
@@ -50,7 +49,6 @@ export class GetWelcomeContentsHandler
       }),
       'id'
     );
-    console.log('contentMap', contentMap);
     return STATIC_WELCOME_CONTENTS.map(
       (item) =>
         new WelcomeContentDto({
