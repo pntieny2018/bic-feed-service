@@ -16,6 +16,7 @@ import {
   SeriesItemsRemovedPayload,
   SeriesItemsAddedPayload,
   ContentAttachedSeriesEvent,
+  ContentGetDetailEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -44,6 +45,7 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
+import { UserDto } from '@libs/service/user';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -62,6 +64,41 @@ export class SeriesDomainService implements ISeriesDomainService {
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository
   ) {}
+
+  public async getSeriesById(seriesId: string, authUser: UserDto): Promise<SeriesEntity> {
+    const seriesEntity = await this._contentRepository.findOne({
+      where: {
+        id: seriesId,
+        groupArchived: false,
+        excludeReportedByUserId: authUser.id,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+        shouldIncludeCategory: true,
+        shouldIncludeSaved: {
+          userId: authUser?.id,
+        },
+        shouldIncludeMarkReadImportant: {
+          userId: authUser?.id,
+        },
+      },
+    });
+
+    const isSeries = seriesEntity && seriesEntity instanceof SeriesEntity;
+    if (!isSeries || seriesEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
+    await this._contentValidator.checkCanReadContent(seriesEntity, authUser, groups);
+
+    if (seriesEntity.isPublished()) {
+      this.event.publish(new ContentGetDetailEvent({ contentId: seriesId, userId: authUser.id }));
+    }
+
+    return seriesEntity;
+  }
 
   public async findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]> {
     return (await this._contentRepository.findAll({
