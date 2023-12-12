@@ -42,10 +42,7 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import {
-  ContentHasSeenEventHandler,
-  ReportHiddenEventHandler,
-} from '../application/event-handler/content';
+import { ReportHiddenEventHandler } from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -62,6 +59,12 @@ import {
   VideoPostUpdatedEventHandler,
   VideoPostVideoSuccessEventHandler,
 } from '../application/event-handler/set-video-state';
+
+import {
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
+} from '../application/event-handler/mark-seen-content';
+
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -136,7 +139,8 @@ export const postProvider = [
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
 
-  ContentHasSeenEventHandler,
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
