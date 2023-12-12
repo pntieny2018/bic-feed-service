@@ -2,7 +2,7 @@ import { IEventPayload } from '@libs/infra/event';
 
 import { ContentAttachedSeries, ContentGetDetail } from '../../../../common/constants';
 
-interface CContentGetDetailEventPayload {
+interface ContentGetDetailEventPayload {
   contentId: string;
   userId: string;
 }
@@ -14,9 +14,9 @@ interface ContentAttachedSeriesEventPayload {
 export class ContentGetDetailEvent implements IEventPayload {
   public static event = ContentGetDetail;
 
-  public payload: CContentGetDetailEventPayload;
+  public payload: ContentGetDetailEventPayload;
 
-  public constructor(data: CContentGetDetailEventPayload) {
+  public constructor(data: ContentGetDetailEventPayload) {
     this.payload = data;
   }
 
