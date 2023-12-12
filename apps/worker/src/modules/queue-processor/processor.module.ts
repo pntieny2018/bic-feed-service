@@ -60,10 +60,14 @@ export class ProcessorModule implements OnModuleInit {
             await process.processMessage(job);
           },
           onCompletedProcess: async (job: JobPro): Promise<void> => {
-            this._logger.debug(`Job has been processed with data: ${JSON.stringify(job.data)}`);
+            this._logger.debug(
+              `Job in queue ${job.name} has been processed with data: ${JSON.stringify(job.data)}`
+            );
           },
           onFailedProcess: async (job: JobPro, error: Error): Promise<void> => {
-            this._logger.debug(`Job has been failed with data: ${JSON.stringify(job.data)}`);
+            this._logger.debug(
+              `Job queue ${job.name} has been failed with data: ${JSON.stringify(job.data)}`
+            );
             this._logger.error(error);
           },
         });
