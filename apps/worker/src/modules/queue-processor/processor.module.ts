@@ -49,17 +49,9 @@ export class ProcessorModule implements OnModuleInit {
     for (const adapter of WORKER_ADAPTER_SERVICES) {
       const handler = this._moduleRef.get<IWorkerService>(adapter.workerToken);
       if (handler) {
-        handler.bindProcess({
-          process: async (job: JobPro): Promise<void> => {
-            const process = this._moduleRef.get<IProcessor>(adapter.processorToken);
-            await process.processMessage(job);
-          },
-          onCompletedProcess: async (): Promise<void> => {
-            this._logger.debug(`Completed process job`);
-          },
-          onFailedProcess: async (job: JobPro, error: Error): Promise<void> => {
-            this._logger.debug(`Failed process job with error ${JSON.stringify(error?.stack)}`);
-          },
+        handler.bindProcessor(async (job: JobPro): Promise<void> => {
+          const process = this._moduleRef.get<IProcessor>(adapter.processorToken);
+          await process.processMessage(job);
         });
       }
     }
