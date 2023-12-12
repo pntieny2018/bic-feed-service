@@ -8,6 +8,7 @@ import {
 } from '@libs/database/postgres/common';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 import {
+  CommentModel,
   PostCategoryModel,
   ReportDetailModel,
   ReportModel,
@@ -30,12 +31,14 @@ import {
 } from '@libs/database/postgres/repository/interface/content.repository.interface';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
   public constructor(
     @InjectModel(ReportModel)
     private readonly _reportModel: typeof ReportModel,
+    @InjectModel(CommentModel)
+    private readonly _commentModel: typeof CommentModel,
     @InjectConnection() private readonly _sequelizeConnection: Sequelize
   ) {
     super(PostModel);
@@ -543,7 +546,6 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   }
 
   private _excludeReportedByUser(userId: string): string {
-    const { schema } = getDatabaseConfig();
     const reporterId = this._sequelizeConnection.escape(userId);
 
     return `NOT EXISTS ( 
@@ -596,10 +598,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async destroyContent(id: string): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      await this._reportModel.destroy({
-        where: { targetId: id },
-        transaction,
-      });
+      await this._deleteReport(id, transaction);
 
       await this.model.destroy({
         where: { id },
@@ -612,5 +611,22 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       await transaction.rollback();
       throw e;
     }
+  }
+
+  private async _deleteReport(contentId: string, transaction: Transaction): Promise<void> {
+    const targetIds = [contentId];
+
+    const comments = await this._commentModel.findAll({
+      where: { postId: contentId },
+      attributes: ['id'],
+    });
+    if (comments?.length) {
+      const commentIds = comments.map((comment) => comment.id);
+      targetIds.push(...commentIds);
+
+      await this._commentModel.destroy({ where: { id: commentIds }, transaction });
+    }
+
+    await this._reportModel.destroy({ where: { targetId: targetIds }, transaction });
   }
 }

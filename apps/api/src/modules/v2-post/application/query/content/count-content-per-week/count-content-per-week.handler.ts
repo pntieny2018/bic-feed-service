@@ -26,7 +26,7 @@ export class CountContentPerWeekHandler
       'key'
     );
     return mapValues(filteredArray, (value) =>
-      Number((value.doc_count / this.numberOfWeeks).toFixed(2))
+      Math.round(Number(value.doc_count / this.numberOfWeeks))
     );
   }
 
