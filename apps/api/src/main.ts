@@ -9,10 +9,15 @@ import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import { bootstrapCLI } from './command';
 
 import './common/extension';
+import { tracing } from './tracing';
 
 async function bootstrap(): Promise<void> {
   if (process.env.TRIGGER_CLI === 'true') {
     return bootstrapCLI();
+  }
+
+  if (process.env.ENABLE_TRACING === 'true') {
+    await tracing.start();
   }
 
   const app = await NestFactory.create(AppModule);
