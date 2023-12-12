@@ -22,12 +22,12 @@ export class QueueService implements IQueueService {
   }
 
   public async addBulk<T>(jobs: JobWithConfiguration<T>[]): Promise<void> {
-    const defaultOptionWithGroup = { group: { id: randomStringGenerator() } };
+    const groupId = randomStringGenerator();
     await this._queue.addBulk(
       jobs.map((job) => ({
         name: this._config.queueName,
         data: job.data,
-        opts: Object.assign(defaultOptionWithGroup, job.opts || {}),
+        opts: Object.assign({ group: { id: groupId } }, job.opts || {}),
       }))
     );
   }
