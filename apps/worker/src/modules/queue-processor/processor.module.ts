@@ -52,23 +52,13 @@ export class ProcessorModule implements OnModuleInit {
         handler.bindProcess({
           process: async (job: JobPro): Promise<void> => {
             const process = this._moduleRef.get<IProcessor>(adapter.processorToken);
-            const {
-              id,
-              opts: { group },
-            } = job;
-            this._logger.debug(`Start the job processing with id ${id} in group ${group.id}`);
             await process.processMessage(job);
           },
-          onCompletedProcess: async (job: JobPro): Promise<void> => {
-            this._logger.debug(
-              `Job in queue ${job.name} has been processed with data: ${JSON.stringify(job.data)}`
-            );
+          onCompletedProcess: async (): Promise<void> => {
+            this._logger.debug(`Completed process job`);
           },
           onFailedProcess: async (job: JobPro, error: Error): Promise<void> => {
-            this._logger.debug(
-              `Job queue ${job.name} has been failed with data: ${JSON.stringify(job.data)}`
-            );
-            this._logger.error(error);
+            this._logger.debug(`Failed process job with error ${JSON.stringify(error?.stack)}`);
           },
         });
       }
