@@ -1,5 +1,4 @@
-import { LibModule } from '@api/app/lib.module';
-import { PostModuleV2 } from '@api/modules/v2-post/post.module';
+import { PostModuleV2 as ApiPostModule } from '@api/modules/v2-post/post.module';
 import { configs } from '@libs/common/config/configuration';
 import { HEADER_REQ_ID } from '@libs/common/constants';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
@@ -12,7 +11,10 @@ import { v4 as uuid } from 'uuid';
 
 import { HealthModule } from './modules/health/health.module';
 import { ConsumerModule } from './modules/kafka-consumer/consumer.module';
+import { PostModule } from './modules/post/post.module';
 import { ProcessorModule } from './modules/queue-processor/processor.module';
+import { WorkerQueuePublisherModule } from './modules/queue-publisher/queue-publisher.module';
+import { WorkerLibModule } from './worker.lib.module';
 
 @Module({
   imports: [
@@ -32,14 +34,16 @@ import { ProcessorModule } from './modules/queue-processor/processor.module';
         },
       },
     }),
-    PostgresModule,
-    LibModule, // TODO: Move lib to libs module
     CqrsModule,
-    PostModuleV2, // TODO: Use v2-post module from worker
-    HealthModule,
-    ProcessorModule,
     ConsumerModule,
+    PostgresModule,
+    ApiPostModule, // TODO: Use v2-post module from worker
+    ProcessorModule,
+    WorkerLibModule,
+    WorkerQueuePublisherModule,
+    HealthModule,
     KafkaModule,
+    PostModule,
   ],
   providers: [],
   exports: [],

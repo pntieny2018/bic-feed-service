@@ -3,8 +3,8 @@ import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 
-import { PublishContentToNewsfeedCommand } from '../../v2-post/application/command/publish-post-to-newsfeed';
-import { RemoveContentFromNewsfeedCommand } from '../../v2-post/application/command/remove-post-from-newsfeed';
+import { PublishContentToNewsfeedCommand } from '../../post/application/command/publish-post-to-newsfeed';
+import { RemoveContentFromNewsfeedCommand } from '../../post/application/command/remove-post-from-newsfeed';
 import { NewsfeedAction } from '../data-type';
 
 @Controller()

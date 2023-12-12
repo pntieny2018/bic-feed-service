@@ -3,8 +3,8 @@ import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 
-import { UserFollowGroupCommand } from '../../v2-post/application/command/user-follow-group';
-import { UserUnfollowGroupCommand } from '../../v2-post/application/command/user-unfollow-group';
+import { UserFollowGroupCommand } from '../../post/application/command/user-follow-group';
+import { UserUnfollowGroupCommand } from '../../post/application/command/user-unfollow-group';
 import { FollowAction } from '../data-type';
 
 @Controller()

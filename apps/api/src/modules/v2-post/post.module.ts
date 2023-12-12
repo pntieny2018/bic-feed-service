@@ -45,7 +45,6 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
-  workerProvider,
 } from './provider';
 
 @Module({
@@ -94,7 +93,6 @@ import {
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,
-    ...workerProvider,
   ],
   exports: [
     {
