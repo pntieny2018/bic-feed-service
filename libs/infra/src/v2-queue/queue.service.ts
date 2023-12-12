@@ -6,7 +6,7 @@ import {
   IQueueServiceConfig,
   JobWithConfiguration,
 } from './interfaces/queue.interface';
-import { QueuePro, QueueEventsPro, JobPro } from './shared';
+import { QueuePro, QueueEventsPro } from './shared';
 
 export class QueueService implements IQueueService {
   private _queue: QueuePro;
@@ -20,21 +20,11 @@ export class QueueService implements IQueueService {
     queueEvents.on('active', (args) => {
       this._logger.debug(`Job id ${args.jobId} in queue ${queueName} is active`);
     });
-    queueEvents.on('completed', async (args) => {
-      const job = await JobPro.fromId(this._queue, args.jobId);
-      this._logger.debug(
-        `Job id ${args.jobId} in queue ${queueName} has been completed with data ${JSON.stringify(
-          job.data
-        )}`
-      );
+    queueEvents.on('completed', (args) => {
+      this._logger.debug(`Job id ${args.jobId} in queue ${queueName} has been completed`);
     });
-    queueEvents.on('failed', async (args) => {
-      const job = await JobPro.fromId(this._queue, args.jobId);
-      this._logger.debug(
-        `Job id ${args.jobId} in queue ${queueName} has been failed with data ${JSON.stringify(
-          job.data
-        )}`
-      );
+    queueEvents.on('failed', (args) => {
+      this._logger.debug(`Job id ${args.jobId} in queue ${queueName} has been failed with data`);
     });
   }
 
