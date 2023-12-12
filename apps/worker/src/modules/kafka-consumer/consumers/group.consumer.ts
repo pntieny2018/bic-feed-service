@@ -9,6 +9,9 @@ import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 
+/**
+ * TODO: Move commands to worker folder
+ */
 @Controller()
 export class GroupConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}
