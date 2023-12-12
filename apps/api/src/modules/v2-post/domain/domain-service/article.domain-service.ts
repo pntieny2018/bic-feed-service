@@ -9,7 +9,7 @@ import {
   ArticleDeletedEvent,
   ArticlePublishedEvent,
   ArticleUpdatedEvent,
-  ContentHasSeenEvent,
+  ContentGetDetailEvent,
 } from '../event';
 import {
   ArticleRequiredCoverException,
@@ -119,7 +119,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     if (articleEntity.isPublished()) {
-      this.event.publish(new ContentHasSeenEvent({ contentId: articleId, userId: authUser.id }));
+      this.event.publish(new ContentGetDetailEvent({ contentId: articleId, userId: authUser.id }));
     }
 
     return articleEntity;

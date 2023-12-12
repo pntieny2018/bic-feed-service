@@ -179,7 +179,7 @@
       "^@libs/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
       "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1",
       "^@libs/database(|/.*)$": "<rootDir>/libs/database/src/$1",
-      "^@api/(|/.*)$": "<rootDir>/api/src/$1"
+      "^@api(.*)$": "<rootDir>/apps/api/src$1"
     }
   },
   "husky": {
