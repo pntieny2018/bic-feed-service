@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, OnApplicationShutdown } from '@nestjs/commo
 import * as Sentry from '@sentry/node';
 import { Client, Event } from '@sentry/types';
 import * as SourceMap from 'source-map-support';
+
 import { SENTRY_MODULE_OPTIONS } from './sentry.constants';
 import { SentryModuleOptions } from './sentry.interfaces';
 

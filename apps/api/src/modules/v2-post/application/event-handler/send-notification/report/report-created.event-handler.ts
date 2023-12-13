@@ -57,15 +57,21 @@ export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreate
     authUser: UserDto,
     groupAdminMap: { [groupId: string]: string[] }
   ): Promise<void> {
-    const contentOfTargetReported = await this._reportDomain.getContentOfTargetReported(
-      reportEntities[0]
-    );
+    const {
+      content: contentOfTargetReported,
+      contentId,
+      contentType,
+      parentCommentId,
+    } = await this._reportDomain.getContentOfTargetReported(reportEntities[0]);
 
     for (const reportEntity of reportEntities) {
       await this._notiAdapter.sendReportCreatedNotification({
         report: this._reportBinding.binding(reportEntity),
         actor: authUser,
         content: contentOfTargetReported,
+        contentId,
+        contentType,
+        parentCommentId,
         adminInfos: { [reportEntity.get('groupId')]: groupAdminMap[reportEntity.get('groupId')] },
       });
     }

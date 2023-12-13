@@ -1,4 +1,4 @@
-import { CONTENT_REPORT_REASON_TYPE } from '@beincom/constants';
+import { CONTENT_REPORT_REASON_TYPE, CONTENT_TYPE } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 
 import { CommentEntity } from '../../model/comment';
@@ -25,7 +25,12 @@ export interface IReportDomainService {
   reportComment(input: CreateReportCommentProps): Promise<void>;
   countReportReasonsByTargetId(targetId: string, groupId?: string): Promise<ReasonCount[]>;
   getReportReasonsMapByTargetIds(targetIds: string[]): Promise<Record<string, ReasonCount[]>>;
-  getContentOfTargetReported(report: ReportEntity): Promise<string>;
+  getContentOfTargetReported(report: ReportEntity): Promise<{
+    content: string;
+    contentId: string;
+    contentType: CONTENT_TYPE;
+    parentCommentId: string;
+  }>;
   ignoreReport(input: ProcessReportProps): Promise<void>;
   hideReport(input: ProcessReportProps): Promise<void>;
 }
