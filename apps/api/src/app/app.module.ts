@@ -41,6 +41,9 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
+import { OpenTelemetryModule } from '@metinseylan/nestjs-opentelemetry';
+import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 @Module({
   imports: [
     ClsModule.forRoot({
@@ -53,6 +56,13 @@ import { LibModule } from './lib.module';
           return req.headers[HEADER_REQ_ID] ?? (uuid() as any);
         },
       },
+    }),
+    OpenTelemetryModule.forRoot({
+      spanProcessor: new SimpleSpanProcessor(
+        new OTLPTraceExporter({
+          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
+        })
+      ),
     }),
     DatabaseModule,
     HttpModule,

@@ -7,7 +7,6 @@ import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import { bootstrapCLI } from './command';
-import { tracing } from './tracing';
 
 import './common/extension';
 //import './tracing';
@@ -18,7 +17,7 @@ async function bootstrap(): Promise<void> {
   }
 
   if (process.env.ENABLE_TRACING === 'true') {
-    await tracing.start();
+    //  await tracing.start();
   }
 
   const app = await NestFactory.create(AppModule);
