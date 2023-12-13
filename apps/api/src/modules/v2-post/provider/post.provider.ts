@@ -58,7 +58,6 @@ import {
 import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
-  VideoPostVideoSuccessEventHandler,
 } from '../application/event-handler/set-video-state';
 
 import {
@@ -139,7 +138,6 @@ export const postProvider = [
   FilePostUpdatedEventHandler,
   FilePostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
-  VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
 
