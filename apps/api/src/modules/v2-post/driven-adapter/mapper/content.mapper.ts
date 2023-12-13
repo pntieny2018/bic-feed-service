@@ -124,11 +124,11 @@ export class ContentMapper {
       lang: post.lang,
       groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      quiz: post.quiz
+      quiz: post.quiz?.[0]
         ? new QuizEntity({
-            ...post.quiz,
-            contentId: post.quiz.postId,
-            questions: (post.quiz.questions || []).map(
+            ...post.quiz[0],
+            contentId: post.quiz[0].postId,
+            questions: (post.quiz[0].questions || []).map(
               (question) => new QuizQuestionEntity(question)
             ),
           })
@@ -190,11 +190,11 @@ export class ContentMapper {
       lang: post.lang,
       groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      quiz: post.quiz
+      quiz: post.quiz?.[0]
         ? new QuizEntity({
-            ...post.quiz,
-            contentId: post.quiz.postId,
-            questions: (post.quiz.questions || []).map(
+            ...post.quiz[0],
+            contentId: post.quiz[0].postId,
+            questions: (post.quiz[0].questions || []).map(
               (question) => new QuizQuestionEntity(question)
             ),
           })

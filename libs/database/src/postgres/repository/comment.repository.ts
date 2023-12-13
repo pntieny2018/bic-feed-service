@@ -169,7 +169,6 @@ export class LibCommentRepository extends BaseRepository<CommentModel> {
             `NOT EXISTS ( 
               SELECT target_id FROM ${ReportDetailModel.getTableName()} as rcd
                 WHERE rcd.target_id = "CommentModel".id AND 
-                      rcd.target_type = '${CONTENT_TARGET.COMMENT}' AND 
                       rcd.reporter_id = ${reporterId}
             )`
           ),
