@@ -59,6 +59,7 @@ import { VERSIONS_SUPPORTED } from '@api/common/constants';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
 import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 @Module({
   imports: [
     ClsModule.forRoot({
@@ -108,7 +109,7 @@ import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
     UserModule,
 
     OpenTelemetryModule.forRoot({
-      serviceName: 'test 1023',
+      serviceName: 'test 301',
       resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: 'test 102',
         [SemanticResourceAttributes.SERVICE_VERSION]:
@@ -121,17 +122,7 @@ import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
         })
       ),
       instrumentations: [
-        getNodeAutoInstrumentations({
-          '@opentelemetry/instrumentation-net': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-dns': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-express': {
-            enabled: false,
-          },
-        }),
+        new HttpInstrumentation(),
         new ExpressInstrumentation(),
         new SequelizeInstrumentation(),
       ],
