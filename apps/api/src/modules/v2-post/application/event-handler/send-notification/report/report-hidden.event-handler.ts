@@ -45,7 +45,12 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
     for (const targetId of Object.keys(reportEntityMapByTargetId)) {
       const entities = reportEntityMapByTargetId[targetId];
 
-      const contentOfTarget = await this._reportDomain.getContentOfTargetReported(entities[0]);
+      const {
+        content: contentOfTarget,
+        contentId,
+        contentType,
+        parentCommentId,
+      } = await this._reportDomain.getContentOfTargetReported(entities[0]);
       const reports = await this._reportBinding.bindingReportsWithReportersInReasonsCount(entities);
       const adminInfos = entities
         .map((entity) => entity.get('groupId'))
@@ -58,6 +63,9 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
         reports,
         actor: authUser,
         content: contentOfTarget,
+        contentId,
+        contentType,
+        parentCommentId,
         adminInfos,
       });
     }
