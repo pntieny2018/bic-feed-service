@@ -49,6 +49,7 @@ export function createMockVideo(data: Partial<Video> = {}): Video {
   return {
     id: videoId,
     url: `https://media.beincom.io/image/variants/comment/content/${videoId}`,
+    hlsUrl: `https://media.beincom.io/image/variants/comment/content/${videoId}`,
     name: 'test.jpg',
     createdBy: v4(),
     mimeType: 'image/jpeg',

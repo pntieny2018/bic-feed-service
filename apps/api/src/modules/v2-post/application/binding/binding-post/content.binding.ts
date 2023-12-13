@@ -1,5 +1,3 @@
-import { EntityHelper } from '@api/common/helpers';
-import { ReactionsCount } from '@api/common/types';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
@@ -9,6 +7,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
 import { flatten, groupBy, uniq, pick } from 'lodash';
 
+import { EntityHelper } from '../../../../../common/helpers';
+import { ReactionsCount } from '../../../../../common/types';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
