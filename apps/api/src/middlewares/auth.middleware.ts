@@ -41,6 +41,7 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   private async _getUser(username: string): Promise<UserDto> {
+    console.log('GET USER =====');
     const userInfo = await this._userService.findProfileAndPermissionByUsername(username);
     if (!userInfo) {
       throw new UnauthorizedException({
