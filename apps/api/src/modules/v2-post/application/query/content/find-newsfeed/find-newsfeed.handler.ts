@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import {
@@ -12,6 +12,7 @@ import { FindNewsfeedQuery } from './find-newsfeed.query';
 
 @QueryHandler(FindNewsfeedQuery)
 export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, FindNewsfeedDto> {
+  private readonly _logger = new Logger(FindNewsfeedHandler.name);
   public constructor(
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: ContentBinding,
@@ -22,6 +23,7 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
   public async execute(query: FindNewsfeedQuery): Promise<any> {
     const payload = query.payload;
     const authUserId = payload.authUser.id;
+    this._logger.debug('FindNewsfeedHandler 111');
     const { rows: ids, meta: meta } = await this._contentDomainService.getContentIdsInNewsFeed({
       ...payload,
       authUserId,

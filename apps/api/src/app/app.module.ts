@@ -41,20 +41,6 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
-import { OpenTelemetryModule } from '@metinseylan/nestjs-opentelemetry';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { VERSIONS_SUPPORTED } from '@api/common/constants';
-
-// my-service-name
-// my-environment
-//token vMyPaQbMFhKw2ksyNb
-//https://8c3e227ed1a04ce1bb4967fe35381c70.apm.us-central1.gcp.cloud.es.io:443
 @Module({
   imports: [
     ClsModule.forRoot({
@@ -68,24 +54,6 @@ import { VERSIONS_SUPPORTED } from '@api/common/constants';
         },
       },
     }),
-    // OpenTelemetryModule.forRoot({
-    //   serviceName: process.env.APP_NAME,
-    //   spanProcessor: new SimpleSpanProcessor(
-    //     new OTLPTraceExporter({
-    //       url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-    //     })
-    //   ),
-    //   resource: new Resource({
-    //     [SemanticResourceAttributes.SERVICE_VERSION]:
-    //       VERSIONS_SUPPORTED[VERSIONS_SUPPORTED.length - 1],
-    //     [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
-    //   }),
-    //   instrumentations: [
-    //     new HttpInstrumentation(),
-    //     new ExpressInstrumentation(),
-    //     new NestInstrumentation(),
-    //   ],
-    // }),
     DatabaseModule,
     HttpModule,
     LibModule,
