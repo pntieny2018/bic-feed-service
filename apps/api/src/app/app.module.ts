@@ -41,9 +41,21 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
-import { OpenTelemetryModule } from '@metinseylan/nestjs-opentelemetry';
+import {
+  ControllerInjector,
+  EventEmitterInjector,
+  GuardInjector,
+  LoggerInjector,
+  OpenTelemetryModule,
+  PipeInjector,
+  ScheduleInjector,
+} from '@metinseylan/nestjs-opentelemetry';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { VERSIONS_SUPPORTED } from '@api/common/constants';
 @Module({
   imports: [
     ClsModule.forRoot({
@@ -57,12 +69,32 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
         },
       },
     }),
-    OpenTelemetryModule.forRoot({
-      spanProcessor: new SimpleSpanProcessor(
-        new OTLPTraceExporter({
-          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
-        })
-      ),
+    OpenTelemetryModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        return {
+          resource: new Resource({
+            [SemanticResourceAttributes.SERVICE_NAME]: 'test 101',
+            [SemanticResourceAttributes.SERVICE_VERSION]:
+              VERSIONS_SUPPORTED[VERSIONS_SUPPORTED.length - 1],
+            [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
+          }),
+          traceAutoInjectors: [
+            ControllerInjector,
+            GuardInjector,
+            EventEmitterInjector,
+            ScheduleInjector,
+            PipeInjector,
+            LoggerInjector,
+          ],
+          spanProcessor: new SimpleSpanProcessor(
+            new OTLPTraceExporter({
+              url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
+            })
+          ),
+        };
+      },
+      inject: [ConfigService],
     }),
     DatabaseModule,
     HttpModule,
