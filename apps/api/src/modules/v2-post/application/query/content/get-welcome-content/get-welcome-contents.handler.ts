@@ -49,12 +49,17 @@ export class GetWelcomeContentsHandler
       }),
       'id'
     );
-    return STATIC_WELCOME_CONTENTS.map(
-      (item) =>
-        new WelcomeContentDto({
-          title: item.title,
-          list: item.list.map((content) => contentMap[content.id] || null),
-        })
-    );
+    return STATIC_WELCOME_CONTENTS.map((item) => {
+      const list = [];
+      item.list.forEach((content) => {
+        if (contentMap[content.id]) {
+          list.push(contentMap[content.id]);
+        }
+      });
+      return new WelcomeContentDto({
+        title: item.title,
+        list,
+      });
+    });
   }
 }
