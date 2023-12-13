@@ -56,6 +56,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { VERSIONS_SUPPORTED } from '@api/common/constants';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
+import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
 @Module({
   imports: [
     ClsModule.forRoot({
@@ -68,33 +71,6 @@ import { VERSIONS_SUPPORTED } from '@api/common/constants';
           return req.headers[HEADER_REQ_ID] ?? (uuid() as any);
         },
       },
-    }),
-    OpenTelemetryModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        return {
-          resource: new Resource({
-            [SemanticResourceAttributes.SERVICE_NAME]: 'test 101',
-            [SemanticResourceAttributes.SERVICE_VERSION]:
-              VERSIONS_SUPPORTED[VERSIONS_SUPPORTED.length - 1],
-            [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
-          }),
-          traceAutoInjectors: [
-            ControllerInjector,
-            GuardInjector,
-            EventEmitterInjector,
-            ScheduleInjector,
-            PipeInjector,
-            LoggerInjector,
-          ],
-          spanProcessor: new SimpleSpanProcessor(
-            new OTLPTraceExporter({
-              url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
-            })
-          ),
-        };
-      },
-      inject: [ConfigService],
     }),
     DatabaseModule,
     HttpModule,
@@ -130,6 +106,36 @@ import { VERSIONS_SUPPORTED } from '@api/common/constants';
     I18nGlobalModule,
     PostgresModule,
     UserModule,
+
+    OpenTelemetryModule.forRoot({
+      serviceName: 'test 1023',
+      resource: new Resource({
+        [SemanticResourceAttributes.SERVICE_NAME]: 'test 102',
+        [SemanticResourceAttributes.SERVICE_VERSION]:
+          VERSIONS_SUPPORTED[VERSIONS_SUPPORTED.length - 1],
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
+      }),
+      spanProcessor: new SimpleSpanProcessor(
+        new OTLPTraceExporter({
+          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
+        })
+      ),
+      instrumentations: [
+        getNodeAutoInstrumentations({
+          '@opentelemetry/instrumentation-net': {
+            enabled: false,
+          },
+          '@opentelemetry/instrumentation-dns': {
+            enabled: false,
+          },
+          '@opentelemetry/instrumentation-express': {
+            enabled: false,
+          },
+        }),
+        new ExpressInstrumentation(),
+        new SequelizeInstrumentation(),
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [],

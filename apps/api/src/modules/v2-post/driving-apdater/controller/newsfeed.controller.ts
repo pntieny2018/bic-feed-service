@@ -7,7 +7,6 @@ import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser } from '../../../../common/decorators';
 import { FindNewsfeedQuery } from '../../application/query/content';
 import { NewsfeedRequestDto } from '../dto/request';
-import { Span } from '@metinseylan/nestjs-opentelemetry';
 
 @ApiTags('v2 Timeline')
 @ApiSecurity('authorization')
@@ -18,7 +17,6 @@ export class NewsFeedController {
   @ApiOperation({ summary: 'Get newsfeed.' })
   @Get(ROUTES.NEWSFEED.GET_LIST.PATH)
   @Version(ROUTES.NEWSFEED.GET_LIST.VERSIONS)
-  @Span('sdfsdf')
   public async getNewsfeed(
     @AuthUser(false) authUser: UserDto,
     @Query() dto: NewsfeedRequestDto
