@@ -27,7 +27,6 @@
     "trigger:command": "TRIGGER_CLI=true node dist/main"
   },
   "dependencies": {
-    "@amplication/opentelemetry-nestjs": "^4.4.0",
     "@aws-sdk/client-s3": "^3.54.0",
     "@beincom/constants": "^2.1.9",
     "@beincom/domain": "^0.1.7",

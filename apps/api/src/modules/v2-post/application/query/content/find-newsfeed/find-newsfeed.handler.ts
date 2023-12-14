@@ -37,10 +37,6 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
       ids,
       authUserId,
     });
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq([contentEntities[0].getCreatedBy()]),
-      contentEntities[0].getCreatedBy()
-    );
     const result = await this._contentBinding.contentsBinding(contentEntities, payload.authUser);
     return {
       list: result,

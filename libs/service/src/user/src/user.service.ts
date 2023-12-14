@@ -10,7 +10,9 @@ import { uniq } from 'lodash';
 
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 
+@Traceable()
 @Injectable()
 export class UserService implements IUserService {
   private readonly _logger = new Logger(UserService.name);

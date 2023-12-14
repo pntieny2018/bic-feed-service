@@ -44,12 +44,12 @@ import { LibModule } from './lib.module';
 import { BatchSpanProcessor, Span } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
-import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
-import { OpenTelemetryModule } from '@amplication/opentelemetry-nestjs';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { ClientRequest, IncomingMessage } from 'http';
-import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
-
+import {
+  OpenTelemetryModule,
+  OpenTelemetryModuleDefaultConfig,
+} from '@libs/common/modules/opentelemetry';
 @Module({
   imports: [
     ClsModule.forRoot({
@@ -99,51 +99,12 @@ import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
     UserModule,
 
     OpenTelemetryModule.forRoot({
-      serviceName: 'test 85',
+      serviceName: 'test 903',
       spanProcessor: new BatchSpanProcessor(
         new OTLPTraceExporter({
           url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
         })
       ),
-      instrumentations: [
-        getNodeAutoInstrumentations({
-          '@opentelemetry/instrumentation-net': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-fs': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-express': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-dns': {
-            enabled: false,
-          },
-          '@opentelemetry/instrumentation-http': {
-            requireParentforOutgoingSpans: true,
-            requestHook: (span: Span, request) => {
-              if (request instanceof ClientRequest) {
-                span.updateName(`${request.method} ${request.path}`);
-              }
-
-              if (request instanceof IncomingMessage) {
-                span.updateName(`${request.method} ${request.url}`);
-              }
-            },
-            ignoreIncomingRequestHook: (req) => {
-              return req.url.includes('health');
-            },
-            enabled: true,
-          },
-        }),
-        new ExpressInstrumentation(),
-        new SequelizeInstrumentation(),
-        new IORedisInstrumentation({
-          requestHook: (span: Span, command) => {
-            console.log('command', command);
-          },
-        }),
-      ],
     }),
   ],
   controllers: [AppController],
