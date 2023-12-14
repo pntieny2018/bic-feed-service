@@ -41,6 +41,7 @@ import {
   ReportTargetDto,
   SearchContentsDto,
   SeriesDto,
+  WelcomeContentDto,
 } from '../../application/dto';
 import {
   FindDraftContentsQuery,
@@ -50,9 +51,10 @@ import {
   GetMyReportedContentsQuery,
   GetSeriesInContentQuery,
   GetTotalDraftQuery,
+  GetWelcomeContentsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
-import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
+import { GetScheduleContentQuery } from '@api/modules/v2-post/application/query/content';
 import {
   CreateReportDto,
   GetAudienceContentDto,
@@ -454,6 +456,18 @@ export class ContentController {
       new GetMyReportedContentsQuery({
         authUser,
         ...query,
+      })
+    );
+    return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get welcome contents' })
+  @Get(ROUTES.CONTENT.GET_WELCOME_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.GET_WELCOME_CONTENT.VERSIONS)
+  public async getWelcomeContents(@AuthUser() authUser: UserDto): Promise<WelcomeContentDto[]> {
+    const reports = await this._queryBus.execute(
+      new GetWelcomeContentsQuery({
+        authUser,
       })
     );
     return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

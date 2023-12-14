@@ -26,6 +26,7 @@ import { InternalModule } from '../modules/internal';
 import { MediaModule } from '../modules/media';
 import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
+import { QueuePublisherModule } from '../modules/queue-publisher/queue-publisher.module';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
@@ -44,6 +45,7 @@ import { LibModule } from './lib.module';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
+import * as process from 'process';
 
 @Module({
   imports: [
@@ -94,13 +96,14 @@ import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
     UserModule,
 
     OpenTelemetryModule.forRoot({
-      serviceName: 'test 903',
+      serviceName: process.env.APP_NAME,
       spanProcessor: new BatchSpanProcessor(
         new OTLPTraceExporter({
           url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
         })
       ),
     }),
+    QueuePublisherModule,
   ],
   controllers: [AppController],
   providers: [],

@@ -9,7 +9,7 @@ import {
   ArticleDeletedEvent,
   ArticlePublishedEvent,
   ArticleUpdatedEvent,
-  ContentHasSeenEvent,
+  ContentGetDetailEvent,
 } from '../event';
 import {
   ArticleRequiredCoverException,
@@ -119,7 +119,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     if (articleEntity.isPublished()) {
-      this.event.publish(new ContentHasSeenEvent({ contentId: articleId, userId: authUser.id }));
+      this.event.publish(new ContentGetDetailEvent({ contentId: articleId, userId: authUser.id }));
     }
 
     return articleEntity;
@@ -128,10 +128,7 @@ export class ArticleDomainService implements IArticleDomainService {
   public async createDraft(input: CreateArticleProps): Promise<ArticleEntity> {
     const { groups, userId } = input;
 
-    const articleEntity = ArticleEntity.create({
-      groupIds: groups.map((group) => group.id),
-      userId,
-    });
+    const articleEntity = ArticleEntity.create(userId);
 
     articleEntity.setGroups(groups.map((group) => group.id));
     articleEntity.setPrivacyFromGroups(groups);

@@ -245,3 +245,37 @@ export class GetMyReportedContentsRequestDto extends PaginatedArgs {
   @IsEnum(ORDER)
   public order: ORDER = ORDER.DESC;
 }
+
+export class CountContentPerWeekRequestDto {
+  @ApiProperty({
+    name: 'root_group_ids',
+    type: [String],
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
+  })
+  @Expose({
+    name: 'root_group_ids',
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  @IsUUID('4', { each: true })
+  public rootGroupIds: string[];
+
+  // TODO: for support multiple metrics
+  @ApiProperty({
+    type: String,
+    name: 'metrics',
+    example: 'average_weekly_count',
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => value.split(','))
+  @Expose({
+    name: 'metrics',
+  })
+  public metrics: string[];
+}

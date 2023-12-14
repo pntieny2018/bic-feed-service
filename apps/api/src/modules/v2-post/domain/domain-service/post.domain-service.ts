@@ -7,13 +7,12 @@ import { EventBus } from '@nestjs/cqrs';
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
-  ContentHasSeenEvent,
+  ContentGetDetailEvent,
   PostDeletedEvent,
   PostPublishedEvent,
   PostScheduledEvent,
   PostUpdatedEvent,
   PostVideoFailedEvent,
-  PostVideoSuccessEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -128,7 +127,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     if (postEntity.isPublished()) {
-      this.event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUserId }));
+      this.event.publish(new ContentGetDetailEvent({ contentId: postId, userId: authUserId }));
     }
 
     return postEntity;
@@ -137,10 +136,7 @@ export class PostDomainService implements IPostDomainService {
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
 
-    const postEntity = PostEntity.create({
-      groupIds: [],
-      userId,
-    });
+    const postEntity = PostEntity.create(userId);
 
     postEntity.setGroups(groups.map((group) => group.id));
     postEntity.setPrivacyFromGroups(groups);
@@ -355,7 +351,6 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoSuccessEvent({ postEntity, authUser: actor }));
     }
 
     if (!isScheduledPost) {
@@ -450,6 +445,8 @@ export class PostDomainService implements IPostDomainService {
     if (status) {
       postEntity.setStatus(payload.status);
     }
+
+    postEntity.setCommunity(groups.map((group) => group.rootGroupId));
 
     postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
     postEntity.setPrivacyFromGroups(groups);

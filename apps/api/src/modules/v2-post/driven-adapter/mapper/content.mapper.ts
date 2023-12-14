@@ -113,6 +113,7 @@ export class ContentMapper {
       updatedAt: post.updatedAt,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
+      isSeen: post.isSeen || false,
       ownerReactions: (post.ownerReactions || []).map((item) => ({
         id: item.id,
         reactionName: item.reactionName,
@@ -123,11 +124,11 @@ export class ContentMapper {
       lang: post.lang,
       groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      quiz: post.quiz
+      quiz: post.quiz?.[0]
         ? new QuizEntity({
-            ...post.quiz,
-            contentId: post.quiz.postId,
-            questions: (post.quiz.questions || []).map(
+            ...post.quiz[0],
+            contentId: post.quiz[0].postId,
+            questions: (post.quiz[0].questions || []).map(
               (question) => new QuizQuestionEntity(question)
             ),
           })
@@ -163,6 +164,7 @@ export class ContentMapper {
       id: post.id,
       isReported: post.isReported,
       isHidden: post.isHidden,
+      isSeen: post.isSeen || false,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,
       privacy: post.privacy,
@@ -188,11 +190,11 @@ export class ContentMapper {
       lang: post.lang,
       groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      quiz: post.quiz
+      quiz: post.quiz?.[0]
         ? new QuizEntity({
-            ...post.quiz,
-            contentId: post.quiz.postId,
-            questions: (post.quiz.questions || []).map(
+            ...post.quiz[0],
+            contentId: post.quiz[0].postId,
+            questions: (post.quiz[0].questions || []).map(
               (question) => new QuizQuestionEntity(question)
             ),
           })
@@ -222,6 +224,7 @@ export class ContentMapper {
     return new SeriesEntity({
       id: post.id,
       isReported: post.isReported,
+      isSeen: post.isSeen || false,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,

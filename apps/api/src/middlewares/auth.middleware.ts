@@ -1,7 +1,5 @@
 import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
-import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 import { ERRORS } from '../common/constants';
@@ -12,8 +10,6 @@ import { Traceable } from '@libs/common/modules/opentelemetry';
 @Traceable()
 export class AuthMiddleware implements NestMiddleware {
   public constructor(
-    private readonly _configService: ConfigService,
-    private readonly _httpService: HttpService,
     @Inject(USER_SERVICE_TOKEN)
     private readonly _userService: IUserService
   ) {}

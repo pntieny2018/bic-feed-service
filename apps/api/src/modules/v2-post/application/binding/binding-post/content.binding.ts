@@ -1,4 +1,3 @@
-import { ReactionsCount } from '@api/common/types';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
@@ -8,6 +7,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
 import { flatten, groupBy, uniq, pick } from 'lodash';
 
+import { EntityHelper } from '../../../../../common/helpers';
+import { ReactionsCount } from '../../../../../common/types';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
@@ -117,8 +118,8 @@ export class ContentBinding implements IContentBinding {
       [postEntity.getId()],
       authUser
     );
-    const quizHighestScore = quizzesHighestScoreMap[postEntity.getId()];
-    const quizDoing = quizzesDoingMap[postEntity.getId()];
+    const quizHighestScore = quizzesHighestScoreMap.get(postEntity.getId());
+    const quizDoing = quizzesDoingMap.get(postEntity.getId());
 
     const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
       postEntity.getId(),
@@ -178,8 +179,8 @@ export class ContentBinding implements IContentBinding {
       users: { [id: string]: UserDto };
       groups: GroupDto[];
       communities: GroupDto[];
-      quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
-      quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+      quizzesHighestScoreMap: Map<string, QuizParticipantEntity>;
+      quizzesDoingMap: Map<string, QuizParticipantEntity>;
       reactionsCount: Map<string, ReactionsCount>;
     }
   ): Promise<PostDto[]> {
@@ -201,8 +202,8 @@ export class ContentBinding implements IContentBinding {
       const postGroups = groups.filter((group) => postEntity.getGroupIds().includes(group.id));
       const communityIds = uniq(postGroups.map((group) => group.rootGroupId));
       const postCommunities = communities.filter((group) => communityIds.includes(group.id));
-      const quizHighestScore = quizzesHighestScoreMap[postEntity.getId()];
-      const quizDoing = quizzesDoingMap[postEntity.getId()];
+      const quizHighestScore = quizzesHighestScoreMap.get(postEntity.getId());
+      const quizDoing = quizzesDoingMap.get(postEntity.getId());
       const mentionUsers = Object.values(pick(users, postEntity.get('mentionUserIds')));
 
       return new PostDto({
@@ -278,8 +279,8 @@ export class ContentBinding implements IContentBinding {
       authUser
     );
 
-    const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
-    const quizDoing = quizzesDoingMap[articleEntity.getId()];
+    const quizHighestScore = quizzesHighestScoreMap.get(articleEntity.getId());
+    const quizDoing = quizzesDoingMap.get(articleEntity.getId());
 
     let reportReasonsCount;
     if (articleEntity.isHidden() && articleEntity.isOwner(authUser.id)) {
@@ -341,8 +342,8 @@ export class ContentBinding implements IContentBinding {
       users: { [id: string]: UserDto };
       groups: GroupDto[];
       communities: GroupDto[];
-      quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
-      quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+      quizzesHighestScoreMap: Map<string, QuizParticipantEntity>;
+      quizzesDoingMap: Map<string, QuizParticipantEntity>;
       reactionsCount: Map<string, ReactionsCount>;
     }
   ): Promise<ArticleDto[]> {
@@ -366,8 +367,8 @@ export class ContentBinding implements IContentBinding {
       );
       const communityIds = uniq(articleGroups.map((group) => group.rootGroupId));
       const articleCommunities = communities.filter((group) => communityIds.includes(group.id));
-      const quizHighestScore = quizzesHighestScoreMap[articleEntity.getId()];
-      const quizDoing = quizzesDoingMap[articleEntity.getId()];
+      const quizHighestScore = quizzesHighestScoreMap.get(articleEntity.getId());
+      const quizDoing = quizzesDoingMap.get(articleEntity.getId());
 
       return new ArticleDto({
         id: articleEntity.get('id'),
@@ -395,6 +396,7 @@ export class ContentBinding implements IContentBinding {
         commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
         totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
         title: articleEntity.get('title'),
+        summary: articleEntity.get('summary'),
         coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
         tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
         quiz:
@@ -646,14 +648,28 @@ export class ContentBinding implements IContentBinding {
       reactionsCount,
     };
 
-    const result = [];
-    const posts = await this._postsBinding(postEntities, dataBinding);
-    const articles = await this._articlesBinding(articleEntities, dataBinding);
-    const series = await this._seriesBinding(seriesEntities, dataBinding);
+    const postsMap = ArrayHelper.convertArrayToObject(
+      await this._postsBinding(postEntities, dataBinding),
+      'id'
+    );
+    const articlesMap = ArrayHelper.convertArrayToObject(
+      await this._articlesBinding(articleEntities, dataBinding),
+      'id'
+    );
+    const series = ArrayHelper.convertArrayToObject(
+      await this._seriesBinding(seriesEntities, dataBinding),
+      'id'
+    );
 
-    result.push(...posts, ...articles, ...series);
-
-    return result;
+    return contentEntities.map((contentEntity) => {
+      if (contentEntity instanceof PostEntity) {
+        return postsMap[contentEntity.getId()];
+      }
+      if (contentEntity instanceof ArticleEntity) {
+        return articlesMap[contentEntity.getId()];
+      }
+      return series[contentEntity.getId()];
+    });
   }
 
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
@@ -795,8 +811,8 @@ export class ContentBinding implements IContentBinding {
     contentIds: string[],
     authUser: UserDto
   ): Promise<{
-    quizzesHighestScoreMap: { [key: string]: QuizParticipantEntity };
-    quizzesDoingMap: { [key: string]: QuizParticipantEntity };
+    quizzesHighestScoreMap: Map<string, QuizParticipantEntity>;
+    quizzesDoingMap: Map<string, QuizParticipantEntity>;
   }> {
     if (!authUser) {
       return { quizzesHighestScoreMap: null, quizzesDoingMap: null };
@@ -813,11 +829,8 @@ export class ContentBinding implements IContentBinding {
         authUser.id
       );
 
-    const quizzesHighestScoreMap = ArrayHelper.convertArrayToObject(
-      quizzesHighestScore,
-      'contentId'
-    );
-    const quizzesDoingMap = ArrayHelper.convertArrayToObject(quizzesDoing, 'contentId');
+    const quizzesHighestScoreMap = EntityHelper.entityArrayToMap(quizzesHighestScore, 'contentId');
+    const quizzesDoingMap = EntityHelper.entityArrayToMap(quizzesDoing, 'contentId');
 
     return { quizzesHighestScoreMap, quizzesDoingMap };
   }
