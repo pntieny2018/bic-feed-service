@@ -41,15 +41,10 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
-import { BatchSpanProcessor, Span } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { ClientRequest, IncomingMessage } from 'http';
-import {
-  OpenTelemetryModule,
-  OpenTelemetryModuleDefaultConfig,
-} from '@libs/common/modules/opentelemetry';
+import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
+
 @Module({
   imports: [
     ClsModule.forRoot({
