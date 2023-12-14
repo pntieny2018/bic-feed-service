@@ -375,6 +375,7 @@ export class CountContentPerWeekRequestDto {
     name: 'metrics',
     example: 'average_weekly_count',
   })
+  @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value.split(','))
   @Expose({
