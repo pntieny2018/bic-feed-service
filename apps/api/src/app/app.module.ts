@@ -98,7 +98,7 @@ import { Resource } from '@opentelemetry/resources';
     UserModule,
 
     OpenTelemetryModule.forRoot({
-      serviceName: process.env.APP_NAME + '11',
+      serviceName: process.env.APP_NAME,
       resource: new Resource({
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
         [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
