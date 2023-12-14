@@ -99,7 +99,7 @@ import { ExpressInstrumentation } from 'opentelemetry-instrumentation-express';
     UserModule,
 
     OpenTelemetryModule.forRoot({
-      serviceName: 'test 83',
+      serviceName: 'test 85',
       spanProcessor: new BatchSpanProcessor(
         new OTLPTraceExporter({
           url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
