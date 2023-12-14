@@ -1,7 +1,7 @@
 import { ORDER } from '@beincom/constants';
 import { CACHE_KEYS, CRON_RUN_SCHEDULED_CONTENT } from '@libs/common/constants';
 import { IPaginatedInfo } from '@libs/database/postgres/common';
-import { RedisService } from '@libs/infra/redis';
+import { DistributedLockService } from '@libs/infra/distributed-locks';
 import { SentryService } from '@libs/infra/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
@@ -26,8 +26,8 @@ export class ContentCron {
     private readonly _contentDomainService: IContentDomainService,
     @Inject(QUEUE_ADAPTER)
     private readonly _queueAdapter: IQueueAdapter,
-    private readonly _redisService: RedisService,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    private readonly _distributedLockService: DistributedLockService
   ) {}
 
   @Cron(CRON_RUN_SCHEDULED_CONTENT)
@@ -36,25 +36,22 @@ export class ContentCron {
 
     const bufferTimeInMinute = 1;
     const beforeDate = moment().add(bufferTimeInMinute, 'minute').toDate();
-    const canRunScheduleContent = await this._redisService.setNxEx(
-      CACHE_KEYS.IS_RUNNING_CONTENT_SCHEDULE,
-      true
-    );
 
-    if (canRunScheduleContent === 1) {
-      try {
-        const payload: GetScheduledContentProps = {
-          limit: this.LIMIT_DEFAULT,
-          order: ORDER.DESC,
-          beforeDate,
-        };
-        return this._recursivelyHandleScheduledContent(payload);
-      } catch (err) {
-        this._logger.error(JSON.stringify(err?.stack));
-        this._sentryService.captureException(err);
-      } finally {
-        await this._redisService.del(CACHE_KEYS.IS_RUNNING_CONTENT_SCHEDULE);
-      }
+    const resource = CACHE_KEYS.IS_RUNNING_CONTENT_SCHEDULE;
+    const ttl = 5000;
+    const lock = await this._distributedLockService.applyLock(resource, ttl);
+
+    try {
+      const payload: GetScheduledContentProps = {
+        limit: this.LIMIT_DEFAULT,
+        order: ORDER.DESC,
+        beforeDate,
+      };
+      return this._recursivelyHandleScheduledContent(payload);
+    } catch (err) {
+      await this._distributedLockService.releaseLock(resource, lock);
+      this._logger.error(JSON.stringify(err?.stack));
+      this._sentryService.captureException(err);
     }
   }
 

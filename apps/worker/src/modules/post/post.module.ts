@@ -8,6 +8,7 @@ import { WorkerQueuePublisherModule } from '../queue-publisher/queue-publisher.m
 import {
   adapterProvider,
   consumerHandlerProvider,
+  distributedLockProvider,
   feedProvider,
   libRepositoryProvider,
   postProvider,
@@ -17,6 +18,7 @@ import {
   imports: [CqrsModule, KafkaModule, UserModule, WorkerQueuePublisherModule],
   controllers: [],
   providers: [
+    ...distributedLockProvider,
     ...adapterProvider,
     ...feedProvider,
     ...libRepositoryProvider,
