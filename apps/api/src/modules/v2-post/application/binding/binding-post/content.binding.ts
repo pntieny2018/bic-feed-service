@@ -57,8 +57,10 @@ import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { IContentBinding } from './content.binding.interface';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 
 @Injectable()
+@Traceable()
 export class ContentBinding implements IContentBinding {
   public constructor(
     @Inject(QUIZ_BINDING_TOKEN)

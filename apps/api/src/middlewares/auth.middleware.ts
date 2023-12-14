@@ -4,8 +4,10 @@ import { Request } from 'express';
 
 import { ERRORS } from '../common/constants';
 import { UserDto } from '../modules/v2-user/application';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 
 @Injectable()
+@Traceable()
 export class AuthMiddleware implements NestMiddleware {
   public constructor(
     @Inject(USER_SERVICE_TOKEN)

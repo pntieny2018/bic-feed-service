@@ -1,0 +1,308 @@
+import { Test } from '@nestjs/testing';
+import { OpenTelemetryModule } from '../../OpenTelemetryModule';
+import { NoopSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { Controller, ForbiddenException, Get } from '@nestjs/common';
+import { Span } from '../Decorators/Span';
+import * as request from 'supertest';
+import { ControllerInjector } from './ControllerInjector';
+import waitForExpect from 'wait-for-expect';
+import { EventPattern, MessagePattern } from '@nestjs/microservices';
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
+
+describe('Tracing Controller Injector Test', () => {
+  const exporter = new NoopSpanProcessor();
+  const exporterSpy = jest.spyOn(exporter, 'onStart');
+
+  const sdkModule = OpenTelemetryModule.forRoot({
+    spanProcessor: exporter,
+    traceAutoInjectors: [ControllerInjector],
+  });
+
+  beforeEach(() => {
+    exporterSpy.mockClear();
+    exporterSpy.mockReset();
+  });
+
+  describe('for microservices', () => {
+    it(`should trace controller method using MessagePattern`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        @MessagePattern('time.us.*')
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        message() {}
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+
+      // when
+      await app.get(HelloController).message();
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.message',
+            kind: SpanKind.SERVER,
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+
+    it(`should trace controller method using EventPattern`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        @EventPattern('user.created')
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        event() {}
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+
+      // when
+      await app.get(HelloController).event();
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.event',
+            kind: SpanKind.SERVER,
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+
+    it(`should not trace controller method if it is not a microservice client`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        @MessagePattern('time.us.*')
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        message() {}
+        @EventPattern('time.us.*')
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        event() {}
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        other() {}
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+      const helloController = app.get(HelloController);
+
+      //when
+      helloController.message();
+      helloController.event();
+      helloController.other();
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).not.toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.other',
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+
+    it(`should trace controller method exception`, async () => {
+      // given      @Controller('hello')
+      @Controller()
+      class HelloController {
+        @EventPattern('user.created')
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        event() {
+          throw new Error("I'm an error");
+        }
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+
+      // when
+      try {
+        await app.get(HelloController).event();
+      } catch (error) {}
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.event',
+            status: {
+              code: SpanStatusCode.ERROR,
+              message: "I'm an error",
+            },
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+  });
+
+  describe('for http', () => {
+    it(`should trace controller method`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        @Get()
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        hi() {}
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+
+      // when
+      await request(app.getHttpServer()).get('/hello').send().expect(200);
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.hi',
+            kind: SpanKind.SERVER,
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+
+    it(`should trace controller method exception`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        @Get()
+        hi() {
+          throw new ForbiddenException();
+        }
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+
+      // when
+      await request(app.getHttpServer()).get('/hello').send().expect(403);
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.hi',
+            status: {
+              code: SpanStatusCode.ERROR,
+              message: 'Forbidden',
+            },
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+
+    it(`should not trace controller method if there is no path`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        hi() {}
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+      const helloController = app.get(HelloController);
+
+      //when
+      helloController.hi();
+
+      //then
+      await waitForExpect(() =>
+        expect(exporterSpy).not.toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'Controller->HelloController.hi' }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+
+    it(`should not trace controller method if already decorated`, async () => {
+      // given
+      @Controller('hello')
+      class HelloController {
+        @Get()
+        @Span('SLM_CNM')
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        hi() {}
+      }
+
+      const context = await Test.createTestingModule({
+        imports: [sdkModule],
+        controllers: [HelloController],
+      }).compile();
+      const app = context.createNestApplication();
+      await app.init();
+
+      // when
+      await request(app.getHttpServer()).get('/hello').send().expect(200);
+
+      // then
+      await waitForExpect(() =>
+        expect(exporterSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Controller->HelloController.SLM_CNM',
+          }),
+          expect.any(Object),
+        ),
+      );
+
+      await app.close();
+    });
+  });
+});

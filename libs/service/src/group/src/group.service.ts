@@ -13,7 +13,9 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 
+@Traceable()
 @Injectable()
 export class GroupService implements IGroupService {
   private readonly _logger = new Logger(GroupService.name);

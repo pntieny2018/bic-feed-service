@@ -42,6 +42,12 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
+import * as process from 'process';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { Resource } from '@opentelemetry/resources';
 
 @Module({
   imports: [
@@ -90,6 +96,19 @@ import { LibModule } from './lib.module';
     I18nGlobalModule,
     PostgresModule,
     UserModule,
+
+    OpenTelemetryModule.forRoot({
+      serviceName: process.env.APP_NAME + '11',
+      resource: new Resource({
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
+        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
+      }),
+      spanProcessor: new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
+        })
+      ),
+    }),
     QueuePublisherModule,
   ],
   controllers: [AppController],

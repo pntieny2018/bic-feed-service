@@ -1,0 +1,29 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+
+
+exporters:
+  logging:
+    loglevel: debug
+  otlp/elastic:
+  # Elastic APM server https endpoint without the "https://" prefix
+    endpoint: "8c3e227ed1a04ce1bb4967fe35381c70.apm.us-central1.gcp.cloud.es.io:443"
+    headers:
+      # Elastic APM Server secret token
+      Authorization: "Bearer vMyPaQbMFhKw2ksyNb"
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [logging, otlp/elastic]
+    metrics:
+      receivers: [otlp]
+      exporters: [logging, otlp/elastic]
+    logs:
+      receivers: [otlp]
+      exporters: [logging, otlp/elastic]

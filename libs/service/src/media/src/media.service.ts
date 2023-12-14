@@ -4,7 +4,9 @@ import { MEDIA_ENDPOINT } from '@libs/service/media/src/endpoint.constant';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { IMediaService } from './interface';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 
+@Traceable()
 @Injectable()
 export class MediaService implements IMediaService {
   private _logger = new Logger(MediaService.name);
