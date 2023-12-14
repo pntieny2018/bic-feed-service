@@ -17,14 +17,7 @@ export class VideoPostUpdatedEventHandler implements IEventHandler<PostUpdatedEv
     const { postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
-      const { attachVideoIds, detachVideoIds } = postEntity.getState();
-
-      if (attachVideoIds.length) {
-        await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED, {
-          key: null,
-          value: { videoIds: attachVideoIds, userId: authUser.id },
-        });
-      }
+      const { detachVideoIds } = postEntity.getState();
 
       if (detachVideoIds.length) {
         await this._kafkaAdapter.emit(KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS, {
