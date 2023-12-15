@@ -105,7 +105,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
       }),
       spanProcessor: new BatchSpanProcessor(
         new OTLPTraceExporter({
-          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
+          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}`,
         })
       ),
     }),
