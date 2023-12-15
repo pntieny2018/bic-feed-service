@@ -33,8 +33,8 @@ export class ExportUserSaveContentCommand {
     const limit = 100;
     let offset = 0;
     const dayAgo = 30;
+    const data = [];
 
-    // find all user save post in 30 days
     while (true) {
       const userSavePosts = await this._userSavePostModel.findAll({
         limit,
@@ -52,16 +52,19 @@ export class ExportUserSaveContentCommand {
 
       const userIds = userSavePosts.map((item) => item.userId);
       const users = await this._userService.findAllByIds(userIds);
-      // Record<userId, userName>
       const userMap = users.reduce((acc, user) => {
         acc[user.id] = user.username;
         return acc;
       }, {});
 
       for (const userSavePost of userSavePosts) {
-        const username = userMap[userSavePost.userId];
-        console.log(`username: ${username} - createdAt: ${userSavePost.createdAt}`);
+        data.push({
+          username: userMap[userSavePost.userId],
+          created_at: userSavePost.createdAt,
+        });
       }
     }
+
+    console.log(JSON.stringify(data));
   }
 }
