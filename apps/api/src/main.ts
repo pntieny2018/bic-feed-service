@@ -16,10 +16,6 @@ async function bootstrap(): Promise<void> {
     return bootstrapCLI();
   }
 
-  if (process.env.ENABLE_TRACING === 'true') {
-    //  await tracing.start();
-  }
-
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new TracingInterceptor());
 
