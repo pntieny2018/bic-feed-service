@@ -1,4 +1,5 @@
 import { LogModule } from '@libs/infra/log';
+import { UserModule } from '@libs/service/user';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
@@ -23,6 +24,7 @@ import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ExportInvalidTagNameCommand } from './export-invalid-tag-name.command';
 import { ExportReactionCountDataCommand } from './export-reaction-count.command';
 import { ExportUserContentDataCommand } from './export-user-content-data.command';
+import { ExportUserSaveContentCommand } from './export-user-save-content.command';
 import { FixCommentCountCommand } from './fix-comment-count.command';
 import { FixCommentRepliesCountCommand } from './fix-comment-replies-count.command';
 import { FixContentPrivacyCommand } from './fix-content-privacy.command';
@@ -65,6 +67,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     FeedPublisherModule,
     FollowModule,
     UploadModule,
+    UserModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -97,6 +100,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     ExportInvalidTagNameCommand,
     CleanUpDeletedSeriesCommand,
     FixSetActorHasSeenPostCommand,
+    ExportUserSaveContentCommand,
   ],
 })
 export class CommandModule {}
