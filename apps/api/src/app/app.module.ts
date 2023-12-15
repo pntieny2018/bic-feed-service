@@ -43,11 +43,11 @@ import { ReactionCountModule } from '../shared/reaction-count';
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
 import * as process from 'process';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
 @Module({
   imports: [
