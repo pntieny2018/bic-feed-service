@@ -4,15 +4,12 @@ import { ModulesContainer } from '@nestjs/core';
 import { BaseTraceInjector } from './BaseTraceInjector';
 
 @Injectable()
-export class EventEmitterInjector
-  extends BaseTraceInjector
-  implements Injector
-{
+export class EventEmitterInjector extends BaseTraceInjector implements Injector {
   private static EVENT_LISTENER_METADATA = 'EVENT_LISTENER_METADATA';
 
   private readonly loggerService = new Logger();
 
-  constructor(protected readonly modulesContainer: ModulesContainer) {
+  public constructor(protected readonly modulesContainer: ModulesContainer) {
     super(modulesContainer);
   }
 
@@ -20,9 +17,7 @@ export class EventEmitterInjector
     const providers = this.getProviders();
 
     for (const provider of providers) {
-      const keys = this.metadataScanner.getAllMethodNames(
-        provider.metatype.prototype,
-      );
+      const keys = this.metadataScanner.getAllMethodNames(provider.metatype.prototype);
 
       for (const key of keys) {
         if (
@@ -38,28 +33,22 @@ export class EventEmitterInjector
               instance: provider.name,
               method: provider.metatype.prototype[key].name,
               event: eventName,
-            },
+            }
           );
-          this.loggerService.log(
-            `Mapped ${provider.name}.${key}`,
-            this.constructor.name,
-          );
+          this.loggerService.log(`Mapped ${provider.name}.${key}`, this.constructor.name);
         }
       }
     }
   }
 
   private isEventConsumer(prototype): boolean {
-    return Reflect.getMetadata(
-      EventEmitterInjector.EVENT_LISTENER_METADATA,
-      prototype,
-    );
+    return Reflect.getMetadata(EventEmitterInjector.EVENT_LISTENER_METADATA, prototype);
   }
 
   private getEventName(prototype): string {
     const metadata: Array<{ event: string }> = Reflect.getMetadata(
       EventEmitterInjector.EVENT_LISTENER_METADATA,
-      prototype,
+      prototype
     );
     return metadata[0].event;
   }

@@ -13,8 +13,8 @@ import { Tracer } from '@opentelemetry/sdk-trace-base';
 import { OpenTelemetryModuleConfig } from './OpenTelemetryModuleConfig.interface';
 
 export class OpenTelemetryModule {
-  static async forRoot(
-    configuration: Partial<OpenTelemetryModuleConfig> = {},
+  public static async forRoot(
+    configuration: Partial<OpenTelemetryModuleConfig> = {}
   ): Promise<DynamicModule> {
     configuration = { ...OpenTelemetryModuleDefaultConfig, ...configuration };
     const injectors = configuration?.traceAutoInjectors ?? [];
@@ -40,7 +40,7 @@ export class OpenTelemetryModule {
   }
 
   private static buildProvider(
-    configuration?: Partial<OpenTelemetryModuleConfig>,
+    configuration?: Partial<OpenTelemetryModuleConfig>
   ): FactoryProvider {
     return {
       provide: Constants.SDK,
@@ -53,14 +53,16 @@ export class OpenTelemetryModule {
   }
 
   private static buildInjectors(
-    configuration?: Partial<OpenTelemetryModuleConfig>,
+    configuration?: Partial<OpenTelemetryModuleConfig>
   ): FactoryProvider {
     const injectors = configuration?.traceAutoInjectors ?? [];
     return {
       provide: Constants.SDK_INJECTORS,
       useFactory: async (...injectors) => {
         for await (const injector of injectors) {
-          if (injector['inject']) await injector.inject();
+          if (injector['inject']) {
+            await injector.inject();
+          }
         }
       },
       inject: [
@@ -71,8 +73,8 @@ export class OpenTelemetryModule {
     };
   }
 
-  static async forRootAsync(
-    configuration: OpenTelemetryModuleAsyncOption = {},
+  public static async forRootAsync(
+    configuration: OpenTelemetryModuleAsyncOption = {}
   ): Promise<DynamicModule> {
     return {
       global: true,
@@ -114,15 +116,16 @@ export class OpenTelemetryModule {
       useFactory: async (config, moduleRef: ModuleRef) => {
         config = { ...OpenTelemetryModuleDefaultConfig, ...config };
         const injectors =
-          config.traceAutoInjectors ??
-          OpenTelemetryModuleDefaultConfig.traceAutoInjectors;
+          config.traceAutoInjectors ?? OpenTelemetryModuleDefaultConfig.traceAutoInjectors;
 
         const decoratorInjector = await moduleRef.create(DecoratorInjector);
         await decoratorInjector.inject();
 
         for await (const injector of injectors) {
           const created = await moduleRef.create(injector);
-          if (created['inject']) await created.inject();
+          if (created['inject']) {
+            await created.inject();
+          }
         }
 
         return {};
