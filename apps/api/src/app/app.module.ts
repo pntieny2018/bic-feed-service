@@ -105,12 +105,12 @@ console.log(process.env.APP_NAME);
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
         [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.1',
       }),
-      traceExporter: new ConsoleSpanExporter(),
-      // spanProcessor: new BatchSpanProcessor(
-      //   new OTLPTraceExporter({
-      //     url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}`,
-      //   })
-      // ),
+      //traceExporter: new ConsoleSpanExporter(),
+      spanProcessor: new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}`,
+        })
+      ),
     }),
     QueuePublisherModule,
   ],

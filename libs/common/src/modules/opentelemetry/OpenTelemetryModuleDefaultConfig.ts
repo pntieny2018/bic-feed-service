@@ -6,7 +6,7 @@ import { PipeInjector } from './Trace/Injectors/PipeInjector';
 import { ConsoleLoggerInjector } from './Trace/Injectors/ConsoleLoggerInjector';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { Resource } from '@opentelemetry/resources';
-import { ConsoleSpanExporter, NoopSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { NoopSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { CompositePropagator } from '@opentelemetry/core';
 import { JaegerPropagator } from '@opentelemetry/propagator-jaeger';
 import { B3InjectEncoding, B3Propagator } from '@opentelemetry/propagator-b3';
@@ -83,8 +83,7 @@ export const OpenTelemetryModuleDefaultConfig = <OpenTelemetryModuleConfig>{
     getNodeAutoInstrumentations(NodeAutoInstrumentationsDefaultConfig),
     new SequelizeInstrumentation(),
   ],
-  traceExporter: new ConsoleSpanExporter(),
-  //spanProcessor: new NoopSpanProcessor(),
+  spanProcessor: new NoopSpanProcessor(),
   textMapPropagator: new CompositePropagator({
     propagators: [
       new JaegerPropagator(),
