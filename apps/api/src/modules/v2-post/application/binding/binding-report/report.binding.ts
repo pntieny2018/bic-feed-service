@@ -129,15 +129,15 @@ export class ReportBinding implements IReportBinding {
       let content;
       switch (targetType) {
         case CONTENT_TARGET.COMMENT:
-          content = commentMap[targetId].get('content');
+          content = commentMap[targetId]?.get('content');
           break;
 
         case CONTENT_TARGET.POST:
-          content = contentMap[targetId].getContent();
+          content = contentMap[targetId]?.getContent();
           break;
 
         case CONTENT_TARGET.ARTICLE:
-          content = contentMap[targetId].getTitle();
+          content = contentMap[targetId]?.getTitle();
           break;
 
         default:
