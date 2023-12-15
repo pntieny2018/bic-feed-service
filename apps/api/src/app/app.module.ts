@@ -98,7 +98,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
     UserModule,
 
     OpenTelemetryModule.forRoot({
-      serviceName: process.env.APP_NAME + '-grpc',
+      serviceName: process.env.APP_NAME,
       resource: new Resource({
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
         [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.1',
