@@ -44,7 +44,7 @@ export const NodeAutoInstrumentationsDefaultConfig = <InstrumentationConfigMap>{
       }
     },
     enabled: true,
-    //ignoreIncomingPaths: ['/health', '/_health', '/healthz', 'healthcheck'],
+    ignoreIncomingPaths: ['/health/readyz', '/health/livez'],
   },
   '@opentelemetry/instrumentation-net': {
     enabled: false,
