@@ -3,7 +3,6 @@ import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { UserModule } from '@libs/service/user';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ClsMiddleware, ClsModule } from 'nestjs-cls';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { v4 as uuid } from 'uuid';
@@ -75,7 +74,6 @@ import { LibModule } from './lib.module';
     ArticleModule,
     SeriesModule,
     CategoryModule,
-    ScheduleModule.forRoot(),
     HealthModule,
     SeriesModule,
     InternalModule,

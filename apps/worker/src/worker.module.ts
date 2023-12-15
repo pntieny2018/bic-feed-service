@@ -6,6 +6,7 @@ import { KafkaModule } from '@libs/infra/kafka';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ClsModule } from 'nestjs-cls';
 import { v4 as uuid } from 'uuid';
 
@@ -18,6 +19,7 @@ import { WorkerLibModule } from './worker.lib.module';
 
 @Module({
   imports: [
+    ApiPostModule, // TODO: Use v2-post module from worker
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
@@ -36,14 +38,14 @@ import { WorkerLibModule } from './worker.lib.module';
     }),
     CqrsModule,
     ConsumerModule,
-    PostgresModule,
-    ApiPostModule, // TODO: Use v2-post module from worker
-    ProcessorModule,
-    WorkerLibModule,
-    WorkerQueuePublisherModule,
     HealthModule,
     KafkaModule,
+    PostgresModule,
+    ProcessorModule,
     PostModule,
+    ScheduleModule.forRoot(),
+    WorkerLibModule,
+    WorkerQueuePublisherModule,
   ],
   providers: [],
   exports: [],
