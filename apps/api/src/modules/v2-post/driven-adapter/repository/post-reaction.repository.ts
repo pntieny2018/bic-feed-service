@@ -1,3 +1,4 @@
+import { OwnerReactionDto } from '@api/modules/v2-post/application/dto';
 import { CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import { PostModel } from '@libs/database/postgres/model';
@@ -119,6 +120,31 @@ export class PostReactionRepository implements IPostReactionRepository {
       rows: result,
       total: count,
     };
+  }
+
+  public async getReactionsByContents(
+    contentIds: string[],
+    userId: string
+  ): Promise<Record<string, OwnerReactionDto[]>> {
+    const reactions = await this._libPostReactionRepo.findMany({
+      where: {
+        postId: contentIds,
+        createdBy: userId,
+      },
+    });
+
+    return reactions.reduce((acc, reaction) => {
+      const { postId } = reaction;
+      if (!acc[postId]) {
+        acc[postId] = [];
+      }
+
+      acc[postId].push({
+        id: reaction.id,
+        reactionName: reaction.reactionName,
+      });
+      return acc;
+    }, {});
   }
 
   public async increaseReactionCount(props: UpdateCountContentReactionProps): Promise<void> {

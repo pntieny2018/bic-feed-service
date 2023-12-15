@@ -132,7 +132,7 @@ export class ContentDomainService implements IContentDomainService {
   public async getContentByIds(
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const { ids, authUserId } = input;
+    const { ids } = input;
     if (!ids.length) {
       return [];
     }
@@ -145,15 +145,6 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId: authUserId,
-        },
-        shouldIncludeMarkReadImportant: {
-          userId: authUserId,
-        },
-        shouldIncludeReaction: {
-          userId: authUserId,
-        },
       },
     });
 

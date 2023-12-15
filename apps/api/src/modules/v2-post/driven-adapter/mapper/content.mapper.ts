@@ -1,4 +1,10 @@
+import {
+  ArticleCacheDto,
+  PostCacheDto,
+  SeriesCacheDto,
+} from '@api/modules/v2-post/application/dto';
 import { CONTENT_TYPE } from '@beincom/constants';
+import { StringHelper } from '@libs/common/helpers';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 
 import { CategoryEntity } from '../../domain/model/category';
@@ -12,7 +18,7 @@ import {
   ArticleAttributes as ArticleEntityAttributes,
   SeriesAttributes as SeriesEntityAttributes,
 } from '../../domain/model/content';
-import { LinkPreviewEntity } from '../../domain/model/link-preview';
+import { LinkPreviewAttributes, LinkPreviewEntity } from '../../domain/model/link-preview';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
@@ -32,6 +38,25 @@ export class ContentMapper {
         return this._modelToSeriesEntity(post);
       case CONTENT_TYPE.ARTICLE:
         return this._modelToArticleEntity(post);
+      default:
+        return null;
+    }
+  }
+
+  public cacheToDomain(
+    content: PostCacheDto | ArticleCacheDto | SeriesCacheDto
+  ): PostEntity | ArticleEntity | SeriesEntity {
+    if (content === null) {
+      return null;
+    }
+
+    switch (content.type) {
+      case CONTENT_TYPE.POST:
+        return this._cacheToPostEntity(content as PostCacheDto);
+      case CONTENT_TYPE.SERIES:
+        return this._cacheToSeriesEntity(content as SeriesCacheDto);
+      case CONTENT_TYPE.ARTICLE:
+        return this._cacheToArticleEntity(content as ArticleCacheDto);
       default:
         return null;
     }
@@ -247,6 +272,108 @@ export class ContentMapper {
       summary: post.summary,
       itemIds: post.itemIds || [],
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
+    });
+  }
+
+  private _cacheToPostEntity(post: PostCacheDto): PostEntity {
+    if (post === null) {
+      return null;
+    }
+    return new PostEntity({
+      id: post.id,
+      isHidden: post.isHidden,
+      isReported: post.isReported,
+      title: StringHelper.getRawTextFromMarkdown(post.content).slice(0, 500),
+      updatedAt: post.updatedAt,
+      updatedBy: post.updatedBy,
+      createdBy: post.createdBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: post.setting,
+      createdAt: post.createdAt,
+      publishedAt: post.publishedAt,
+      groupIds: post.groups,
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+      },
+      media: {
+        images: (post.media.images || []).map((image) => new ImageEntity(image)),
+        files: (post.media.files || []).map((file) => new FileEntity(file)),
+        videos: (post.media.videos || []).map((video) => new VideoEntity(video)),
+      },
+      content: post.content,
+      mentionUserIds: post.mentionsUserId || [],
+      linkPreview: post.linkPreview
+        ? new LinkPreviewEntity(post.linkPreview as LinkPreviewAttributes)
+        : undefined,
+      seriesIds: post.seriesIds || [],
+      tags: post.tags ? post.tags.map((tag) => new TagEntity(tag)) : [],
+    });
+  }
+
+  private _cacheToArticleEntity(article: ArticleCacheDto): ArticleEntity {
+    if (article === null) {
+      return null;
+    }
+    return new ArticleEntity({
+      id: article.id,
+      isHidden: article.isHidden,
+      isReported: article.isReported,
+      title: article.title,
+      updatedAt: article.updatedAt,
+      updatedBy: article.updatedBy,
+      createdBy: article.createdBy,
+      privacy: article.privacy,
+      status: article.status,
+      type: article.type,
+      setting: article.setting,
+      createdAt: article.createdAt,
+      publishedAt: article.publishedAt,
+      groupIds: article.groups,
+      aggregation: {
+        commentsCount: article.commentsCount,
+        totalUsersSeen: article.totalUsersSeen,
+      },
+      media: {
+        images: (article.media.images || []).map((image) => new ImageEntity(image)),
+        files: (article.media.files || []).map((file) => new FileEntity(file)),
+        videos: (article.media.videos || []).map((video) => new VideoEntity(video)),
+      },
+      content: article.content,
+      summary: article.summary,
+      categories: article.categories
+        ? article.categories.map((category) => new CategoryEntity(category))
+        : [],
+      cover: article.coverMedia ? new ImageEntity(article.coverMedia) : null,
+      seriesIds: article.seriesIds || [],
+      tags: article.tags ? article.tags.map((tag) => new TagEntity(tag)) : [],
+    });
+  }
+
+  private _cacheToSeriesEntity(series: SeriesCacheDto): SeriesEntity {
+    if (series === null) {
+      return null;
+    }
+    return new SeriesEntity({
+      id: series.id,
+      isReported: series.isReported,
+      isHidden: series.isHidden,
+      createdBy: series.createdBy,
+      updatedBy: series.updatedBy,
+      privacy: series.privacy,
+      status: series.status,
+      type: series.type,
+      setting: series.setting,
+      createdAt: series.createdAt,
+      updatedAt: series.updatedAt,
+      publishedAt: series.publishedAt,
+      groupIds: series.groups,
+      title: series.title,
+      summary: series.summary,
+      itemIds: series.itemsIds || [],
+      cover: series.coverMedia ? new ImageEntity(series.coverMedia) : null,
     });
   }
 }

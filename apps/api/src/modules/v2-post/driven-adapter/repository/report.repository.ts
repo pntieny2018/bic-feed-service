@@ -209,4 +209,17 @@ export class ReportRepository implements IReportRepository {
 
     return uniq(reportDetails.map((reportDetail) => reportDetail.reporterId));
   }
+
+  public async checkIsReported(reporterId: string, targetId: string): Promise<boolean> {
+    if (!reporterId || !targetId) {
+      return false;
+    }
+
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId, targetId },
+      select: ['id'],
+    });
+
+    return !!reportDetails?.length;
+  }
 }

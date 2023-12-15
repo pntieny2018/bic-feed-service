@@ -8,7 +8,15 @@ import {
   PostAttributes,
   ArticleAttributes,
 } from '../../../domain/model/content';
-import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
+import {
+  SeriesDto,
+  ArticleDto,
+  PostDto,
+  UserMentionDto,
+  ArticleCacheDto,
+  PostCacheDto,
+  SeriesCacheDto,
+} from '../../dto';
 
 export interface IContentBinding {
   postBinding(
@@ -60,6 +68,10 @@ export interface IContentBinding {
     contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[],
     authUser: UserDto
   ): Promise<(ArticleDto | PostDto | SeriesDto)[]>;
+
+  contentsCacheBinding(
+    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[]
+  ): Promise<(ArticleCacheDto | PostCacheDto | SeriesCacheDto)[]>;
 
   mapMentionWithUserInfo(users: UserDto[]): UserMentionDto;
 }

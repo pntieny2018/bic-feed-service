@@ -107,3 +107,32 @@ export class ItemInSeries {
     Object.assign(this, data);
   }
 }
+
+export class PostCacheDto {
+  public id: string;
+  public isReported: boolean;
+  public isHidden: boolean;
+  public groups: string[];
+  public content: string;
+  public createdAt: Date;
+  public updatedAt: Date;
+  public publishedAt: Date;
+  public createdBy: string;
+  public updatedBy: string;
+  public tags: TagDto[];
+  public media: MediaDto;
+  public mentionsUserId: string[];
+  public status: CONTENT_STATUS;
+  public type: CONTENT_TYPE;
+  public privacy: PRIVACY;
+  public setting: PostSettingDto;
+  public commentsCount: number;
+  public totalUsersSeen: number;
+  public linkPreview?: LinkPreviewDto;
+  public reactionsCount: ReactionCount[];
+  public seriesIds: string[];
+
+  public constructor(data: PostCacheDto) {
+    Object.assign(this, data);
+  }
+}

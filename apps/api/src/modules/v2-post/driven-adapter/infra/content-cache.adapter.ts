@@ -1,12 +1,19 @@
 import { ReactionsCount } from '@api/common/types';
+import { CONTENT_BINDING_TOKEN, IContentBinding } from '@api/modules/v2-post/application/binding';
 import { IContentCacheAdapter } from '@api/modules/v2-post/domain/infra-adapter-interface';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { merge } from 'lodash';
+
+import { ArticleEntity, PostEntity, SeriesEntity } from '../../domain/model/content';
 
 @Injectable()
 export class ContentCacheAdapter implements IContentCacheAdapter {
-  public constructor(private readonly _store: RedisContentService) {}
+  public constructor(
+    private readonly _store: RedisContentService,
+    @Inject(forwardRef(() => CONTENT_BINDING_TOKEN))
+    private readonly _contentBinding: IContentBinding
+  ) {}
 
   public async setJson<T>(key: string, value: T): Promise<any> {
     return this._store.setJson(key, value);
@@ -47,6 +54,17 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
         JSON.stringify({ id: contentId, reactionCounts: merge({}, ...reactionsCount) }),
         'NX'
       );
+    }
+    await pipeline.exec();
+  }
+
+  public async setCacheContents(
+    contents: (PostEntity | ArticleEntity | SeriesEntity)[]
+  ): Promise<void> {
+    const contentsCacheDto = await this._contentBinding.contentsCacheBinding(contents);
+    const pipeline = this._store.getClient().pipeline();
+    for (const contentCacheDto of contentsCacheDto) {
+      pipeline.call('JSON.SET', contentCacheDto.id, '$', JSON.stringify(contentCacheDto));
     }
     await pipeline.exec();
   }

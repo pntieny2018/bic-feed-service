@@ -59,6 +59,7 @@ export interface IContentRepository {
   markSeen(postId: string, userId: string): Promise<void>;
   hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
+  getMarkReadImportant(postIds: string[], userId: string): Promise<Record<string, boolean>>;
 
   findPinnedContentIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
@@ -66,6 +67,7 @@ export interface IContentRepository {
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
   saveContent(userId: string, contentId: string): Promise<void>;
   unSaveContent(userId: string, contentId: string): Promise<void>;
+  getSavedContentIds(userId: string, contentIds: string[]): Promise<Record<string, boolean>>;
 
   createPostSeries(seriesId: string, postId: string): Promise<void>;
   deletePostSeries(seriesId: string, postId: string): Promise<void>;

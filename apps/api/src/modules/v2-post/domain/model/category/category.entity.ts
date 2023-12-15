@@ -1,17 +1,18 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
+
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 
 export type CategoryProps = {
   id: string;
-  parentId: string;
+  parentId?: string;
   name: string;
   slug?: string;
-  level: number;
-  zindex: number;
-  isActive: boolean;
-  createdBy: string;
-  updatedBy: string;
+  level?: number;
+  zindex?: number;
+  isActive?: boolean;
+  createdBy?: string;
+  updatedBy?: string;
   createdAt?: Date;
   updatedAt?: Date;
 };

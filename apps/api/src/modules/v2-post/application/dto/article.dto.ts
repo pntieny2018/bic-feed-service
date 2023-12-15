@@ -76,3 +76,35 @@ export class ArticleInSeriesDto extends PickType(ArticleDto, [
     super(data);
   }
 }
+
+export class ArticleCacheDto {
+  public id: string;
+  public isReported: boolean;
+  public isHidden: boolean;
+  public createdBy: string;
+  public updatedBy: string;
+  public privacy: PRIVACY;
+  public status: CONTENT_STATUS;
+  public type: CONTENT_TYPE;
+  public setting: PostSettingDto;
+  public media: MediaDto;
+  public createdAt: Date;
+  public updatedAt: Date;
+  public reactionsCount: ReactionCount[];
+  public publishedAt: Date;
+  public groups: string[];
+  public wordCount: number;
+  public commentsCount: number;
+  public totalUsersSeen: number;
+  public content: string;
+  public summary: string;
+  public title: string;
+  public categories: { id: string; name: string }[];
+  public coverMedia: ImageDto;
+  public seriesIds: string[];
+  public tags: TagDto[];
+
+  public constructor(data: ArticleCacheDto) {
+    Object.assign(this, data);
+  }
+}

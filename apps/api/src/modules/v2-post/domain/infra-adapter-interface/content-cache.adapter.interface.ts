@@ -1,4 +1,5 @@
 import { ReactionsCount } from '@api/common/types';
+import { ArticleEntity, PostEntity, SeriesEntity } from '@api/modules/v2-post/domain/model/content';
 
 export interface IContentCacheAdapter {
   setJson<T>(key: string, value: T): Promise<any>;
@@ -10,6 +11,7 @@ export interface IContentCacheAdapter {
   mgetJson<T>(keys: string[]): Promise<T[]>;
 
   cacheContentReactionsCount(reactionsCountMap: Map<string, ReactionsCount>): Promise<void>;
+  setCacheContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
   deleteContentCache(contentId: string): Promise<void>;
 }
 

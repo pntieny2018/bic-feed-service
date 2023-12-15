@@ -116,3 +116,27 @@ export class SeriesInContentDto {
   public title: string;
   public createdBy?: string;
 }
+
+export class SeriesCacheDto {
+  public id: string;
+  public createdBy: string;
+  public updatedBy: string;
+  public isReported: boolean;
+  public isHidden: boolean;
+  public privacy: PRIVACY;
+  public status: CONTENT_STATUS;
+  public type: CONTENT_TYPE;
+  public setting: PostSettingDto;
+  public createdAt: Date;
+  public updatedAt: Date;
+  public publishedAt: Date;
+  public groups: string[];
+  public title: string;
+  public summary: string;
+  public itemsIds: string[];
+  public coverMedia: ImageDto;
+
+  public constructor(data: SeriesCacheDto) {
+    Object.assign(this, data);
+  }
+}

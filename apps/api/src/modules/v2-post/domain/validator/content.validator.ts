@@ -16,13 +16,21 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentNoPinPermissionException,
+  ContentNotFoundException,
   ContentRequireGroupException,
   TagSeriesInvalidException,
   UserNoBelongGroupException,
 } from '../exception';
 import { SeriesEntity, ContentEntity, PostEntity, ArticleEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IPostGroupRepository,
+  IReportRepository,
+  POST_GROUP_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import {
   IUserAdapter,
   USER_ADAPTER,
@@ -42,7 +50,11 @@ export class ContentValidator implements IContentValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository
+    protected readonly _contentRepository: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepository: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepository: IPostGroupRepository
   ) {}
 
   public async checkCanCRUDContent(
@@ -189,6 +201,28 @@ export class ContentValidator implements IContentValidator {
         throw new ContentRequireGroupException(null, { requireGroups: groups });
       }
       throw new ContentNoCRUDPermissionException();
+    }
+  }
+
+  public async validateReadCacheContent(
+    contentId: string,
+    user: UserDto,
+    postGroupIds: string[]
+  ): Promise<void> {
+    const isReport = await this._reportRepository.checkIsReported(user.id, contentId);
+    if (isReport) {
+      throw new ContentNotFoundException();
+    }
+
+    const userJoinedGroupIds = user.groups ?? [];
+    const groupCanAccess = postGroupIds.filter((groupId) => userJoinedGroupIds.includes(groupId));
+    const activePostGroupIds = await this._postGroupRepository.getNotInStateGroupIds(
+      groupCanAccess,
+      true
+    );
+
+    if (!activePostGroupIds.length) {
+      throw new ContentNotFoundException();
     }
   }
 

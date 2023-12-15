@@ -1,4 +1,11 @@
+import { SeriesCacheDto } from '@api/modules/v2-post/application/dto';
+import {
+  CONTENT_CACHE_ADAPTER,
+  IContentCacheAdapter,
+} from '@api/modules/v2-post/domain/infra-adapter-interface';
+import { ContentMapper } from '@api/modules/v2-post/driven-adapter/mapper';
 import { CONTENT_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
@@ -61,8 +68,54 @@ export class SeriesDomainService implements ISeriesDomainService {
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository
+    private readonly _contentRepository: IContentRepository,
+    @Inject(CONTENT_CACHE_ADAPTER)
+    private readonly _contentCacheAdapter: IContentCacheAdapter,
+
+    private readonly contentMapper: ContentMapper
   ) {}
+
+  public async getSeriesById(seriesId: string, authUser: UserDto): Promise<SeriesEntity> {
+    const cachedSeries = await this._contentCacheAdapter.getJson<SeriesCacheDto>(`${seriesId}`);
+    if (cachedSeries) {
+      await this._contentValidator.validateReadCacheContent(
+        seriesId,
+        authUser,
+        cachedSeries.groups
+      );
+      return this.contentMapper.cacheToDomain(cachedSeries) as SeriesEntity;
+    }
+
+    const seriesEntity = await this._contentRepository.findOne({
+      where: {
+        id: seriesId,
+        groupArchived: false,
+        excludeReportedByUserId: authUser.id,
+      },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+        shouldIncludeCategory: true,
+      },
+    });
+
+    if (
+      !seriesEntity ||
+      !(seriesEntity instanceof SeriesEntity) ||
+      (seriesEntity.isDraft() && !seriesEntity.isOwner(authUser.id)) ||
+      seriesEntity.isHidden()
+    ) {
+      throw new ContentNotFoundException();
+    }
+
+    await this._contentCacheAdapter.setCacheContents([seriesEntity]);
+
+    if (!authUser && !seriesEntity.isOpen()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    return seriesEntity;
+  }
 
   public async findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]> {
     return (await this._contentRepository.findAll({
