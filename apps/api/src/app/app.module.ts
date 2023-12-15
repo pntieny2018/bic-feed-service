@@ -49,8 +49,6 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import { Resource } from '@opentelemetry/resources';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
-console.log(process.env.OTEL_EXPORTER_OTLP_ENDPOINT);
-console.log(process.env.APP_NAME);
 @Module({
   imports: [
     ClsModule.forRoot({
