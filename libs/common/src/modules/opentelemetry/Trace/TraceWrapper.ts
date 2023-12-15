@@ -10,11 +10,9 @@ export class TraceWrapper {
    * @param options @type {TraceWrapperOptions} Options for the trace
    * @returns The traced instance of the class
    */
-  static trace<T>(instance: T, options?: TraceWrapperOptions): T {
+  public static trace<T>(instance: T, options?: TraceWrapperOptions): T {
     const logger = options?.logger ?? console;
-    const keys = new MetadataScanner().getAllMethodNames(
-      instance.constructor.prototype,
-    );
+    const keys = new MetadataScanner().getAllMethodNames(instance.constructor.prototype);
     for (const key of keys) {
       const defaultTraceName = `${instance.constructor.name}.${instance[key].name}`;
       const method = TraceWrapper.wrap(instance[key], defaultTraceName, {
@@ -41,12 +39,12 @@ export class TraceWrapper {
    * @param attributes Additional attributes to add to the span
    * @returns The wrapped method
    */
-  static wrap(
+  public static wrap(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     prototype: Record<any, any>,
     traceName: string,
     attributes = {},
-    kind?: SpanKind,
+    kind?: SpanKind
   ): Record<any, any> {
     let method;
 
@@ -54,19 +52,15 @@ export class TraceWrapper {
       method = {
         [prototype.name]: async function (...args: unknown[]) {
           const tracer = trace.getTracer('default');
-          return await tracer.startActiveSpan(
-            traceName,
-            { kind },
-            async (span) => {
-              span.setAttributes(attributes);
-              return prototype
-                .apply(this, args)
-                .catch((error) => TraceWrapper.recordException(error, span))
-                .finally(() => {
-                  span.end();
-                });
-            },
-          );
+          return await tracer.startActiveSpan(traceName, { kind }, async (span) => {
+            span.setAttributes(attributes);
+            return prototype
+              .apply(this, args)
+              .catch((error) => TraceWrapper.recordException(error, span))
+              .finally(() => {
+                span.end();
+              });
+          });
         },
       }[prototype.name];
     } else {

@@ -8,7 +8,7 @@ import { SpanKind } from '@opentelemetry/api';
 export class ControllerInjector extends BaseTraceInjector implements Injector {
   private readonly loggerService = new Logger();
 
-  constructor(protected readonly modulesContainer: ModulesContainer) {
+  public constructor(protected readonly modulesContainer: ModulesContainer) {
     super(modulesContainer);
   }
 

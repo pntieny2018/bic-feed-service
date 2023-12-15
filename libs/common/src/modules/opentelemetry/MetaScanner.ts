@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common/interfaces';
-import {
-  isConstructor,
-  isFunction,
-  isNil,
-} from '@nestjs/common/utils/shared.utils';
+import { isConstructor, isFunction, isNil } from '@nestjs/common/utils/shared.utils';
 
 export class MetadataScanner {
   private readonly cachedScannedPrototypes: Map<object, string[]> = new Map();
@@ -16,7 +12,7 @@ export class MetadataScanner {
   public scanFromPrototype<T extends Injectable, R = any>(
     instance: T,
     prototype: object,
-    callback: (name: string) => R,
+    callback: (name: string) => R
   ): R[] {
     if (!prototype) {
       return [];
@@ -53,10 +49,7 @@ export class MetadataScanner {
 
         result.push(value);
       }
-    } while (
-      (prototype = Reflect.getPrototypeOf(prototype)) &&
-      prototype !== Object.prototype
-    );
+    } while ((prototype = Reflect.getPrototypeOf(prototype)) && prototype !== Object.prototype);
 
     return result;
   }
@@ -66,9 +59,7 @@ export class MetadataScanner {
    * @see {@link getAllMethodNames}
    * @see getAllMethodNames
    */
-  public *getAllFilteredMethodNames(
-    prototype: object,
-  ): IterableIterator<string> {
+  public *getAllFilteredMethodNames(prototype: object): IterableIterator<string> {
     yield* this.getAllMethodNames(prototype);
   }
 
@@ -108,10 +99,7 @@ export class MetadataScanner {
 
         result.push(property);
       }
-    } while (
-      (prototype = Reflect.getPrototypeOf(prototype)) &&
-      prototype !== Object.prototype
-    );
+    } while ((prototype = Reflect.getPrototypeOf(prototype)) && prototype !== Object.prototype);
 
     return result;
   }

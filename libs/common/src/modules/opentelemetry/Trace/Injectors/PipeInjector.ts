@@ -9,7 +9,7 @@ import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 export class PipeInjector extends BaseTraceInjector implements Injector {
   private readonly loggerService = new Logger();
 
-  constructor(protected readonly modulesContainer: ModulesContainer) {
+  public constructor(protected readonly modulesContainer: ModulesContainer) {
     super(modulesContainer);
   }
 
@@ -17,27 +17,16 @@ export class PipeInjector extends BaseTraceInjector implements Injector {
     const controllers = this.getControllers();
 
     for (const controller of controllers) {
-      const keys = this.metadataScanner.getAllMethodNames(
-        controller.metatype.prototype,
-      );
+      const keys = this.metadataScanner.getAllMethodNames(controller.metatype.prototype);
 
       for (const key of keys) {
         if (this.isPath(controller.metatype.prototype[key])) {
-          const pipes = this.getPipes(controller.metatype.prototype[key]).map(
-            (pipe) =>
-              this.wrapPipe(
-                pipe,
-                controller,
-                controller.metatype.prototype[key],
-              ),
+          const pipes = this.getPipes(controller.metatype.prototype[key]).map((pipe) =>
+            this.wrapPipe(pipe, controller, controller.metatype.prototype[key])
           );
 
           if (pipes.length > 0) {
-            Reflect.defineMetadata(
-              PIPES_METADATA,
-              pipes,
-              controller.metatype.prototype[key],
-            );
+            Reflect.defineMetadata(PIPES_METADATA, pipes, controller.metatype.prototype[key]);
           }
         }
       }
@@ -62,20 +51,18 @@ export class PipeInjector extends BaseTraceInjector implements Injector {
           {
             pipe: provider.metatype.name,
             scope: 'GLOBAL',
-          },
+          }
         );
         this.loggerService.log(`Mapped ${traceName}`, this.constructor.name);
       }
     }
   }
 
-  private wrapPipe(
-    pipe: PipeTransform,
-    controller: InstanceWrapper,
-    prototype,
-  ): PipeTransform {
+  private wrapPipe(pipe: PipeTransform, controller: InstanceWrapper, prototype): PipeTransform {
     const pipeProto = pipe['prototype'] ?? pipe;
-    if (this.isAffected(pipeProto.transform)) return pipe;
+    if (this.isAffected(pipeProto.transform)) {
+      return pipe;
+    }
 
     const traceName = `Pipe->${controller.name}.${prototype.name}.${pipeProto.constructor.name}`;
     pipeProto.transform = this.wrap(pipeProto.transform, traceName, {
