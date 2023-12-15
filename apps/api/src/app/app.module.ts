@@ -101,7 +101,7 @@ import { Resource } from '@opentelemetry/resources';
       serviceName: process.env.APP_NAME,
       resource: new Resource({
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
-        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
+        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.1',
       }),
       spanProcessor: new BatchSpanProcessor(
         new OTLPTraceExporter({
