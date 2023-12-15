@@ -48,6 +48,7 @@
     "@nestjs/sequelize": "^8.0.0",
     "@nestjs/swagger": "^7.1.16",
     "@nestjs/terminus": "^9.1.1",
+    "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.38.0",
     "@opentelemetry/exporter-collector-grpc": "^0.25.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.41.2",
