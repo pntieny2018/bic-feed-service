@@ -9,7 +9,6 @@ export class ControllerInjector extends BaseTraceInjector implements Injector {
   private readonly loggerService = new Logger();
 
   constructor(protected readonly modulesContainer: ModulesContainer) {
-    console.log('xxxx1111');
     super(modulesContainer);
   }
 
@@ -17,9 +16,7 @@ export class ControllerInjector extends BaseTraceInjector implements Injector {
     const controllers = this.getControllers();
 
     for (const controller of controllers) {
-      const keys = this.metadataScanner.getAllMethodNames(
-        controller.metatype.prototype,
-      );
+      const keys = this.metadataScanner.getAllMethodNames(controller.metatype.prototype);
 
       for (const key of keys) {
         if (
@@ -36,15 +33,12 @@ export class ControllerInjector extends BaseTraceInjector implements Injector {
               controller: controller.name,
               method: controller.metatype.prototype[key].name,
             },
-            SpanKind.SERVER,
+            SpanKind.SERVER
           );
           this.reDecorate(controller.metatype.prototype[key], method);
 
           controller.metatype.prototype[key] = method;
-          this.loggerService.log(
-            `Mapped ${controller.name}.${key}`,
-            this.constructor.name,
-          );
+          this.loggerService.log(`Mapped ${controller.name}.${key}`, this.constructor.name);
         }
       }
     }

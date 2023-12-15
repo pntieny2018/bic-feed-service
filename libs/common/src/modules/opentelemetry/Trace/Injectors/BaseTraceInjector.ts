@@ -11,7 +11,7 @@ import { MetadataScanner } from '../../MetaScanner';
 export class BaseTraceInjector {
   protected readonly metadataScanner: MetadataScanner = new MetadataScanner();
 
-  constructor(protected readonly modulesContainer: ModulesContainer) {}
+  public constructor(protected readonly modulesContainer: ModulesContainer) {}
 
   protected *getControllers(): Generator<InstanceWrapper<Controller>> {
     for (const module of this.modulesContainer.values()) {
@@ -53,7 +53,7 @@ export class BaseTraceInjector {
     return Reflect.hasMetadata(Constants.TRACE_METADATA, prototype);
   }
 
-  protected reDecorate(source, destination) {
+  protected reDecorate(source, destination): void {
     const keys = Reflect.getMetadataKeys(source);
 
     for (const key of keys) {
@@ -64,14 +64,14 @@ export class BaseTraceInjector {
 
   protected wrap(
     prototype: Record<any, any>,
-    traceName,
+    traceName: string,
     attributes = {},
-    spanKind?: SpanKind,
-  ) {
+    spanKind?: SpanKind
+  ): Record<any, any> {
     return TraceWrapper.wrap(prototype, traceName, attributes, spanKind);
   }
 
-  protected affect(prototype) {
+  protected affect(prototype: unknown): void {
     Reflect.defineMetadata(Constants.TRACE_METADATA_ACTIVE, 1, prototype);
   }
 }
