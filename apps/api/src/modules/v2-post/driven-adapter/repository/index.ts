@@ -8,4 +8,3 @@ export * from './quiz.repository';
 export * from './quiz-participant.repository';
 export * from './report.repository';
 export * from './tag.repository';
-export * from './follow.repository';

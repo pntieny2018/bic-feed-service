@@ -3,21 +3,14 @@ import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Logger } from '@nestjs/common';
 
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
-import {
-  DispatchContentIdToGroupsProps,
-  DispatchContentsInGroupsToUserIdProps,
-  INewsfeedDomainService,
-} from './interface';
+import { DispatchContentIdToGroupsProps, INewsfeedDomainService } from './interface';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
   private readonly _logger = new Logger(NewsfeedDomainService.name);
 
   public constructor(
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(KAFKA_ADAPTER)
@@ -86,36 +79,6 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
         }
         cursorPagination = cursor;
       }
-    }
-  }
-
-  public async dispatchContentsInGroupsToUserId(
-    input: DispatchContentsInGroupsToUserIdProps
-  ): Promise<void> {
-    const { userId, groupIds, action } = input;
-    let after = null;
-    while (true) {
-      const contents = await this._contentRepo.getCursorPaginationPostIdsPublishedInGroup({
-        groupIds,
-        limit: 1000,
-        after,
-      });
-      if (!contents.ids.length) {
-        break;
-      }
-
-      await this._kafkaAdapter.sendMessages(
-        KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
-        contents.ids.map((contentId) => ({
-          key: userId,
-          value: {
-            contentId,
-            userId,
-            action,
-          },
-        }))
-      );
-      after = contents.cursor;
     }
   }
 }

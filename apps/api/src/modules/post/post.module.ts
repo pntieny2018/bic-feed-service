@@ -1,4 +1,5 @@
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
+import { IKafkaConfig } from '@libs/infra/kafka/config';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
@@ -17,10 +18,8 @@ import { PostAppService } from './application/post.app-service';
 import { ContentController } from './content.controller';
 import { FeedBackupController } from './feed-backup.controller';
 import { PostBindingService } from './post-binding.service';
-import { PostCronService } from './post-cron.service';
 import { PostController } from './post.controller';
 import { PostService } from './post.service';
-import { IKafkaConfig } from '@libs/infra/kafka/config';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -46,7 +45,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
   providers: [
     PostService,
     PostBindingService,
-    PostCronService,
     PostAppService,
     LibReportRepository,
     LibReportDetailRepository,

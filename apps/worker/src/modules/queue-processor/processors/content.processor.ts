@@ -7,6 +7,9 @@ import { CommandBus } from '@nestjs/cqrs';
 import { IProcessor } from '../interface';
 import { CONTENT_SCHEDULED_PROCESSOR_TOKEN } from '../provider';
 
+/**
+ * TODO: Move commands to worker folder
+ */
 @Component({ injectToken: CONTENT_SCHEDULED_PROCESSOR_TOKEN })
 export class ContentProcessor implements IProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}

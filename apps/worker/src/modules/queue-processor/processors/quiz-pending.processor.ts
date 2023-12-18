@@ -7,6 +7,9 @@ import { CommandBus } from '@nestjs/cqrs';
 import { IProcessor } from '../interface';
 import { QUIZ_PENDING_PROCESSOR_TOKEN } from '../provider';
 
+/**
+ * TODO: Move commands to worker folder
+ */
 @Component({ injectToken: QUIZ_PENDING_PROCESSOR_TOKEN })
 export class QuizPendingProcessor implements IProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
