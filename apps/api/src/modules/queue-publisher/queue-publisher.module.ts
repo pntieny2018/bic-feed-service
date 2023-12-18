@@ -8,18 +8,10 @@ import { PublisherApplicationService } from './application/publisher.application
 import { QueueAdapters } from './domain/infra-interface';
 import { PUBLISHER_DOMAIN_SERVICE_TOKEN } from './domain/interface';
 import { PublisherDomainService } from './domain/publisher-domain.service';
-import {
-  ContentScheduledPublisher,
-  QuizParticipantPublisher,
-  QuizPendingPublisher,
-} from './driven-adapter/infra';
+import { QuizParticipantPublisher, QuizPendingPublisher } from './driven-adapter/infra';
 import { QUEUE_ADAPTER_SERVICES } from './provider';
 
-const publisherInstances = [
-  ContentScheduledPublisher,
-  QuizPendingPublisher,
-  QuizParticipantPublisher,
-];
+const publisherInstances = [QuizPendingPublisher, QuizParticipantPublisher];
 
 const createQueueServiceProviders = (adapters: QueueAdapters[]): Provider[] => {
   return adapters.map((adapter) => {
