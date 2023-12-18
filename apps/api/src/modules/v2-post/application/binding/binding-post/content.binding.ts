@@ -7,7 +7,7 @@ import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
-import { flatten, groupBy, uniq, pick } from 'lodash';
+import { flatten, groupBy, uniq, pick, merge, map } from 'lodash';
 
 import {
   IReportDomainService,
@@ -119,9 +119,13 @@ export class ContentBinding implements IContentBinding {
     const quizHighestScore = quizzesHighestScoreMap.get(postEntity.getId());
     const quizDoing = quizzesDoingMap.get(postEntity.getId());
 
-    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
-      postEntity.getId(),
-    ]);
+    const reactionsCount = postEntity.get('aggregation')?.reactionsCount
+      ? map(postEntity.get('aggregation')?.reactionsCount, (value, key) => ({
+          [key]: value,
+        }))
+      : (await this._postReactionRepo.getAndCountReactionByContents([postEntity.getId()])).get(
+          postEntity.getId()
+        );
 
     let reportReasonsCount;
     if (postEntity.isHidden() && postEntity.isOwner(authUser.id)) {
@@ -130,7 +134,6 @@ export class ContentBinding implements IContentBinding {
 
     const ownerReactions = await this._bindOwnerReactions(authUser.id, [postEntity.getId()]);
     const markedReadPosts = await this._bindMarkedReadPost(authUser.id, [postEntity.getId()]);
-    const isSavedPosts = await this._bindIsSaved(authUser.id, [postEntity.getId()]);
 
     return new PostDto({
       id: postEntity.getId(),
@@ -146,9 +149,8 @@ export class ContentBinding implements IContentBinding {
       createdAt: postEntity.get('createdAt'),
       updatedAt: postEntity.get('updatedAt'),
       markedReadPost: markedReadPosts[postEntity.getId()] || false,
-      isSaved: isSavedPosts[postEntity.getId()] || false,
       ownerReactions: ownerReactions[postEntity.getId()] || [],
-      reactionsCount: reactionsCount.get(postEntity.getId()) || [],
+      reactionsCount,
       publishedAt: postEntity.get('publishedAt'),
       scheduledAt: postEntity.get('scheduledAt'),
       audience: { groups },
@@ -183,25 +185,16 @@ export class ContentBinding implements IContentBinding {
       communities: GroupDto[];
       quizzesHighestScoreMap: Map<string, QuizParticipantEntity>;
       quizzesDoingMap: Map<string, QuizParticipantEntity>;
-      reactionsCount: Map<string, ReactionsCount>;
       ownerReactions: Record<string, OwnerReactionDto[]>;
       markedReadPosts: Record<string, boolean>;
-      isSavedPosts: Record<string, boolean>;
     }
   ): Promise<PostDto[]> {
     if (!postsEntities.length) {
       return [];
     }
 
-    const {
-      authUser,
-      users,
-      groups,
-      communities,
-      quizzesHighestScoreMap,
-      quizzesDoingMap,
-      reactionsCount,
-    } = dataBinding;
+    const { authUser, users, groups, communities, quizzesHighestScoreMap, quizzesDoingMap } =
+      dataBinding;
 
     return postsEntities.map((postEntity) => {
       const postGroups = groups.filter((group) => postEntity.getGroupIds().includes(group.id));
@@ -225,9 +218,10 @@ export class ContentBinding implements IContentBinding {
         createdAt: postEntity.get('createdAt'),
         updatedAt: postEntity.get('updatedAt'),
         markedReadPost: dataBinding.markedReadPosts[postEntity.getId()] || false,
-        isSaved: dataBinding.isSavedPosts[postEntity.getId()] || false,
         ownerReactions: dataBinding.ownerReactions[postEntity.getId()] || [],
-        reactionsCount: reactionsCount.get(postEntity.getId()) || [],
+        reactionsCount: map(postEntity.get('aggregation')?.reactionsCount, (value, key) => ({
+          [key]: value,
+        })),
         publishedAt: postEntity.get('publishedAt'),
         scheduledAt: postEntity.get('scheduledAt'),
         audience: { groups: postGroups },
@@ -275,9 +269,13 @@ export class ContentBinding implements IContentBinding {
 
     const series = await this._getSeriesBindingInContent(articleEntity.getSeriesIds());
 
-    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
-      articleEntity.getId(),
-    ]);
+    const reactionsCount = articleEntity.get('aggregation')?.reactionsCount
+      ? map(articleEntity.get('aggregation')?.reactionsCount, (value, key) => ({
+          [key]: value,
+        }))
+      : (await this._postReactionRepo.getAndCountReactionByContents([articleEntity.getId()])).get(
+          articleEntity.getId()
+        );
 
     const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
       [articleEntity.getId()],
@@ -294,7 +292,6 @@ export class ContentBinding implements IContentBinding {
 
     const ownerReactions = await this._bindOwnerReactions(authUser.id, [articleEntity.getId()]);
     const markedReadArticles = await this._bindMarkedReadPost(authUser.id, [articleEntity.getId()]);
-    const isSavedArticles = await this._bindIsSaved(authUser.id, [articleEntity.getId()]);
 
     return new ArticleDto({
       id: articleEntity.get('id'),
@@ -309,9 +306,8 @@ export class ContentBinding implements IContentBinding {
       createdAt: articleEntity.get('createdAt'),
       updatedAt: articleEntity.get('updatedAt'),
       markedReadPost: markedReadArticles[articleEntity.getId()] || false,
-      isSaved: isSavedArticles[articleEntity.getId()] || false,
       ownerReactions: ownerReactions[articleEntity.getId()] || [],
-      reactionsCount: reactionsCount.get(articleEntity.getId()) || [],
+      reactionsCount,
       publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
         ? articleEntity.get('scheduledAt')
         : articleEntity.get('publishedAt'),
@@ -353,25 +349,16 @@ export class ContentBinding implements IContentBinding {
       communities: GroupDto[];
       quizzesHighestScoreMap: Map<string, QuizParticipantEntity>;
       quizzesDoingMap: Map<string, QuizParticipantEntity>;
-      reactionsCount: Map<string, ReactionsCount>;
       ownerReactions: Record<string, OwnerReactionDto[]>;
       markedReadPosts: Record<string, boolean>;
-      isSavedPosts: Record<string, boolean>;
     }
   ): Promise<ArticleDto[]> {
     if (!articleEntities.length) {
       return [];
     }
 
-    const {
-      authUser,
-      users,
-      groups,
-      communities,
-      quizzesHighestScoreMap,
-      quizzesDoingMap,
-      reactionsCount,
-    } = dataBinding;
+    const { authUser, users, groups, communities, quizzesHighestScoreMap, quizzesDoingMap } =
+      dataBinding;
 
     return articleEntities.map((articleEntity) => {
       const articleGroups = groups.filter((group) =>
@@ -395,9 +382,10 @@ export class ContentBinding implements IContentBinding {
         createdAt: articleEntity.get('createdAt'),
         updatedAt: articleEntity.get('updatedAt'),
         markedReadPost: dataBinding.markedReadPosts[articleEntity.getId()] || false,
-        isSaved: dataBinding.isSavedPosts[articleEntity.getId()] || false,
         ownerReactions: dataBinding.ownerReactions[articleEntity.getId()] || [],
-        reactionsCount: reactionsCount.get(articleEntity.getId()) || [],
+        reactionsCount: map(articleEntity.get('aggregation')?.reactionsCount, (value, key) => ({
+          [key]: value,
+        })),
         publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
           ? articleEntity.get('scheduledAt')
           : articleEntity.get('publishedAt'),
@@ -462,7 +450,6 @@ export class ContentBinding implements IContentBinding {
     const bindingItems = await this.seriesItemBinding(items);
 
     const markedReadSeries = await this._bindMarkedReadPost(authUser.id, [seriesEntity.getId()]);
-    const isSavedSeries = await this._bindIsSaved(authUser.id, [seriesEntity.getId()]);
 
     return new SeriesDto({
       id: seriesEntity.get('id'),
@@ -477,7 +464,6 @@ export class ContentBinding implements IContentBinding {
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
       markedReadPost: markedReadSeries[seriesEntity.getId()] || false,
-      isSaved: isSavedSeries[seriesEntity.getId()] || false,
       publishedAt: seriesEntity.get('publishedAt'),
       audience: { groups },
       communities,
@@ -498,7 +484,6 @@ export class ContentBinding implements IContentBinding {
       groups: GroupDto[];
       communities: GroupDto[];
       markedReadPosts: Record<string, boolean>;
-      isSavedPosts: Record<string, boolean>;
     }
   ): Promise<SeriesDto[]> {
     if (!seriesEntities.length) {
@@ -548,7 +533,6 @@ export class ContentBinding implements IContentBinding {
         createdAt: seriesEntity.get('createdAt'),
         updatedAt: seriesEntity.get('updatedAt'),
         markedReadPost: dataBinding.markedReadPosts[seriesEntity.getId()] || false,
-        isSaved: dataBinding.isSavedPosts[seriesEntity.getId()] || false,
         publishedAt: seriesEntity.get('publishedAt'),
         audience: { groups: seriesGroups },
         communities: seriesCommunities,
@@ -647,8 +631,6 @@ export class ContentBinding implements IContentBinding {
     const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
     const communities = await this._groupAdapter.getGroupsByIds(communityIds);
 
-    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(contentIds);
-
     const { quizzesHighestScoreMap, quizzesDoingMap } = await this._getQuizBindingInContent(
       contentIds,
       authUser
@@ -657,7 +639,6 @@ export class ContentBinding implements IContentBinding {
     // for cached Entity ownerReactions, markedReadPost, isSaved
     const ownerReactions = await this._bindOwnerReactions(authUser.id, contentIds);
     const markedReadPosts = await this._bindMarkedReadPost(authUser.id, contentIds);
-    const isSavedPosts = await this._bindIsSaved(authUser.id, contentIds);
 
     const dataBinding = {
       authUser,
@@ -666,10 +647,8 @@ export class ContentBinding implements IContentBinding {
       communities,
       quizzesDoingMap,
       quizzesHighestScoreMap,
-      reactionsCount,
       ownerReactions,
       markedReadPosts,
-      isSavedPosts,
     };
 
     const postsMap = ArrayHelper.convertArrayToObject(
@@ -1082,7 +1061,7 @@ export class ContentBinding implements IContentBinding {
       mentionsUserId: postEntity.get('mentionUserIds'),
       privacy: postEntity.get('privacy'),
       publishedAt: postEntity.get('publishedAt'),
-      reactionsCount: dataBinding.reactionsCount.get(postEntity.getId()) || [],
+      reactionsCount: merge({}, ...(dataBinding.reactionsCount.get(postEntity.getId()) || [])),
       setting: postEntity.get('setting'),
       status: postEntity.get('status'),
       tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
@@ -1116,7 +1095,7 @@ export class ContentBinding implements IContentBinding {
       media: this._mediaBinding.binding(articleEntity.get('media')),
       privacy: articleEntity.get('privacy'),
       publishedAt: articleEntity.get('publishedAt'),
-      reactionsCount: dataBinding.reactionsCount.get(articleEntity.getId()) || [],
+      reactionsCount: merge({}, ...(dataBinding.reactionsCount.get(articleEntity.getId()) || [])),
       seriesIds: articleEntity.getSeriesIds(),
       setting: articleEntity.get('setting'),
       status: articleEntity.get('status'),
@@ -1164,9 +1143,5 @@ export class ContentBinding implements IContentBinding {
     contentIds: string[]
   ): Promise<Record<string, boolean>> {
     return this._contentRepo.getMarkReadImportant(contentIds, authUserId);
-  }
-
-  private _bindIsSaved(authUserId: string, contentIds: string[]): Promise<Record<string, boolean>> {
-    return this._contentRepo.getSavedContentIds(authUserId, contentIds);
   }
 }

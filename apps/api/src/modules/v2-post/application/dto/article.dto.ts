@@ -90,7 +90,7 @@ export class ArticleCacheDto {
   public media: MediaDto;
   public createdAt: Date;
   public updatedAt: Date;
-  public reactionsCount: ReactionCount[];
+  public reactionsCount: ReactionCount;
   public publishedAt: Date;
   public groups: string[];
   public wordCount: number;

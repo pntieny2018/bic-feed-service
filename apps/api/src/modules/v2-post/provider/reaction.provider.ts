@@ -1,3 +1,6 @@
+import { CacheIncreaseReactionCountEventHandler } from '@api/modules/v2-post/application/event-handler/cache-content';
+import { CacheDecreaseReactionCountEventHandler } from '@api/modules/v2-post/application/event-handler/cache-content/cache-reactions-count/decrease-reactions-count.event-handler';
+
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';
 import {
@@ -34,6 +37,8 @@ export const reactionProvider = [
   /* Application Event handler */
   IncreaseReactionCountEventHandler,
   DecreaseReactionCountEventHandler,
+  CacheIncreaseReactionCountEventHandler,
+  CacheDecreaseReactionCountEventHandler,
 
   /* Domain Service */
   {

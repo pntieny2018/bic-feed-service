@@ -93,6 +93,23 @@ export class ContentDomainService implements IContentDomainService {
     return contentEntity;
   }
 
+  public async getContentForCacheById(
+    id: string
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    return this._contentRepo.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
+      },
+    });
+  }
+
   public getRawContent(contentEntity: ContentEntity): string {
     if (contentEntity instanceof PostEntity) {
       return StringHelper.removeMarkdownCharacter(contentEntity.get('content'));

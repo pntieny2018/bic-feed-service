@@ -129,7 +129,7 @@ export class PostCacheDto {
   public commentsCount: number;
   public totalUsersSeen: number;
   public linkPreview?: LinkPreviewDto;
-  public reactionsCount: ReactionCount[];
+  public reactionsCount: ReactionCount;
   public seriesIds: string[];
 
   public constructor(data: PostCacheDto) {

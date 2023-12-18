@@ -45,6 +45,8 @@ import {
 import {
   GetCursorPaginationPostIdsInGroup,
   IContentRepository,
+  IPostReactionRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
 } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
@@ -63,7 +65,9 @@ export class ContentRepository implements IContentRepository {
     private readonly _libUserSavePostRepo: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper,
     @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter
+    private readonly _contentCacheAdapter: IContentCacheAdapter,
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepository: IPostReactionRepository
   ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
@@ -294,8 +298,11 @@ export class ContentRepository implements IContentRepository {
     findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const content = await this._libContentRepo.findOne(findOnePostOptions);
+    const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents([
+      findOnePostOptions.where.id,
+    ]);
 
-    return this._contentMapper.toDomain(content);
+    return this._contentMapper.toDomain(content, contentReactionCounts);
   }
 
   public async findAll(
@@ -320,7 +327,13 @@ export class ContentRepository implements IContentRepository {
     }
 
     const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
-    const dbContentsEntity = contents.map((content) => this._contentMapper.toDomain(content));
+    const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents(
+      findAllPostOptions.where.ids
+    );
+
+    const dbContentsEntity = contents.map((content) =>
+      this._contentMapper.toDomain(content, contentReactionCounts)
+    );
     await this._contentCacheAdapter.setCacheContents(dbContentsEntity);
     return [...dbContentsEntity, ...cacheContentsEntity];
   }

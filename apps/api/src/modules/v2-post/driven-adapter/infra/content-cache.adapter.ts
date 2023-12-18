@@ -15,8 +15,8 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
     private readonly _contentBinding: IContentBinding
   ) {}
 
-  public async setJson<T>(key: string, value: T): Promise<any> {
-    return this._store.setJson(key, value);
+  public async setJson<T>(key: string, value: T, path?: string): Promise<any> {
+    return this._store.setJson(key, value, path);
   }
 
   public async setJsonNx<T>(key: string, value: T, path = '$'): Promise<any> {
@@ -28,9 +28,10 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
     await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, 1);
   }
 
-  public async decreaseValue(key: string, path: string): Promise<void> {
+  public async decreaseValue(key: string, path: string): Promise<number> {
     const redisClient = this._store.getClient();
-    await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, -1);
+    const decreaseResult = await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, -1);
+    return JSON.parse(decreaseResult as string)[0];
   }
 
   public async getJson<T>(key: string, path?: string): Promise<T> {

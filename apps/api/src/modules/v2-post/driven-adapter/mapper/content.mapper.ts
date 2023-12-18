@@ -1,3 +1,4 @@
+import { ReactionsCount } from '@api/common/types';
 import {
   ArticleCacheDto,
   PostCacheDto,
@@ -6,6 +7,7 @@ import {
 import { CONTENT_TYPE } from '@beincom/constants';
 import { StringHelper } from '@libs/common/helpers';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import { merge } from 'lodash';
 
 import { CategoryEntity } from '../../domain/model/category';
 import {
@@ -25,7 +27,10 @@ import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { TagEntity } from '../../domain/model/tag';
 
 export class ContentMapper {
-  public toDomain(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
+  public toDomain(
+    post: PostModel,
+    reactionsCountMap?: Map<string, ReactionsCount>
+  ): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) {
       return null;
     }
@@ -33,11 +38,11 @@ export class ContentMapper {
     post = post.toJSON();
     switch (post.type) {
       case CONTENT_TYPE.POST:
-        return this._modelToPostEntity(post);
+        return this._modelToPostEntity(post, reactionsCountMap);
       case CONTENT_TYPE.SERIES:
         return this._modelToSeriesEntity(post);
       case CONTENT_TYPE.ARTICLE:
-        return this._modelToArticleEntity(post);
+        return this._modelToArticleEntity(post, reactionsCountMap);
       default:
         return null;
     }
@@ -115,7 +120,10 @@ export class ContentMapper {
     };
   }
 
-  private _modelToPostEntity(post: PostAttributes): PostEntity {
+  private _modelToPostEntity(
+    post: PostAttributes,
+    reactionsCountMap?: Map<string, ReactionsCount>
+  ): PostEntity {
     if (post === null) {
       return null;
     }
@@ -164,6 +172,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
+        ...(reactionsCountMap && { reactionsCount: merge({}, ...reactionsCountMap.get(post.id)) }),
       },
       media: {
         images: (post.mediaJson?.images || []).map((image) => new ImageEntity(image)),
@@ -180,7 +189,10 @@ export class ContentMapper {
     });
   }
 
-  private _modelToArticleEntity(post: PostAttributes): ArticleEntity {
+  private _modelToArticleEntity(
+    post: PostAttributes,
+    reactionsCountMap?: Map<string, ReactionsCount>
+  ): ArticleEntity {
     if (post === null) {
       return null;
     }
@@ -229,6 +241,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
+        ...(reactionsCountMap && { reactionsCount: merge({}, ...reactionsCountMap.get(post.id)) }),
       },
       title: post.title,
       summary: post.summary,
@@ -297,6 +310,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
+        reactionsCount: post.reactionsCount,
       },
       media: {
         images: (post.media.images || []).map((image) => new ImageEntity(image)),
@@ -335,6 +349,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: article.commentsCount,
         totalUsersSeen: article.totalUsersSeen,
+        reactionsCount: article.reactionsCount,
       },
       media: {
         images: (article.media.images || []).map((image) => new ImageEntity(image)),
