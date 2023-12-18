@@ -1,6 +1,6 @@
 import { IQueueService, JobWithConfiguration } from '@libs/infra/v2-queue';
 
-import { IPublisher } from '../../domain/infra-interface';
+import { IPublisher } from '../../../domain/infra-interface';
 
 export class BasePublisher implements IPublisher {
   private readonly _queue: IQueueService;
