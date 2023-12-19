@@ -2,10 +2,11 @@ import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { Payload } from '@nestjs/microservices';
 
-import { PublishContentToNewsfeedCommand } from '../../post/application/command/publish-post-to-newsfeed';
-import { RemoveContentFromNewsfeedCommand } from '../../post/application/command/remove-post-from-newsfeed';
-import { NewsfeedAction } from '../data-type';
+import { PublishContentToNewsfeedCommand } from '../../application/command/publish-post-to-newsfeed';
+import { RemoveContentFromNewsfeedCommand } from '../../application/command/remove-post-from-newsfeed';
+import { NewsfeedAction } from '../../data-type';
 
 @Controller()
 export class PublishOrRemovePostToNewsfeedConsumer {
@@ -13,6 +14,7 @@ export class PublishOrRemovePostToNewsfeedConsumer {
 
   @EventPatternAndLog(KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED)
   public async publishOrRemovePostToNewsfeed(
+    @Payload()
     message: IKafkaConsumerMessage<{
       userId: string;
       contentId: string;
