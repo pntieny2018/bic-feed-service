@@ -8,6 +8,7 @@ import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { Payload } from '@nestjs/microservices';
 
 /**
  * TODO: Move commands to worker folder
@@ -18,6 +19,7 @@ export class GroupConsumer {
 
   @EventPatternAndLog(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)
   public async groupPrivacyUpdated(
+    @Payload()
     message: IKafkaConsumerMessage<GroupPrivacyUpdatedMessagePayload>
   ): Promise<void> {
     const { value } = message;
@@ -28,6 +30,7 @@ export class GroupConsumer {
 
   @EventPatternAndLog(KAFKA_TOPIC.BEIN_GROUP.GROUP_STATE_HAS_BEEN_CHANGED)
   public async groupStateUpdated(
+    @Payload()
     message: IKafkaConsumerMessage<GroupStateUpdatedMessagePayload>
   ): Promise<void> {
     const { data } = message.value;
