@@ -179,7 +179,7 @@ export function EventPatternAndLog(topicName: string): MethodDecorator {
 
       try {
         logger.debug(`EventPattern start: ${JSON.stringify({ topic, message })}`);
-        const response = originalHandler.call(this, message);
+        const response = await originalHandler.call(this, message);
         logger.debug(`EventPattern done: ${JSON.stringify({ topic, partition, offset })}`);
         return response;
       } catch (error) {
