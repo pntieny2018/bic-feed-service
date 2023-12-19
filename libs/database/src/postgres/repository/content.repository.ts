@@ -70,18 +70,23 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       before,
       limit = PAGING_DEFAULT_LIMIT,
       order = ORDER.DESC,
+      subQuery,
     } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 
     const cursorColumns = orderBuilder?.map((order) => order[0]);
-    const { rows, meta } = await this.cursorPaginate(findOption, {
-      limit,
-      before,
-      after,
-      order,
-      sortColumns: cursorColumns || ['createdAt'],
-    });
+    const { rows, meta } = await this.cursorPaginate(
+      findOption,
+      {
+        limit,
+        before,
+        after,
+        order,
+        sortColumns: cursorColumns || ['createdAt'],
+      },
+      subQuery
+    );
 
     return {
       rows,

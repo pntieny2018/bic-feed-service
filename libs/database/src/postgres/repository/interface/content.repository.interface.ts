@@ -61,6 +61,7 @@ export type FindContentProps = {
   include?: FindContentIncludeOptions;
   attributes?: { exclude?: (keyof PostAttributes)[] };
   orderOptions?: OrderOptions;
+  subQuery?: boolean;
 };
 
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;
