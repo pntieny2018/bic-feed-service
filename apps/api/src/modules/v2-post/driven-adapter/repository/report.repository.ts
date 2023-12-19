@@ -222,4 +222,22 @@ export class ReportRepository implements IReportRepository {
 
     return !!reportDetails?.length;
   }
+
+  public async getTargetIdsByReporterId(reporterId: string): Promise<string[]> {
+    if (!reporterId) {
+      return [];
+    }
+
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId },
+      select: ['targetId'],
+    });
+
+    const targetIds = uniq(reportDetails.map((reportDetail) => reportDetail.targetId));
+    if (!targetIds?.length) {
+      return [];
+    }
+
+    return targetIds;
+  }
 }

@@ -1,6 +1,7 @@
 import { ReactionsCount } from '@api/common/types';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '@api/modules/v2-post/application/binding';
 import { IContentCacheAdapter } from '@api/modules/v2-post/domain/infra-adapter-interface';
+import { CACHE_KEYS } from '@libs/common/constants';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { merge } from 'lodash';
@@ -32,6 +33,10 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
     const redisClient = this._store.getClient();
     const decreaseResult = await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, -1);
     return JSON.parse(decreaseResult as string)[0];
+  }
+
+  public async hasKey(key: string): Promise<boolean> {
+    return this._store.existKey(key);
   }
 
   public async getJson<T>(key: string, path?: string): Promise<T> {
@@ -72,5 +77,9 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
 
   public async deleteContentCache(contentId: string): Promise<void> {
     await this._store.del(contentId);
+  }
+
+  public async cacheUserReportedContent(userId: string, contentIds: string[]): Promise<void> {
+    await this._store.setSets(`${CACHE_KEYS.USER_REPORTED_CONTENT}:${userId}`, contentIds);
   }
 }

@@ -1,5 +1,5 @@
-import { CacheIncreaseReactionCountEventHandler } from '@api/modules/v2-post/application/event-handler/cache-content';
-import { CacheDecreaseReactionCountEventHandler } from '@api/modules/v2-post/application/event-handler/cache-content/cache-reactions-count/decrease-reactions-count.event-handler';
+import { CacheDecreaseReactionCountEventHandler } from '@api/modules/v2-post/application/event-handler/cache/cache-reactions-count/decrease-reactions-count.event-handler';
+import { CacheIncreaseReactionCountEventHandler } from 'apps/api/src/modules/v2-post/application/event-handler/cache';
 
 import { ReactionBinding, REACTION_BINDING_TOKEN } from '../application/binding';
 import { CreateReactionHandler, DeleteReactionHandler } from '../application/command/reaction';

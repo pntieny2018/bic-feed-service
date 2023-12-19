@@ -1,4 +1,4 @@
-import { ContentDeleteCacheEventHandler } from '@api/modules/v2-post/application/event-handler/cache-content';
+import { ContentDeleteCacheEventHandler } from 'apps/api/src/modules/v2-post/application/event-handler/cache';
 
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
