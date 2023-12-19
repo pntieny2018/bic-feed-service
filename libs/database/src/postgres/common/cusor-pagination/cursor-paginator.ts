@@ -46,7 +46,7 @@ export class CursorPaginator<T extends Model> {
       ...query,
       where: paginationWhere,
       limit: this.limit + 1,
-      subQuery: query.subQuery || true,
+      subQuery: query.subQuery,
     };
 
     const rows = await this.modelClass.findAll(paginationQueryOptions);
