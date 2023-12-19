@@ -19,7 +19,7 @@ export class InternalController {
   ): Promise<Record<string, number>> {
     return this._queryBus.execute(
       new CountContentPerWeekQuery({
-        rootGroupIds: data.rootGroupIds,
+        rootGroups: data.rootGroups,
       })
     );
   }
