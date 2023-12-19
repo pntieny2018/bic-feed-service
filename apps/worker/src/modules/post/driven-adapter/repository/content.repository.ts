@@ -29,7 +29,7 @@ export class ContentRepository implements IContentRepository {
     contentId: string,
     options?: FindContentIncludeOptions
   ): Promise<PostAttributes> {
-    return await this._libContentRepo.findOne({
+    return this._libContentRepo.findOne({
       where: { id: contentId, groupArchived: false },
       include: options,
     });
@@ -38,7 +38,7 @@ export class ContentRepository implements IContentRepository {
   public async getCursorPagination(
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostAttributes>> {
-    return await this._libContentRepo.getPagination(getPaginationContentsProps);
+    return this._libContentRepo.getPagination(getPaginationContentsProps);
   }
 
   public async getCursorPaginationPostIdsPublishedInGroup(

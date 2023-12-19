@@ -1,6 +1,6 @@
 import { Process, Processor } from '@nestjs/bull';
 import { BULL_MODULE_QUEUE_PROCESS } from '@nestjs/bull/dist/bull.constants';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { EventsHandler, IEvent } from '@nestjs/cqrs';
 import { EventPattern } from '@nestjs/microservices';
 import * as Sentry from '@sentry/node';
@@ -9,7 +9,7 @@ import { v4 } from 'uuid';
 
 import { HEADER_REQ_ID } from '../../../common/src/constants';
 import { IEventPayload } from '../event';
-import { IKafkaConsumerMessage } from '../kafka';
+import { IKafkaConsumerMessage, IKafkaService, KAFKA_SERVICE_TOKEN } from '../kafka';
 import { Job, JobWithContext } from '../queue';
 
 import { CONTEXT, getContext, getDebugContext } from './log.context';
@@ -159,48 +159,37 @@ export function ProcessorAndLog(queueName: string) {
   };
 }
 
-export function EventPatternAndLog(topicName: string) {
-  // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/explicit-module-boundary-types
+export function EventPatternAndLog(topicName: string): MethodDecorator {
+  const Injector = Inject(KAFKA_SERVICE_TOKEN);
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor): void {
     const originalHandler = descriptor.value;
     const className = target.constructor.name;
     const logger = new Logger(className);
 
-    descriptor.value = function (message: IKafkaConsumerMessage<unknown>): void {
+    Injector(target, '_kafkaService');
+    descriptor.value = async function (message: IKafkaConsumerMessage<unknown>): Promise<any> {
       const { headers } = message;
-      const requestId = headers?.[HEADER_REQ_ID] || v4(); // Assuming you have a requestId header
+      const requestId = headers?.[HEADER_REQ_ID] || v4();
       const cls = ClsServiceManager.getClsService();
       cls.enter();
       cls.set(CLS_ID, requestId);
 
-      logger.debug(`EventPattern start: ${JSON.stringify({ topicName, message })}`);
+      const { topic, partition, offset } = message;
+      const kafkaService = this._kafkaService as IKafkaService;
 
-      function logDone(): void {
-        logger.debug(`EventPattern done: ${JSON.stringify({ topicName })}`);
-      }
-
-      function logError(error: any): void {
-        logger.error(`EventPattern error: ${JSON.stringify({ topicName, error: error.message })}`);
+      try {
+        logger.debug(`EventPattern start: ${JSON.stringify({ topic, message })}`);
+        const response = originalHandler.call(this, message);
+        logger.debug(`EventPattern done: ${JSON.stringify({ topic, partition, offset })}`);
+        return response;
+      } catch (error) {
+        logger.error(`EventPattern error: ${JSON.stringify({ topic, error: error.message })}`);
         Sentry.captureException(error);
+      } finally {
+        await kafkaService.commitOffsets(topic, partition, offset);
       }
-
-      const result = originalHandler.call(this, message);
-
-      if (result instanceof Promise) {
-        result
-          .then((d) => {
-            logDone();
-            return d;
-          })
-          .catch((error) => {
-            logError(error);
-          });
-      } else {
-        logDone();
-      }
-
-      return result;
     };
+
     EventPattern(`${process.env.KAFKA_ENV}.${topicName}`)(target, propertyKey, descriptor);
   };
 }
