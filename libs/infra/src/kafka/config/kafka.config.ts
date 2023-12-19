@@ -25,8 +25,5 @@ export const getKafkaConfig = (): IKafkaConfig => ({
     groupId: process.env.KAFKA_CONSUMER_GROUP_ID,
     maxBytes: 100000,
   },
-  run: {
-    autoCommit: false,
-  },
   producerOnlyMode: process.env.KAFKA_PRODUCER_ONLY_MODE === 'true' || false,
 });
