@@ -156,7 +156,8 @@ export class ReportRepository implements IReportRepository {
           group: ['target_id'],
         }),
       },
-      { limit, before, after, order, sortColumns }
+      { limit, before, after, order, sortColumns },
+      false
     );
 
     return {
