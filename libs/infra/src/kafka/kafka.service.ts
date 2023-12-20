@@ -81,4 +81,18 @@ export class KafkaService implements IKafkaService {
       },
     });
   }
+
+  public async commitOffsets(topic: string, partition: number, offset: string): Promise<void> {
+    try {
+      await this._kafkaClient.commitOffsets([{ topic, partition, offset }]);
+      this._logger.debug(
+        `Commited offset successful: ${JSON.stringify({ topic, partition, offset })}`
+      );
+    } catch (err) {
+      this._logger.error(err);
+      throw new Error(
+        `Error while committing offsets: ${JSON.stringify({ topic, partition, offset })}`
+      );
+    }
+  }
 }

@@ -6,8 +6,13 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { WorkerQueuePublisherModule } from '../queue-publisher/queue-publisher.module';
 
 import {
+  FollowConsumer,
+  GroupConsumer,
+  MediaConsumer,
+  PublishOrRemovePostToNewsfeedConsumer,
+} from './driving-apdater/controller';
+import {
   adapterProvider,
-  consumerHandlerProvider,
   distributedLockProvider,
   feedProvider,
   libRepositoryProvider,
@@ -16,14 +21,18 @@ import {
 
 @Module({
   imports: [CqrsModule, KafkaModule, UserModule, WorkerQueuePublisherModule],
-  controllers: [],
+  controllers: [
+    FollowConsumer,
+    MediaConsumer,
+    GroupConsumer,
+    PublishOrRemovePostToNewsfeedConsumer,
+  ],
   providers: [
     ...distributedLockProvider,
     ...adapterProvider,
     ...feedProvider,
     ...libRepositoryProvider,
     ...postProvider,
-    ...consumerHandlerProvider,
   ],
 })
 export class PostModule {}

@@ -1,3 +1,7 @@
+import { PublishContentToNewsfeedHandler } from '../application/command/publish-post-to-newsfeed';
+import { RemoveContentFromNewsfeedHandler } from '../application/command/remove-post-from-newsfeed';
+import { UserFollowGroupHandler } from '../application/command/user-follow-group';
+import { UserUnfollowGroupHandler } from '../application/command/user-unfollow-group';
 import { ContentCron } from '../application/cron/content.cron';
 import { PostCronService } from '../application/cron/post.cron';
 import { ContentDomainService } from '../domain/domain-service';
@@ -18,4 +22,10 @@ export const postProvider = [
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
   },
+
+  /** Application Handler */
+  PublishContentToNewsfeedHandler,
+  RemoveContentFromNewsfeedHandler,
+  UserFollowGroupHandler,
+  UserUnfollowGroupHandler,
 ];
