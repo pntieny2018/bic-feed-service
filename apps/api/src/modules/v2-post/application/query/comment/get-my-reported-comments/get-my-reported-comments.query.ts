@@ -9,6 +9,7 @@ class GetMyReportedCommentsPayload extends PaginatedArgs {
   public order: ORDER;
   public before?: string;
   public after?: string;
+  public targetIds?: string[];
 }
 
 export class GetMyReportedCommentsQuery implements IQuery {
