@@ -9,6 +9,7 @@ class GetMyReportedContentsPayload extends PaginatedArgs {
   public order: ORDER;
   public before?: string;
   public after?: string;
+  public targetIds?: string[];
 }
 
 export class GetMyReportedContentsQuery implements IQuery {
