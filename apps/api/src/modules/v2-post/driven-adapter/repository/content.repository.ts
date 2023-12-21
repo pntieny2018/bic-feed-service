@@ -422,6 +422,8 @@ export class ContentRepository implements IContentRepository {
       ],
       { ignoreDuplicates: true }
     );
+
+    await this._contentCacheAdapter.increaseSeenContentCount(postId);
   }
 
   public async hasSeen(postId: string, userId: string): Promise<boolean> {
