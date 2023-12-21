@@ -8,6 +8,10 @@ import { PublishContentToNewsfeedCommand } from '../../application/command/publi
 import { RemoveContentFromNewsfeedCommand } from '../../application/command/remove-post-from-newsfeed';
 import { NewsfeedAction } from '../../data-type';
 
+/**
+ * Keep this file to backward compatible
+ * Remove soon
+ */
 @Controller()
 export class PublishOrRemovePostToNewsfeedConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}

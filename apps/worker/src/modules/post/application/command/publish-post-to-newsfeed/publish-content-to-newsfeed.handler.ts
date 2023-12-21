@@ -10,6 +10,10 @@ import {
 
 import { PublishContentToNewsfeedCommand } from './publish-content-to-newsfeed.command';
 
+/**
+ * Keep this file to backward compatible
+ * TODO: Remove soon
+ */
 @CommandHandler(PublishContentToNewsfeedCommand)
 export class PublishContentToNewsfeedHandler
   implements ICommandHandler<PublishContentToNewsfeedCommand, void>
@@ -27,14 +31,6 @@ export class PublishContentToNewsfeedHandler
 
     const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
     if (!content || !Boolean(content.publishedAt) || content.isHidden) {
-      return;
-    }
-
-    const hasPublishedNewsfeed = await this._userNewsfeedRepo.hasPublishedContentIdToUserId(
-      contentId,
-      userId
-    );
-    if (hasPublishedNewsfeed) {
       return;
     }
 

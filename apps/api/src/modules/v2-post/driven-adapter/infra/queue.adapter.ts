@@ -5,12 +5,8 @@ import {
   PUBLISHER_APPLICATION_SERVICE,
   IPublisherApplicationService,
 } from '../../../queue-publisher/application/interface';
-import {
-  ContentScheduledJobDto,
-  QuizGenerateJobDto,
-  QuizParticipantResultJobDto,
-} from '../../application/dto';
-import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
+import { QuizGenerateJobDto, QuizParticipantResultJobDto } from '../../application/dto';
+import { IQueueAdapter, ContentChangedJobPayload } from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
@@ -46,13 +42,11 @@ export class QueueAdapter implements IQueueAdapter {
     );
   }
 
-  public async addContentScheduledJobs(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._publisherAppService.addBulkJobs<ContentScheduledJobDto>(
-      QueueName.CONTENT_SCHEDULED,
-      payloads.map(({ contentId, ownerId }) => ({
-        data: { contentId, ownerId },
-        opts: { jobId: contentId },
-      }))
-    );
+  public async addContentChangedJob(payload: ContentChangedJobPayload): Promise<void> {
+    const { contentId } = payload;
+    await this._publisherAppService.addJob<ContentChangedJobPayload>(QueueName.CONTENT_CHANGED, {
+      data: payload,
+      opts: { group: { id: contentId } },
+    });
   }
 }
