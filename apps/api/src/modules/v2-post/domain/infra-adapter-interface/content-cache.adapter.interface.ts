@@ -9,7 +9,7 @@ import { ArticleEntity, PostEntity, SeriesEntity } from '@api/modules/v2-post/do
 export interface IContentCacheAdapter {
   setJson<T>(key: string, value: T, path?: string): Promise<any>;
   setJsonNx<T>(key: string, value: T, path?: string): Promise<any>;
-  increaseValue(key: string, path: string): Promise<void>;
+  increaseValue(key: string, path: string): Promise<number>;
   decreaseValue(key: string, path: string): Promise<number>;
   hasKey(key: string): Promise<boolean>;
 
@@ -28,8 +28,13 @@ export interface IContentCacheAdapter {
 
   setReactionsCount(contentId: string, reactionsCount: ReactionCount): Promise<void>;
   setReactionNameNx(contentId: string, reactionName: string): Promise<any>;
-  increaseReactionsCount(contentId: string, reactionName: string): Promise<any>;
-  decreaseReactionsCount(contentId: string, reactionName: string): Promise<any>;
+  increaseReactionsCount(contentId: string, reactionName: string): Promise<number>;
+  decreaseReactionsCount(contentId: string, reactionName: string): Promise<number>;
+
+  increaseCommentCount(contentId: string): Promise<void>;
+  decreaseCommentCount(contentId: string, decrease?: number): Promise<void>;
+
+  increaseSeenContentCount(contentId: string): Promise<void>;
 }
 
 export const CONTENT_CACHE_ADAPTER = 'CONTENT_CACHE_ADAPTER';

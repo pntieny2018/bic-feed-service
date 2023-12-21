@@ -28,14 +28,15 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
     return this._store.setJson(key, value, path, true);
   }
 
-  public async increaseValue(key: string, path: string): Promise<void> {
+  public async increaseValue(key: string, path: string): Promise<number> {
     const redisClient = this._store.getClient();
-    await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, 1);
+    const increaseResult = await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, 1);
+    return JSON.parse(increaseResult as string)[0];
   }
 
-  public async decreaseValue(key: string, path: string): Promise<number> {
+  public async decreaseValue(key: string, path: string, decrease = -1): Promise<number> {
     const redisClient = this._store.getClient();
-    const decreaseResult = await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, -1);
+    const decreaseResult = await redisClient.call('JSON.NUMINCRBY', key, `$.${path}`, decrease);
     return JSON.parse(decreaseResult as string)[0];
   }
 
@@ -113,17 +114,29 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
     await this.setJsonNx(`${CACHE_KEYS.CONTENT}:${contentId}`, 1, `reactionsCount.${reactionName}`);
   }
 
-  public async increaseReactionsCount(contentId: string, reactionName: string): Promise<void> {
+  public async increaseReactionsCount(contentId: string, reactionName: string): Promise<number> {
     return this.increaseValue(
       `${CACHE_KEYS.CONTENT}:${contentId}`,
       `reactionsCount.${reactionName}`
     );
   }
 
-  public async decreaseReactionsCount(contentId: string, reactionName: string): Promise<any> {
+  public async decreaseReactionsCount(contentId: string, reactionName: string): Promise<number> {
     return this.decreaseValue(
       `${CACHE_KEYS.CONTENT}:${contentId}`,
       `reactionsCount.${reactionName}`
     );
+  }
+
+  public async increaseCommentCount(contentId: string): Promise<void> {
+    await this.increaseValue(`${CACHE_KEYS.CONTENT}:${contentId}`, 'commentsCount');
+  }
+
+  public async decreaseCommentCount(contentId: string, decrease = -1): Promise<void> {
+    await this.decreaseValue(`${CACHE_KEYS.CONTENT}:${contentId}`, 'commentsCount', decrease);
+  }
+
+  public async increaseSeenContentCount(contentId: string): Promise<void> {
+    await this.increaseValue(`${CACHE_KEYS.CONTENT}:${contentId}`, 'totalUsersSeen');
   }
 }
