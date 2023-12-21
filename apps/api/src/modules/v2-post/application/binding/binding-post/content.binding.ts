@@ -495,7 +495,7 @@ export class ContentBinding implements IContentBinding {
 
     const items = (await this._contentRepo.findAll({
       where: {
-        ids: itemIds,
+        ids: itemIds.slice(0, 3),
         excludeReportedByUserId: authUser?.id,
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
@@ -541,6 +541,7 @@ export class ContentBinding implements IContentBinding {
         title: seriesEntity.get('title'),
         summary: seriesEntity.get('summary'),
         items: seriesItems,
+        totalItems: itemIds.length,
         coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       });
     });
