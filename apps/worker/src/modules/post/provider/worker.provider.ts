@@ -57,7 +57,7 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.PUBLISH_REMOVE_CONTENT_CONCURRENCY) | 50,
+    concurrency: parseInt(process.env.PUBLISH_REMOVE_CONTENT_CONCURRENCY) | 20,
   },
   {
     queueName: QueueName.FOLLOW_UNFOLLOW_GROUPS,
@@ -66,6 +66,6 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.FOLLOW_UNFOLLOW_GROUPS_CONCURRENCY) | 50,
+    concurrency: parseInt(process.env.FOLLOW_UNFOLLOW_GROUPS_CONCURRENCY) | 20,
   },
 ];
