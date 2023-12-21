@@ -5,6 +5,7 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
+import { UserDto } from '@libs/service/user';
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
@@ -44,7 +45,15 @@ export interface IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentInCache(
+    findOnePostOptions: FindContentProps,
+    user: UserDto
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginationProps?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+  findAllInCache(
     findAllPostOptions: FindContentProps,
     offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;

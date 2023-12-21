@@ -7,7 +7,6 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '@api/modules/v2-post/domain/repositoty-interface';
-import { CONTENT_TARGET } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
@@ -24,18 +23,13 @@ export class CacheUserReportedContentIdsEventHandler implements IEventHandler<Re
 
   public async handle(event: ReportCreatedEvent): Promise<void> {
     const { reportEntities, authUser } = event.payload;
-    const targetType = reportEntities[0].get('targetType');
-    if (targetType === CONTENT_TARGET.COMMENT) {
-      return;
-    }
 
     const isCached = await this._contentCacheAdapter.hasKey(
       `${CACHE_KEYS.USER_REPORTED_CONTENT}:${authUser.id}`
     );
 
     if (!isCached) {
-      const reportedTargetIds = await this._reportRepo.getTargetIdsByReporterId(authUser.id);
-      await this._contentCacheAdapter.cacheUserReportedContent(authUser.id, reportedTargetIds);
+      await this._reportRepo.getTargetIdsByReporterId(authUser.id);
     } else {
       const contentId = reportEntities[0].get('targetId');
       await this._contentCacheAdapter.cacheUserReportedContent(authUser.id, [contentId]);

@@ -30,21 +30,20 @@ export class CacheIncreaseReactionCountEventHandler implements IEventHandler<Rea
 
     const contentId = reactionEntity.get('targetId');
 
-    const contentCache = await this._contentCacheAdapter.getJson(contentId);
+    const contentCache = await this._contentCacheAdapter.getContentCached(contentId);
     if (!contentCache) {
       const contentEntity = await this._contentDomainService.getContentForCacheById(contentId);
       await this._contentCacheAdapter.setCacheContents([contentEntity]);
     } else {
-      const setReactionsCountNx = await this._contentCacheAdapter.setJsonNx(
+      const increaseValue = await this._contentCacheAdapter.increaseReactionsCount(
         contentId,
-        1,
-        `reactionsCount.${reactionEntity.get('reactionName')}`
+        reactionEntity.get('reactionName')
       );
 
-      if (!setReactionsCountNx) {
-        await this._contentCacheAdapter.increaseValue(
+      if (!increaseValue) {
+        await this._contentCacheAdapter.setReactionNameNx(
           contentId,
-          `reactionsCount.${reactionEntity.get('reactionName')}`
+          reactionEntity.get('reactionName')
         );
       }
     }

@@ -1,8 +1,12 @@
+import {
+  CONTENT_CACHE_ADAPTER,
+  IContentCacheAdapter,
+} from '@api/modules/v2-post/domain/infra-adapter-interface';
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { uniq, isBoolean } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
@@ -25,7 +29,9 @@ export class ReportRepository implements IReportRepository {
     private readonly _reportMapper: ReportMapper,
 
     @InjectConnection()
-    private readonly _sequelizeConnection: Sequelize
+    private readonly _sequelizeConnection: Sequelize,
+    @Inject(CONTENT_CACHE_ADAPTER)
+    private readonly _contentCacheAdapter: IContentCacheAdapter
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
@@ -211,21 +217,18 @@ export class ReportRepository implements IReportRepository {
   }
 
   public async checkIsReported(reporterId: string, targetId: string): Promise<boolean> {
-    if (!reporterId || !targetId) {
-      return false;
-    }
-
-    const reportDetails = await this._libReportDetailRepo.findMany({
-      where: { reporterId, targetId },
-      select: ['id'],
-    });
-
-    return !!reportDetails?.length;
+    const reportedIds = await this.getTargetIdsByReporterId(reporterId);
+    return reportedIds.includes(targetId);
   }
 
   public async getTargetIdsByReporterId(reporterId: string): Promise<string[]> {
     if (!reporterId) {
       return [];
+    }
+
+    const targetIdCached = await this._contentCacheAdapter.getUserReportedTargetIds(reporterId);
+    if (targetIdCached?.length) {
+      return targetIdCached;
     }
 
     const reportDetails = await this._libReportDetailRepo.findMany({
@@ -237,6 +240,8 @@ export class ReportRepository implements IReportRepository {
     if (!targetIds?.length) {
       return [];
     }
+
+    await this._contentCacheAdapter.cacheUserReportedContent(reporterId, targetIds);
 
     return targetIds;
   }

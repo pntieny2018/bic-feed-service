@@ -1,9 +1,7 @@
-import { ArticleCacheDto } from '@api/modules/v2-post/application/dto';
 import {
   CONTENT_CACHE_ADAPTER,
   IContentCacheAdapter,
 } from '@api/modules/v2-post/domain/infra-adapter-interface';
-import { ContentMapper } from '@api/modules/v2-post/driven-adapter/mapper';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -88,35 +86,27 @@ export class ArticleDomainService implements IArticleDomainService {
     @Inject(CONTENT_CACHE_ADAPTER)
     private readonly _contentCacheAdapter: IContentCacheAdapter,
 
-    private readonly contentMapper: ContentMapper,
     private readonly event: EventBus
   ) {}
 
   public async getArticleById(articleId: string, authUser: UserDto): Promise<ArticleEntity> {
-    const cachedArticle = await this._contentCacheAdapter.getJson<ArticleCacheDto>(`${articleId}`);
-    if (cachedArticle) {
-      await this._contentValidator.validateReadCacheContent(
-        articleId,
-        authUser,
-        cachedArticle.groups
-      );
-      return this.contentMapper.cacheToDomain(cachedArticle) as ArticleEntity;
-    }
-
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id: articleId,
-        groupArchived: false,
-        excludeReportedByUserId: authUser?.id,
+    const articleEntity = await this._contentRepository.findContentInCache(
+      {
+        where: {
+          id: articleId,
+          groupArchived: false,
+          excludeReportedByUserId: authUser?.id,
+        },
+        include: {
+          shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
+          shouldIncludeLinkPreview: true,
+          shouldIncludeQuiz: true,
+          shouldIncludeCategory: true,
+        },
       },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeCategory: true,
-      },
-    });
+      authUser
+    );
 
     const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
     if (!isArticle || articleEntity.isInArchivedGroups()) {

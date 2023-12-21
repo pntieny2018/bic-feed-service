@@ -1051,6 +1051,7 @@ export class ContentBinding implements IContentBinding {
       isReported: postEntity.get('isReported'),
       commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
       content: postEntity.getContent(),
+      title: postEntity.get('title'),
       createdAt: postEntity.get('createdAt'),
       updatedAt: postEntity.get('updatedAt'),
       createdBy: postEntity.getCreatedBy(),

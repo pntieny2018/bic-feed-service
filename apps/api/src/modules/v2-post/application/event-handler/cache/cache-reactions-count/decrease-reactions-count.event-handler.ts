@@ -37,24 +37,23 @@ export class CacheDecreaseReactionCountEventHandler implements IEventHandler<Rea
 
     const contentId = reactionEntity.get('targetId');
 
-    const contentCache = await this._contentCacheAdapter.getJson(contentId);
+    const contentCache = await this._contentCacheAdapter.getContentCached(contentId);
     if (!contentCache) {
       const contentEntity = await this._contentDomainService.getContentForCacheById(contentId);
       await this._contentCacheAdapter.setCacheContents([contentEntity]);
     } else {
-      const decreasedValue = await this._contentCacheAdapter.decreaseValue(
+      const decreasedValue = await this._contentCacheAdapter.decreaseReactionsCount(
         contentId,
-        `reactionsCount.${reactionEntity.get('reactionName')}`
+        reactionEntity.get('reactionName')
       );
 
       if (!decreasedValue) {
         const reactionsCount = await this._postReactionRepository.getAndCountReactionByContents([
           contentId,
         ]);
-        await this._contentCacheAdapter.setJson(
+        await this._contentCacheAdapter.setReactionsCount(
           contentId,
-          merge({}, ...(reactionsCount.get(contentId) || [])),
-          'reactionsCount'
+          merge({}, ...(reactionsCount.get(contentId) || []))
         );
       }
     }

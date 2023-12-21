@@ -2,7 +2,6 @@ import {
   CONTENT_CACHE_ADAPTER,
   IContentCacheAdapter,
 } from '@api/modules/v2-post/domain/infra-adapter-interface';
-import { ContentMapper } from '@api/modules/v2-post/driven-adapter/mapper';
 import { CONTENT_STATUS } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
@@ -10,7 +9,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { LinkPreviewDto, MediaRequestDto, PostCacheDto } from '../../application/dto';
+import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
   ContentDeleteCacheEvent,
   ContentHasSeenEvent,
@@ -97,30 +96,26 @@ export class PostDomainService implements IPostDomainService {
     @Inject(CONTENT_CACHE_ADAPTER)
     private readonly _contentCacheAdapter: IContentCacheAdapter,
 
-    private readonly contentMapper: ContentMapper,
     private readonly event: EventBus
   ) {}
 
   public async getPostById(postId: string, authUser: UserDto): Promise<PostEntity> {
-    const cachedPost = await this._contentCacheAdapter.getJson<PostCacheDto>(`${postId}`);
-    if (cachedPost) {
-      await this._contentValidator.validateReadCacheContent(postId, authUser, cachedPost.groups);
-      return this.contentMapper.cacheToDomain(cachedPost) as PostEntity;
-    }
-
-    const postEntity = await this._contentRepository.findOne({
-      where: {
-        id: postId,
-        groupArchived: false,
-        excludeReportedByUserId: authUser.id,
+    const postEntity = await this._contentRepository.findContentInCache(
+      {
+        where: {
+          id: postId,
+          groupArchived: false,
+          excludeReportedByUserId: authUser.id,
+        },
+        include: {
+          shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
+          shouldIncludeLinkPreview: true,
+          shouldIncludeQuiz: true,
+        },
       },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-      },
-    });
+      authUser
+    );
 
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isInArchivedGroups()) {

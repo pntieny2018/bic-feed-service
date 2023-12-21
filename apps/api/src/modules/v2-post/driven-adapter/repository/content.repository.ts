@@ -7,6 +7,10 @@ import {
   CONTENT_CACHE_ADAPTER,
   IContentCacheAdapter,
 } from '@api/modules/v2-post/domain/infra-adapter-interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
+} from '@api/modules/v2-post/domain/validator/interface';
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
@@ -26,7 +30,8 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
-import { Inject, Injectable } from '@nestjs/common';
+import { UserDto } from '@libs/service/user';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { flatten } from 'lodash';
 import { Sequelize, Transaction } from 'sequelize';
@@ -67,7 +72,9 @@ export class ContentRepository implements IContentRepository {
     @Inject(CONTENT_CACHE_ADAPTER)
     private readonly _contentCacheAdapter: IContentCacheAdapter,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
-    private readonly _postReactionRepository: IPostReactionRepository
+    private readonly _postReactionRepository: IPostReactionRepository,
+    @Inject(forwardRef(() => CONTENT_VALIDATOR_TOKEN))
+    private readonly _contentValidator: IContentValidator
   ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
@@ -305,13 +312,50 @@ export class ContentRepository implements IContentRepository {
     return this._contentMapper.toDomain(content, contentReactionCounts);
   }
 
+  public async findContentInCache(
+    findOnePostOptions: FindContentProps,
+    user: UserDto
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const cachedContent = await this._contentCacheAdapter.getContentCached(
+      `${findOnePostOptions.where.id}`
+    );
+    if (cachedContent) {
+      await this._contentValidator.validateReadCacheContent(
+        cachedContent.id,
+        user,
+        cachedContent.groups
+      );
+      return this._contentMapper.cacheToDomain(cachedContent);
+    }
+
+    const content = await this._libContentRepo.findOne(findOnePostOptions);
+    if (!content) {
+      return null;
+    }
+    const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents([
+      findOnePostOptions.where.id,
+    ]);
+
+    const contentEntity = this._contentMapper.toDomain(content, contentReactionCounts);
+    await this._contentCacheAdapter.setCacheContents([contentEntity]);
+    return contentEntity;
+  }
+
   public async findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
+    return contents.map((content) => this._contentMapper.toDomain(content));
+  }
+
+  public async findAllInCache(
     findAllPostOptions: FindContentProps,
     offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const contentIds = findAllPostOptions.where.ids;
     const contentsCache: (ArticleCacheDto | PostCacheDto | SeriesCacheDto)[] = flatten(
-      await this._contentCacheAdapter.mgetJson(contentIds)
+      await this._contentCacheAdapter.getContentsCached(contentIds)
     );
 
     const cacheContentsEntity = contentsCache.map((content) =>

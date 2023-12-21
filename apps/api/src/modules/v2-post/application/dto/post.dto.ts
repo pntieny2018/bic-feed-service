@@ -114,6 +114,7 @@ export class PostCacheDto {
   public isHidden: boolean;
   public groups: string[];
   public content: string;
+  public title: string;
   public createdAt: Date;
   public updatedAt: Date;
   public publishedAt: Date;
