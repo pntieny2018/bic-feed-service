@@ -1,6 +1,6 @@
 import { Process, Processor } from '@nestjs/bull';
 import { BULL_MODULE_QUEUE_PROCESS } from '@nestjs/bull/dist/bull.constants';
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { EventsHandler, IEvent } from '@nestjs/cqrs';
 import { EventPattern } from '@nestjs/microservices';
 import * as Sentry from '@sentry/node';
@@ -9,7 +9,7 @@ import { v4 } from 'uuid';
 
 import { HEADER_REQ_ID } from '../../../common/src/constants';
 import { IEventPayload } from '../event';
-import { IKafkaConsumerMessage, IKafkaService, KAFKA_SERVICE_TOKEN } from '../kafka';
+import { IKafkaConsumerMessage } from '../kafka';
 import { Job, JobWithContext } from '../queue';
 
 import { CONTEXT, getContext, getDebugContext } from './log.context';
@@ -160,13 +160,11 @@ export function ProcessorAndLog(queueName: string) {
 }
 
 export function EventPatternAndLog(topicName: string): MethodDecorator {
-  const Injector = Inject(KAFKA_SERVICE_TOKEN);
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor): void {
     const originalHandler = descriptor.value;
     const className = target.constructor.name;
     const logger = new Logger(className);
 
-    Injector(target, '_kafkaService');
     descriptor.value = async function (message: IKafkaConsumerMessage<unknown>): Promise<any> {
       const { headers } = message;
       const requestId = headers?.[HEADER_REQ_ID] || v4();
@@ -175,7 +173,6 @@ export function EventPatternAndLog(topicName: string): MethodDecorator {
       cls.set(CLS_ID, requestId);
 
       const { topic, partition, offset } = message;
-      const kafkaService = this._kafkaService as IKafkaService;
 
       try {
         logger.debug(`EventPattern start: ${JSON.stringify({ topic, message })}`);
@@ -185,8 +182,6 @@ export function EventPatternAndLog(topicName: string): MethodDecorator {
       } catch (error) {
         logger.error(`EventPattern error: ${JSON.stringify({ topic, error: error.message })}`);
         Sentry.captureException(error);
-      } finally {
-        await kafkaService.commitOffsets(topic, partition, offset);
       }
     };
 
