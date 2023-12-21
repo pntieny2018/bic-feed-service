@@ -25,7 +25,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       return;
     }
 
-    await this._queueAdapter.addPublishRemoveContentToNewsfeedJob({
+    await this._queueAdapter.addContentChangedJob({
       contentId,
       newGroupIds,
       oldGroupIds,

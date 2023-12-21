@@ -11,7 +11,7 @@ import { IProcessor } from '../interface';
  * TODO: Move commands to worker folder
  */
 @Component({ injectToken: CONTENT_SCHEDULED_PROCESSOR_TOKEN })
-export class ContentProcessor implements IProcessor {
+export class ContentScheduledProcessor implements IProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   public async processMessage(job: JobPro<ContentScheduledJobDto>): Promise<void> {

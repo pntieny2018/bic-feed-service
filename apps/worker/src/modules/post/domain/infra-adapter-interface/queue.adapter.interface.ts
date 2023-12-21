@@ -7,7 +7,7 @@ export type ContentScheduledJobPayload = {
   ownerId: string;
 };
 
-export type PublishOrRemoveContentJobPayload = {
+export type ContentChangedJobPayload = {
   contentId: string;
   newGroupIds: string[];
   oldGroupIds: string[];
