@@ -1,84 +1,39 @@
 import { ArrayHelper } from '@libs/common/helpers';
-import { KAFKA_TOPIC } from '@libs/infra/kafka';
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
-import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
+import { IQueueAdapter, QUEUE_ADAPTER } from '../infra-adapter-interface';
+import { IUserNewsfeedRepository, USER_NEWSFEED_REPOSITORY_TOKEN } from '../repositoty-interface';
 
 import { DispatchContentIdToGroupsProps, INewsfeedDomainService } from './interface';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
-  private readonly _logger = new Logger(NewsfeedDomainService.name);
-
   public constructor(
-    @Inject(GROUP_ADAPTER)
-    private readonly _groupAdapter: IGroupAdapter,
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    @Inject(QUEUE_ADAPTER)
+    private readonly _queueAdapter: IQueueAdapter,
+    @Inject(USER_NEWSFEED_REPOSITORY_TOKEN)
+    private readonly _userNewsfeedRepo: IUserNewsfeedRepository
   ) {}
 
   public async dispatchContentIdToGroups(input: DispatchContentIdToGroupsProps): Promise<void> {
     const { contentId, newGroupIds, oldGroupIds } = input;
+    const defaultLimit = 1000;
 
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
     const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
 
-    if (attachedGroupIds.length) {
-      let cursorPagination = null;
-      while (true) {
-        const { list: userIds, cursor } = await this._groupAdapter.getUserIdsInGroups({
-          groupIds: attachedGroupIds,
-          notInGroupIds: oldGroupIds,
-          limit: 1000,
-          after: cursorPagination,
-        });
-        if (userIds.length) {
-          await this._kafkaAdapter.sendMessages(
-            KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
-            userIds.map((userId) => ({
-              key: userId,
-              value: {
-                contentId: contentId,
-                userId,
-                action: 'publish',
-              },
-            }))
-          );
-        }
-        if (userIds.length === 0 || userIds.length < 1000) {
-          break;
-        }
-        cursorPagination = cursor;
-      }
+    if (!attachedGroupIds.length && !detachedGroupIds.length) {
+      return;
     }
 
-    if (detachedGroupIds.length) {
-      let cursorPagination = null;
-      while (true) {
-        const { list: userIds, cursor } = await this._groupAdapter.getUserIdsInGroups({
-          groupIds: detachedGroupIds,
-          notInGroupIds: newGroupIds,
-          after: cursorPagination,
-          limit: 1000,
-        });
-        if (userIds.length) {
-          await this._kafkaAdapter.sendMessages(
-            KAFKA_TOPIC.CONTENT.PUBLISH_OR_REMOVE_TO_NEWSFEED,
-            userIds.map((userId) => ({
-              key: userId,
-              value: {
-                contentId: contentId,
-                userId,
-                action: 'remove',
-              },
-            }))
-          );
-        }
-        if (userIds.length === 0 || userIds.length < 1000) {
-          break;
-        }
-        cursorPagination = cursor;
-      }
-    }
+    await this._queueAdapter.addPublishRemoveContentToNewsfeedJob({
+      contentId,
+      newGroupIds,
+      oldGroupIds,
+      limit: defaultLimit,
+    });
+  }
+
+  public async attachContentIdToUserId(contentId: string, userId: string): Promise<void> {
+    return this._userNewsfeedRepo.attachContentIdToUserId(contentId, userId);
   }
 }

@@ -2,7 +2,10 @@ import { JobWithConfiguration, QueueName } from '@libs/infra/v2-queue';
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
-import { CONTENT_SCHEDULED_PUBLISHER_TOKEN } from '../provider';
+import {
+  CONTENT_SCHEDULED_PUBLISHER_TOKEN,
+  FOLLOW_UNFOLLOW_GROUPS_PUBLISHER_TOKEN,
+} from '../provider';
 
 import { IPublisher } from './infra-interface';
 import { IPublisherDomainService } from './interface';
@@ -17,6 +20,8 @@ export class PublisherDomainService implements IPublisherDomainService {
     switch (queueName) {
       case QueueName.CONTENT_SCHEDULED:
         return CONTENT_SCHEDULED_PUBLISHER_TOKEN;
+      case QueueName.FOLLOW_UNFOLLOW_GROUPS:
+        return FOLLOW_UNFOLLOW_GROUPS_PUBLISHER_TOKEN;
       default:
         throw new Error(`Unknown queue name: ${queueName}`);
     }

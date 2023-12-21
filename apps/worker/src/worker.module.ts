@@ -12,7 +12,6 @@ import { v4 as uuid } from 'uuid';
 
 import { HealthModule } from './modules/health/health.module';
 import { PostModule } from './modules/post/post.module';
-import { ProcessorModule } from './modules/queue-processor/processor.module';
 import { WorkerQueuePublisherModule } from './modules/queue-publisher/queue-publisher.module';
 import { WorkerLibModule } from './worker.lib.module';
 
@@ -39,7 +38,6 @@ import { WorkerLibModule } from './worker.lib.module';
     HealthModule,
     KafkaModule,
     PostgresModule,
-    ProcessorModule,
     PostModule,
     ScheduleModule.forRoot(),
     WorkerLibModule,

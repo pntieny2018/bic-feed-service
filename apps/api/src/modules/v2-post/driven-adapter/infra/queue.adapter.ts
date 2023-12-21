@@ -5,12 +5,11 @@ import {
   PUBLISHER_APPLICATION_SERVICE,
   IPublisherApplicationService,
 } from '../../../queue-publisher/application/interface';
+import { QuizGenerateJobDto, QuizParticipantResultJobDto } from '../../application/dto';
 import {
-  ContentScheduledJobDto,
-  QuizGenerateJobDto,
-  QuizParticipantResultJobDto,
-} from '../../application/dto';
-import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
+  IQueueAdapter,
+  PublishOrRemoveContentJobPayload,
+} from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
@@ -46,13 +45,16 @@ export class QueueAdapter implements IQueueAdapter {
     );
   }
 
-  public async addContentScheduledJobs(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._publisherAppService.addBulkJobs<ContentScheduledJobDto>(
-      QueueName.CONTENT_SCHEDULED,
-      payloads.map(({ contentId, ownerId }) => ({
-        data: { contentId, ownerId },
-        opts: { jobId: contentId },
-      }))
+  public async addPublishRemoveContentToNewsfeedJob(
+    payload: PublishOrRemoveContentJobPayload
+  ): Promise<void> {
+    const { contentId } = payload;
+    await this._publisherAppService.addJob<PublishOrRemoveContentJobPayload>(
+      QueueName.PUBLISH_OR_REMOVE_CONTENT_TO_NEWSFEED,
+      {
+        data: payload,
+        opts: { group: { id: contentId } },
+      }
     );
   }
 }

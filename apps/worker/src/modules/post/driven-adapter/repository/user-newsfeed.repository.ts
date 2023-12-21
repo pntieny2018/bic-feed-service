@@ -38,4 +38,42 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
       },
     });
   }
+
+  public async attachContentIdToUserIds(contentId: string, userIds: string[]): Promise<void> {
+    await this._libUserNewsfeedRepo.bulkCreate(
+      userIds.map((userId) => ({
+        postId: contentId,
+        userId,
+      })),
+      { ignoreDuplicates: true }
+    );
+  }
+
+  public async detachContentIdFromUserIds(contentId: string, userIds: string[]): Promise<void> {
+    await this._libUserNewsfeedRepo.delete({
+      where: {
+        postId: contentId,
+        userId: userIds,
+      },
+    });
+  }
+
+  public async attachContentIdsToUserId(contentIds: string[], userId: string): Promise<void> {
+    await this._libUserNewsfeedRepo.bulkCreate(
+      contentIds.map((contentId) => ({
+        postId: contentId,
+        userId,
+      })),
+      { ignoreDuplicates: true }
+    );
+  }
+
+  public async detachContentIdsFromUserId(contentIds: string[], userId: string): Promise<void> {
+    await this._libUserNewsfeedRepo.delete({
+      where: {
+        postId: contentIds,
+        userId: userId,
+      },
+    });
+  }
 }

@@ -47,9 +47,28 @@ export class ContentRepository implements IContentRepository {
     ids: string[];
     cursor: string;
   }> {
-    const { groupIds, limit, after } = props;
+    const { groupIds, notInGroupIds, limit, after } = props;
     const { schema } = getDatabaseConfig();
     const postGroupTable = PostGroupModel.tableName;
+
+    let whereRaw = `EXISTS (          
+                            SELECT 1
+                            FROM ${schema}.${postGroupTable} g            
+                            WHERE g.post_id = "PostModel".id 
+                            AND g.group_id IN (${groupIds
+                              .map((item) => this._sequelizeConnection.escape(item))
+                              .join(',')})
+                    )`;
+    if (notInGroupIds && notInGroupIds.length) {
+      whereRaw += ` AND NOT EXISTS (
+                            SELECT 1
+                            FROM ${schema}.${postGroupTable} g2
+                            WHERE g2.post_id = "PostModel".id
+                            AND g2.group_id IN (${notInGroupIds
+                              .map((item) => this._sequelizeConnection.escape(item))
+                              .join(',')})
+                    )`;
+    }
 
     const rows = await this._libContentRepo.cursorPaginate(
       {
@@ -58,14 +77,7 @@ export class ContentRepository implements IContentRepository {
           status: CONTENT_STATUS.PUBLISHED,
           isHidden: false,
         },
-        whereRaw: `EXISTS (          
-                            SELECT 1
-                            FROM  ${schema}.${postGroupTable} g            
-                            WHERE g.post_id = "PostModel".id  AND g.group_id IN (${groupIds
-                              .map((item) => this._sequelizeConnection.escape(item))
-                              .join(',')})
-                            AND is_archived = false
-                  )`,
+        whereRaw,
       },
       {
         after,
