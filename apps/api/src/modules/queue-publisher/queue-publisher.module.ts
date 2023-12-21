@@ -9,7 +9,7 @@ import { QueueAdapters } from './domain/infra-interface';
 import { PUBLISHER_DOMAIN_SERVICE_TOKEN } from './domain/interface';
 import { PublisherDomainService } from './domain/publisher-domain.service';
 import {
-  PublishOrRemoveContentPublisher,
+  ContentChangedPublisher,
   QuizParticipantPublisher,
   QuizPendingPublisher,
 } from './driven-adapter/infra';
@@ -18,7 +18,7 @@ import { QUEUE_ADAPTER_SERVICES } from './provider';
 const publisherInstances = [
   QuizPendingPublisher,
   QuizParticipantPublisher,
-  PublishOrRemoveContentPublisher,
+  ContentChangedPublisher,
 ];
 
 const createQueueServiceProviders = (adapters: QueueAdapters[]): Provider[] => {

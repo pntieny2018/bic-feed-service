@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
-  PUBLISH_REMOVE_CONTENT_PUBLISHER_TOKEN,
+  CONTENT_CHANGED_PUBLISHER_TOKEN,
   QUIZ_PARTICIPANT_PUBLISHER_TOKEN,
   QUIZ_PENDING_PUBLISHER_TOKEN,
 } from '../provider';
@@ -23,8 +23,8 @@ export class PublisherDomainService implements IPublisherDomainService {
         return QUIZ_PENDING_PUBLISHER_TOKEN;
       case QueueName.QUIZ_PARTICIPANT_RESULT:
         return QUIZ_PARTICIPANT_PUBLISHER_TOKEN;
-      case QueueName.PUBLISH_OR_REMOVE_CONTENT_TO_NEWSFEED:
-        return PUBLISH_REMOVE_CONTENT_PUBLISHER_TOKEN;
+      case QueueName.CONTENT_CHANGED:
+        return CONTENT_CHANGED_PUBLISHER_TOKEN;
       default:
         throw new Error(`Unknown queue name: ${queueName}`);
     }

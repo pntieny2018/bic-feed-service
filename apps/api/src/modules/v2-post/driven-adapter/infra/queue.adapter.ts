@@ -6,10 +6,7 @@ import {
   IPublisherApplicationService,
 } from '../../../queue-publisher/application/interface';
 import { QuizGenerateJobDto, QuizParticipantResultJobDto } from '../../application/dto';
-import {
-  IQueueAdapter,
-  PublishOrRemoveContentJobPayload,
-} from '../../domain/infra-adapter-interface';
+import { IQueueAdapter, ContentChangedJobPayload } from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
@@ -45,16 +42,11 @@ export class QueueAdapter implements IQueueAdapter {
     );
   }
 
-  public async addPublishRemoveContentToNewsfeedJob(
-    payload: PublishOrRemoveContentJobPayload
-  ): Promise<void> {
+  public async addContentChangedJob(payload: ContentChangedJobPayload): Promise<void> {
     const { contentId } = payload;
-    await this._publisherAppService.addJob<PublishOrRemoveContentJobPayload>(
-      QueueName.PUBLISH_OR_REMOVE_CONTENT_TO_NEWSFEED,
-      {
-        data: payload,
-        opts: { group: { id: contentId } },
-      }
-    );
+    await this._publisherAppService.addJob<ContentChangedJobPayload>(QueueName.CONTENT_CHANGED, {
+      data: payload,
+      opts: { group: { id: contentId } },
+    });
   }
 }

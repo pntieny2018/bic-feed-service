@@ -24,9 +24,9 @@ import {
 } from './driving-apdater/controller';
 import { IProcessor, WorkerAdapters } from './driving-apdater/queue-processor/interface';
 import {
-  ContentProcessor,
+  ContentScheduledProcessor,
   FollowUnFollowGroupsProcessor,
-  PublishRemoveContentProcessor,
+  ContentChangedProcessor,
   QuizParticipantProcessor,
   QuizPendingProcessor,
 } from './driving-apdater/queue-processor/processors';
@@ -40,10 +40,10 @@ import {
 } from './provider';
 
 const processorInstances = [
-  ContentProcessor,
+  ContentScheduledProcessor,
   QuizPendingProcessor,
   QuizParticipantProcessor,
-  PublishRemoveContentProcessor,
+  ContentChangedProcessor,
   FollowUnFollowGroupsProcessor,
 ];
 
