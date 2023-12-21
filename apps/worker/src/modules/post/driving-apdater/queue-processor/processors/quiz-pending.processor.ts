@@ -4,8 +4,8 @@ import { Component } from '@libs/infra/v2-queue/decorators';
 import { JobPro } from '@libs/infra/v2-queue/shared';
 import { CommandBus } from '@nestjs/cqrs';
 
+import { QUIZ_PENDING_PROCESSOR_TOKEN } from '../../../provider';
 import { IProcessor } from '../interface';
-import { QUIZ_PENDING_PROCESSOR_TOKEN } from '../provider';
 
 /**
  * TODO: Move commands to worker folder

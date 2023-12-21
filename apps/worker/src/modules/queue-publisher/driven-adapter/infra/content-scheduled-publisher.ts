@@ -2,7 +2,7 @@ import { CONTENT_SCHEDULED_SERVICE_TOKEN, IQueueService } from '@libs/infra/v2-q
 import { Component } from '@libs/infra/v2-queue/decorators';
 import { Inject } from '@nestjs/common';
 
-import { CONTENT_SCHEDULED_PUBLISHER_TOKEN } from '../../../provider';
+import { CONTENT_SCHEDULED_PUBLISHER_TOKEN } from '../../provider';
 
 import { BasePublisher } from './base-publisher';
 

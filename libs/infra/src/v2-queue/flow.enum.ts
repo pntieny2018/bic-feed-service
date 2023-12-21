@@ -1,3 +1,3 @@
-export enum QueueFlowName {
+export enum FlowName {
   PUBLISH_OR_REMOVE_POST_TO_NEWSFEED = 'PUBLISH_OR_REMOVE_POST_TO_NEWSFEED',
 }

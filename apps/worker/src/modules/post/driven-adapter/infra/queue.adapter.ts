@@ -5,7 +5,11 @@ import {
   PUBLISHER_APPLICATION_SERVICE,
   IPublisherApplicationService,
 } from '../../../queue-publisher/application/interface';
-import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
+import {
+  ContentScheduledJobPayload,
+  FollowUnfollowGroupsJobPayload,
+  IQueueAdapter,
+} from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
@@ -20,6 +24,17 @@ export class QueueAdapter implements IQueueAdapter {
         data: { contentId, ownerId },
         opts: { jobId: contentId },
       }))
+    );
+  }
+
+  public async addFollowUnfollowGroupsJob(payload: FollowUnfollowGroupsJobPayload): Promise<void> {
+    const { userId } = payload;
+    await this._publisherAppService.addJob<FollowUnfollowGroupsJobPayload>(
+      QueueName.FOLLOW_UNFOLLOW_GROUPS,
+      {
+        data: payload,
+        opts: { group: { id: userId } },
+      }
     );
   }
 }

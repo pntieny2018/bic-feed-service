@@ -7,6 +7,7 @@ import {
 
 export type GetCursorPaginationPostIdsInGroup = {
   groupIds: string[];
+  notInGroupIds?: string[];
   limit: number;
   after: string;
 };

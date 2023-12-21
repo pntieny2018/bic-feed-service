@@ -1,11 +1,19 @@
 import { FlowOpts, QueueBaseOptions } from 'bullmq';
 
-import { FlowJobPro } from '../shared';
+import { JobsProOptions } from '../shared';
 
-export interface IQueueFlowServiceConfig {
-  queueFlowConfig: QueueBaseOptions;
+export interface IFlowServiceConfig {
+  flowConfig: QueueBaseOptions;
 }
 
-export interface IQueueFlowService {
-  add(flow: FlowJobPro, opts?: FlowOpts): Promise<void>;
+export interface IFlowJobWithConfiguration<T, U> {
+  name: string;
+  queueName: string;
+  data?: T;
+  opts?: Omit<JobsProOptions, 'repeat'>;
+  children?: IFlowJobWithConfiguration<U, T>[];
+}
+
+export interface IFlowService {
+  add<T, U>(flow: IFlowJobWithConfiguration<T, U>, opts?: FlowOpts): Promise<void>;
 }
