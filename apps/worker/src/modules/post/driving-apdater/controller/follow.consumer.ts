@@ -23,13 +23,13 @@ export class FollowConsumer {
   ): Promise<void> {
     const { userId, groupIds, verb } = message.value;
     if (verb === FollowAction.FOLLOW) {
-      await this._commandBus.execute<UserFollowGroupCommand>(
+      return this._commandBus.execute<UserFollowGroupCommand>(
         new UserFollowGroupCommand({ userId, groupIds })
       );
     }
 
     if (verb === FollowAction.UNFOLLOW) {
-      await this._commandBus.execute<UserUnfollowGroupCommand>(
+      return this._commandBus.execute<UserUnfollowGroupCommand>(
         new UserUnfollowGroupCommand({ userId, groupIds })
       );
     }

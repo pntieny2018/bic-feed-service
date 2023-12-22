@@ -23,7 +23,7 @@ export class GroupConsumer {
     message: IKafkaConsumerMessage<GroupPrivacyUpdatedMessagePayload>
   ): Promise<void> {
     const { value } = message;
-    await this._commandBus.execute<ProcessGroupPrivacyUpdatedCommand, void>(
+    return this._commandBus.execute<ProcessGroupPrivacyUpdatedCommand, void>(
       new ProcessGroupPrivacyUpdatedCommand(value)
     );
   }
@@ -34,7 +34,7 @@ export class GroupConsumer {
     message: IKafkaConsumerMessage<GroupStateUpdatedMessagePayload>
   ): Promise<void> {
     const { data } = message.value;
-    await this._commandBus.execute<ProcessGroupStateUpdatedCommand, void>(
+    return this._commandBus.execute<ProcessGroupStateUpdatedCommand, void>(
       new ProcessGroupStateUpdatedCommand({
         groupIds: data.object.groups.map((group) => group.id),
         verb: data.verb,

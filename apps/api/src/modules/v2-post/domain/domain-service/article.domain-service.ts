@@ -218,7 +218,7 @@ export class ArticleDomainService implements IArticleDomainService {
     return articleEntity;
   }
 
-  public async schedule(inputData: ScheduleArticleProps): Promise<ArticleEntity> {
+  public async schedule(inputData: ScheduleArticleProps): Promise<void> {
     const { payload, actor } = inputData;
     const { id, scheduledAt } = payload;
 
@@ -255,8 +255,6 @@ export class ArticleDomainService implements IArticleDomainService {
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
     }
-
-    return articleEntity;
   }
 
   public async update(input: UpdateArticleProps): Promise<ArticleEntity> {

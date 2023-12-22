@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { instanceToInstance, plainToInstance } from 'class-transformer';
+import { instanceToInstance } from 'class-transformer';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
@@ -29,7 +29,7 @@ import {
   ScheduleArticleCommand,
   UpdateArticleCommand,
 } from '../../application/command/article';
-import { ArticleDto, CreateDraftPostDto } from '../../application/dto';
+import { ArticleDto } from '../../application/dto';
 import { FindArticleQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
@@ -53,8 +53,8 @@ export class ArticleController {
     @Param('articleId', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const data = await this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
-    return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    const data = this._queryBus.execute(new FindArticleQuery({ articleId: id, authUser }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Create draft article' })
@@ -69,10 +69,10 @@ export class ArticleController {
     success: 'message.article.created_success',
   })
   public async create(@AuthUser() authUser: UserDto): Promise<ArticleDto> {
-    const data = await this._commandBus.execute<CreateDraftArticleCommand, CreateDraftPostDto>(
+    const data = this._commandBus.execute<CreateDraftArticleCommand, ArticleDto>(
       new CreateDraftArticleCommand({ authUser })
     );
-    return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Delete article' })
@@ -89,7 +89,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('articleId', ParseUUIDPipe) id: string
   ): Promise<void> {
-    await this._commandBus.execute<DeleteArticleCommand, void>(
+    return this._commandBus.execute<DeleteArticleCommand, void>(
       new DeleteArticleCommand({
         id,
         actor: user,
@@ -111,7 +111,7 @@ export class ArticleController {
     @Body() updateData: UpdateArticleRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
-    await this._commandBus.execute<AutoSaveArticleCommand, void>(
+    return this._commandBus.execute<AutoSaveArticleCommand, void>(
       new AutoSaveArticleCommand({
         ...updateData,
         id: articleId,
@@ -138,7 +138,7 @@ export class ArticleController {
     @Body() updateData: UpdateArticleRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const articleDto = await this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
+    const articleDto = this._commandBus.execute<UpdateArticleCommand, ArticleDto>(
       new UpdateArticleCommand({
         ...updateData,
         id: articleId,
@@ -167,7 +167,7 @@ export class ArticleController {
     @Body() publishData: PublishArticleRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
-    const articleDto = await this._commandBus.execute<PublishArticleCommand, ArticleDto>(
+    const articleDto = this._commandBus.execute<PublishArticleCommand, ArticleDto>(
       new PublishArticleCommand({
         ...publishData,
         id: articleId,
@@ -195,7 +195,7 @@ export class ArticleController {
     @AuthUser() user: UserDto
   ): Promise<void> {
     const { audience } = scheduleData;
-    await this._commandBus.execute<ScheduleArticleCommand, ArticleDto>(
+    return this._commandBus.execute<ScheduleArticleCommand, void>(
       new ScheduleArticleCommand({
         ...scheduleData,
         id: articleId,
