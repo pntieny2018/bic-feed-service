@@ -3,7 +3,6 @@ import { GROUP_SERVICE_TOKEN } from '@libs/service/group/src/group.service.inter
 import { Module } from '@nestjs/common';
 
 @Module({
-  imports: [],
   providers: [
     {
       provide: GROUP_SERVICE_TOKEN,

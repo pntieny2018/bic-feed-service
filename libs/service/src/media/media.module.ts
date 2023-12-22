@@ -3,7 +3,6 @@ import { MediaService } from '@libs/service/media/src/media.service';
 import { Module } from '@nestjs/common';
 
 @Module({
-  imports: [],
   providers: [
     {
       provide: MEDIA_SERVICE_TOKEN,
