@@ -88,11 +88,11 @@ export class RedisService {
   }
 
   public async reset(): Promise<'OK'> {
-    return await this._store.flushdb();
+    return this._store.flushdb();
   }
 
   public async keys(pattern: string): Promise<string[]> {
-    return await this._store.keys(pattern);
+    return this._store.keys(pattern);
   }
 
   public async existKey(key: string): Promise<boolean> {
