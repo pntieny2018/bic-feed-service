@@ -12,7 +12,7 @@ export class ContentChangedProcessor implements IProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   public async processMessage(job: JobPro<ContentChangedJobPayload>): Promise<void> {
-    await this._commandBus.execute<AttachDetachContentNewsfeedCommand, void>(
+    this._commandBus.execute<AttachDetachContentNewsfeedCommand, void>(
       new AttachDetachContentNewsfeedCommand(job.data)
     );
   }

@@ -69,7 +69,7 @@ export class ReactionController {
     @Body() createReactionDto: CreateReactionRequestDto
   ): Promise<ReactionDto> {
     const { target, targetId, reactionName } = createReactionDto;
-    const reactionDto = await this._commandBus.execute(
+    const reactionDto = this._commandBus.execute(
       new CreateReactionCommand({ target, targetId, reactionName, authUser: user })
     );
 
@@ -87,8 +87,6 @@ export class ReactionController {
     @AuthUser() user: UserDto,
     @Body() deleteReactionDto: DeleteReactionRequestDto
   ): Promise<void> {
-    await this._commandBus.execute(
-      new DeleteReactionCommand({ ...deleteReactionDto, userId: user.id })
-    );
+    this._commandBus.execute(new DeleteReactionCommand({ ...deleteReactionDto, userId: user.id }));
   }
 }

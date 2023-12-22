@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
+import { instanceToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
@@ -61,11 +61,11 @@ export class PostController {
   ): Promise<CreateDraftPostDto> {
     const { audience } = createDraftPostRequestDto;
 
-    const data = await this._commandBus.execute<CreateDraftPostCommand, CreateDraftPostDto>(
+    const data = this._commandBus.execute<CreateDraftPostCommand, CreateDraftPostDto>(
       new CreateDraftPostCommand({ groupIds: audience.groupIds, authUser })
     );
 
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Update post' })
@@ -96,7 +96,7 @@ export class PostController {
     if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Publish post.' })
@@ -126,7 +126,7 @@ export class PostController {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
 
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Auto save post' })
@@ -159,8 +159,8 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto
   ): Promise<PostDto> {
-    const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    const data = this._queryBus.execute(new FindPostQuery({ postId, authUser }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Schedule post' })
@@ -175,7 +175,7 @@ export class PostController {
     @Body() scheduleData: SchedulePostRequestDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    await this._commandBus.execute<SchedulePostCommand, void>(
+    this._commandBus.execute<SchedulePostCommand, void>(
       new SchedulePostCommand({
         id: postId,
         content: scheduleData.content,
@@ -201,6 +201,6 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<void> {
-    await this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
+    this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
   }
 }
