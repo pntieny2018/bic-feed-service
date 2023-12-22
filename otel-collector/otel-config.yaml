@@ -12,10 +12,9 @@ exporters:
     loglevel: debug
   otlp/elastic:
   # Elastic APM server https endpoint without the "https://" prefix
-    endpoint: "8c3e227ed1a04ce1bb4967fe35381c70.apm.us-central1.gcp.cloud.es.io:443"
-    headers:
-      # Elastic APM Server secret token
-      Authorization: "Bearer vMyPaQbMFhKw2ksyNb"
+    endpoint: "http://apm-server:8200"
+    tls:
+      insecure: true
 service:
   pipelines:
     traces:
