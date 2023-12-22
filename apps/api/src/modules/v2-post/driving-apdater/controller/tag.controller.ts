@@ -125,6 +125,6 @@ export class TagController {
     @AuthUser() user: UserDto,
     @Param('tagId', ParseUUIDPipe) tagId: string
   ): Promise<void> {
-    this._commandBus.execute(new DeleteTagCommand({ id: tagId, actor: user }));
+    await this._commandBus.execute(new DeleteTagCommand({ id: tagId, actor: user }));
   }
 }

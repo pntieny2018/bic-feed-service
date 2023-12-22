@@ -78,7 +78,7 @@ export class CommentController {
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getListCommentsDto: GetListCommentsDto
   ): Promise<FindCommentsPaginationDto> {
-    const data = this._queryBus.execute(
+    const data = await this._queryBus.execute(
       new FindCommentsPaginationQuery({
         authUser: user,
         ...getListCommentsDto,
@@ -97,7 +97,7 @@ export class CommentController {
     @AuthUser() authUser: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<CommentExtendedDto> {
-    const commentDto = this._queryBus.execute(
+    const commentDto = await this._queryBus.execute(
       new GetMyReportedCommentQuery({
         authUser,
         commentId,
@@ -116,7 +116,7 @@ export class CommentController {
     @AuthUser() authUser: UserDto,
     @Query() query: GetMyReportedCommentsRequestDto
   ): Promise<PaginatedResponse<ReportTargetDto>> {
-    const commentsReported = this._queryBus.execute(
+    const commentsReported = await this._queryBus.execute(
       new GetMyReportedCommentsQuery({
         authUser,
         ...query,
@@ -137,7 +137,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query(GetCommentsAroundIdPipe) getCommentsAroundIdDto: GetCommentsAroundIdDto
   ): Promise<FindCommentsAroundIdDto> {
-    const data = this._queryBus.execute(
+    const data = await this._queryBus.execute(
       new FindCommentsAroundIdQuery({ authUser: user, commentId, ...getCommentsAroundIdDto })
     );
     return instanceToInstance(data, {
@@ -159,7 +159,7 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentRequestDto
   ): Promise<CommentBaseDto> {
-    const data = this._commandBus.execute<CreateCommentCommand, CommentBaseDto>(
+    const data = await this._commandBus.execute<CreateCommentCommand, CommentBaseDto>(
       new CreateCommentCommand({
         ...createCommentDto,
         contentId: createCommentDto.postId,
@@ -191,7 +191,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) replyCommentRequestDto: ReplyCommentRequestDto
   ): Promise<CommentBaseDto> {
-    const data = this._commandBus.execute<ReplyCommentCommand, CommentBaseDto>(
+    const data = await this._commandBus.execute<ReplyCommentCommand, CommentBaseDto>(
       new ReplyCommentCommand({
         ...replyCommentRequestDto,
         contentId: replyCommentRequestDto.postId,
@@ -224,7 +224,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentRequestDto: UpdateCommentRequestDto
   ): Promise<void> {
-    this._commandBus.execute<UpdateCommentCommand, void>(
+    await this._commandBus.execute<UpdateCommentCommand, void>(
       new UpdateCommentCommand({
         ...updateCommentRequestDto,
         commentId,
@@ -254,7 +254,7 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<void> {
-    this._commandBus.execute<DeleteCommentCommand, void>(
+    await this._commandBus.execute<DeleteCommentCommand, void>(
       new DeleteCommentCommand({
         commentId,
         actor: user,
@@ -275,7 +275,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() input: CreateReportDto
   ): Promise<void> {
-    this._commandBus.execute(
+    return this._commandBus.execute(
       new ReportCommentCommand({
         authUser,
         commentId,

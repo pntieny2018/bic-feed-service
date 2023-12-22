@@ -16,7 +16,7 @@ export class QuizParticipantProcessor implements IProcessor {
 
   public async processMessage(job: JobPro<QuizParticipantResultJobDto>): Promise<void> {
     const { quizParticipantId } = job.data;
-    this._commandBus.execute<ProcessQuizParticipantResultCommand, void>(
+    await this._commandBus.execute<ProcessQuizParticipantResultCommand, void>(
       new ProcessQuizParticipantResultCommand({ quizParticipantId })
     );
   }

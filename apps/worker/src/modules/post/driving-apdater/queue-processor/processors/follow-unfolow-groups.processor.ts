@@ -12,7 +12,7 @@ export class FollowUnFollowGroupsProcessor implements IProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
 
   public async processMessage(job: JobPro<FollowUnfollowGroupsJobPayload>): Promise<void> {
-    this._commandBus.execute<DispatchFollowUnfollowGroupsCommand, void>(
+    await this._commandBus.execute<DispatchFollowUnfollowGroupsCommand, void>(
       new DispatchFollowUnfollowGroupsCommand(job.data)
     );
   }

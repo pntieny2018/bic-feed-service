@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { instanceToInstance } from 'class-transformer';
+import { instanceToInstance, plainToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
@@ -80,7 +80,7 @@ export class QuizController {
     @AuthUser() user: UserDto,
     @Query() getQuizzesRequestDto: GetQuizzesRequestDto
   ): Promise<FindQuizzesDto> {
-    const data = this._queryBus.execute(
+    const data = await this._queryBus.execute(
       new FindQuizzesQuery({ authUser: user, ...getQuizzesRequestDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -100,11 +100,11 @@ export class QuizController {
     @AuthUser() authUser: UserDto,
     @Body() createQuizDto: CreateQuizRequestDto
   ): Promise<QuizDto> {
-    const quiz = this._commandBus.execute<CreateQuizCommand, QuizDto>(
+    const quiz = await this._commandBus.execute<CreateQuizCommand, QuizDto>(
       new CreateQuizCommand({ ...createQuizDto, authUser })
     );
 
-    return instanceToInstance(quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Generate a quiz' })
@@ -119,11 +119,11 @@ export class QuizController {
     @AuthUser() authUser: UserDto,
     @Body() generateQuizDto: GenerateQuizRequestDto
   ): Promise<QuizDto> {
-    const quiz = this._commandBus.execute<GenerateQuizCommand, QuizDto>(
+    const quiz = await this._commandBus.execute<GenerateQuizCommand, QuizDto>(
       new GenerateQuizCommand({ ...generateQuizDto, quizId, authUser })
     );
 
-    return instanceToInstance(quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Get quiz summary' })
@@ -137,7 +137,8 @@ export class QuizController {
     @Param('contentId', ParseUUIDPipe) contentId: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizSummaryDto> {
-    return this._queryBus.execute(new FindQuizSummaryQuery({ authUser, contentId }));
+    const data = await this._queryBus.execute(new FindQuizSummaryQuery({ authUser, contentId }));
+    return data;
   }
 
   @ApiOperation({ summary: 'Get quiz participants summary detail' })
@@ -152,9 +153,10 @@ export class QuizController {
     @AuthUser() authUser: UserDto,
     @Query() query: GetQuizParticipantsSummaryDetailRequestDto
   ): Promise<FindQuizParticipantsSummaryDetailDto> {
-    return this._queryBus.execute(
+    const data = await this._queryBus.execute(
       new FindQuizParticipantsSummaryDetailQuery({ authUser, contentId, ...query })
     );
+    return data;
   }
 
   @ApiOperation({ summary: 'Update a quiz' })
@@ -173,7 +175,7 @@ export class QuizController {
     @Body() updateQuizDto: UpdateQuizRequestDto,
     @Req() req: Request
   ): Promise<QuizDto> {
-    const quiz = this._commandBus.execute<UpdateQuizCommand, QuizDto>(
+    const quiz = await this._commandBus.execute<UpdateQuizCommand, QuizDto>(
       new UpdateQuizCommand({ ...updateQuizDto, quizId, authUser })
     );
 
@@ -181,7 +183,7 @@ export class QuizController {
       req.message = 'message.quiz.published_success';
     }
 
-    return instanceToInstance(quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return plainToInstance(QuizDto, quiz, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Get quiz' })
@@ -191,7 +193,7 @@ export class QuizController {
     @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizDto> {
-    const data = this._queryBus.execute(new FindQuizQuery({ authUser, quizId }));
+    const data = await this._queryBus.execute(new FindQuizQuery({ authUser, quizId }));
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
@@ -205,7 +207,7 @@ export class QuizController {
     @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
-    this._commandBus.execute<DeleteQuizCommand, QuizDto>(
+    await this._commandBus.execute<DeleteQuizCommand, QuizDto>(
       new DeleteQuizCommand({ quizId, authUser })
     );
   }
@@ -221,7 +223,7 @@ export class QuizController {
     @Body() addQuestionDto: AddQuizQuestionRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<QuestionDto> {
-    const data = this._commandBus.execute<AddQuizQuestionCommand, QuestionDto>(
+    const data = await this._commandBus.execute<AddQuizQuestionCommand, QuestionDto>(
       new AddQuizQuestionCommand({
         quizId,
         content: addQuestionDto.content,
@@ -244,7 +246,7 @@ export class QuizController {
     @Body() updateQuestionDto: UpdateQuizQuestionRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<QuestionDto> {
-    const data = this._commandBus.execute<UpdateQuizQuestionCommand, QuestionDto>(
+    const data = await this._commandBus.execute<UpdateQuizQuestionCommand, QuestionDto>(
       new UpdateQuizQuestionCommand({
         quizId,
         questionId,
@@ -267,7 +269,7 @@ export class QuizController {
     @Param('questionId', ParseUUIDPipe) questionId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
-    this._commandBus.execute<DeleteQuizQuestionCommand, string>(
+    await this._commandBus.execute<DeleteQuizQuestionCommand, string>(
       new DeleteQuizQuestionCommand({
         quizId,
         questionId,
@@ -287,9 +289,10 @@ export class QuizController {
     @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<string> {
-    return this._commandBus.execute<StartQuizCommand, string>(
+    const quizParticipantId = await this._commandBus.execute<StartQuizCommand, string>(
       new StartQuizCommand({ quizId, authUser })
     );
+    return quizParticipantId;
   }
 
   @ApiOperation({ summary: 'Update quiz answers' })
@@ -300,7 +303,7 @@ export class QuizController {
     @Body() updateQuizAnswersDto: UpdateQuizAnswersRequestDto,
     @AuthUser() authUser: UserDto
   ): Promise<void> {
-    this._commandBus.execute<UpdateQuizAnswerCommand, void>(
+    await this._commandBus.execute<UpdateQuizAnswerCommand, void>(
       new UpdateQuizAnswerCommand({
         quizParticipantId,
         isFinished: updateQuizAnswersDto.isFinished,
@@ -317,7 +320,7 @@ export class QuizController {
     @Param('quizParticipantId', ParseUUIDPipe) quizParticipantId: string,
     @AuthUser() authUser: UserDto
   ): Promise<QuizParticipantDto> {
-    const data = this._queryBus.execute(
+    const data = await this._queryBus.execute(
       new FindQuizParticipantQuery({ authUser, quizParticipantId })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

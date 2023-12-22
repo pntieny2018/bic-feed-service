@@ -27,13 +27,13 @@ export class PublishOrRemovePostToNewsfeedConsumer {
   ): Promise<void> {
     const { userId, contentId, action } = message.value;
     if (action === NewsfeedAction.PUBLISH) {
-      this._commandBus.execute<PublishContentToNewsfeedCommand>(
+      await this._commandBus.execute<PublishContentToNewsfeedCommand>(
         new PublishContentToNewsfeedCommand({ contentId, userId })
       );
     }
 
     if (action === NewsfeedAction.REMOVE) {
-      this._commandBus.execute<RemoveContentFromNewsfeedCommand>(
+      await this._commandBus.execute<RemoveContentFromNewsfeedCommand>(
         new RemoveContentFromNewsfeedCommand({ contentId, userId })
       );
     }
