@@ -1533,12 +1533,10 @@
   resolved "https://registry.yarnpkg.com/@msgpackr-extract/msgpackr-extract-win32-x64/-/msgpackr-extract-win32-x64-3.0.2.tgz#0f164b726869f71da3c594171df5ebc1c4b0a407"
   integrity sha512-O+6Gs8UeDbyFpbSh2CPEz/UOrrdWPTBYNblZK5CxxLisYt4kGX3Sc+czffFonyjiGSq3jWLwJS/CCJc7tBr4sQ==
 
-"@nestjs/axios@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@nestjs/axios/-/axios-0.0.7.tgz#7f134636db13c2c1e8299365c7eceb73cd782b67"
-  integrity sha512-at8nj+1Nb8UleHcIN5QqZYeWX54m4m9s9gxzVE1qWy00neX2rg0+h2TfbWsnDi2tc23zIxqexanxMOJZbzO0CA==
-  dependencies:
-    axios "0.26.0"
+"@nestjs/axios@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@nestjs/axios/-/axios-3.0.1.tgz#b006f81dd54a49def92cfaf9a8970434567e75ce"
+  integrity sha512-VlOZhAGDmOoFdsmewn8AyClAdGpKXQQaY1+3PGB+g6ceurGIdTxZgRX3VXc1T6Zs60PedWjg3A82TDOB05mrzQ==
 
 "@nestjs/bull-shared@^0.0.5":
   version "0.0.5"
@@ -3418,13 +3416,6 @@ available-typed-arrays@^1.0.5:
   resolved "https://registry.yarnpkg.com/available-typed-arrays/-/available-typed-arrays-1.0.5.tgz#92f95616501069d07d10edb2fc37d3e1c65123b7"
   integrity sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==
 
-axios@0.26.0:
-  version "0.26.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.26.0.tgz#9a318f1c69ec108f8cd5f3c3d390366635e13928"
-  integrity sha512-lKoGLMYtHvFrPVt3r+RBMp9nh34N0M8zEfCWqdWZx6phynIEhQqAdydpyBAAG211zlhX9Rgu08cOamy6XjE5Og==
-  dependencies:
-    follow-redirects "^1.14.8"
-
 axios@0.27.2:
   version "0.27.2"
   resolved "https://registry.yarnpkg.com/axios/-/axios-0.27.2.tgz#207658cc8621606e586c85db4b41a750e756d972"
@@ -3439,6 +3430,15 @@ axios@^0.26.0:
   integrity sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==
   dependencies:
     follow-redirects "^1.14.8"
+
+axios@^1.6.2:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.2.tgz#de67d42c755b571d3e698df1b6504cde9b0ee9f2"
+  integrity sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==
+  dependencies:
+    follow-redirects "^1.15.0"
+    form-data "^4.0.0"
+    proxy-from-env "^1.1.0"
 
 babel-jest@^27.5.1:
   version "27.5.1"
@@ -5228,6 +5228,11 @@ follow-redirects@^1.14.8, follow-redirects@^1.14.9:
   version "1.15.2"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.2.tgz#b460864144ba63f2681096f274c4e57026da2c13"
   integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==
+
+follow-redirects@^1.15.0:
+  version "1.15.3"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.3.tgz#fe2f3ef2690afce7e82ed0b44db08165b207123a"
+  integrity sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==
 
 for-each@^0.3.3:
   version "0.3.3"
