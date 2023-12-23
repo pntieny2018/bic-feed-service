@@ -104,5 +104,8 @@ export class PostModule implements OnModuleInit {
         }
       }
     });
+    process.on('uncaughtException', (err) => {
+      this._logger.error('Uncaught exception', err?.stack);
+    });
   }
 }
