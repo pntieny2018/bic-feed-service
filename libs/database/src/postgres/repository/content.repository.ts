@@ -195,7 +195,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
 
     if (shouldIncludeMarkReadImportant) {
       subSelect.push(
-        this._loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
+        this.loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
       );
     }
 
@@ -411,7 +411,7 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     ];
   }
 
-  private _loadMarkReadPost(authUserId: string, alias?: string): [string, string] {
+  public loadMarkReadPost(authUserId: string, alias?: string): [string, string] {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     if (!authUserId) {
