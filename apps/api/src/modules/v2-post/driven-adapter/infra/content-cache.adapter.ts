@@ -1,4 +1,9 @@
-import { CONTENT_BINDING_TOKEN, IContentBinding } from '@api/modules/v2-post/application/binding';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+  IQuizBinding,
+  QUIZ_BINDING_TOKEN,
+} from '@api/modules/v2-post/application/binding';
 import {
   ArticleCacheDto,
   PostCacheDto,
@@ -6,6 +11,7 @@ import {
   SeriesCacheDto,
 } from '@api/modules/v2-post/application/dto';
 import { IContentCacheAdapter } from '@api/modules/v2-post/domain/infra-adapter-interface';
+import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
@@ -17,7 +23,9 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
   public constructor(
     private readonly _store: RedisContentService,
     @Inject(forwardRef(() => CONTENT_BINDING_TOKEN))
-    private readonly _contentBinding: IContentBinding
+    private readonly _contentBinding: IContentBinding,
+    @Inject(QUIZ_BINDING_TOKEN)
+    private readonly _quizBinding: IQuizBinding
   ) {}
 
   public async setJson<T>(key: string, value: T, path?: string): Promise<any> {
@@ -138,5 +146,24 @@ export class ContentCacheAdapter implements IContentCacheAdapter {
 
   public async increaseSeenContentCount(contentId: string): Promise<void> {
     await this.increaseValue(`${CACHE_KEYS.CONTENT}:${contentId}`, 'totalUsersSeen');
+  }
+
+  public async updateQuiz(quiz: QuizEntity): Promise<void> {
+    const contentId = quiz.get('contentId');
+    const isContentCached = await this.hasKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    if (!isContentCached) {
+      return;
+    }
+
+    const quizDto = this._quizBinding.binding(quiz);
+    await this.setJson(`${CACHE_KEYS.CONTENT}:${contentId}`, quizDto, 'quiz');
+  }
+
+  public async deleteQuiz(contentId: string): Promise<void> {
+    const isContentCached = await this.hasKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    if (!isContentCached) {
+      return;
+    }
+    await this.setJson(`${CACHE_KEYS.CONTENT}:${contentId}`, null, 'quiz');
   }
 }

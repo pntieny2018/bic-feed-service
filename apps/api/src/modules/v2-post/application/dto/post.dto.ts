@@ -132,6 +132,7 @@ export class PostCacheDto {
   public linkPreview?: LinkPreviewDto;
   public reactionsCount: ReactionCount;
   public seriesIds: string[];
+  public quiz?: QuizDto;
 
   public constructor(data: PostCacheDto) {
     Object.assign(this, data);

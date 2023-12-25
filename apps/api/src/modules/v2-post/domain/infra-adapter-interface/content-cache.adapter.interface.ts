@@ -5,6 +5,7 @@ import {
   SeriesCacheDto,
 } from '@api/modules/v2-post/application/dto';
 import { ArticleEntity, PostEntity, SeriesEntity } from '@api/modules/v2-post/domain/model/content';
+import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
 
 export interface IContentCacheAdapter {
   setJson<T>(key: string, value: T, path?: string): Promise<any>;
@@ -35,6 +36,9 @@ export interface IContentCacheAdapter {
   decreaseCommentCount(contentId: string, decrease?: number): Promise<void>;
 
   increaseSeenContentCount(contentId: string): Promise<void>;
+
+  updateQuiz(quiz: QuizEntity): Promise<void>;
+  deleteQuiz(contentId: string): Promise<void>;
 }
 
 export const CONTENT_CACHE_ADAPTER = 'CONTENT_CACHE_ADAPTER';

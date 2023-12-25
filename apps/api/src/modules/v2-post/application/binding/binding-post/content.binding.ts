@@ -1069,6 +1069,7 @@ export class ContentBinding implements IContentBinding {
       totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
       type: postEntity.getType(),
       seriesIds: postEntity.getSeriesIds(),
+      quiz: postEntity.get('quiz') ? this._quizBinding.binding(postEntity.get('quiz')) : undefined,
     });
   }
 
@@ -1107,6 +1108,9 @@ export class ContentBinding implements IContentBinding {
       type: articleEntity.getType(),
       updatedAt: articleEntity.get('updatedAt'),
       wordCount: articleEntity.get('wordCount'),
+      quiz: articleEntity.get('quiz')
+        ? this._quizBinding.binding(articleEntity.get('quiz'))
+        : undefined,
     });
   }
 

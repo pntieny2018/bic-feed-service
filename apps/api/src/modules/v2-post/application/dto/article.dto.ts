@@ -103,6 +103,7 @@ export class ArticleCacheDto {
   public coverMedia: ImageDto;
   public seriesIds: string[];
   public tags: TagDto[];
+  public quiz?: QuizDto;
 
   public constructor(data: ArticleCacheDto) {
     Object.assign(this, data);

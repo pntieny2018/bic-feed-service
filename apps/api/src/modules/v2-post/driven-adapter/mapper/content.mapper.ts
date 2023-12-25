@@ -22,7 +22,7 @@ import {
 } from '../../domain/model/content';
 import { LinkPreviewAttributes, LinkPreviewEntity } from '../../domain/model/link-preview';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
-import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
+import { QuizEntity, QuizQuestionAttributes, QuizQuestionEntity } from '../../domain/model/quiz';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { TagEntity } from '../../domain/model/tag';
 
@@ -317,6 +317,15 @@ export class ContentMapper {
         files: (post.media.files || []).map((file) => new FileEntity(file)),
         videos: (post.media.videos || []).map((video) => new VideoEntity(video)),
       },
+      quiz: post.quiz
+        ? new QuizEntity({
+            ...post.quiz,
+            contentId: post.id,
+            questions: (post.quiz.questions || []).map(
+              (question) => new QuizQuestionEntity(question as QuizQuestionAttributes)
+            ),
+          })
+        : undefined,
       content: post.content,
       mentionUserIds: post.mentionsUserId || [],
       linkPreview: post.linkPreview

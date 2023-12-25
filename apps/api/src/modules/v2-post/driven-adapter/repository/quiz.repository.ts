@@ -1,3 +1,7 @@
+import {
+  CONTENT_CACHE_ADAPTER,
+  IContentCacheAdapter,
+} from '@api/modules/v2-post/domain/infra-adapter-interface';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { PostModel, QuizAttributes } from '@libs/database/postgres/model';
 import {
@@ -5,7 +9,7 @@ import {
   LibQuizQuestionRepository,
   LibQuizRepository,
 } from '@libs/database/postgres/repository';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { WhereOptions } from 'sequelize';
 
 import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
@@ -24,12 +28,16 @@ export class QuizRepository implements IQuizRepository {
     private readonly _libQuizQuestionRepo: LibQuizQuestionRepository,
     private readonly _libQuizAnswerRepo: LibQuizAnswerRepository,
     private readonly _quizQuestionMapper: QuizQuestionMapper,
-    private readonly _quizMapper: QuizMapper
+    private readonly _quizMapper: QuizMapper,
+
+    @Inject(CONTENT_CACHE_ADAPTER)
+    private readonly _contentCacheAdapter: IContentCacheAdapter
   ) {}
 
   public async createQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
     await this._libQuizRepo.create(model);
+    await this._contentCacheAdapter.updateQuiz(quizEntity);
   }
 
   public async updateQuiz(quizEntity: QuizEntity): Promise<void> {
@@ -37,6 +45,8 @@ export class QuizRepository implements IQuizRepository {
     await this._libQuizRepo.update(quiz, {
       where: { id: quizEntity.get('id') },
     });
+
+    await this._contentCacheAdapter.updateQuiz(quizEntity);
 
     if (quiz.questions !== undefined && quiz.questions.length) {
       await this._libQuizQuestionRepo.delete({ where: { quizId: quizEntity.get('id') } });
@@ -73,10 +83,11 @@ export class QuizRepository implements IQuizRepository {
     }
   }
 
-  public async deleteQuiz(id: string): Promise<void> {
+  public async deleteQuiz(id: string, contentId: string): Promise<void> {
     await this._libQuizRepo.delete({
       where: { id },
     });
+    await this._contentCacheAdapter.deleteQuiz(contentId);
   }
 
   public async findQuizById(quizId: string): Promise<QuizEntity> {
