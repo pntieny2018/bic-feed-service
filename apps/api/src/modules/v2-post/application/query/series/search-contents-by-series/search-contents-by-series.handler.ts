@@ -111,10 +111,7 @@ export class SearchContentsBySeriesHandler
       })
     );
 
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq(source.map((item) => item.createdBy)),
-      authUser.id
-    );
+    const users = await this._userAdapter.getUsersByIds(uniq(source.map((item) => item.createdBy)));
     const usersMapper = new Map<string, UserDto>(
       users.map((user) => {
         return [user.id, user];

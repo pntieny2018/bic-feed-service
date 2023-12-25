@@ -46,9 +46,7 @@ export class FindCommentsPaginationHandler
       return new FindCommentsPaginationDto([], meta);
     }
 
-    const commentsDto = await this._commentBinding.commentsBinding(rows, {
-      authUser,
-    });
+    const commentsDto = await this._commentBinding.commentsBinding(rows);
 
     return new FindCommentsPaginationDto(commentsDto, meta);
   }

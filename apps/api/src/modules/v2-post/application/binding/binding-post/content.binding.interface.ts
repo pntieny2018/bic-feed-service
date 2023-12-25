@@ -8,7 +8,7 @@ import {
   PostAttributes,
   ArticleAttributes,
 } from '../../../domain/model/content';
-import { SeriesDto, ArticleDto, PostDto, UserMentionDto } from '../../dto';
+import { SeriesDto, ArticleDto, PostDto } from '../../dto';
 
 export interface IContentBinding {
   postBinding(
@@ -60,7 +60,5 @@ export interface IContentBinding {
     contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[],
     authUser: UserDto
   ): Promise<(ArticleDto | PostDto | SeriesDto)[]>;
-
-  mapMentionWithUserInfo(users: UserDto[]): UserMentionDto;
 }
 export const CONTENT_BINDING_TOKEN = 'CONTENT_BINDING_TOKEN';

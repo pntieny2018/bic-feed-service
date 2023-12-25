@@ -47,16 +47,6 @@ export class UserAdapter implements IUserAdapter {
     return excluded;
   }
 
-  public async findAllAndFilterByPersonalVisibility(
-    userIds: string[],
-    authUserId: string
-  ): Promise<UserDto[]> {
-    if (!userIds || userIds?.length === 0) {
-      return [];
-    }
-    return this._userService.findAllByIdsWithAuthUser(userIds, authUserId);
-  }
-
   public async canCudTags(userId: string, groupId: string): Promise<boolean> {
     return this._userService.canCudTags(userId, groupId);
   }
