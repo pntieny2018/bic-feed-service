@@ -1,6 +1,7 @@
 import { ROLE_TYPE } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import {
@@ -13,7 +14,6 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
-import { Traceable } from '@libs/common/modules/opentelemetry';
 
 @Traceable()
 @Injectable()

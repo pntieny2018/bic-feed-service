@@ -1,6 +1,7 @@
 import { CACHE_KEYS } from '@beincom/constants';
 import { UserDto as ProfileUserDto } from '@beincom/dto';
 import { AxiosHelper } from '@libs/common/helpers';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
@@ -10,7 +11,6 @@ import { uniq } from 'lodash';
 
 import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
-import { Traceable } from '@libs/common/modules/opentelemetry';
 
 @Traceable()
 @Injectable()
