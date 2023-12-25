@@ -3,14 +3,21 @@ import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { Inject, Logger } from '@nestjs/common';
 
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IUserNewsfeedRepository,
+  USER_NEWSFEED_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../service-adapter-interface';
 
 import {
   DispatchContentIdToGroupsProps,
   DispatchContentsInGroupsToUserIdProps,
+  GetContentIdsInNewsFeedProps,
   INewsfeedDomainService,
 } from './interface';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 
 export class NewsfeedDomainService implements INewsfeedDomainService {
   private readonly _logger = new Logger(NewsfeedDomainService.name);
@@ -18,6 +25,8 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
   public constructor(
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
+    @Inject(USER_NEWSFEED_REPOSITORY_TOKEN)
+    private readonly _userNewsfeedRepo: IUserNewsfeedRepository,
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(KAFKA_ADAPTER)
@@ -117,5 +126,38 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       );
       after = contents.cursor;
     }
+  }
+
+  public async getContentIdsInNewsFeed(
+    props: GetContentIdsInNewsFeedProps
+  ): Promise<CursorPaginationResult<string>> {
+    const { isMine, type, isSaved, limit, isImportant, after, authUserId } = props;
+
+    if (isImportant) {
+      const { rows, meta } =
+        await this._userNewsfeedRepo.getImportantContentIdsCursorPaginationByUserId({
+          userId: authUserId,
+          type,
+          limit,
+          after,
+        });
+      return {
+        rows,
+        meta,
+      };
+    }
+    const { rows, meta } = await this._userNewsfeedRepo.getContentIdsCursorPaginationByUserId({
+      userId: authUserId,
+      isSavedBy: isSaved ? authUserId : null,
+      createdBy: isMine ? authUserId : null,
+      type,
+      limit,
+      after,
+    });
+
+    return {
+      rows,
+      meta,
+    };
   }
 }

@@ -4,12 +4,13 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
+  INewsfeedDomainService,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../../../binding';
 import { FindNewsfeedDto } from '../../../dto';
 
 import { FindNewsfeedQuery } from './find-newsfeed.query';
-import { uniq } from 'lodash';
 import { IUserAdapter, USER_ADAPTER } from '@api/modules/v2-post/domain/service-adapter-interface';
 
 @QueryHandler(FindNewsfeedQuery)
@@ -20,6 +21,9 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
     private readonly _contentBinding: ContentBinding,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
+
+    @Inject(NEWSFEED_DOMAIN_SERVICE_TOKEN)
+    private readonly _newsfeedDomainService: INewsfeedDomainService,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
@@ -27,12 +31,10 @@ export class FindNewsfeedHandler implements IQueryHandler<FindNewsfeedQuery, Fin
   public async execute(query: FindNewsfeedQuery): Promise<any> {
     const payload = query.payload;
     const authUserId = payload.authUser.id;
-    this._logger.debug('FindNewsfeedHandler 222');
-    const { rows: ids, meta: meta } = await this._contentDomainService.getContentIdsInNewsFeed({
+    const { rows: ids, meta: meta } = await this._newsfeedDomainService.getContentIdsInNewsFeed({
       ...payload,
       authUserId,
     });
-
     const contentEntities = await this._contentDomainService.getContentByIds({
       ids,
       authUserId,

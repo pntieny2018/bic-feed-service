@@ -145,9 +145,6 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId: authUserId,
-        },
         shouldIncludeMarkReadImportant: {
           userId: authUserId,
         },
@@ -232,6 +229,14 @@ export class ContentDomainService implements IContentDomainService {
       order = ORDER.DESC,
     } = props;
 
+    if (!groupIds.length) {
+      return {
+        rows: [],
+        meta: {
+          hasNextPage: false,
+        },
+      };
+    }
     if (isImportant) {
       return this.getImportantContentIds(props);
     }

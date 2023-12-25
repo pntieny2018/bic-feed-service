@@ -38,6 +38,6 @@ export class PublishContentToNewsfeedHandler
     }
 
     //TODO: ranking & update cache
-    await this._userNewsfeedRepo.attachContentIdToUserId(contentId, userId);
+    await this._userNewsfeedRepo.attachContentIdToUserId(content, userId);
   }
 }

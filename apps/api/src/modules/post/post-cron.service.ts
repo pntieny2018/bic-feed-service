@@ -7,10 +7,13 @@ import moment from 'moment';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
-import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
-import { PostModel, PostStatus } from '../../database/models/post.model';
-
 import { PostService } from './post.service';
+import {
+  FailedProcessPostModel,
+  PostModel,
+  UserNewsFeedModel,
+} from '@libs/database/postgres/model';
+import { CONTENT_STATUS } from '@beincom/constants';
 
 @Injectable()
 export class PostCronService {
@@ -58,7 +61,7 @@ export class PostCronService {
       await transaction.rollback();
     }
   }
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   private async _jobUpdateImportantPost(): Promise<void> {
     try {
       await this._postModel.update(
@@ -75,6 +78,10 @@ export class PostCronService {
           paranoid: false,
         }
       );
+
+      await this._sequelizeConnection.query(`
+      UPDATE ${UserNewsFeedModel.getTableName()} SET is_important = false WHERE post_id IN (
+      select id from ${PostModel.getTableName()} where is_important = true and important_expired_at < NOW()`);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
@@ -85,7 +92,7 @@ export class PostCronService {
     try {
       const posts = await this._postModel.findAll({
         where: {
-          status: PostStatus.PROCESSING,
+          status: CONTENT_STATUS.PROCESSING,
           updatedAt: {
             [Op.lt]: moment().subtract(1, 'day').toDate(),
           },
