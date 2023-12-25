@@ -68,6 +68,14 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
     });
   }
 
+  public async detachContentId(contentId: string): Promise<void> {
+    await this._libUserNewsfeedRepo.delete({
+      where: {
+        postId: contentId,
+      },
+    });
+  }
+
   public async getContentIdsCursorPaginationByUserId(
     getNewsfeedPaginationProps: GetContentIdsCursorPaginationByUserIdProps
   ): Promise<CursorPaginationResult<string>> {

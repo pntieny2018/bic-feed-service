@@ -10,14 +10,16 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 @EventsHandlerAndLog(ReportHiddenEvent)
-export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenEvent> {
+export class DetachNewsfeedWhenReportHiddenEventHandler
+  implements IEventHandler<ReportHiddenEvent>
+{
   public constructor(
     @Inject(USER_NEWSFEED_REPOSITORY_TOKEN)
     private readonly _userNewsfeedRepo: IUserNewsfeedRepository
   ) {}
 
   public async handle(event: ReportHiddenEvent): Promise<void> {
-    const { reportEntities, authUser } = event.payload;
+    const { reportEntities } = event.payload;
 
     const reportEntityMapByTargetId = EntityHelper.entityArrayToArrayRecord<ReportEntity>(
       reportEntities,
@@ -27,7 +29,7 @@ export class NotiReportHiddenEventHandler implements IEventHandler<ReportHiddenE
     for (const targetId of Object.keys(reportEntityMapByTargetId)) {
       const reportEntity = reportEntityMapByTargetId[targetId][0];
       if (reportEntity.isTargetContent()) {
-        await this._userNewsfeedRepo.detachContentIdFromUserId(targetId, authUser.id);
+        await this._userNewsfeedRepo.detachContentId(targetId);
       }
     }
   }

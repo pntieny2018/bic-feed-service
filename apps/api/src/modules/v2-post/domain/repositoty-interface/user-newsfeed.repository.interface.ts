@@ -18,6 +18,7 @@ export interface IUserNewsfeedRepository {
   hasPublishedContentIdToUserId(contentId: string, userId: string): Promise<boolean>;
   attachContentIdToUserId(contentEntity: ContentEntity, userId: string): Promise<void>;
   detachContentIdFromUserId(contentId: string, userId: string): Promise<void>;
+  detachContentId(contentId: string): Promise<void>;
   getContentIdsCursorPaginationByUserId(
     getNewsfeedPaginationProps: GetContentIdsCursorPaginationByUserIdProps
   ): Promise<CursorPaginationResult<string>>;

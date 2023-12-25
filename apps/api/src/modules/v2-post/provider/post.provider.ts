@@ -120,6 +120,8 @@ import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mappe
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
 import { ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
+import { DetachNewsfeedWhenReportHiddenEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-hidden.event-handler';
+import { DetachNewsfeedWhenReportCreatedEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-created.event-handler';
 
 export const postProvider = [
   /** Application Cron Handler */
@@ -143,6 +145,8 @@ export const postProvider = [
 
   SeenContentWhenReactionCreatedEventHandler,
   SeenContentWhenGetDetailEventHandler,
+  DetachNewsfeedWhenReportHiddenEventHandler,
+  DetachNewsfeedWhenReportCreatedEventHandler,
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
