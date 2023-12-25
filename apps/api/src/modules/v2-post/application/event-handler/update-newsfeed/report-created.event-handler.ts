@@ -10,7 +10,9 @@ import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
 @EventsHandlerAndLog(ReportCreatedEvent)
-export class NotiReportCreatedEventHandler implements IEventHandler<ReportCreatedEvent> {
+export class DetachNewsfeedWhenReportCreatedEventHandler
+  implements IEventHandler<ReportCreatedEvent>
+{
   public constructor(
     @Inject(USER_NEWSFEED_REPOSITORY_TOKEN)
     private readonly _userNewsfeedRepo: IUserNewsfeedRepository
