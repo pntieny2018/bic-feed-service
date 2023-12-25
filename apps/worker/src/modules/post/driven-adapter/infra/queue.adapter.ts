@@ -6,9 +6,11 @@ import {
   IPublisherApplicationService,
 } from '../../../queue-publisher/application/interface';
 import {
+  AttachDetachNewsfeedJobPayload,
   ContentScheduledJobPayload,
   FollowUnfollowGroupsJobPayload,
   IQueueAdapter,
+  ProducerFollowUnfollowJobPayload,
 } from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
@@ -27,6 +29,19 @@ export class QueueAdapter implements IQueueAdapter {
     );
   }
 
+  public async addProducerFollowUnfollowJob(
+    payload: ProducerFollowUnfollowJobPayload
+  ): Promise<void> {
+    const { userId } = payload;
+    await this._publisherAppService.addJob<ProducerFollowUnfollowJobPayload>(
+      QueueName.PRODUCER_FOLLOW_UNFOLLOW_GROUPS,
+      {
+        data: payload,
+        opts: { group: { id: userId } },
+      }
+    );
+  }
+
   public async addFollowUnfollowGroupsJob(payload: FollowUnfollowGroupsJobPayload): Promise<void> {
     const { userId } = payload;
     await this._publisherAppService.addJob<FollowUnfollowGroupsJobPayload>(
@@ -34,6 +49,17 @@ export class QueueAdapter implements IQueueAdapter {
       {
         data: payload,
         opts: { group: { id: userId } },
+      }
+    );
+  }
+
+  public async addAttachDetachNewsfeedJob(payload: AttachDetachNewsfeedJobPayload): Promise<void> {
+    const { contentId } = payload;
+    await this._publisherAppService.addJob<AttachDetachNewsfeedJobPayload>(
+      QueueName.ATTACH_DETACH_NEWSFEED,
+      {
+        data: payload,
+        opts: { group: { id: contentId } },
       }
     );
   }

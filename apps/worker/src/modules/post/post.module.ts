@@ -26,9 +26,11 @@ import { IProcessor, WorkerAdapters } from './driving-apdater/queue-processor/in
 import {
   ContentScheduledProcessor,
   FollowUnFollowGroupsProcessor,
-  ContentChangedProcessor,
+  ProducerAttachDetachNewsfeedProcessor,
   QuizParticipantProcessor,
   QuizPendingProcessor,
+  ProducerFollowUnFollowGroupsProcessor,
+  AttachDetachNewsfeedProcessor,
 } from './driving-apdater/queue-processor/processors';
 import {
   WORKER_ADAPTER_SERVICES,
@@ -43,8 +45,10 @@ const processorInstances = [
   ContentScheduledProcessor,
   QuizPendingProcessor,
   QuizParticipantProcessor,
-  ContentChangedProcessor,
+  AttachDetachNewsfeedProcessor,
+  ProducerAttachDetachNewsfeedProcessor,
   FollowUnFollowGroupsProcessor,
+  ProducerFollowUnFollowGroupsProcessor,
 ];
 
 const createChannelWorkerProviders = (adapters: WorkerAdapters[]): Provider[] => {

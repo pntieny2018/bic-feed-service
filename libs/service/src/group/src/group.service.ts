@@ -3,16 +3,18 @@ import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
-import {
-  GetUserIdsInGroupsProps,
-  GetUserRoleInGroupsResult,
-  IGroupService,
-} from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
+import {
+  GetUserIdsInGroupsProps,
+  CountUsersInGroupsProps,
+  GetUserRoleInGroupsResult,
+  IGroupService,
+  GetPaginationGroupsMembersProps,
+} from './group.service.interface';
 
 @Injectable()
 export class GroupService implements IGroupService {
@@ -156,7 +158,7 @@ export class GroupService implements IGroupService {
     return userIds.includes(userId);
   }
 
-  public async getUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
+  public async getCursorUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
     list: string[];
     cursor: string;
   }> {
@@ -180,6 +182,50 @@ export class GroupService implements IGroupService {
         list: [],
         cursor: null,
       };
+    }
+  }
+
+  public async countUsersInGroups(input: CountUsersInGroupsProps): Promise<{ total: number }> {
+    const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds } = input;
+
+    try {
+      const response = await this._httpService.post(
+        `${GROUP_ENDPOINT.INTERNAL.NUMBER_USERS_IN_GROUPS}`,
+        {
+          group_ids: groupIds,
+          ignore_group_ids: notInGroupIds,
+          ignore_user_ids: ignoreUserIds,
+          include_deactivated: includeDeactivated || false,
+        }
+      );
+      return {
+        total: response.data['data'].total,
+      };
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex));
+      return { total: 0 };
+    }
+  }
+
+  public async getPaginationGroupsMembers(
+    input: GetPaginationGroupsMembersProps
+  ): Promise<{ ids: string[] }> {
+    const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, offset } = input;
+    try {
+      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.GROUPS_MEMBERS}`, {
+        group_ids: groupIds,
+        ignore_group_ids: notInGroupIds,
+        ignore_user_ids: ignoreUserIds,
+        include_deactivated: includeDeactivated || false,
+        offset,
+        limit,
+      });
+      return {
+        ids: response.data['data'].ids,
+      };
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex));
+      return { ids: [] };
     }
   }
 }

@@ -1,10 +1,16 @@
 import { ICommand } from '@nestjs/cqrs';
 
+import { NewsfeedAction } from '../../../data-type';
+
 export type AttachDetachContentNewsfeedPayload = {
+  queryParams: {
+    groupIds: string[];
+    notInGroupIds: string[];
+    offset: number;
+    limit: number;
+  };
   contentId: string;
-  oldGroupIds: string[];
-  newGroupIds: string[];
-  limit: number;
+  action: NewsfeedAction;
 };
 export class AttachDetachContentNewsfeedCommand implements ICommand {
   public constructor(public readonly payload: AttachDetachContentNewsfeedPayload) {}

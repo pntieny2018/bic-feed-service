@@ -1,7 +1,7 @@
 import {
   QUIZ_PARTICIPANT_SERVICE_TOKEN,
   QUIZ_PENDING_SERVICE_TOKEN,
-  CONTENT_CHANGED_SERVICE_TOKEN,
+  PRODUCER_ATTACH_DETACH_SERVICE_TOKEN,
   QueueName,
 } from '@libs/infra/v2-queue';
 
@@ -17,7 +17,7 @@ export const QUEUE_ADAPTER_SERVICES: QueueAdapters[] = [
     serviceToken: QUIZ_PARTICIPANT_SERVICE_TOKEN,
   },
   {
-    queueName: QueueName.CONTENT_CHANGED,
-    serviceToken: CONTENT_CHANGED_SERVICE_TOKEN,
+    queueName: QueueName.PRODUCER_ATTACH_DETACH_NEWSFEED,
+    serviceToken: PRODUCER_ATTACH_DETACH_SERVICE_TOKEN,
   },
 ];

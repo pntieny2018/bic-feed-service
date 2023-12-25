@@ -3,8 +3,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
+  ATTACH_DETACH_NEWSFEED_PUBLISHER_TOKEN,
   CONTENT_SCHEDULED_PUBLISHER_TOKEN,
   FOLLOW_UNFOLLOW_GROUPS_PUBLISHER_TOKEN,
+  PRODUCER_FOLLOW_UNFOLLOW_PUBLISHER_TOKEN,
 } from '../provider';
 
 import { IPublisher } from './infra-interface';
@@ -22,6 +24,10 @@ export class PublisherDomainService implements IPublisherDomainService {
         return CONTENT_SCHEDULED_PUBLISHER_TOKEN;
       case QueueName.FOLLOW_UNFOLLOW_GROUPS:
         return FOLLOW_UNFOLLOW_GROUPS_PUBLISHER_TOKEN;
+      case QueueName.PRODUCER_FOLLOW_UNFOLLOW_GROUPS:
+        return PRODUCER_FOLLOW_UNFOLLOW_PUBLISHER_TOKEN;
+      case QueueName.ATTACH_DETACH_NEWSFEED:
+        return ATTACH_DETACH_NEWSFEED_PUBLISHER_TOKEN;
       default:
         throw new Error(`Unknown queue name: ${queueName}`);
     }

@@ -2,11 +2,10 @@ import { QueueName } from '@libs/infra/v2-queue';
 
 export const QUEUE_ADAPTER = 'QUEUE_ADAPTER';
 
-export type ContentChangedJobPayload = {
+export type ProducerAttachDetachNewsfeedJobPayload = {
   contentId: string;
   newGroupIds: string[];
   oldGroupIds: string[];
-  limit: number;
 };
 
 export interface IQueueAdapter {
@@ -14,5 +13,7 @@ export interface IQueueAdapter {
   killJob(queueName: QueueName, jobId: string): Promise<void>;
   addQuizGenerateJob(quizId: string): Promise<void>;
   addQuizParticipantStartedJob(quizParticipantId: string, delayTime: number): Promise<void>;
-  addContentChangedJob(payload: ContentChangedJobPayload): Promise<void>;
+  addProducerAttachDetachNewsfeedJob(
+    payload: ProducerAttachDetachNewsfeedJobPayload
+  ): Promise<void>;
 }

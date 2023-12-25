@@ -23,6 +23,23 @@ export type GetUserIdsInGroupsProps = {
   after?: string;
   limit?: number;
 };
+
+export type CountUsersInGroupsProps = {
+  groupIds: string[];
+  notInGroupIds: string[];
+  ignoreUserIds?: string;
+  includeDeactivated?: boolean;
+};
+
+export type GetPaginationGroupsMembersProps = {
+  groupIds: string[];
+  notInGroupIds: string[];
+  ignoreUserIds?: string;
+  includeDeactivated?: boolean;
+  offset: number;
+  limit: number;
+};
+
 export interface IGroupService {
   findById(groupId: string): Promise<GroupDto>;
 
@@ -40,10 +57,8 @@ export interface IGroupService {
   ): Promise<GetUserRoleInGroupsResult | null>;
 
   isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
-  getUserIdsInGroups(props: GetUserIdsInGroupsProps): Promise<{
-    list: string[];
-    cursor: string;
-  }>;
+  getPaginationGroupsMembers(props: GetPaginationGroupsMembersProps): Promise<{ ids: string[] }>;
+  countUsersInGroups(props: CountUsersInGroupsProps): Promise<{ total: number }>;
 }
 
 export const GROUP_SERVICE_TOKEN = 'GROUP_SERVICE_TOKEN';

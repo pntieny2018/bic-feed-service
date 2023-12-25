@@ -4,7 +4,11 @@ import {
 } from '@libs/service/group/src/group.service.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { GetUserIdsInGroupsProps, IGroupAdapter } from '../../domain/service-adapter-interface';
+import {
+  CountUsersInGroupsProps,
+  GetGroupsMembersProps,
+  IGroupAdapter,
+} from '../../domain/service-adapter-interface';
 
 @Injectable()
 export class GroupAdapter implements IGroupAdapter {
@@ -13,9 +17,11 @@ export class GroupAdapter implements IGroupAdapter {
     private readonly _groupService: IGroupService
   ) {}
 
-  public async getUserIdsInGroups(
-    props: GetUserIdsInGroupsProps
-  ): Promise<{ list: string[]; cursor: string }> {
-    return this._groupService.getUserIdsInGroups(props);
+  public async getGroupsMembers(props: GetGroupsMembersProps): Promise<{ ids: string[] }> {
+    return this._groupService.getPaginationGroupsMembers(props);
+  }
+
+  public async countUsersInGroups(props: CountUsersInGroupsProps): Promise<{ total: number }> {
+    return this._groupService.countUsersInGroups(props);
   }
 }

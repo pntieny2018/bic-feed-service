@@ -16,7 +16,6 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
 
   public async dispatchContentIdToGroups(input: DispatchContentIdToGroupsProps): Promise<void> {
     const { contentId, newGroupIds, oldGroupIds } = input;
-    const defaultLimit = 1000;
 
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
     const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
@@ -25,11 +24,10 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       return;
     }
 
-    await this._queueAdapter.addContentChangedJob({
+    await this._queueAdapter.addProducerAttachDetachNewsfeedJob({
       contentId,
       newGroupIds,
       oldGroupIds,
-      limit: defaultLimit,
     });
   }
 
