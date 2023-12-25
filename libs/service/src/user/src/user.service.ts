@@ -2,14 +2,13 @@ import { CACHE_KEYS } from '@beincom/constants';
 import { UserDto as ProfileUserDto } from '@beincom/dto';
 import { AxiosHelper } from '@libs/common/helpers';
 import { Traceable } from '@libs/common/modules/opentelemetry';
-import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
+import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
 import { IUserService, ShowingBadgeDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { USER_ENDPOINT } from './endpoint.constant';
 import { UserDto, UserPermissionDto } from './user.dto';
 
 @Traceable()
@@ -19,7 +18,6 @@ export class UserService implements IUserService {
 
   public constructor(
     private readonly _store: RedisService,
-    @Inject(USER_HTTP_TOKEN) private readonly _userHttpService: IHttpService,
     @Inject(GROUP_HTTP_TOKEN) private readonly _groupHttpService: IHttpService
   ) {}
 
@@ -64,54 +62,6 @@ export class UserService implements IUserService {
     try {
       const usernames = await this._getUsernamesFromCacheByUserIds(uniq(ids));
       return this._getUsersFromCacheByUserNames(usernames);
-    } catch (e) {
-      this._logger.error(e);
-      return [];
-    }
-  }
-
-  public async findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]> {
-    if (!ids.length) {
-      return [];
-    }
-
-    try {
-      const uniqueIds = uniq(ids);
-      return this._getUsersFromApiByIds(uniqueIds, authUserId);
-    } catch (e) {
-      this._logger.error(e);
-      return [];
-    }
-  }
-
-  // TODO: now user squad is keeping this api for protect domain logic, will be refactor it later
-  private async _getUsersFromApiByIds(ids: string[], authUserId: string): Promise<UserDto[]> {
-    try {
-      if (!ids.length) {
-        return [];
-      }
-
-      const params = { ids };
-      if (authUserId) {
-        params['actorId'] = authUserId;
-      }
-      const response = await this._userHttpService.get(USER_ENDPOINT.INTERNAL.GET_USERS, {
-        params,
-      });
-      if (response.status !== HttpStatus.OK) {
-        return [];
-      }
-
-      const userApis = response.data['data'];
-
-      return userApis.map((user) => {
-        const showingBadgesWithCommunity: ShowingBadgeDto[] = user?.showingBadges?.map((badge) => ({
-          ...badge,
-          community: badge.community || null,
-        }));
-
-        return new UserDto({ ...user, showingBadges: showingBadgesWithCommunity });
-      });
     } catch (e) {
       this._logger.error(e);
       return [];

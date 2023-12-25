@@ -7,7 +7,6 @@ export interface IUserService {
   findProfileAndPermissionById(id: string): Promise<UserDto>;
   findById(id: string): Promise<UserDto>;
   findAllByIds(ids: string[]): Promise<UserDto[]>;
-  findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]>;
   canCudTags(userId: string, rootGroupId: string): Promise<boolean>;
   getGroupIdsJoinedByUserId(userId: string): Promise<string[]>;
 }
