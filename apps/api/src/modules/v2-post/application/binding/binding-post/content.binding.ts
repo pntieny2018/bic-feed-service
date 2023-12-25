@@ -1,5 +1,4 @@
 import { EntityHelper } from '@api/common/helpers';
-import { ReactionsCount } from '@api/common/types';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
@@ -7,7 +6,7 @@ import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
-import { flatten, groupBy, uniq, pick, merge, map } from 'lodash';
+import { flatten, groupBy, uniq, pick, map } from 'lodash';
 
 import {
   IReportDomainService,
@@ -49,9 +48,6 @@ import {
   ArticleInSeriesDto,
   ReportReasonCountDto,
   ItemInSeries,
-  SeriesCacheDto,
-  PostCacheDto,
-  ArticleCacheDto,
   OwnerReactionDto,
 } from '../../dto';
 import { IMediaBinding, MEDIA_BINDING_TOKEN } from '../binding-media';
@@ -675,30 +671,6 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
-  public async contentsCacheBinding(
-    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[]
-  ): Promise<(ArticleCacheDto | PostCacheDto | SeriesCacheDto)[]> {
-    const contentIds = contentEntities.map((contentEntity) => contentEntity.getId());
-
-    const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents(contentIds);
-
-    const result = [];
-    for (const content of contentEntities) {
-      if (content instanceof PostEntity) {
-        result.push(this._bindingPostCache(content, { reactionsCount }));
-      }
-      if (content instanceof ArticleEntity) {
-        result.push(this._bindingArticleCache(content, { reactionsCount }));
-      }
-
-      if (content instanceof SeriesEntity) {
-        result.push(this._bindingSeriesCache(content));
-      }
-    }
-
-    return result;
-  }
-
   public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
     if (!users || !users?.length) {
       return {};
@@ -1037,103 +1009,6 @@ export class ContentBinding implements IContentBinding {
 
   private _mapActorUser(user: UserDto): UserDto {
     return instanceToInstance(user, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
-  }
-
-  private _bindingPostCache(
-    postEntity: PostEntity,
-    dataBinding: {
-      reactionsCount: Map<string, ReactionsCount>;
-    }
-  ): PostCacheDto {
-    return new PostCacheDto({
-      id: postEntity.getId(),
-      isHidden: postEntity.isHidden(),
-      isReported: postEntity.get('isReported'),
-      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
-      content: postEntity.getContent(),
-      title: postEntity.get('title'),
-      createdAt: postEntity.get('createdAt'),
-      updatedAt: postEntity.get('updatedAt'),
-      createdBy: postEntity.getCreatedBy(),
-      updatedBy: postEntity.get('updatedBy'),
-      groups: postEntity.getGroupIds(),
-      linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
-      media: this._mediaBinding.binding(postEntity.get('media')),
-      mentionsUserId: postEntity.get('mentionUserIds'),
-      privacy: postEntity.get('privacy'),
-      publishedAt: postEntity.get('publishedAt'),
-      reactionsCount: merge({}, ...(dataBinding.reactionsCount.get(postEntity.getId()) || [])),
-      setting: postEntity.get('setting'),
-      status: postEntity.get('status'),
-      tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
-      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      type: postEntity.getType(),
-      seriesIds: postEntity.getSeriesIds(),
-      quiz: postEntity.get('quiz') ? this._quizBinding.binding(postEntity.get('quiz')) : undefined,
-    });
-  }
-
-  private _bindingArticleCache(
-    articleEntity: ArticleEntity,
-    dataBinding: {
-      reactionsCount: Map<string, ReactionsCount>;
-    }
-  ): ArticleCacheDto {
-    return new ArticleCacheDto({
-      categories: articleEntity.getCategories().map((category) => ({
-        id: category.get('id'),
-        name: category.get('name'),
-      })),
-      commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
-      content: articleEntity.get('content'),
-      coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
-      createdAt: articleEntity.get('createdAt'),
-      createdBy: articleEntity.getCreatedBy(),
-      updatedBy: articleEntity.get('updatedBy'),
-      groups: articleEntity.getGroupIds(),
-      id: articleEntity.getId(),
-      isReported: articleEntity.get('isReported'),
-      isHidden: articleEntity.isHidden(),
-      media: this._mediaBinding.binding(articleEntity.get('media')),
-      privacy: articleEntity.get('privacy'),
-      publishedAt: articleEntity.get('publishedAt'),
-      reactionsCount: merge({}, ...(dataBinding.reactionsCount.get(articleEntity.getId()) || [])),
-      seriesIds: articleEntity.getSeriesIds(),
-      setting: articleEntity.get('setting'),
-      status: articleEntity.get('status'),
-      summary: articleEntity.get('summary'),
-      tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
-      title: articleEntity.get('title'),
-      totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
-      type: articleEntity.getType(),
-      updatedAt: articleEntity.get('updatedAt'),
-      wordCount: articleEntity.get('wordCount'),
-      quiz: articleEntity.get('quiz')
-        ? this._quizBinding.binding(articleEntity.get('quiz'))
-        : undefined,
-    });
-  }
-
-  private _bindingSeriesCache(seriesEntity: SeriesEntity): SeriesCacheDto {
-    return new SeriesCacheDto({
-      coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
-      createdAt: seriesEntity.get('createdAt'),
-      updatedAt: seriesEntity.get('updatedAt'),
-      updatedBy: seriesEntity.get('updatedBy'),
-      createdBy: seriesEntity.getCreatedBy(),
-      isHidden: seriesEntity.isHidden(),
-      isReported: seriesEntity.get('isReported'),
-      groups: seriesEntity.getGroupIds(),
-      id: seriesEntity.getId(),
-      itemsIds: seriesEntity.getItemIds(),
-      privacy: seriesEntity.get('privacy'),
-      publishedAt: seriesEntity.get('publishedAt'),
-      setting: seriesEntity.get('setting'),
-      status: seriesEntity.get('status'),
-      summary: seriesEntity.get('summary'),
-      title: seriesEntity.get('title'),
-      type: seriesEntity.getType(),
-    });
   }
 
   private _bindOwnerReactions(

@@ -204,16 +204,18 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public async validateReadCacheContent(
+  public async validateContentReported(contentId: string, userId: string): Promise<void> {
+    const isReport = await this._reportRepository.checkIsReported(userId, contentId);
+    if (isReport) {
+      throw new ContentNotFoundException();
+    }
+  }
+
+  public async validateContentArchived(
     contentId: string,
     user: UserDto,
     postGroupIds: string[]
   ): Promise<void> {
-    const isReport = await this._reportRepository.checkIsReported(user.id, contentId);
-    if (isReport) {
-      throw new ContentNotFoundException();
-    }
-
     const userJoinedGroupIds = user.groups ?? [];
     const groupCanAccess = postGroupIds.filter((groupId) => userJoinedGroupIds.includes(groupId));
     const activePostGroupIds = await this._postGroupRepository.getNotInStateGroupIds(

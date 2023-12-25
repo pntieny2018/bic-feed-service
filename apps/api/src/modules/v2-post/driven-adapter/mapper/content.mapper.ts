@@ -1,12 +1,22 @@
 import { ReactionsCount } from '@api/common/types';
 import {
   ArticleCacheDto,
+  ImageDto,
+  LinkPreviewDto,
   PostCacheDto,
   SeriesCacheDto,
+  TagDto,
 } from '@api/modules/v2-post/application/dto';
+import {
+  IPostReactionRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
+} from '@api/modules/v2-post/domain/repositoty-interface';
+import { MediaMapper } from '@api/modules/v2-post/driven-adapter/mapper/media.mapper';
+import { QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper/quiz.mapper';
 import { CONTENT_TYPE } from '@beincom/constants';
 import { StringHelper } from '@libs/common/helpers';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import { Inject, Injectable } from '@nestjs/common';
 import { merge } from 'lodash';
 
 import { CategoryEntity } from '../../domain/model/category';
@@ -26,7 +36,15 @@ import { QuizEntity, QuizQuestionAttributes, QuizQuestionEntity } from '../../do
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { TagEntity } from '../../domain/model/tag';
 
+@Injectable()
 export class ContentMapper {
+  public constructor(
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepo: IPostReactionRepository,
+    private readonly _quizMapper: QuizMapper,
+    private readonly _mediaMapper: MediaMapper
+  ) {}
+
   public toDomain(
     post: PostModel,
     reactionsCountMap?: Map<string, ReactionsCount>
@@ -65,6 +83,26 @@ export class ContentMapper {
       default:
         return null;
     }
+  }
+
+  public async contentsCacheBinding(
+    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[]
+  ): Promise<(ArticleCacheDto | PostCacheDto | SeriesCacheDto)[]> {
+    const result = [];
+    for (const content of contentEntities) {
+      if (content instanceof PostEntity) {
+        result.push(this._bindingPostCache(content));
+      }
+      if (content instanceof ArticleEntity) {
+        result.push(this._bindingArticleCache(content));
+      }
+
+      if (content instanceof SeriesEntity) {
+        result.push(this._bindingSeriesCache(content));
+      }
+    }
+
+    return result;
   }
 
   public toPersistence<
@@ -399,5 +437,117 @@ export class ContentMapper {
       itemIds: series.itemsIds || [],
       cover: series.coverMedia ? new ImageEntity(series.coverMedia) : null,
     });
+  }
+
+  private _bindingPostCache(postEntity: PostEntity): PostCacheDto {
+    return new PostCacheDto({
+      id: postEntity.getId(),
+      isHidden: postEntity.isHidden(),
+      isReported: postEntity.get('isReported'),
+      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
+      content: postEntity.getContent(),
+      title: postEntity.get('title'),
+      createdAt: postEntity.get('createdAt'),
+      updatedAt: postEntity.get('updatedAt'),
+      createdBy: postEntity.getCreatedBy(),
+      updatedBy: postEntity.get('updatedBy'),
+      groups: postEntity.getGroupIds(),
+      linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
+      media: this._mediaMapper.toDto(postEntity.get('media')),
+      mentionsUserId: postEntity.get('mentionUserIds'),
+      privacy: postEntity.get('privacy'),
+      publishedAt: postEntity.get('publishedAt'),
+      reactionsCount: postEntity.get('aggregation')?.reactionsCount,
+      setting: postEntity.get('setting'),
+      status: postEntity.get('status'),
+      tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
+      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
+      type: postEntity.getType(),
+      seriesIds: postEntity.getSeriesIds(),
+      quiz: postEntity.get('quiz') ? this._quizMapper.toDto(postEntity.get('quiz')) : undefined,
+    });
+  }
+
+  private _bindingArticleCache(articleEntity: ArticleEntity): ArticleCacheDto {
+    return new ArticleCacheDto({
+      categories: articleEntity.getCategories().map((category) => ({
+        id: category.get('id'),
+        name: category.get('name'),
+      })),
+      commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
+      content: articleEntity.get('content'),
+      coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
+      createdAt: articleEntity.get('createdAt'),
+      createdBy: articleEntity.getCreatedBy(),
+      updatedBy: articleEntity.get('updatedBy'),
+      groups: articleEntity.getGroupIds(),
+      id: articleEntity.getId(),
+      isReported: articleEntity.get('isReported'),
+      isHidden: articleEntity.isHidden(),
+      media: this._mediaMapper.toDto(articleEntity.get('media')),
+      privacy: articleEntity.get('privacy'),
+      publishedAt: articleEntity.get('publishedAt'),
+      reactionsCount: articleEntity.get('aggregation')?.reactionsCount,
+      seriesIds: articleEntity.getSeriesIds(),
+      setting: articleEntity.get('setting'),
+      status: articleEntity.get('status'),
+      summary: articleEntity.get('summary'),
+      tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
+      title: articleEntity.get('title'),
+      totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
+      type: articleEntity.getType(),
+      updatedAt: articleEntity.get('updatedAt'),
+      wordCount: articleEntity.get('wordCount'),
+      quiz: articleEntity.get('quiz')
+        ? this._quizMapper.toDto(articleEntity.get('quiz'))
+        : undefined,
+    });
+  }
+
+  private _bindingSeriesCache(seriesEntity: SeriesEntity): SeriesCacheDto {
+    return new SeriesCacheDto({
+      coverMedia: new ImageDto(seriesEntity.get('cover').toObject()),
+      createdAt: seriesEntity.get('createdAt'),
+      updatedAt: seriesEntity.get('updatedAt'),
+      updatedBy: seriesEntity.get('updatedBy'),
+      createdBy: seriesEntity.getCreatedBy(),
+      isHidden: seriesEntity.isHidden(),
+      isReported: seriesEntity.get('isReported'),
+      groups: seriesEntity.getGroupIds(),
+      id: seriesEntity.getId(),
+      itemsIds: seriesEntity.getItemIds(),
+      privacy: seriesEntity.get('privacy'),
+      publishedAt: seriesEntity.get('publishedAt'),
+      setting: seriesEntity.get('setting'),
+      status: seriesEntity.get('status'),
+      summary: seriesEntity.get('summary'),
+      title: seriesEntity.get('title'),
+      type: seriesEntity.getType(),
+    });
+  }
+
+  private _getLinkPreviewBindingInContent(linkPreviewEntity: LinkPreviewEntity): LinkPreviewDto {
+    if (!linkPreviewEntity) {
+      return null;
+    }
+    return {
+      id: linkPreviewEntity.get('id'),
+      url: linkPreviewEntity.get('url'),
+      domain: linkPreviewEntity.get('domain'),
+      image: linkPreviewEntity.get('image'),
+      title: linkPreviewEntity.get('title'),
+      description: linkPreviewEntity.get('description'),
+    };
+  }
+
+  private _getTagBindingInContent(tagEntity: TagEntity): TagDto {
+    if (!tagEntity) {
+      return null;
+    }
+    return {
+      id: tagEntity.get('id'),
+      groupId: tagEntity.get('groupId'),
+      name: tagEntity.get('name'),
+    };
   }
 }

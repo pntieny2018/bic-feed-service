@@ -45,7 +45,7 @@ export interface IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  findContentInCache(
+  findContentWithCache(
     findOnePostOptions: FindContentProps,
     user: UserDto
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
@@ -53,7 +53,7 @@ export interface IContentRepository {
     findAllPostOptions: FindContentProps,
     offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
-  findAllInCache(
+  findContentsWithCache(
     findAllPostOptions: FindContentProps,
     offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;

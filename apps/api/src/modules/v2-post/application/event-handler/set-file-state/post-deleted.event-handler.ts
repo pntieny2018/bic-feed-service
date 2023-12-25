@@ -14,7 +14,7 @@ export class FilePostDeletedEventHandler implements IEventHandler<PostDeletedEve
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     const fileIds = postEntity.get('media').files.map((file) => file.get('id'));
 

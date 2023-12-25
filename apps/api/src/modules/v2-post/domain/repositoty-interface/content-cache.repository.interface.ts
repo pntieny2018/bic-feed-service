@@ -7,24 +7,15 @@ import {
 import { ArticleEntity, PostEntity, SeriesEntity } from '@api/modules/v2-post/domain/model/content';
 import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
 
-export interface IContentCacheAdapter {
-  setJson<T>(key: string, value: T, path?: string): Promise<any>;
-  setJsonNx<T>(key: string, value: T, path?: string): Promise<any>;
-  increaseValue(key: string, path: string): Promise<number>;
-  decreaseValue(key: string, path: string): Promise<number>;
-  hasKey(key: string): Promise<boolean>;
+export interface IContentCacheRepository {
+  existKey(key: string): Promise<boolean>;
 
-  getJson<T>(key: string, path?: string): Promise<T>;
-  mgetJson<T>(keys: string[]): Promise<T[]>;
+  getContent(contentId: string): Promise<PostCacheDto | ArticleCacheDto | SeriesCacheDto>;
+  getContents(contentIds: string[]): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]>;
+  setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
+  deleteContent(contentId: string): Promise<void>;
 
-  getContentCached(contentId: string): Promise<PostCacheDto | ArticleCacheDto | SeriesCacheDto>;
-  getContentsCached(
-    contentIds: string[]
-  ): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]>;
-  setCacheContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
-  deleteContentCache(contentId: string): Promise<void>;
-
-  getUserReportedTargetIds(userId: string): Promise<string[]>;
+  getReportedTargetIdsByUserId(userId: string): Promise<string[]>;
   cacheUserReportedContent(userId: string, contentIds: string[]): Promise<void>;
 
   setReactionsCount(contentId: string, reactionsCount: ReactionCount): Promise<void>;
@@ -41,4 +32,4 @@ export interface IContentCacheAdapter {
   deleteQuiz(contentId: string): Promise<void>;
 }
 
-export const CONTENT_CACHE_ADAPTER = 'CONTENT_CACHE_ADAPTER';
+export const CONTENT_CACHE_REPOSITORY_TOKEN = 'CONTENT_CACHE_REPOSITORY_TOKEN';

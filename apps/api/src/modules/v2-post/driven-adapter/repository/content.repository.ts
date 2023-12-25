@@ -4,9 +4,9 @@ import {
   SeriesCacheDto,
 } from '@api/modules/v2-post/application/dto';
 import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
@@ -69,8 +69,8 @@ export class ContentRepository implements IContentRepository {
     private readonly _libUserMarkReadPostRepo: LibUserMarkReadPostRepository,
     private readonly _libUserSavePostRepo: LibUserSavePostRepository,
     private readonly _contentMapper: ContentMapper,
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly contentCacheRepository: IContentCacheRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepository: IPostReactionRepository,
     @Inject(forwardRef(() => CONTENT_VALIDATOR_TOKEN))
@@ -305,22 +305,20 @@ export class ContentRepository implements IContentRepository {
     findOnePostOptions: FindContentProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const content = await this._libContentRepo.findOne(findOnePostOptions);
-    const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents([
-      findOnePostOptions.where.id,
-    ]);
 
-    return this._contentMapper.toDomain(content, contentReactionCounts);
+    return this._contentMapper.toDomain(content);
   }
 
-  public async findContentInCache(
+  public async findContentWithCache(
     findOnePostOptions: FindContentProps,
     user: UserDto
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const cachedContent = await this._contentCacheAdapter.getContentCached(
+    const cachedContent = await this.contentCacheRepository.getContent(
       `${findOnePostOptions.where.id}`
     );
     if (cachedContent) {
-      await this._contentValidator.validateReadCacheContent(
+      await this._contentValidator.validateContentReported(cachedContent.id, user.id);
+      await this._contentValidator.validateContentArchived(
         cachedContent.id,
         user,
         cachedContent.groups
@@ -333,11 +331,11 @@ export class ContentRepository implements IContentRepository {
       return null;
     }
     const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents([
-      findOnePostOptions.where.id,
+      content.id,
     ]);
 
     const contentEntity = this._contentMapper.toDomain(content, contentReactionCounts);
-    await this._contentCacheAdapter.setCacheContents([contentEntity]);
+    await this.contentCacheRepository.setContents([contentEntity]);
     return contentEntity;
   }
 
@@ -349,13 +347,13 @@ export class ContentRepository implements IContentRepository {
     return contents.map((content) => this._contentMapper.toDomain(content));
   }
 
-  public async findAllInCache(
+  public async findContentsWithCache(
     findAllPostOptions: FindContentProps,
     offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const contentIds = findAllPostOptions.where.ids;
     const contentsCache: (ArticleCacheDto | PostCacheDto | SeriesCacheDto)[] = flatten(
-      await this._contentCacheAdapter.getContentsCached(contentIds)
+      await this.contentCacheRepository.getContents(contentIds)
     );
 
     const cacheContentsEntity = contentsCache.map((content) =>
@@ -378,7 +376,7 @@ export class ContentRepository implements IContentRepository {
     const dbContentsEntity = contents.map((content) =>
       this._contentMapper.toDomain(content, contentReactionCounts)
     );
-    await this._contentCacheAdapter.setCacheContents(dbContentsEntity);
+    await this.contentCacheRepository.setContents(dbContentsEntity);
     return [...dbContentsEntity, ...cacheContentsEntity];
   }
 
@@ -423,7 +421,7 @@ export class ContentRepository implements IContentRepository {
       { ignoreDuplicates: true }
     );
 
-    await this._contentCacheAdapter.increaseSeenContentCount(postId);
+    await this.contentCacheRepository.increaseSeenContentCount(postId);
   }
 
   public async hasSeen(postId: string, userId: string): Promise<boolean> {

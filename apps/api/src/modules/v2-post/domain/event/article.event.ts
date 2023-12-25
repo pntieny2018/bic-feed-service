@@ -9,7 +9,7 @@ import { UserDto } from '../../../v2-user/application';
 import { ArticleEntity } from '../model/content';
 
 interface ArticleEventPayload {
-  articleEntity: ArticleEntity;
+  entity: ArticleEntity;
   authUser: UserDto;
 }
 export class ArticleDeletedEvent implements IEventPayload {

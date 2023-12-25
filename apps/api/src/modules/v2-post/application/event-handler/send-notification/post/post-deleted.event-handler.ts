@@ -19,7 +19,7 @@ export class NotiPostDeletedEventHandler implements IEventHandler<PostDeletedEve
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     const postDto = await this._contentBinding.postBinding(postEntity, {
       actor: authUser,

@@ -153,7 +153,7 @@ export class ContentDomainService implements IContentDomainService {
     if (!ids.length) {
       return [];
     }
-    const contentEntities = await this._contentRepo.findAllInCache({
+    const contentEntities = await this._contentRepo.findContentsWithCache({
       where: {
         ids,
       },

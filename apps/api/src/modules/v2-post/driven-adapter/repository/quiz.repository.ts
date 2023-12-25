@@ -1,7 +1,7 @@
 import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { PostModel, QuizAttributes } from '@libs/database/postgres/model';
 import {
@@ -30,14 +30,14 @@ export class QuizRepository implements IQuizRepository {
     private readonly _quizQuestionMapper: QuizQuestionMapper,
     private readonly _quizMapper: QuizMapper,
 
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepository: IContentCacheRepository
   ) {}
 
   public async createQuiz(quizEntity: QuizEntity): Promise<void> {
     const model = this._quizMapper.toPersistence(quizEntity);
     await this._libQuizRepo.create(model);
-    await this._contentCacheAdapter.updateQuiz(quizEntity);
+    await this._contentCacheRepository.updateQuiz(quizEntity);
   }
 
   public async updateQuiz(quizEntity: QuizEntity): Promise<void> {
@@ -46,7 +46,7 @@ export class QuizRepository implements IQuizRepository {
       where: { id: quizEntity.get('id') },
     });
 
-    await this._contentCacheAdapter.updateQuiz(quizEntity);
+    await this._contentCacheRepository.updateQuiz(quizEntity);
 
     if (quiz.questions !== undefined && quiz.questions.length) {
       await this._libQuizQuestionRepo.delete({ where: { quizId: quizEntity.get('id') } });
@@ -87,7 +87,7 @@ export class QuizRepository implements IQuizRepository {
     await this._libQuizRepo.delete({
       where: { id },
     });
-    await this._contentCacheAdapter.deleteQuiz(contentId);
+    await this._contentCacheRepository.deleteQuiz(contentId);
   }
 
   public async findQuizById(quizId: string): Promise<QuizEntity> {

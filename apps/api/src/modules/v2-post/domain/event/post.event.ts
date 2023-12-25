@@ -12,7 +12,7 @@ import {
 import { PostEntity } from '../model/content';
 
 interface PostEventPayload {
-  postEntity: PostEntity;
+  entity: PostEntity;
   authUser: UserDto;
 }
 

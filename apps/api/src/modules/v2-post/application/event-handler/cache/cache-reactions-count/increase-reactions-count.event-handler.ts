@@ -4,9 +4,9 @@ import {
 } from '@api/modules/v2-post/domain/domain-service/interface';
 import { ReactionCreatedEvent } from '@api/modules/v2-post/domain/event';
 import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { CONTENT_TARGET } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
@@ -15,8 +15,8 @@ import { IEventHandler } from '@nestjs/cqrs';
 @EventsHandlerAndLog(ReactionCreatedEvent)
 export class CacheIncreaseReactionCountEventHandler implements IEventHandler<ReactionCreatedEvent> {
   public constructor(
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly contentCacheRepository: IContentCacheRepository,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService
   ) {}
@@ -30,18 +30,18 @@ export class CacheIncreaseReactionCountEventHandler implements IEventHandler<Rea
 
     const contentId = reactionEntity.get('targetId');
 
-    const contentCache = await this._contentCacheAdapter.getContentCached(contentId);
+    const contentCache = await this.contentCacheRepository.getContent(contentId);
     if (!contentCache) {
       const contentEntity = await this._contentDomainService.getContentForCacheById(contentId);
-      await this._contentCacheAdapter.setCacheContents([contentEntity]);
+      await this.contentCacheRepository.setContents([contentEntity]);
     } else {
-      const increaseValue = await this._contentCacheAdapter.increaseReactionsCount(
+      const increaseValue = await this.contentCacheRepository.increaseReactionsCount(
         contentId,
         reactionEntity.get('reactionName')
       );
 
       if (!increaseValue) {
-        await this._contentCacheAdapter.setReactionNameNx(
+        await this.contentCacheRepository.setReactionNameNx(
           contentId,
           reactionEntity.get('reactionName')
         );

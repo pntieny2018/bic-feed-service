@@ -1,7 +1,3 @@
-import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
 import { CONTENT_STATUS } from '@beincom/constants';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -21,7 +17,6 @@ import {
   SeriesItemsRemovedPayload,
   SeriesItemsAddedPayload,
   ContentAttachedSeriesEvent,
-  ContentDeleteCacheEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -66,13 +61,11 @@ export class SeriesDomainService implements ISeriesDomainService {
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter
+    private readonly _contentRepository: IContentRepository
   ) {}
 
   public async getSeriesById(seriesId: string, authUser: UserDto): Promise<SeriesEntity> {
-    const seriesEntity = await this._contentRepository.findContentInCache(
+    const seriesEntity = await this._contentRepository.findContentWithCache(
       {
         where: {
           id: seriesId,
@@ -96,8 +89,6 @@ export class SeriesDomainService implements ISeriesDomainService {
     ) {
       throw new ContentNotFoundException();
     }
-
-    await this._contentCacheAdapter.setCacheContents([seriesEntity]);
 
     if (!authUser && !seriesEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -164,7 +155,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new DatabaseException();
     }
 
-    this.event.publish(new SeriesPublishedEvent({ seriesEntity, authUser: actor }));
+    this.event.publish(new SeriesPublishedEvent({ entity: seriesEntity, authUser: actor }));
 
     return seriesEntity;
   }
@@ -252,8 +243,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setMarkReadImportant();
     }
 
-    this.event.publish(new SeriesUpdatedEvent({ seriesEntity, authUser: actor }));
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
+    this.event.publish(new SeriesUpdatedEvent({ entity: seriesEntity, authUser: actor }));
 
     return seriesEntity;
   }
@@ -290,8 +280,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.delete(seriesEntity.get('id'));
 
-    this.event.publish(new SeriesDeletedEvent({ seriesEntity, authUser: actor }));
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
+    this.event.publish(new SeriesDeletedEvent({ entity: seriesEntity, authUser: actor }));
   }
 
   public async findItemsInSeries(
@@ -362,7 +351,6 @@ export class SeriesDomainService implements ISeriesDomainService {
         context: 'add',
       })
     );
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public async removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void> {
@@ -405,7 +393,6 @@ export class SeriesDomainService implements ISeriesDomainService {
         contentIsDeleted: false,
       })
     );
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public async reorderSeriesItems(input: ReorderSeriesItemsProps): Promise<void> {
@@ -432,7 +419,6 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentRepository.reorderPostsSeries(id, itemIds);
 
     this.event.publish(new SeriesItemsReorderedEvent(id));
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
   }
 
   public sendSeriesItemsAddedEvent(input: SeriesItemsAddedPayload): void {

@@ -14,7 +14,7 @@ export class VideoPostVideoSuccessEventHandler implements IEventHandler<PostVide
   ) {}
 
   public async handle(event: PostVideoSuccessEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     const videoIds = postEntity.get('media').videos.map((video) => video.get('id'));
 

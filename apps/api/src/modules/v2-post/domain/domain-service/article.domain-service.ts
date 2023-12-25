@@ -1,7 +1,3 @@
-import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -13,7 +9,6 @@ import {
   ArticleDeletedEvent,
   ArticlePublishedEvent,
   ArticleUpdatedEvent,
-  ContentDeleteCacheEvent,
   ContentHasSeenEvent,
 } from '../event';
 import {
@@ -83,14 +78,12 @@ export class ArticleDomainService implements IArticleDomainService {
     private readonly _contentRepository: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepository: ITagRepository,
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter,
 
     private readonly event: EventBus
   ) {}
 
   public async getArticleById(articleId: string, authUser: UserDto): Promise<ArticleEntity> {
-    const articleEntity = await this._contentRepository.findContentInCache(
+    const articleEntity = await this._contentRepository.findContentWithCache(
       {
         where: {
           id: articleId,
@@ -112,8 +105,6 @@ export class ArticleDomainService implements IArticleDomainService {
     if (!isArticle || articleEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
-
-    await this._contentCacheAdapter.setCacheContents([articleEntity]);
 
     await this._contentValidator.checkCanReadNotPublishedContent(articleEntity, authUser.id);
 
@@ -172,8 +163,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new ArticleDeletedEvent({ articleEntity, authUser: actor }));
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
+    this.event.publish(new ArticleDeletedEvent({ entity: articleEntity, authUser: actor }));
   }
 
   public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
@@ -209,7 +199,7 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticlePublishedEvent({ articleEntity, authUser: actor }));
+    this.event.publish(new ArticlePublishedEvent({ entity: articleEntity, authUser: actor }));
 
     await this._contentDomainService.markSeen(articleEntity.get('id'), actor.id);
     articleEntity.increaseTotalSeen();
@@ -302,8 +292,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
-      this.event.publish(new ArticleUpdatedEvent({ articleEntity, authUser: actor }));
-      this.event.publish(new ContentDeleteCacheEvent({ contentId: articleEntity.getId() }));
+      this.event.publish(new ArticleUpdatedEvent({ entity: articleEntity, authUser: actor }));
     }
 
     return articleEntity;

@@ -49,4 +49,14 @@ export class RedisContentService extends BaseRedisService {
     const result = await this._store.call('JSON.MGET', ...keys, '$');
     return (result as any[]).filter((r) => !!r).map((r) => JSON.parse(r));
   }
+
+  public async increaseValue(key: string, path: string, increase = 1): Promise<number> {
+    const increaseResult = await this._store.call('JSON.NUMINCRBY', key, `$.${path}`, increase);
+    return JSON.parse(increaseResult as string)[0];
+  }
+
+  public async decreaseValue(key: string, path: string, decrease = -1): Promise<number> {
+    const decreaseResult = await this._store.call('JSON.NUMINCRBY', key, `$.${path}`, decrease);
+    return JSON.parse(decreaseResult as string)[0];
+  }
 }

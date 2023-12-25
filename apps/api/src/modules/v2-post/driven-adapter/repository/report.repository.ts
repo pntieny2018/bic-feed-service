@@ -1,7 +1,7 @@
 import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { ReportAttribute } from '@libs/database/postgres/model';
@@ -30,8 +30,8 @@ export class ReportRepository implements IReportRepository {
 
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepository: IContentCacheRepository
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
@@ -226,7 +226,9 @@ export class ReportRepository implements IReportRepository {
       return [];
     }
 
-    const targetIdCached = await this._contentCacheAdapter.getUserReportedTargetIds(reporterId);
+    const targetIdCached = await this._contentCacheRepository.getReportedTargetIdsByUserId(
+      reporterId
+    );
     if (targetIdCached?.length) {
       return targetIdCached;
     }
@@ -241,7 +243,7 @@ export class ReportRepository implements IReportRepository {
       return [];
     }
 
-    await this._contentCacheAdapter.cacheUserReportedContent(reporterId, targetIds);
+    await this._contentCacheRepository.cacheUserReportedContent(reporterId, targetIds);
 
     return targetIds;
   }

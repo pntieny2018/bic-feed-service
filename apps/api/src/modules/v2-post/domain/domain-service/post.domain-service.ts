@@ -1,7 +1,3 @@
-import {
-  CONTENT_CACHE_ADAPTER,
-  IContentCacheAdapter,
-} from '@api/modules/v2-post/domain/infra-adapter-interface';
 import { CONTENT_STATUS } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
@@ -11,7 +7,6 @@ import { EventBus } from '@nestjs/cqrs';
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
-  ContentDeleteCacheEvent,
   ContentHasSeenEvent,
   PostDeletedEvent,
   PostPublishedEvent,
@@ -93,14 +88,12 @@ export class PostDomainService implements IPostDomainService {
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
-    @Inject(CONTENT_CACHE_ADAPTER)
-    private readonly _contentCacheAdapter: IContentCacheAdapter,
 
     private readonly event: EventBus
   ) {}
 
   public async getPostById(postId: string, authUser: UserDto): Promise<PostEntity> {
-    const postEntity = await this._contentRepository.findContentInCache(
+    const postEntity = await this._contentRepository.findContentWithCache(
       {
         where: {
           id: postId,
@@ -121,7 +114,6 @@ export class PostDomainService implements IPostDomainService {
     if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
-    await this._contentCacheAdapter.setCacheContents([postEntity]);
 
     await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUser.id);
 
@@ -182,7 +174,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostScheduledEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostScheduledEvent({ entity: postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -234,7 +226,7 @@ export class PostDomainService implements IPostDomainService {
         postEntity.setMarkReadImportant();
       }
 
-      this.event.publish(new PostPublishedEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostPublishedEvent({ entity: postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -282,8 +274,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostUpdatedEvent({ postEntity, authUser: actor }));
-      this.event.publish(new ContentDeleteCacheEvent({ contentId: postEntity.getId() }));
+      this.event.publish(new PostUpdatedEvent({ entity: postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -323,7 +314,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoFailedEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostVideoFailedEvent({ entity: postEntity, authUser: actor }));
     }
   }
 
@@ -358,7 +349,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoSuccessEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostVideoSuccessEvent({ entity: postEntity, authUser: actor }));
     }
 
     if (!isScheduledPost) {
@@ -425,8 +416,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
-    this.event.publish(new ContentDeleteCacheEvent({ contentId: id }));
+    this.event.publish(new PostDeletedEvent({ entity: postEntity, authUser: authUser }));
   }
 
   private async _setPostAttributes(
