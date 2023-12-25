@@ -37,7 +37,6 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
-import { ContentCron } from '../application/cron';
 import {
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
@@ -124,9 +123,6 @@ import { DetachNewsfeedWhenReportHiddenEventHandler } from '@api/modules/v2-post
 import { DetachNewsfeedWhenReportCreatedEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-created.event-handler';
 
 export const postProvider = [
-  /** Application Cron Handler */
-  ContentCron,
-
   /** Application Event Handler */
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,

@@ -129,9 +129,12 @@ export class ReportRepository implements IReportRepository {
     input: GetPaginationReportProps
   ): Promise<CursorPaginationResult<ReportEntity>> {
     const { limit, before, after, order = ORDER.DESC, sortColumns = ['createdAt'] } = input;
-    const { targetTypes, targetActorId, status, groupId, isDistinctTarget } = input;
+    const { targetIds, targetTypes, targetActorId, status, groupId, isDistinctTarget } = input;
 
     const condition: WhereOptions<ReportAttribute> = {};
+    if (targetIds?.length) {
+      condition.targetId = targetIds;
+    }
     if (targetTypes?.length) {
       condition.targetType = targetTypes;
     }
@@ -156,7 +159,8 @@ export class ReportRepository implements IReportRepository {
           group: ['target_id'],
         }),
       },
-      { limit, before, after, order, sortColumns }
+      { limit, before, after, order, sortColumns },
+      false
     );
 
     return {

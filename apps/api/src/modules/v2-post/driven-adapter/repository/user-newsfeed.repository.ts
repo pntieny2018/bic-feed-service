@@ -1,15 +1,6 @@
-import {
-  LibContentRepository,
-  LibUserNewsfeedRepository,
-} from '@libs/database/postgres/repository';
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  GetContentIdsCursorPaginationByUserIdProps,
-  GetImportantContentIdsCursorPaginationByUserIdProps,
-  IUserNewsfeedRepository,
-} from '../../domain/repositoty-interface';
 import { ContentEntity } from '@api/modules/v2-post/domain/model/content';
 import { ORDER } from '@beincom/constants';
+import { FindOptions } from '@libs/database/postgres';
 import {
   createCursor,
   CursorPaginationResult,
@@ -21,21 +12,26 @@ import {
   UserNewsFeedModel,
   UserSavePostModel,
 } from '@libs/database/postgres/model';
-import { FindOptions } from '@libs/database/postgres';
+import {
+  LibContentRepository,
+  LibUserNewsfeedRepository,
+} from '@libs/database/postgres/repository';
+import { Injectable } from '@nestjs/common';
+
+import {
+  GetContentIdsCursorPaginationByUserIdProps,
+  GetImportantContentIdsCursorPaginationByUserIdProps,
+  IUserNewsfeedRepository,
+} from '../../domain/repositoty-interface';
 
 @Injectable()
 export class UserNewsfeedRepository implements IUserNewsfeedRepository {
-  private _logger = new Logger(UserNewsfeedRepository.name);
-
   public constructor(
     private readonly _libUserNewsfeedRepo: LibUserNewsfeedRepository,
     private readonly _libContentRepo: LibContentRepository
   ) {}
 
-  public async attachContentIdToUserId(
-    contentEntity: ContentEntity,
-    userId: string
-  ): Promise<void> {
+  public async attachContentToUserId(contentEntity: ContentEntity, userId: string): Promise<void> {
     await this._libUserNewsfeedRepo.bulkCreate(
       [
         {
@@ -50,15 +46,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
       { ignoreDuplicates: true }
     );
   }
-  public async hasPublishedContentIdToUserId(contentId: string, userId: string): Promise<boolean> {
-    const data = await this._libUserNewsfeedRepo.first({
-      where: {
-        userId,
-        postId: contentId,
-      },
-    });
-    return !!data;
-  }
+
   public async detachContentIdFromUserId(contentId: string, userId: string): Promise<void> {
     await this._libUserNewsfeedRepo.delete({
       where: {
@@ -68,7 +56,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
     });
   }
 
-  public async detachContentId(contentId: string): Promise<void> {
+  public async detachContentIdFromAllUsers(contentId: string): Promise<void> {
     await this._libUserNewsfeedRepo.delete({
       where: {
         postId: contentId,

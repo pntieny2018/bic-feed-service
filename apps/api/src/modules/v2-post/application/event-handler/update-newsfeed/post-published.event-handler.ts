@@ -16,11 +16,14 @@ export class FeedPostPublishedEventHandler implements IEventHandler<PostPublishe
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity } = event.payload;
+    const { postEntity, authUser } = event.payload;
 
     if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;
     }
+
+    await this._newsfeedDomainService.attachContentToUserId(postEntity, authUser.id);
+
     await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: postEntity.getId(),
       newGroupIds: postEntity.getGroupIds(),

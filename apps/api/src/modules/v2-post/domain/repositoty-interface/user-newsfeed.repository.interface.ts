@@ -1,6 +1,6 @@
 import { ContentEntity } from '@api/modules/v2-post/domain/model/content';
-import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 import { CONTENT_TYPE } from '@beincom/constants';
+import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 
 export type GetContentIdsCursorPaginationByUserIdProps = {
   userId: string;
@@ -15,10 +15,9 @@ export type GetImportantContentIdsCursorPaginationByUserIdProps = {
   type?: CONTENT_TYPE;
 } & Pick<CursorPaginationProps, 'limit' | 'after'>;
 export interface IUserNewsfeedRepository {
-  hasPublishedContentIdToUserId(contentId: string, userId: string): Promise<boolean>;
-  attachContentIdToUserId(contentEntity: ContentEntity, userId: string): Promise<void>;
+  attachContentToUserId(contentEntity: ContentEntity, userId: string): Promise<void>;
   detachContentIdFromUserId(contentId: string, userId: string): Promise<void>;
-  detachContentId(contentId: string): Promise<void>;
+  detachContentIdFromAllUsers(contentId: string): Promise<void>;
   getContentIdsCursorPaginationByUserId(
     getNewsfeedPaginationProps: GetContentIdsCursorPaginationByUserIdProps
   ): Promise<CursorPaginationResult<string>>;

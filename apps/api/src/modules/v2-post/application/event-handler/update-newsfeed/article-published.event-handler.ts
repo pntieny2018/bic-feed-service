@@ -16,11 +16,13 @@ export class FeedArticlePublishedEventHandler implements IEventHandler<ArticlePu
   ) {}
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
-    const { articleEntity } = event.payload;
+    const { articleEntity, authUser } = event.payload;
 
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
+
+    await this._newsfeedDomainService.attachContentToUserId(articleEntity, authUser.id);
 
     await this._newsfeedDomainService.dispatchContentIdToGroups({
       contentId: articleEntity.getId(),

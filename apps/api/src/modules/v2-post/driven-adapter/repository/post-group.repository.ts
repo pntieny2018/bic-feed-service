@@ -59,7 +59,8 @@ export class PostGroupRepository implements IPostGroupRepository {
           ],
         }),
       },
-      { limit, before, after, order, sortColumns }
+      { limit, before, after, order, sortColumns },
+      false
     );
 
     return { rows, meta };
