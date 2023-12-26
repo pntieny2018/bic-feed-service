@@ -973,7 +973,7 @@ describe('QuizRepository', () => {
         mockQuizEntity.get('contentId'),
         mockUser
       );
-      expect(_quizRepo.deleteQuiz).toBeCalledWith(mockQuizId);
+      expect(_quizRepo.deleteQuiz).toBeCalledWith(mockQuizId, mockQuizEntity.get('contentId'));
     });
 
     it('Should throw error when quiz is not found ', async () => {
@@ -1023,7 +1023,7 @@ describe('QuizRepository', () => {
           mockQuizEntity.get('contentId'),
           mockUser
         );
-        expect(_quizRepo.deleteQuiz).toBeCalledWith(mockQuizId);
+        expect(_quizRepo.deleteQuiz).toBeCalledWith(mockQuizId, mockQuizEntity.get('contentId'));
       }
     });
   });
