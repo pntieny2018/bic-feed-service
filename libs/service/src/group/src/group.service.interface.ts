@@ -57,7 +57,7 @@ export interface IGroupService {
   ): Promise<GetUserRoleInGroupsResult | null>;
 
   isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
-  getPaginationGroupsMembers(props: GetPaginationGroupsMembersProps): Promise<{ ids: string[] }>;
+  getPaginationGroupsMembers(props: GetPaginationGroupsMembersProps): Promise<{ list: string[] }>;
   countUsersInGroups(props: CountUsersInGroupsProps): Promise<{ total: number }>;
 }
 

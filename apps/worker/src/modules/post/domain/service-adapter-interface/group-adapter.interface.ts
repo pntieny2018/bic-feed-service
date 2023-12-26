@@ -16,6 +16,6 @@ export type CountUsersInGroupsProps = {
   includeDeactivated?: boolean;
 };
 export interface IGroupAdapter {
-  getGroupsMembers(props: GetGroupsMembersProps): Promise<{ ids: string[] }>;
+  getGroupsMembers(props: GetGroupsMembersProps): Promise<{ list: string[] }>;
   countUsersInGroups(props: CountUsersInGroupsProps): Promise<{ total: number }>;
 }

@@ -164,14 +164,17 @@ export class GroupService implements IGroupService {
   }> {
     const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, after } = input;
     try {
-      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
-        group_ids: groupIds,
-        ignore_group_ids: notInGroupIds,
-        ignoreUserIds,
-        include_deactivated: includeDeactivated || false,
-        limit: limit || 5000,
-        after: after || null,
-      });
+      const response = await this._httpService.post(
+        `${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS_BY_CURSOR}`,
+        {
+          group_ids: groupIds,
+          ignore_group_ids: notInGroupIds,
+          ignoreUserIds,
+          include_deactivated: includeDeactivated || false,
+          limit: limit || 5000,
+          after: after || null,
+        }
+      );
       return {
         list: response.data['data'],
         cursor: response.data['meta']['cursors']['next'],
@@ -209,10 +212,10 @@ export class GroupService implements IGroupService {
 
   public async getPaginationGroupsMembers(
     input: GetPaginationGroupsMembersProps
-  ): Promise<{ ids: string[] }> {
+  ): Promise<{ list: string[] }> {
     const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, offset } = input;
     try {
-      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.GROUPS_MEMBERS}`, {
+      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
         group_ids: groupIds,
         ignore_group_ids: notInGroupIds,
         ignore_user_ids: ignoreUserIds,
@@ -221,11 +224,11 @@ export class GroupService implements IGroupService {
         limit,
       });
       return {
-        ids: response.data['data'].ids,
+        list: response.data['data'],
       };
     } catch (ex) {
       this._logger.error(JSON.stringify(ex));
-      return { ids: [] };
+      return { list: [] };
     }
   }
 }
