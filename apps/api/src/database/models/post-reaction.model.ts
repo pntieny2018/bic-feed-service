@@ -1,4 +1,5 @@
 import { IsUUID } from 'class-validator';
+import { Optional } from 'sequelize/types';
 import {
   Column,
   CreatedAt,
@@ -8,10 +9,9 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize/types';
-import { MediaModel } from './media.model';
-import { PostModel } from './post.model';
 import { v4 as uuid_v4 } from 'uuid';
+
+import { PostModel } from './post.model';
 
 export interface IPostReaction {
   id: string;
@@ -39,7 +39,6 @@ export class PostReactionModel
   @Column
   public postId: string;
 
-  @ForeignKey(() => MediaModel)
   @Column
   public reactionName: string;
 

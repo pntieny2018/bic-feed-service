@@ -6,10 +6,8 @@ import { ImageEntity } from '../media';
 import { ContentEntity, ContentAttributes } from './content.entity';
 
 export type SeriesAttributes = ContentAttributes & {
-  title: string;
   summary: string;
   itemIds?: string[];
-  items?: { id: string; zindex: number }[];
   cover: ImageEntity;
 };
 
@@ -54,8 +52,8 @@ export class SeriesEntity extends ContentEntity<SeriesAttributes> {
     this._props.cover = coverMedia;
   }
 
-  public getTitle(): string {
-    return this._props.title;
+  public getItemIds(): string[] {
+    return this._props.itemIds || [];
   }
 
   /**

@@ -1,3 +1,4 @@
+import { ORDER } from '@beincom/constants';
 import { FindOptions } from '@libs/database/postgres';
 import {
   CursorPaginationProps,
@@ -67,6 +68,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       limit: options.limit || undefined,
       offset: options.offset || undefined,
       subQuery: options.subQuery,
+      replacements: options.replacements,
     });
   }
 
@@ -98,7 +100,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
   }
 
   public async delete(options: DestroyOptions<M>): Promise<number> {
-    return this.model.destroy(options);
+    return this.model.destroy({ ...options, individualHooks: true });
   }
 
   public async bulkCreate(
@@ -170,12 +172,29 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
 
   public async cursorPaginate(
     findOptions: FindOptions<M>,
-    paginationProps: CursorPaginationProps
+    paginationProps: CursorPaginationProps,
+    subQuery = true
   ): Promise<CursorPaginationResult<M>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order, column } = paginationProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+      sortColumns = ['createdAt'],
+    } = paginationProps;
 
-    const paginator = new CursorPaginator(this.model, [column], { before, after, limit }, order);
-    const { rows, meta } = await paginator.paginate(findOptions);
+    const attributes = this._buildSelect(findOptions);
+    const include = this._buildInclude(findOptions);
+    const where = this._buildWhere(findOptions);
+
+    const paginator = new CursorPaginator(this.model, sortColumns, { before, after, limit }, order);
+    const { rows, meta } = await paginator.paginate({
+      attributes,
+      where,
+      include: include.length > 0 ? include : undefined,
+      subQuery,
+      group: findOptions.group,
+    });
 
     return {
       rows,

@@ -82,10 +82,14 @@ export class QuizModel extends Model<IQuiz, Optional<IQuiz, 'id'>> implements IQ
   })
   public meta: any;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: QUIZ_STATUS;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public genStatus: QUIZ_PROCESS_STATUS;
 
   @Column({

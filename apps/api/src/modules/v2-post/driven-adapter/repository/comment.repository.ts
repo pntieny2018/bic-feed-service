@@ -1,4 +1,4 @@
-import { CursorPaginationResult, getDatabaseConfig } from '@libs/database/postgres/common';
+import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { CommentAttributes, CommentModel } from '@libs/database/postgres/model';
 import { LibCommentRepository, LibFollowRepository } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
@@ -13,6 +13,7 @@ import {
   ICommentRepository,
 } from '../../domain/repositoty-interface';
 import { CommentMapper } from '../mapper/comment.mapper';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -59,6 +60,11 @@ export class CommentRepository implements ICommentRepository {
   ): Promise<CommentEntity> {
     const comment = await this._libCommentRepo.findOne(where, options);
     return this._commentMapper.toDomain(comment);
+  }
+
+  public async findAll(where: WhereOptions<CommentAttributes>): Promise<CommentEntity[]> {
+    const comments = await this._libCommentRepo.findMany({ where });
+    return (comments ?? []).map((comment) => this._commentMapper.toDomain(comment));
   }
 
   public async update(commentEntity: CommentEntity): Promise<void> {

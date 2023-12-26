@@ -13,9 +13,6 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { CommentMediaModel } from './comment-media.model';
-import { CommentModel } from './comment.model';
-import { PostMediaModel } from './post-media.model';
 import { PostModel } from './post.model';
 
 export enum MediaMarkAction {
@@ -46,7 +43,9 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
   @Column
   public url: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public type: MEDIA_TYPE;
 
   @AllowNull(false)
@@ -55,12 +54,6 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
 
   @CreatedAt
   public createdAt?: Date;
-
-  @HasMany(() => PostMediaModel)
-  public posts?: PostModel[];
-
-  @HasMany(() => CommentMediaModel)
-  public comments?: CommentModel[];
 
   @HasMany(() => PostModel, {
     foreignKey: 'cover',
@@ -84,7 +77,9 @@ export class MediaModel extends Model<MediaAttributes, InferCreationAttributes<M
   @Column
   public extension?: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public status: MEDIA_PROCESS_STATUS;
 
   @Default(0)

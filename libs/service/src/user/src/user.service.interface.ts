@@ -9,4 +9,5 @@ export interface IUserService {
   findAllByIds(ids: string[]): Promise<UserDto[]>;
   findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]>;
   canCudTags(userId: string, rootGroupId: string): Promise<boolean>;
+  getGroupIdsJoinedByUserId(userId: string): Promise<string[]>;
 }

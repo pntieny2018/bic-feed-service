@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { TestBed } from '@automock/jest';
-import { CONTENT_STATUS, CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { PostGroupModel } from '@libs/database/postgres/model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import {
   LibContentRepository,
   LibPostCategoryRepository,
@@ -12,11 +11,10 @@ import {
   LibPostSeriesRepository,
   LibPostTagRepository,
   LibUserMarkReadPostRepository,
-  LibUserReportContentRepository,
   LibUserSavePostRepository,
   LibUserSeenPostRepository,
 } from '@libs/database/postgres/repository';
-import { Transaction, Op } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { v4 } from 'uuid';
 
@@ -29,12 +27,7 @@ import {
 } from '../../../domain/model/content';
 import { ContentMapper } from '../../../driven-adapter/mapper/content.mapper';
 import { ContentRepository } from '../../../driven-adapter/repository/content.repository';
-import {
-  createMockCategoryEntity,
-  createMockReportContentDetailRecord,
-  createMockTagEntity,
-  createMockTagRecord,
-} from '../../mock';
+import { createMockCategoryEntity, createMockTagEntity, createMockTagRecord } from '../../mock';
 import {
   createMockArticleEntity,
   createMockArticleRecord,
@@ -56,7 +49,6 @@ describe('ContentRepository', () => {
   let _libPostCategoryRepo: jest.Mocked<LibPostCategoryRepository>;
   let _libUserSeenPostRepo: jest.Mocked<LibUserSeenPostRepository>;
   let _libUserMarkReadPostRepo: jest.Mocked<LibUserMarkReadPostRepository>;
-  let _libUserReportContentRepo: jest.Mocked<LibUserReportContentRepository>;
   let _libUserSavePostRepo: jest.Mocked<LibUserSavePostRepository>;
   let _contentMapper: jest.Mocked<ContentMapper>;
 
@@ -82,7 +74,6 @@ describe('ContentRepository', () => {
     _libPostCategoryRepo = unitRef.get(LibPostCategoryRepository);
     _libUserSeenPostRepo = unitRef.get(LibUserSeenPostRepository);
     _libUserMarkReadPostRepo = unitRef.get(LibUserMarkReadPostRepository);
-    _libUserReportContentRepo = unitRef.get(LibUserReportContentRepository);
     _libUserSavePostRepo = unitRef.get(LibUserSavePostRepository);
     _contentMapper = unitRef.get(ContentMapper);
 
@@ -255,6 +246,20 @@ describe('ContentRepository', () => {
     });
   });
 
+  describe('updateContentPrivacy', () => {
+    it('Should update content privacy success', async () => {
+      const mockContentIds = [v4(), v4()];
+      const mockPrivacy = PRIVACY.PRIVATE;
+
+      await _contentRepo.updateContentPrivacy(mockContentIds, mockPrivacy);
+
+      expect(_libContentRepo.update).toBeCalledWith(
+        { privacy: mockPrivacy },
+        { where: { id: mockContentIds } }
+      );
+    });
+  });
+
   describe('_setGroups', () => {
     it('Should add and delete groups success', async () => {
       const mockAttachGroupIds = [v4()];
@@ -286,7 +291,11 @@ describe('ContentRepository', () => {
       await _contentRepo['_setSeries'](mockPostEntity, transaction);
 
       expect(_libPostSeriesRepo.bulkCreate).toBeCalledWith(
-        mockAttachSeriesIds.map((seriesId) => ({ postId: mockPostEntity.getId(), seriesId })),
+        mockAttachSeriesIds.map((seriesId) => ({
+          postId: mockPostEntity.getId(),
+          seriesId,
+          zindex: 1,
+        })),
         { transaction, ignoreDuplicates: true }
       );
       expect(_libPostSeriesRepo.delete).toBeCalledWith({
@@ -354,7 +363,7 @@ describe('ContentRepository', () => {
       const mockContentId = v4();
       await _contentRepo.delete(mockContentId);
 
-      expect(_libContentRepo.delete).toBeCalledWith({ where: { id: mockContentId } });
+      expect(_libContentRepo.destroyContent).toBeCalledWith(mockContentId);
     });
   });
 
@@ -439,30 +448,6 @@ describe('ContentRepository', () => {
     });
   });
 
-  describe('getContentById', () => {
-    it('Should get content success', async () => {
-      const mockPostId = mockPostRecord.id;
-      _contentRepo.findContentById = jest.fn().mockResolvedValue(mockPostEntity);
-
-      const post = await _contentRepo.getContentById(mockPostId);
-
-      expect(_contentRepo.findContentById).toBeCalledWith(mockPostId);
-      expect(post).toEqual(mockPostEntity);
-    });
-
-    it('Should get content error', async () => {
-      const mockPostId = mockPostRecord.id;
-      _contentRepo.findContentById = jest.fn().mockResolvedValue(null);
-
-      try {
-        await _contentRepo.getContentById(mockPostId);
-      } catch (error) {
-        expect(_contentRepo.findContentById).toBeCalledWith(mockPostId);
-        expect(error).toEqual(new ContentNotFoundException());
-      }
-    });
-  });
-
   describe('findAll', () => {
     it('Should find all contents without pagination success', async () => {
       const mockPostIds = [v4(), v4()];
@@ -500,6 +485,69 @@ describe('ContentRepository', () => {
       );
       expect(_contentMapper.toDomain).toBeCalledTimes(2);
       expect(posts).toEqual(mockPostEntities);
+    });
+  });
+
+  describe('getContentById', () => {
+    it('Should get content success', async () => {
+      const mockPostId = mockPostRecord.id;
+      _contentRepo.findContentById = jest.fn().mockResolvedValue(mockPostEntity);
+
+      const post = await _contentRepo.getContentById(mockPostId);
+
+      expect(_contentRepo.findContentById).toBeCalledWith(mockPostId);
+      expect(post).toEqual(mockPostEntity);
+    });
+
+    it('Should get content error', async () => {
+      const mockPostId = mockPostRecord.id;
+      _contentRepo.findContentById = jest.fn().mockResolvedValue(null);
+
+      try {
+        await _contentRepo.getContentById(mockPostId);
+      } catch (error) {
+        expect(_contentRepo.findContentById).toBeCalledWith(mockPostId);
+        expect(error).toEqual(new ContentNotFoundException());
+      }
+    });
+  });
+
+  describe('getPagination', () => {
+    it('Should get contents with pagination success', async () => {
+      _libContentRepo.getPagination.mockResolvedValue({
+        rows: [mockPostRecord] as PostModel[],
+        meta: { hasNextPage: false, hasPreviousPage: false },
+      });
+      _contentMapper.toDomain.mockReturnValue(mockPostEntity);
+
+      const posts = await _contentRepo.getCursorPagination({
+        where: { type: CONTENT_TYPE.POST },
+        limit: 10,
+      });
+
+      expect(_libContentRepo.getPagination).toBeCalledWith({
+        where: { type: CONTENT_TYPE.POST },
+        limit: 10,
+      });
+      expect(posts).toEqual({
+        rows: [mockPostEntity],
+        meta: { hasNextPage: false, hasPreviousPage: false },
+      });
+    });
+  });
+
+  describe('countDraftContentByUserId', () => {
+    it('Should count draft content success', async () => {
+      const mockUserId = v4();
+
+      _libContentRepo.count.mockResolvedValue(10);
+
+      const totalDraftContent = await _contentRepo.countDraftContentByUserId(mockUserId);
+
+      expect(_libContentRepo.count).toBeCalledWith({
+        where: { createdBy: mockUserId, status: CONTENT_STATUS.DRAFT },
+      });
+      expect(totalDraftContent).toEqual(10);
     });
   });
 
@@ -542,71 +590,6 @@ describe('ContentRepository', () => {
         [{ postId: mockContentId, userId: mockUserId }],
         { ignoreDuplicates: true }
       );
-    });
-  });
-
-  describe('getPagination', () => {
-    it('Should get contents with pagination success', async () => {
-      _libContentRepo.getPagination.mockResolvedValue({
-        rows: [mockPostRecord] as PostModel[],
-        meta: { hasNextPage: false, hasPreviousPage: false },
-      });
-      _contentMapper.toDomain.mockReturnValue(mockPostEntity);
-
-      const posts = await _contentRepo.getPagination({
-        where: { type: CONTENT_TYPE.POST },
-        limit: 10,
-      });
-
-      expect(_libContentRepo.getPagination).toBeCalledWith({
-        where: { type: CONTENT_TYPE.POST },
-        limit: 10,
-      });
-      expect(posts).toEqual({
-        rows: [mockPostEntity],
-        meta: { hasNextPage: false, hasPreviousPage: false },
-      });
-    });
-  });
-
-  describe('getReportedContentIdsByUser', () => {
-    it('Should get reported content success', async () => {
-      const mockUserId = v4();
-      const mockTargetIds = [v4(), v4()];
-      const mockReportContents = mockTargetIds.map((targetId) =>
-        createMockReportContentDetailRecord({ targetId, createdBy: mockUserId })
-      );
-
-      _libUserReportContentRepo.findMany.mockResolvedValue(
-        mockReportContents as ReportContentDetailModel[]
-      );
-
-      const targetIds = await _contentRepo.getReportedContentIdsByUser({
-        reportUser: mockUserId,
-        target: [CONTENT_TARGET.POST],
-      });
-
-      expect(_libUserReportContentRepo.findMany).toBeCalledWith({
-        where: {
-          [Op.and]: [{ createdBy: mockUserId, targetType: [CONTENT_TARGET.POST] }],
-        },
-      });
-      expect(targetIds).toEqual(mockTargetIds);
-    });
-  });
-
-  describe('countDraftContentByUserId', () => {
-    it('Should count draft content success', async () => {
-      const mockUserId = v4();
-
-      _libContentRepo.count.mockResolvedValue(10);
-
-      const totalDraftContent = await _contentRepo.countDraftContentByUserId(mockUserId);
-
-      expect(_libContentRepo.count).toBeCalledWith({
-        where: { createdBy: mockUserId, status: CONTENT_STATUS.DRAFT },
-      });
-      expect(totalDraftContent).toEqual(10);
     });
   });
 
@@ -719,6 +702,56 @@ describe('ContentRepository', () => {
       expect(_libUserSavePostRepo.bulkCreate).toBeCalledWith(
         [{ userId: mockUserId, postId: mockContentId }],
         { ignoreDuplicates: true }
+      );
+    });
+  });
+
+  describe('createPostSeries', () => {
+    it('Should create post series success', async () => {
+      const mockSeriesId = v4();
+      const mockContentId = v4();
+
+      _libPostSeriesRepo.max.mockResolvedValue(5);
+
+      await _contentRepo.createPostSeries(mockSeriesId, mockContentId);
+
+      expect(_libPostSeriesRepo.max).toBeCalledWith('zindex', {
+        where: { seriesId: mockSeriesId },
+      });
+      expect(_libPostSeriesRepo.bulkCreate).toBeCalledWith(
+        [{ seriesId: mockSeriesId, postId: mockContentId, zindex: 6 }],
+        { ignoreDuplicates: true }
+      );
+    });
+  });
+
+  describe('deletePostSeries', () => {
+    it('Should delete post series success', async () => {
+      const mockSeriesId = v4();
+      const mockContentId = v4();
+
+      await _contentRepo.deletePostSeries(mockSeriesId, mockContentId);
+
+      expect(_libPostSeriesRepo.delete).toBeCalledWith({
+        where: { seriesId: mockSeriesId, postId: mockContentId },
+      });
+    });
+  });
+
+  describe('reorderPostsSeries', () => {
+    it('Should reorder post series success', async () => {
+      const mockSeriesId = v4();
+      const mockItemIds = [v4(), v4()];
+
+      await _contentRepo.reorderPostsSeries(mockSeriesId, mockItemIds);
+
+      expect(_libPostSeriesRepo.update).toBeCalledWith(
+        { zindex: 0 },
+        { where: { seriesId: mockSeriesId, postId: mockItemIds[0] } }
+      );
+      expect(_libPostSeriesRepo.update).toBeCalledWith(
+        { zindex: 1 },
+        { where: { seriesId: mockSeriesId, postId: mockItemIds[1] } }
       );
     });
   });

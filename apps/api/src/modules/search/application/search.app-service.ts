@@ -1,4 +1,4 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TARGET } from '@beincom/constants';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { PageDto } from '../../../common/dto';
@@ -8,12 +8,16 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-grou
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
-} from '../../v2-post/application/binding/binding-post/content.interface';
+} from '../../v2-post/application/binding/binding-post/content.binding.interface';
 import { ArticleDto, ContentHighlightDto, PostDto, SeriesDto } from '../../v2-post/application/dto';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
 } from '../../v2-post/domain/domain-service/interface';
+import {
+  IReportRepository,
+  REPORT_REPOSITORY_TOKEN,
+} from '../../v2-post/domain/repositoty-interface';
 import { UserDto } from '../../v2-user/application';
 import { IPostElasticsearch } from '../interfaces';
 import { SearchService } from '../search.service';
@@ -28,7 +32,9 @@ export class SearchAppService {
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: IContentBinding
+    private readonly _contentBinding: IContentBinding,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    private readonly _reportRepo: IReportRepository
   ) {}
 
   /*
@@ -71,13 +77,11 @@ export class SearchAppService {
       }
     }
 
-    const notIncludeIds = await this._contentDomainService.getReportedContentIdsByUser(
-      authUser.id,
-      {
-        postTypes: [CONTENT_TYPE.POST],
-        groupIds,
-      }
-    );
+    const notIncludeIds = await this._reportRepo.getReportedTargetIdsByReporterId({
+      reporterId: authUser.id,
+      groupIds,
+      targetTypes: [CONTENT_TARGET.POST],
+    });
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({
       keyword: contentSearch,

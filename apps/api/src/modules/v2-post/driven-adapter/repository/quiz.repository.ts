@@ -38,7 +38,7 @@ export class QuizRepository implements IQuizRepository {
       where: { id: quizEntity.get('id') },
     });
 
-    if (quiz.questions !== undefined) {
+    if (quiz.questions !== undefined && quiz.questions.length) {
       await this._libQuizQuestionRepo.delete({ where: { quizId: quizEntity.get('id') } });
 
       const questions = quiz.questions.map((question, index) => {
@@ -166,7 +166,7 @@ export class QuizRepository implements IQuizRepository {
         before,
         after,
         order,
-        column: 'createdAt',
+        sortColumns: ['createdAt'],
       }
     );
 

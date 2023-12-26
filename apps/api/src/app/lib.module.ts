@@ -1,5 +1,9 @@
 import { DomainEventModule } from '@beincom/nest-domain-event';
-import { HttpModule as LibHttpModule } from '@libs/infra/http';
+import { configs } from '@libs/common/config/configuration';
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
+import { IRedisConfig } from '@libs/common/config/redis';
+import { ISentryConfig } from '@libs/common/config/sentry';
+import { HttpModule as LibHttpModule, IAxiosConfig } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
 import { RedisModule } from '@libs/infra/redis';
 import { SentryModule } from '@libs/infra/sentry';
@@ -7,27 +11,11 @@ import { HttpModule } from '@nestjs/axios';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
-import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { RewriteFrames } from '@sentry/integrations';
 import * as Sentry from '@sentry/node';
 
-import { KAFKA_PRODUCER } from '../common/constants';
-import { IAxiosConfig } from '../config/axios';
-import { configs } from '../config/configuration';
-import { IElasticsearchConfig } from '../config/elasticsearch';
-import { IKafkaConfig } from '../config/kafka';
-import { IRedisConfig } from '../config/redis';
-import { ISentryConfig } from '../config/sentry';
-
 import { InternalEventEmitterModule } from './custom/event-emitter';
 
-export const register = async (config: ConfigService): Promise<KafkaOptions> => {
-  const kafkaConfig = config.get<IKafkaConfig>('kafka');
-  return {
-    transport: Transport.KAFKA,
-    options: kafkaConfig,
-  };
-};
 @Global()
 @Module({
   imports: [
@@ -36,13 +24,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
       cache: true,
       load: [configs],
     }),
-    ClientsModule.registerAsync([
-      {
-        name: KAFKA_PRODUCER,
-        useFactory: register,
-        inject: [ConfigService],
-      },
-    ]),
     ElasticsearchModule.registerAsync({
       useFactory: async (configService: ConfigService) => {
         const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
@@ -138,6 +119,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     LogModule,
   ],
   providers: [],
-  exports: [ElasticsearchModule, ClientsModule],
+  exports: [ElasticsearchModule],
 })
 export class LibModule {}

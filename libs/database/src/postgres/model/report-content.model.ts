@@ -1,6 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
-import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -13,9 +13,20 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { ReportContentDetailModel } from './report-content-detail.model';
+import {
+  ReportContentDetailAttributes,
+  ReportContentDetailModel,
+} from './report-content-detail.model';
+
+export enum REPORT_STATUS {
+  CREATED = 'CREATED',
+  IGNORED = 'IGNORED',
+  HIDDEN = 'HID',
+}
 
 export type ReportContentAttribute = InferAttributes<ReportContentModel>;
+
+// TODO: Remove this model
 @Table({
   tableName: 'report_contents',
   paranoid: false,
@@ -33,14 +44,16 @@ export class ReportContentModel extends Model<
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: CONTENT_TARGET;
 
   @Column
   public authorId: string;
 
   @Column
-  public status?: string;
+  public status: REPORT_STATUS;
 
   @Column
   public updatedBy?: string;
@@ -54,5 +67,5 @@ export class ReportContentModel extends Model<
   public updatedAt?: Date;
 
   @HasMany(() => ReportContentDetailModel)
-  public details: ReportContentDetailModel[];
+  public details?: ReportContentDetailAttributes[];
 }

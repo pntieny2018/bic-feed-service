@@ -6,6 +6,7 @@ import {
   LibQuizParticipantAnswerRepository,
   LibQuizParticipantRepository,
 } from '@libs/database/postgres/repository';
+import { Op } from 'sequelize';
 import { v4 } from 'uuid';
 
 import { QuizParticipantNotFoundException } from '../../../domain/exception';
@@ -232,6 +233,30 @@ describe('QuizParticipantRepository', () => {
     });
   });
 
+  describe('findQuizParticipantDoingByContentIdAndUserId', () => {
+    it('Should find doing quiz successfully', async () => {
+      const mockContentId = v4();
+      const mockUserId = v4();
+
+      _libQuizParticipantRepo.first.mockResolvedValue(
+        mockQuizParticipantRecord as QuizParticipantModel
+      );
+      _quizParticipantMapper.toDomain.mockReturnValue(mockQuizParticipantEntity);
+
+      const quizParticipant =
+        await _quizParticipantRepo.findQuizParticipantDoingByContentIdAndUserId(
+          mockContentId,
+          mockUserId
+        );
+
+      expect(_libQuizParticipantRepo.first).toBeCalledWith({
+        where: { postId: mockContentId, createdBy: mockUserId, finishedAt: null },
+      });
+      expect(_quizParticipantMapper.toDomain).toBeCalledWith(mockQuizParticipantRecord);
+      expect(quizParticipant).toEqual(mockQuizParticipantEntity);
+    });
+  });
+
   describe('getQuizParticipantHighestScoreGroupByUserId', () => {
     it('Should get highest score successfully', async () => {
       const mockContentId = v4();
@@ -256,7 +281,7 @@ describe('QuizParticipantRepository', () => {
         await _quizParticipantRepo.getQuizParticipantHighestScoreGroupByUserId(mockContentId);
 
       expect(_libQuizParticipantRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentId, finishedAt: null },
+        where: { postId: mockContentId, finishedAt: { [Op.ne]: null } },
         select: ['createdBy'],
         selectRaw: [['MAX(score)', 'score']],
         group: ['created_by'],
@@ -284,95 +309,15 @@ describe('QuizParticipantRepository', () => {
 
       expect(_libQuizParticipantRepo.cursorPaginate).toBeCalledWith(
         {
-          where: { postId: mockContentId, isHighest: true, finishedAt: null },
+          where: { postId: mockContentId, isHighest: true, finishedAt: { [Op.ne]: null } },
         },
-        { limit: 10, order: ORDER.DESC, column: 'createdAt' }
+        { limit: 10, order: ORDER.DESC, sortColumns: ['createdAt'] }
       );
       expect(_quizParticipantMapper.toDomain).toBeCalledWith(mockQuizParticipantRecord);
       expect(result).toEqual({
         rows: [mockQuizParticipantEntity],
         meta: { hasNextPage: false, hasPreviousPage: false },
       });
-    });
-  });
-
-  describe('getMapQuizParticipantHighestScoreGroupByContentId', () => {
-    it('Should get map highest score successfully', async () => {
-      const mockContentIds = [v4(), v4()];
-      const mockUserId = v4();
-
-      const mockQuizParticipantRecords = [
-        createMockQuizParticipationRecord({
-          postId: mockContentIds[0],
-          isHighest: true,
-          createdBy: mockUserId,
-          score: 10,
-        }),
-        createMockQuizParticipationRecord({
-          postId: mockContentIds[1],
-          isHighest: true,
-          createdBy: mockUserId,
-          score: 20,
-        }),
-      ];
-      const mockQuizParticipantEntities = mockQuizParticipantRecords.map(
-        createMockQuizParticipantEntity
-      );
-
-      _libQuizParticipantRepo.findMany.mockResolvedValue(
-        mockQuizParticipantRecords as QuizParticipantModel[]
-      );
-      _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[0]);
-      _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[1]);
-
-      const quizParticipant =
-        await _quizParticipantRepo.getMapQuizParticipantHighestScoreGroupByContentId(
-          mockContentIds,
-          mockUserId
-        );
-
-      expect(_libQuizParticipantRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentIds, createdBy: mockUserId, isHighest: true, finishedAt: null },
-      });
-      expect(quizParticipant).toEqual(
-        new Map(mockQuizParticipantEntities.map((e) => [e.get('contentId'), e]))
-      );
-    });
-  });
-
-  describe('getMapQuizParticipantsDoingGroupByContentId', () => {
-    it('Should get map doing successfully', async () => {
-      const mockContentIds = [v4(), v4()];
-      const mockUserId = v4();
-
-      const mockQuizParticipantRecords = mockContentIds.map((contentId) =>
-        createMockQuizParticipationRecord({
-          postId: contentId,
-          createdBy: mockUserId,
-        })
-      );
-      const mockQuizParticipantEntities = mockQuizParticipantRecords.map(
-        createMockQuizParticipantEntity
-      );
-
-      _libQuizParticipantRepo.findMany.mockResolvedValue(
-        mockQuizParticipantRecords as QuizParticipantModel[]
-      );
-      _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[0]);
-      _quizParticipantMapper.toDomain.mockReturnValueOnce(mockQuizParticipantEntities[1]);
-
-      const quizParticipant =
-        await _quizParticipantRepo.getMapQuizParticipantsDoingGroupByContentId(
-          mockContentIds,
-          mockUserId
-        );
-
-      expect(_libQuizParticipantRepo.findMany).toBeCalledWith({
-        where: { postId: mockContentIds, createdBy: mockUserId, finishedAt: null },
-      });
-      expect(quizParticipant).toEqual(
-        new Map(mockQuizParticipantEntities.map((e) => [e.get('contentId'), e]))
-      );
     });
   });
 });

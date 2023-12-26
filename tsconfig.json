@@ -50,6 +50,12 @@
       ],
       "@libs/common/*": [
         "libs/common/src/*"
+      ],
+      "@api": [
+          "apps/api/src"
+        ],
+      "@api/*": [
+        "apps/api/src/*"
       ]
     }
   },

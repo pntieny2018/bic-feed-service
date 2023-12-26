@@ -12,7 +12,8 @@ import {
   SearchSeriesItemsAddedEventHandler,
   SearchSeriesItemsRemovedEventHandler,
   SearchSeriesItemsReorderedEventHandler,
-} from '../application/event-handler/search';
+  SearchReportHiddenEventHandler,
+} from '../application/event-handler/sync-es-search';
 
 export const searchProvider = [
   /** Application Event Handler */
@@ -32,4 +33,6 @@ export const searchProvider = [
   SearchSeriesItemsReorderedEventHandler,
   SearchSeriesItemsAddedEventHandler,
   SearchSeriesItemsRemovedEventHandler,
+
+  SearchReportHiddenEventHandler,
 ];

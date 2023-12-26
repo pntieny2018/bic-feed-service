@@ -24,7 +24,7 @@ export class FindDraftContentsHandler
   public async execute(query: FindDraftContentsQuery): Promise<FindDraftContentsDto> {
     const { authUser } = query.payload;
 
-    const { rows, meta } = await this._contentDomainService.getDraftIdsPagination({
+    const { rows, meta } = await this._contentDomainService.getDraftContentIdsPagination({
       ...query.payload,
       authUserId: authUser.id,
     });

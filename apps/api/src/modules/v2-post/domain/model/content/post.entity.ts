@@ -7,6 +7,7 @@ import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { TagEntity } from '../tag';
 
 import { ContentEntity, ContentAttributes } from './content.entity';
+import { StringHelper } from '@libs/common/helpers';
 
 export type PostAttributes = ContentAttributes & {
   media: {
@@ -33,6 +34,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
       id: v4(),
       groupIds,
       content: null,
+      title: null,
       createdBy: userId,
       updatedBy: userId,
       aggregation: {
@@ -64,7 +66,6 @@ export class PostEntity extends ContentEntity<PostAttributes> {
       wordCount: 0,
     });
   }
-
   public updateAttribute(data: Partial<PostAttributes>, userId: string): void {
     const { content, seriesIds, groupIds, mentionUserIds } = data;
     const authUser = { id: userId };
@@ -75,6 +76,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
 
     if (content) {
       this._props.content = content;
+      this._props.title = StringHelper.getRawTextFromMarkdown(content).slice(0, 500);
     }
     if (mentionUserIds) {
       this._props.mentionUserIds = mentionUserIds;
@@ -92,10 +94,6 @@ export class PostEntity extends ContentEntity<PostAttributes> {
 
   public setLinkPreview(linkPreview: LinkPreviewEntity): void {
     this._props.linkPreview = linkPreview;
-  }
-
-  public getTitle(): string {
-    return '';
   }
 
   public getSeriesIds(): string[] {
@@ -192,10 +190,13 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     const currentVideoIds = (this._props.media.videos || []).map((video) => video.get('id'));
     for (const video of videos) {
       if (!currentVideoIds.includes(video.get('id'))) {
-        if (!video.isProcessed()) {
-          this._props.videoIdProcessing = video.get('id');
-        }
         this._state.attachVideoIds.push(video.get('id'));
+      }
+
+      if (!video.isProcessed()) {
+        this._props.videoIdProcessing = video.get('id');
+      } else {
+        this._props.videoIdProcessing = null;
       }
     }
 
@@ -213,5 +214,9 @@ export class PostEntity extends ContentEntity<PostAttributes> {
 
   public isOverLimitedToAttachSeries(): boolean {
     return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
+  }
+
+  public getContent(): string {
+    return this._props.content;
   }
 }

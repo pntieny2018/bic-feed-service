@@ -3,25 +3,28 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
 import { FindCategoriesPaginationHandler } from '../../../application/query/category';
-import { CategoryDomainService } from '../../../domain/domain-service/category.domain-service';
-import { CATEGORY_DOMAIN_SERVICE_TOKEN } from '../../../domain/domain-service/interface';
 import { CategoryEntity } from '../../../domain/model/category';
+import {
+  CATEGORY_REPOSITORY_TOKEN,
+  ICategoryRepository,
+} from '../../../domain/repositoty-interface';
 
 describe('FindCategoriesPaginationHandler', () => {
-  let categoryDomainService, handler;
+  let handler;
+  let categoryRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FindCategoriesPaginationHandler,
         {
-          provide: CATEGORY_DOMAIN_SERVICE_TOKEN,
-          useValue: createMock<CategoryDomainService>(),
+          provide: CATEGORY_REPOSITORY_TOKEN,
+          useValue: createMock<ICategoryRepository>(),
         },
       ],
     }).compile();
     handler = module.get<FindCategoriesPaginationHandler>(FindCategoriesPaginationHandler);
-    categoryDomainService = module.get(CATEGORY_DOMAIN_SERVICE_TOKEN);
+    categoryRepository = module.get(CATEGORY_REPOSITORY_TOKEN);
   });
 
   afterEach(() => {
@@ -64,7 +67,7 @@ describe('FindCategoriesPaginationHandler', () => {
   describe('execute', () => {
     it('should find categories success', async () => {
       jest
-        .spyOn(categoryDomainService, 'getPagination')
+        .spyOn(categoryRepository, 'getPagination')
         .mockResolvedValue({ rows: categoryEntities, total: 2 });
       const result = await handler.execute({ page: 0, limit: 10 });
       expect(result).toEqual({ rows: categoryRecords, total: 2 });

@@ -1,9 +1,12 @@
 import { ORDER } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { ReportAttribute } from '@libs/database/postgres/model';
+import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { isBoolean } from 'lodash';
+import { isBoolean, uniq } from 'lodash';
 import {
   FindAttributeOptions,
   FindOptions,
@@ -18,8 +21,6 @@ import { NIL } from 'uuid';
 
 import { EntityIdDto, PageDto } from '../../common/dto';
 import { ArrayHelper } from '../../common/helpers';
-import { ModelHelper } from '../../common/helpers/model.helper';
-import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -36,16 +37,12 @@ import {
   PostStatus,
   PostType,
 } from '../../database/models/post.model';
-import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { ReportTo, TargetType } from '../report-content/contstants';
@@ -103,12 +100,11 @@ export class PostService {
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
-    @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
     protected readonly tagService: TagService,
     @InjectModel(UserSeenPostModel)
     protected userSeenPostModel: typeof UserSeenPostModel,
-    protected mediaService: MediaService
+    private readonly _libReportRepo: LibReportRepository,
+    private readonly _libReportDetailRepo: LibReportDetailRepository
   ) {}
 
   /**
@@ -749,41 +745,6 @@ export class PostService {
     return posts;
   }
 
-  public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
-    if (groupIds.length === 0) {
-      return [];
-    }
-    try {
-      const posts = await this.postModel.findAll({
-        attributes: ['id'],
-        subQuery: false,
-        where: {
-          status: PostStatus.PUBLISHED,
-          isHidden: false,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            required: true,
-            attributes: ['groupId'],
-            where: {
-              groupId: groupIds,
-              isArchived: false,
-            },
-          },
-        ],
-        limit: take,
-        order: [['createdAt', 'DESC']],
-      });
-      return posts.map((p) => p.id);
-    } catch (ex) {
-      this.logger.error(ex, ex?.stack);
-      this.sentryService.captureException(ex);
-      return [];
-    }
-  }
-
   public async markRead(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
@@ -1024,60 +985,6 @@ export class PostService {
     );
   }
 
-  public getPostPrivacyByCompareGroupPrivacy(
-    groupPrivacy: GroupPrivacy,
-    postPrivacy: PostPrivacy
-  ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
-      return PostPrivacy.OPEN;
-    }
-    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
-      return PostPrivacy.CLOSED;
-    }
-    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
-      return PostPrivacy.PRIVATE;
-    }
-    return PostPrivacy.SECRET;
-  }
-
-  public async filterPostIdsNeedToUpdatePrivacy(
-    postIds: string[],
-    newPrivacy: PostPrivacy
-  ): Promise<{ [key: string]: string[] }> {
-    const relationInfo = await this.postGroupModel.findAll({
-      where: { postId: { [Op.in]: postIds } },
-    });
-    const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
-    const groupInfos = await this.groupAppService.findAllByIds(groupIds);
-    const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
-      returnValue[elementValue.id] = elementValue.privacy;
-      return returnValue;
-    }, {});
-    const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
-      if (!returnValue[elementValue.postId]) {
-        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId],
-          newPrivacy
-        );
-      } else {
-        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId],
-          returnValue[elementValue.postId]
-        );
-      }
-      return returnValue;
-    }, {});
-    const updatedPostIds = {};
-    Object.entries(postPrivacyMapping).forEach(([postId, postPrivacy]) => {
-      if (!updatedPostIds[postPrivacy.toString()]) {
-        updatedPostIds[postPrivacy.toString()] = [postId];
-      } else {
-        updatedPostIds[postPrivacy.toString()].push(postId);
-      }
-    });
-    return updatedPostIds;
-  }
-
   public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
     await this.postModel.update(data, {
       where: {
@@ -1086,74 +993,6 @@ export class PostService {
         },
       },
     });
-  }
-
-  public async getPostIdsInNewsFeed(
-    userId: string,
-    filters: {
-      offset: number;
-      limit: number;
-      isImportant?: boolean;
-      type?: PostType;
-      createdBy?: string;
-    }
-  ): Promise<string[]> {
-    const { offset, limit, isImportant, type, createdBy } = filters;
-    const conditions = {
-      status: PostStatus.PUBLISHED,
-      isHidden: false,
-      [Op.and]: [
-        this.postModel.notIncludePostsReported(userId, {
-          mainTableAlias: '"PostModel"',
-          type: [TargetType.ARTICLE, TargetType.POST],
-        }),
-      ],
-    };
-    const order = [];
-    if (isImportant) {
-      conditions['isImportant'] = true;
-      order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
-    }
-    if (createdBy) {
-      conditions['createdBy'] = createdBy;
-    }
-    order.push(['createdAt', 'desc']);
-
-    if (type) {
-      conditions['type'] = type;
-    }
-
-    const posts = await this.postModel.findAll({
-      attributes: ['id', PostModel.loadMarkReadPost(userId)],
-      include: [
-        {
-          model: UserNewsFeedModel,
-          as: 'userNewsfeeds',
-          required: true,
-          attributes: [],
-          where: {
-            userId,
-          },
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: true,
-          attributes: [],
-          where: {
-            isArchived: false,
-          },
-        },
-      ],
-      subQuery: false,
-      where: conditions,
-      order,
-      group: '"PostModel"."id"',
-      offset,
-      limit,
-    });
-
-    return posts.map((post) => post.id);
   }
 
   public async getPostsByIds(
@@ -1294,71 +1133,6 @@ export class PostService {
     return posts.map((post) => post.id);
   }
 
-  public async getPostIdsInGroupIds(
-    groupIds: string[],
-    filters: {
-      offset: number;
-      limit: number;
-      authUserId: string;
-      isImportant?: boolean;
-      type?: PostType;
-    }
-  ): Promise<string[]> {
-    const { offset, limit, authUserId, isImportant, type } = filters;
-    const conditions = {
-      status: PostStatus.PUBLISHED,
-      isHidden: false,
-    };
-
-    if (authUserId) {
-      conditions[Op.and] = [
-        this.postModel.notIncludePostsReported(authUserId, {
-          mainTableAlias: '"PostModel"',
-          type: [TargetType.ARTICLE, TargetType.POST],
-        }),
-      ];
-    }
-    const order = [];
-    const attributes: any = ['id'];
-    if (isImportant) {
-      conditions['isImportant'] = true;
-      order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
-      attributes.push(PostModel.loadMarkReadPost(authUserId));
-    } else {
-      order.push([this.sequelizeConnection.literal('"isImportant"'), 'desc']);
-      attributes.push(PostModel.loadImportant(authUserId));
-    }
-    order.push(['createdAt', 'desc']);
-
-    if (type) {
-      conditions['type'] = type;
-    }
-
-    const posts = await this.postModel.findAll({
-      attributes,
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: true,
-          attributes: [],
-          where: {
-            groupId: groupIds,
-            isArchived: false,
-          },
-        },
-      ],
-      subQuery: false,
-      where: conditions,
-      order,
-      group: 'id',
-      offset,
-      limit,
-    });
-
-    return posts.map((post) => post.id);
-  }
-
   public async getTotalDraft(user: UserDto): Promise<number> {
     return this.postModel.count({
       where: {
@@ -1449,24 +1223,28 @@ export class PostService {
     if (!userId) {
       return [];
     }
-    const { groupIds } = options ?? {};
-    const condition = {
-      [Op.and]: [
-        {
-          createdBy: userId,
-          targetType: targetTypes,
-        },
-      ],
-    };
 
-    if (groupIds) {
-      //condition[''] improve later
-    }
-    const rows = await this.reportContentDetailModel.findAll({
-      where: condition,
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId: userId },
+      select: ['id'],
     });
 
-    return rows.map((row) => row.targetId);
+    if (!reportDetails?.length) {
+      return [];
+    }
+
+    const reportIds = reportDetails.map((reportDetail) => reportDetail.id);
+    const condition: WhereOptions<ReportAttribute> = { id: reportIds };
+    if (options?.groupIds?.length) {
+      condition.groupId = options.groupIds;
+    }
+    if (targetTypes?.length) {
+      condition.targetType = targetTypes;
+    }
+
+    const reports = await this._libReportRepo.findMany({ where: condition, select: ['targetId'] });
+
+    return uniq(reports.map((report) => report.targetId));
   }
 
   public async getPostsByFilter(
@@ -1519,104 +1297,6 @@ export class PostService {
       },
     ];
     return this.postModel.findAll(findOption);
-  }
-
-  public async updateGroupStateAndGetPostIdsAffected(
-    groupIds: string[],
-    isArchive: boolean
-  ): Promise<string[]> {
-    const notInStateGroupIds = await this.postGroupModel.findAll({
-      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId'], 'is_archived'],
-      where: { groupId: groupIds, isArchived: !isArchive },
-      limit: groupIds.length,
-    });
-
-    const [affectedCount] = await this.postGroupModel.update(
-      { isArchived: isArchive },
-      { where: { groupId: notInStateGroupIds.map((e) => e.groupId) } }
-    );
-    if (affectedCount > 0) {
-      const affectPostGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
-        groupId: notInStateGroupIds.map((e) => e.groupId),
-      });
-      return affectPostGroups.map((e) => e.postId);
-    }
-    return null;
-  }
-
-  public async getPostsArchivedOrRestoredByGroupEventPayload(
-    postIds: string[]
-  ): Promise<PostsArchivedOrRestoredByGroupEventPayload> {
-    const postGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
-      postId: postIds,
-      isArchived: false,
-    });
-    const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
-      if (!result[postId]) {
-        result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
-      }
-      return result;
-    }, {});
-    const affectedPosts = await ModelHelper.getAllRecursive<IPost>(this.postModel, {
-      id: Object.keys(postIndex),
-    });
-    return {
-      posts: affectedPosts,
-      mappingPostIdGroupIds: postIndex,
-    };
-  }
-
-  private async _addSeriesToPost(
-    seriesIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<void> {
-    if (seriesIds.length === 0) {
-      return;
-    }
-    const dataCreate = seriesIds.map((seriesId) => ({
-      postId: postId,
-      seriesId,
-    }));
-    await this.postSeriesModel.bulkCreate(dataCreate, { transaction });
-  }
-
-  private async _updateSeriesToPost(
-    seriesIds: string[],
-    postId: string,
-    transaction: Transaction
-  ): Promise<void> {
-    const currentSeries = await this.postSeriesModel.findAll({
-      where: { postId },
-    });
-    const currentSeriesIds = currentSeries.map((i) => i.seriesId);
-
-    const deleteSeriesIds = ArrayHelper.arrDifferenceElements(currentSeriesIds, seriesIds);
-    if (deleteSeriesIds.length) {
-      await this.postSeriesModel.destroy({
-        where: { seriesId: deleteSeriesIds, postId },
-        transaction,
-      });
-    }
-
-    const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
-    if (addSeriesIds.length) {
-      const dataInsert = [];
-      for (const seriesId of addSeriesIds) {
-        const maxIndexArticlesInSeries: number = await this.postSeriesModel.max('zindex', {
-          where: {
-            seriesId,
-          },
-        });
-        dataInsert.push({
-          postId,
-          seriesId,
-          zindex: maxIndexArticlesInSeries + 1,
-        });
-      }
-
-      await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
-    }
   }
 
   public async getPinnedList(groupId: string, user: UserDto): Promise<ArticleResponseDto[]> {

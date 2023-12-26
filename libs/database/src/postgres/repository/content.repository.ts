@@ -3,11 +3,16 @@ import { FindOptions, Include } from '@libs/database/postgres';
 import {
   CursorPaginationProps,
   CursorPaginationResult,
-  CursorPaginator,
-  getDatabaseConfig,
   PaginationProps,
   PAGING_DEFAULT_LIMIT,
 } from '@libs/database/postgres/common';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import {
+  CommentModel,
+  PostCategoryModel,
+  ReportDetailModel,
+  ReportModel,
+} from '@libs/database/postgres/model';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
 import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
 import { PostGroupModel } from '@libs/database/postgres/model/post-group.model';
@@ -15,7 +20,6 @@ import { PostReactionModel } from '@libs/database/postgres/model/post-reaction.m
 import { PostSeriesModel } from '@libs/database/postgres/model/post-series.model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { QuizModel } from '@libs/database/postgres/model/quiz.model';
-import { ReportContentDetailModel } from '@libs/database/postgres/model/report-content-detail.model';
 import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
 import { UserNewsFeedModel } from '@libs/database/postgres/model/user-newsfeed.model';
 import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
@@ -24,12 +28,18 @@ import {
   FindContentProps,
   OrderOptions,
 } from '@libs/database/postgres/repository/interface/content.repository.interface';
-import { InjectConnection } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { isBoolean } from 'lodash';
-import { Op, Sequelize, WhereOptions } from 'sequelize';
+import { Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
 export class LibContentRepository extends BaseRepository<PostModel> {
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {
+  public constructor(
+    @InjectModel(ReportModel)
+    private readonly _reportModel: typeof ReportModel,
+    @InjectModel(CommentModel)
+    private readonly _commentModel: typeof CommentModel,
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize
+  ) {
     super(PostModel);
   }
 
@@ -55,19 +65,28 @@ export class LibContentRepository extends BaseRepository<PostModel> {
   public async getPagination(
     getPaginationContentsProps: FindContentProps & CursorPaginationProps
   ): Promise<CursorPaginationResult<PostModel>> {
-    const { after, before, limit = PAGING_DEFAULT_LIMIT, order } = getPaginationContentsProps;
+    const {
+      after,
+      before,
+      limit = PAGING_DEFAULT_LIMIT,
+      order = ORDER.DESC,
+      subQuery,
+    } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 
     const cursorColumns = orderBuilder?.map((order) => order[0]);
-
-    const paginator = new CursorPaginator(
-      this.model,
-      cursorColumns || ['createdAt'],
-      { before, after, limit },
-      order
+    const { rows, meta } = await this.cursorPaginate(
+      findOption,
+      {
+        limit,
+        before,
+        after,
+        order,
+        sortColumns: cursorColumns || ['createdAt'],
+      },
+      subQuery
     );
-    const { rows, meta } = await paginator.paginate(findOption);
 
     return {
       rows,
@@ -77,6 +96,8 @@ export class LibContentRepository extends BaseRepository<PostModel> {
 
   protected buildFindOptions(options: FindContentProps): FindOptions<PostModel> {
     const findOptions: FindOptions<PostModel> = {};
+    findOptions.subQuery = true;
+
     const subSelect = this._buildSubSelect(options);
 
     findOptions.where = this._buildWhereOptions(options);
@@ -140,7 +161,10 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       order.push([orderOptions.sortColumn, orderOptions.orderBy]);
     }
     if (orderOptions.isSavedDateByDesc) {
-      order.push(['userSavePosts', 'createdAt', ORDER.DESC]);
+      order.push([
+        { model: UserSavePostModel, as: 'userSavePosts', field: 'createdAt' },
+        ORDER.DESC,
+      ]);
     }
     if (orderOptions.createdAtDesc) {
       order.push(['createdAt', ORDER.DESC]);
@@ -154,8 +178,16 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     }
 
     const subSelect: [string, string][] = [];
-    const { shouldIncludeSaved, shouldIncludeMarkReadImportant, shouldIncludeImportant } =
-      options.include || {};
+    const {
+      shouldIncludeSaved,
+      shouldIncludeMarkReadImportant,
+      shouldIncludeImportant,
+      shouldIncludeCategory,
+      shouldIncludeQuiz,
+      shouldIncludeItems,
+      shouldIncludeReaction,
+      shouldIncludeSeries,
+    } = options.include || {};
 
     if (shouldIncludeSaved) {
       subSelect.push(this._loadSaved(shouldIncludeSaved.userId, 'isSaved'));
@@ -171,6 +203,25 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       subSelect.push(this._loadImportant(shouldIncludeImportant.userId, 'isReadImportant'));
     }
 
+    if (shouldIncludeItems) {
+      subSelect.push(this._loadItemsInSeriesAndSort());
+    }
+    if (shouldIncludeReaction) {
+      subSelect.push(this._loadOwnerReaction(shouldIncludeReaction.userId));
+    }
+
+    if (shouldIncludeCategory) {
+      subSelect.push(this._loadCategories());
+    }
+
+    if (shouldIncludeQuiz) {
+      subSelect.push(this._loadQuiz());
+    }
+
+    if (shouldIncludeSeries) {
+      subSelect.push(this._loadSeriesIds(options.where?.groupArchived));
+    }
+
     return subSelect;
   }
 
@@ -182,14 +233,9 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     const includeable: Include<PostModel>[] = [];
     const { groupArchived, groupIds } = options.where || {};
     const {
-      shouldIncludeSeries,
-      shouldIncludeGroup,
       shouldIncludeLinkPreview,
-      shouldIncludeCategory,
-      shouldIncludeQuiz,
-      shouldIncludeReaction,
-      shouldIncludeItems,
       shouldIncludeSaved,
+      shouldIncludeGroup,
       mustIncludeGroup,
       mustIncludeSaved,
     } = options.include;
@@ -210,70 +256,11 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       });
     }
 
-    if (shouldIncludeSeries) {
-      includeable.push({
-        model: PostSeriesModel,
-        as: 'postSeries',
-        required: false,
-        select: ['seriesId'],
-        whereRaw: isBoolean(groupArchived)
-          ? this._postSeriesFilterInGroupArchivedCondition(groupArchived)
-          : undefined,
-      });
-    }
-
-    if (shouldIncludeItems) {
-      includeable.push({
-        model: PostSeriesModel,
-        as: 'itemIds',
-        required: false,
-        select: ['postId', 'zindex'],
-      });
-    }
-
     if (shouldIncludeLinkPreview) {
       includeable.push({
         model: LinkPreviewModel,
         as: 'linkPreview',
         required: false,
-      });
-    }
-
-    if (shouldIncludeReaction?.userId) {
-      includeable.push({
-        model: PostReactionModel,
-        as: 'ownerReactions',
-        required: false,
-        where: {
-          createdBy: shouldIncludeReaction.userId,
-        },
-      });
-    }
-
-    if (shouldIncludeQuiz) {
-      includeable.push({
-        model: QuizModel,
-        as: 'quiz',
-        required: false,
-        select: [
-          'id',
-          'title',
-          'description',
-          'status',
-          'genStatus',
-          'createdBy',
-          'createdAt',
-          'updatedAt',
-        ],
-      });
-    }
-
-    if (shouldIncludeCategory) {
-      includeable.push({
-        model: CategoryModel,
-        as: 'categories',
-        required: false,
-        select: ['id', 'name'],
       });
     }
 
@@ -366,6 +353,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         );
       }
 
+      if (options.where.videoIdProcessing) {
+        conditions.push({
+          videoIdProcessing: options.where.videoIdProcessing,
+        });
+      }
+
       if (
         isBoolean(options.where.groupArchived) &&
         !options.include?.shouldIncludeGroup &&
@@ -436,15 +429,113 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     ];
   }
 
-  private _excludeReportedByUser(userId: string): string {
+  private _loadItemsInSeriesAndSort(alias?: string): [string, string] {
     const { schema } = getDatabaseConfig();
-    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    const postSeriesModel = PostSeriesModel.tableName;
+    return [
+      `(
+        SELECT array_agg("postSeries".post_id order by zindex asc)
+        FROM ${schema}.${postSeriesModel} as "postSeries"
+        WHERE "PostModel"."id" = "postSeries"."series_id"
+        )`,
+      alias ? alias : 'itemIds',
+    ];
+  }
+
+  private _loadQuiz(alias?: string): [string, string] {
+    const { schema } = getDatabaseConfig();
+    const quizModel = QuizModel.tableName;
+    return [
+      `(
+       SELECT json_agg(
+        json_build_object(
+          'id',quiz.id,
+          'title', quiz.title,
+          'description', quiz.description,
+          'status', quiz.status,
+          'genStatus', quiz.gen_status,
+          'createdBy', quiz.created_by,
+          'createdAt', quiz.created_at,
+          'updatedAt', quiz.updated_at
+        ))
+        from ${schema}.${quizModel} AS "quiz"
+        where quiz.post_id = "PostModel".id
+        )`,
+      alias ? alias : 'quiz',
+    ];
+  }
+  private _loadSeriesIds(isArchived?: boolean, alias?: string): [string, string] {
+    const { schema } = getDatabaseConfig();
+    const postSeriesModel = PostSeriesModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
+
+    let conditionArchiveGroup = '';
+    if (isBoolean(isArchived)) {
+      conditionArchiveGroup = `AND EXISTS (
+        SELECT 1 FROM ${schema}.${postGroupTable} as "seriesGroups"
+          WHERE "seriesGroups".post_id = "postSeries".series_id AND "seriesGroups".is_archived = ${isArchived}
+        )`;
+    }
+    return [
+      `(
+       SELECT array_agg(series_id)
+        FROM ${schema}.${postSeriesModel} AS "postSeries"
+        WHERE "postSeries".post_id = "PostModel".id
+        ${conditionArchiveGroup}
+        )`,
+      alias ? alias : 'seriesIds',
+    ];
+  }
+
+  private _loadCategories(alias?: string): [string, string] {
+    const { schema } = getDatabaseConfig();
+    const categoryModel = CategoryModel.tableName;
+    const postCategoryModel = PostCategoryModel.tableName;
+    return [
+      `(
+       SELECT json_agg(
+                    json_build_object(
+                      'id',category.id,
+                      'name', category.name
+                    )
+                )
+        FROM ${schema}.${categoryModel} AS "category"
+        INNER JOIN ${schema}.${postCategoryModel} as pc ON pc.category_id = category.id
+        WHERE pc.post_id = "PostModel".id
+        )`,
+      alias ? alias : 'categories',
+    ];
+  }
+
+  private _loadOwnerReaction(userId: string, alias?: string): [string, string] {
+    const { schema } = getDatabaseConfig();
+    const postReactionModel = PostReactionModel.tableName;
+    if (!userId) {
+      return [``, alias ? alias : 'ownerReactions'];
+    }
+    return [
+      `(
+        SELECT json_agg(
+                          json_build_object(
+                            'id',id,
+                            'reactionName', reaction_name
+                          ) order by created_at asc
+                )
+           FROM ${schema}.${postReactionModel} AS "ownerReactions"
+           WHERE "PostModel"."id" = "ownerReactions"."post_id" AND
+            "ownerReactions"."created_by" = ${this._sequelizeConnection.escape(userId)}
+        )`,
+      alias ? alias : 'ownerReactions',
+    ];
+  }
+
+  private _excludeReportedByUser(userId: string): string {
+    const reporterId = this._sequelizeConnection.escape(userId);
+
     return `NOT EXISTS ( 
-        SELECT target_id FROM ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this._sequelizeConnection.escape(
-            userId
-          )}
-      )`;
+              SELECT target_id FROM ${ReportDetailModel.getTableName()} rcd
+              WHERE rcd.target_id = "PostModel".id AND rcd.reporter_id = ${reporterId}
+            )`;
   }
 
   private _filterSavedByUser(userId: string): string {
@@ -457,7 +548,8 @@ export class LibContentRepository extends BaseRepository<PostModel> {
             )}
         )`;
   }
-
+  //t1: 2
+  //t2: 2, 4,5
   private _filterInNewsfeedUser(userId: string): string {
     const { schema } = getDatabaseConfig();
     const userNewsFeedTable = UserNewsFeedModel.tableName;
@@ -485,5 +577,40 @@ export class LibContentRepository extends BaseRepository<PostModel> {
         SELECT seriesGroups.post_id FROM ${schema}.${postGroupTable} as seriesGroups
           WHERE seriesGroups.post_id = "postSeries".series_id AND seriesGroups.is_archived = ${groupArchived}
         )`;
+  }
+
+  public async destroyContent(id: string): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      await this._deleteReport(id, transaction);
+
+      await this.model.destroy({
+        where: { id },
+        force: true,
+        transaction: transaction,
+      });
+
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  private async _deleteReport(contentId: string, transaction: Transaction): Promise<void> {
+    const targetIds = [contentId];
+
+    const comments = await this._commentModel.findAll({
+      where: { postId: contentId },
+      attributes: ['id'],
+    });
+    if (comments?.length) {
+      const commentIds = comments.map((comment) => comment.id);
+      targetIds.push(...commentIds);
+
+      await this._commentModel.destroy({ where: { id: commentIds }, transaction });
+    }
+
+    await this._reportModel.destroy({ where: { targetId: targetIds }, transaction });
   }
 }

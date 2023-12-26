@@ -3,7 +3,11 @@ import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
-import { GetUserRoleInGroupsResult, IGroupService } from '@libs/service/group';
+import {
+  GetUserIdsInGroupsProps,
+  GetUserRoleInGroupsResult,
+  IGroupService,
+} from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
@@ -106,39 +110,6 @@ export class GroupService implements IGroupService {
     return [...new Set(response.flat())];
   }
 
-  public async getCommunityAdmins(
-    rootGroupIds: string[],
-    pagination?: { offset?: number; limit?: number }
-  ): Promise<{
-    admins: Record<string, string[]>;
-    owners: Record<string, string[]>;
-  }> {
-    try {
-      const offset = pagination?.offset || 0;
-      const limit = pagination?.limit || 50;
-      const params = `group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
-
-      const response = await this._httpService.get(
-        `${GROUP_ENDPOINT.INTERNAL.COMMUNITY_ADMINS}?${params}`
-      );
-
-      if (response.status !== HttpStatus.OK) {
-        return {
-          admins: {},
-          owners: {},
-        };
-      }
-      this._logger.debug(JSON.stringify(response.data));
-      return response.data['data'];
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex));
-      return {
-        admins: {},
-        owners: {},
-      };
-    }
-  }
-
   public async getUserRoleInGroups(
     groupIds: string[],
     roles: ROLE_TYPE[]
@@ -183,5 +154,32 @@ export class GroupService implements IGroupService {
       }
     }
     return userIds.includes(userId);
+  }
+
+  public async getUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
+    list: string[];
+    cursor: string;
+  }> {
+    const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, after } = input;
+    try {
+      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
+        group_ids: groupIds,
+        ignore_group_ids: notInGroupIds,
+        ignoreUserIds,
+        include_deactivated: includeDeactivated || false,
+        limit: limit || 5000,
+        after: after || null,
+      });
+      return {
+        list: response.data['data'],
+        cursor: response.data['meta']['cursors']['next'],
+      };
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex));
+      return {
+        list: [],
+        cursor: null,
+      };
+    }
   }
 }

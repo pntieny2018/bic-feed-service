@@ -1,8 +1,8 @@
+import { IKafkaConfig } from '@libs/infra/kafka/config';
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
 
-import { IKafkaConfig } from '../../config/kafka';
 import { PostModule } from '../post';
 import { TagModule } from '../tag';
 import { GroupModuleV2 } from '../v2-group/group.module';

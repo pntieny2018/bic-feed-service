@@ -17,6 +17,7 @@ export type FindContentConditionOptions = {
   status?: CONTENT_STATUS;
   statuses?: CONTENT_STATUS[];
   inNewsfeedUserId?: string;
+  videoIdProcessing?: string;
 };
 
 export type FindContentIncludeOptions = {
@@ -60,6 +61,7 @@ export type FindContentProps = {
   include?: FindContentIncludeOptions;
   attributes?: { exclude?: (keyof PostAttributes)[] };
   orderOptions?: OrderOptions;
+  subQuery?: boolean;
 };
 
 export type GetPaginationContentsProps = FindContentProps & CursorPaginationProps;

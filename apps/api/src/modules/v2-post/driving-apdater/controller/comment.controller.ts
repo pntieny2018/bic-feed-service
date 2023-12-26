@@ -1,3 +1,4 @@
+import { PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
@@ -25,22 +26,29 @@ import {
   DeleteCommentCommandPayload,
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
+  ReportCommentCommand,
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
 } from '../../application/command/comment';
 import {
-  CommentDto,
+  CommentBaseDto,
+  CommentExtendedDto,
   FindCommentsAroundIdDto,
   FindCommentsPaginationDto,
+  ReportTargetDto,
 } from '../../application/dto';
 import {
   FindCommentsAroundIdQuery,
   FindCommentsPaginationQuery,
+  GetMyReportedCommentQuery,
+  GetMyReportedCommentsQuery,
 } from '../../application/query/comment';
 import {
   CreateCommentRequestDto,
+  CreateReportDto,
   GetCommentsAroundIdDto,
   GetListCommentsDto,
+  GetMyReportedCommentsRequestDto,
   ReplyCommentRequestDto,
   UpdateCommentRequestDto,
 } from '../dto/request';
@@ -82,6 +90,42 @@ export class CommentController {
     });
   }
 
+  @ApiOperation({ summary: 'Get comment was reported' })
+  @Get(ROUTES.COMMENT.GET_REPORT.PATH)
+  @Version(ROUTES.COMMENT.GET_REPORT.VERSIONS)
+  public async getReportedComment(
+    @AuthUser() authUser: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string
+  ): Promise<CommentExtendedDto> {
+    const commentDto = await this._queryBus.execute(
+      new GetMyReportedCommentQuery({
+        authUser,
+        commentId,
+      })
+    );
+
+    return instanceToInstance(commentDto, {
+      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
+    });
+  }
+
+  @ApiOperation({ summary: 'Get my reported comments' })
+  @Get(ROUTES.COMMENT.GET_REPORTS.PATH)
+  @Version(ROUTES.COMMENT.GET_REPORTS.VERSIONS)
+  public async getMyReportedComments(
+    @AuthUser() authUser: UserDto,
+    @Query() query: GetMyReportedCommentsRequestDto
+  ): Promise<PaginatedResponse<ReportTargetDto>> {
+    const commentsReported = await this._queryBus.execute(
+      new GetMyReportedCommentsQuery({
+        authUser,
+        ...query,
+      })
+    );
+
+    return instanceToInstance(commentsReported, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
   @ApiOperation({ summary: 'Get comments around a comment' })
   @ResponseMessages({
     success: 'Get comments around a comment successfully',
@@ -103,7 +147,7 @@ export class CommentController {
 
   @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({
-    type: CommentDto,
+    type: CommentBaseDto,
     description: 'Create comment successfully',
   })
   @ResponseMessages({
@@ -114,8 +158,8 @@ export class CommentController {
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentRequestDto
-  ): Promise<CommentDto> {
-    const data = await this._commandBus.execute<CreateCommentCommand, CommentDto>(
+  ): Promise<CommentBaseDto> {
+    const data = await this._commandBus.execute<CreateCommentCommand, CommentBaseDto>(
       new CreateCommentCommand({
         ...createCommentDto,
         contentId: createCommentDto.postId,
@@ -134,7 +178,7 @@ export class CommentController {
 
   @ApiOperation({ summary: 'Reply comment' })
   @ApiOkResponse({
-    type: CommentDto,
+    type: CommentBaseDto,
     description: 'Create reply comment successfully',
   })
   @ResponseMessages({
@@ -146,8 +190,8 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) replyCommentRequestDto: ReplyCommentRequestDto
-  ): Promise<CommentDto> {
-    const data = await this._commandBus.execute<ReplyCommentCommand, CommentDto>(
+  ): Promise<CommentBaseDto> {
+    const data = await this._commandBus.execute<ReplyCommentCommand, CommentBaseDto>(
       new ReplyCommentCommand({
         ...replyCommentRequestDto,
         contentId: replyCommentRequestDto.postId,
@@ -215,6 +259,28 @@ export class CommentController {
         commentId,
         actor: user,
       } as DeleteCommentCommandPayload)
+    );
+  }
+
+  @ApiOperation({ summary: 'Report comment' })
+  @ApiOkResponse({ description: 'Reported comment successfully' })
+  @ResponseMessages({
+    success: 'Reported comment successfully',
+    error: 'Reported comment failed',
+  })
+  @Post(ROUTES.COMMENT.CREATE_REPORT.PATH)
+  @Version(ROUTES.COMMENT.CREATE_REPORT.VERSIONS)
+  public async reportComment(
+    @AuthUser() authUser: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() input: CreateReportDto
+  ): Promise<void> {
+    return this._commandBus.execute(
+      new ReportCommentCommand({
+        authUser,
+        commentId,
+        ...input,
+      })
     );
   }
 }

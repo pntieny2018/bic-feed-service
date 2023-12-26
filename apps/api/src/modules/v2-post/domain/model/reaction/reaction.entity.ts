@@ -3,7 +3,6 @@ import { emoji } from 'node-emoji';
 import { v4, validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { REACTION_TARGET } from '../../../data-type';
 
 export const BIC_EMOJI = [
   'bic_check_mark',
@@ -58,7 +57,7 @@ export const BIC_EMOJI = [
 
 export type ReactionAttributes = {
   id: string;
-  target: REACTION_TARGET | CONTENT_TARGET;
+  target: CONTENT_TARGET;
   targetId: string;
   reactionName: string;
   createdBy: string;

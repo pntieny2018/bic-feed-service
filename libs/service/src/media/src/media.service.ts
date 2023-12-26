@@ -77,11 +77,13 @@ export class MediaService implements IMediaService {
             return {
               id: i.id,
               url: i.originUrl,
+              hlsUrl: i.hlsUrl,
               name: i.properties.name,
               mimeType: i.properties.mimeType,
               width: i.properties.width,
               height: i.properties.height,
               size: i.properties.size,
+              duration: i.properties.duration,
               thumbnails: i.thumbnails,
               createdBy: i.userId,
               status: i.status,

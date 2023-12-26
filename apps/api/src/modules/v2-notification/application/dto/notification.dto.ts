@@ -1,3 +1,5 @@
+import { CONTENT_TYPE } from '@beincom/constants';
+
 import { TargetType, VerbActivity } from '../../data-type';
 
 import {
@@ -41,10 +43,12 @@ export class NotificationPayloadDto<T> {
 
 class NotificationMetaPayloadDto<T> {
   public report?: {
-    adminInfos?: {
-      [rootGroupId: string]: string[];
-    };
     creatorId?: string;
+    content?: string;
+    contentId?: string;
+    contentType?: CONTENT_TYPE;
+    parentCommentId?: string;
+    adminInfos?: { [groupId: string]: string[] }; // TODO: remove when noti v3 is ready
   };
 
   public post?: {

@@ -4,7 +4,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 
 import { UserDto } from '../../../v2-user/application';
-import { REACTION_TARGET } from '../../data-type';
 
 export class ReactionDto {
   @ApiProperty()
@@ -17,7 +16,7 @@ export class ReactionDto {
   public targetId: string;
 
   @ApiProperty()
-  public target: REACTION_TARGET | CONTENT_TARGET;
+  public target: CONTENT_TARGET;
 
   @ApiProperty()
   public actor: UserDto;
@@ -62,3 +61,10 @@ export class FindReactionsDto implements IQueryResult {
     Object.assign(this, data);
   }
 }
+
+export class OwnerReactionDto {
+  public id: string;
+  public reactionName: string;
+}
+
+export type ReactionCount = Record<string, number>;

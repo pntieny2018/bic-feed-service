@@ -251,4 +251,8 @@ export class UserService implements IUserService {
       return false;
     }
   }
+
+  public async getGroupIdsJoinedByUserId(userId: string): Promise<string[]> {
+    return this._getJoinedGroupsFromCacheByUserId(userId);
+  }
 }

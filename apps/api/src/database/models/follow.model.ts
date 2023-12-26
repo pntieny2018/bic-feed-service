@@ -1,5 +1,5 @@
 import { AutoIncrement, Column, CreatedAt, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { getDatabaseConfig } from '../../config/database';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export interface IFollow {
   zindex: number;

@@ -10,7 +10,6 @@ import { TagEntity } from '../tag';
 import { ContentEntity, ContentAttributes } from './content.entity';
 
 export type ArticleAttributes = ContentAttributes & {
-  title: string;
   summary: string;
   content: string;
   categories: CategoryEntity[];
@@ -98,8 +97,8 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
     this._props.seriesIds = seriesIds;
   }
 
-  public getTitle(): string {
-    return this._props.title;
+  public getCategories(): CategoryEntity[] {
+    return this._props.categories || [];
   }
 
   public setCategories(categoryEntities: CategoryEntity[]): void {
@@ -143,5 +142,9 @@ export class ArticleEntity extends ContentEntity<ArticleAttributes> {
 
   public isOverLimitedToAttachSeries(): boolean {
     return this._props.seriesIds && this._props.seriesIds.length > RULES.LIMIT_ATTACHED_SERIES;
+  }
+
+  public getContent(): string {
+    return this._props.content;
   }
 }

@@ -1,7 +1,7 @@
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
+import { BooleanHelper } from '@libs/common/helpers';
 import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BooleanHelper } from 'apps/api/src/common/helpers';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -238,4 +238,16 @@ export class PinContentDto {
   })
   @IsUUID('4', { each: true })
   public unpinGroupIds: string[];
+}
+
+export class GetMyReportedContentsRequestDto extends PaginatedArgs {
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
+
+  @ApiProperty({ name: 'target_ids', required: false, type: [String] })
+  @Expose({ name: 'target_ids' })
+  @Type(() => Array)
+  @Transform(({ value }) => (typeof value === 'string' && !value.includes(',') ? [value] : value))
+  public targetIds?: string[];
 }
