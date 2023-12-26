@@ -29,7 +29,7 @@ export class DetachNewsfeedWhenReportHiddenEventHandler
     for (const targetId of Object.keys(reportEntityMapByTargetId)) {
       const reportEntity = reportEntityMapByTargetId[targetId][0];
       if (reportEntity.isTargetContent()) {
-        await this._userNewsfeedRepo.detachContentId(targetId);
+        await this._userNewsfeedRepo.detachContentIdFromAllUsers(targetId);
       }
     }
   }

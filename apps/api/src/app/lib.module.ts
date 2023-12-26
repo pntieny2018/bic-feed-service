@@ -3,7 +3,7 @@ import { configs } from '@libs/common/config/configuration';
 import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 import { IRedisConfig } from '@libs/common/config/redis';
 import { ISentryConfig } from '@libs/common/config/sentry';
-import { HttpModule as LibHttpModule, IAxiosConfig } from '@libs/infra/http';
+import { IAxiosConfig } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
 import { RedisModule } from '@libs/infra/redis';
 import { SentryModule } from '@libs/infra/sentry';
@@ -115,7 +115,6 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
     }),
     InternalEventEmitterModule,
     DomainEventModule,
-    LibHttpModule.forRoot(),
     LogModule,
   ],
   providers: [],

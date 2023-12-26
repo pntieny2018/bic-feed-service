@@ -8,7 +8,7 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 
 import { GroupNotFoundException } from '../../domain/exception';
-import { GetUserIdsInGroupsProps, IGroupAdapter } from '../../domain/service-adapter-interface';
+import { IGroupAdapter } from '../../domain/service-adapter-interface';
 
 @Injectable()
 export class GroupAdapter implements IGroupAdapter {
@@ -72,12 +72,6 @@ export class GroupAdapter implements IGroupAdapter {
     ]);
 
     return groupMembers.groupAdmin;
-  }
-
-  public async getUserIdsInGroups(
-    props: GetUserIdsInGroupsProps
-  ): Promise<{ list: string[]; cursor: string }> {
-    return this._groupService.getUserIdsInGroups(props);
   }
 
   public async getCommunityAdmins(groupIds: string[]): Promise<{

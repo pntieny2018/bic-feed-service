@@ -6,12 +6,8 @@ import {
   FeedSeriesPublishedEventHandler,
   FeedSeriesUpdatedEventHandler,
 } from '../application/event-handler/update-newsfeed';
-import {
-  FOLLOW_REPOSITORY_TOKEN,
-  USER_NEWSFEED_REPOSITORY_TOKEN,
-} from '../domain/repositoty-interface';
-import { FollowRepository } from '../driven-adapter/repository';
-import { UserNewsfeedRepository } from '../driven-adapter/repository/user-newsfeed.repository';
+import { USER_NEWSFEED_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import { UserNewsfeedRepository } from '../driven-adapter/repository';
 
 export const feedProvider = [
   /** Application Event Handler */
@@ -22,11 +18,6 @@ export const feedProvider = [
   FeedSeriesPublishedEventHandler,
   FeedSeriesUpdatedEventHandler,
 
-  /* Repository */
-  {
-    provide: FOLLOW_REPOSITORY_TOKEN,
-    useClass: FollowRepository,
-  },
   {
     provide: USER_NEWSFEED_REPOSITORY_TOKEN,
     useClass: UserNewsfeedRepository,

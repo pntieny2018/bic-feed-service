@@ -34,7 +34,7 @@ export class HealthController {
     const heapUsedThresholdInMB = process.env.HEALTH_CHECK_HEAP_SIZE
       ? parseInt(process.env.HEALTH_CHECK_HEAP_SIZE)
       : 256;
-    return await this._healthCheckService.check([
+    return this._healthCheckService.check([
       async (): Promise<HealthIndicatorResult> =>
         this._memoryHealthIndicator.checkHeap(
           HealthLabel.MEMORY_HEAP_KEY,

@@ -5,12 +5,11 @@ import {
   PUBLISHER_APPLICATION_SERVICE,
   IPublisherApplicationService,
 } from '../../../queue-publisher/application/interface';
+import { QuizGenerateJobDto, QuizParticipantResultJobDto } from '../../application/dto';
 import {
-  ContentScheduledJobDto,
-  QuizGenerateJobDto,
-  QuizParticipantResultJobDto,
-} from '../../application/dto';
-import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
+  IQueueAdapter,
+  ProducerAttachDetachNewsfeedJobPayload,
+} from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
@@ -46,13 +45,16 @@ export class QueueAdapter implements IQueueAdapter {
     );
   }
 
-  public async addContentScheduledJobs(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._publisherAppService.addBulkJobs<ContentScheduledJobDto>(
-      QueueName.CONTENT_SCHEDULED,
-      payloads.map(({ contentId, ownerId }) => ({
-        data: { contentId, ownerId },
-        opts: { jobId: contentId },
-      }))
+  public async addProducerAttachDetachNewsfeedJob(
+    payload: ProducerAttachDetachNewsfeedJobPayload
+  ): Promise<void> {
+    const { contentId } = payload;
+    await this._publisherAppService.addJob<ProducerAttachDetachNewsfeedJobPayload>(
+      QueueName.PRODUCER_ATTACH_DETACH_NEWSFEED,
+      {
+        data: payload,
+        opts: { group: { id: contentId } },
+      }
     );
   }
 }

@@ -7,5 +7,7 @@ export const GROUP_ENDPOINT = {
     CHECK_CUD_TAG: '/internal/users/:userId/can-cud-tags/:rootGroupId',
     USER_ROLE_IN_GROUPS: '/internal/groups/users',
     USERS_IN_GROUPS: '/internal/groups/ids/users',
+    NUMBER_USERS_IN_GROUPS: '/internal/groups/ids/user-count',
+    GROUPS_MEMBERS: '/internal/groups-members',
   },
 };

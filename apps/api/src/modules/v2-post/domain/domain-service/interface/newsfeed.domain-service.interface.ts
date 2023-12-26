@@ -1,15 +1,12 @@
 import { CONTENT_TYPE } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
 
+import { ContentEntity } from '../../model/content';
+
 export type DispatchContentIdToGroupsProps = {
   contentId: string;
   newGroupIds: string[];
   oldGroupIds: string[];
-};
-export type DispatchContentsInGroupsToUserIdProps = {
-  groupIds: string[];
-  userId: string;
-  action: 'publish' | 'remove';
 };
 
 export type GetContentIdsInNewsFeedProps = {
@@ -19,9 +16,10 @@ export type GetContentIdsInNewsFeedProps = {
   isSaved?: boolean;
   type?: CONTENT_TYPE;
 } & CursorPaginationProps;
+
 export interface INewsfeedDomainService {
   dispatchContentIdToGroups(props: DispatchContentIdToGroupsProps): Promise<void>;
-  dispatchContentsInGroupsToUserId(input: DispatchContentsInGroupsToUserIdProps): Promise<void>;
+  attachContentToUserId(contentEntity: ContentEntity, userId: string): Promise<void>;
   getContentIdsInNewsFeed(
     getContentIdsInNewsFeedProps: GetContentIdsInNewsFeedProps
   ): Promise<CursorPaginationResult<string>>;

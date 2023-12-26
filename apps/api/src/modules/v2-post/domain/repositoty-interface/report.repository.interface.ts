@@ -20,6 +20,7 @@ export type FindAllReportsProps = {
 };
 
 export type GetPaginationReportProps = {
+  targetIds?: string[];
   targetTypes?: CONTENT_TARGET[];
   targetActorId?: string;
   status?: REPORT_STATUS;

@@ -1,3 +1,6 @@
+import { CONTENT_TYPE } from '@beincom/constants';
+import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
+import { UserSavePostModel } from '@libs/database/postgres/model/user-save-post.model';
 import { IsUUID } from 'class-validator';
 import { DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import {
@@ -13,12 +16,6 @@ import {
 } from 'sequelize-typescript';
 
 import { PostModel } from './post.model';
-import { CONTENT_TYPE } from '@beincom/constants';
-import {
-  UserSavePostAttributes,
-  UserSavePostModel,
-} from '@libs/database/postgres/model/user-save-post.model';
-import { UserMarkReadPostModel } from '@libs/database/postgres/model/user-mark-read-post.model';
 
 export type UserNewsFeedAttributes = InferAttributes<UserNewsFeedModel>;
 @Table({
