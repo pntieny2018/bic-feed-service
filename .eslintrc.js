@@ -25,6 +25,7 @@ module.exports = {
       },
     ],
     'no-console': 'error',
+    'no-return-await': 'error',
     '@typescript-eslint/unbound-method': 'warn',
     '@typescript-eslint/ban-types': [
       'error',

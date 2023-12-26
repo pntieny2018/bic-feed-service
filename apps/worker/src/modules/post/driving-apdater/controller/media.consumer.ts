@@ -19,6 +19,6 @@ export class MediaConsumer {
     message: IKafkaConsumerMessage<PostVideoProcessedMessagePayload>
   ): Promise<void> {
     const { value } = message;
-    await this._commandBus.execute(new PostVideoProcessedCommand(value));
+    return this._commandBus.execute(new PostVideoProcessedCommand(value));
   }
 }

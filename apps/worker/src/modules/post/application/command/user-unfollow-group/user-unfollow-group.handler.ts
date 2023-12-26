@@ -19,7 +19,7 @@ export class UserUnfollowGroupHandler implements ICommandHandler<UserUnfollowGro
   public async execute(command: UserUnfollowGroupCommand): Promise<void> {
     const { userId, groupIds } = command.payload;
 
-    await this._queueAdapter.addFollowUnfollowGroupsJob({
+    await this._queueAdapter.addProducerFollowUnfollowJob({
       userId,
       groupIds,
       action: FollowAction.UNFOLLOW,

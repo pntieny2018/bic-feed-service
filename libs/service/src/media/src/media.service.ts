@@ -1,10 +1,10 @@
 import { File, Image, Video } from '@libs/common/dtos';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 import { IHttpService, MEDIA_HTTP_TOKEN } from '@libs/infra/http';
 import { MEDIA_ENDPOINT } from '@libs/service/media/src/endpoint.constant';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { IMediaService } from './interface';
-import { Traceable } from '@libs/common/modules/opentelemetry';
 
 @Traceable()
 @Injectable()

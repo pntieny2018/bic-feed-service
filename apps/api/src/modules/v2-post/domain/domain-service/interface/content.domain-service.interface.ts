@@ -28,14 +28,6 @@ export type GetScheduledContentProps = {
   beforeDate: Date;
 } & CursorPaginationProps;
 
-export type GetContentIdsInNewsFeedProps = {
-  authUserId: string;
-  isImportant?: boolean;
-  isMine?: boolean;
-  isSaved?: boolean;
-  type?: CONTENT_TYPE;
-} & CursorPaginationProps;
-
 export type GetContentIdsInTimelineProps = {
   authUserId: string;
   groupIds: string[];
@@ -92,9 +84,7 @@ export interface IContentDomainService {
   getContentByIds(
     data: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
-  getContentIdsInNewsFeed(
-    query: GetContentIdsInNewsFeedProps
-  ): Promise<CursorPaginationResult<string>>;
+
   getContentIdsInTimeline(
     query: GetContentIdsInTimelineProps
   ): Promise<CursorPaginationResult<string>>;

@@ -1,5 +1,9 @@
 import { CONTENT_STATUS } from '@beincom/constants';
-import { FailedProcessPostModel, PostModel } from '@libs/database/postgres/model';
+import {
+  FailedProcessPostModel,
+  PostModel,
+  UserNewsFeedModel,
+} from '@libs/database/postgres/model';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -53,7 +57,7 @@ export class PostCronService {
       await transaction.rollback();
     }
   }
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   private async _jobUpdateImportantPost(): Promise<void> {
     try {
       this._logger.debug('[Cron Job] Start update important post');
@@ -71,6 +75,16 @@ export class PostCronService {
           paranoid: false,
         }
       );
+
+      await this._sequelizeConnection.query(
+        `UPDATE ${UserNewsFeedModel.getTableName()} 
+        SET is_important = false WHERE post_id IN 
+        (
+          SELECT id FROM ${PostModel.getTableName()} 
+          WHERE is_important = true AND important_expired_at < NOW()
+        )`
+      );
+
       this._logger.debug('[Cron Job] Complete update important post');
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));

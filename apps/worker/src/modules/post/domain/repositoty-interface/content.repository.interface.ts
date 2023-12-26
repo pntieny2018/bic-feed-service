@@ -5,11 +5,16 @@ import {
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
 
-export type GetCursorPaginationPostIdsInGroup = {
+export type GetPaginationPostIdsInGroup = {
   groupIds: string[];
   notInGroupIds?: string[];
+  offset: number;
   limit: number;
-  after: string;
+};
+
+export type CountNumerOfPostsInGroup = {
+  groupIds: string[];
+  notInGroupIds?: string[];
 };
 
 export interface IContentRepository {
@@ -22,13 +27,10 @@ export interface IContentRepository {
     getPaginationContentsProps: GetPaginationContentsProps
   ): Promise<CursorPaginationResult<PostAttributes>>;
 
-  getCursorPaginationPostIdsPublishedInGroup(
-    getCursorPaginationPostIdsInGroup: GetCursorPaginationPostIdsInGroup
-  ): Promise<{
-    ids: string[];
-    cursor: string;
-  }>;
-  hasBelongActiveGroupIds(contentId: string, groupIds: string[]): Promise<boolean>;
+  getPaginationPostIdsPublishedInGroup(
+    getPaginationPostIdsInGroup: GetPaginationPostIdsInGroup
+  ): Promise<PostAttributes[]>;
+  countNumberOfPostsPublishedInGroup(props: CountNumerOfPostsInGroup): Promise<number>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

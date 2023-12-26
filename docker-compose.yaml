@@ -4,7 +4,7 @@ services:
     image: bein_stream_dev:1.0.0
     build:
       context: .
-      target: builder
+      target: development
       dockerfile: ./Dockerfile
     command: "nest start --watch"
     volumes:
@@ -20,7 +20,7 @@ services:
       - redis
       - postgres
   postgres:
-    image: postgres:12
+    image: postgres:14
     container_name: postgres
     restart: always
     environment:
@@ -32,7 +32,14 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data/
+      - ./data/log:/logs:z
+      - ./data/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 4G
     networks:
       - bein-stream-network
   redis:

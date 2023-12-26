@@ -64,7 +64,7 @@ export class ManageController {
     @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
     @Param('reportId', ParseUUIDPipe) reportId: string
   ): Promise<ReportTargetDto> {
-    const report = await this._queryBus.execute(
+    const report = this._queryBus.execute(
       new GetReportQuery({ groupId: rootGroupId, reportId, authUser })
     );
     return instanceToInstance(report, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

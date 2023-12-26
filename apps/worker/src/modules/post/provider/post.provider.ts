@@ -1,5 +1,7 @@
 import { AttachDetachContentNewsfeedHandler } from '../application/command/attach-detach-content-newsfeed';
 import { DispatchFollowUnfollowGroupsHandler } from '../application/command/dispatch-follow-unfollow-groups';
+import { ProducerAttachDetachNewsfeedHandler } from '../application/command/producer-attach-detach-newsfeed';
+import { ProducerFollowUnfollowGroupsHandler } from '../application/command/producer-follow-unfollow-groups';
 import { PublishContentToNewsfeedHandler } from '../application/command/publish-post-to-newsfeed';
 import { RemoveContentFromNewsfeedHandler } from '../application/command/remove-post-from-newsfeed';
 import { UserFollowGroupHandler } from '../application/command/user-follow-group';
@@ -30,6 +32,9 @@ export const postProvider = [
   RemoveContentFromNewsfeedHandler,
   UserFollowGroupHandler,
   UserUnfollowGroupHandler,
+  ProducerAttachDetachNewsfeedHandler,
   AttachDetachContentNewsfeedHandler,
+
+  ProducerFollowUnfollowGroupsHandler,
   DispatchFollowUnfollowGroupsHandler,
 ];
