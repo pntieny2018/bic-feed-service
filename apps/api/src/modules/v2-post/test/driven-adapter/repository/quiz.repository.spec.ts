@@ -117,7 +117,8 @@ describe('QuizRepository', () => {
   describe('deleteQuiz', () => {
     it('Should delete quiz successfully', async () => {
       const mockQuizId = v4();
-      await _quizRepo.deleteQuiz(mockQuizId);
+      const mockContentId = v4();
+      await _quizRepo.deleteQuiz(mockQuizId, mockContentId);
       expect(_libQuizRepo.delete).toBeCalledWith({ where: { id: mockQuizId } });
     });
   });

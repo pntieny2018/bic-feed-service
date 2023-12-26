@@ -91,12 +91,22 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
     RedisModule.registerAsync({
       useFactory: async (configService: ConfigService) => {
         const redisConfig = configService.get<IRedisConfig>('redis');
+        const redisContentConfig = configService.get<IRedisConfig>('redisContent');
         const sslConfig = redisConfig.ssl
           ? {
               tls: {
                 host: redisConfig.host,
                 port: redisConfig.port,
                 password: redisConfig.password,
+              },
+            }
+          : {};
+        const redisContentSslConfig = redisContentConfig.ssl
+          ? {
+              tls: {
+                host: redisContentConfig.host,
+                port: redisContentConfig.port,
+                password: redisContentConfig.password,
               },
             }
           : {};
@@ -108,6 +118,13 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
             port: redisConfig.port,
             password: redisConfig.password,
             ...sslConfig,
+          },
+          redisContentOptions: {
+            keyPrefix: redisContentConfig.prefix,
+            host: redisContentConfig.host,
+            port: redisContentConfig.port,
+            password: redisContentConfig.password,
+            ...redisContentSslConfig,
           },
         };
       },

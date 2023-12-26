@@ -251,7 +251,7 @@ export class QuizDomainService implements IQuizDomainService {
     await this._quizValidator.checkCanCUDQuizInContent(quizEntity.get('contentId'), authUser);
 
     try {
-      await this._quizRepo.deleteQuiz(quizId);
+      await this._quizRepo.deleteQuiz(quizId, quizEntity.get('contentId'));
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

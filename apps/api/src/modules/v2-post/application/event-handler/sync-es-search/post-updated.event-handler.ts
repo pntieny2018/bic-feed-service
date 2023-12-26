@@ -22,7 +22,7 @@ export class SearchPostUpdatedEventHandler implements IEventHandler<PostUpdatedE
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (postEntity.isHidden() || !postEntity.isPublished()) {
       return;

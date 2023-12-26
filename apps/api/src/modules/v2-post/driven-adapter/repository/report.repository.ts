@@ -1,8 +1,12 @@
+import {
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { ORDER } from '@beincom/constants';
 import { CursorPaginationResult } from '@libs/database/postgres/common';
 import { ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { uniq, isBoolean } from 'lodash';
 import { Sequelize, WhereOptions } from 'sequelize';
@@ -25,7 +29,9 @@ export class ReportRepository implements IReportRepository {
     private readonly _reportMapper: ReportMapper,
 
     @InjectConnection()
-    private readonly _sequelizeConnection: Sequelize
+    private readonly _sequelizeConnection: Sequelize,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepository: IContentCacheRepository
   ) {}
 
   public async findOne(input: FindOneReportProps): Promise<ReportEntity> {
@@ -212,5 +218,37 @@ export class ReportRepository implements IReportRepository {
     });
 
     return uniq(reportDetails.map((reportDetail) => reportDetail.reporterId));
+  }
+
+  public async checkIsReported(reporterId: string, targetId: string): Promise<boolean> {
+    const reportedIds = await this.getTargetIdsByReporterId(reporterId);
+    return reportedIds.includes(targetId);
+  }
+
+  public async getTargetIdsByReporterId(reporterId: string): Promise<string[]> {
+    if (!reporterId) {
+      return [];
+    }
+
+    const targetIdCached = await this._contentCacheRepository.getReportedTargetIdsByUserId(
+      reporterId
+    );
+    if (targetIdCached?.length) {
+      return targetIdCached;
+    }
+
+    const reportDetails = await this._libReportDetailRepo.findMany({
+      where: { reporterId },
+      select: ['targetId'],
+    });
+
+    const targetIds = uniq(reportDetails.map((reportDetail) => reportDetail.targetId));
+    if (!targetIds?.length) {
+      return [];
+    }
+
+    await this._contentCacheRepository.cacheUserReportedContent(reporterId, targetIds);
+
+    return targetIds;
   }
 }

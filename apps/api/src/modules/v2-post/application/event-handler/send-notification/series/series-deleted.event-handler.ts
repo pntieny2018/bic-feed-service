@@ -26,7 +26,7 @@ export class NotiSeriesDeletedEventHandler implements IEventHandler<SeriesDelete
   ) {}
 
   public async handle(event: SeriesDeletedEvent): Promise<void> {
-    const { seriesEntity, authUser } = event.payload;
+    const { entity: seriesEntity, authUser } = event.payload;
 
     if (seriesEntity.isHidden() || !seriesEntity.get('itemIds')?.length) {
       return;

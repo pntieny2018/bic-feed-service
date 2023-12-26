@@ -51,6 +51,7 @@ export type ContentAttributes = {
   aggregation?: {
     commentsCount: number;
     totalUsersSeen: number;
+    reactionsCount?: Record<string, number>;
   };
 };
 export type ContentState = {

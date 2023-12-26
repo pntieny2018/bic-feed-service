@@ -21,7 +21,7 @@ export class SearchArticlePublishedEventHandler implements IEventHandler<Article
   ) {}
 
   public async handle(event: ArticlePublishedEvent): Promise<void> {
-    const { articleEntity } = event.payload;
+    const { entity: articleEntity } = event.payload;
 
     if (!articleEntity.isPublished()) {
       return;

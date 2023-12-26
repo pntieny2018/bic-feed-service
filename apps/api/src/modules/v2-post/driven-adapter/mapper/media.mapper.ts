@@ -1,3 +1,4 @@
+import { FileDto, ImageDto, MediaDto, VideoDto } from '@api/modules/v2-post/application/dto';
 import { File, Image, Video } from '@libs/common/dtos';
 import { Injectable } from '@nestjs/common';
 
@@ -15,5 +16,22 @@ export class MediaMapper {
 
   public videoToDomain(video: Video): VideoEntity {
     return new VideoEntity(video);
+  }
+
+  public toDto(data: {
+    images?: ImageEntity[];
+    videos?: VideoEntity[];
+    files?: FileEntity[];
+  }): MediaDto {
+    if (!data) {
+      return { images: [], videos: [], files: [] };
+    }
+
+    const { images, videos, files } = data;
+    return {
+      images: (images || []).map((image) => new ImageDto(image.toObject())),
+      videos: (videos || []).map((video) => new VideoDto(video.toObject())),
+      files: (files || []).map((file) => new FileDto(file.toObject())),
+    };
   }
 }

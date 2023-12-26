@@ -1,4 +1,4 @@
-import { RedisOptions, Redis } from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 
 export class RedisStore {
   public static create(options: RedisOptions): Redis {
