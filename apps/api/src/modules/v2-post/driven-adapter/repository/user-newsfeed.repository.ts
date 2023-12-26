@@ -70,7 +70,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
     const { userId, after, limit, isSavedBy, type, createdBy, isImportant } =
       getNewsfeedPaginationProps;
     const findOption: FindOptions<UserNewsFeedModel> = {
-      select: ['postId'],
+      select: ['userId', 'postId', 'publishedAt'],
       where: { userId },
       whereRaw: this._filterUnArchivedContent(),
     };
