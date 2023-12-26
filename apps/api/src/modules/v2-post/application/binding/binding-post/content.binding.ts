@@ -58,9 +58,9 @@ import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { IContentBinding } from './content.binding.interface';
+import { Span } from '@libs/common/modules/opentelemetry';
 
 @Injectable()
-@Traceable()
 export class ContentBinding implements IContentBinding {
   public constructor(
     @Inject(QUIZ_BINDING_TOKEN)
@@ -87,6 +87,7 @@ export class ContentBinding implements IContentBinding {
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
+  @Span()
   public async postBinding(
     postEntity: PostEntity,
     dataBinding: {
@@ -246,6 +247,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async articleBinding(
     articleEntity: ArticleEntity,
     dataBinding: {
@@ -411,6 +413,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async seriesBinding(
     seriesEntity: SeriesEntity,
     dataBinding: {
@@ -546,6 +549,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async seriesItemBinding(
     items: (PostEntity | ArticleEntity)[]
   ): Promise<(PostInSeriesDto | ArticleInSeriesDto)[]> {
@@ -597,6 +601,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async contentsBinding(
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
