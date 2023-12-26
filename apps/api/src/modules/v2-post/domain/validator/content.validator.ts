@@ -211,11 +211,7 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public async validateContentArchived(
-    contentId: string,
-    user: UserDto,
-    postGroupIds: string[]
-  ): Promise<void> {
+  public async validateContentArchived(user: UserDto, postGroupIds: string[]): Promise<void> {
     const userJoinedGroupIds = user.groups ?? [];
     const groupCanAccess = postGroupIds.filter((groupId) => userJoinedGroupIds.includes(groupId));
     const activePostGroupIds = await this._postGroupRepository.getNotInStateGroupIds(
