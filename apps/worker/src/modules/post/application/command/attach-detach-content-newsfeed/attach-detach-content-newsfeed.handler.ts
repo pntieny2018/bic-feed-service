@@ -1,10 +1,9 @@
-import { ArrayHelper } from '@libs/common/helpers';
+import { Span } from '@libs/common/modules/opentelemetry';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { NewsfeedAction } from '../../../data-type';
 import {
-  CONTENT_REPOSITORY_TOKEN,
-  IContentRepository,
   IUserNewsfeedRepository,
   USER_NEWSFEED_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
@@ -19,59 +18,28 @@ export class AttachDetachContentNewsfeedHandler
   public constructor(
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository,
     @Inject(USER_NEWSFEED_REPOSITORY_TOKEN)
     private readonly _userNewsfeedRepo: IUserNewsfeedRepository
   ) {}
 
+  @Span()
   public async execute(command: AttachDetachContentNewsfeedCommand): Promise<void> {
-    const { contentId, oldGroupIds, newGroupIds, limit } = command.payload;
+    const { content, action, queryParams } = command.payload;
+    const { list: userIds } = await this._groupAdapter.getGroupsMembers(queryParams);
 
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
-    if (!content || !Boolean(content.publishedAt) || content.isHidden) {
+    if (!userIds.length) {
       return;
     }
 
-    const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
-    const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
-
-    if (attachedGroupIds.length) {
-      let cursorPagination = null;
-      while (true) {
-        const { list: userIds, cursor } = await this._groupAdapter.getUserIdsInGroups({
-          groupIds: attachedGroupIds,
-          notInGroupIds: oldGroupIds,
-          limit,
-          after: cursorPagination,
-        });
-        if (userIds.length) {
-          await this._userNewsfeedRepo.attachContentIdToUserIds(contentId, userIds);
-        }
-        if (userIds.length === 0 || userIds.length < 1000) {
-          break;
-        }
-        cursorPagination = cursor;
-      }
-    }
-
-    if (detachedGroupIds.length) {
-      let cursorPagination = null;
-      while (true) {
-        const { list: userIds, cursor } = await this._groupAdapter.getUserIdsInGroups({
-          groupIds: detachedGroupIds,
-          notInGroupIds: newGroupIds,
-          after: cursorPagination,
-          limit: 1000,
-        });
-        if (userIds.length) {
-          await this._userNewsfeedRepo.detachContentIdFromUserIds(contentId, userIds);
-        }
-        if (userIds.length === 0 || userIds.length < 1000) {
-          break;
-        }
-        cursorPagination = cursor;
-      }
+    switch (action) {
+      case NewsfeedAction.PUBLISH:
+        await this._userNewsfeedRepo.attachContentToUserIds(content, userIds);
+        return;
+      case NewsfeedAction.REMOVE:
+        await this._userNewsfeedRepo.detachContentIdFromUserIds(content.id, userIds);
+        return;
+      default:
+        return;
     }
   }
 }

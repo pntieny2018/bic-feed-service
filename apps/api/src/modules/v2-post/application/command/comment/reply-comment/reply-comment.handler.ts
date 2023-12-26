@@ -63,6 +63,6 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       parentId,
     });
 
-    return this._commentBinding.commentBinding(commentEntity, { authUser: actor });
+    return this._commentBinding.commentBinding(commentEntity);
   }
 }

@@ -12,7 +12,8 @@ import { InjectConnection } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize';
 
 import {
-  GetCursorPaginationPostIdsInGroup,
+  CountNumerOfPostsInGroup,
+  GetPaginationPostIdsInGroup,
   IContentRepository,
 } from '../../domain/repositoty-interface';
 
@@ -41,13 +42,10 @@ export class ContentRepository implements IContentRepository {
     return this._libContentRepo.getPagination(getPaginationContentsProps);
   }
 
-  public async getCursorPaginationPostIdsPublishedInGroup(
-    props: GetCursorPaginationPostIdsInGroup
-  ): Promise<{
-    ids: string[];
-    cursor: string;
-  }> {
-    const { groupIds, notInGroupIds, limit, after } = props;
+  public async getPaginationPostIdsPublishedInGroup(
+    props: GetPaginationPostIdsInGroup
+  ): Promise<PostAttributes[]> {
+    const { groupIds, notInGroupIds, limit, offset } = props;
     const { schema } = getDatabaseConfig();
     const postGroupTable = PostGroupModel.tableName;
 
@@ -70,37 +68,52 @@ export class ContentRepository implements IContentRepository {
                     )`;
     }
 
-    const rows = await this._libContentRepo.cursorPaginate(
-      {
-        select: ['id', 'createdAt'],
-        where: {
-          status: CONTENT_STATUS.PUBLISHED,
-          isHidden: false,
-        },
-        whereRaw,
+    return this._libContentRepo.findMany({
+      select: ['id', 'type', 'publishedAt', 'isImportant', 'createdAt'],
+      where: {
+        status: CONTENT_STATUS.PUBLISHED,
+        isHidden: false,
       },
-      {
-        after,
-        limit,
-        sortColumns: ['createdAt'],
-        order: ORDER.DESC,
-      }
-    );
-    return {
-      ids: rows.rows.map((row) => row.id),
-      cursor: rows.meta.endCursor,
-    };
+      whereRaw,
+      limit,
+      offset,
+      order: [['createdAt', ORDER.DESC]],
+    });
   }
 
-  public async hasBelongActiveGroupIds(contentId: string, groupIds: string[]): Promise<boolean> {
-    const data = await this._libPostGroupRepo.first({
-      where: {
-        groupId: groupIds,
-        postId: contentId,
-        isArchived: false,
-      },
-    });
+  public async countNumberOfPostsPublishedInGroup(
+    props: CountNumerOfPostsInGroup
+  ): Promise<number> {
+    const { groupIds, notInGroupIds } = props;
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
 
-    return !!data;
+    let whereRaw = `EXISTS (          
+                            SELECT 1
+                            FROM ${schema}.${postGroupTable} g            
+                            WHERE g.post_id = "PostModel".id 
+                            AND g.group_id IN (${groupIds
+                              .map((item) => this._sequelizeConnection.escape(item))
+                              .join(',')})
+                    )`;
+    if (notInGroupIds && notInGroupIds.length) {
+      whereRaw += ` AND NOT EXISTS (
+                            SELECT 1
+                            FROM ${schema}.${postGroupTable} g2
+                            WHERE g2.post_id = "PostModel".id
+                            AND g2.group_id IN (${notInGroupIds
+                              .map((item) => this._sequelizeConnection.escape(item))
+                              .join(',')})
+                    )`;
+    }
+
+    return this._libContentRepo.count({
+      select: ['id'],
+      where: {
+        status: CONTENT_STATUS.PUBLISHED,
+        isHidden: false,
+      },
+      whereRaw,
+    });
   }
 }

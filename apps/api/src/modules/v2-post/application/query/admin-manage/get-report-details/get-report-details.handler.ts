@@ -89,9 +89,7 @@ export class GetReportHandler implements IQueryHandler<GetReportQuery, ReportTar
   ): Promise<PostDto | ArticleDto | CommentBaseDto> {
     if (targetType === CONTENT_TARGET.COMMENT) {
       const commentEntity = await this._commentRepo.findOne({ id: targetId });
-      return commentEntity
-        ? this._commentBinding.commentBinding(commentEntity, { authUser })
-        : null;
+      return commentEntity ? this._commentBinding.commentBinding(commentEntity) : null;
     }
 
     const contentEntity = await this._contentRepo.findContentById(targetId, {

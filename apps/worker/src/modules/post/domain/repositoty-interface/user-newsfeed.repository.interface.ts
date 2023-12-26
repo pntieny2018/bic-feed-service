@@ -1,11 +1,18 @@
+import { UserNewsFeedAttributes } from '@libs/database/postgres/model';
+
+export type ContentNewsFeedAttributes = Pick<
+  UserNewsFeedAttributes,
+  'id' | 'type' | 'publishedAt' | 'isImportant'
+>;
+
 export interface IUserNewsfeedRepository {
-  attachContentIdToUserId(contentId: string, userId: string): Promise<void>;
+  attachContentToUserId(content: ContentNewsFeedAttributes, userId: string): Promise<void>;
   detachContentIdFromUserId(contentId: string, userId: string): Promise<void>;
 
-  attachContentIdToUserIds(contentId: string, userIds: string[]): Promise<void>;
+  attachContentToUserIds(content: ContentNewsFeedAttributes, userIds: string[]): Promise<void>;
   detachContentIdFromUserIds(contentId: string, userIds: string[]): Promise<void>;
 
-  attachContentIdsToUserId(contentIds: string[], userId: string): Promise<void>;
+  attachContentsToUserId(contents: ContentNewsFeedAttributes[], userId: string): Promise<void>;
   detachContentIdsFromUserId(contentIds: string[], userId: string): Promise<void>;
 }
 

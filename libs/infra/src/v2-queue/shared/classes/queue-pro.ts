@@ -293,7 +293,7 @@ export class QueuePro<
     const client = await this.client;
 
     const groupKey = this.toKey(`groups:${groupId}`);
-    return await client['getGroupCount']([groupKey, this.keys.wait, this.toKey(''), groupId]);
+    return client['getGroupCount']([groupKey, this.keys.wait, this.toKey(''), groupId]);
   }
 
   /**

@@ -60,9 +60,7 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     const commentIds = reportEntities.map((row) => row.get('targetId'));
     const commentEntities = await this._commentRepo.findAll({ id: commentIds });
 
-    const comments = await this._commentBinding.commentsBinding(commentEntities, {
-      authUser,
-    });
+    const comments = await this._commentBinding.commentsBinding(commentEntities);
 
     const commentMap = ArrayHelper.convertArrayToObject(comments, 'id');
     const reportReasonsCountMap = await this._reportDomain.getReportReasonsMapByTargetIds(

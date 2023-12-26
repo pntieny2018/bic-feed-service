@@ -16,7 +16,7 @@ export class QuizPendingProcessor implements IProcessor {
 
   public async processMessage(job: JobPro<QuizGenerateJobDto>): Promise<void> {
     const { quizId } = job.data;
-    await this._commandBus.execute<ProcessGenerationQuizCommand, void>(
+    return this._commandBus.execute<ProcessGenerationQuizCommand, void>(
       new ProcessGenerationQuizCommand({ quizId })
     );
   }

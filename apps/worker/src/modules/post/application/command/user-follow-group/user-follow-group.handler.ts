@@ -22,7 +22,7 @@ export class UserFollowGroupHandler implements ICommandHandler<UserFollowGroupCo
       return;
     }
 
-    await this._queueAdapter.addFollowUnfollowGroupsJob({
+    await this._queueAdapter.addProducerFollowUnfollowJob({
       userId,
       groupIds,
       action: FollowAction.FOLLOW,

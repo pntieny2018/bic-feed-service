@@ -4,6 +4,8 @@ import {
   DeleteCacheContentWhenContentUpdatedHandler,
   DeleteCacheContentWhenSeriesUpdatedItemsHandler,
 } from '@api/modules/v2-post/application/event-handler/cache/delete-cache';
+import { DetachNewsfeedWhenReportCreatedEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-created.event-handler';
+import { DetachNewsfeedWhenReportHiddenEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-hidden.event-handler';
 import { CONTENT_CACHE_REPOSITORY_TOKEN } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
@@ -52,6 +54,10 @@ import {
 } from '../application/event-handler/article';
 import { ReportHiddenEventHandler } from '../application/event-handler/content';
 import {
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
+} from '../application/event-handler/mark-seen-content';
+import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
@@ -66,12 +72,6 @@ import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
 } from '../application/event-handler/set-video-state';
-
-import {
-  SeenContentWhenReactionCreatedEventHandler,
-  SeenContentWhenGetDetailEventHandler,
-} from '../application/event-handler/mark-seen-content';
-
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -147,6 +147,9 @@ export const postProvider = [
 
   SeenContentWhenReactionCreatedEventHandler,
   SeenContentWhenGetDetailEventHandler,
+
+  DetachNewsfeedWhenReportHiddenEventHandler,
+  DetachNewsfeedWhenReportCreatedEventHandler,
 
   /** Cache Content Event Handler */
   DeleteCacheContentWhenContentDeletedHandler,

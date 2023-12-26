@@ -17,7 +17,7 @@ export class ContentScheduledProcessor implements IProcessor {
   public async processMessage(job: JobPro<ContentScheduledJobDto>): Promise<void> {
     const { contentId: articleId, ownerId: articleOwnerId } = job.data;
 
-    await this._commandBus.execute<ProcessScheduledContentPublishingCommand, void>(
+    return this._commandBus.execute<ProcessScheduledContentPublishingCommand, void>(
       new ProcessScheduledContentPublishingCommand({ id: articleId, actorId: articleOwnerId })
     );
   }

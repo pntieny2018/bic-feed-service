@@ -243,6 +243,14 @@ export class ContentDomainService implements IContentDomainService {
       order = ORDER.DESC,
     } = props;
 
+    if (!groupIds.length) {
+      return {
+        rows: [],
+        meta: {
+          hasNextPage: false,
+        },
+      };
+    }
     if (isImportant) {
       return this.getImportantContentIds(props);
     }

@@ -1,16 +1,21 @@
 export const GROUP_ADAPTER = 'GROUP_ADAPTER';
 
-export type GetUserIdsInGroupsProps = {
+export type GetGroupsMembersProps = {
   groupIds: string[];
   notInGroupIds: string[];
   ignoreUserIds?: string;
   includeDeactivated?: boolean;
-  after?: string;
-  limit?: number;
+  offset: number;
+  limit: number;
+};
+
+export type CountUsersInGroupsProps = {
+  groupIds: string[];
+  notInGroupIds: string[];
+  ignoreUserIds?: string;
+  includeDeactivated?: boolean;
 };
 export interface IGroupAdapter {
-  getUserIdsInGroups(props: GetUserIdsInGroupsProps): Promise<{
-    list: string[];
-    cursor: string;
-  }>;
+  getGroupsMembers(props: GetGroupsMembersProps): Promise<{ list: string[] }>;
+  countUsersInGroups(props: CountUsersInGroupsProps): Promise<{ total: number }>;
 }

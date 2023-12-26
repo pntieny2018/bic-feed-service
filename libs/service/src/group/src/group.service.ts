@@ -1,19 +1,21 @@
 import { ROLE_TYPE } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
-import {
-  GetUserIdsInGroupsProps,
-  GetUserRoleInGroupsResult,
-  IGroupService,
-} from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
 import { GroupDto, GroupMember } from './group.dto';
-import { Traceable } from '@libs/common/modules/opentelemetry';
+import {
+  GetUserIdsInGroupsProps,
+  CountUsersInGroupsProps,
+  GetUserRoleInGroupsResult,
+  IGroupService,
+  GetPaginationGroupsMembersProps,
+} from './group.service.interface';
 
 @Traceable()
 @Injectable()
@@ -158,20 +160,23 @@ export class GroupService implements IGroupService {
     return userIds.includes(userId);
   }
 
-  public async getUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
+  public async getCursorUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
     list: string[];
     cursor: string;
   }> {
     const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, after } = input;
     try {
-      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
-        group_ids: groupIds,
-        ignore_group_ids: notInGroupIds,
-        ignoreUserIds,
-        include_deactivated: includeDeactivated || false,
-        limit: limit || 5000,
-        after: after || null,
-      });
+      const response = await this._httpService.post(
+        `${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS_BY_CURSOR}`,
+        {
+          group_ids: groupIds,
+          ignore_group_ids: notInGroupIds,
+          ignoreUserIds,
+          include_deactivated: includeDeactivated || false,
+          limit: limit || 5000,
+          after: after || null,
+        }
+      );
       return {
         list: response.data['data'],
         cursor: response.data['meta']['cursors']['next'],
@@ -182,6 +187,50 @@ export class GroupService implements IGroupService {
         list: [],
         cursor: null,
       };
+    }
+  }
+
+  public async countUsersInGroups(input: CountUsersInGroupsProps): Promise<{ total: number }> {
+    const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds } = input;
+
+    try {
+      const response = await this._httpService.post(
+        `${GROUP_ENDPOINT.INTERNAL.NUMBER_USERS_IN_GROUPS}`,
+        {
+          group_ids: groupIds,
+          ignore_group_ids: notInGroupIds,
+          ignore_user_ids: ignoreUserIds,
+          include_deactivated: includeDeactivated || false,
+        }
+      );
+      return {
+        total: response.data['data'].total,
+      };
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex));
+      return { total: 0 };
+    }
+  }
+
+  public async getPaginationGroupsMembers(
+    input: GetPaginationGroupsMembersProps
+  ): Promise<{ list: string[] }> {
+    const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, offset } = input;
+    try {
+      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
+        group_ids: groupIds,
+        ignore_group_ids: notInGroupIds,
+        ignore_user_ids: ignoreUserIds,
+        include_deactivated: includeDeactivated || false,
+        offset,
+        limit,
+      });
+      return {
+        list: response.data['data'],
+      };
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex));
+      return { list: [] };
     }
   }
 }

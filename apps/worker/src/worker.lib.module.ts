@@ -3,7 +3,6 @@ import { configs } from '@libs/common/config/configuration';
 import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
 import { IRedisConfig } from '@libs/common/config/redis';
 import { ISentryConfig } from '@libs/common/config/sentry';
-import { HttpModule as LibHttpModule } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
 import { RedisModule } from '@libs/infra/redis';
 import { SentryModule } from '@libs/infra/sentry';
@@ -100,7 +99,6 @@ import * as Sentry from '@sentry/node';
       inject: [ConfigService],
     }),
     DomainEventModule,
-    LibHttpModule.forRoot(),
     LogModule,
   ],
   providers: [],

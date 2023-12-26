@@ -1,8 +1,15 @@
+import * as process from 'process';
+
 import { HEADER_REQ_ID } from '@libs/common/constants';
+import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { UserModule } from '@libs/service/user';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { Resource } from '@opentelemetry/resources';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { ClsMiddleware, ClsModule } from 'nestjs-cls';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { v4 as uuid } from 'uuid';
@@ -41,12 +48,6 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
-import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
-import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
-import * as process from 'process';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { Resource } from '@opentelemetry/resources';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
 @Module({
   imports: [

@@ -46,7 +46,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
     const attributes = this._buildSelect(options);
     const include = this._buildInclude(options);
     const where = this._buildWhere(options);
-    return await this.model.findOne({
+    return this.model.findOne({
       attributes,
       where,
       include: include.length > 0 ? include : undefined,

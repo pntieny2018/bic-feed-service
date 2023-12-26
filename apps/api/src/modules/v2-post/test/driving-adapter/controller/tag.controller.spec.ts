@@ -157,9 +157,9 @@ describe('TagController', () => {
     };
 
     it('Should delete tag successfully', async () => {
-      jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
-      const result = await tagController.delete(userMock, deleteTagDto.id);
-      expect(result).not.toBeDefined();
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
+      tagController.delete(userMock, deleteTagDto.id);
+      expect(commandExecute).toBeCalledTimes(1);
     });
 
     it(`Should catch not found exception`, async () => {
