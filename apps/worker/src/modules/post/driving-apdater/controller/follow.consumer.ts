@@ -1,3 +1,4 @@
+import { Traceable } from '@libs/common/modules/opentelemetry';
 import { IKafkaConsumerMessage, KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventPatternAndLog } from '@libs/infra/log';
 import { Controller } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { UserUnfollowGroupCommand } from '../../application/command/user-unfollo
 import { FollowAction } from '../../data-type';
 
 @Controller()
+@Traceable()
 export class FollowConsumer {
   public constructor(private readonly _commandBus: CommandBus) {}
 

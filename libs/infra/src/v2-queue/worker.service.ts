@@ -24,7 +24,7 @@ export class WorkerService implements IWorkerService {
       this._logger.debug(`Job ${args.jobId} in ${queueEvents.name} has been completed`);
     });
     queueEvents.on('failed', (args) => {
-      this._logger.debug(
+      this._logger.error(
         `Job ${args.jobId} in ${queueEvents.name} has been failed with reason ${args.failedReason}`
       );
     });
