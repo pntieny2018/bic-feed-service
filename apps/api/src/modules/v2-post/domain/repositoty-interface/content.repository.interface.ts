@@ -88,6 +88,7 @@ export interface IContentRepository {
     cursor: string;
   }>;
   hasBelongActiveGroupIds(contentId: string, groupIds: string[]): Promise<boolean>;
+  getInterestedContentIdsByReporterId(contentIds: string[], reporterId: string): Promise<string[]>;
 }
 
 export const CONTENT_REPOSITORY_TOKEN = 'CONTENT_REPOSITORY_TOKEN';

@@ -1,5 +1,6 @@
 // content
 export const ContentHasBeenSeen = 'content.has.been.seen';
+export const ContentGetDetail = 'content.get.detail';
 export const ContentAttachedSeries = 'content.attached.series';
 
 // post

@@ -31,6 +31,7 @@ export type Image = {
 export type Video = {
   id: string;
   url: string;
+  hlsUrl: string;
   name: string;
   mimeType: string;
   createdBy: string;

@@ -244,4 +244,67 @@ export class GetMyReportedContentsRequestDto extends PaginatedArgs {
   @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
   @IsEnum(ORDER)
   public order: ORDER = ORDER.DESC;
+
+  @ApiProperty({ name: 'target_ids', required: false, type: [String] })
+  @Expose({ name: 'target_ids' })
+  @Type(() => Array)
+  @Transform(({ value }) => (typeof value === 'string' && !value.includes(',') ? [value] : value))
+  public targetIds?: string[];
+}
+
+export class RootGroupRequestDto {
+  @ApiProperty({
+    name: 'id',
+  })
+  @IsNotEmpty()
+  @IsUUID('4')
+  public id: string;
+
+  @ApiProperty({
+    name: 'created_at',
+  })
+  @Expose({
+    name: 'created_at',
+  })
+  @IsNotEmpty()
+  @IsDateString()
+  public createdAt: string;
+}
+
+export class CountContentPerWeekRequestDto {
+  @ApiProperty({
+    name: 'root_groups',
+    type: () => RootGroupRequestDto,
+    isArray: true,
+    example: [
+      {
+        id: '8f914eaa-821f-44b8-80e0-7bac69346397',
+        created_at: '2022-07-05T11:49:53.672Z',
+      },
+      {
+        id: 'a2878812-95df-4810-b036-9967de528e6e',
+        created_at: '2022-06-05T11:49:53.672Z',
+      },
+    ],
+  })
+  @Expose({
+    name: 'root_groups',
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @Type(() => RootGroupRequestDto)
+  public rootGroups: RootGroupRequestDto[];
+
+  // TODO: for support multiple metrics
+  @ApiProperty({
+    type: String,
+    name: 'metrics',
+    example: 'average_weekly_count',
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => value.split(','))
+  @Expose({
+    name: 'metrics',
+  })
+  public metrics: string[];
 }

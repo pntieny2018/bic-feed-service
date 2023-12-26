@@ -45,9 +45,10 @@ export class GetMyReportedContentsHandler
   public async execute(
     query: GetMyReportedContentsQuery
   ): Promise<PaginatedResponse<ReportTargetDto>> {
-    const { authUser, limit, order, before, after } = query.payload;
+    const { authUser, limit, order, before, after, targetIds } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
+      targetIds,
       targetTypes: [CONTENT_TARGET.POST, CONTENT_TARGET.ARTICLE],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
@@ -61,7 +62,7 @@ export class GetMyReportedContentsHandler
     const contentIds = reportEntities.map((row) => row.get('targetId'));
     const contentEntities = await this._contentRepo.findAll({
       where: { ids: contentIds },
-      include: { mustIncludeGroup: true },
+      include: { mustIncludeGroup: true, shouldIncludeQuiz: true },
     });
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 

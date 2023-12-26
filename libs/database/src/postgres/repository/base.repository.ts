@@ -172,7 +172,8 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
 
   public async cursorPaginate(
     findOptions: FindOptions<M>,
-    paginationProps: CursorPaginationProps
+    paginationProps: CursorPaginationProps,
+    subQuery = true
   ): Promise<CursorPaginationResult<M>> {
     const {
       after,
@@ -191,7 +192,7 @@ export abstract class BaseRepository<M extends Model> implements IBaseRepository
       attributes,
       where,
       include: include.length > 0 ? include : undefined,
-      subQuery: false,
+      subQuery,
       group: findOptions.group,
     });
 

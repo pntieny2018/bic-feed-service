@@ -184,6 +184,7 @@ export class ContentMapper {
       updatedAt: post.updatedAt,
       markedReadImportant: post.markedReadPost,
       isSaved: post.isSaved || false,
+      isSeen: post.isSeen || false,
       ownerReactions: (post.ownerReactions || []).map((item) => ({
         id: item.id,
         reactionName: item.reactionName,
@@ -238,6 +239,7 @@ export class ContentMapper {
       id: post.id,
       isReported: post.isReported,
       isHidden: post.isHidden,
+      isSeen: post.isSeen || false,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,
       privacy: post.privacy,
@@ -298,6 +300,7 @@ export class ContentMapper {
     return new SeriesEntity({
       id: post.id,
       isReported: post.isReported,
+      isSeen: post.isSeen || false,
       isHidden: post.isHidden,
       createdBy: post.createdBy,
       updatedBy: post.updatedBy,

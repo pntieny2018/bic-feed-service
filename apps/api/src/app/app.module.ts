@@ -3,7 +3,6 @@ import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { UserModule } from '@libs/service/user';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ClsMiddleware, ClsModule } from 'nestjs-cls';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { v4 as uuid } from 'uuid';
@@ -26,6 +25,7 @@ import { InternalModule } from '../modules/internal';
 import { MediaModule } from '../modules/media';
 import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
+import { QueuePublisherModule } from '../modules/queue-publisher/queue-publisher.module';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
@@ -41,6 +41,12 @@ import { ReactionCountModule } from '../shared/reaction-count';
 
 import { AppController } from './app.controller';
 import { LibModule } from './lib.module';
+import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
+import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
+import * as process from 'process';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { Resource } from '@opentelemetry/resources';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
 @Module({
   imports: [
@@ -74,7 +80,6 @@ import { LibModule } from './lib.module';
     ArticleModule,
     SeriesModule,
     CategoryModule,
-    ScheduleModule.forRoot(),
     HealthModule,
     SeriesModule,
     InternalModule,
@@ -89,6 +94,21 @@ import { LibModule } from './lib.module';
     I18nGlobalModule,
     PostgresModule,
     UserModule,
+
+    OpenTelemetryModule.forRoot({
+      serviceName: process.env.APP_NAME,
+      resource: new Resource({
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.APP_ENV,
+        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.1',
+      }),
+      //traceExporter: new ConsoleSpanExporter(),
+      spanProcessor: new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}`,
+        })
+      ),
+    }),
+    QueuePublisherModule,
   ],
   controllers: [AppController],
   providers: [],

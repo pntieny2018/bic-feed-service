@@ -45,16 +45,12 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
-import { ContentCron } from '../application/cron';
 import {
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import {
-  ContentHasSeenEventHandler,
-  ReportHiddenEventHandler,
-} from '../application/event-handler/content';
+import { ReportHiddenEventHandler } from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -69,8 +65,13 @@ import {
 import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
-  VideoPostVideoSuccessEventHandler,
 } from '../application/event-handler/set-video-state';
+
+import {
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
+} from '../application/event-handler/mark-seen-content';
+
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -83,6 +84,8 @@ import {
   FindPinnedContentHandler,
   GetContentAudienceHandler,
   GetScheduleContentHandler,
+  CountContentPerWeekHandler,
+  GetWelcomeContentsHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
@@ -126,9 +129,6 @@ import { ContentCacheRepository, ContentRepository } from '../driven-adapter/rep
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 
 export const postProvider = [
-  /** Application Cron Handler */
-  ContentCron,
-
   /** Application Event Handler */
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
@@ -142,9 +142,11 @@ export const postProvider = [
   FilePostUpdatedEventHandler,
   FilePostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
-  VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
+
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
 
   /** Cache Content Event Handler */
   DeleteCacheContentWhenContentDeletedHandler,
@@ -152,7 +154,6 @@ export const postProvider = [
   DeleteCacheContentWhenSeriesUpdatedItemsHandler,
   DeleteCacheContentWhenAdminHidHandler,
 
-  ContentHasSeenEventHandler,
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -213,6 +214,9 @@ export const postProvider = [
   SearchSeriesHandler,
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
+  GetWelcomeContentsHandler,
+
+  CountContentPerWeekHandler,
 
   /** Domain Service */
   {

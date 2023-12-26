@@ -20,7 +20,7 @@ export class HttpModule {
       providers: [
         {
           provide: USER_HTTP_TOKEN,
-          useFactory: (configService: ConfigService) => {
+          useFactory: (configService: ConfigService): HttpService => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.user.baseUrl,
@@ -32,7 +32,7 @@ export class HttpModule {
         },
         {
           provide: GROUP_HTTP_TOKEN,
-          useFactory: (configService: ConfigService) => {
+          useFactory: (configService: ConfigService): HttpService => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.group.baseUrl,
@@ -44,7 +44,7 @@ export class HttpModule {
         },
         {
           provide: MEDIA_HTTP_TOKEN,
-          useFactory: (configService: ConfigService) => {
+          useFactory: (configService: ConfigService): HttpService => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.upload.baseUrl,
@@ -56,7 +56,7 @@ export class HttpModule {
         },
         {
           provide: LAMBDA_COUNT_TOKEN_HTTP_TOKEN,
-          useFactory: (configService: ConfigService) => {
+          useFactory: (configService: ConfigService): HttpService => {
             const axiosConfig = configService.get<IAxiosConfig>('axios');
             return new HttpService({
               baseURL: axiosConfig.lambda.baseUrl,

@@ -220,7 +220,7 @@ export class ReportDomainService implements IReportDomainService {
 
         content = comment?.get('content') || '';
         contentId = comment?.get('postId') || '';
-        parentCommentId = comment?.get('parentId') || '';
+        parentCommentId = comment?.isChildComment() ? comment.get('parentId') : '';
         contentType = contentEntity?.getType();
         break;
       }

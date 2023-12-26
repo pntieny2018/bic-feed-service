@@ -7,6 +7,7 @@ export const getRedisConfig = (): IRedisConfig => ({
   password: process.env.REDIS_PASSWORD,
   ssl: process.env.REDIS_SSL === 'true',
   prefix: `${process.env.REDIS_ENV}:` || '',
+  env: process.env.REDIS_ENV,
 });
 
 export const getRedisContentConfig = (): IRedisConfig => ({
@@ -16,4 +17,5 @@ export const getRedisContentConfig = (): IRedisConfig => ({
   password: process.env.REDIS_CONTENT_PASSWORD,
   ssl: process.env.REDIS_CONTENT_SSL === 'true',
   prefix: `${process.env.REDIS_CONTENT_ENV}:` || '',
+  env: process.env.REDIS_CONTENT_ENV,
 });

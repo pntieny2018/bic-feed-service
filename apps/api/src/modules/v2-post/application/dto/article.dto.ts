@@ -27,6 +27,7 @@ export class ArticleDto {
   public updatedAt: Date;
   public markedReadPost: boolean; // markedReadImportant
   public isSaved: boolean;
+  public isSeen?: boolean;
   public ownerReactions: OwnerReactionDto[];
   public reactionsCount: ReactionCount[];
   public publishedAt?: Date;

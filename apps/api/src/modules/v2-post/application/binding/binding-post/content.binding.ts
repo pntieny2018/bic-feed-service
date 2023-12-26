@@ -1,4 +1,3 @@
-import { EntityHelper } from '@api/common/helpers';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
@@ -8,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
 import { flatten, groupBy, uniq, pick, map } from 'lodash';
 
+import { EntityHelper } from '../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
@@ -55,8 +55,10 @@ import { IQuizBinding, QUIZ_BINDING_TOKEN } from '../binding-quiz';
 import { IReportBinding, REPORT_BINDING_TOKEN } from '../binding-report';
 
 import { IContentBinding } from './content.binding.interface';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 
 @Injectable()
+@Traceable()
 export class ContentBinding implements IContentBinding {
   public constructor(
     @Inject(QUIZ_BINDING_TOKEN)
@@ -492,7 +494,7 @@ export class ContentBinding implements IContentBinding {
 
     const items = (await this._contentRepo.findAll({
       where: {
-        ids: itemIds,
+        ids: itemIds.slice(0, 3),
         excludeReportedByUserId: authUser?.id,
         isHidden: false,
         status: CONTENT_STATUS.PUBLISHED,
@@ -537,6 +539,7 @@ export class ContentBinding implements IContentBinding {
         title: seriesEntity.get('title'),
         summary: seriesEntity.get('summary'),
         items: seriesItems,
+        totalItems: itemIds.length,
         coverMedia: this._mediaBinding.imageBinding(seriesEntity.get('cover')),
       });
     });

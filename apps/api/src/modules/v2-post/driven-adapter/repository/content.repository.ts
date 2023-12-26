@@ -695,4 +695,18 @@ export class ContentRepository implements IContentRepository {
 
     return !!data;
   }
+
+  public async getInterestedContentIdsByReporterId(
+    contentIds: string[],
+    userId: string
+  ): Promise<string[]> {
+    const data = await this._libUserSeenPostRepo.findMany({
+      where: {
+        userId,
+        postId: contentIds,
+      },
+    });
+
+    return data.map((item) => item.postId);
+  }
 }

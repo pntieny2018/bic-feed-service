@@ -30,7 +30,7 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
                 })
               : data,
           meta: {
-            message: i18n?.translate(message),
+            message: message === 'OK' ? message : i18n?.translate(message),
           },
         };
       })

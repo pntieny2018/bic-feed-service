@@ -1,62 +1,52 @@
-import { QUEUES } from '@libs/common/constants';
-import { IQueueService, Job, QUEUE_SERVICE_TOKEN } from '@libs/infra/queue';
+import { QueueGroup, QueueName } from '@libs/infra/v2-queue';
 import { Inject } from '@nestjs/common';
-import { JobId } from 'bull';
 
 import {
-  ContentScheduledJobDto,
-  QuizGenerateJobDto,
-  QuizParticipantResultJobDto,
-} from '../../application/dto';
-import { ContentScheduledJobPayload, IQueueAdapter } from '../../domain/infra-adapter-interface';
+  PUBLISHER_APPLICATION_SERVICE,
+  IPublisherApplicationService,
+} from '../../../queue-publisher/application/interface';
+import { QuizGenerateJobDto, QuizParticipantResultJobDto } from '../../application/dto';
+import { IQueueAdapter, ContentChangedJobPayload } from '../../domain/infra-adapter-interface';
 
 export class QueueAdapter implements IQueueAdapter {
   public constructor(
-    @Inject(QUEUE_SERVICE_TOKEN)
-    private readonly _queueService: IQueueService
+    @Inject(PUBLISHER_APPLICATION_SERVICE)
+    private readonly _publisherAppService: IPublisherApplicationService
   ) {}
 
-  public async getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>> {
-    return this._queueService.getJobById(queueName, jobId);
+  public async hasJob(queueName: QueueName, jobId: string): Promise<boolean> {
+    return this._publisherAppService.hasJob(queueName, jobId);
   }
 
-  public async killJob(queueName: string, jobId: JobId): Promise<void> {
-    await this._queueService.killJob(queueName, jobId);
+  public async killJob(queueName: QueueName, jobId: string): Promise<void> {
+    await this._publisherAppService.removeJob(queueName, jobId);
   }
 
   public async addQuizGenerateJob(quizId: string): Promise<void> {
-    await this._queueService.addBulkJobs<QuizGenerateJobDto>([
-      {
-        name: QUEUES.QUIZ_PENDING.JOBS.PROCESS_QUIZ_PENDING,
-        data: { quizId },
-        opts: {},
-        queue: { name: QUEUES.QUIZ_PENDING.QUEUE_NAME },
-      },
-    ]);
+    await this._publisherAppService.addJob<QuizGenerateJobDto>(QueueName.QUIZ_PENDING, {
+      data: { quizId },
+      opts: { group: { id: QueueGroup.QUIZ_PENDING_GROUP } },
+    });
   }
 
   public async addQuizParticipantStartedJob(
     quizParticipantId: string,
     delayTime: number
   ): Promise<void> {
-    await this._queueService.addBulkJobs<QuizParticipantResultJobDto>([
+    await this._publisherAppService.addJob<QuizParticipantResultJobDto>(
+      QueueName.QUIZ_PARTICIPANT_RESULT,
       {
-        name: QUEUES.QUIZ_PARTICIPANT_RESULT.JOBS.PROCESS_QUIZ_PARTICIPANT_RESULT,
         data: { quizParticipantId },
         opts: { jobId: quizParticipantId, delay: delayTime },
-        queue: { name: QUEUES.QUIZ_PARTICIPANT_RESULT.QUEUE_NAME },
-      },
-    ]);
+      }
+    );
   }
 
-  public async addContentScheduledJobs(payloads: ContentScheduledJobPayload[]): Promise<void> {
-    await this._queueService.addBulkJobs<ContentScheduledJobDto>(
-      payloads.map(({ contentId, ownerId }) => ({
-        name: QUEUES.CONTENT_SCHEDULED.JOBS.PROCESS_CONTENT_SCHEDULED,
-        data: { contentId, ownerId },
-        opts: { jobId: contentId },
-        queue: { name: QUEUES.CONTENT_SCHEDULED.QUEUE_NAME },
-      }))
-    );
+  public async addContentChangedJob(payload: ContentChangedJobPayload): Promise<void> {
+    const { contentId } = payload;
+    await this._publisherAppService.addJob<ContentChangedJobPayload>(QueueName.CONTENT_CHANGED, {
+      data: payload,
+      opts: { group: { id: contentId } },
+    });
   }
 }

@@ -217,6 +217,9 @@ export class ContentDomainService implements IContentDomainService {
       orderOptions,
       before,
       after,
+      ...(isSaved && {
+        subQuery: false,
+      }),
     });
     return {
       rows: rows.map((row) => row.getId()),

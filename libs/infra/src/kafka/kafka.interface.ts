@@ -1,5 +1,6 @@
 export interface IKafkaConsumerMessage<T> {
   topic: string;
+  offset: string;
   partition: number;
   key: string;
   headers: {

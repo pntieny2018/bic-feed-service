@@ -17,6 +17,7 @@ import {
   SeriesItemsRemovedPayload,
   SeriesItemsAddedPayload,
   ContentAttachedSeriesEvent,
+  ContentGetDetailEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -81,17 +82,16 @@ export class SeriesDomainService implements ISeriesDomainService {
       authUser
     );
 
-    if (
-      !seriesEntity ||
-      !(seriesEntity instanceof SeriesEntity) ||
-      (seriesEntity.isDraft() && !seriesEntity.isOwner(authUser.id)) ||
-      seriesEntity.isHidden()
-    ) {
+    const isSeries = seriesEntity && seriesEntity instanceof SeriesEntity;
+    if (!isSeries || seriesEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
 
-    if (!authUser && !seriesEntity.isOpen()) {
-      throw new ContentAccessDeniedException();
+    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
+    await this._contentValidator.checkCanReadContent(seriesEntity, authUser, groups);
+
+    if (seriesEntity.isPublished()) {
+      this.event.publish(new ContentGetDetailEvent({ contentId: seriesId, userId: authUser.id }));
     }
 
     return seriesEntity;
