@@ -22,11 +22,9 @@ export class WsCommentCreatedEventHandler implements IEventHandler<CommentCreate
   ) {}
 
   public async handle(event: CommentCreatedEvent): Promise<void> {
-    const { comment, authUser } = event.payload;
+    const { comment } = event.payload;
 
-    const commentDto = await this._commentBinding.commentBinding(comment, {
-      authUser,
-    });
+    const commentDto = await this._commentBinding.commentBinding(comment);
 
     const content = await this._contentRepository.findContentByIdInActiveGroup(commentDto.postId, {
       mustIncludeGroup: true,
