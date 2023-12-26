@@ -1,3 +1,4 @@
+import { Span } from '@libs/common/modules/opentelemetry';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -21,6 +22,7 @@ export class AttachDetachContentNewsfeedHandler
     private readonly _userNewsfeedRepo: IUserNewsfeedRepository
   ) {}
 
+  @Span()
   public async execute(command: AttachDetachContentNewsfeedCommand): Promise<void> {
     const { content, action, queryParams } = command.payload;
     const { ids: userIds } = await this._groupAdapter.getGroupsMembers(queryParams);

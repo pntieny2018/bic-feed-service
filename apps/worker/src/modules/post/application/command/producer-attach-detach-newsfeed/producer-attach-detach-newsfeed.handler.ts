@@ -1,4 +1,5 @@
 import { ArrayHelper } from '@libs/common/helpers';
+import { Span } from '@libs/common/modules/opentelemetry';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -22,6 +23,7 @@ export class ProducerAttachDetachNewsfeedHandler
     private readonly _contentRepo: IContentRepository
   ) {}
 
+  @Span()
   public async execute(command: ProducerAttachDetachNewsfeedCommand): Promise<void> {
     const defaultLimit = 1000;
     const { contentId, oldGroupIds, newGroupIds } = command.payload;
