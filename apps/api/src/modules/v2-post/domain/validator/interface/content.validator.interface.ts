@@ -22,11 +22,7 @@ export interface IContentValidator {
 
   validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void>;
 
-  checkCanReadContent(
-    post: ContentEntity,
-    user: UserDto,
-    postGroupsData?: GroupDto[]
-  ): Promise<void>;
+  checkCanReadContent(post: ContentEntity, user: UserDto): Promise<void>;
 
   checkCanReadNotPublishedContent(contentEntity: ContentEntity, userId: string): Promise<void>;
 
