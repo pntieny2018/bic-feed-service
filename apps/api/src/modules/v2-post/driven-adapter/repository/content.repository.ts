@@ -318,11 +318,7 @@ export class ContentRepository implements IContentRepository {
     );
     if (cachedContent) {
       await this._contentValidator.validateContentReported(cachedContent.id, user.id);
-      await this._contentValidator.validateContentArchived(
-        cachedContent.id,
-        user,
-        cachedContent.groups
-      );
+      await this._contentValidator.validateContentArchived(user, cachedContent.groups);
       return this._contentMapper.cacheToDomain(cachedContent);
     }
 

@@ -7,6 +7,7 @@ import {
 import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
 import { IContentCacheRepository } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { ContentMapper, QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper';
+import { CONTENT_STATUS } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
 import { Injectable } from '@nestjs/common';
@@ -55,6 +56,10 @@ export class ContentCacheRepository implements IContentCacheRepository {
     const contentsCacheDto = await this._contentMapper.contentsCacheBinding(contents);
     const pipeline = this._store.getClient().pipeline();
     for (const contentCacheDto of contentsCacheDto) {
+      if (!contentCacheDto || contentCacheDto.status !== CONTENT_STATUS.PUBLISHED) {
+        continue;
+      }
+
       pipeline.call(
         'JSON.SET',
         `${CACHE_KEYS.CONTENT}:${contentCacheDto.id}`,
