@@ -476,7 +476,7 @@ export class ContentMapper {
       })),
       commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
       content: articleEntity.get('content'),
-      coverMedia: new ImageDto(articleEntity.get('cover').toObject()),
+      coverMedia: new ImageDto(articleEntity.get('cover')?.toObject()),
       createdAt: articleEntity.get('createdAt'),
       createdBy: articleEntity.getCreatedBy(),
       updatedBy: articleEntity.get('updatedBy'),
@@ -506,7 +506,7 @@ export class ContentMapper {
 
   private _bindingSeriesCache(seriesEntity: SeriesEntity): SeriesCacheDto {
     return new SeriesCacheDto({
-      coverMedia: new ImageDto(seriesEntity.get('cover').toObject()),
+      coverMedia: new ImageDto(seriesEntity.get('cover')?.toObject()),
       createdAt: seriesEntity.get('createdAt'),
       updatedAt: seriesEntity.get('updatedAt'),
       updatedBy: seriesEntity.get('updatedBy'),
