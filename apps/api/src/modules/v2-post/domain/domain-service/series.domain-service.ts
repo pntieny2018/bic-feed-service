@@ -1,4 +1,5 @@
 import { CONTENT_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
@@ -63,6 +64,39 @@ export class SeriesDomainService implements ISeriesDomainService {
     private readonly _contentRepository: IContentRepository
   ) {}
 
+  public async getSeriesById(seriesId: string, authUser: UserDto): Promise<SeriesEntity> {
+    const seriesEntity = await this._contentRepository.findContentWithCache(
+      {
+        where: {
+          id: seriesId,
+          groupArchived: false,
+          excludeReportedByUserId: authUser.id,
+        },
+        include: {
+          mustIncludeGroup: true,
+          shouldIncludeItems: true,
+          shouldIncludeCategory: true,
+        },
+      },
+      authUser
+    );
+
+    if (
+      !seriesEntity ||
+      !(seriesEntity instanceof SeriesEntity) ||
+      (seriesEntity.isDraft() && !seriesEntity.isOwner(authUser.id)) ||
+      seriesEntity.isHidden()
+    ) {
+      throw new ContentNotFoundException();
+    }
+
+    if (!authUser && !seriesEntity.isOpen()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    return seriesEntity;
+  }
+
   public async findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]> {
     return (await this._contentRepository.findAll({
       attributes: {
@@ -121,7 +155,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new DatabaseException();
     }
 
-    this.event.publish(new SeriesPublishedEvent({ seriesEntity, authUser: actor }));
+    this.event.publish(new SeriesPublishedEvent({ entity: seriesEntity, authUser: actor }));
 
     return seriesEntity;
   }
@@ -209,7 +243,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       seriesEntity.setMarkReadImportant();
     }
 
-    this.event.publish(new SeriesUpdatedEvent({ seriesEntity, authUser: actor }));
+    this.event.publish(new SeriesUpdatedEvent({ entity: seriesEntity, authUser: actor }));
 
     return seriesEntity;
   }
@@ -246,7 +280,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentRepository.delete(seriesEntity.get('id'));
 
-    this.event.publish(new SeriesDeletedEvent({ seriesEntity, authUser: actor }));
+    this.event.publish(new SeriesDeletedEvent({ entity: seriesEntity, authUser: actor }));
   }
 
   public async findItemsInSeries(

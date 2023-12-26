@@ -1,3 +1,11 @@
+import {
+  DeleteCacheContentWhenAdminHidHandler,
+  DeleteCacheContentWhenContentDeletedHandler,
+  DeleteCacheContentWhenContentUpdatedHandler,
+  DeleteCacheContentWhenSeriesUpdatedItemsHandler,
+} from '@api/modules/v2-post/application/event-handler/cache/delete-cache';
+import { CONTENT_CACHE_REPOSITORY_TOKEN } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
+
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
@@ -114,7 +122,7 @@ import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
-import { ContentRepository } from '../driven-adapter/repository';
+import { ContentCacheRepository, ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 
 export const postProvider = [
@@ -137,6 +145,12 @@ export const postProvider = [
   VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
+
+  /** Cache Content Event Handler */
+  DeleteCacheContentWhenContentDeletedHandler,
+  DeleteCacheContentWhenContentUpdatedHandler,
+  DeleteCacheContentWhenSeriesUpdatedItemsHandler,
+  DeleteCacheContentWhenAdminHidHandler,
 
   ContentHasSeenEventHandler,
   /** Application Binding */
@@ -253,5 +267,9 @@ export const postProvider = [
   {
     provide: POST_GROUP_REPOSITORY_TOKEN,
     useClass: PostGroupRepository,
+  },
+  {
+    provide: CONTENT_CACHE_REPOSITORY_TOKEN,
+    useClass: ContentCacheRepository,
   },
 ];

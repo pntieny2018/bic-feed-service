@@ -92,43 +92,37 @@ export class PostDomainService implements IPostDomainService {
     private readonly event: EventBus
   ) {}
 
-  public async getPostById(postId: string, authUserId: string): Promise<PostEntity> {
-    const postEntity = await this._contentRepository.findOne({
-      where: {
-        id: postId,
-        groupArchived: false,
-        excludeReportedByUserId: authUserId,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId: authUserId,
+  public async getPostById(postId: string, authUser: UserDto): Promise<PostEntity> {
+    const postEntity = await this._contentRepository.findContentWithCache(
+      {
+        where: {
+          id: postId,
+          groupArchived: false,
+          excludeReportedByUserId: authUser.id,
         },
-        shouldIncludeMarkReadImportant: {
-          userId: authUserId,
-        },
-        shouldIncludeReaction: {
-          userId: authUserId,
+        include: {
+          shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
+          shouldIncludeLinkPreview: true,
+          shouldIncludeQuiz: true,
         },
       },
-    });
+      authUser
+    );
 
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
 
-    await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUserId);
+    await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUser.id);
 
-    if (!authUserId && !postEntity.isOpen()) {
+    if (!authUser.id && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
     }
 
     if (postEntity.isPublished()) {
-      this.event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUserId }));
+      this.event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUser.id }));
     }
 
     return postEntity;
@@ -180,7 +174,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostScheduledEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostScheduledEvent({ entity: postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -232,7 +226,7 @@ export class PostDomainService implements IPostDomainService {
         postEntity.setMarkReadImportant();
       }
 
-      this.event.publish(new PostPublishedEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostPublishedEvent({ entity: postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -280,7 +274,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostUpdatedEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostUpdatedEvent({ entity: postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -320,7 +314,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoFailedEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostVideoFailedEvent({ entity: postEntity, authUser: actor }));
     }
   }
 
@@ -355,7 +349,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostVideoSuccessEvent({ postEntity, authUser: actor }));
+      this.event.publish(new PostVideoSuccessEvent({ entity: postEntity, authUser: actor }));
     }
 
     if (!isScheduledPost) {
@@ -422,7 +416,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
+    this.event.publish(new PostDeletedEvent({ entity: postEntity, authUser: authUser }));
   }
 
   private async _setPostAttributes(

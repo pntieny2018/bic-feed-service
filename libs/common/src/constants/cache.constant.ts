@@ -5,4 +5,6 @@ export const CACHE_KEYS = {
   SHARE_USER: 'SU',
   SHARE_GROUP: 'SG',
   IS_RUNNING_ARTICLE_SCHEDULE: 'is_running_article_schedule',
+  USER_REPORTED_CONTENT: 'user_reported_content',
+  CONTENT: 'content',
 };

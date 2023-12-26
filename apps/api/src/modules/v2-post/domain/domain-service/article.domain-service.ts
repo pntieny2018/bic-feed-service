@@ -83,29 +83,23 @@ export class ArticleDomainService implements IArticleDomainService {
   ) {}
 
   public async getArticleById(articleId: string, authUser: UserDto): Promise<ArticleEntity> {
-    const articleEntity = await this._contentRepository.findOne({
-      where: {
-        id: articleId,
-        groupArchived: false,
-        excludeReportedByUserId: authUser?.id,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-        shouldIncludeCategory: true,
-        shouldIncludeSaved: {
-          userId: authUser?.id,
+    const articleEntity = await this._contentRepository.findContentWithCache(
+      {
+        where: {
+          id: articleId,
+          groupArchived: false,
+          excludeReportedByUserId: authUser?.id,
         },
-        shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
-        },
-        shouldIncludeReaction: {
-          userId: authUser?.id,
+        include: {
+          shouldIncludeGroup: true,
+          shouldIncludeSeries: true,
+          shouldIncludeLinkPreview: true,
+          shouldIncludeQuiz: true,
+          shouldIncludeCategory: true,
         },
       },
-    });
+      authUser
+    );
 
     const isArticle = articleEntity && articleEntity instanceof ArticleEntity;
     if (!isArticle || articleEntity.isInArchivedGroups()) {
@@ -169,7 +163,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new ArticleDeletedEvent({ articleEntity, authUser: actor }));
+    this.event.publish(new ArticleDeletedEvent({ entity: articleEntity, authUser: actor }));
   }
 
   public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
@@ -205,7 +199,7 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticlePublishedEvent({ articleEntity, authUser: actor }));
+    this.event.publish(new ArticlePublishedEvent({ entity: articleEntity, authUser: actor }));
 
     await this._contentDomainService.markSeen(articleEntity.get('id'), actor.id);
     articleEntity.increaseTotalSeen();
@@ -298,7 +292,7 @@ export class ArticleDomainService implements IArticleDomainService {
 
     if (articleEntity.isChanged()) {
       await this._contentRepository.update(articleEntity);
-      this.event.publish(new ArticleUpdatedEvent({ articleEntity, authUser: actor }));
+      this.event.publish(new ArticleUpdatedEvent({ entity: articleEntity, authUser: actor }));
     }
 
     return articleEntity;

@@ -14,7 +14,7 @@ export class VideoPostDeletedEventHandler implements IEventHandler<PostDeletedEv
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     const videoIds = postEntity.get('media').videos.map((video) => video.get('id'));
 

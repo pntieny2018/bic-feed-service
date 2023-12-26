@@ -93,6 +93,23 @@ export class ContentDomainService implements IContentDomainService {
     return contentEntity;
   }
 
+  public async getContentForCacheById(
+    id: string
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    return this._contentRepo.findOne({
+      where: {
+        id,
+        groupArchived: false,
+      },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
+      },
+    });
+  }
+
   public getRawContent(contentEntity: ContentEntity): string {
     if (contentEntity instanceof PostEntity) {
       return StringHelper.removeMarkdownCharacter(contentEntity.get('content'));
@@ -132,11 +149,11 @@ export class ContentDomainService implements IContentDomainService {
   public async getContentByIds(
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const { ids, authUserId } = input;
+    const { ids } = input;
     if (!ids.length) {
       return [];
     }
-    const contentEntities = await this._contentRepo.findAll({
+    const contentEntities = await this._contentRepo.findContentsWithCache({
       where: {
         ids,
       },
@@ -145,15 +162,6 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId: authUserId,
-        },
-        shouldIncludeMarkReadImportant: {
-          userId: authUserId,
-        },
-        shouldIncludeReaction: {
-          userId: authUserId,
-        },
       },
     });
 

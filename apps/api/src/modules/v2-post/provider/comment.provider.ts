@@ -1,3 +1,7 @@
+import {
+  CacheCountCommentCreatedEventHandler,
+  CacheCountCommentDeletedEventHandler,
+} from '@api/modules/v2-post/application/event-handler/cache';
 import { LibCommentRepository, LibFollowRepository } from '@libs/database/postgres/repository';
 
 import { CommentBinding, COMMENT_BINDING_TOKEN } from '../application/binding';
@@ -63,4 +67,7 @@ export const commentProvider = [
   NotiCommentCreatedEventHandler,
   NotiCommentDeletedEventHandler,
   NotiCommentUpdatedEventHandler,
+
+  CacheCountCommentCreatedEventHandler,
+  CacheCountCommentDeletedEventHandler,
 ];

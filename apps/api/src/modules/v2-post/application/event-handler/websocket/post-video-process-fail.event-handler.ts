@@ -13,7 +13,7 @@ export class WsPostVideoFailedEventHandler implements IEventHandler<PostVideoFai
   ) {}
 
   public async handle(event: PostVideoFailedEvent): Promise<void> {
-    const { postEntity } = event.payload;
+    const { entity: postEntity } = event.payload;
 
     if (postEntity.isPublished()) {
       return;

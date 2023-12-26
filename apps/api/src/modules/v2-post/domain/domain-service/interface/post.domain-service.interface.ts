@@ -44,7 +44,7 @@ export type PublishPostProps = {
 };
 
 export interface IPostDomainService {
-  getPostById(postId: string, authUserId: string): Promise<PostEntity>;
+  getPostById(postId: string, authUser: UserDto): Promise<PostEntity>;
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   schedule(input: SchedulePostProps): Promise<PostEntity>;
   publish(input: PublishPostProps): Promise<PostEntity>;

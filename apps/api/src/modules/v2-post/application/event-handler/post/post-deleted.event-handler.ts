@@ -22,7 +22,7 @@ export class PostDeletedEventHandler implements IEventHandler<PostDeletedEvent> 
   ) {}
 
   public async handle(event: PostDeletedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (!postEntity.isPublished()) {
       return;

@@ -42,6 +42,8 @@ export interface IReportRepository {
 
   getReportedTargetIdsByReporterId(input: GetReportedTargetIdsByReporterIdProps): Promise<string[]>;
   getReporterIdsByTargetId(targetId: string): Promise<string[]>;
+  checkIsReported(reporterId: string, targetId: string): Promise<boolean>;
+  getTargetIdsByReporterId(reporterId: string): Promise<string[]>;
 }
 
 export const REPORT_REPOSITORY_TOKEN = 'REPORT_REPOSITORY_TOKEN';

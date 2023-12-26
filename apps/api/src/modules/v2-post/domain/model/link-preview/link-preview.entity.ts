@@ -18,8 +18,8 @@ export type LinkPreviewAttributes = {
   image?: string;
   title?: string;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewAttributes> {

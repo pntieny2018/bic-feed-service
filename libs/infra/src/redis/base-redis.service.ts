@@ -54,6 +54,12 @@ export class BaseRedisService {
     return result;
   }
 
+  public async setSets(key: string, values: string[]): Promise<number> {
+    const result = await this.store.sadd(key, ...values);
+    this._logger.debug(`[CACHE] ${JSON.stringify({ method: 'SADD', key, values, result })}`);
+    return result;
+  }
+
   public async mget(keys: string[]): Promise<any> {
     if (keys.length === 0) {
       return [];

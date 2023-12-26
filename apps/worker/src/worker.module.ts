@@ -18,6 +18,11 @@ import {
   MediaConsumer,
   PublishOrRemovePostToNewsfeedConsumer,
 } from './module/main/kafka-consumer';
+import {
+  ArticleProcessor,
+  QuizProcessor,
+  QuizParticipantProcessor,
+} from './module/main/queue-processor';
 
 @Module({
   imports: [
@@ -51,7 +56,7 @@ import {
     MediaConsumer,
     GroupConsumer,
   ],
-  providers: [],
+  providers: [ArticleProcessor, QuizProcessor, QuizParticipantProcessor],
   exports: [],
 })
 export class WorkerModule {}
