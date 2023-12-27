@@ -1,4 +1,3 @@
-import { Span } from '@libs/common/modules/opentelemetry';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -23,7 +22,6 @@ export class DispatchFollowUnfollowGroupsHandler
     private readonly _userNewsfeedRepo: IUserNewsfeedRepository
   ) {}
 
-  @Span()
   public async execute(command: DispatchFollowUnfollowGroupsCommand): Promise<void> {
     const { queryParams, userId, action } = command.payload;
     const contents = await this._contentRepo.getPaginationPostIdsPublishedInGroup(queryParams);
