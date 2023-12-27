@@ -1,3 +1,4 @@
+import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -9,7 +10,6 @@ import { PostModel } from '../../../database/models/post.model';
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { AuthorityService } from '../../authority';
 import { TagService } from '../../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 import { RULES } from '../../v2-post/constant';
 import {
   AudienceNoBelongContentException,
@@ -30,8 +30,8 @@ export class PostAppService {
   public constructor(
     private _postService: PostService,
     private _authorityService: AuthorityService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    private _groupAppService: IGroupService,
     protected authorityService: AuthorityService,
     private _tagService: TagService,
     @InjectModel(PostModel)

@@ -12,7 +12,6 @@ import { PostModule } from '../post';
 import { SearchModule } from '../search';
 import { SeriesModule } from '../series';
 import { TagModule } from '../tag';
-import { GroupModuleV2 } from '../v2-group/group.module';
 
 import { ArticleAppService } from './application/article.app-service';
 import { ArticleController } from './article.controller';
@@ -23,7 +22,6 @@ import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
 @Module({
   imports: [
     PostModule,
-    GroupModuleV2,
     MediaModule,
     FeedModule,
     MentionModule,

@@ -1,18 +1,19 @@
+import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op, Transaction } from 'sequelize';
+
+import { ArrayHelper } from '../../common/helpers';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../database/models/tag.model';
-import { Op, Transaction } from 'sequelize';
-import { ArrayHelper } from '../../common/helpers';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 
 @Injectable()
 export class TagService {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
     @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private readonly _groupAppService: IGroupApplicationService
+    @Inject(GROUP_SERVICE_TOKEN)
+    private readonly _groupAppService: IGroupService
   ) {}
 
   public async updateToPost(

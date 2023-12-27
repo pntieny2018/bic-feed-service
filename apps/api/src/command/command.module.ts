@@ -17,7 +17,6 @@ import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
 import { SearchModule } from '../modules/search';
 import { TagModule } from '../modules/tag';
-import { GroupModuleV2 } from '../modules/v2-group/group.module';
 
 import { CleanUpDeletedCommentRefCommand } from './clean-up-deleted-comment-ref.command';
 import { CleanUpDeletedContentRefCommand } from './clean-up-deleted-content-ref.command';
@@ -60,7 +59,6 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     LogModule,
     DatabaseModule,
     LibModule,
-    GroupModuleV2,
     PostModule,
     MentionModule,
     MediaModule,

@@ -1,7 +1,7 @@
 import { CONTENT_TARGET, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
 import { UserDto } from '@libs/service/user';
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, WhereOptions } from 'sequelize';
@@ -24,7 +24,6 @@ import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { ContentNotFoundException } from '../v2-post/domain/exception';
 
 import { GetArticleDto, UpdateArticleDto } from './dto/requests';
@@ -59,8 +58,6 @@ export class ArticleService {
     protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected groupAppService: IGroupApplicationService,
     protected mentionService: MentionService,
     protected commentService: CommentService,
     protected readonly sentryService: SentryService,

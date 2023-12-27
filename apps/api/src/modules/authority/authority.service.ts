@@ -1,5 +1,6 @@
 import { PERMISSION_KEY } from '@beincom/constants';
 import { Ability, subject } from '@casl/ability';
+import { GROUP_SERVICE_TOKEN, GroupDto, IGroupService } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
@@ -15,11 +16,6 @@ import {
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesResponseDto } from '../series/dto/responses';
 import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../v2-group/application';
-import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
   ContentNoPinPermissionException,
@@ -33,8 +29,8 @@ export class AuthorityService {
   private readonly _logger = new Logger(AuthorityService.name);
 
   public constructor(
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    private _groupAppService: IGroupService,
     private _authorityFactory: AuthorityFactory
   ) {}
 

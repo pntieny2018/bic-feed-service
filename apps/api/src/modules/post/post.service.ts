@@ -1,8 +1,9 @@
-import { CONTENT_TARGET, ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER, PRIVACY } from '@beincom/constants';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { REPORT_SCOPE, ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
+import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -47,8 +48,6 @@ import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
 import { TagService } from '../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
-import { GroupPrivacy } from '../v2-group/data-type';
 import { RULES } from '../v2-post/constant';
 import {
   ContentEmptyContentException,
@@ -91,8 +90,8 @@ export class PostService {
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
     protected userSavePostModel: typeof UserSavePostModel,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected groupAppService: IGroupApplicationService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    protected groupAppService: IGroupService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
@@ -556,13 +555,13 @@ export class PostService {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.OPEN) {
+      if (group.privacy === PRIVACY.OPEN) {
         return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) {
+      if (group.privacy === PRIVACY.CLOSED) {
         totalOpen++;
       }
-      if (group.privacy === GroupPrivacy.PRIVATE) {
+      if (group.privacy === PRIVACY.PRIVATE) {
         totalPrivate++;
       }
     }

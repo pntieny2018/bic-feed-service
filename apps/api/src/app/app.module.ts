@@ -36,7 +36,6 @@ import { QueuePublisherModule } from '../modules/queue-publisher/queue-publisher
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
-import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { NotificationModuleV2 } from '../modules/v2-notification/notification.module';
 import { PostModuleV2 } from '../modules/v2-post/post.module';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
@@ -84,7 +83,6 @@ import { LibModule } from './lib.module';
     InternalModule,
     SearchModule,
     PostModuleV2,
-    GroupModuleV2,
     RecentSearchModuleV2,
     GiphyModuleV2,
     AdminModule,

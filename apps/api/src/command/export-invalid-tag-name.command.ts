@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -6,7 +7,6 @@ import { Command, CommandRunner } from 'nest-commander';
 import { Op, Sequelize } from 'sequelize';
 
 import { TagModel } from '../database/models/tag.model';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../modules/v2-group/application';
 
 @Command({
   name: 'export-invalid-tag',
@@ -17,8 +17,8 @@ export class ExportInvalidTagNameCommand implements CommandRunner {
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
     @Inject(USER_SERVICE_TOKEN)
     private _userService: IUserService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private _groupAppService: IGroupApplicationService
+    @Inject(GROUP_SERVICE_TOKEN)
+    private _groupAppService: IGroupService
   ) {}
 
   public async run(): Promise<any> {
