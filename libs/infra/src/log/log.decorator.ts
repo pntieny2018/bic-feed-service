@@ -15,6 +15,7 @@ import { Job, JobWithContext } from '../queue';
 import { CONTEXT, getContext, getDebugContext } from './log.context';
 
 export function EventsHandlerAndLog(...events: IEvent[]) {
+  console.log('EventsHandlerAndLog', events);
   // eslint-disable-next-line @typescript-eslint/ban-types
   return function (target: Function): void {
     const className = target.prototype.constructor.name;
