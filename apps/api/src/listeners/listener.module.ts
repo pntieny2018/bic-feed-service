@@ -11,11 +11,9 @@ import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
 import { TagModule } from '../modules/tag';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
-import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { NotificationModule } from '../notification';
 
 import { ArticleListener } from './article';
-import { ReportContentListener } from './report';
 import {
   SeriesAddedItemsListener,
   SeriesRemovedItemsListener,
@@ -32,7 +30,6 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
     NotificationModule,
     FeedPublisherModule,
     MediaModule,
-    UserModuleV2,
     FeedModule,
     SeriesModule,
     ArticleModule,
@@ -44,7 +41,6 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
     SeriesAddedItemsListener,
     SeriesRemovedItemsListener,
     SeriesReorderItemsListener,
-    ReportContentListener,
     SeriesChangedItemsListener,
   ],
 })

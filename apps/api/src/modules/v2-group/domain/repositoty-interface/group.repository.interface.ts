@@ -1,5 +1,6 @@
+import { UserDto } from '@libs/service/user';
+
 import { GroupEntity } from '../model/group';
-import { UserDto } from '../../../v2-user/application';
 
 export interface IGroupRepository {
   findOne(groupId: string): Promise<GroupEntity>;

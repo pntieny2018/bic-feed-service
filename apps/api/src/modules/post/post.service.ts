@@ -1,8 +1,9 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
-import { ReportAttribute } from '@libs/database/postgres/model';
+import { REPORT_SCOPE, ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
+import { UserDto } from '@libs/service/user';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -45,7 +46,6 @@ import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
-import { ReportTo, TargetType } from '../report-content/contstants';
 import { TagService } from '../tag/tag.service';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
@@ -57,7 +57,6 @@ import {
   ContentEmptyGroupException,
   ContentLimitAttachedSeriesException,
 } from '../v2-post/domain/exception';
-import { UserDto } from '../v2-user/application';
 
 import { GetPostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
@@ -341,8 +340,8 @@ export class PostService {
     });
 
     const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-      TargetType.POST,
+      CONTENT_TARGET.ARTICLE,
+      CONTENT_TARGET.POST,
     ]);
     const articleIdsSorted = itemsInSeries
       .filter((item) => !postIdsReported.includes(item.postId))
@@ -1037,8 +1036,8 @@ export class PostService {
     });
 
     const articleOrPostIdsReported = await this.getEntityIdsReportedByUser(userId, [
-      TargetType.ARTICLE,
-      TargetType.POST,
+      CONTENT_TARGET.ARTICLE,
+      CONTENT_TARGET.POST,
     ]);
     const mappedPosts = [];
     for (const postId of ids) {
@@ -1214,9 +1213,9 @@ export class PostService {
 
   public async getEntityIdsReportedByUser(
     userId: string,
-    targetTypes: TargetType[],
+    targetTypes: CONTENT_TARGET[],
     options?: {
-      reportTo?: ReportTo;
+      reportTo?: REPORT_SCOPE;
       groupIds?: string[];
     }
   ): Promise<string[]> {

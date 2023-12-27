@@ -1,5 +1,6 @@
 import { PERMISSION_KEY } from '@beincom/constants';
 import { Ability, subject } from '@casl/ability';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { permissionToCommonName, SUBJECT } from '../../common/constants';
@@ -24,7 +25,6 @@ import {
   ContentNoPinPermissionException,
   ContentNotFoundException,
 } from '../v2-post/domain/exception';
-import { UserDto } from '../v2-user/application';
 
 import { AuthorityFactory } from './authority.factory';
 

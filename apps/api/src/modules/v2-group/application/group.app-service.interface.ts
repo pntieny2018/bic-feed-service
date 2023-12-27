@@ -1,5 +1,6 @@
+import { UserDto } from '@libs/service/user';
+
 import { GroupDto } from './group.dto';
-import { UserDto } from '../../v2-user/application';
 
 export interface IGroupApplicationService {
   findOne(id: string): Promise<GroupDto>;

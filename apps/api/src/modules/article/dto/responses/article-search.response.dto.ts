@@ -1,9 +1,11 @@
+import { UserDto } from '@libs/service/user';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+
 import { MediaResponseDto } from '../../../media/dto/response';
-import { CategoryResponseDto } from './category.response.dto';
-import { UserDto } from '../../../v2-user/application';
 import { AudienceResponseDto } from '../../../post/dto/responses';
+
+import { CategoryResponseDto } from './category.response.dto';
 
 export class ArticleSearchResponseDto {
   @ApiProperty({

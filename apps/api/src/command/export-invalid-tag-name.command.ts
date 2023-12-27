@@ -1,8 +1,10 @@
+/* eslint-disable no-console */
+import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
+import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
-import { Inject } from '@nestjs/common';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
 import { Op, Sequelize } from 'sequelize';
+
 import { TagModel } from '../database/models/tag.model';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../modules/v2-group/application';
 
@@ -13,8 +15,8 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../modules/v2
 export class ExportInvalidTagNameCommand implements CommandRunner {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService,
+    @Inject(USER_SERVICE_TOKEN)
+    private _userService: IUserService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService
   ) {}
@@ -47,7 +49,7 @@ export class ExportInvalidTagNameCommand implements CommandRunner {
       userIds.push(tag.createdBy);
     });
 
-    const users = await this._userAppService.findAllByIds(userIds);
+    const users = await this._userService.findAllByIds(userIds);
 
     const communities = await this._groupAppService.findAllByIds(groupIds);
 

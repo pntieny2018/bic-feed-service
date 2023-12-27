@@ -1,12 +1,12 @@
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group';
+import { UserDto } from '@libs/service/user';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 
 import { CACHE_KEYS } from '../../../../common/constants';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
-import { UserDto } from '../../../v2-user/application';
 import { GroupPrivacy } from '../../data-type';
 import { GroupEntity } from '../../domain/model/group';
 import { IGroupRepository } from '../../domain/repositoty-interface/group.repository.interface';

@@ -1,6 +1,7 @@
 import { ORDER } from '@beincom/constants';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { ReportDetailModel, ReportModel } from '@libs/database/postgres/model';
+import { UserDto } from '@libs/service/user';
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional, QueryTypes, Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
@@ -23,7 +24,6 @@ import {
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
 import { GetCommentsDto } from '../../modules/comment/dto/requests';
-import { UserDto } from '../../modules/v2-user/application';
 
 import { CommentReactionModel, ICommentReaction } from './comment-reaction.model';
 import { IMedia } from './media.model';

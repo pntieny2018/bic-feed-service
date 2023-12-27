@@ -1,4 +1,5 @@
 import { CONTENT_TARGET } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { PageDto } from '../../../common/dto';
@@ -18,7 +19,6 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../v2-post/domain/repositoty-interface';
-import { UserDto } from '../../v2-user/application';
 import { IPostElasticsearch } from '../interfaces';
 import { SearchService } from '../search.service';
 

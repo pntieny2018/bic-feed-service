@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { uniq } from 'lodash';
@@ -18,11 +19,6 @@ import {
   ContentPinNotFoundException,
   PostInvalidParameterException,
 } from '../../v2-post/domain/exception';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../v2-user/application';
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostService } from '../post.service';
@@ -34,8 +30,6 @@ export class PostAppService {
   public constructor(
     private _postService: PostService,
     private _authorityService: AuthorityService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
     protected authorityService: AuthorityService,
@@ -104,17 +98,6 @@ export class PostAppService {
 
   public async markSeenPost(postId: string, userId: string): Promise<void> {
     await this._postService.markSeenPost(postId, userId);
-  }
-
-  public async getUserGroup(groupId: string, userId: string, postId: string): Promise<any> {
-    const user = await this._userAppService.findOne(userId);
-    const group = await this._groupAppService.findOne(groupId);
-    const post = await this._postService.findPost({ postId });
-    return {
-      group,
-      user,
-      post,
-    };
   }
 
   public async isSeriesAndTagsValid(

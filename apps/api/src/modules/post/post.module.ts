@@ -1,5 +1,6 @@
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { IKafkaConfig } from '@libs/infra/kafka/config';
+import { UserModule as LibUserModule } from '@libs/service/user';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
@@ -12,7 +13,6 @@ import { MentionModule } from '../mention';
 import { ReactionModule } from '../reaction';
 import { TagModule } from '../tag';
 import { GroupModuleV2 } from '../v2-group/group.module';
-import { UserModuleV2 } from '../v2-user/user.module';
 
 import { PostAppService } from './application/post.app-service';
 import { ContentController } from './content.controller';
@@ -31,7 +31,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 
 @Module({
   imports: [
-    UserModuleV2,
     GroupModuleV2,
     MediaModule,
     MentionModule,
@@ -40,6 +39,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     forwardRef(() => CommentModule),
     LinkPreviewModule,
     TagModule,
+    LibUserModule,
   ],
   controllers: [PostController, ContentController, FeedBackupController],
   providers: [

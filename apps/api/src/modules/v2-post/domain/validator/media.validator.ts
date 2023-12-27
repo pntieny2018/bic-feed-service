@@ -1,7 +1,6 @@
 import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { BadRequestException, Injectable } from '@nestjs/common';
-
-import { UserDto } from '../../../v2-user/application';
 
 import { ImageProps, IMediaValidator } from './interface';
 

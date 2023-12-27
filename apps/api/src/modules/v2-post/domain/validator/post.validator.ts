@@ -1,10 +1,10 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { UserDto } from '../../../v2-user/application';
 import { ContentEmptyContentException } from '../exception';
 import { PostEntity } from '../model/content';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';

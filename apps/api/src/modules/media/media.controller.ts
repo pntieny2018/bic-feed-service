@@ -1,5 +1,4 @@
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { UserDto } from '@libs/service/user';
 import {
   BadRequestException,
   Controller,
@@ -7,11 +6,14 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { ValidatorException } from '../../common/exceptions';
-import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
-import { UserDto } from '../v2-user/application';
 import { AuthUser } from '../../common/decorators';
+import { ValidatorException } from '../../common/exceptions';
+
+import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')

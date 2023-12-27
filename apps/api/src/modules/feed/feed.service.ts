@@ -1,4 +1,5 @@
 import { SentryService } from '@libs/infra/sentry';
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -16,7 +17,6 @@ import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 
@@ -26,8 +26,8 @@ export class FeedService {
   private readonly _classTransformer = new ClassTransformer();
 
   public constructor(
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userService: IUserApplicationService,
+    @Inject(USER_SERVICE_TOKEN)
+    private readonly _userService: IUserService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupAppService: GroupApplicationService,
     private readonly _postService: PostService,
@@ -122,10 +122,7 @@ export class FeedService {
         },
       });
 
-      const users = await this._userService.findAllAndFilterByPersonalVisibility(
-        usersSeenPost.map((usp) => usp.userId),
-        user.id
-      );
+      const users = await this._userService.findAllByIds(usersSeenPost.map((usp) => usp.userId));
 
       return new PageDto<UserDto>(
         users,

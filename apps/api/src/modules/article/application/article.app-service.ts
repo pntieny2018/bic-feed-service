@@ -1,5 +1,6 @@
-import { CONTENT_TYPE } from '@beincom/constants';
+import { CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
 import { IMediaService, MEDIA_SERVICE_TOKEN } from '@libs/service/media/src/interface';
+import { UserDto } from '@libs/service/user';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { uniq } from 'lodash';
@@ -14,7 +15,6 @@ import { PostBindingService } from '../../post/post-binding.service';
 import { PostHelper } from '../../post/post.helper';
 import { PostService } from '../../post/post.service';
 import { ReactionService } from '../../reaction';
-import { TargetType } from '../../report-content/contstants';
 import { IPostElasticsearch } from '../../search/interfaces';
 import { SearchService } from '../../search/search.service';
 import { TagService } from '../../tag/tag.service';
@@ -24,7 +24,6 @@ import {
   ContentLimitAttachedSeriesException,
   ContentNotFoundException,
 } from '../../v2-post/domain/exception';
-import { UserDto } from '../../v2-user/application';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
@@ -312,7 +311,7 @@ export class ArticleAppService {
       filterGroupIds = groupIds.filter((groupId) => user.groups.includes(groupId));
     }
     const notIncludeIds = await this._postService.getEntityIdsReportedByUser(user.id, [
-      TargetType.ARTICLE,
+      CONTENT_TARGET.ARTICLE,
     ]);
 
     const response = await this._searchService.searchContents<IPostElasticsearch>({

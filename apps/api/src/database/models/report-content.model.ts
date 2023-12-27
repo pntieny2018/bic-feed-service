@@ -1,3 +1,4 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import {
@@ -12,8 +13,6 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { TargetType } from '../../modules/report-content/contstants';
-
 import {
   IReportContentDetailAttribute,
   ReportContentDetailModel,
@@ -23,7 +22,7 @@ export interface IReportContentAttribute {
   id?: string;
   targetId: string;
   authorId: string;
-  targetType: TargetType;
+  targetType: CONTENT_TARGET;
   status?: string;
   details?: IReportContentDetailAttribute[];
   updatedBy?: string;
@@ -51,7 +50,7 @@ export class ReportContentModel
   @Column({
     type: DataTypes.STRING,
   })
-  public targetType: TargetType;
+  public targetType: CONTENT_TARGET;
 
   @Column
   public authorId: string;

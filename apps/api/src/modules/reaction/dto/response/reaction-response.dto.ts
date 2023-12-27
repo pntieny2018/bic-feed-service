@@ -1,7 +1,7 @@
+import { UserDto } from '@libs/service/user';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import { IsUUID } from 'class-validator';
-import { UserDto } from '../../../v2-user/application';
 
 @Exclude()
 export class ReactionResponseDto {

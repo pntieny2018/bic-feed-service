@@ -1,4 +1,5 @@
 import { SentryService } from '@libs/infra/sentry';
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -15,7 +16,6 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 import { PostResponseDto } from './dto/responses';
 
@@ -38,8 +38,8 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected userAppService: IUserApplicationService,
+    @Inject(USER_SERVICE_TOKEN)
+    protected userAppService: IUserService,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected groupAppService: IGroupApplicationService,
     protected reactionService: ReactionService,

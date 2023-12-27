@@ -1,14 +1,16 @@
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
+
+import { ArrayHelper } from '../../../common/helpers';
+import { GroupPrivacy } from '../data-type';
 import { GroupEntity } from '../domain/model/group';
 import {
   GROUP_REPOSITORY_TOKEN,
   IGroupRepository,
 } from '../domain/repositoty-interface/group.repository.interface';
+
 import { IGroupApplicationService } from './group.app-service.interface';
 import { GroupDto } from './group.dto';
-import { ArrayHelper } from '../../../common/helpers';
-import { GroupPrivacy } from '../data-type';
-import { UserDto } from '../../v2-user/application';
 
 export class GroupApplicationService implements IGroupApplicationService {
   @Inject(GROUP_REPOSITORY_TOKEN)
@@ -20,7 +22,9 @@ export class GroupApplicationService implements IGroupApplicationService {
   }
 
   public async findAllByIds(groupIds: string[]): Promise<GroupDto[]> {
-    if (!groupIds?.length) return [];
+    if (!groupIds?.length) {
+      return [];
+    }
     const rows = await this._repo.findAllByIds(groupIds);
 
     return rows.map((row) => this._toDto(row));
