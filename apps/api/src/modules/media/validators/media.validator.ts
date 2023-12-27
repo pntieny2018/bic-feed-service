@@ -1,4 +1,5 @@
 import { IMediaService, MEDIA_SERVICE_TOKEN } from '@libs/service/media/src/interface';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   registerDecorator,
@@ -9,7 +10,6 @@ import {
 } from 'class-validator';
 
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
-import { UserDto } from '../../v2-user/application';
 import { MediaDto } from '../dto';
 
 export interface IExtendedValidationArguments extends ValidationArguments {

@@ -1,6 +1,7 @@
-import { MEDIA_PROCESS_STATUS } from '@beincom/constants';
+import { CONTENT_TARGET, MEDIA_PROCESS_STATUS } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { UserDto } from '@libs/service/user';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, WhereOptions } from 'sequelize';
@@ -21,12 +22,9 @@ import { MentionService } from '../mention';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
-import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { ContentNotFoundException } from '../v2-post/domain/exception';
-import { UserDto } from '../v2-user/application';
 
 import { GetArticleDto, UpdateArticleDto } from './dto/requests';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
@@ -60,8 +58,6 @@ export class ArticleService {
     protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected groupAppService: IGroupApplicationService,
     protected mentionService: MentionService,
     protected commentService: CommentService,
     protected readonly sentryService: SentryService,
@@ -111,7 +107,7 @@ export class ArticleService {
     });
 
     const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
-      TargetType.ARTICLE,
+      CONTENT_TARGET.ARTICLE,
     ]);
 
     const relatedRows = await this.postModel.findAll({

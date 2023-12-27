@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Injectable } from '@nestjs/common';
 
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
@@ -16,7 +17,6 @@ import {
   SeriesNotFoundException,
   ValidationException,
 } from '../../v2-post/domain/exception';
-import { UserDto } from '../../v2-user/application';
 import { SeriesService } from '../series.service';
 
 @Injectable()

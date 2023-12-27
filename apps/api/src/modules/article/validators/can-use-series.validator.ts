@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import {
@@ -7,9 +8,9 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { PostModel } from '../../../database/models/post.model';
-import { UserDto } from '../../v2-user/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -29,7 +30,9 @@ export class CanUseSeriesConstraint implements ValidatorConstraintInterface {
     seriesIds: string[],
     args?: IExtendedValidationArguments
   ): Promise<boolean> {
-    if (seriesIds.length === 0) return true;
+    if (seriesIds.length === 0) {
+      return true;
+    }
     const user = args?.object[REQUEST_CONTEXT].user;
     const seriesCount = await this._postModel.count({
       where: {

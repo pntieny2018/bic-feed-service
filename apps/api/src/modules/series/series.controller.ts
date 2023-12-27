@@ -1,9 +1,9 @@
+import { UserDto } from '@libs/service/user';
 import { Body, Controller, Delete, Param, ParseUUIDPipe, Put } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
-import { UserDto } from '../v2-user/application';
 
 import { SeriesAppService } from './application/series.app-service';
 import { AddItemsInSeriesDto } from './dto/requests/add-items-in-series.dto';

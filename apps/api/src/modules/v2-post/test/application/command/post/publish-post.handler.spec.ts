@@ -2,7 +2,6 @@ import { CONTENT_STATUS } from '@beincom/constants';
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { groupMock } from '../../../../../v2-group/tests/mocks/group.mock';
 import { CONTENT_BINDING_TOKEN, IContentBinding } from '../../../../application/binding';
 import {
   PublishPostCommandPayload,
@@ -26,7 +25,12 @@ import {
   IUserAdapter,
   USER_ADAPTER,
 } from '../../../../domain/service-adapter-interface';
-import { createMockPostDto, createMockPostEntity, createMockUserDto } from '../../../mock';
+import {
+  createMockGroupDto,
+  createMockPostDto,
+  createMockPostEntity,
+  createMockUserDto,
+} from '../../../mock';
 
 describe('PublishPostHandler', () => {
   let publishPostHandler: PublishPostHandler;
@@ -115,7 +119,7 @@ describe('PublishPostHandler', () => {
       jest.spyOn(postEntityMock, 'isImportant').mockReturnValue(false);
       jest.spyOn(postEntityMock, 'isChanged').mockReturnValue(true);
 
-      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue(groupMock);
+      jest.spyOn(groupAdapter, 'getGroupsByIds').mockResolvedValue([createMockGroupDto()]);
       jest.spyOn(userAdapter, 'getUsersByIds').mockResolvedValue([userMock]);
 
       jest.spyOn(contentBinding, 'postBinding').mockResolvedValue(postDtoMock);

@@ -1,3 +1,4 @@
+import { UserModule as LibUserModule } from '@libs/service/user';
 import { forwardRef, Module } from '@nestjs/common';
 
 import { AuthorityModule } from '../authority';
@@ -7,7 +8,6 @@ import { MediaModule } from '../media';
 import { MentionModule } from '../mention';
 import { PostModule } from '../post';
 import { ReactionModule } from '../reaction';
-import { UserModuleV2 } from '../v2-user/user.module';
 
 import { CommentService } from './comment.service';
 
@@ -16,11 +16,11 @@ import { CommentService } from './comment.service';
     AuthorityModule,
     FollowModule,
     forwardRef(() => PostModule),
-    UserModuleV2,
     MentionModule,
     MediaModule,
     ReactionModule,
     GiphyModule,
+    LibUserModule,
   ],
   providers: [CommentService],
   exports: [CommentService],

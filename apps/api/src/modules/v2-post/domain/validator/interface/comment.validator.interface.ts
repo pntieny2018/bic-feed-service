@@ -1,4 +1,5 @@
-import { UserDto } from '../../../../v2-user/application';
+import { UserDto } from '@libs/service/user';
+
 import { CommentEntity } from '../../model/comment';
 
 export type UpdateCommentProps = {

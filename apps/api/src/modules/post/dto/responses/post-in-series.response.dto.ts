@@ -1,11 +1,12 @@
+import { UserDto } from '@libs/service/user';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsUUID } from 'class-validator';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
-import { AudienceResponseDto } from '../../../post/dto/responses';
+
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { AudienceResponseDto } from '../../../post/dto/responses';
 import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
-import { UserDto } from '../../../v2-user/application';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
 
 export class PostInSeriesResponseDto {
   @ApiProperty({

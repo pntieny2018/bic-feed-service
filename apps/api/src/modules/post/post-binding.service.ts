@@ -1,4 +1,7 @@
+import { PRIVACY } from '@beincom/constants';
 import { SentryService } from '@libs/infra/sentry';
+import { GROUP_SERVICE_TOKEN, GroupDto, IGroupService } from '@libs/service/group';
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -9,13 +12,6 @@ import { PostModel } from '../../database/models/post.model';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../v2-group/application';
-import { GroupPrivacy } from '../v2-group/data-type';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 import { PostResponseDto } from './dto/responses';
 
@@ -38,10 +34,10 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected userAppService: IUserApplicationService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected groupAppService: IGroupApplicationService,
+    @Inject(USER_SERVICE_TOKEN)
+    protected userAppService: IUserService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    protected groupAppService: IGroupService,
     protected reactionService: ReactionService,
     protected mentionService: MentionService,
     protected linkPreviewService: LinkPreviewService,
@@ -132,7 +128,7 @@ export class PostBindingService {
           const isGuest = !options?.authUser;
           if (
             options?.shouldHideSecretAudienceCanNotAccess &&
-            dataGroup.privacy === GroupPrivacy.SECRET &&
+            dataGroup.privacy === PRIVACY.SECRET &&
             (isUserNotInGroup || isGuest)
           ) {
             return false;
