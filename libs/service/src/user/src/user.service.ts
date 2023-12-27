@@ -24,7 +24,7 @@ export class UserService implements IUserService {
   public async findProfileAndPermissionByUsername(username: string): Promise<UserDto> {
     try {
       const user = await this._getUserFromCacheByUserName(username);
-      user.permissions = await this._getPermissionFromCacheByUserId(user.id);
+      user.permissions = await this.getPermissionByUserId(user.id);
       return user;
     } catch (e) {
       this._logger.error(e);
@@ -36,7 +36,7 @@ export class UserService implements IUserService {
     try {
       const [username] = await this._getUsernamesFromCacheByUserIds([id]);
       const user = await this._getUserFromCacheByUserName(username);
-      user.permissions = await this._getPermissionFromCacheByUserId(user.id);
+      user.permissions = await this.getPermissionByUserId(user.id);
       return user;
     } catch (e) {
       this._logger.error(e);
@@ -136,7 +136,7 @@ export class UserService implements IUserService {
     return this._store.getSets(`${CACHE_KEYS.JOINED_GROUPS}:${userId}`);
   }
 
-  private async _getPermissionFromCacheByUserId(userId: string): Promise<UserPermissionDto> {
+  public async getPermissionByUserId(userId: string): Promise<UserPermissionDto> {
     const versionPermissionCacheKey = 'version';
     const permissions: UserPermissionDto = {
       communities: {},
