@@ -1,4 +1,5 @@
 import { CONTENT_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { uniq } from 'lodash';
@@ -45,7 +46,6 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
-import { UserDto } from '@libs/service/user';
 
 @Injectable()
 export class SeriesDomainService implements ISeriesDomainService {
@@ -90,8 +90,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
-    await this._contentValidator.checkCanReadContent(seriesEntity, authUser, groups);
+    await this._contentValidator.checkCanReadContent(seriesEntity, authUser);
 
     if (seriesEntity.isPublished()) {
       this.event.publish(new ContentGetDetailEvent({ contentId: seriesId, userId: authUser.id }));

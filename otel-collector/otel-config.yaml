@@ -5,7 +5,7 @@ receivers:
       http:
 
 processors:
-
+  batch:
 
 exporters:
   logging:
@@ -19,10 +19,13 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
+      processors: [batch]
       exporters: [logging, otlp/elastic]
     metrics:
       receivers: [otlp]
+      processors: [batch]
       exporters: [logging, otlp/elastic]
     logs:
       receivers: [otlp]
+      processors: [batch]
       exporters: [logging, otlp/elastic]
