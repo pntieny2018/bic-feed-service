@@ -87,8 +87,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
-    await this._contentValidator.checkCanReadContent(seriesEntity, authUser, groups);
+    await this._contentValidator.checkCanReadContent(seriesEntity, authUser);
 
     if (seriesEntity.isPublished()) {
       this.event.publish(new ContentGetDetailEvent({ contentId: seriesId, userId: authUser.id }));

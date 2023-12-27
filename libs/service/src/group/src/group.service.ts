@@ -138,28 +138,6 @@ export class GroupService implements IGroupService {
     }
   }
 
-  public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
-    const adminRoleInclude = [ROLE_TYPE.COMMUNITY_ADMIN, ROLE_TYPE.GROUP_ADMIN, ROLE_TYPE.OWNER];
-
-    const data = await this.getUserRoleInGroups(groupIds, adminRoleInclude);
-    const userIds = [];
-
-    for (const groupId of groupIds) {
-      if (data.communityAdmin[groupId]) {
-        userIds.push(...data.communityAdmin[groupId]);
-      }
-
-      if (data.groupAdmin[groupId]) {
-        userIds.push(...data.groupAdmin[groupId]);
-      }
-
-      if (data.owner[groupId]) {
-        userIds.push(...data.owner[groupId]);
-      }
-    }
-    return userIds.includes(userId);
-  }
-
   public async getCursorUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
     list: string[];
     cursor: string;

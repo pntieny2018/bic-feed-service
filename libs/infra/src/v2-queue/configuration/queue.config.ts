@@ -4,11 +4,6 @@ import { DefaultJobOptions } from 'bullmq';
 import { QueueProOptions } from '../shared';
 
 export const getDefaultJobOptions = (): DefaultJobOptions => ({
-  attempts: 3,
-  backoff: {
-    type: 'exponential',
-    delay: 3000,
-  },
   removeOnComplete: true,
   removeOnFail: true,
 });

@@ -44,7 +44,7 @@ export type FollowUnfollowGroupsJobPayload = {
 
 export interface IQueueAdapter {
   addContentScheduledJobs(payload: ContentScheduledJobPayload[]): Promise<void>;
-  addFollowUnfollowGroupsJob(payload: FollowUnfollowGroupsJobPayload): Promise<void>;
-  addAttachDetachNewsfeedJob(payload: AttachDetachNewsfeedJobPayload): Promise<void>;
+  addFollowUnfollowGroupsJobs(payloads: FollowUnfollowGroupsJobPayload[]): Promise<void>;
+  addAttachDetachNewsfeedJobs(payloads: AttachDetachNewsfeedJobPayload[]): Promise<void>;
   addProducerFollowUnfollowJob(payload: ProducerFollowUnfollowJobPayload): Promise<void>;
 }
