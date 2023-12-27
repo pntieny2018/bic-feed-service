@@ -11,7 +11,7 @@ import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-@EventsHandlerAndLog([SeriesItemsAddedEvent, SeriesItemsRemovedEvent, SeriesItemsReorderedEvent])
+@EventsHandlerAndLog(SeriesItemsAddedEvent, SeriesItemsRemovedEvent, SeriesItemsReorderedEvent)
 export class DeleteCacheContentWhenSeriesUpdatedItemsHandler implements IEventHandler {
   public constructor(
     @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)

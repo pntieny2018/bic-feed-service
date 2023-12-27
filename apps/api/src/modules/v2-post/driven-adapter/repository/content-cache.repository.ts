@@ -126,6 +126,10 @@ export class ContentCacheRepository implements IContentCacheRepository {
   }
 
   public async increaseSeenContentCount(contentId: string): Promise<void> {
+    const isContentCached = await this._store.existKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    if (!isContentCached) {
+      return;
+    }
     await this._store.increaseValue(`${CACHE_KEYS.CONTENT}:${contentId}`, 'totalUsersSeen');
   }
 
