@@ -46,6 +46,10 @@ export class ProducerFollowUnfollowGroupsHandler
     const jobs: FollowUnfollowGroupsJobPayload[] = [];
     const totalCount = await this._contentRepo.countNumberOfPostsPublishedInGroup({ groupIds });
 
+    if (!totalCount) {
+      return;
+    }
+
     for (let page = 1; page <= Math.ceil(totalCount / this.LIMIT_DEFAULT); page++) {
       jobs.push({
         queryParams: {
@@ -56,10 +60,6 @@ export class ProducerFollowUnfollowGroupsHandler
         userId,
         action: FollowAction.FOLLOW,
       });
-    }
-
-    if (!jobs.length) {
-      return;
     }
 
     await this._queueAdapter.addFollowUnfollowGroupsJobs(jobs);
@@ -73,6 +73,10 @@ export class ProducerFollowUnfollowGroupsHandler
       notInGroupIds,
     });
 
+    if (!totalCount) {
+      return;
+    }
+
     for (let page = 1; page <= Math.ceil(totalCount / this.LIMIT_DEFAULT); page++) {
       jobs.push({
         queryParams: {
@@ -84,10 +88,6 @@ export class ProducerFollowUnfollowGroupsHandler
         userId,
         action: FollowAction.UNFOLLOW,
       });
-    }
-
-    if (!jobs.length) {
-      return;
     }
 
     await this._queueAdapter.addFollowUnfollowGroupsJobs(jobs);
