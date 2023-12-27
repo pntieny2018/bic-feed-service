@@ -4,10 +4,10 @@ import { CommandBus } from '@nestjs/cqrs';
 
 import { AttachDetachContentNewsfeedCommand } from '../../../application/command/attach-detach-content-newsfeed';
 import { AttachDetachNewsfeedJobPayload } from '../../../domain/infra-adapter-interface';
-import { PRODUCER_ATTACH_DETACH_NEWSFEED_PROCESSOR_TOKEN } from '../../../provider';
+import { ATTACH_DETACH_NEWSFEED_PROCESSOR_TOKEN } from '../../../provider';
 import { IProcessor } from '../interface';
 
-@Component({ injectToken: PRODUCER_ATTACH_DETACH_NEWSFEED_PROCESSOR_TOKEN })
+@Component({ injectToken: ATTACH_DETACH_NEWSFEED_PROCESSOR_TOKEN })
 export class AttachDetachNewsfeedProcessor implements IProcessor {
   public constructor(private readonly _commandBus: CommandBus) {}
 
