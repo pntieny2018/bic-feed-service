@@ -3,7 +3,11 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { FollowAction } from '../../../data-type';
-import { IQueueAdapter, QUEUE_ADAPTER } from '../../../domain/infra-adapter-interface';
+import {
+  FollowUnfollowGroupsJobPayload,
+  IQueueAdapter,
+  QUEUE_ADAPTER,
+} from '../../../domain/infra-adapter-interface';
 import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { IUserAdapter, USER_ADAPTER } from '../../../domain/service-adapter-interface';
 
@@ -13,6 +17,8 @@ import { ProducerFollowUnfollowGroupsCommand } from './producer-follow-unfollow-
 export class ProducerFollowUnfollowGroupsHandler
   implements ICommandHandler<ProducerFollowUnfollowGroupsCommand, void>
 {
+  private readonly LIMIT_DEFAULT = 500;
+
   public constructor(
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter,
@@ -39,41 +45,53 @@ export class ProducerFollowUnfollowGroupsHandler
   }
 
   private async _producerFollowGroupsJobs(groupIds: string[], userId: string): Promise<void> {
-    const defaultLimit = 1000;
+    const jobs: FollowUnfollowGroupsJobPayload[] = [];
     const totalCount = await this._contentRepo.countNumberOfPostsPublishedInGroup({ groupIds });
 
-    for (let page = 1; page <= Math.ceil(totalCount / defaultLimit); page++) {
-      await this._queueAdapter.addFollowUnfollowGroupsJob({
+    if (!totalCount) {
+      return;
+    }
+
+    for (let page = 1; page <= Math.ceil(totalCount / this.LIMIT_DEFAULT); page++) {
+      jobs.push({
         queryParams: {
           groupIds,
-          offset: (page - 1) * defaultLimit,
-          limit: defaultLimit,
+          offset: (page - 1) * this.LIMIT_DEFAULT,
+          limit: this.LIMIT_DEFAULT,
         },
         userId,
         action: FollowAction.FOLLOW,
       });
     }
+
+    await this._queueAdapter.addFollowUnfollowGroupsJobs(jobs);
   }
 
   private async _producerUnFollowGroupsJobs(groupIds: string[], userId: string): Promise<void> {
-    const defaultLimit = 1000;
+    const jobs: FollowUnfollowGroupsJobPayload[] = [];
     const notInGroupIds = await this._userAdapter.getGroupIdsJoinedByUserId(userId);
     const totalCount = await this._contentRepo.countNumberOfPostsPublishedInGroup({
       groupIds,
       notInGroupIds,
     });
 
-    for (let page = 1; page <= Math.ceil(totalCount / defaultLimit); page++) {
-      await this._queueAdapter.addFollowUnfollowGroupsJob({
+    if (!totalCount) {
+      return;
+    }
+
+    for (let page = 1; page <= Math.ceil(totalCount / this.LIMIT_DEFAULT); page++) {
+      jobs.push({
         queryParams: {
           groupIds,
           notInGroupIds,
-          offset: (page - 1) * defaultLimit,
-          limit: defaultLimit,
+          offset: (page - 1) * this.LIMIT_DEFAULT,
+          limit: this.LIMIT_DEFAULT,
         },
         userId,
         action: FollowAction.UNFOLLOW,
       });
     }
+
+    await this._queueAdapter.addFollowUnfollowGroupsJobs(jobs);
   }
 }

@@ -42,25 +42,27 @@ export class QueueAdapter implements IQueueAdapter {
     );
   }
 
-  public async addFollowUnfollowGroupsJob(payload: FollowUnfollowGroupsJobPayload): Promise<void> {
-    const { userId } = payload;
-    await this._publisherAppService.addJob<FollowUnfollowGroupsJobPayload>(
+  public async addFollowUnfollowGroupsJobs(
+    payloads: FollowUnfollowGroupsJobPayload[]
+  ): Promise<void> {
+    await this._publisherAppService.addBulkJobs<FollowUnfollowGroupsJobPayload>(
       QueueName.FOLLOW_UNFOLLOW_GROUPS,
-      {
+      payloads.map((payload) => ({
         data: payload,
-        opts: { group: { id: userId } },
-      }
+        opts: { group: { id: payload.userId } },
+      }))
     );
   }
 
-  public async addAttachDetachNewsfeedJob(payload: AttachDetachNewsfeedJobPayload): Promise<void> {
-    const { content } = payload;
-    await this._publisherAppService.addJob<AttachDetachNewsfeedJobPayload>(
+  public async addAttachDetachNewsfeedJobs(
+    payloads: AttachDetachNewsfeedJobPayload[]
+  ): Promise<void> {
+    await this._publisherAppService.addBulkJobs<AttachDetachNewsfeedJobPayload>(
       QueueName.ATTACH_DETACH_NEWSFEED,
-      {
+      payloads.map((payload) => ({
         data: payload,
-        opts: { group: { id: content.id } },
-      }
+        opts: { group: { id: payload.content.id } },
+      }))
     );
   }
 }
