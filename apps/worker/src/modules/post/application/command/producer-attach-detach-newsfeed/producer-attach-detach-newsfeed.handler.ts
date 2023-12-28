@@ -8,7 +8,11 @@ import {
   IQueueAdapter,
   QUEUE_ADAPTER,
 } from '../../../domain/infra-adapter-interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  ContentNewsFeedAttributes,
+  IContentRepository,
+} from '../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
 
 import { ProducerAttachDetachNewsfeedCommand } from './producer-attach-detach-newsfeed.command';
@@ -17,7 +21,7 @@ import { ProducerAttachDetachNewsfeedCommand } from './producer-attach-detach-ne
 export class ProducerAttachDetachNewsfeedHandler
   implements ICommandHandler<ProducerAttachDetachNewsfeedCommand, void>
 {
-  private readonly LIMIT_DEFAULT = 500;
+  private readonly LIMIT_DEFAULT = 1000;
 
   public constructor(
     @Inject(GROUP_ADAPTER)
@@ -37,6 +41,12 @@ export class ProducerAttachDetachNewsfeedHandler
     }
 
     const jobs: AttachDetachNewsfeedJobPayload[] = [];
+    const contentAttributes: ContentNewsFeedAttributes = {
+      id: content.id,
+      type: content.type,
+      publishedAt: content.publishedAt,
+      isImportant: content.isImportant,
+    };
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
     const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
 
@@ -54,7 +64,7 @@ export class ProducerAttachDetachNewsfeedHandler
             offset: (page - 1) * this.LIMIT_DEFAULT,
             limit: this.LIMIT_DEFAULT,
           },
-          content,
+          content: contentAttributes,
           action: NewsfeedAction.PUBLISH,
         });
       }
@@ -74,7 +84,7 @@ export class ProducerAttachDetachNewsfeedHandler
             offset: (page - 1) * this.LIMIT_DEFAULT,
             limit: this.LIMIT_DEFAULT,
           },
-          content,
+          content: contentAttributes,
           action: NewsfeedAction.REMOVE,
         });
       }
