@@ -17,7 +17,7 @@ import { ProducerAttachDetachNewsfeedCommand } from './producer-attach-detach-ne
 export class ProducerAttachDetachNewsfeedHandler
   implements ICommandHandler<ProducerAttachDetachNewsfeedCommand, void>
 {
-  private readonly LIMIT_DEFAULT = 500;
+  private readonly LIMIT_DEFAULT = 1000;
 
   public constructor(
     @Inject(GROUP_ADAPTER)
