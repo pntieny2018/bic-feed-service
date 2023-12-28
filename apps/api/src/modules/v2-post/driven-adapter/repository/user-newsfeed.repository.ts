@@ -17,6 +17,7 @@ import {
   LibUserNewsfeedRepository,
 } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
+import { Op, Sequelize } from 'sequelize';
 
 import {
   GetContentIdsCursorPaginationByUserIdProps,
@@ -76,6 +77,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
     };
 
     let sortColumns: any = ['publishedAt'];
+    let subQuery: boolean;
 
     if (isImportant) {
       findOption.where = {
@@ -93,9 +95,15 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
           as: 'userSavePosts',
           required: true,
           where: { userId: isSavedBy },
+          on: {
+            post_id: {
+              [Op.eq]: Sequelize.col('UserNewsFeedModel.post_id'),
+            },
+          },
         },
       ];
       sortColumns = [{ model: UserSavePostModel, as: 'userSavePosts', field: 'createdAt' }];
+      subQuery = false;
     }
 
     if (createdBy) {
@@ -112,12 +120,16 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
       };
     }
 
-    const { rows, meta } = await this._libUserNewsfeedRepo.cursorPaginate(findOption, {
-      limit,
-      after,
-      order: ORDER.DESC,
-      sortColumns,
-    });
+    const { rows, meta } = await this._libUserNewsfeedRepo.cursorPaginate(
+      findOption,
+      {
+        limit,
+        after,
+        order: ORDER.DESC,
+        sortColumns,
+      },
+      subQuery
+    );
 
     return {
       rows: rows.map((row) => row.postId),
