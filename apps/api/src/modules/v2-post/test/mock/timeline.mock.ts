@@ -57,7 +57,6 @@ export const timelineMock = {
     id: '97f3a300-97ee-4d9d-bc3e-3a8724d9d511',
     username: 'test',
     fullname: 'test',
-    email: 'test@test.com',
     avatar:
       'https://media.beincom.io/image/variants/user/avatar/8051af2c-3170-4f85-9881-8821dabe506b',
     is_deactivated: false,

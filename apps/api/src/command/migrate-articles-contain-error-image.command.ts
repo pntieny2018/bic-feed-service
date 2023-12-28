@@ -126,7 +126,6 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
         createdBy: post.createdBy,
         actor: {
           username: users.find((user) => user.id === post.createdBy)?.username,
-          email: users.find((user) => user.id === post.createdBy)?.email,
           fullname: users.find((user) => user.id === post.createdBy)?.fullname,
         },
       }));
