@@ -4,7 +4,11 @@ import { Inject } from '@nestjs/common';
 
 import { IQueueAdapter, QUEUE_ADAPTER } from '../infra-adapter-interface';
 import { ContentEntity } from '../model/content';
-import { IUserNewsfeedRepository, USER_NEWSFEED_REPOSITORY_TOKEN } from '../repositoty-interface';
+import {
+  ContentNewsFeedAttributes,
+  IUserNewsfeedRepository,
+  USER_NEWSFEED_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 
 import {
   DispatchContentIdToGroupsProps,
@@ -21,7 +25,7 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
   ) {}
 
   public async dispatchContentIdToGroups(input: DispatchContentIdToGroupsProps): Promise<void> {
-    const { contentId, newGroupIds, oldGroupIds } = input;
+    const { content, newGroupIds, oldGroupIds } = input;
 
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
     const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
@@ -30,8 +34,16 @@ export class NewsfeedDomainService implements INewsfeedDomainService {
       return;
     }
 
+    const contentAttributes: ContentNewsFeedAttributes = {
+      id: content.getId(),
+      type: content.getType(),
+      publishedAt: content.getPublishedAt(),
+      isImportant: content.isImportant(),
+      createdBy: content.getCreatedBy(),
+    };
+
     await this._queueAdapter.addProducerAttachDetachNewsfeedJob({
-      contentId,
+      content: contentAttributes,
       newGroupIds,
       oldGroupIds,
     });

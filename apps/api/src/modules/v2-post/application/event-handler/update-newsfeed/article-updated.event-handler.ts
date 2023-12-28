@@ -22,7 +22,7 @@ export class FeedArticleUpdatedEventHandler implements IEventHandler<ArticleUpda
       return;
     }
     await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: articleEntity.getId(),
+      content: articleEntity,
       newGroupIds: articleEntity.getGroupIds(),
       oldGroupIds: articleEntity.getSnapshot().groupIds,
     });

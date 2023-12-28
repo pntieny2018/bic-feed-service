@@ -8,11 +8,6 @@ import {
   IQueueAdapter,
   QUEUE_ADAPTER,
 } from '../../../domain/infra-adapter-interface';
-import {
-  CONTENT_REPOSITORY_TOKEN,
-  ContentNewsFeedAttributes,
-  IContentRepository,
-} from '../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
 
 import { ProducerAttachDetachNewsfeedCommand } from './producer-attach-detach-newsfeed.command';
@@ -27,26 +22,13 @@ export class ProducerAttachDetachNewsfeedHandler
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(QUEUE_ADAPTER)
-    private readonly _queueAdapter: IQueueAdapter,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository
+    private readonly _queueAdapter: IQueueAdapter
   ) {}
 
   public async execute(command: ProducerAttachDetachNewsfeedCommand): Promise<void> {
-    const { contentId, oldGroupIds, newGroupIds } = command.payload;
-
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
-    if (!content || !Boolean(content.publishedAt) || content.isHidden) {
-      return;
-    }
+    const { content, oldGroupIds, newGroupIds } = command.payload;
 
     const jobs: AttachDetachNewsfeedJobPayload[] = [];
-    const contentAttributes: ContentNewsFeedAttributes = {
-      id: content.id,
-      type: content.type,
-      publishedAt: content.publishedAt,
-      isImportant: content.isImportant,
-    };
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
     const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
 
@@ -64,7 +46,7 @@ export class ProducerAttachDetachNewsfeedHandler
             offset: (page - 1) * this.LIMIT_DEFAULT,
             limit: this.LIMIT_DEFAULT,
           },
-          content: contentAttributes,
+          content,
           action: NewsfeedAction.PUBLISH,
         });
       }
@@ -84,7 +66,7 @@ export class ProducerAttachDetachNewsfeedHandler
             offset: (page - 1) * this.LIMIT_DEFAULT,
             limit: this.LIMIT_DEFAULT,
           },
-          content: contentAttributes,
+          content,
           action: NewsfeedAction.REMOVE,
         });
       }

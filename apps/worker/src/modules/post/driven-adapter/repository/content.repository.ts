@@ -69,7 +69,7 @@ export class ContentRepository implements IContentRepository {
     }
 
     return this._libContentRepo.findMany({
-      select: ['id', 'type', 'publishedAt', 'isImportant', 'createdAt'],
+      select: ['id', 'type', 'publishedAt', 'isImportant', 'createdAt', 'createdBy'],
       where: {
         status: CONTENT_STATUS.PUBLISHED,
         isHidden: false,

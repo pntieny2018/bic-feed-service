@@ -25,7 +25,7 @@ export class FeedPostPublishedEventHandler implements IEventHandler<PostPublishe
     await this._newsfeedDomainService.attachContentToUserId(postEntity, authUser.id);
 
     await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: postEntity.getId(),
+      content: postEntity,
       newGroupIds: postEntity.getGroupIds(),
       oldGroupIds: [],
     });

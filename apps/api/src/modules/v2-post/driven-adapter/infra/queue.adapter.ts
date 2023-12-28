@@ -48,12 +48,12 @@ export class QueueAdapter implements IQueueAdapter {
   public async addProducerAttachDetachNewsfeedJob(
     payload: ProducerAttachDetachNewsfeedJobPayload
   ): Promise<void> {
-    const { contentId } = payload;
+    const { content } = payload;
     await this._publisherAppService.addJob<ProducerAttachDetachNewsfeedJobPayload>(
       QueueName.PRODUCER_ATTACH_DETACH_NEWSFEED,
       {
         data: payload,
-        opts: { group: { id: contentId } },
+        opts: { group: { id: content.id } },
       }
     );
   }
