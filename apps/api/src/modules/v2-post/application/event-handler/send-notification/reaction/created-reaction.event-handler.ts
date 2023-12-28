@@ -6,7 +6,6 @@ import { NIL } from 'uuid';
 
 import { ReactionCreatedEvent } from '../../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../../domain/exception';
-import { ContentEntity } from '../../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -99,9 +98,7 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
       throw new ContentNotFoundException();
     }
 
-    const contentActor = await this._userAdapter.getUserByIdWithPermission(
-      (contentEntity as ContentEntity).get('createdBy')
-    );
+    const contentActor = await this._userAdapter.getUserById(contentEntity.getCreatedBy());
 
     const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);
     return contentDto[0] as PostDto | ArticleDto;
