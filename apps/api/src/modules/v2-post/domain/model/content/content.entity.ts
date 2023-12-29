@@ -198,6 +198,10 @@ export class ContentEntity<
     return this._props.quiz;
   }
 
+  public getPublishedAt(): Date {
+    return this._props.publishedAt;
+  }
+
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
   }

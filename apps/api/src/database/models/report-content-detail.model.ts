@@ -1,3 +1,4 @@
+import { REPORT_SCOPE } from '@libs/database/postgres/model';
 import { DataTypes, Optional } from 'sequelize';
 import {
   Column,
@@ -11,14 +12,12 @@ import {
 } from 'sequelize-typescript';
 import { v4 as uuid_v4 } from 'uuid';
 
-import { ReportTo } from '../../modules/report-content/contstants';
-
 import { ReportContentModel } from './report-content.model';
 
 export interface IReportContentDetailAttribute {
   id?: string;
   groupId: string;
-  reportTo: ReportTo;
+  reportTo: REPORT_SCOPE;
   reportId?: string;
   targetId: string;
   targetType: string;
@@ -60,7 +59,7 @@ export class ReportContentDetailModel
   @Column({
     type: DataTypes.STRING,
   })
-  public reportTo: ReportTo;
+  public reportTo: REPORT_SCOPE;
 
   @ForeignKey(() => ReportContentModel)
   @Column

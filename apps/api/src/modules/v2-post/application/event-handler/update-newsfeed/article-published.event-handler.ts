@@ -25,7 +25,7 @@ export class FeedArticlePublishedEventHandler implements IEventHandler<ArticlePu
     await this._newsfeedDomainService.attachContentToUserId(articleEntity, authUser.id);
 
     await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: articleEntity.getId(),
+      content: articleEntity,
       newGroupIds: articleEntity.getGroupIds(),
       oldGroupIds: [],
     });

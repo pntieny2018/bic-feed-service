@@ -1,8 +1,9 @@
-import { IEvent } from '../../common/interfaces';
-import { UserDto } from '../../modules/v2-user/application';
+import { UserDto } from '@libs/service/user';
+
 import { SeriesHasBeenChangeItems } from '../../common/constants';
-import { ISeriesState } from '../../notification/activities';
+import { IEvent } from '../../common/interfaces';
 import { IPost } from '../../database/models/post.model';
+import { ISeriesState } from '../../notification/activities';
 
 export class SeriesChangedItemsEvent implements IEvent<ISeriesChangeItemsPayload> {
   public payload: ISeriesChangeItemsPayload;

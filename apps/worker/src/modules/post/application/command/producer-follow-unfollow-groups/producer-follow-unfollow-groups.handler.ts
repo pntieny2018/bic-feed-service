@@ -16,7 +16,7 @@ import { ProducerFollowUnfollowGroupsCommand } from './producer-follow-unfollow-
 export class ProducerFollowUnfollowGroupsHandler
   implements ICommandHandler<ProducerFollowUnfollowGroupsCommand, void>
 {
-  private readonly LIMIT_DEFAULT = 500;
+  private readonly LIMIT_DEFAULT = 1000;
 
   public constructor(
     @Inject(USER_ADAPTER)

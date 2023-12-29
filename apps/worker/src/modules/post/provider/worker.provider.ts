@@ -62,7 +62,7 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.PRODUCER_ATTACH_DETACH_NEWSFEED_CONCURRENCY) | 20,
+    concurrency: parseInt(process.env.PRODUCER_ATTACH_DETACH_NEWSFEED_CONCURRENCY) | 5,
   },
   {
     queueName: QueueName.ATTACH_DETACH_NEWSFEED,
@@ -71,7 +71,7 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.ATTACH_DETACH_NEWSFEED_CONCURRENCY) | 20,
+    concurrency: parseInt(process.env.ATTACH_DETACH_NEWSFEED_CONCURRENCY) | 5,
   },
   {
     queueName: QueueName.PRODUCER_FOLLOW_UNFOLLOW_GROUPS,
@@ -80,7 +80,7 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.PRODUCER_FOLLOW_UNFOLLOW_CONCURRENCY) | 20,
+    concurrency: parseInt(process.env.PRODUCER_FOLLOW_UNFOLLOW_CONCURRENCY) | 5,
   },
   {
     queueName: QueueName.FOLLOW_UNFOLLOW_GROUPS,
@@ -89,6 +89,6 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.FOLLOW_UNFOLLOW_GROUPS_CONCURRENCY) | 20,
+    concurrency: parseInt(process.env.FOLLOW_UNFOLLOW_GROUPS_CONCURRENCY) | 5,
   },
 ];

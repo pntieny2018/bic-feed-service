@@ -1,9 +1,9 @@
 import { CONTENT_TYPE } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 
 import { SeriesHasBeenRemoveItem } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 import { PostType } from '../../database/models/post.model';
-import { UserDto } from '../../modules/v2-user/application';
 
 export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayload> {
   protected static event = SeriesHasBeenRemoveItem;

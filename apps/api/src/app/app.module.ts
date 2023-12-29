@@ -33,15 +33,12 @@ import { MediaModule } from '../modules/media';
 import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
 import { QueuePublisherModule } from '../modules/queue-publisher/queue-publisher.module';
-import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { SearchModule } from '../modules/search';
 import { SeriesModule } from '../modules/series';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
-import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { NotificationModuleV2 } from '../modules/v2-notification/notification.module';
 import { PostModuleV2 } from '../modules/v2-post/post.module';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
-import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { WebSocketModule } from '../modules/ws/ws.module';
 import { NotificationModule } from '../notification';
 import { ReactionCountModule } from '../shared/reaction-count';
@@ -85,10 +82,7 @@ import { LibModule } from './lib.module';
     SeriesModule,
     InternalModule,
     SearchModule,
-    ReportContentModule,
     PostModuleV2,
-    GroupModuleV2,
-    UserModuleV2,
     RecentSearchModuleV2,
     GiphyModuleV2,
     AdminModule,

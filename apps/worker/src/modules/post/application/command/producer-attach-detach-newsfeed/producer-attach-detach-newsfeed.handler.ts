@@ -8,7 +8,6 @@ import {
   IQueueAdapter,
   QUEUE_ADAPTER,
 } from '../../../domain/infra-adapter-interface';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../../../domain/repositoty-interface';
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../domain/service-adapter-interface';
 
 import { ProducerAttachDetachNewsfeedCommand } from './producer-attach-detach-newsfeed.command';
@@ -17,24 +16,17 @@ import { ProducerAttachDetachNewsfeedCommand } from './producer-attach-detach-ne
 export class ProducerAttachDetachNewsfeedHandler
   implements ICommandHandler<ProducerAttachDetachNewsfeedCommand, void>
 {
-  private readonly LIMIT_DEFAULT = 500;
+  private readonly LIMIT_DEFAULT = 1000;
 
   public constructor(
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(QUEUE_ADAPTER)
-    private readonly _queueAdapter: IQueueAdapter,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepo: IContentRepository
+    private readonly _queueAdapter: IQueueAdapter
   ) {}
 
   public async execute(command: ProducerAttachDetachNewsfeedCommand): Promise<void> {
-    const { contentId, oldGroupIds, newGroupIds } = command.payload;
-
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
-    if (!content || !Boolean(content.publishedAt) || content.isHidden) {
-      return;
-    }
+    const { content, oldGroupIds, newGroupIds } = command.payload;
 
     const jobs: AttachDetachNewsfeedJobPayload[] = [];
     const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);

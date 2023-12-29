@@ -25,7 +25,7 @@ export class FeedSeriesPublishedEventHandler implements IEventHandler<SeriesPubl
     await this._newsfeedDomainService.attachContentToUserId(seriesEntity, authUser.id);
 
     await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: seriesEntity.getId(),
+      content: seriesEntity,
       newGroupIds: seriesEntity.getGroupIds(),
       oldGroupIds: [],
     });

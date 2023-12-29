@@ -688,7 +688,6 @@ export class ContentBinding implements IContentBinding {
           [current.username]: {
             id: current.id,
             fullname: current.fullname,
-            email: current.email,
             username: current.username,
             avatar: current.avatar,
           },

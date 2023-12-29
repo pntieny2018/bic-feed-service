@@ -7,6 +7,7 @@ import {
   PostModel,
   PostSeriesModel,
 } from '@libs/database/postgres/model';
+import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -19,10 +20,6 @@ import { PostBindingService } from '../../modules/post/post-binding.service';
 import { PostService } from '../../modules/post/post.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
 import { SearchService } from '../../modules/search/search.service';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../modules/v2-group/application';
 
 import { POST_DEFAULT_MAPPING } from './post_default_mapping';
 import { POST_EN_MAPPING } from './post_en_mapping';
@@ -46,8 +43,8 @@ export class IndexPostCommand implements CommandRunner {
   public constructor(
     @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    public readonly groupAppService: IGroupApplicationService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    public readonly groupAppService: IGroupService,
     public readonly postSearchService: SearchService,
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,

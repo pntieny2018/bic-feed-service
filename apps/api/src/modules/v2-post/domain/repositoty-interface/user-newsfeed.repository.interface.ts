@@ -1,6 +1,7 @@
 import { ContentEntity } from '@api/modules/v2-post/domain/model/content';
 import { CONTENT_TYPE } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { UserNewsFeedAttributes } from '@libs/database/postgres/model';
 
 export type GetContentIdsCursorPaginationByUserIdProps = {
   userId: string;
@@ -14,6 +15,12 @@ export type GetImportantContentIdsCursorPaginationByUserIdProps = {
   userId: string;
   type?: CONTENT_TYPE;
 } & Pick<CursorPaginationProps, 'limit' | 'after'>;
+
+export type ContentNewsFeedAttributes = Pick<
+  UserNewsFeedAttributes,
+  'id' | 'type' | 'publishedAt' | 'isImportant' | 'createdBy'
+>;
+
 export interface IUserNewsfeedRepository {
   attachContentToUserId(contentEntity: ContentEntity, userId: string): Promise<void>;
   detachContentIdFromUserId(contentId: string, userId: string): Promise<void>;
