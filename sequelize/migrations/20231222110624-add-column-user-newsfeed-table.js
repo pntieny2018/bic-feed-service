@@ -78,21 +78,6 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         `
-             DELETE FROM ${schemaName}.user_newsfeed t1
-              set created_by = t2.created_by, published_at = t2.published_at,
-                  type = t2.type,
-                  is_important = t2.is_important
-              FROM ${schemaName}.posts t2
-          WHERE
-              t2.id = t1.post_id;
-              `,
-        {
-          transaction: t,
-        }
-      );
-
-      await queryInterface.sequelize.query(
-        `
              update ${schemaName}.user_newsfeed t1
               set created_by = t2.created_by, published_at = t2.published_at,
                   type = t2.type,
