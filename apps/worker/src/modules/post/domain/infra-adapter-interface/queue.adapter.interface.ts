@@ -9,7 +9,7 @@ export type ContentScheduledJobPayload = {
 };
 
 export type ProducerAttachDetachNewsfeedJobPayload = {
-  contentId: string;
+  content: ContentNewsFeedAttributes;
   newGroupIds: string[];
   oldGroupIds: string[];
 };

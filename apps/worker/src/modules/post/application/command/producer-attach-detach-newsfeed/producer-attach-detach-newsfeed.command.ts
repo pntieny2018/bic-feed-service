@@ -1,7 +1,9 @@
 import { ICommand } from '@nestjs/cqrs';
 
+import { ContentNewsFeedAttributes } from '../../../domain/repositoty-interface';
+
 export type ProducerAttachDetachNewsfeedPaylod = {
-  contentId: string;
+  content: ContentNewsFeedAttributes;
   oldGroupIds: string[];
   newGroupIds: string[];
 };

@@ -2,7 +2,7 @@ import { UserNewsFeedAttributes } from '@libs/database/postgres/model';
 
 export type ContentNewsFeedAttributes = Pick<
   UserNewsFeedAttributes,
-  'id' | 'type' | 'publishedAt' | 'isImportant'
+  'id' | 'type' | 'publishedAt' | 'isImportant' | 'createdBy'
 >;
 
 export interface IUserNewsfeedRepository {

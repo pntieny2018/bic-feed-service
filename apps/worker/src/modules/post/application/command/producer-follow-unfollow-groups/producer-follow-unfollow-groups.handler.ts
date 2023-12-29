@@ -1,4 +1,3 @@
-import { Span } from '@libs/common/modules/opentelemetry';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
@@ -17,7 +16,7 @@ import { ProducerFollowUnfollowGroupsCommand } from './producer-follow-unfollow-
 export class ProducerFollowUnfollowGroupsHandler
   implements ICommandHandler<ProducerFollowUnfollowGroupsCommand, void>
 {
-  private readonly LIMIT_DEFAULT = 500;
+  private readonly LIMIT_DEFAULT = 1000;
 
   public constructor(
     @Inject(USER_ADAPTER)
@@ -28,7 +27,6 @@ export class ProducerFollowUnfollowGroupsHandler
     private readonly _contentRepo: IContentRepository
   ) {}
 
-  @Span()
   public async execute(command: ProducerFollowUnfollowGroupsCommand): Promise<void> {
     const { groupIds, userId, action } = command.payload;
 
