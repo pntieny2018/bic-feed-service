@@ -7,16 +7,12 @@ import {
   SeriesCacheDto,
   TagDto,
 } from '@api/modules/v2-post/application/dto';
-import {
-  IPostReactionRepository,
-  POST_REACTION_REPOSITORY_TOKEN,
-} from '@api/modules/v2-post/domain/repositoty-interface';
 import { MediaMapper } from '@api/modules/v2-post/driven-adapter/mapper/media.mapper';
 import { QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper/quiz.mapper';
 import { CONTENT_TYPE } from '@beincom/constants';
 import { StringHelper } from '@libs/common/helpers';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { merge } from 'lodash';
 
 import { CategoryEntity } from '../../domain/model/category';
@@ -39,8 +35,6 @@ import { TagEntity } from '../../domain/model/tag';
 @Injectable()
 export class ContentMapper {
   public constructor(
-    @Inject(POST_REACTION_REPOSITORY_TOKEN)
-    private readonly _postReactionRepo: IPostReactionRepository,
     private readonly _quizMapper: QuizMapper,
     private readonly _mediaMapper: MediaMapper
   ) {}

@@ -162,6 +162,8 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
+        shouldIncludeSeries: true,
+        shouldIncludeCategory: true,
       },
     });
 
