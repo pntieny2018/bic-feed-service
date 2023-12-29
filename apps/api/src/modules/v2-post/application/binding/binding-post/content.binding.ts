@@ -395,8 +395,12 @@ export class ContentBinding implements IContentBinding {
         wordCount: articleEntity.get('wordCount'),
         commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
         totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
-        title: articleEntity.get('title'),
+        content: articleEntity.getContent(),
         summary: articleEntity.get('summary'),
+        title: articleEntity.get('title'),
+        categories: articleEntity
+          .getCategories()
+          .map((category) => ({ id: category.get('id'), name: category.get('name') })),
         coverMedia: this._mediaBinding.imageBinding(articleEntity.get('cover')),
         tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
         quiz:
