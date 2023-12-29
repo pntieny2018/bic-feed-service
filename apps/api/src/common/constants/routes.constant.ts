@@ -355,4 +355,10 @@ export const ROUTES = {
       VERSIONS: AppHelper.getVersionsSupported(),
     },
   },
+  INTERNAL: {
+    COUNT_CONTENTS_PER_WEEK: {
+      PATH: '/internal/contents/statistics',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
+    },
+  },
 };

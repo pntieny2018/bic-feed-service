@@ -77,6 +77,7 @@ export class ImageDto {
 export class VideoDto {
   public id: string;
   public url: string;
+  public hlsUrl: string;
   public name: string;
   public createdAt: Date;
   public mimeType: string;
@@ -93,5 +94,6 @@ export class VideoDto {
 
   public constructor(data: Partial<VideoDto>) {
     Object.assign(this, data);
+    this.hlsUrl && (this.url = this.hlsUrl);
   }
 }

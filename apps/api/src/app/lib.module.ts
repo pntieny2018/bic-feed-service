@@ -1,4 +1,8 @@
 import { DomainEventModule } from '@beincom/nest-domain-event';
+import { configs } from '@libs/common/config/configuration';
+import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
+import { IRedisConfig } from '@libs/common/config/redis';
+import { ISentryConfig } from '@libs/common/config/sentry';
 import { HttpModule as LibHttpModule, IAxiosConfig } from '@libs/infra/http';
 import { LogModule } from '@libs/infra/log';
 import { RedisModule } from '@libs/infra/redis';
@@ -11,10 +15,6 @@ import { RewriteFrames } from '@sentry/integrations';
 import * as Sentry from '@sentry/node';
 
 import { InternalEventEmitterModule } from './custom/event-emitter';
-import { configs } from '@libs/common/config/configuration';
-import { IElasticsearchConfig } from '@libs/common/config/elasticsearch';
-import { ISentryConfig } from '@libs/common/config/sentry';
-import { IRedisConfig } from '@libs/common/config/redis';
 
 @Global()
 @Module({

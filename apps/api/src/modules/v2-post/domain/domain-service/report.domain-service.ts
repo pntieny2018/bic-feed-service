@@ -1,4 +1,4 @@
-import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_REPORT_REASON_TYPE, CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
 import { ArrayHelper, StringHelper } from '@libs/common/helpers';
 import { REPORT_STATUS } from '@libs/database/postgres/model';
 import { UserDto } from '@libs/service/user';
@@ -199,26 +199,46 @@ export class ReportDomainService implements IReportDomainService {
     }));
   }
 
-  public async getContentOfTargetReported(report: ReportEntity): Promise<string> {
+  public async getContentOfTargetReported(report: ReportEntity): Promise<{
+    content: string;
+    contentId: string;
+    contentType: CONTENT_TYPE;
+    parentCommentId: string;
+  }> {
     const targetType = report.get('targetType');
     const targetId = report.get('targetId');
 
-    let content = '';
+    let content;
+    let contentId;
+    let parentCommentId;
+    let contentType;
 
     switch (targetType) {
       case CONTENT_TARGET.COMMENT: {
         const comment = await this._commentRepo.findOne({ id: targetId });
+        const contentEntity = await this._contentRepo.findContentById(comment?.get('postId'));
+
         content = comment?.get('content') || '';
+        contentId = comment?.get('postId') || '';
+        parentCommentId = comment?.isChildComment() ? comment.get('parentId') : '';
+        contentType = contentEntity?.getType();
+        break;
       }
 
       case CONTENT_TARGET.POST: {
         const post = (await this._contentRepo.findContentById(targetId)) as PostEntity;
-        return post?.get('content') || '';
+        content = post?.getContent();
+        contentId = post?.getId();
+        contentType = post?.getType();
+        break;
       }
 
       case CONTENT_TARGET.ARTICLE: {
         const article = (await this._contentRepo.findContentById(targetId)) as ArticleEntity;
-        content = article?.get('title') || '';
+        content = article?.getTitle();
+        contentId = article?.getId();
+        contentType = article?.getType();
+        break;
       }
 
       default: {
@@ -226,7 +246,12 @@ export class ReportDomainService implements IReportDomainService {
       }
     }
 
-    return StringHelper.removeMarkdownCharacter(content).slice(0, 200);
+    return {
+      content: StringHelper.removeMarkdownCharacter(content).slice(0, 200),
+      contentId,
+      contentType,
+      parentCommentId,
+    };
   }
 
   public async ignoreReport(input: ProcessReportProps): Promise<void> {

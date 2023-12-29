@@ -19,6 +19,8 @@ import {
   IDataPostToAdd,
   IDataPostToDelete,
   IDataPostToUpdate,
+  ICountContentsInCommunityQuery,
+  ICountContentsInCommunityResult,
 } from './interfaces';
 
 @Injectable()
@@ -277,5 +279,41 @@ export class SearchService {
           ? response.hits?.hits[response.hits?.hits.length - 1].sort
           : null,
     };
+  }
+
+  public async countContentsInCommunity(
+    query: ICountContentsInCommunityQuery
+  ): Promise<ICountContentsInCommunityResult> {
+    const { startTime, endTime, rootGroupIds } = query;
+    const body = this.elasticsearchQueryBuilder.buildPayloadCountContentsInCommunity({
+      startTime,
+      endTime,
+      rootGroupIds,
+    });
+    const aggs = {
+      communities: {
+        terms: {
+          field: 'communityIds',
+          size: 100,
+        },
+      },
+    };
+
+    const payload = {
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
+      ...body,
+      aggs,
+      size: 0, // return only aggregation results
+    };
+
+    const response = await this.elasticsearchService.search(payload);
+
+    if (!response) {
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return response.aggregations.communities.buckets;
   }
 }

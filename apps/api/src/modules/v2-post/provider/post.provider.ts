@@ -58,7 +58,6 @@ import {
 import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
-  VideoPostVideoSuccessEventHandler,
 } from '../application/event-handler/set-video-state';
 
 import {
@@ -78,6 +77,7 @@ import {
   FindPinnedContentHandler,
   GetContentAudienceHandler,
   GetScheduleContentHandler,
+  CountContentPerWeekHandler,
   GetWelcomeContentsHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
@@ -138,7 +138,6 @@ export const postProvider = [
   FilePostUpdatedEventHandler,
   FilePostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
-  VideoPostVideoSuccessEventHandler,
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
 
@@ -205,6 +204,8 @@ export const postProvider = [
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
   GetWelcomeContentsHandler,
+
+  CountContentPerWeekHandler,
 
   /** Domain Service */
   {
