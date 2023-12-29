@@ -4,7 +4,6 @@ import { ArticleModule } from '../modules/article';
 import { CommentModule } from '../modules/comment';
 import { FeedModule } from '../modules/feed';
 import { FeedPublisherModule } from '../modules/feed-publisher';
-import { FilterUserModule } from '../modules/filter-user';
 import { FollowModule } from '../modules/follow';
 import { MediaModule } from '../modules/media';
 import { PostModule } from '../modules/post';
@@ -16,8 +15,6 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { NotificationModule } from '../notification';
 
 import { ArticleListener } from './article';
-import { CommentListener } from './comment';
-import { PostListener } from './post';
 import { ReportContentListener } from './report';
 import {
   SeriesAddedItemsListener,
@@ -29,7 +26,6 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
 @Module({
   imports: [
     FollowModule,
-    FilterUserModule,
     GroupModuleV2,
     PostModule,
     CommentModule,
@@ -44,8 +40,6 @@ import { SeriesChangedItemsListener } from './series/series-changed-items.listen
     TagModule,
   ],
   providers: [
-    PostListener,
-    CommentListener,
     ArticleListener,
     SeriesAddedItemsListener,
     SeriesRemovedItemsListener,

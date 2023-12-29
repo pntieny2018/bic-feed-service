@@ -1,8 +1,8 @@
+import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
 
-import { IKafkaConfig } from '../../config/kafka';
 import { AuthorityModule } from '../authority';
 import { CommentModule } from '../comment';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
@@ -17,11 +17,10 @@ import { PostAppService } from './application/post.app-service';
 import { ContentController } from './content.controller';
 import { FeedBackupController } from './feed-backup.controller';
 import { PostBindingService } from './post-binding.service';
-import { PostConsumerController } from './post-consummer.controller';
 import { PostCronService } from './post-cron.service';
-import { PostHistoryService } from './post-history.service';
 import { PostController } from './post.controller';
 import { PostService } from './post.service';
+import { IKafkaConfig } from '@libs/infra/kafka/config';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -43,8 +42,15 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     LinkPreviewModule,
     TagModule,
   ],
-  controllers: [PostController, PostConsumerController, ContentController, FeedBackupController],
-  providers: [PostService, PostBindingService, PostHistoryService, PostCronService, PostAppService],
-  exports: [PostService, PostBindingService, PostHistoryService],
+  controllers: [PostController, ContentController, FeedBackupController],
+  providers: [
+    PostService,
+    PostBindingService,
+    PostCronService,
+    PostAppService,
+    LibReportRepository,
+    LibReportDetailRepository,
+  ],
+  exports: [PostService, PostBindingService],
 })
 export class PostModule {}

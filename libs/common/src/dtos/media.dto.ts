@@ -31,12 +31,14 @@ export type Image = {
 export type Video = {
   id: string;
   url: string;
+  hlsUrl: string;
   name: string;
   mimeType: string;
   createdBy: string;
   size: number;
   width: number;
   height: number;
+  duration: number;
   status: MEDIA_PROCESS_STATUS;
   thumbnails: VideoThumbnail[];
 };

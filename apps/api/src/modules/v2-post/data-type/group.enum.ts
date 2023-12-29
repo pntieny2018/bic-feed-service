@@ -1,0 +1,4 @@
+export enum GROUP_STATE_VERB {
+  ARCHIVE = 'ARCHIVE',
+  RESTORE = 'RESTORE',
+}

@@ -1,5 +1,6 @@
 export interface IEventPayload {
   payload: any;
+  getEventName(): string;
 }
 
 export interface IEventService {

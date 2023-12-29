@@ -20,13 +20,16 @@ export class ArticleUpdatedEventHandler implements IEventHandler<ArticleUpdatedE
   ) {}
 
   public async handle(event: ArticleUpdatedEvent): Promise<void> {
-    const { articleEntity, actor } = event;
+    const { articleEntity, authUser } = event.payload;
 
     if (articleEntity.isHidden() || !articleEntity.isPublished()) {
       return;
     }
 
     await this._tagDomain.updateTagsUsedByContent(articleEntity);
-    await this._seriesDomain.sendContentUpdatedSeriesEvent({ content: articleEntity, actor });
+    await this._seriesDomain.sendContentUpdatedSeriesEvent({
+      content: articleEntity,
+      actor: authUser,
+    });
   }
 }

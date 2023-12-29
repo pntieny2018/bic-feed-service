@@ -1,14 +1,29 @@
+import { IEventPayload } from '@libs/infra/event';
 import { UserDto } from '@libs/service/user';
 
+import {
+  SeriesHasBeenAddItem,
+  SeriesHasBeenDeleted,
+  SeriesHasBeenPublished,
+  SeriesHasBeenRemoveItem,
+  SeriesHasBeenReorderItem,
+  SeriesHasBeenSameOwnerChanged,
+  SeriesHasBeenUpdated,
+} from '../../../../common/constants';
 import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
 
-export type SeriesItemsAddedPayload = {
+interface SeriesEventPayload {
+  seriesEntity: SeriesEntity;
+  authUser: UserDto;
+}
+
+export interface SeriesItemsAddedPayload {
   authUser: UserDto;
   seriesId: string;
   item: PostEntity | ArticleEntity;
   skipNotify?: boolean;
   context: 'publish' | 'add'; // publish: when publish or edited content || add: when content is added into series
-};
+}
 
 export interface SeriesItemsRemovedPayload {
   authUser: UserDto;
@@ -24,30 +39,100 @@ export interface SeriesSameOwnerChangedPayload {
   content: PostEntity | ArticleEntity;
 }
 
-export class SeriesCreatedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
+export class SeriesPublishedEvent implements IEventPayload {
+  public static event = SeriesHasBeenPublished;
+
+  public payload: SeriesEventPayload;
+
+  public constructor(data: SeriesEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return SeriesPublishedEvent.event;
+  }
 }
 
-export class SeriesUpdatedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
+export class SeriesUpdatedEvent implements IEventPayload {
+  public static event = SeriesHasBeenUpdated;
+
+  public payload: SeriesEventPayload;
+
+  public constructor(data: SeriesEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return SeriesUpdatedEvent.event;
+  }
 }
 
-export class SeriesDeletedEvent {
-  public constructor(public readonly seriesEntity: SeriesEntity, public readonly actor: UserDto) {}
+export class SeriesDeletedEvent implements IEventPayload {
+  public static event = SeriesHasBeenDeleted;
+
+  public payload: SeriesEventPayload;
+
+  public constructor(data: SeriesEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return SeriesDeletedEvent.event;
+  }
 }
 
-export class SeriesItemsReorderedEvent {
-  public constructor(public readonly seriesId: string) {}
+export class SeriesItemsReorderedEvent implements IEventPayload {
+  public static event = SeriesHasBeenReorderItem;
+
+  public payload: { seriesId: string };
+
+  public constructor(seriesId: string) {
+    this.payload = { seriesId };
+  }
+
+  public getEventName(): string {
+    return SeriesItemsReorderedEvent.event;
+  }
 }
 
-export class SeriesItemsAddedEvent {
-  public constructor(public readonly payload: SeriesItemsAddedPayload) {}
+export class SeriesItemsAddedEvent implements IEventPayload {
+  public static event = SeriesHasBeenAddItem;
+
+  public payload: SeriesItemsAddedPayload;
+
+  public constructor(data: SeriesItemsAddedPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return SeriesItemsAddedEvent.event;
+  }
 }
 
-export class SeriesItemsRemovedEvent {
-  public constructor(public readonly payload: SeriesItemsRemovedPayload) {}
+export class SeriesItemsRemovedEvent implements IEventPayload {
+  public static event = SeriesHasBeenRemoveItem;
+
+  public payload: SeriesItemsRemovedPayload;
+
+  public constructor(data: SeriesItemsRemovedPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return SeriesItemsRemovedEvent.event;
+  }
 }
 
-export class SeriesSameOwnerChangedEvent {
-  public constructor(public readonly payload: SeriesSameOwnerChangedPayload) {}
+export class SeriesSameOwnerChangedEvent implements IEventPayload {
+  public static event = SeriesHasBeenSameOwnerChanged;
+
+  public payload: SeriesSameOwnerChangedPayload;
+
+  public constructor(data: SeriesSameOwnerChangedPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return SeriesSameOwnerChangedEvent.event;
+  }
 }

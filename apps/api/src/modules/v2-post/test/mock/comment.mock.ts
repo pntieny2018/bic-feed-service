@@ -52,5 +52,9 @@ export function createMockCommentEntity(data: Partial<CommentAttributes> = {}): 
           createdAt: reaction.createdAt,
         })
     ),
+    childs: {
+      rows: (comment?.child || []).map((child) => this.toDomain(child)),
+      meta: {},
+    },
   });
 }

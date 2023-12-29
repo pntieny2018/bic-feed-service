@@ -1,24 +1,48 @@
 import { UserDto } from '@libs/service/user';
 
 import { ArticleDto, PostDto, SeriesDto } from '../../../../v2-post/application/dto';
-import { VerbActivity } from '../../../data-type';
 
 export const CONTENT_NOTIFICATION_APPLICATION_SERVICE = 'CONTENT_NOTIFICATION_APPLICATION_SERVICE';
 
-export type PostNotificationPayload = {
-  event: string;
+export type PostVideoProcessFailedNotificationPayload = {
   actor: UserDto;
   post: PostDto;
-  oldPost?: PostDto;
-  ignoreUserIds?: string[];
 };
 
-export type ArticleNotificationPayload = {
-  event: string;
+export type PostDeletedNotificationPayload = {
+  actor: UserDto;
+  post: PostDto;
+};
+
+export type PostPublishedNotificationPayload = {
+  actor: UserDto;
+  post: PostDto;
+  ignoreUserIds: string[];
+};
+
+export type PostUpdatedNotificationPayload = {
+  actor: UserDto;
+  post: PostDto;
+  oldPost: PostDto;
+  ignoreUserIds: string[];
+};
+
+export type ArticleUpdatedNotificationPayload = {
   actor: UserDto;
   article: ArticleDto;
-  oldArticle?: ArticleDto;
-  ignoreUserIds?: string[];
+  oldArticle: ArticleDto;
+  ignoreUserIds: string[];
+};
+
+export type ArticleDeletedNotificationPayload = {
+  actor: UserDto;
+  article: ArticleDto;
+};
+
+export type ArticlePublishedNotificationPayload = {
+  actor: UserDto;
+  article: ArticleDto;
+  ignoreUserIds: string[];
 };
 
 export type SeriesPublishedNotificationPayload = {
@@ -61,26 +85,18 @@ export type SeriesChangedItemNotificationPayload = {
   item: PostDto | ArticleDto;
 };
 
-export type SeriesNotificationPayload = {
-  event: string;
-  actor: UserDto;
-  series: SeriesDto | SeriesWithStateDto[];
-  oldSeries?: SeriesDto;
-  item?: PostDto | ArticleDto;
-  verb: VerbActivity;
-  targetUserIds?: string[];
-  isSendToContentCreator?: boolean;
-  contentIsDeleted?: boolean;
-  context?: string;
-};
-
-export type SeriesWithStateDto = SeriesDto & {
-  state: 'add' | 'remove';
-};
-
 export interface IContentNotificationApplicationService {
-  sendPostNotification(payload: PostNotificationPayload): Promise<void>;
-  sendArticleNotification(payload: ArticleNotificationPayload): Promise<void>;
+  sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void>;
+  sendPostPublishedNotification(payload: PostPublishedNotificationPayload): Promise<void>;
+  sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void>;
+  sendPostVideoProcessFailedNotification(
+    payload: PostVideoProcessFailedNotificationPayload
+  ): Promise<void>;
+
+  sendArticleDeletedNotification(payload: ArticleDeletedNotificationPayload): Promise<void>;
+  sendArticlePublishedNotification(payload: ArticlePublishedNotificationPayload): Promise<void>;
+  sendArticleUpdatedNotification(payload: ArticleUpdatedNotificationPayload): Promise<void>;
+
   sendSeriesPublishedNotification(payload: SeriesPublishedNotificationPayload): Promise<void>;
   sendSeriesDeletedNotification(payload: SeriesDeletedNotificationPayload): Promise<void>;
   sendSeriesUpdatedNotification(payload: SeriesUpdatedNotificationPayload): Promise<void>;

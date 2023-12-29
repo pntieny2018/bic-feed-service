@@ -263,3 +263,15 @@ export class UpdateCommentRequestDto {
   })
   public giphyId?: string;
 }
+
+export class GetMyReportedCommentsRequestDto extends PaginatedArgs {
+  @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
+  @IsEnum(ORDER)
+  public order: ORDER = ORDER.DESC;
+
+  @ApiProperty({ name: 'target_ids', required: false, type: [String] })
+  @Expose({ name: 'target_ids' })
+  @Type(() => Array)
+  @Transform(({ value }) => (typeof value === 'string' && !value.includes(',') ? [value] : value))
+  public targetIds?: string[];
+}

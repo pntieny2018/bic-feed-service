@@ -1,7 +1,7 @@
 import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
 
-import { ERRORS } from '../../../../common/constants/errors';
+import { ERRORS } from '../../../../common/constants';
 
 export class UserNoBelongGroupException extends DomainException {
   public static code = ERRORS.GROUP_NOT_MEMBER;
@@ -28,5 +28,23 @@ export class UserNotFoundException extends DomainException {
   public constructor(message: string = null, error: any = null) {
     message = message || 'User is not found';
     super(UserNotFoundException.code, message, error);
+  }
+}
+
+export class NotGroupAdminException extends DomainException {
+  public static code = ERRORS.GROUP_NOT_ADMIN;
+
+  public constructor(message: string = null, error: any = null) {
+    message = message || 'You are not group admin';
+    super(NotGroupAdminException.code, message, error);
+  }
+}
+
+export class NotCommunityAdminException extends DomainException {
+  public static code = ERRORS.COMMUNITY_NOT_ADMIN;
+
+  public constructor(message: string = null, error: any = null) {
+    message = message || 'You are not community owner or admin';
+    super(NotCommunityAdminException.code, message, error);
   }
 }

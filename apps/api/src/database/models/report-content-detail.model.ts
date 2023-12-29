@@ -1,3 +1,4 @@
+import { DataTypes, Optional } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -8,10 +9,11 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
 import { v4 as uuid_v4 } from 'uuid';
-import { ReportContentModel } from './report-content.model';
+
 import { ReportTo } from '../../modules/report-content/contstants';
+
+import { ReportContentModel } from './report-content.model';
 
 export interface IReportContentDetailAttribute {
   id?: string;
@@ -44,7 +46,9 @@ export class ReportContentDetailModel
   @Column
   public targetId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public targetType: string;
 
   @Column
@@ -53,14 +57,18 @@ export class ReportContentDetailModel
   @Column
   public createdBy: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reportTo: ReportTo;
 
   @ForeignKey(() => ReportContentModel)
   @Column
   public reportId: string;
 
-  @Column
+  @Column({
+    type: DataTypes.STRING,
+  })
   public reasonType: string;
 
   @Column

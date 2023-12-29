@@ -1,8 +1,8 @@
+import { KAFKA_TOPIC } from '@libs/infra/kafka';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import { KAFKA_TOPIC } from '../../../../../common/constants';
 import { QuizGeneratedEvent } from '../../../domain/event';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../../domain/infra-adapter-interface';
 import {
@@ -39,11 +39,14 @@ export class QuizGeneratedEventHandler implements IEventHandler<QuizGeneratedEve
     }
 
     this._kafkaAdapter.emit(KAFKA_TOPIC.CONTENT.QUIZ_PROCESSED, {
-      contentId: quizEntity.get('contentId'),
-      contentType: contentEntity.getType(),
-      quizId: quizEntity.get('id'),
-      genStatus: quizEntity.get('genStatus'),
-      createdBy: quizEntity.get('createdBy'),
+      key: quizId,
+      value: {
+        contentId: quizEntity.get('contentId'),
+        contentType: contentEntity.getType(),
+        quizId: quizEntity.get('id'),
+        genStatus: quizEntity.get('genStatus'),
+        createdBy: quizEntity.get('createdBy'),
+      },
     });
   }
 }

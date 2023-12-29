@@ -14,9 +14,9 @@ import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { Literal } from 'sequelize/types/utils';
-import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from './post.model';
 import { PostTagModel } from './post-tag.model';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
 
 export interface ITag {
   id: string;

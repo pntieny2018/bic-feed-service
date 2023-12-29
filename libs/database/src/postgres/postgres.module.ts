@@ -1,4 +1,4 @@
-import { IDatabaseConfig } from '@libs/database/postgres/common';
+import { IDatabaseConfig } from '@libs/database/postgres/config';
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';

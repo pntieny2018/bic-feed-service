@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
-import { TypeActivity, VerbActivity } from '../../notification.constants';
+
 import { UserDto } from '../../../modules/v2-user/application';
+import { TypeActivity, VerbActivity } from '../../notification.constants';
 
 export class ActivityObject {
   public id: string;

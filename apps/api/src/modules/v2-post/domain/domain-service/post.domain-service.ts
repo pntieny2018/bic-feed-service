@@ -1,15 +1,18 @@
+import { CONTENT_STATUS } from '@beincom/constants';
+import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
 import { DatabaseException } from '../../../../common/exceptions';
-import { LinkPreviewDto, MediaDto } from '../../application/dto';
+import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
   ContentHasSeenEvent,
   PostDeletedEvent,
   PostPublishedEvent,
   PostScheduledEvent,
   PostUpdatedEvent,
+  PostVideoFailedEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -54,6 +57,7 @@ import {
   MEDIA_DOMAIN_SERVICE_TOKEN,
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
+  UpdateVideoProcessProps,
 } from './interface';
 
 export class PostDomainService implements IPostDomainService {
@@ -111,15 +115,12 @@ export class PostDomainService implements IPostDomainService {
       },
     });
 
-    if (
-      !postEntity ||
-      !(postEntity instanceof PostEntity) ||
-      (postEntity.isDraft() && !postEntity.isOwner(authUserId)) ||
-      (postEntity.isHidden() && !postEntity.isOwner(authUserId)) ||
-      postEntity.isInArchivedGroups()
-    ) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
+
+    await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUserId);
 
     if (!authUserId && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -153,7 +154,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async schedule(input: SchedulePostProps): Promise<PostEntity> {
     const { payload, actor } = input;
-    const { id, scheduledAt } = payload;
+    const { id, scheduledAt, groupIds } = payload;
 
     const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
       mustIncludeGroup: true,
@@ -169,14 +170,16 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isPublished()) {
       throw new ContentHasBeenPublishedException();
     }
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
 
-    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+    await this._setPostAttributes(postEntity, groups, payload, actor);
+    await this._validatePost(postEntity, groups, payload, actor);
 
     postEntity.setWaitingSchedule(scheduledAt);
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostScheduledEvent({ postEntity, actor }));
+      this.event.publish(new PostScheduledEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -184,7 +187,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async publish(input: PublishPostProps): Promise<PostEntity> {
     const { payload, actor } = input;
-    const { id: postId } = payload;
+    const { id: postId, groupIds } = payload;
 
     const postEntity = await this._contentRepository.findContentByIdInActiveGroup(postId, {
       mustIncludeGroup: true,
@@ -200,8 +203,10 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isPublished()) {
       return postEntity;
     }
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
 
-    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+    await this._setPostAttributes(postEntity, groups, payload, actor);
+    await this._validatePost(postEntity, groups, payload, actor);
 
     if (postEntity.isWaitingSchedule() && postEntity.hasVideoProcessing()) {
       throw new PostVideoProcessingException();
@@ -216,7 +221,7 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
 
-      if (postEntity.getState().isChangeStatus && postEntity.isNotUsersSeen()) {
+      if (postEntity.isNotUsersSeen()) {
         await this._contentDomainService.markSeen(postId, actor.id);
         postEntity.increaseTotalSeen();
       }
@@ -226,7 +231,7 @@ export class PostDomainService implements IPostDomainService {
         postEntity.setMarkReadImportant();
       }
 
-      this.event.publish(new PostPublishedEvent({ postEntity, actor }));
+      this.event.publish(new PostPublishedEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
@@ -261,7 +266,12 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNoPublishYetException();
     }
 
-    await this._validateAndSetPostAttributes(postEntity, payload, actor);
+    const groups = await this._groupAdapter.getGroupsByIds(
+      payload.groupIds || postEntity.get('groupIds')
+    );
+
+    await this._setPostAttributes(postEntity, groups, payload, actor);
+    await this._validatePost(postEntity, groups, payload, actor);
 
     if (postEntity.hasVideoProcessing() && !postEntity.isWaitingSchedule()) {
       postEntity.setProcessing();
@@ -269,10 +279,91 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
-      this.event.publish(new PostUpdatedEvent({ postEntity, actor }));
+      this.event.publish(new PostUpdatedEvent({ postEntity, authUser: actor }));
     }
 
     return postEntity;
+  }
+
+  public async updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, videoId, actor } = props;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    await this._setNewMedia(postEntity, {
+      images: [],
+      files: [],
+      videos: [
+        {
+          id: videoId,
+        },
+      ],
+    });
+
+    const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
+    const status = isScheduledPost ? CONTENT_STATUS.SCHEDULE_FAILED : CONTENT_STATUS.DRAFT;
+
+    postEntity.setStatus(status);
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+      this.event.publish(new PostVideoFailedEvent({ postEntity, authUser: actor }));
+    }
+  }
+
+  public async updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void> {
+    const { id, videoId, actor } = props;
+
+    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+      shouldIncludeGroup: true,
+      shouldIncludeSeries: true,
+    });
+
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost || postEntity.isInArchivedGroups()) {
+      throw new ContentNotFoundException();
+    }
+
+    if (postEntity.isHidden()) {
+      throw new ContentAccessDeniedException();
+    }
+
+    const isScheduledPost = postEntity.isScheduleFailed() || postEntity.isWaitingSchedule();
+
+    await this._setNewMedia(postEntity, {
+      images: [],
+      files: [],
+      videos: [
+        {
+          id: videoId,
+        },
+      ],
+    });
+
+    if (postEntity.isChanged()) {
+      await this._contentRepository.update(postEntity);
+    }
+
+    if (!isScheduledPost) {
+      await this.publish({
+        payload: {
+          id: postEntity.get('id'),
+        },
+        actor,
+      });
+    }
   }
 
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
@@ -289,7 +380,16 @@ export class PostDomainService implements IPostDomainService {
       return;
     }
 
-    await this._validateAndSetPostAttributes(postEntity, props.payload, actor, false);
+    if (!postEntity.isOwner(actor.id)) {
+      throw new ContentAccessDeniedException();
+    }
+    const groups = await this._groupAdapter.getGroupsByIds(
+      payload.groupIds || postEntity.get('groupIds')
+    );
+
+    await this._setPostAttributes(postEntity, groups, props.payload, actor);
+    await this._validatePost(postEntity, groups, props.payload, actor, false);
+
     if (!postEntity.isChanged()) {
       return;
     }
@@ -302,7 +402,8 @@ export class PostDomainService implements IPostDomainService {
       shouldIncludeSeries: true,
     });
 
-    if (!postEntity || !(postEntity instanceof PostEntity)) {
+    const isPost = postEntity && postEntity instanceof PostEntity;
+    if (!isPost) {
       throw new ContentNotFoundException();
     }
 
@@ -319,16 +420,17 @@ export class PostDomainService implements IPostDomainService {
     }
 
     await this._contentRepository.delete(id);
-    this.event.publish(new PostDeletedEvent({ postEntity, actor: authUser }));
+    this.event.publish(new PostDeletedEvent({ postEntity, authUser: authUser }));
   }
 
-  private async _validateAndSetPostAttributes(
+  private async _setPostAttributes(
     postEntity: PostEntity,
+    groups: GroupDto[],
     payload: PostPayload,
-    actor: UserDto,
-    validatePublishContent = true
+    actor: UserDto
   ): Promise<void> {
-    const { content, seriesIds, tagIds, groupIds, media, mentionUserIds, linkPreview } = payload;
+    const { content, seriesIds, tagIds, groupIds, media, mentionUserIds, linkPreview, status } =
+      payload;
 
     if (tagIds) {
       await this._setNewTags(postEntity, tagIds);
@@ -343,13 +445,26 @@ export class PostDomainService implements IPostDomainService {
       await this._setNewLinkPreview(postEntity, linkPreview);
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds || postEntity.get('groupIds'));
-    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
-      withGroupJoined: true,
-    });
+    if (status) {
+      postEntity.setStatus(payload.status);
+    }
 
     postEntity.updateAttribute({ content, seriesIds, groupIds, mentionUserIds }, actor.id);
     postEntity.setPrivacyFromGroups(groups);
+  }
+
+  private async _validatePost(
+    postEntity: PostEntity,
+    groups: GroupDto[],
+    payload: PostPayload,
+    actor: UserDto,
+    validatePublishContent = true
+  ): Promise<void> {
+    const { mentionUserIds } = payload;
+
+    const mentionUsers = await this._userAdapter.getUsersByIds(mentionUserIds || [], {
+      withGroupJoined: true,
+    });
 
     validatePublishContent &&
       (await this._postValidator.validatePublishContent(
@@ -381,12 +496,11 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setLinkPreview(linkPreviewEntity);
   }
 
-  private async _setNewMedia(postEntity: PostEntity, media: MediaDto): Promise<void> {
+  private async _setNewMedia(postEntity: PostEntity, media: MediaRequestDto): Promise<void> {
     const ownerId = postEntity.get('createdBy');
 
     const imageEntities = postEntity.get('media').images;
     const fileEntities = postEntity.get('media').files;
-    const videoEntities = postEntity.get('media').videos;
 
     const newImageIds = media?.images?.map((image) => image.id) || [];
     const newFileIds = media?.files?.map((file) => file.id) || [];
@@ -405,11 +519,7 @@ export class PostDomainService implements IPostDomainService {
       newFileIds,
       ownerId
     );
-    const videos = await this._mediaDomainService.getAvailableVideos(
-      videoEntities,
-      newVideoIds,
-      ownerId
-    );
+    const videos = await this._mediaDomainService.getAvailableVideos(newVideoIds, ownerId);
 
     postEntity.setMedia({
       files,

@@ -1,8 +1,8 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMockUserDto } from 'apps/api/src/modules/v2-post/test/mock/user.mock';
 import { v4 } from 'uuid';
 
+import { createMockUserDto } from '../../../../v2-post/test/mock';
 import { FindRecentSearchesPaginationHandler } from '../../../aplication/query/find-recent-searches/find-recent-searches-pagination.handler';
 import { RecentSearchEntity } from '../../../domain/model/recent-search/recent-search.entity';
 import { RECENT_SEARCH_QUERY_TOKEN } from '../../../driven-adapter/query/interface/recent-search.query.interface';

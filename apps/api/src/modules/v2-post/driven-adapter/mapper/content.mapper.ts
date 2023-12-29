@@ -57,6 +57,7 @@ export class ContentMapper {
       mentions: postEntity.get('mentionUserIds' as keyof ContentAttributes) || [],
       type: postEntity.get('type'),
       summary: postEntity.get('summary' as keyof ContentAttributes),
+      lang: postEntity.get('lang'),
       privacy: postEntity.get('privacy'),
       tagsJson:
         postEntity
@@ -122,11 +123,11 @@ export class ContentMapper {
       lang: post.lang,
       groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      quiz: post.quiz
+      quiz: post.quiz?.[0]
         ? new QuizEntity({
-            ...post.quiz,
-            contentId: post.quiz.postId,
-            questions: (post.quiz.questions || []).map(
+            ...post.quiz[0],
+            contentId: post.quiz[0].postId,
+            questions: (post.quiz[0].questions || []).map(
               (question) => new QuizQuestionEntity(question)
             ),
           })
@@ -144,10 +145,11 @@ export class ContentMapper {
         files: (post.mediaJson?.files || []).map((file) => new FileEntity(file)),
         videos: (post.mediaJson?.videos || []).map((video) => new VideoEntity(video)),
       },
+      title: post.title,
       content: post.content,
       mentionUserIds: post.mentions || [],
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
-      seriesIds: (post.postSeries || []).map((series) => series.seriesId),
+      seriesIds: post.seriesIds || [],
       tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
       videoIdProcessing: post.videoIdProcessing || null,
     });
@@ -186,11 +188,11 @@ export class ContentMapper {
       lang: post.lang,
       groupIds: (post.groups || []).map((group) => group.groupId),
       postGroups: post.groups || [],
-      quiz: post.quiz
+      quiz: post.quiz?.[0]
         ? new QuizEntity({
-            ...post.quiz,
-            contentId: post.quiz.postId,
-            questions: (post.quiz.questions || []).map(
+            ...post.quiz[0],
+            contentId: post.quiz[0].postId,
+            questions: (post.quiz[0].questions || []).map(
               (question) => new QuizQuestionEntity(question)
             ),
           })
@@ -208,7 +210,7 @@ export class ContentMapper {
       content: post.content,
       categories: (post.categories || []).map((category) => new CategoryEntity(category)),
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
-      seriesIds: (post.postSeries || []).map((series) => series.seriesId),
+      seriesIds: post.seriesIds || [],
       tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
     });
   }
@@ -243,12 +245,7 @@ export class ContentMapper {
       postGroups: post.groups || [],
       title: post.title,
       summary: post.summary,
-      itemIds: (post.itemIds || []).sort((a, b) => a.zindex - b.zindex).map((item) => item.postId),
-      items: (post.itemIds || [])
-        .sort((a, b) => {
-          return a.zindex - b.zindex;
-        })
-        .map((item) => ({ id: item.postId, zindex: item.zindex })),
+      itemIds: post.itemIds || [],
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
     });
   }

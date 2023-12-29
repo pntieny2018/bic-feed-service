@@ -5,7 +5,6 @@ import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
-import { PostType } from '../../../data-type';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
@@ -19,6 +18,7 @@ export type PostSettingAttributes = {
 
 export type ContentAttributes = {
   id: string;
+  title: string;
   isReported: boolean;
   isHidden: boolean;
   createdBy: string;
@@ -116,6 +116,10 @@ export class ContentEntity<
     }
   }
 
+  public getPrivacy(): PRIVACY {
+    return this._props.privacy;
+  }
+
   public setPrivacyFromGroups(groups: GroupDto[]): void {
     if (groups.length === 0) {
       return;
@@ -168,7 +172,7 @@ export class ContentEntity<
     return this._props.aggregation.totalUsersSeen === 0;
   }
 
-  public getType(): PostType | CONTENT_TYPE {
+  public getType(): CONTENT_TYPE {
     return this._props.type;
   }
 
@@ -246,6 +250,10 @@ export class ContentEntity<
 
   public isDraft(): boolean {
     return this._props.status === CONTENT_STATUS.DRAFT;
+  }
+
+  public setStatus(status: CONTENT_STATUS): void {
+    this._props.status = status;
   }
 
   public setProcessing(): void {
@@ -331,5 +339,17 @@ export class ContentEntity<
   //TODO: Need to refactor this function so that the purpose use matches the naming
   public isInArchivedGroups(): boolean {
     return this.isPublished() && !this.getGroupIds()?.length;
+  }
+
+  public setReported(isReported: boolean): void {
+    this._props.isReported = isReported;
+  }
+
+  public hide(): void {
+    this._props.isHidden = true;
+  }
+
+  public getTitle(): string {
+    return this._props.title;
   }
 }

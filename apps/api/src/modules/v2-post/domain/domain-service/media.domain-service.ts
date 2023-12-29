@@ -1,9 +1,6 @@
-import { MEDIA_TYPE } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { difference, intersection } from 'lodash';
 
-import { KAFKA_TOPIC } from '../../../../common/constants';
-import { IKafkaAdapter, KAFKA_ADAPTER } from '../infra-adapter-interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaAdapter, MEDIA_ADAPTER } from '../service-adapter-interface';
 
@@ -11,32 +8,17 @@ import { IMediaDomainService } from './interface';
 
 export class MediaDomainService implements IMediaDomainService {
   public constructor(
-    @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter,
     @Inject(MEDIA_ADAPTER)
     private readonly _mediaAdapter: IMediaAdapter
   ) {}
 
-  public async getAvailableVideos(
-    videoEntities: VideoEntity[],
-    videosIds: string[],
-    ownerId: string
-  ): Promise<VideoEntity[]> {
+  public async getAvailableVideos(videosIds: string[], ownerId: string): Promise<VideoEntity[]> {
     if (!videosIds || videosIds?.length === 0) {
       return [];
     }
 
-    videoEntities = videoEntities || [];
-    const currentVideoIds = videoEntities.map((e) => e.get('id'));
-    const notChangedIds = intersection(currentVideoIds, videosIds);
-    const addingVideoIds = difference(videosIds, currentVideoIds);
-    let result = videoEntities.filter((e) => notChangedIds.includes(e.get('id')));
-
-    if (addingVideoIds.length) {
-      const videos = await this._mediaAdapter.findVideosByIds(addingVideoIds);
-      const availableVideos = videos.filter((video) => video.isOwner(ownerId));
-      result = result.concat(availableVideos);
-    }
+    const videos = await this._mediaAdapter.findVideosByIds(videosIds);
+    const result = videos.filter((video) => video.isOwner(ownerId));
 
     return result.sort((a, b) => videosIds.indexOf(a.get('id')) - videosIds.indexOf(b.get('id')));
   }
@@ -87,59 +69,5 @@ export class MediaDomainService implements IMediaDomainService {
     }
 
     return result.sort((a, b) => imagesIds.indexOf(a.get('id')) - imagesIds.indexOf(b.get('id')));
-  }
-
-  public async setMediaUsed(
-    mediaType: MEDIA_TYPE,
-    mediaIds: string[],
-    userId: string = null
-  ): Promise<void> {
-    const config = {
-      [MEDIA_TYPE.FILE]: {
-        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED,
-        keyIds: 'fileIds',
-      },
-      [MEDIA_TYPE.VIDEO]: {
-        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED,
-        keyIds: 'videoIds',
-      },
-    };
-
-    if (!config[mediaType]) {
-      return;
-    }
-    if (mediaIds.length) {
-      await this._kafkaAdapter.emit(config[mediaType].topic, {
-        key: null,
-        value: { [config[mediaType].keyIds]: mediaIds, userId },
-      });
-    }
-  }
-
-  public async setMediaDelete(
-    mediaType: MEDIA_TYPE,
-    mediaIds: string[],
-    userId: string = null
-  ): Promise<void> {
-    const config = {
-      [MEDIA_TYPE.FILE]: {
-        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES,
-        keyIds: 'fileIds',
-      },
-      [MEDIA_TYPE.VIDEO]: {
-        topic: KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS,
-        keyIds: 'videoIds',
-      },
-    };
-
-    if (!config[mediaType]) {
-      return;
-    }
-    if (mediaIds.length) {
-      await this._kafkaAdapter.emit(config[mediaType].topic, {
-        key: null,
-        value: { [config[mediaType].keyIds]: mediaIds, userId },
-      });
-    }
   }
 }

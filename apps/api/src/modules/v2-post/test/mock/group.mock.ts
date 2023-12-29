@@ -22,12 +22,6 @@ export function createMockGroupDto(data: Partial<GroupDto> = {}): GroupDto {
     isCommunity: false,
     privacy: PRIVACY.OPEN,
     rootGroupId: v4(),
-    child: {
-      open: [],
-      closed: [],
-      private: [],
-      secret: [],
-    },
     ...data,
   });
 }

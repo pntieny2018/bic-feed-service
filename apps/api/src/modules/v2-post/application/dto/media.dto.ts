@@ -12,7 +12,7 @@ export class MediaItemDto {
   public id: string;
 }
 
-export class MediaDto {
+export class MediaRequestDto {
   @ApiProperty({ required: false, type: [MediaItemDto] })
   @IsArray()
   @IsOptional()
@@ -36,6 +36,12 @@ export class MediaDto {
   @Type(() => MediaItemDto)
   @Expose()
   public files?: MediaItemDto[] = [];
+}
+
+export class MediaDto {
+  public images: ImageDto[];
+  public videos: VideoDto[];
+  public files: FileDto[];
 }
 
 export class FileDto {
@@ -71,6 +77,7 @@ export class ImageDto {
 export class VideoDto {
   public id: string;
   public url: string;
+  public hlsUrl: string;
   public name: string;
   public createdAt: Date;
   public mimeType: string;
@@ -87,5 +94,6 @@ export class VideoDto {
 
   public constructor(data: Partial<VideoDto>) {
     Object.assign(this, data);
+    this.hlsUrl && (this.url = this.hlsUrl);
   }
 }

@@ -1,5 +1,3 @@
-import { MEDIA_TYPE } from '@beincom/constants';
-
 import { FileEntity, ImageEntity, VideoEntity } from '../../model/media';
 
 export interface IMediaDomainService {
@@ -15,13 +13,6 @@ export interface IMediaDomainService {
     ownerId: string
   ): Promise<FileEntity[]>;
 
-  getAvailableVideos(
-    currentImageEntities: VideoEntity[],
-    newVideoIds: string[],
-    ownerId: string
-  ): Promise<VideoEntity[]>;
-
-  setMediaUsed(mediaType: MEDIA_TYPE, mediaIds: string[], userId: string): Promise<void>;
-  setMediaDelete(mediaType: MEDIA_TYPE, mediaIds: string[], userId: string): Promise<void>;
+  getAvailableVideos(newVideoIds: string[], ownerId: string): Promise<VideoEntity[]>;
 }
 export const MEDIA_DOMAIN_SERVICE_TOKEN = 'MEDIA_DOMAIN_SERVICE_TOKEN';

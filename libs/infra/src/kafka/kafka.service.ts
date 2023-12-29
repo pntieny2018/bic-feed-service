@@ -1,3 +1,4 @@
+import { HEADER_REQ_ID } from '@libs/common/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { Producer } from '@nestjs/microservices/external/kafka.interface';
@@ -6,6 +7,7 @@ import { Observable, from } from 'rxjs';
 import { v4 } from 'uuid';
 
 import { KAFKA_TOKEN } from './kafka.constant';
+import { IKafkaProducerMessage } from './kafka.interface';
 import { IKafkaService } from './kafka.service.interface';
 
 @Injectable()
@@ -20,23 +22,16 @@ export class KafkaService implements IKafkaService {
     this._producerOb = from(this._kafkaClient.connect());
   }
 
-  public emit<TInput>(topic: string, payload: TInput): void {
-    const hasKey = payload.hasOwnProperty('key') && payload.hasOwnProperty('value');
-
-    const topicName = `${topic}`;
+  public emit(topic: string, payload: IKafkaProducerMessage): void {
+    const topicName = `${process.env.KAFKA_ENV}.${topic}`;
     const headers = {
-      requestId: this._clsService.getId() ?? v4(),
+      [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
     };
-    const message = hasKey
-      ? {
-          key: payload['key'],
-          value: JSON.stringify(payload['value']),
-          headers,
-        }
-      : {
-          value: JSON.stringify(payload),
-          headers,
-        };
+    const message = {
+      key: payload['key'],
+      value: JSON.stringify(payload['value']),
+      headers,
+    };
 
     const record = {
       topic: topicName,
@@ -51,6 +46,35 @@ export class KafkaService implements IKafkaService {
           `Produced msg to ${topicName}: ${JSON.stringify({
             ...message,
             value: JSON.parse(message.value),
+          })}`
+        );
+        sub.unsubscribe();
+      },
+    });
+  }
+
+  public sendMessages(topic: string, messages: IKafkaProducerMessage[]): void {
+    const topicName = `${process.env.KAFKA_ENV}.${topic}`;
+    const headers = {
+      [HEADER_REQ_ID]: this._clsService.getId() ?? v4(),
+    };
+
+    const record = {
+      topic: topicName,
+      messages: messages.map((item) => ({
+        key: item['key'] || null,
+        value: JSON.stringify(item['value']),
+        headers,
+      })),
+    };
+
+    const sub = this._producerOb.subscribe({
+      next: (producer) => producer.send(record),
+      error: (e) => this._logger.error(`Producing msg to ${topicName} failed: ${e.message}`),
+      complete: () => {
+        this._logger.debug(
+          `Produced msg to ${topicName}: ${JSON.stringify({
+            ...record.messages,
           })}`
         );
         sub.unsubscribe();

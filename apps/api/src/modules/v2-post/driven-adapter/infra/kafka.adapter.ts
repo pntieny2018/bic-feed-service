@@ -1,4 +1,4 @@
-import { IKafkaService, KAFKA_SERVICE_TOKEN } from '@libs/infra/kafka';
+import { IKafkaProducerMessage, IKafkaService, KAFKA_SERVICE_TOKEN } from '@libs/infra/kafka';
 import { Inject } from '@nestjs/common';
 
 import { IKafkaAdapter } from '../../domain/infra-adapter-interface';
@@ -9,7 +9,11 @@ export class KafkaAdapter implements IKafkaAdapter {
     private readonly _kafkaService: IKafkaService
   ) {}
 
-  public async emit<T>(topic: string, payload: T): Promise<void> {
+  public async emit(topic: string, payload: IKafkaProducerMessage): Promise<void> {
     return this._kafkaService.emit(topic, payload);
+  }
+
+  public async sendMessages(topic: string, messages: IKafkaProducerMessage[]): Promise<void> {
+    return this._kafkaService.sendMessages(topic, messages);
   }
 }

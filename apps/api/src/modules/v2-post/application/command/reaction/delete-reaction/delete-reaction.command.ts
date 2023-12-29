@@ -1,11 +1,10 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { ICommand } from '@nestjs/cqrs';
-
-import { REACTION_TARGET } from '../../../../data-type';
 
 export type DeleteReactionCommandPayload = {
   userId: string;
   targetId: string;
-  target: REACTION_TARGET;
+  target: CONTENT_TARGET;
   reactionId?: string;
   reactionName: string;
 };

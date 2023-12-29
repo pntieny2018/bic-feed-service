@@ -29,15 +29,8 @@ export const POST_KO_MAPPING = {
           },
         },
       },
-      items: {
-        properties: {
-          id: {
-            type: 'keyword',
-          },
-          zindex: {
-            type: 'integer',
-          },
-        },
+      itemIds: {
+        type: 'keyword',
       },
       seriesIds: {
         type: 'keyword',
