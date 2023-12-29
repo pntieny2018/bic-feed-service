@@ -22,22 +22,9 @@ export class UserService implements IUserService {
     @Inject(USER_HTTP_TOKEN) private readonly _userHttpService: IHttpService
   ) {}
 
-  public async findProfileAndPermissionByUsername(username: string): Promise<UserDto> {
+  public async findProfileByUsername(username: string): Promise<UserDto> {
     try {
-      const user = await this._getUserByUserName(username);
-      user.permissions = await this.getPermissionByUserId(user.id);
-      return user;
-    } catch (e) {
-      this._logger.error(e);
-      return null;
-    }
-  }
-
-  public async findProfileAndPermissionById(id: string): Promise<UserDto> {
-    try {
-      const user = await this._getUserByUserId(id);
-      user.permissions = await this.getPermissionByUserId(user.id);
-      return user;
+      return this._getUserByUserName(username);
     } catch (e) {
       this._logger.error(e);
       return null;

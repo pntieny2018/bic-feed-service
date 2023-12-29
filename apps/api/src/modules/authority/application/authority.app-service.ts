@@ -1,8 +1,8 @@
 import { PERMISSION_KEY } from '@beincom/constants';
 import { Ability, subject } from '@casl/ability';
 import { SentryService } from '@libs/infra/sentry';
-import { UserPermissionDto, UserDto } from '@libs/service/user';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { IUserService, USER_SERVICE_TOKEN, UserPermissionDto, UserDto } from '@libs/service/user';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 
 import { SUBJECT } from '../../../common/constants';
 
@@ -12,17 +12,21 @@ import { IAuthorityAppService } from './authority.app-service.interface';
 export class AuthorityAppService implements IAuthorityAppService {
   private _abilities: Ability;
 
-  public constructor(private _sentryService: SentryService) {}
+  public constructor(
+    private _sentryService: SentryService,
+    @Inject(USER_SERVICE_TOKEN)
+    private readonly _userService: IUserService
+  ) {}
 
   public async buildAbility(user: UserDto): Promise<void> {
     try {
-      const cachedPermissions = user.permissions ?? null;
-      if (!cachedPermissions) {
+      const permissions = await this._userService.getPermissionByUserId(user.id);
+      if (!permissions) {
         this._abilities = new Ability([]);
         return;
       }
-      const permissions = AuthorityAppService.extractAbilitiesFromPermission(cachedPermissions);
-      this._abilities = new Ability(permissions);
+      const permissionsAbility = AuthorityAppService.extractAbilitiesFromPermission(permissions);
+      this._abilities = new Ability(permissionsAbility);
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new InternalServerErrorException(ex);
