@@ -32,17 +32,15 @@ export class NotiSeriesPublishedEventHandler implements IEventHandler<SeriesPubl
     const groupAdminIds = await this._groupAdapter.getGroupAdminIds(seriesEntity.getGroupIds());
     const notiGroupAdminIds = groupAdminIds.filter((id) => id !== authUser.id);
 
-    if (notiGroupAdminIds.length) {
-      const seriesDto = await this._contentBinding.seriesBinding(seriesEntity, {
-        actor: authUser,
-        authUser,
-      });
+    const seriesDto = await this._contentBinding.seriesBinding(seriesEntity, {
+      actor: authUser,
+      authUser,
+    });
 
-      await this._notiAdapter.sendSeriesPublishedNotification({
-        actor: authUser,
-        series: seriesDto,
-        targetUserIds: notiGroupAdminIds,
-      });
-    }
+    await this._notiAdapter.sendSeriesPublishedNotification({
+      actor: authUser,
+      series: seriesDto,
+      targetUserIds: notiGroupAdminIds,
+    });
   }
 }
