@@ -49,11 +49,6 @@ export class PostVideoProcessedHandler implements ICommandHandler<PostVideoProce
       switch (status) {
         case MEDIA_PROCESS_STATUS.COMPLETED:
           await this._postDomain.updatePostVideoSuccessProcessed(props);
-          await this._newsfeedDomain.dispatchContentIdToGroups({
-            contentId: post.getId(),
-            newGroupIds: post.getGroupIds(),
-            oldGroupIds: [],
-          });
           break;
         case MEDIA_PROCESS_STATUS.FAILED:
           await this._postDomain.updatePostVideoFailProcessed(props);
