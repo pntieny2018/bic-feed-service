@@ -136,10 +136,7 @@ export class PostDomainService implements IPostDomainService {
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
 
-    const postEntity = PostEntity.create({
-      groupIds: [],
-      userId,
-    });
+    const postEntity = PostEntity.create(userId);
 
     postEntity.setGroups(groups.map((group) => group.id));
     postEntity.setPrivacyFromGroups(groups);

@@ -28,11 +28,11 @@ export class PostEntity extends ContentEntity<PostAttributes> {
     super(props);
   }
 
-  public static create({ groupIds, userId }: { groupIds: string[]; userId: string }): PostEntity {
+  public static create(userId: string): PostEntity {
     const now = new Date();
     return new PostEntity({
       id: v4(),
-      groupIds,
+      groupIds: [],
       content: null,
       title: null,
       createdBy: userId,

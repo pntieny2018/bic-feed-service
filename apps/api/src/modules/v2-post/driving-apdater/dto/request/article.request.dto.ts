@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsUUID,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -84,6 +85,21 @@ export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
 
   public constructor(data: ScheduleArticleRequestDto) {
     super(data);
+    Object.assign(this, data);
+  }
+}
+
+export class CreateDraftArticleRequestDto {
+  @ApiProperty({
+    description: 'Audience',
+    type: AudienceRequestDto,
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @ValidateIf((i) => i.audience)
+  @Type(() => AudienceRequestDto)
+  public audience: AudienceRequestDto;
+  public constructor(data: CreateDraftArticleRequestDto) {
     Object.assign(this, data);
   }
 }
