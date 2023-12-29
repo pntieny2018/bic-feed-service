@@ -7,7 +7,7 @@ import { NestFactory } from '@nestjs/core';
 import { WorkerBootstrap } from './app.bootstrap';
 import { WorkerModule } from './worker.module';
 import './extension';
-
+// TODO: Add comment, remove soon
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(WorkerModule);
   const configService = app.get<ConfigService>(ConfigService);
