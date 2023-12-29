@@ -9,6 +9,7 @@ import {
   VERSION_1_10_0,
   VERSION_1_11_0,
   VERSION_1_12_0,
+  VERSION_1_13_0,
 } from './app.constant';
 
 export const ROUTES = {
@@ -348,6 +349,12 @@ export const ROUTES = {
     GET_LIST_IN_GROUP: {
       PATH: '/timeline/:groupId',
       VERSIONS: AppHelper.getVersionsSupported(),
+    },
+  },
+  INTERNAL: {
+    COUNT_CONTENTS_PER_WEEK: {
+      PATH: '/internal/contents/statistics',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
     },
   },
 };
