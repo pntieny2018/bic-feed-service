@@ -7,7 +7,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { DatabaseException } from '../../../../common/exceptions';
 import { LinkPreviewDto, MediaRequestDto } from '../../application/dto';
 import {
-  ContentHasSeenEvent,
+  ContentGetDetailEvent,
   PostDeletedEvent,
   PostPublishedEvent,
   PostScheduledEvent,
@@ -127,7 +127,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     if (postEntity.isPublished()) {
-      this.event.publish(new ContentHasSeenEvent({ contentId: postId, userId: authUserId }));
+      this.event.publish(new ContentGetDetailEvent({ contentId: postId, userId: authUserId }));
     }
 
     return postEntity;

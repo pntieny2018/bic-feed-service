@@ -30,6 +30,7 @@ export type SendContentUpdatedSeriesEventProps = {
 
 export interface ISeriesDomainService {
   findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]>;
+  getSeriesById(seriesId: string, authUser: UserDto): Promise<SeriesEntity>;
   findItemsInSeries(itemIds: string[], authUserId: string): Promise<(PostEntity | ArticleEntity)[]>;
   create(data: CreateSeriesProps): Promise<SeriesEntity>;
   update(input: UpdateSeriesProps): Promise<SeriesEntity>;

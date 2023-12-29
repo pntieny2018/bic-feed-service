@@ -10,3 +10,4 @@ export * from './get-series-in-content';
 export * from './get-total-draft';
 export * from './search-contents';
 export * from './count-content-per-week';
+export * from './get-welcome-content';

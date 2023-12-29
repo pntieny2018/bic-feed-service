@@ -37,6 +37,9 @@ export type FindContentIncludeOptions = {
   shouldIncludeSaved?: {
     userId?: string;
   };
+  shouldIncludeSeen?: {
+    userId?: string;
+  };
 
   shouldIncludeMarkReadImportant?: {
     userId: string;

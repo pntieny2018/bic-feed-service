@@ -1,0 +1,65 @@
+import { ArrayHelper } from '@libs/common/helpers';
+import { Inject } from '@nestjs/common';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
+import { STATIC_WELCOME_CONTENTS } from '../../../../constant';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '../../../../domain/repositoty-interface';
+import { WelcomeContentDto } from '../../../dto';
+
+import { GetWelcomeContentsQuery } from './get-welcome-contents.query';
+
+@QueryHandler(GetWelcomeContentsQuery)
+export class GetWelcomeContentsHandler
+  implements IQueryHandler<GetWelcomeContentsQuery, WelcomeContentDto[]>
+{
+  public constructor(
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepo: IContentRepository
+  ) {}
+
+  public async execute(query: GetWelcomeContentsQuery): Promise<WelcomeContentDto[]> {
+    const { authUser } = query.payload;
+
+    const contentIds = STATIC_WELCOME_CONTENTS.map((content) =>
+      content.list.map((item) => item.id)
+    ).flat();
+    const contentEntities = await this._contentRepo.findAll({
+      select: ['id', 'title', 'type'],
+      where: {
+        ids: contentIds,
+      },
+      include: {
+        shouldIncludeSeen: {
+          userId: authUser.id,
+        },
+      },
+    });
+
+    const contentMap = ArrayHelper.convertArrayToObject(
+      contentEntities.map((contentEntity) => {
+        return {
+          id: contentEntity.getId(),
+          title: contentEntity.getTitle(),
+          type: contentEntity.getType(),
+          isSeen: contentEntity.getIsSeen(),
+        };
+      }),
+      'id'
+    );
+    return STATIC_WELCOME_CONTENTS.map((item) => {
+      const list = [];
+      item.list.forEach((content) => {
+        if (contentMap[content.id]) {
+          list.push(contentMap[content.id]);
+        }
+      });
+      return new WelcomeContentDto({
+        title: item.title,
+        list,
+      });
+    });
+  }
+}

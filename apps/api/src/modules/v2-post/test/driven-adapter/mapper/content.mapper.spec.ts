@@ -85,6 +85,7 @@ describe('ContentMapper', () => {
       const {
         groups,
         isSaved,
+        isSeen,
         itemIds,
         markedReadPost,
         ownerReactions,
@@ -104,6 +105,7 @@ describe('ContentMapper', () => {
       const {
         groups,
         isSaved,
+        isSeen,
         itemIds,
         markedReadPost,
         ownerReactions,
@@ -123,6 +125,7 @@ describe('ContentMapper', () => {
       const {
         groups,
         isSaved,
+        isSeen,
         itemIds,
         markedReadPost,
         ownerReactions,
