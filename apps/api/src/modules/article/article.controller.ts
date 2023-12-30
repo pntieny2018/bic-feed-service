@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -17,7 +18,6 @@ import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { PostResponseDto } from '../post/dto/responses';
-import { UserDto } from '../v2-user/application';
 
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';

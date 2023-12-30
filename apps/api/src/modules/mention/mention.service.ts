@@ -1,12 +1,13 @@
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
+
 import { UserMentionDto } from './dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class MentionService {
   public constructor(
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService
+    @Inject(USER_SERVICE_TOKEN)
+    private _userAppService: IUserService
   ) {}
 
   /**
@@ -15,7 +16,9 @@ export class MentionService {
    * @returns Promise resolve UserSharedDto[]
    */
   public async resolve(userIds: string[]): Promise<UserDto[]> {
-    if (!userIds.length) return [];
+    if (!userIds.length) {
+      return [];
+    }
     const users = await this._userAppService.findAllByIds(userIds);
     return users;
   }
@@ -68,7 +71,9 @@ export class MentionService {
       }
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
-          if (cm.mentions?.length) userIds.push(...cm.mentions);
+          if (cm.mentions?.length) {
+            userIds.push(...cm.mentions);
+          }
         }
       }
     }
@@ -94,7 +99,9 @@ export class MentionService {
         const mentions = [];
         post.mentions.forEach((userId) => {
           const user = usersInfo.find((u) => u.id === userId);
-          if (user) mentions.push(user);
+          if (user) {
+            mentions.push(user);
+          }
         });
         post.mentions = mentions.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
       }

@@ -1,4 +1,4 @@
-import { UserDto } from '../../modules/v2-user/application';
+import { UserDto } from '@libs/service/user';
 
 export interface IResponseMessage {
   success: string;

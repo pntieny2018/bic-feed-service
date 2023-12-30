@@ -1,10 +1,11 @@
+import { UserModule as LibUserModule } from '@libs/service/user';
 import { Module } from '@nestjs/common';
+
 import { MentionService } from './mention.service';
 import { ValidateMentionConstraint } from './validators/validate-mention.validator';
-import { UserModuleV2 } from '../v2-user/user.module';
 
 @Module({
-  imports: [UserModuleV2],
+  imports: [LibUserModule],
   providers: [MentionService, ValidateMentionConstraint],
   exports: [MentionService],
 })

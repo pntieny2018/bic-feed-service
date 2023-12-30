@@ -1,7 +1,7 @@
+import { GroupDto } from '@libs/service/group';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
-import { GroupDto } from '../../../v2-group/application';
+import { IsUUID } from 'class-validator';
 
 export class TagResponseDto {
   @ApiProperty()

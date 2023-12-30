@@ -1,6 +1,6 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { UserDto } from '../../../v2-user/application';
 import { CONTENT_DOMAIN_SERVICE_TOKEN, IContentDomainService } from '../domain-service/interface';
 import { ContentAccessDeniedException } from '../exception';
 

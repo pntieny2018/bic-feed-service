@@ -89,7 +89,6 @@ export const newsfeedDtoMock = {
     id: '7b63852c-5249-499a-a32b-6bdaa2761fc2',
     username: 'testuser',
     fullname: 'test user',
-    email: 'test@evol.vn',
     avatar:
       'https://media.beincom.io/image/variants/user/avatar/1e65c01e-7916-46aa-b5a8-aeea19cfef97',
     is_deactivated: false,

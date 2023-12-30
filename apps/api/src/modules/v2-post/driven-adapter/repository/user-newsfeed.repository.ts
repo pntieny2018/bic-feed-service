@@ -17,6 +17,7 @@ import {
   LibUserNewsfeedRepository,
 } from '@libs/database/postgres/repository';
 import { Injectable } from '@nestjs/common';
+import { Op, Sequelize } from 'sequelize';
 
 import {
   GetContentIdsCursorPaginationByUserIdProps,
@@ -71,21 +72,13 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
     const { userId, after, limit, isSavedBy, type, createdBy, isImportant } =
       getNewsfeedPaginationProps;
     const findOption: FindOptions<UserNewsFeedModel> = {
-      select: ['userId', 'postId', 'publishedAt'],
+      select: ['postId', 'publishedAt'],
       where: { userId },
       whereRaw: this._filterUnArchivedContent(),
     };
 
     let sortColumns: any = ['publishedAt'];
-
-    if (isImportant) {
-      findOption.where = {
-        ...findOption.where,
-        isImportant,
-      };
-      findOption.selectRaw = [this._libContentRepo.loadMarkReadPost(userId, 'markedReadPost')];
-      sortColumns = ['markedReadPost', ORDER.ASC];
-    }
+    const subQuery = false;
 
     if (isSavedBy) {
       findOption.include = [
@@ -94,6 +87,11 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
           as: 'userSavePosts',
           required: true,
           where: { userId: isSavedBy },
+          on: {
+            post_id: {
+              [Op.eq]: Sequelize.col('UserNewsFeedModel.post_id'),
+            },
+          },
         },
       ];
       sortColumns = [{ model: UserSavePostModel, as: 'userSavePosts', field: 'createdAt' }];
@@ -113,12 +111,16 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
       };
     }
 
-    const { rows, meta } = await this._libUserNewsfeedRepo.cursorPaginate(findOption, {
-      limit,
-      after,
-      order: ORDER.DESC,
-      sortColumns,
-    });
+    const { rows, meta } = await this._libUserNewsfeedRepo.cursorPaginate(
+      findOption,
+      {
+        limit,
+        after,
+        order: ORDER.DESC,
+        sortColumns,
+      },
+      subQuery
+    );
 
     return {
       rows: rows.map((row) => row.postId),

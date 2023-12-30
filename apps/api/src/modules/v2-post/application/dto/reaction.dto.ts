@@ -1,9 +1,8 @@
 import { CONTENT_TARGET } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { IQueryResult } from '@nestjs/cqrs';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-
-import { UserDto } from '../../../v2-user/application';
 
 export class ReactionDto {
   @ApiProperty()

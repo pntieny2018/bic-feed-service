@@ -1,16 +1,17 @@
+import { UserDto } from '@libs/service/user';
 import { ApiProperty } from '@nestjs/swagger';
-import { PageDto } from '../../../../common/dto';
 import { Expose, Transform } from 'class-transformer';
-import { CommentResponseDto } from '../../../comment/dto/response';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsEnum, IsUUID } from 'class-validator';
-import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
-import { MediaResponseDto } from '../../../media/dto/response';
+
+import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { ItemInSeriesResponseDto } from '../../../article/dto/responses';
+import { CommentResponseDto } from '../../../comment/dto/response';
+import { MediaResponseDto } from '../../../media/dto/response';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
 import { PostInSeriesResponseDto } from '../../../post/dto/responses/post-in-series.response.dto';
-import { UserDto } from '../../../v2-user/application';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
 
 export class SeriesResponseDto {
   @ApiProperty({

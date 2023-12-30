@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import {
@@ -8,9 +9,9 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { Op } from 'sequelize';
+
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { CategoryModel } from '../../../database/models/category.model';
-import { UserDto } from '../../v2-user/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -30,7 +31,9 @@ export class CanUseCategoryConstraint implements ValidatorConstraintInterface {
     categoryIds: string[],
     args?: IExtendedValidationArguments
   ): Promise<boolean> {
-    if (categoryIds.length === 0) return true;
+    if (categoryIds.length === 0) {
+      return true;
+    }
     const user = args?.object[REQUEST_CONTEXT].user;
     const totalCatesCanAccessFromCateIds = await this._categoryModel.count({
       where: {

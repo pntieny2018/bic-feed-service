@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -16,7 +17,6 @@ import { AuthUser, ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { PinContentDto } from '../feed/dto/request/pin-content.dto';
-import { UserDto } from '../v2-user/application';
 
 import { PostAppService } from './application/post.app-service';
 import { GetAudienceContentDto } from './dto/requests/get-audience-content.response.dto';

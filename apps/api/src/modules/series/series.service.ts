@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -15,7 +16,6 @@ import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { PostStatus } from '../v2-post/data-type';
 import { ContentNotFoundException } from '../v2-post/domain/exception';
-import { UserDto } from '../v2-user/application';
 
 import { GetSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
