@@ -1,5 +1,6 @@
 import { KafkaHealthBootstrap } from '@libs/common/health-check/kafka-health.bootstrap';
 import { KafkaGateway } from '@libs/infra/kafka';
+import { TracingInterceptor } from '@libs/infra/log';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -10,6 +11,7 @@ import './extension';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(WorkerModule);
+  app.useGlobalInterceptors(new TracingInterceptor());
   const configService = app.get<ConfigService>(ConfigService);
 
   KafkaGateway.init(app, configService)
