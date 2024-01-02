@@ -1,10 +1,9 @@
-import { Command, CommandRunner } from 'nest-commander';
-import { InjectModel } from '@nestjs/sequelize';
-import { QueryTypes } from 'sequelize';
-import { CommentModel } from '../database/models/comment.model';
-import { PostModel } from '../database/models/post.model';
-import { NIL } from 'uuid';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { CommentModel, PostModel } from '@libs/database/postgres/model';
+import { InjectModel } from '@nestjs/sequelize';
+import { Command, CommandRunner } from 'nest-commander';
+import { QueryTypes } from 'sequelize';
+import { NIL } from 'uuid';
 @Command({
   name: 'fix:comment-replies-count',
   description: 'Migration data reply count and related posts',

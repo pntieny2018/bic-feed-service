@@ -11,7 +11,7 @@ import {
   CONTENT_VALIDATOR_TOKEN,
   IContentValidator,
 } from '@api/modules/v2-post/domain/validator/interface';
-import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, LANGUAGE, ORDER, PRIVACY } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { PostGroupModel, PostModel } from '@libs/database/postgres/model';
@@ -132,6 +132,17 @@ export class ContentRepository implements IContentRepository {
   public async updateContentPrivacy(contentIds: string[], privacy: PRIVACY): Promise<void> {
     await this._libContentRepo.update(
       { privacy },
+      {
+        where: {
+          id: contentIds,
+        },
+      }
+    );
+  }
+
+  public async updateContentLang(contentIds: string[], lang: LANGUAGE): Promise<void> {
+    await this._libContentRepo.update(
+      { lang },
       {
         where: {
           id: contentIds,

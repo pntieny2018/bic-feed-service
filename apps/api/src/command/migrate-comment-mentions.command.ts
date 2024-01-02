@@ -1,8 +1,8 @@
-import { Command, CommandRunner } from 'nest-commander';
-import { InjectModel } from '@nestjs/sequelize';
-import { QueryTypes } from 'sequelize';
-import { CommentModel } from '../database/models/comment.model';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { CommentModel } from '@libs/database/postgres/model';
+import { InjectModel } from '@nestjs/sequelize';
+import { Command, CommandRunner } from 'nest-commander';
+import { QueryTypes } from 'sequelize';
 
 //npx ts-node -r tsconfig-paths/register src/command/cli.ts migrate:comment-mentions
 @Command({

@@ -1,13 +1,11 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { CONTENT_STATUS } from '@beincom/constants';
+import { PostModel, PostTagModel, TagModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostStatus } from '../database/models/post.model';
-import { PostTagModel } from '../database/models/post-tag.model';
-import { TagModel } from '../database/models/tag.model';
+import { Command, CommandRunner } from 'nest-commander';
 
 @Command({ name: 'tag:update-total-used', description: 'Update total used for all tags' })
 export class UpdateTagTotalUsedCommand implements CommandRunner {
   public constructor(
-    @InjectModel(PostModel) private _postModel: typeof PostModel,
     @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
     @InjectModel(TagModel) private _tagModel: typeof TagModel
   ) {}
@@ -24,7 +22,7 @@ export class UpdateTagTotalUsedCommand implements CommandRunner {
         ],
       });
       const totalUsedMapping = tagPosts.reduce((result, current) => {
-        if (current.post.status === PostStatus.PUBLISHED) {
+        if (current.post.status === CONTENT_STATUS.PUBLISHED) {
           if (result[current.tagId]) {
             result[current.tagId] += 1;
           } else {

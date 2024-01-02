@@ -1,15 +1,18 @@
+import { ArticleEntity, PostEntity } from '@api/modules/v2-post/domain/model/content';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface';
+import { CONTENT_TYPE } from '@beincom/constants';
 import { SearchTotalHits } from '@elastic/elasticsearch/lib/api/types';
 import { StringHelper } from '@libs/common/helpers';
-import { PostAttributes } from '@libs/database/postgres/model';
+import { FailedProcessPostModel, PostAttributes } from '@libs/database/postgres/model';
 import { SentryService } from '@libs/infra/sentry';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 
 import { ElasticsearchHelper } from '../../common/helpers';
-import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
-import { PostType } from '../../database/models/post.model';
-import { PostService } from '../post/post.service';
 
 import { ElasticsearchQueryBuilder } from './elasticsearch-query.builder';
 import {
@@ -32,12 +35,13 @@ export class SearchService {
   protected logger = new Logger(SearchService.name);
 
   public constructor(
-    protected readonly postService: PostService,
     protected readonly sentryService: SentryService,
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly elasticsearchQueryBuilder: ElasticsearchQueryBuilder,
     @InjectModel(FailedProcessPostModel)
-    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
+    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel,
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentRepo: IContentRepository
   ) {}
 
   public async addPostsToSearch(
@@ -50,10 +54,10 @@ export class SearchService {
       if (post.isHidden === true) {
         continue;
       }
-      if (post.type === PostType.ARTICLE) {
+      if (post.type === CONTENT_TYPE.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
       }
-      if (post.type === PostType.POST) {
+      if (post.type === CONTENT_TYPE.POST) {
         post.content =
           !post.content || StringHelper.containsOnlySpace(post.content)
             ? undefined
@@ -122,9 +126,7 @@ export class SearchService {
     });
 
     for (const item of groupSuccessItemsByLang) {
-      await this.postService.updateData(item.ids, {
-        lang: item.lang,
-      });
+      await this._contentRepo.updateContentLang(item.ids, item.lang);
     }
   }
 
@@ -134,10 +136,10 @@ export class SearchService {
       if (dataIndex.isHidden === true) {
         continue;
       }
-      if (dataIndex.type === PostType.ARTICLE) {
+      if (dataIndex.type === CONTENT_TYPE.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       }
-      if (dataIndex.type === PostType.POST) {
+      if (dataIndex.type === CONTENT_TYPE.POST) {
         dataIndex.content =
           !dataIndex.content || StringHelper.containsOnlySpace(dataIndex.content)
             ? undefined
@@ -153,7 +155,7 @@ export class SearchService {
         });
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
         if (dataIndex.lang !== newLang) {
-          await this.postService.updateData([dataIndex.id], { lang: newLang });
+          await this._contentRepo.updateContentLang([dataIndex.id], newLang);
           const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(dataIndex.lang);
           await this.elasticsearchService.delete({ index: oldIndex, id: `${dataIndex.id}` });
         }
@@ -242,11 +244,23 @@ export class SearchService {
   }
 
   public async updateAttachedSeriesForPost(ids: string[]): Promise<void> {
-    const posts = await this.postService.getPostsWithSeries(ids);
+    const posts = await this._contentRepo.findAll({
+      include: {
+        shouldIncludeSeries: true,
+      },
+      where: {
+        ids,
+      },
+    });
     for (const post of posts) {
-      await this.updateAttributePostToSearch(post, {
-        seriesIds: post.postSeries.map((series) => series.seriesId),
-      });
+      const seriesIds = (post as PostEntity | ArticleEntity).getSeriesIds();
+
+      await this.updateAttributePostToSearch(
+        { id: post.getId(), lang: post.getLang() },
+        {
+          seriesIds,
+        }
+      );
     }
   }
 

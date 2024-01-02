@@ -1,9 +1,10 @@
-import { QueryTypes } from 'sequelize';
+import { CONTENT_STATUS } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostModel } from '@libs/database/postgres/model';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
-import { PostModel, PostStatus } from '../database/models/post.model';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { QueryTypes } from 'sequelize';
 
 @Command({
   name: 'migrate:published-time-content',
@@ -25,7 +26,7 @@ export class MigratePublishedTimeContentCommand implements CommandRunner {
           WHERE status = :status`,
         {
           replacements: {
-            status: PostStatus.PUBLISHED,
+            status: CONTENT_STATUS.PUBLISHED,
           },
           type: QueryTypes.UPDATE,
         }

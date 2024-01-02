@@ -1,8 +1,7 @@
+import { CommentReactionModel, PostReactionModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
 import { Sequelize } from 'sequelize';
-import { CommentReactionModel } from '../database/models/comment-reaction.model';
-import { PostReactionModel } from '../database/models/post-reaction.model';
 
 @Command({
   name: 'export-reaction',

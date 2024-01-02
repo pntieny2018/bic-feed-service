@@ -7,15 +7,18 @@ import { UserModule } from '@libs/service/user/user.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
-import { NotificationModule } from '../../notification';
 import { AuthorityModule } from '../authority';
 import { QueuePublisherModule } from '../queue-publisher/queue-publisher.module';
 import { SearchModule } from '../search';
 import { NotificationModuleV2 } from '../v2-notification/notification.module';
 import { WebSocketModule } from '../ws/ws.module';
 
-import { REPORT_REPOSITORY_TOKEN } from './domain/repositoty-interface';
-import { ReportRepository } from './driven-adapter/repository';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
+  TAG_REPOSITORY_TOKEN,
+} from './domain/repositoty-interface';
+import { ContentRepository, ReportRepository, TagRepository } from './driven-adapter/repository';
 import { ArticleController } from './driving-apdater/controller/article.controller';
 import { CategoryController } from './driving-apdater/controller/category.controller';
 import { CommentController } from './driving-apdater/controller/comment.controller';
@@ -54,7 +57,6 @@ import {
     CqrsModule,
     AuthorityModule,
     KafkaModule,
-    NotificationModule,
     NotificationModuleV2,
     WebSocketModule,
     EventModule,
@@ -102,6 +104,14 @@ import {
     {
       provide: REPORT_REPOSITORY_TOKEN, // TODO: remove after remove old search module
       useClass: ReportRepository,
+    },
+    {
+      provide: CONTENT_REPOSITORY_TOKEN,
+      useClass: ContentRepository,
+    },
+    {
+      provide: TAG_REPOSITORY_TOKEN,
+      useClass: TagRepository,
     },
     ...elasticProvider,
   ],

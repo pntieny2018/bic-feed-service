@@ -1,7 +1,9 @@
+import { ENDPOINT } from '@api/common/constants/endpoint.constant';
 import { CONTENT_TYPE } from '@beincom/constants';
-import { StringHelper } from '@libs/common/helpers';
+import { AxiosHelper, StringHelper } from '@libs/common/helpers';
+import { IHttpService, NOTIFICATION_HTTP_TOKEN } from '@libs/infra/http';
 import { KAFKA_TOPIC } from '@libs/infra/kafka';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { v4 } from 'uuid';
 
 import {
@@ -20,7 +22,7 @@ import {
   SeriesHasBeenRemoveItem,
 } from '../../../../common/constants';
 import { ArticleDto, PostDto, SeriesDto } from '../../../v2-post/application/dto';
-import { TargetType, VerbActivity } from '../../data-type';
+import { SpecificNotificationSettings, TargetType, VerbActivity } from '../../data-type';
 import { IKafkaAdapter, KAFKA_ADAPTER } from '../../domain/infra-adapter-interface';
 import {
   ArticleActivityObjectDto,
@@ -50,10 +52,34 @@ import {
 export class ContentNotificationApplicationService
   implements IContentNotificationApplicationService
 {
+  private readonly _logger = new Logger(ContentNotificationApplicationService.name);
+
   public constructor(
     @Inject(KAFKA_ADAPTER)
-    private readonly _kafkaAdapter: IKafkaAdapter
+    private readonly _kafkaAdapter: IKafkaAdapter,
+    @Inject(NOTIFICATION_HTTP_TOKEN) private readonly _notiHttpService: IHttpService
   ) {}
+
+  public async getSpecificNotificationSettings(
+    userId: string,
+    targetId: string
+  ): Promise<SpecificNotificationSettings> {
+    try {
+      const response = await this._notiHttpService.get(
+        AxiosHelper.injectParamsToStrUrl(
+          ENDPOINT.NOTIFICATION.INTERNAL.SPECIFIC_NOTIFICATION_SETTINGS,
+          {
+            userId,
+            targetId,
+          }
+        )
+      );
+
+      return AxiosHelper.getDataResponse<SpecificNotificationSettings>(response as any);
+    } catch (e) {
+      this._logger.debug(e);
+    }
+  }
 
   public async sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void> {
     const { actor, post } = payload;

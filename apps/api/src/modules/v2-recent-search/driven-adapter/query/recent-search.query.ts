@@ -1,9 +1,9 @@
 import { PaginationResult } from '@libs/database/postgres/common';
+import { RecentSearchModel } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 
-import { RecentSearchModel } from '../../../../database/models/recent-search.model';
 import { RecentSearchType } from '../../data-type';
 import {
   IRecentSearchFactory,

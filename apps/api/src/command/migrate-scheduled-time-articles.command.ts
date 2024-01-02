@@ -1,9 +1,10 @@
-import { QueryTypes } from 'sequelize';
+import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostModel } from '@libs/database/postgres/model';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
-import { PostModel, PostStatus, PostType } from '../database/models/post.model';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { QueryTypes } from 'sequelize';
 
 @Command({
   name: 'migrate:scheduled-time-articles',
@@ -25,7 +26,7 @@ export class MigrateScheduledTimeArticlesCommand implements CommandRunner {
           WHERE type = :type AND scheduled_at IS NULL AND published_at IS NOT NULL`,
         {
           replacements: {
-            type: PostType.ARTICLE,
+            type: CONTENT_TYPE.ARTICLE,
           },
           type: QueryTypes.UPDATE,
         }
@@ -37,9 +38,9 @@ export class MigrateScheduledTimeArticlesCommand implements CommandRunner {
           WHERE type = :type AND (status = :failed OR status = :waiting)`,
         {
           replacements: {
-            type: PostType.ARTICLE,
-            failed: PostStatus.SCHEDULE_FAILED,
-            waiting: PostStatus.WAITING_SCHEDULE,
+            type: CONTENT_TYPE.ARTICLE,
+            failed: CONTENT_STATUS.SCHEDULE_FAILED,
+            waiting: CONTENT_STATUS.WAITING_SCHEDULE,
           },
           type: QueryTypes.UPDATE,
         }

@@ -19,7 +19,6 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
-import { ArticleResponseDto } from '../../../article/dto/responses';
 import {
   AutoSaveArticleCommand,
   CreateDraftArticleCommand,
@@ -60,7 +59,7 @@ export class ArticleController {
 
   @ApiOperation({ summary: 'Create draft article' })
   @ApiOkResponse({
-    type: ArticleResponseDto,
+    type: ArticleDto,
     description: 'Create article successfully',
   })
   @Post(ROUTES.ARTICLE.CREATE.PATH)
