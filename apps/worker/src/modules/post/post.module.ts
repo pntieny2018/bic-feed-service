@@ -95,7 +95,7 @@ export class PostModule implements OnModuleInit {
       if (handler) {
         handler.bindProcessor(async (job: JobPro): Promise<void> => {
           const process = this._moduleRef.get<IProcessor>(adapter.processorToken);
-          await process.processMessage(job);
+          return process.processMessage(job);
         });
       }
     }

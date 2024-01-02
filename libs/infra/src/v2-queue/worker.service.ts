@@ -35,11 +35,11 @@ export class WorkerService implements IWorkerService {
 
     this._worker = new WorkerPro(
       queueName,
-      async (job: JobPro) => {
+      async (job: JobPro): Promise<void> => {
         this._logger.debug(
           `Job ${job.id} in ${queueName} be processed with data ${JSON.stringify(job.data)}`
         );
-        await handlers(job);
+        return handlers(job);
       },
       workerConfig
     );
