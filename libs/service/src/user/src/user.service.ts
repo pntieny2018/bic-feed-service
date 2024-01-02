@@ -22,28 +22,6 @@ export class UserService implements IUserService {
     @Inject(USER_HTTP_TOKEN) private readonly _userHttpService: IHttpService
   ) {}
 
-  public async findProfileAndPermissionByUsername(username: string): Promise<UserDto> {
-    try {
-      const user = await this._getUserByUserName(username);
-      user.permissions = await this.getPermissionByUserId(user.id);
-      return user;
-    } catch (e) {
-      this._logger.error(e);
-      return null;
-    }
-  }
-
-  public async findProfileAndPermissionById(id: string): Promise<UserDto> {
-    try {
-      const user = await this._getUserByUserId(id);
-      user.permissions = await this.getPermissionByUserId(user.id);
-      return user;
-    } catch (e) {
-      this._logger.error(e);
-      return null;
-    }
-  }
-
   public async findById(id: string): Promise<UserDto> {
     try {
       return this._getUserByUserId(id);
@@ -66,7 +44,7 @@ export class UserService implements IUserService {
     }
   }
 
-  private async _getUserByUserName(username: string): Promise<UserDto> {
+  public async findByUsername(username: string): Promise<UserDto> {
     if (!username) {
       return null;
     }

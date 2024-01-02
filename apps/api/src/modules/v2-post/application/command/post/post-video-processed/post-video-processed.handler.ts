@@ -35,7 +35,7 @@ export class PostVideoProcessedHandler implements ICommandHandler<PostVideoProce
     })) as PostEntity[];
 
     for (const post of posts) {
-      const actor = await this._userAdapter.getUserByIdWithPermission(post.get('createdBy'));
+      const actor = await this._userAdapter.getUserById(post.get('createdBy'));
       const props = {
         videoId,
         actor,
