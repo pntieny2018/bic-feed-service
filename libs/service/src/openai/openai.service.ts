@@ -12,7 +12,7 @@ import {
   GenerateQuestionResponse,
   IOpenAIService,
 } from '@libs/service/openai/openai.service.interface';
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Configuration, OpenAIApi } from 'openai';
 import { v4 } from 'uuid';
@@ -26,9 +26,12 @@ export class OpenAIService implements IOpenAIService {
     gpt_4k: 'gpt-3.5-turbo',
     gpt_16k: 'gpt-3.5-turbo-16k',
   };
+  private _logger = new Logger(OpenAIService.name);
+
   public constructor(
     private readonly _configService: ConfigService,
-    @Inject(LAMBDA_COUNT_TOKEN_HTTP_TOKEN) private readonly _httpService: IHttpService
+    @Inject(LAMBDA_COUNT_TOKEN_HTTP_TOKEN)
+    private readonly _httpService: IHttpService
   ) {}
 
   public async generateQuestion(props: GenerateQuestionProps): Promise<GenerateQuestionResponse> {
@@ -84,18 +87,25 @@ export class OpenAIService implements IOpenAIService {
         completion: completion.data,
       };
     } catch (e) {
+      this._logger.error(JSON.stringify(e));
       throw e;
     }
   }
+
   private async _getInputTokens(props: GenerateQuestionProps): Promise<number> {
     const { content } = props;
-    const response = await this._httpService.post(OPENAI_ENDPOINT.LAMBDA.COUNT_TOKEN, {
-      content,
-    });
-    if (response.status !== HttpStatus.OK) {
+    try {
+      const response = await this._httpService.post(OPENAI_ENDPOINT.LAMBDA.COUNT_TOKEN, {
+        content,
+      });
+      if (response.status !== HttpStatus.OK) {
+        throw new CountTokenException();
+      }
+      return +response.data + TOKEN_IN_CONTEXT;
+    } catch (e) {
+      this._logger.error(JSON.stringify(e));
       throw new CountTokenException();
     }
-    return +response.data + TOKEN_IN_CONTEXT;
   }
 
   private _getCompletionTokens(props: GenerateQuestionProps): number {
