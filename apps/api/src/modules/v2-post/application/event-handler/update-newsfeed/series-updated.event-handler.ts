@@ -16,7 +16,7 @@ export class FeedSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
   ) {}
 
   public async handle(event: SeriesUpdatedEvent): Promise<void> {
-    const { seriesEntity } = event.payload;
+    const { entity: seriesEntity } = event.payload;
 
     if (seriesEntity.isHidden() || !seriesEntity.isPublished()) {
       return;

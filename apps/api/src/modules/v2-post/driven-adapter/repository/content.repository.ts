@@ -1,40 +1,57 @@
+import {
+  ArticleCacheDto,
+  PostCacheDto,
+  SeriesCacheDto,
+} from '@api/modules/v2-post/application/dto';
+import {
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
+import {
+  CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
+} from '@api/modules/v2-post/domain/validator/interface';
 import { CONTENT_STATUS, ORDER, PRIVACY } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
 import { PostGroupModel, PostModel } from '@libs/database/postgres/model';
 import {
+  LibContentRepository,
   LibPostCategoryRepository,
   LibPostGroupRepository,
   LibPostSeriesRepository,
-  LibUserMarkReadPostRepository,
-  LibUserSeenPostRepository,
-  LibContentRepository,
   LibPostTagRepository,
+  LibUserMarkReadPostRepository,
   LibUserSavePostRepository,
+  LibUserSeenPostRepository,
 } from '@libs/database/postgres/repository';
 import {
   FindContentIncludeOptions,
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
-import { Injectable } from '@nestjs/common';
+import { UserDto } from '@libs/service/user';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
+import { flatten } from 'lodash';
 import { Sequelize, Transaction } from 'sequelize';
 
 import { ContentNotFoundException } from '../../domain/exception';
 import {
-  PostEntity,
-  ArticleEntity,
-  ContentEntity,
-  SeriesEntity,
-  PostAttributes,
-  SeriesAttributes,
   ArticleAttributes,
+  ArticleEntity,
   ContentAttributes,
+  ContentEntity,
+  PostAttributes,
+  PostEntity,
+  SeriesAttributes,
+  SeriesEntity,
 } from '../../domain/model/content';
 import {
   GetCursorPaginationPostIdsInGroup,
   IContentRepository,
+  IPostReactionRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
 } from '../../domain/repositoty-interface';
 import { ContentMapper } from '../mapper/content.mapper';
 
@@ -51,7 +68,13 @@ export class ContentRepository implements IContentRepository {
     private readonly _libUserSeenPostRepo: LibUserSeenPostRepository,
     private readonly _libUserMarkReadPostRepo: LibUserMarkReadPostRepository,
     private readonly _libUserSavePostRepo: LibUserSavePostRepository,
-    private readonly _contentMapper: ContentMapper
+    private readonly _contentMapper: ContentMapper,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly contentCacheRepository: IContentCacheRepository,
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepository: IPostReactionRepository,
+    @Inject(forwardRef(() => CONTENT_VALIDATOR_TOKEN))
+    private readonly _contentValidator: IContentValidator
   ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
@@ -286,12 +309,71 @@ export class ContentRepository implements IContentRepository {
     return this._contentMapper.toDomain(content);
   }
 
+  public async findContentWithCache(
+    findOnePostOptions: FindContentProps,
+    user: UserDto
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const cachedContent = await this.contentCacheRepository.getContent(
+      `${findOnePostOptions.where.id}`
+    );
+    if (cachedContent) {
+      await this._contentValidator.validateContentReported(cachedContent.id, user.id);
+      await this._contentValidator.validateContentArchived(user, cachedContent.groups);
+      return this._contentMapper.cacheToDomain(cachedContent);
+    }
+
+    const content = await this._libContentRepo.findOne(findOnePostOptions);
+    if (!content) {
+      return null;
+    }
+    const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents([
+      content.id,
+    ]);
+
+    const contentEntity = this._contentMapper.toDomain(content, contentReactionCounts);
+    await this.contentCacheRepository.setContents([contentEntity]);
+    return contentEntity;
+  }
+
   public async findAll(
     findAllPostOptions: FindContentProps,
     offsetPaginate?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
     const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
     return contents.map((content) => this._contentMapper.toDomain(content));
+  }
+
+  public async findContentsWithCache(
+    findAllPostOptions: FindContentProps,
+    offsetPaginate?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const contentIds = findAllPostOptions.where.ids;
+    const contentsCache: (ArticleCacheDto | PostCacheDto | SeriesCacheDto)[] = flatten(
+      await this.contentCacheRepository.getContents(contentIds)
+    );
+
+    const cacheContentsEntity = contentsCache.map((content) =>
+      this._contentMapper.cacheToDomain(content)
+    );
+
+    findAllPostOptions.where.ids = contentIds.filter(
+      (id: string) => !contentsCache.find((content) => content.id === id)
+    );
+
+    if (findAllPostOptions.where.ids.length === 0) {
+      return cacheContentsEntity;
+    }
+
+    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
+    const contentReactionCounts = await this._postReactionRepository.getAndCountReactionByContents(
+      findAllPostOptions.where.ids
+    );
+
+    const dbContentsEntity = contents.map((content) =>
+      this._contentMapper.toDomain(content, contentReactionCounts)
+    );
+    await this.contentCacheRepository.setContents(dbContentsEntity);
+    return [...dbContentsEntity, ...cacheContentsEntity];
   }
 
   public async getContentById(
@@ -334,6 +416,8 @@ export class ContentRepository implements IContentRepository {
       ],
       { ignoreDuplicates: true }
     );
+
+    await this.contentCacheRepository.increaseSeenContentCount(postId);
   }
 
   public async hasSeen(postId: string, userId: string): Promise<boolean> {
@@ -356,6 +440,23 @@ export class ContentRepository implements IContentRepository {
       ],
       { ignoreDuplicates: true }
     );
+  }
+
+  public async getMarkReadImportant(
+    postIds: string[],
+    userId: string
+  ): Promise<Record<string, boolean>> {
+    const contents = await this._libUserMarkReadPostRepo.findMany({
+      where: {
+        postId: postIds,
+        userId,
+      },
+    });
+
+    return contents.reduce((acc, content) => {
+      acc[content.postId] = true;
+      return acc;
+    }, {});
   }
 
   public async findPinnedContentIdsByGroupId(groupId: string): Promise<string[]> {
@@ -466,6 +567,23 @@ export class ContentRepository implements IContentRepository {
         postId: contentId,
       },
     });
+  }
+
+  public async getSavedContentIds(
+    userId: string,
+    contentIds: string[]
+  ): Promise<Record<string, boolean>> {
+    const contents = await this._libUserSavePostRepo.findMany({
+      where: {
+        userId,
+        postId: contentIds,
+      },
+    });
+
+    return contents.reduce((acc, content) => {
+      acc[content.postId] = true;
+      return acc;
+    }, {});
   }
 
   public async createPostSeries(seriesId: string, postId: string): Promise<void> {

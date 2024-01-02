@@ -1,3 +1,13 @@
+import {
+  DeleteCacheContentWhenAdminHidHandler,
+  DeleteCacheContentWhenContentDeletedHandler,
+  DeleteCacheContentWhenContentUpdatedHandler,
+  DeleteCacheContentWhenSeriesUpdatedItemsHandler,
+} from '@api/modules/v2-post/application/event-handler/cache/delete-cache';
+import { DetachNewsfeedWhenReportCreatedEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-created.event-handler';
+import { DetachNewsfeedWhenReportHiddenEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-hidden.event-handler';
+import { CONTENT_CACHE_REPOSITORY_TOKEN } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
+
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
@@ -44,6 +54,10 @@ import {
 } from '../application/event-handler/article';
 import { ReportHiddenEventHandler } from '../application/event-handler/content';
 import {
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
+} from '../application/event-handler/mark-seen-content';
+import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
   PostScheduledEventHandler,
@@ -58,12 +72,6 @@ import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
 } from '../application/event-handler/set-video-state';
-
-import {
-  SeenContentWhenReactionCreatedEventHandler,
-  SeenContentWhenGetDetailEventHandler,
-} from '../application/event-handler/mark-seen-content';
-
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -117,10 +125,8 @@ import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
-import { ContentRepository } from '../driven-adapter/repository';
+import { ContentCacheRepository, ContentRepository } from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
-import { DetachNewsfeedWhenReportHiddenEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-hidden.event-handler';
-import { DetachNewsfeedWhenReportCreatedEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-created.event-handler';
 
 export const postProvider = [
   /** Application Event Handler */
@@ -138,6 +144,12 @@ export const postProvider = [
   VideoPostUpdatedEventHandler,
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
+
+  /** Cache Content Event Handler */
+  DeleteCacheContentWhenContentDeletedHandler,
+  DeleteCacheContentWhenContentUpdatedHandler,
+  DeleteCacheContentWhenSeriesUpdatedItemsHandler,
+  DeleteCacheContentWhenAdminHidHandler,
 
   SeenContentWhenReactionCreatedEventHandler,
   SeenContentWhenGetDetailEventHandler,
@@ -260,5 +272,9 @@ export const postProvider = [
   {
     provide: POST_GROUP_REPOSITORY_TOKEN,
     useClass: PostGroupRepository,
+  },
+  {
+    provide: CONTENT_CACHE_REPOSITORY_TOKEN,
+    useClass: ContentCacheRepository,
   },
 ];

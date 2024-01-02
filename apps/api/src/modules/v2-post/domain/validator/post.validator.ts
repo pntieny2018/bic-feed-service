@@ -7,7 +7,14 @@ import {
 } from '../../../authority/application/authority.app-service.interface';
 import { ContentEmptyContentException } from '../exception';
 import { PostEntity } from '../model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IPostGroupRepository,
+  IReportRepository,
+  POST_GROUP_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import {
   IUserAdapter,
   USER_ADAPTER,
@@ -28,9 +35,20 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected _authorityAppService: IAuthorityAppService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository
+    protected readonly _contentRepository: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepository: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepository: IPostGroupRepository
   ) {
-    super(_groupAdapter, _userAdapter, _authorityAppService, _contentRepository);
+    super(
+      _groupAdapter,
+      _userAdapter,
+      _authorityAppService,
+      _contentRepository,
+      _reportRepository,
+      _postGroupRepository
+    );
   }
 
   public async validatePublishContent(

@@ -16,7 +16,7 @@ export class QuizDto {
   public numberOfAnswers: number;
   public isRandom: boolean;
   public title: string;
-  public description?: string;
+  public description: string;
   public numberOfQuestionsDisplay?: number;
   public questions?: QuestionDto[];
   public createdAt: Date;
@@ -27,6 +27,8 @@ export class QuizDto {
     code: string;
     message: string;
   };
+  public createdBy?: string;
+  public timeLimit: number;
   public constructor(data: Partial<QuizDto>) {
     Object.assign(this, data);
   }

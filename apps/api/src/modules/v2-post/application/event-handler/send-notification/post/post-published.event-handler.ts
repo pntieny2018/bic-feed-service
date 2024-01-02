@@ -31,7 +31,7 @@ export class NotiPostPublishedEventHandler implements IEventHandler<PostPublishe
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       const postDto = await this._contentBinding.postBinding(postEntity, {

@@ -35,7 +35,7 @@ export type GetPaginationQuizzesProps = {
 export interface IQuizRepository {
   createQuiz(quizEntity: QuizEntity): Promise<void>;
   updateQuiz(quizEntity: QuizEntity): Promise<void>;
-  deleteQuiz(quizId: string): Promise<void>;
+  deleteQuiz(quizId: string, contentId: string): Promise<void>;
 
   findQuizById(quizId: string): Promise<QuizEntity>;
   findQuizByIdWithQuestions(quizId: string): Promise<QuizEntity>;

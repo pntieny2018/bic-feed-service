@@ -24,6 +24,10 @@ export interface IContentValidator {
 
   checkCanReadContent(post: ContentEntity, user: UserDto): Promise<void>;
 
+  validateContentReported(contentId: string, userId: string): Promise<void>;
+
+  validateContentArchived(user: UserDto, postGroupIds: string[]): Promise<void>;
+
   checkCanReadNotPublishedContent(contentEntity: ContentEntity, userId: string): Promise<void>;
 
   validateSeriesAndTags(groups: GroupDto[], seriesIds: string[], tags: TagEntity[]): Promise<void>;

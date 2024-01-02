@@ -79,6 +79,7 @@ export type GetAudiencesProps = GetContentAudienceProps;
 
 export interface IContentDomainService {
   getVisibleContent(id: string, excludeReportedByUserId?: string): Promise<ContentEntity>;
+  getContentForCacheById(id: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getRawContent(contentEntity: ContentEntity): string;
   getContentByIds(
     data: GetContentByIdsProps

@@ -5,6 +5,7 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
+import { UserDto } from '@libs/service/user';
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
@@ -44,7 +45,15 @@ export interface IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentWithCache(
+    findOnePostOptions: FindContentProps,
+    user: UserDto
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
+    findAllPostOptions: FindContentProps,
+    offsetPaginationProps?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+  findContentsWithCache(
     findAllPostOptions: FindContentProps,
     offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
@@ -59,6 +68,7 @@ export interface IContentRepository {
   markSeen(postId: string, userId: string): Promise<void>;
   hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
+  getMarkReadImportant(postIds: string[], userId: string): Promise<Record<string, boolean>>;
 
   findPinnedContentIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
@@ -66,6 +76,7 @@ export interface IContentRepository {
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
   saveContent(userId: string, contentId: string): Promise<void>;
   unSaveContent(userId: string, contentId: string): Promise<void>;
+  getSavedContentIds(userId: string, contentIds: string[]): Promise<Record<string, boolean>>;
 
   createPostSeries(seriesId: string, postId: string): Promise<void>;
   deletePostSeries(seriesId: string, postId: string): Promise<void>;

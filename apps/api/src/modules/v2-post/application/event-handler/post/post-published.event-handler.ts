@@ -22,7 +22,7 @@ export class PostPublishedEventHandler implements IEventHandler<PostPublishedEve
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       await this._tagDomain.increaseTotalUsedByContent(postEntity);

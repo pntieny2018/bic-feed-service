@@ -1,3 +1,5 @@
+import { CacheUserReportedContentIdsEventHandler } from '@api/modules/v2-post/application/event-handler/cache';
+
 import { REPORT_BINDING_TOKEN, ReportBinding } from '../application/binding';
 import { ReportCommentHandler } from '../application/command/comment';
 import { ReportContentHandler } from '../application/command/content';
@@ -28,6 +30,7 @@ export const reportProvider = [
 
   /* Application Event Handler */
   ReportCreatedEventHandler,
+  CacheUserReportedContentIdsEventHandler,
 
   /* Application Binding */
   {

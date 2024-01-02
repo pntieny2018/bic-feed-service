@@ -27,7 +27,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
 
   public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;
-    const postEntity = await this._postDomainService.getPostById(postId, authUser.id);
+    const postEntity = await this._postDomainService.getPostById(postId, authUser);
 
     await this._postValidator.checkCanReadContent(postEntity, authUser);
 

@@ -14,7 +14,7 @@ export class FilePostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       const { attachFileIds, detachFileIds } = postEntity.getState();

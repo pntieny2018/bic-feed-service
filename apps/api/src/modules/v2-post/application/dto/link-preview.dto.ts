@@ -1,4 +1,5 @@
 export class LinkPreviewDto {
+  public id?: string;
   public url: string;
   public domain: string;
   public image: string;
