@@ -243,6 +243,7 @@ export class PostModel extends Model<PostAttributes, InferCreationAttributes<Pos
   public markedReadPost?: boolean;
 
   public isSaved?: boolean;
+  public isSeen?: boolean;
 
   @BelongsTo(() => MediaModel, {
     foreignKey: 'cover',

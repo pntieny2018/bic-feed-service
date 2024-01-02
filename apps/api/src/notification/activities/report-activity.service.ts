@@ -1,7 +1,7 @@
+import { CONTENT_TARGET } from '@beincom/constants';
 import { Injectable } from '@nestjs/common';
 
 import { ObjectHelper } from '../../common/helpers';
-import { TargetType } from '../../modules/report-content/contstants';
 import {
   ActivityObject,
   ActorObject,
@@ -15,7 +15,7 @@ export class ReportActivityService {
     id: string;
     actor: ActorObject;
     targetId: string;
-    targetType: TargetType;
+    targetType: CONTENT_TARGET;
     status: string;
     details: Record<string, any>[];
     createdAt: Date;

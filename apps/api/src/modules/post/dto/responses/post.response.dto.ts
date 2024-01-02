@@ -1,6 +1,8 @@
+import { UserDto } from '@libs/service/user';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsEnum, IsUUID } from 'class-validator';
+
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { ArticleResponseDto } from '../../../article/dto/responses';
@@ -11,9 +13,9 @@ import { UserMentionDto } from '../../../mention/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { TagResponseDto } from '../../../tag/dto/responses/tag-response.dto';
 import { PostSettingDto } from '../common/post-setting.dto';
+
 import { AudienceResponseDto } from './audience.response.dto';
 import { PostSettingResponseDto } from './post-setting-response.dto';
-import { UserDto } from '../../../v2-user/application';
 
 export class CommunityResponseDto {
   @ApiProperty({

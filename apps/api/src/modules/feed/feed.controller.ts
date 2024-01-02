@@ -1,13 +1,15 @@
+import { UserDto } from '@libs/service/user';
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { PageDto } from '../../common/dto';
-import { FeedService } from './feed.service';
-import { PostResponseDto } from '../post/dto/responses';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { UserDto } from '../v2-user/application';
-import { ArticleResponseDto } from '../article/dto/responses';
 import { AuthUser } from '../../common/decorators';
+import { PageDto } from '../../common/dto';
+import { ArticleResponseDto } from '../article/dto/responses';
+import { PostResponseDto } from '../post/dto/responses';
+
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { FeedService } from './feed.service';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')

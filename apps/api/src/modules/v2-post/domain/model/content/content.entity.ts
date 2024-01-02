@@ -36,6 +36,7 @@ export type ContentAttributes = {
   updatedAt: Date;
   markedReadImportant?: boolean;
   isSaved?: boolean;
+  isSeen?: boolean;
   ownerReactions?: { id: string; reactionName: string }[];
   errorLog?: any;
   publishedAt?: Date;
@@ -177,6 +178,10 @@ export class ContentEntity<
     return this._props.type;
   }
 
+  public getIsSeen(): boolean {
+    return this._props.isSeen;
+  }
+
   public getGroupIds(): string[] {
     return this._props.groupIds || [];
   }
@@ -191,6 +196,10 @@ export class ContentEntity<
 
   public getQuiz(): QuizEntity {
     return this._props.quiz;
+  }
+
+  public getPublishedAt(): Date {
+    return this._props.publishedAt;
   }
 
   public isOwner(userId: string): boolean {

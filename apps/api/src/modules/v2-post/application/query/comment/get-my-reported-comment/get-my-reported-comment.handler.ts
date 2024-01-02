@@ -36,7 +36,7 @@ export class GetMyReportedCommentHandler
     const { commentId, authUser } = query.payload;
 
     const commentEntity = await this._commentDomain.getMyCommentById(commentId, authUser.id);
-    const comments = await this._commentBinding.commentsBinding([commentEntity], { authUser });
+    const comments = await this._commentBinding.commentsBinding([commentEntity]);
 
     const comment = comments[0];
 

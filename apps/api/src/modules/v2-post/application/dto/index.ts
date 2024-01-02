@@ -17,3 +17,4 @@ export * from './user-mention.dto';
 export * from './menu-settings.dto';
 export * from './content-hightlight.dto';
 export * from './cache.dto';
+export * from './welcome-content.dto';

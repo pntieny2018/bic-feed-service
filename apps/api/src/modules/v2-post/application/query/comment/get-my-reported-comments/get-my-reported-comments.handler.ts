@@ -43,9 +43,10 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
   public async execute(
     query: GetMyReportedCommentsQuery
   ): Promise<PaginatedResponse<ReportTargetDto>> {
-    const { authUser, limit, order, before, after } = query.payload;
+    const { authUser, limit, order, before, after, targetIds } = query.payload;
 
     const { rows: reportEntities, meta } = await this._reportRepo.getPagination({
+      targetIds,
       targetTypes: [CONTENT_TARGET.COMMENT],
       targetActorId: authUser.id,
       status: REPORT_STATUS.HIDDEN,
@@ -59,9 +60,7 @@ export class GetMyReportedCommentsHandler implements IQueryHandler<GetMyReported
     const commentIds = reportEntities.map((row) => row.get('targetId'));
     const commentEntities = await this._commentRepo.findAll({ id: commentIds });
 
-    const comments = await this._commentBinding.commentsBinding(commentEntities, {
-      authUser,
-    });
+    const comments = await this._commentBinding.commentsBinding(commentEntities);
 
     const commentMap = ArrayHelper.convertArrayToObject(comments, 'id');
     const reportReasonsCountMap = await this._reportDomain.getReportReasonsMapByTargetIds(

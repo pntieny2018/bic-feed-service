@@ -1,10 +1,12 @@
 import { File, Image, Video } from '@libs/common/dtos';
+import { Traceable } from '@libs/common/modules/opentelemetry';
 import { IHttpService, MEDIA_HTTP_TOKEN } from '@libs/infra/http';
 import { MEDIA_ENDPOINT } from '@libs/service/media/src/endpoint.constant';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { IMediaService } from './interface';
 
+@Traceable()
 @Injectable()
 export class MediaService implements IMediaService {
   private _logger = new Logger(MediaService.name);
@@ -77,6 +79,7 @@ export class MediaService implements IMediaService {
             return {
               id: i.id,
               url: i.originUrl,
+              hlsUrl: i.hlsUrl,
               name: i.properties.name,
               mimeType: i.properties.mimeType,
               width: i.properties.width,

@@ -1,17 +1,21 @@
-import { Job } from '@libs/infra/queue';
-import { JobId } from 'bull';
+import { QueueName } from '@libs/infra/v2-queue';
+
+import { ContentNewsFeedAttributes } from '../../domain/repositoty-interface';
 
 export const QUEUE_ADAPTER = 'QUEUE_ADAPTER';
 
-export type ContentScheduledJobPayload = {
-  contentId: string;
-  ownerId: string;
+export type ProducerAttachDetachNewsfeedJobPayload = {
+  content: ContentNewsFeedAttributes;
+  newGroupIds: string[];
+  oldGroupIds: string[];
 };
 
 export interface IQueueAdapter {
-  getJobById<T>(queueName: string, jobId: JobId): Promise<Job<T>>;
-  killJob(queueName: string, jobId: JobId): Promise<void>;
+  hasJob(queueName: QueueName, jobId: string): Promise<boolean>;
+  killJob(queueName: QueueName, jobId: string): Promise<void>;
   addQuizGenerateJob(quizId: string): Promise<void>;
   addQuizParticipantStartedJob(quizParticipantId: string, delayTime: number): Promise<void>;
-  addContentScheduledJobs(payload: ContentScheduledJobPayload[]): Promise<void>;
+  addProducerAttachDetachNewsfeedJob(
+    payload: ProducerAttachDetachNewsfeedJobPayload
+  ): Promise<void>;
 }

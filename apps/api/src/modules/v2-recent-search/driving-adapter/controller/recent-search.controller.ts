@@ -1,19 +1,20 @@
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { UserDto } from '@libs/service/user';
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ClassTransformer } from 'class-transformer';
-import { GetRecentSearchRequestDto } from '../dto/request/get-recent-search.request.dto';
-import { RecentSearchesResponseDto } from '../dto/response/recent-searches.response.dto';
-import { UserDto } from '../../../v2-user/application';
-import { CreateRecentSearchRequestDto } from '../dto/request/create-recent-search.request.dto';
-import { CleanRecentSearchesDto } from '../dto/request/clean-recent-searches.dto';
-import { FindRecentSearchesPaginationQuery } from '../../aplication/query/find-recent-searches/find-recent-searches-pagination.query';
-import { DeleteRecentSearchCommand } from '../../aplication/command/delete-recent-search/delete-recent-search.command';
-import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';
+
+import { VERSIONS_SUPPORTED } from '../../../../common/constants';
+import { AuthUser } from '../../../../common/decorators';
 import { CreateRecentSearchCommand } from '../../aplication/command/create-recent-search/create-recent-search.command';
 import { CreateRecentSearchDto } from '../../aplication/command/create-recent-search/create-recent-search.dto';
-import { AuthUser } from '../../../../common/decorators';
+import { DeleteRecentSearchCommand } from '../../aplication/command/delete-recent-search/delete-recent-search.command';
+import { FindRecentSearchesPaginationQuery } from '../../aplication/query/find-recent-searches/find-recent-searches-pagination.query';
+import { CleanRecentSearchesDto } from '../dto/request/clean-recent-searches.dto';
+import { CreateRecentSearchRequestDto } from '../dto/request/create-recent-search.request.dto';
+import { GetRecentSearchRequestDto } from '../dto/request/get-recent-search.request.dto';
+import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';
+import { RecentSearchesResponseDto } from '../dto/response/recent-searches.response.dto';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')

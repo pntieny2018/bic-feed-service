@@ -219,6 +219,9 @@ export class ContentDomainService implements IContentDomainService {
       orderOptions,
       before,
       after,
+      ...(isSaved && {
+        subQuery: false,
+      }),
     });
     return {
       rows: rows.map((row) => row.getId()),
@@ -242,6 +245,14 @@ export class ContentDomainService implements IContentDomainService {
       order = ORDER.DESC,
     } = props;
 
+    if (!groupIds.length) {
+      return {
+        rows: [],
+        meta: {
+          hasNextPage: false,
+        },
+      };
+    }
     if (isImportant) {
       return this.getImportantContentIds(props);
     }

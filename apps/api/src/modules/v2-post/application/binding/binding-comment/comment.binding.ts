@@ -27,13 +27,8 @@ export class CommentBinding implements ICommentBinding {
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
-  public async commentsBinding(
-    rows: CommentEntity[],
-    dataBinding: { authUser: UserDto }
-  ): Promise<CommentExtendedDto[]> {
-    const { authUser } = dataBinding;
-
-    const userData = await this._getUsersBindingInComment(rows, authUser);
+  public async commentsBinding(rows: CommentEntity[]): Promise<CommentExtendedDto[]> {
+    const userData = await this._getUsersBindingInComment(rows);
 
     const reactionsCount = await this._commentReactionRepo.getAndCountReactionByComments(
       rows.map((item) => item.get('id'))
@@ -59,7 +54,7 @@ export class CommentBinding implements ICommentBinding {
         actor,
         child: row.get('childs')
           ? new PaginatedResponse(
-              await this.commentsBinding(row.get('childs').rows, { authUser }),
+              await this.commentsBinding(row.get('childs').rows),
               row.get('childs').meta
             )
           : undefined,
@@ -78,13 +73,8 @@ export class CommentBinding implements ICommentBinding {
     return Promise.all(result);
   }
 
-  public async commentBinding(
-    commentEntity: CommentEntity,
-    dataBinding: { authUser: UserDto }
-  ): Promise<CommentBaseDto> {
-    const { authUser } = dataBinding;
-
-    const userData = await this._getUsersBindingInComment([commentEntity], authUser);
+  public async commentBinding(commentEntity: CommentEntity): Promise<CommentBaseDto> {
+    const userData = await this._getUsersBindingInComment([commentEntity]);
 
     const { actor, mentionUsers } = userData[commentEntity.get('id')];
 
@@ -107,18 +97,14 @@ export class CommentBinding implements ICommentBinding {
   }
 
   private async _getUsersBindingInComment(
-    commentEntities: CommentEntity[],
-    authUser?: UserDto
+    commentEntities: CommentEntity[]
   ): Promise<{ [commentId: string]: { actor: UserDto; mentionUsers: UserMentionDto } }> {
     const userIdsNeedToFind = uniq([
       ...commentEntities.map((item) => item.get('createdBy')),
       ...commentEntities.map((item) => item.get('mentions') || []).flat(),
     ]);
 
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq(userIdsNeedToFind),
-      authUser?.id
-    );
+    const users = await this._userAdapter.getUsersByIds(uniq(userIdsNeedToFind));
 
     return commentEntities.reduce((returnValue, current) => {
       const actor = users.find((user) => user.id === current.get('createdBy'));

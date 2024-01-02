@@ -1,6 +1,6 @@
+import { UserDto } from '@libs/service/user';
 import { v4 } from 'uuid';
 
-import { UserDto } from '../../../modules/v2-user/application';
 import { TypeActivity, VerbActivity } from '../../notification.constants';
 
 export class ActivityObject {

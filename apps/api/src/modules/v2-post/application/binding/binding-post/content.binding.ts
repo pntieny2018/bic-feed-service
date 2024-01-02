@@ -1,13 +1,14 @@
-import { EntityHelper } from '@api/common/helpers';
 import { CONTENT_STATUS, CONTENT_TYPE, PRIVACY } from '@beincom/constants';
 import { TRANSFORMER_VISIBLE_ONLY } from '@libs/common/constants/transfromer.constant';
 import { ArrayHelper } from '@libs/common/helpers';
+import { Span } from '@libs/common/modules/opentelemetry';
 import { GroupDto } from '@libs/service/group';
 import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import { instanceToInstance } from 'class-transformer';
 import { flatten, groupBy, uniq, pick, map } from 'lodash';
 
+import { EntityHelper } from '../../../../../common/helpers';
 import {
   IReportDomainService,
   REPORT_DOMAIN_SERVICE_TOKEN,
@@ -81,6 +82,8 @@ export class ContentBinding implements IContentBinding {
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
+
+  @Span()
   public async postBinding(
     postEntity: PostEntity,
     dataBinding: {
@@ -226,7 +229,7 @@ export class ContentBinding implements IContentBinding {
         commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
         totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
         content: postEntity.get('content'),
-        mentions: this.mapMentionWithUserInfo(mentionUsers),
+        mentions: this._mapMentionWithUserInfo(mentionUsers),
         linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
         tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
         quiz:
@@ -241,6 +244,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async articleBinding(
     articleEntity: ArticleEntity,
     dataBinding: {
@@ -407,6 +411,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async seriesBinding(
     seriesEntity: SeriesEntity,
     dataBinding: {
@@ -542,6 +547,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async seriesItemBinding(
     items: (PostEntity | ArticleEntity)[]
   ): Promise<(PostInSeriesDto | ArticleInSeriesDto)[]> {
@@ -593,6 +599,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async contentsBinding(
     contentEntities: (PostEntity | ArticleEntity | SeriesEntity)[],
     authUser: UserDto
@@ -615,14 +622,11 @@ export class ContentBinding implements IContentBinding {
     );
     const contentIds = contentEntities.map((contentEntity) => contentEntity.getId());
 
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq([...authorIds, ...mentionUserIds]),
-      authUser.id
-    );
+    const users = await this._userAdapter.getUsersByIds(uniq([...authorIds, ...mentionUserIds]));
     const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
 
     const groups = await this._groupAdapter.getGroupsByIds(groupIds);
-    const accessGroups = this.filterSecretGroupCannotAccess(groups, authUser);
+    const accessGroups = this._filterSecretGroupCannotAccess(groups, authUser);
 
     const communityIds = uniq(accessGroups.map((group) => group.rootGroupId));
     const communities = await this._groupAdapter.getGroupsByIds(communityIds);
@@ -671,7 +675,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
-  public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
+  private _mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
     if (!users || !users?.length) {
       return {};
     }
@@ -683,7 +687,6 @@ export class ContentBinding implements IContentBinding {
           [current.username]: {
             id: current.id,
             fullname: current.fullname,
-            email: current.email,
             username: current.username,
             avatar: current.avatar,
           },
@@ -691,7 +694,7 @@ export class ContentBinding implements IContentBinding {
       }, {});
   }
 
-  public filterSecretGroupCannotAccess(groups: GroupDto[], authUser?: UserDto): GroupDto[] {
+  private _filterSecretGroupCannotAccess(groups: GroupDto[], authUser?: UserDto): GroupDto[] {
     return groups.filter((group) => {
       const isUserNotInGroup = !authUser?.groups.includes(group.id);
       const isGuest = !authUser;
@@ -756,7 +759,7 @@ export class ContentBinding implements IContentBinding {
     actor?: UserDto;
     mentionUsers?: UserDto[];
   }): Promise<{ users: UserDto[]; actor: UserDto; mentionUsers: UserMentionDto }> {
-    const { authUser, createdBy, mentionUserIds = [], actor, mentionUsers } = data;
+    const { createdBy, mentionUserIds = [], actor, mentionUsers } = data;
 
     const userIdsNeedToFind = [];
 
@@ -767,10 +770,7 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...mentionUserIds);
     }
 
-    const users = await this._userAdapter.findAllAndFilterByPersonalVisibility(
-      uniq(userIdsNeedToFind),
-      authUser.id
-    );
+    const users = await this._userAdapter.getUsersByIds(uniq(userIdsNeedToFind));
 
     if (actor) {
       users.push(actor);
@@ -783,7 +783,7 @@ export class ContentBinding implements IContentBinding {
 
     let mentionUsersBinding: UserMentionDto = {};
     if (mentionUserIds && users.length) {
-      mentionUsersBinding = this.mapMentionWithUserInfo(
+      mentionUsersBinding = this._mapMentionWithUserInfo(
         users.filter((user) => mentionUserIds.includes(user.id))
       );
     }
@@ -799,7 +799,7 @@ export class ContentBinding implements IContentBinding {
     const { authUser, groupIds = [], groups } = data;
 
     const bindingGroups = groups || (await this._groupAdapter.getGroupsByIds(groupIds));
-    const accessGroups = this.filterSecretGroupCannotAccess(bindingGroups, authUser);
+    const accessGroups = this._filterSecretGroupCannotAccess(bindingGroups, authUser);
 
     const communityIds = ArrayHelper.arrayUnique(accessGroups.map((group) => group.rootGroupId));
     const communities = await this._groupAdapter.getGroupsByIds(communityIds);
@@ -842,6 +842,7 @@ export class ContentBinding implements IContentBinding {
     return this._reportBinding.bindingReportReasonsCount(reasonsCount);
   }
 
+  @Span()
   public async postAttributesBinding(
     postAttributes: PostAttributes,
     dataBinding: {
@@ -921,6 +922,7 @@ export class ContentBinding implements IContentBinding {
     });
   }
 
+  @Span()
   public async articleAttributesBinding(
     articleAttributes: ArticleAttributes,
     dataBinding: {

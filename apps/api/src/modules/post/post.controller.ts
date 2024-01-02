@@ -1,9 +1,9 @@
+import { UserDto } from '@libs/service/user';
 import { Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser, ResponseMessages } from '../../common/decorators';
-import { UserDto } from '../v2-user/application';
 
 import { PostAppService } from './application/post.app-service';
 
@@ -35,15 +35,6 @@ export class PostController {
     @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
     return this._postAppService.markReadPost(user, postId);
-  }
-
-  @Get('/get-user-group/:groupId/:userId/:postId')
-  public async getUserGroup(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
-    @Param('userId', ParseUUIDPipe) userId: string,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<any> {
-    return this._postAppService.getUserGroup(groupId, userId, postId);
   }
 
   @ApiOperation({ summary: 'Save post' })

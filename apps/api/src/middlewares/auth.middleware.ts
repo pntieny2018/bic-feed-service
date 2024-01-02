@@ -1,20 +1,14 @@
-import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
-import { HttpService } from '@nestjs/axios';
+import { Traceable } from '@libs/common/modules/opentelemetry';
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import * as jwt from 'jsonwebtoken';
-import jwkToPem from 'jwk-to-pem';
-import { lastValueFrom } from 'rxjs';
 
 import { ERRORS } from '../common/constants';
-import { UserDto } from '../modules/v2-user/application';
 
 @Injectable()
+@Traceable()
 export class AuthMiddleware implements NestMiddleware {
   public constructor(
-    private readonly _configService: ConfigService,
-    private readonly _httpService: HttpService,
     @Inject(USER_SERVICE_TOKEN)
     private readonly _userService: IUserService
   ) {}
@@ -41,7 +35,7 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   private async _getUser(username: string): Promise<UserDto> {
-    const userInfo = await this._userService.findProfileAndPermissionByUsername(username);
+    const userInfo = await this._userService.findByUsername(username);
     if (!userInfo) {
       throw new UnauthorizedException({
         code: ERRORS.API_UNAUTHORIZED,

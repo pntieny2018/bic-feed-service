@@ -1,4 +1,6 @@
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
+import { IKafkaConfig } from '@libs/infra/kafka/config';
+import { UserModule as LibUserModule } from '@libs/service/user';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
@@ -10,17 +12,14 @@ import { MediaModule } from '../media';
 import { MentionModule } from '../mention';
 import { ReactionModule } from '../reaction';
 import { TagModule } from '../tag';
-import { GroupModuleV2 } from '../v2-group/group.module';
-import { UserModuleV2 } from '../v2-user/user.module';
 
 import { PostAppService } from './application/post.app-service';
 import { ContentController } from './content.controller';
 import { FeedBackupController } from './feed-backup.controller';
 import { PostBindingService } from './post-binding.service';
-import { PostCronService } from './post-cron.service';
 import { PostController } from './post.controller';
 import { PostService } from './post.service';
-import { IKafkaConfig } from '@libs/infra/kafka/config';
+import { GroupModule } from '@libs/service/group';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -32,8 +31,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 
 @Module({
   imports: [
-    UserModuleV2,
-    GroupModuleV2,
+    GroupModule,
     MediaModule,
     MentionModule,
     ReactionModule,
@@ -41,12 +39,12 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     forwardRef(() => CommentModule),
     LinkPreviewModule,
     TagModule,
+    LibUserModule,
   ],
   controllers: [PostController, ContentController, FeedBackupController],
   providers: [
     PostService,
     PostBindingService,
-    PostCronService,
     PostAppService,
     LibReportRepository,
     LibReportDetailRepository,

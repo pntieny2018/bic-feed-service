@@ -1,14 +1,16 @@
+import { UserDto } from '@libs/service/user';
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { PageDto } from '../../common/dto';
-import { PostResponseDto } from '../post/dto/responses';
-import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
-import { AdminService } from './admin.service';
-import { GetPostPipe } from '../post/pipes';
-import { GetArticleDto } from '../article/dto/requests';
-import { UserDto } from '../v2-user/application';
 import { AuthUser } from '../../common/decorators';
+import { PageDto } from '../../common/dto';
+import { GetArticleDto } from '../article/dto/requests';
+import { PostResponseDto } from '../post/dto/responses';
+import { GetPostPipe } from '../post/pipes';
+
+import { AdminService } from './admin.service';
+import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Admin')

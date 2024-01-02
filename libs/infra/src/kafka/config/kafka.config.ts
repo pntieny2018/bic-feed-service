@@ -23,6 +23,7 @@ export const getKafkaConfig = (): IKafkaConfig => ({
   },
   consumer: {
     groupId: process.env.KAFKA_CONSUMER_GROUP_ID,
+    maxBytes: parseInt(process.env.KAFKA_CONSUMER_MAX_BYTES) || 10000,
   },
   producerOnlyMode: process.env.KAFKA_PRODUCER_ONLY_MODE === 'true' || false,
 });

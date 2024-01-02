@@ -1,0 +1,31 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+
+exporters:
+  logging:
+    loglevel: debug
+  otlp/elastic:
+  # Elastic APM server https endpoint without the "https://" prefix
+    endpoint: "http://apm-server:8200"
+    tls:
+      insecure: true
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, otlp/elastic]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, otlp/elastic]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, otlp/elastic]

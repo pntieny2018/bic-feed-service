@@ -41,6 +41,7 @@ import {
   ReportTargetDto,
   SearchContentsDto,
   SeriesDto,
+  WelcomeContentDto,
 } from '../../application/dto';
 import {
   FindDraftContentsQuery,
@@ -50,9 +51,10 @@ import {
   GetMyReportedContentsQuery,
   GetSeriesInContentQuery,
   GetTotalDraftQuery,
+  GetWelcomeContentsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
-import { GetScheduleContentQuery } from '../../application/query/content/get-schedule-content';
+import { GetScheduleContentQuery } from '@api/modules/v2-post/application/query/content';
 import {
   CreateReportDto,
   GetAudienceContentDto,
@@ -87,7 +89,7 @@ export class ContentController {
     @AuthUser() user: UserDto,
     @Query() getListCommentsDto: GetDraftContentsRequestDto
   ): Promise<FindDraftContentsDto> {
-    const data = await this._queryBus.execute(
+    const data = this._queryBus.execute(
       new FindDraftContentsQuery({ authUser: user, ...getListCommentsDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -133,7 +135,7 @@ export class ContentController {
     @Query() query: GetScheduleContentsQueryDto
   ): Promise<GetScheduleContentsResponseDto> {
     const { limit, before, after, order, type } = query;
-    const contents = await this._queryBus.execute<
+    const contents = this._queryBus.execute<
       GetScheduleContentQuery,
       GetScheduleContentsResponseDto
     >(
@@ -162,7 +164,7 @@ export class ContentController {
     @Query() query: GetScheduleContentsQueryDto
   ): Promise<GetScheduleContentsResponseDto> {
     const { limit, isMine, groupId, before, after, order, type } = query;
-    const contents = await this._queryBus.execute<
+    const contents = this._queryBus.execute<
       GetScheduleContentQuery,
       GetScheduleContentsResponseDto
     >(
@@ -191,7 +193,7 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<GetSeriesResponseDto> {
-    const contents = await this._queryBus.execute<GetSeriesInContentQuery, GetSeriesResponseDto>(
+    const contents = this._queryBus.execute<GetSeriesInContentQuery, GetSeriesResponseDto>(
       new GetSeriesInContentQuery({
         authUser,
         contentId,
@@ -208,7 +210,7 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Param('groupId', ParseUUIDPipe) groupId: string
   ): Promise<(ArticleDto | PostDto | SeriesDto)[]> {
-    const contents = await this._queryBus.execute<FindPinnedContentQuery>(
+    const contents = this._queryBus.execute<FindPinnedContentQuery>(
       new FindPinnedContentQuery({
         authUser,
         groupId,
@@ -247,7 +249,7 @@ export class ContentController {
     @AuthUser() user: UserDto,
     @Query() searchContentsRequestDto: SearchContentsRequestDto
   ): Promise<SearchContentsDto> {
-    const data = await this._queryBus.execute(
+    const data = this._queryBus.execute(
       new SearchContentsQuery({ authUser: user, ...searchContentsRequestDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -263,7 +265,7 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) id: string
   ): Promise<void> {
-    await this._commandBus.execute<MarkReadImportantContentCommand, void>(
+    return this._commandBus.execute<MarkReadImportantContentCommand, void>(
       new MarkReadImportantContentCommand({ id, authUser })
     );
   }
@@ -278,7 +280,7 @@ export class ContentController {
   public async validateSeriesTags(
     @Body() validateSeriesTagDto: ValidateSeriesTagDto
   ): Promise<void> {
-    await this._commandBus.execute<ValidateSeriesTagsCommand, void>(
+    return this._commandBus.execute<ValidateSeriesTagsCommand, void>(
       new ValidateSeriesTagsCommand({
         groupIds: validateSeriesTagDto.groups,
         seriesIds: validateSeriesTagDto.series,
@@ -301,7 +303,7 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Body() contentSettingRequestDto: PostSettingRequestDto
   ): Promise<void> {
-    await this._commandBus.execute<UpdateContentSettingCommand, void>(
+    return this._commandBus.execute<UpdateContentSettingCommand, void>(
       new UpdateContentSettingCommand({
         ...contentSettingRequestDto,
         id,
@@ -324,7 +326,7 @@ export class ContentController {
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @Body() contentIds: string[]
   ): Promise<void> {
-    await this._commandBus.execute<ReorderPinnedContentCommand, void>(
+    return this._commandBus.execute<ReorderPinnedContentCommand, void>(
       new ReorderPinnedContentCommand({
         groupId,
         authUser,
@@ -346,7 +348,7 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<void> {
-    await this._commandBus.execute(
+    return this._commandBus.execute(
       new SeenContentCommand({
         authUser,
         contentId,
@@ -368,7 +370,7 @@ export class ContentController {
     @Param('contentId', ParseUUIDPipe) contentId: string,
     @Body() pinContentDto: PinContentDto
   ): Promise<void> {
-    await this._commandBus.execute<PinContentCommand, void>(
+    return this._commandBus.execute<PinContentCommand, void>(
       new PinContentCommand({
         authUser,
         contentId,
@@ -450,10 +452,22 @@ export class ContentController {
     @AuthUser() authUser: UserDto,
     @Query() query: GetMyReportedContentsRequestDto
   ): Promise<PaginatedResponse<ReportTargetDto>> {
-    const reports = await this._queryBus.execute(
+    const reports = this._queryBus.execute(
       new GetMyReportedContentsQuery({
         authUser,
         ...query,
+      })
+    );
+    return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get welcome contents' })
+  @Get(ROUTES.CONTENT.GET_WELCOME_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.GET_WELCOME_CONTENT.VERSIONS)
+  public async getWelcomeContents(@AuthUser() authUser: UserDto): Promise<WelcomeContentDto[]> {
+    const reports = await this._queryBus.execute(
+      new GetWelcomeContentsQuery({
+        authUser,
       })
     );
     return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });

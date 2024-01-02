@@ -12,6 +12,7 @@ import {
   PostCategoryModel,
   ReportDetailModel,
   ReportModel,
+  UserSeenPostModel,
 } from '@libs/database/postgres/model';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
 import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
@@ -70,18 +71,23 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       before,
       limit = PAGING_DEFAULT_LIMIT,
       order = ORDER.DESC,
+      subQuery,
     } = getPaginationContentsProps;
     const findOption = this.buildFindOptions(getPaginationContentsProps);
     const orderBuilder = this.buildOrderByOptions(getPaginationContentsProps.orderOptions);
 
     const cursorColumns = orderBuilder?.map((order) => order[0]);
-    const { rows, meta } = await this.cursorPaginate(findOption, {
-      limit,
-      before,
-      after,
-      order,
-      sortColumns: cursorColumns || ['createdAt'],
-    });
+    const { rows, meta } = await this.cursorPaginate(
+      findOption,
+      {
+        limit,
+        before,
+        after,
+        order,
+        sortColumns: cursorColumns || ['createdAt'],
+      },
+      subQuery
+    );
 
     return {
       rows,
@@ -182,15 +188,19 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       shouldIncludeItems,
       shouldIncludeReaction,
       shouldIncludeSeries,
+      shouldIncludeSeen,
     } = options.include || {};
 
+    if (shouldIncludeSeen) {
+      subSelect.push(this._loadSeen(shouldIncludeSeen.userId, 'isSeen'));
+    }
     if (shouldIncludeSaved) {
       subSelect.push(this._loadSaved(shouldIncludeSaved.userId, 'isSaved'));
     }
 
     if (shouldIncludeMarkReadImportant) {
       subSelect.push(
-        this._loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
+        this.loadMarkReadPost(shouldIncludeMarkReadImportant.userId, 'markedReadPost')
       );
     }
 
@@ -390,7 +400,23 @@ export class LibContentRepository extends BaseRepository<PostModel> {
     ];
   }
 
-  private _loadMarkReadPost(authUserId: string, alias?: string): [string, string] {
+  private _loadSeen(authUserId: string, alias?: string): [string, string] {
+    const userSeenPostTable = UserSeenPostModel.getTableName();
+    if (!authUserId) {
+      return [`(false)`, alias ? alias : 'isSeen'];
+    }
+    return [
+      `(
+        COALESCE((SELECT true FROM ${userSeenPostTable} as s
+          WHERE s.post_id = "PostModel".id AND s.user_id = ${this._sequelizeConnection.escape(
+            authUserId
+          )}), false)
+               )`,
+      alias ? alias : 'isSeen',
+    ];
+  }
+
+  public loadMarkReadPost(authUserId: string, alias?: string): [string, string] {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     if (!authUserId) {

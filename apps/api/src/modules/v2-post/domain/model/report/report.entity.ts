@@ -165,4 +165,8 @@ export class ReportEntity extends DomainAggregateRoot<ReportAttributes> {
     this._props.processedBy = processedBy;
     this._props.processedAt = new Date();
   }
+
+  public isTargetContent(): boolean {
+    return this._props.targetType !== CONTENT_TARGET.COMMENT;
+  }
 }

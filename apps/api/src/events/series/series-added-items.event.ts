@@ -1,6 +1,7 @@
-import { IEvent } from '../../common/interfaces';
-import { UserDto } from '../../modules/v2-user/application';
+import { UserDto } from '@libs/service/user';
+
 import { SeriesHasBeenAddItem } from '../../common/constants';
+import { IEvent } from '../../common/interfaces';
 
 export class SeriesAddedItemsEvent implements IEvent<ISeriesAddItemsPayload> {
   public payload: ISeriesAddItemsPayload;

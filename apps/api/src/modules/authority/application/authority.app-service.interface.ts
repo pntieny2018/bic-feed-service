@@ -1,4 +1,4 @@
-import { UserDto } from '../../v2-user/application';
+import { UserDto } from '@libs/service/user';
 
 export interface IAuthorityAppService {
   buildAbility(user: UserDto): Promise<void>;

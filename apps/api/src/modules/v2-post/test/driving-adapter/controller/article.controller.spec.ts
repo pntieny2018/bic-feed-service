@@ -63,9 +63,18 @@ describe('ArticleController', () => {
   describe('Create draft article', () => {
     it('Should create draft article successfully', async () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
-      await articleController.create(userMock);
+      await articleController.create(userMock, {
+        audience: {
+          groupIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
+        },
+      });
       expect(commandExecute).toBeCalledTimes(1);
-      expect(commandExecute).toBeCalledWith(new CreateDraftArticleCommand({ authUser: userMock }));
+      expect(commandExecute).toBeCalledWith(
+        new CreateDraftArticleCommand({
+          authUser: userMock,
+          groupIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
+        })
+      );
     });
   });
 
