@@ -35,6 +35,7 @@ export class SeriesDto {
   public title: string;
   public summary: string;
   public items?: (PostInSeriesDto | ArticleInSeriesDto | ItemInSeries)[];
+  public totalItems?: number;
   public quiz?: QuizDto;
   public coverMedia?: ImageDto;
   public highlight?: string;
