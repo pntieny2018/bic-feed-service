@@ -9,7 +9,6 @@ import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import { bootstrapCLI } from './command';
 
 import './common/extension';
-//import './tracing';
 
 async function bootstrap(): Promise<void> {
   if (process.env.TRIGGER_CLI === 'true') {

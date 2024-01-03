@@ -1,5 +1,10 @@
 import { IAxiosConfig } from '@libs/infra/http';
 
+/**
+ * Temporarily increase the timeout to prevent node crash when calling slow API
+ * Follow issue: https://github.com/axios/axios/issues/5538
+ *
+ */
 export const getAxiosConfig = (): IAxiosConfig => ({
   group: {
     baseUrl: process.env.BE_GROUP_API_ENDPOINT,
