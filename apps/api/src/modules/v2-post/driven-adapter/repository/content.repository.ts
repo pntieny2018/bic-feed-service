@@ -30,10 +30,12 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
+import { CONTEXT, IContext } from '@libs/infra/log';
 import { UserDto } from '@libs/service/user';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
 import { flatten } from 'lodash';
+import { ClsService } from 'nestjs-cls';
 import { Sequelize, Transaction } from 'sequelize';
 
 import { ContentNotFoundException } from '../../domain/exception';
@@ -57,6 +59,8 @@ import { ContentMapper } from '../mapper/content.mapper';
 
 @Injectable()
 export class ContentRepository implements IContentRepository {
+  private readonly _logger = new Logger(ContentRepository.name);
+
   public constructor(
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
@@ -74,7 +78,8 @@ export class ContentRepository implements IContentRepository {
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepository: IPostReactionRepository,
     @Inject(forwardRef(() => CONTENT_VALIDATOR_TOKEN))
-    private readonly _contentValidator: IContentValidator
+    private readonly _contentValidator: IContentValidator,
+    private readonly _clsService: ClsService
   ) {}
 
   public async create(contentEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
@@ -313,14 +318,18 @@ export class ContentRepository implements IContentRepository {
     findOnePostOptions: FindContentProps,
     user: UserDto
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const handler = (this._clsService.get(CONTEXT) as IContext).handler;
     const cachedContent = await this.contentCacheRepository.getContent(
       `${findOnePostOptions.where.id}`
     );
     if (cachedContent) {
+      this._logger.log(`[CACHE] ${handler} - 1`);
       await this._contentValidator.validateContentReported(cachedContent.id, user.id);
       await this._contentValidator.validateContentArchived(user, cachedContent.groups);
       return this._contentMapper.cacheToDomain(cachedContent);
     }
+
+    this._logger.log(`[CACHE] ${handler} - 0`);
 
     const content = await this._libContentRepo.findOne(findOnePostOptions);
     if (!content) {
@@ -358,6 +367,11 @@ export class ContentRepository implements IContentRepository {
 
     findAllPostOptions.where.ids = contentIds.filter(
       (id: string) => !contentsCache.find((content) => content.id === id)
+    );
+
+    const handler = (this._clsService.get(CONTEXT) as IContext).handler;
+    this._logger.log(
+      `[CACHE] ${handler} - ${(contentsCache.length / contentIds.length).toFixed(2)}`
     );
 
     if (findAllPostOptions.where.ids.length === 0) {
