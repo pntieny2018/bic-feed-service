@@ -24,7 +24,7 @@ export const getAxiosConfig = (): IAxiosConfig => ({
   lambda: {
     baseUrl: process.env.PRIVATE_API_GATEWAY,
     maxRedirects: 3,
-    timeout: 10000,
+    timeout: 5000,
   },
   notification: {
     baseUrl: process.env.BE_NOTIFICATION_API_ENDPOINT,
