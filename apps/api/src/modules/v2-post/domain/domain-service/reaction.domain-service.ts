@@ -3,7 +3,7 @@ import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
-import { ContentHasSeenEvent, ReactionCreatedEvent, ReactionDeletedEvent } from '../event';
+import { ReactionCreatedEvent, ReactionDeletedEvent } from '../event';
 import {
   ReactionNotFoundException,
   ReactionNotHaveAuthorityException,
@@ -64,12 +64,6 @@ export class ReactionDomainService implements IReactionDomainService {
       case CONTENT_TARGET.POST:
       case CONTENT_TARGET.ARTICLE:
         await this._postReactionRepository.create(reactionEntity);
-        this.eventBus.publish(
-          new ContentHasSeenEvent({
-            contentId: reactionEntity.get('targetId'),
-            userId: reactionEntity.get('createdBy'),
-          })
-        );
         break;
       case CONTENT_TARGET.COMMENT:
         await this._commentReactionRepository.create(reactionEntity);

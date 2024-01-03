@@ -35,6 +35,7 @@ import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,
   ScheduleArticleRequestDto,
+  CreateDraftArticleRequestDto,
 } from '../dto/request';
 
 @ApiTags('v2 Articles')
@@ -68,9 +69,13 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
-  public async create(@AuthUser() authUser: UserDto): Promise<ArticleDto> {
+  public async create(
+    @AuthUser() authUser: UserDto,
+    @Body() createDraftArticleRequestDto: CreateDraftArticleRequestDto
+  ): Promise<ArticleDto> {
+    const { audience } = createDraftArticleRequestDto;
     const data = await this._commandBus.execute<CreateDraftArticleCommand, CreateDraftPostDto>(
-      new CreateDraftArticleCommand({ authUser })
+      new CreateDraftArticleCommand({ authUser, groupIds: audience?.groupIds })
     );
     return plainToInstance(ArticleDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }

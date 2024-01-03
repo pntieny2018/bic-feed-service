@@ -1,10 +1,11 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { ResponseDto } from '../dto';
+import { I18nContext } from 'nestjs-i18n';
 import { map, Observable } from 'rxjs';
 import snakecaseKeys from 'snakecase-keys';
+
 import { ERRORS } from '../constants/errors';
-import { I18nContext } from 'nestjs-i18n';
+import { ResponseDto } from '../dto';
 
 @Injectable()
 export class HandleResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>> {
@@ -26,7 +27,11 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
           data:
             typeof data === 'object'
               ? snakecaseKeys(data, {
-                  exclude: [/[\-]/gm, /[\.]/gm],
+                  exclude: [
+                    /[\-]/gm,
+                    /[\.]/gm,
+                    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+                  ],
                 })
               : data,
           meta: {

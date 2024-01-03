@@ -43,10 +43,7 @@ import {
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
-import {
-  ContentHasSeenEventHandler,
-  ReportHiddenEventHandler,
-} from '../application/event-handler/content';
+import { ReportHiddenEventHandler } from '../application/event-handler/content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -62,6 +59,12 @@ import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
 } from '../application/event-handler/set-video-state';
+
+import {
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
+} from '../application/event-handler/mark-seen-content';
+
 import { FindArticleHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
@@ -74,6 +77,8 @@ import {
   FindPinnedContentHandler,
   GetContentAudienceHandler,
   GetScheduleContentHandler,
+  CountContentPerWeekHandler,
+  GetWelcomeContentsHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
@@ -136,7 +141,8 @@ export const postProvider = [
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
 
-  ContentHasSeenEventHandler,
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -197,6 +203,9 @@ export const postProvider = [
   SearchSeriesHandler,
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
+  GetWelcomeContentsHandler,
+
+  CountContentPerWeekHandler,
 
   /** Domain Service */
   {

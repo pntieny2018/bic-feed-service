@@ -12,6 +12,7 @@ import {
   PostCategoryModel,
   ReportDetailModel,
   ReportModel,
+  UserSeenPostModel,
 } from '@libs/database/postgres/model';
 import { CategoryModel } from '@libs/database/postgres/model/category.model';
 import { LinkPreviewModel } from '@libs/database/postgres/model/link-preview.model';
@@ -187,8 +188,12 @@ export class LibContentRepository extends BaseRepository<PostModel> {
       shouldIncludeItems,
       shouldIncludeReaction,
       shouldIncludeSeries,
+      shouldIncludeSeen,
     } = options.include || {};
 
+    if (shouldIncludeSeen) {
+      subSelect.push(this._loadSeen(shouldIncludeSeen.userId, 'isSeen'));
+    }
     if (shouldIncludeSaved) {
       subSelect.push(this._loadSaved(shouldIncludeSaved.userId, 'isSaved'));
     }
@@ -392,6 +397,22 @@ export class LibContentRepository extends BaseRepository<PostModel> {
           )}), false)
                )`,
       alias ? alias : 'isSaved',
+    ];
+  }
+
+  private _loadSeen(authUserId: string, alias?: string): [string, string] {
+    const userSeenPostTable = UserSeenPostModel.getTableName();
+    if (!authUserId) {
+      return [`(false)`, alias ? alias : 'isSeen'];
+    }
+    return [
+      `(
+        COALESCE((SELECT true FROM ${userSeenPostTable} as s
+          WHERE s.post_id = "PostModel".id AND s.user_id = ${this._sequelizeConnection.escape(
+            authUserId
+          )}), false)
+               )`,
+      alias ? alias : 'isSeen',
     ];
   }
 
