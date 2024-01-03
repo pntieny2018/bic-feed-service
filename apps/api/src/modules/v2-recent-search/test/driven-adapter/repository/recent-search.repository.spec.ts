@@ -1,9 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
+import { RecentSearchModel } from '@libs/database/postgres/model';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 
-import { RecentSearchModel } from '../../../../../database/models/recent-search.model';
 import { createMockUserDto } from '../../../../v2-post/test/mock';
 import { RecentSearchType } from '../../../data-type/recent-search-type.enum';
 import {
