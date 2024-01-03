@@ -1,4 +1,3 @@
-import { GroupModule } from '@libs/service/group';
 import { UserModule } from '@libs/service/user';
 import { Module } from '@nestjs/common';
 
@@ -8,7 +7,7 @@ import { AuthorityController } from './authority.controller';
 import { AuthorityFactory } from './authority.factory';
 
 @Module({
-  imports: [GroupModule, UserModule],
+  imports: [UserModule],
   controllers: [AuthorityController],
   providers: [
     AuthorityFactory,
