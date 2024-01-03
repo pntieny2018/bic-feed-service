@@ -109,7 +109,10 @@ export class PostModule implements OnModuleInit {
       }
     });
     process.on('uncaughtException', (err) => {
-      this._logger.error('Uncaught exception', err?.stack);
+      this._logger.error(`Caught exception: ${err}\n` + `Exception origin: ${err?.stack}`);
+    });
+    process.on('unhandledRejection', (reason: string, promise: Promise<any>) => {
+      this._logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
     });
   }
 }
