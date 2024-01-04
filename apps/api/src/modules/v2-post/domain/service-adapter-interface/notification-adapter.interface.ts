@@ -22,6 +22,7 @@ import {
   ChildCommentUpdatedNotificationPayload,
   ReportCreatedNotificationPayload,
   ReportHiddenNotificationPayload,
+  PostVideoProcessSuccessNotificationPayload,
 } from '../../../v2-notification/application/application-services/interface';
 
 export const NOTIFICATION_ADAPTER = 'NOTIFICATION_ADAPTER';
@@ -30,6 +31,9 @@ export interface INotificationAdapter {
   sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void>;
   sendPostPublishedNotification(payload: PostPublishedNotificationPayload): Promise<void>;
   sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void>;
+  sendPostVideoProcessSuccessNotification(
+    payload: PostVideoProcessSuccessNotificationPayload
+  ): Promise<void>;
   sendPostVideoProcessFailedNotification(
     payload: PostVideoProcessFailedNotificationPayload
   ): Promise<void>;
