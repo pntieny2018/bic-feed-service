@@ -46,6 +46,7 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
+  workerProvider,
   webSocketProvider,
 } from './provider';
 
@@ -97,6 +98,7 @@ import {
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,
+    ...workerProvider,
   ],
   exports: [
     {
@@ -104,8 +106,6 @@ import {
       useClass: ReportRepository,
     },
     ...elasticProvider,
-    ...postProvider,
-    ...tagProvider,
   ],
 })
 export class PostModuleV2 {}
