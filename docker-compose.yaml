@@ -1,24 +1,24 @@
 version: '3.8'
 services:
-#  bein_stream_dev:
-#    image: bein_stream_dev:1.0.0
-#    build:
-#      context: .
-#      target: builder
-#      dockerfile: ./Dockerfile
-#    command: "nest start --watch"
-#    volumes:
-#      - .:/usr/src/app
-#      - /usr/src/app/dist/
-#      - /usr/src/app/node_modules/
-#    ports:
-#      - '${APP_PORT}:${APP_PORT}'
-#    networks:
-#      - bein-stream-network
-#    restart: unless-stopped
-#    depends_on:
-#      - redis
-#      - postgres
+  bein_stream_dev:
+    image: bein_stream_dev:1.0.0
+    build:
+      context: .
+      target: builder
+      dockerfile: ./Dockerfile
+    command: "nest start --watch"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/dist/
+      - /usr/src/app/node_modules/
+    ports:
+      - '${APP_PORT}:${APP_PORT}'
+    networks:
+      - bein-stream-network
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
   postgres:
     image: postgres:12
     container_name: postgres
@@ -35,19 +35,19 @@ services:
       - ./data/postgres:/var/lib/postgresql/data
     networks:
       - bein-stream-network
-#  redis:
-#    image: bitnami/redis:latest
-#    container_name: redis_feed
-#    restart: always
-#    env_file:
-#      - ./.env
-#    environment:
-#      REDIS_PASSWORD: ${REDIS_PASSWORD}
-#      REDIS_PORT_NUMBER: ${REDIS_PORT}
-#    ports:
-#      - '${REDIS_PORT}:${REDIS_PORT}'
-#    networks:
-#      - bein-stream-network
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis_feed
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT_NUMBER: ${REDIS_PORT}
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    networks:
+      - bein-stream-network
 
 networks:
   bein-stream-network:
