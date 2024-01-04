@@ -3,6 +3,7 @@ import { PaginationResult } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 
+import { ReactionCount } from '../../application/dto';
 import { ReactionCreatedEvent, ReactionDeletedEvent } from '../event';
 import {
   ReactionNotFoundException,
@@ -47,7 +48,7 @@ export class ReactionDomainService implements IReactionDomainService {
 
   public async getAndCountReactionByContentIds(
     contentIds: string[]
-  ): Promise<Map<string, Record<string, number>[]>> {
+  ): Promise<Map<string, ReactionCount[]>> {
     return this._postReactionRepository.getAndCountReactionByContents(contentIds);
   }
 

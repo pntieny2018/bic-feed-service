@@ -66,11 +66,11 @@ export class PostDomainService implements IPostDomainService {
 
   public constructor(
     @Inject(LINK_PREVIEW_DOMAIN_SERVICE_TOKEN)
-    private readonly _linkPreviewDomainService: ILinkPreviewDomainService,
+    private readonly _linkPreviewDomain: ILinkPreviewDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService,
+    private readonly _mediaDomain: IMediaDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
+    private readonly _contentDomain: IContentDomainService,
 
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
@@ -80,7 +80,7 @@ export class PostDomainService implements IPostDomainService {
     private readonly _mentionValidator: IMentionValidator,
 
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    private readonly _contentRepo: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
     private readonly _tagRepo: ITagRepository,
 
@@ -93,22 +93,19 @@ export class PostDomainService implements IPostDomainService {
   ) {}
 
   public async getPostById(postId: string, authUser: UserDto): Promise<PostEntity> {
-    const postEntity = await this._contentRepository.findContentWithCache(
-      {
-        where: {
-          id: postId,
-          groupArchived: false,
-          excludeReportedByUserId: authUser.id,
-        },
-        include: {
-          shouldIncludeGroup: true,
-          shouldIncludeSeries: true,
-          shouldIncludeLinkPreview: true,
-          shouldIncludeQuiz: true,
-        },
+    const postEntity = await this._contentRepo.findContentWithCache({
+      where: {
+        id: postId,
+        groupArchived: false,
+        excludeReportedByUserId: authUser.id,
       },
-      authUser
-    );
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+        shouldIncludeQuiz: true,
+      },
+    });
 
     const isPost = postEntity && postEntity instanceof PostEntity;
     if (!isPost || postEntity.isInArchivedGroups()) {
@@ -136,7 +133,7 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setGroups(groups.map((group) => group.id));
     postEntity.setPrivacyFromGroups(groups);
     try {
-      await this._contentRepository.create(postEntity);
+      await this._contentRepo.create(postEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -148,7 +145,7 @@ export class PostDomainService implements IPostDomainService {
     const { payload, actor } = input;
     const { id, scheduledAt, groupIds } = payload;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       mustIncludeGroup: true,
       shouldIncludeSeries: true,
       shouldIncludeLinkPreview: true,
@@ -170,7 +167,7 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setWaitingSchedule(scheduledAt);
 
     if (postEntity.isChanged()) {
-      await this._contentRepository.update(postEntity);
+      await this._contentRepo.update(postEntity);
       this.event.publish(new PostScheduledEvent({ entity: postEntity, authUser: actor }));
     }
 
@@ -181,7 +178,7 @@ export class PostDomainService implements IPostDomainService {
     const { payload, actor } = input;
     const { id: postId, groupIds } = payload;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(postId, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(postId, {
       mustIncludeGroup: true,
       shouldIncludeSeries: true,
       shouldIncludeLinkPreview: true,
@@ -211,15 +208,15 @@ export class PostDomainService implements IPostDomainService {
     }
 
     if (postEntity.isChanged()) {
-      await this._contentRepository.update(postEntity);
+      await this._contentRepo.update(postEntity);
 
       if (postEntity.isNotUsersSeen()) {
-        await this._contentDomainService.markSeen(postId, actor.id);
+        await this._contentDomain.markSeen(postId, actor.id);
         postEntity.increaseTotalSeen();
       }
 
       if (postEntity.isImportant()) {
-        await this._contentDomainService.markReadImportant(postId, actor.id);
+        await this._contentDomain.markReadImportant(postId, actor.id);
         postEntity.setMarkReadImportant();
       }
 
@@ -232,7 +229,7 @@ export class PostDomainService implements IPostDomainService {
   public async update(props: UpdatePostProps): Promise<PostEntity> {
     const { payload, actor } = props;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(payload.id, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(payload.id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
       shouldIncludeLinkPreview: true,
@@ -270,7 +267,7 @@ export class PostDomainService implements IPostDomainService {
     }
 
     if (postEntity.isChanged()) {
-      await this._contentRepository.update(postEntity);
+      await this._contentRepo.update(postEntity);
       this.event.publish(new PostUpdatedEvent({ entity: postEntity, authUser: actor }));
     }
 
@@ -280,7 +277,7 @@ export class PostDomainService implements IPostDomainService {
   public async updatePostVideoFailProcessed(props: UpdateVideoProcessProps): Promise<void> {
     const { id, videoId, actor } = props;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
     });
@@ -310,7 +307,7 @@ export class PostDomainService implements IPostDomainService {
     postEntity.setStatus(status);
 
     if (postEntity.isChanged()) {
-      await this._contentRepository.update(postEntity);
+      await this._contentRepo.update(postEntity);
       this.event.publish(new PostVideoFailedEvent({ entity: postEntity, authUser: actor }));
     }
   }
@@ -318,7 +315,7 @@ export class PostDomainService implements IPostDomainService {
   public async updatePostVideoSuccessProcessed(props: UpdateVideoProcessProps): Promise<void> {
     const { id, videoId, actor } = props;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
     });
@@ -345,7 +342,7 @@ export class PostDomainService implements IPostDomainService {
     });
 
     if (postEntity.isChanged()) {
-      await this._contentRepository.update(postEntity);
+      await this._contentRepo.update(postEntity);
       this.event.publish(new PostVideoSuccessEvent({ entity: postEntity, authUser: actor }));
     }
 
@@ -362,7 +359,7 @@ export class PostDomainService implements IPostDomainService {
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
     const { payload, actor } = props;
 
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(payload.id, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(payload.id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
       shouldIncludeLinkPreview: true,
@@ -386,11 +383,11 @@ export class PostDomainService implements IPostDomainService {
     if (!postEntity.isChanged()) {
       return;
     }
-    return this._contentRepository.update(postEntity);
+    return this._contentRepo.update(postEntity);
   }
 
   public async delete(id: string, authUser: UserDto): Promise<void> {
-    const postEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
     });
@@ -412,7 +409,7 @@ export class PostDomainService implements IPostDomainService {
       });
     }
 
-    await this._contentRepository.delete(id);
+    await this._contentRepo.delete(id);
     this.event.publish(new PostDeletedEvent({ entity: postEntity, authUser: authUser }));
   }
 
@@ -487,7 +484,7 @@ export class PostDomainService implements IPostDomainService {
     postEntity: PostEntity,
     linkPreview: LinkPreviewDto
   ): Promise<void> {
-    const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
+    const linkPreviewEntity = await this._linkPreviewDomain.findOrUpsert(linkPreview);
     postEntity.setLinkPreview(linkPreviewEntity);
   }
 
@@ -501,20 +498,12 @@ export class PostDomainService implements IPostDomainService {
     const newFileIds = media?.files?.map((file) => file.id) || [];
     const newVideoIds = media?.videos?.map((video) => video.id) || [];
 
-    const images = await this._mediaDomainService.getAvailableImages(
-      imageEntities,
-      newImageIds,
-      ownerId
-    );
+    const images = await this._mediaDomain.getAvailableImages(imageEntities, newImageIds, ownerId);
     if (images.some((image) => !image.isPostContentResource())) {
       throw new InvalidResourceImageException();
     }
-    const files = await this._mediaDomainService.getAvailableFiles(
-      fileEntities,
-      newFileIds,
-      ownerId
-    );
-    const videos = await this._mediaDomainService.getAvailableVideos(newVideoIds, ownerId);
+    const files = await this._mediaDomain.getAvailableFiles(fileEntities, newFileIds, ownerId);
+    const videos = await this._mediaDomain.getAvailableVideos(newVideoIds, ownerId);
 
     postEntity.setMedia({
       files,

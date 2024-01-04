@@ -49,7 +49,7 @@ describe('ArticleController', () => {
   describe('Get post detail', () => {
     it('Should get post detail successfully', async () => {
       const queryExecute = jest.spyOn(query, 'execute').mockResolvedValue({});
-      await articleController.getPostDetail('id', userMock);
+      await articleController.getArticleDetail('id', userMock);
       expect(queryExecute).toBeCalledTimes(1);
       expect(queryExecute).toBeCalledWith(
         new FindArticleQuery({

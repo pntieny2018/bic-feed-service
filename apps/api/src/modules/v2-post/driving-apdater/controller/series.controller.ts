@@ -205,7 +205,7 @@ export class SeriesController {
   @ApiOperation({ summary: 'Get series detail' })
   @Get(ROUTES.SERIES.GET_DETAIL.PATH)
   @Version(ROUTES.SERIES.GET_DETAIL.VERSIONS)
-  public async getPostDetail(
+  public async getSeriesDetail(
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<SeriesDto> {

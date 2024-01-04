@@ -5,9 +5,10 @@ import {
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
-import { UserDto } from '@libs/service/user';
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
+
+import { FindContentInCacheProps } from './content-cache.repository.interface';
 
 export type GetReportContentIdsProps = {
   reportUser: string;
@@ -46,8 +47,7 @@ export interface IContentRepository {
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findContentWithCache(
-    findOnePostOptions: FindContentProps,
-    user: UserDto
+    input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
     findAllPostOptions: FindContentProps,

@@ -1,7 +1,7 @@
 import { ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 
-import { ReactionsCount } from '../../../../common/types';
+import { ReactionCount } from '../../application/dto';
 import { ReactionEntity } from '../model/reaction';
 
 export type FindOneCommentReactionProps = {
@@ -33,7 +33,7 @@ export interface ICommentReactionRepository {
     input: GetPaginationCommentReactionProps
   ): Promise<PaginationResult<ReactionEntity>>;
 
-  getAndCountReactionByComments(commentIds: string[]): Promise<Map<string, ReactionsCount>>;
+  getAndCountReactionByComments(commentIds: string[]): Promise<Map<string, ReactionCount[]>>;
 
   increaseReactionCount(props: UpdateCountCommentReactionProps): Promise<void>;
 

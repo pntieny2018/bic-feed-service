@@ -14,24 +14,24 @@ import { IEventHandler } from '@nestjs/cqrs';
 @EventsHandlerAndLog(CommentDeletedEvent)
 export class CacheCountCommentDeletedEventHandler implements IEventHandler<CommentDeletedEvent> {
   public constructor(
-    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
-    private readonly contentCacheRepository: IContentCacheRepository,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService
+    private readonly _contentDomain: IContentDomainService,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepo: IContentCacheRepository
   ) {}
 
   public async handle(event: CommentDeletedEvent): Promise<void> {
     const { comment } = event.payload;
 
     const contentId = comment.get('postId');
-    const contentCache = await this.contentCacheRepository.getContent(contentId);
+    const contentCache = await this._contentCacheRepo.findContent({ where: { id: contentId } });
     if (!contentCache) {
-      const contentEntity = await this._contentDomainService.getContentForCacheById(contentId);
-      await this.contentCacheRepository.setContents([contentEntity]);
+      const contentEntity = await this._contentDomain.getContentForCacheById(contentId);
+      await this._contentCacheRepo.setContents([contentEntity]);
     } else {
       const totalReplies = comment.get('totalReply');
       const decreasedValue = totalReplies > 0 ? totalReplies + 1 : 1;
-      await this.contentCacheRepository.decreaseCommentCount(contentId, -decreasedValue);
+      await this._contentCacheRepo.decreaseCommentCount(contentId, -decreasedValue);
     }
   }
 }

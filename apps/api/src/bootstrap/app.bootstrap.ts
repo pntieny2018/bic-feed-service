@@ -41,5 +41,10 @@ export class AppBootstrap {
     const logger = new PinoLogger({}).logger;
 
     await app.listen(appConfig.port).catch((ex) => logger.error(ex));
+
+    logger.debug(
+      `${appConfig.name} API run in ${appConfig.url}:${appConfig.port}`,
+      'NestApplication'
+    );
   }
 }
