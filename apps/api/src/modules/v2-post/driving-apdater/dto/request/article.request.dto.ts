@@ -14,6 +14,8 @@ import {
 import { MediaRequestDto, MediaItemDto } from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
+import { RULES } from '@api/modules/v2-post/constant';
+import { MaxArticleLength } from '@api/modules/v2-post/driving-apdater/custom-validation/MaxArticleLength.validation';
 
 export class UpdateArticleRequestDto {
   @ApiPropertyOptional({ type: String })
@@ -28,6 +30,11 @@ export class UpdateArticleRequestDto {
 
   @ApiProperty({ description: 'Content of post', type: String })
   @IsOptional()
+  @MaxArticleLength(RULES.MAX_ARTICLE_CONTENT_CHARACTER, {
+    message: `Your content cannot exceed ${new Intl.NumberFormat('de-ES').format(
+      RULES.MAX_ARTICLE_CONTENT_CHARACTER
+    )} characters. `,
+  })
   public content?: string;
 
   @ApiPropertyOptional({ type: [String] })

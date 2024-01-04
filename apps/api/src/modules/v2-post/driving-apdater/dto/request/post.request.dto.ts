@@ -16,11 +16,18 @@ import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
 import { MediaRequestDto } from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
+import { MaxMarkdownLength } from '@api/modules/v2-post/driving-apdater/custom-validation/MaxMarkdownLength.validation';
+import { RULES } from '@api/modules/v2-post/constant';
 
 export class UpdatePostRequestDto {
   @ApiProperty({ description: 'Content of post', type: String })
   @IsOptional()
   @Type(() => String)
+  @MaxMarkdownLength(RULES.MAX_POST_CONTENT_CHARACTER, {
+    message: `Your content cannot exceed ${new Intl.NumberFormat('de-ES').format(
+      RULES.MAX_POST_CONTENT_CHARACTER
+    )} characters. `,
+  })
   public content?: string;
 
   @ApiProperty({ type: [String] })
