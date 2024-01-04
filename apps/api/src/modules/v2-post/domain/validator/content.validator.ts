@@ -42,18 +42,20 @@ import { IContentValidator } from './interface';
 @Injectable()
 export class ContentValidator implements IContentValidator {
   public constructor(
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    protected readonly _authorityAppService: IAuthorityAppService,
+
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    protected readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepo: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepo: IPostGroupRepository,
+
     @Inject(GROUP_ADAPTER)
     protected readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    protected readonly _userAdapter: IUserAdapter,
-    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected readonly _authorityAppService: IAuthorityAppService,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository,
-    @Inject(REPORT_REPOSITORY_TOKEN)
-    protected readonly _reportRepository: IReportRepository,
-    @Inject(POST_GROUP_REPOSITORY_TOKEN)
-    protected readonly _postGroupRepository: IPostGroupRepository
+    protected readonly _userAdapter: IUserAdapter
   ) {}
 
   public async checkCanCRUDContent(input: {
@@ -209,7 +211,7 @@ export class ContentValidator implements IContentValidator {
   }
 
   public async validateContentReported(contentId: string, userId: string): Promise<void> {
-    const isReport = await this._reportRepository.checkIsReported(userId, contentId);
+    const isReport = await this._reportRepo.checkIsReported(userId, contentId);
     if (isReport) {
       throw new ContentNotFoundException();
     }
@@ -218,7 +220,7 @@ export class ContentValidator implements IContentValidator {
   public async validateContentArchived(user: UserDto, postGroupIds: string[]): Promise<void> {
     const userJoinedGroupIds = user.groups ?? [];
     const groupCanAccess = postGroupIds.filter((groupId) => userJoinedGroupIds.includes(groupId));
-    const activePostGroupIds = await this._postGroupRepository.getNotInStateGroupIds(
+    const activePostGroupIds = await this._postGroupRepo.getNotInStateGroupIds(
       groupCanAccess,
       true
     );
@@ -272,7 +274,7 @@ export class ContentValidator implements IContentValidator {
     };
     if (seriesIds?.length) {
       const groupIds = groups.map((e) => e.id);
-      const series = await this._contentRepository.findAll({
+      const series = await this._contentRepo.findAll({
         attributes: {
           exclude: ['content'],
         },
@@ -334,12 +336,10 @@ export class ContentValidator implements IContentValidator {
       throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
-      contentEntity.getId(),
-      {
-        shouldIncludeSeries: true,
-      }
-    )) as ArticleEntity | PostEntity;
+    const contentWithArchivedGroups = (await this._contentRepo.findContentWithCache({
+      where: { id: contentEntity.getId(), groupArchived: false },
+      include: { shouldIncludeSeries: true },
+    })) as ArticleEntity | PostEntity;
 
     if (!contentWithArchivedGroups) {
       return;

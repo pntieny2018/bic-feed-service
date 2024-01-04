@@ -83,7 +83,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
     }
 
     if (mustIncludeGroup || shouldIncludeGroup) {
-      const groupIdsObject = this._postGroupRepo.getGroupsIdsByContent(
+      const groupIdsObject = await this._postGroupRepo.getGroupsIdsByContent(
         [id],
         isBoolean(groupArchived) ? groupArchived : undefined
       );

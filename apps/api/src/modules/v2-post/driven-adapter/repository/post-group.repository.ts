@@ -47,11 +47,11 @@ export class PostGroupRepository implements IPostGroupRepository {
 
     return record.reduce((acc, item) => {
       const { groupId, postId } = item;
-      if (!acc[groupId]) {
-        acc[groupId] = [];
+      if (!acc[postId]) {
+        acc[postId] = [];
       }
 
-      acc[groupId].push(postId);
+      acc[postId].push(groupId);
 
       return acc;
     }, {});

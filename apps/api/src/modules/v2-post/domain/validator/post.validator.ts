@@ -28,26 +28,28 @@ import { IPostValidator } from './interface';
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
   public constructor(
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    protected _authorityAppService: IAuthorityAppService,
+
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    protected readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepo: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepo: IPostGroupRepository,
+
     @Inject(GROUP_ADAPTER)
     protected _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    protected readonly _userAdapter: IUserAdapter,
-    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected _authorityAppService: IAuthorityAppService,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository,
-    @Inject(REPORT_REPOSITORY_TOKEN)
-    protected readonly _reportRepository: IReportRepository,
-    @Inject(POST_GROUP_REPOSITORY_TOKEN)
-    protected readonly _postGroupRepository: IPostGroupRepository
+    protected readonly _userAdapter: IUserAdapter
   ) {
     super(
-      _groupAdapter,
-      _userAdapter,
       _authorityAppService,
-      _contentRepository,
-      _reportRepository,
-      _postGroupRepository
+      _contentRepo,
+      _reportRepo,
+      _postGroupRepo,
+      _groupAdapter,
+      _userAdapter
     );
   }
 

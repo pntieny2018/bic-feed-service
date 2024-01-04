@@ -59,7 +59,7 @@ export class CreateCommentHandler implements ICommandHandler<CreateCommentComman
         withGroupJoined: true,
       });
 
-      await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+      this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
 
     const commentEntity = await this._commentDomain.create({

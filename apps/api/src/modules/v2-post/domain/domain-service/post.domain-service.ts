@@ -145,10 +145,13 @@ export class PostDomainService implements IPostDomainService {
     const { payload, actor } = input;
     const { id, scheduledAt, groupIds } = payload;
 
-    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
-      mustIncludeGroup: true,
-      shouldIncludeSeries: true,
-      shouldIncludeLinkPreview: true,
+    const postEntity = await this._contentRepo.findContentWithCache({
+      where: { id, groupArchived: false },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+      },
     });
 
     const isPost = postEntity && postEntity instanceof PostEntity;
@@ -178,10 +181,13 @@ export class PostDomainService implements IPostDomainService {
     const { payload, actor } = input;
     const { id: postId, groupIds } = payload;
 
-    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(postId, {
-      mustIncludeGroup: true,
-      shouldIncludeSeries: true,
-      shouldIncludeLinkPreview: true,
+    const postEntity = await this._contentRepo.findContentWithCache({
+      where: { id: postId, groupArchived: false },
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+      },
     });
 
     const isPost = postEntity && postEntity instanceof PostEntity;
@@ -359,10 +365,13 @@ export class PostDomainService implements IPostDomainService {
   public async autoSavePost(props: UpdatePostProps): Promise<void> {
     const { payload, actor } = props;
 
-    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(payload.id, {
-      shouldIncludeGroup: true,
-      shouldIncludeSeries: true,
-      shouldIncludeLinkPreview: true,
+    const postEntity = await this._contentRepo.findContentWithCache({
+      where: { id: payload.id, groupArchived: false },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeLinkPreview: true,
+      },
     });
 
     const isPost = postEntity && postEntity instanceof PostEntity;
@@ -387,9 +396,9 @@ export class PostDomainService implements IPostDomainService {
   }
 
   public async delete(id: string, authUser: UserDto): Promise<void> {
-    const postEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
-      shouldIncludeGroup: true,
-      shouldIncludeSeries: true,
+    const postEntity = await this._contentRepo.findContentWithCache({
+      where: { id, groupArchived: false },
+      include: { shouldIncludeGroup: true, shouldIncludeSeries: true },
     });
 
     const isPost = postEntity && postEntity instanceof PostEntity;
