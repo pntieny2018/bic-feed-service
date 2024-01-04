@@ -46,7 +46,7 @@ import {
   searchProvider,
   sharedProvider,
   tagProvider,
-  workerProvider,
+  webSocketProvider,
 } from './provider';
 
 @Module({
@@ -81,6 +81,7 @@ import {
     InternalController,
   ],
   providers: [
+    ...webSocketProvider,
     ...adapterProvider,
     ...categoryProvider,
     ...commentProvider,
@@ -96,7 +97,6 @@ import {
     ...searchProvider,
     ...sharedProvider,
     ...tagProvider,
-    ...workerProvider,
   ],
   exports: [
     {
@@ -104,6 +104,8 @@ import {
       useClass: ReportRepository,
     },
     ...elasticProvider,
+    ...postProvider,
+    ...tagProvider,
   ],
 })
 export class PostModuleV2 {}
