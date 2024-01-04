@@ -32,11 +32,12 @@ export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
       });
       return;
     }
-
-    await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: postEntity.getId(),
-      newGroupIds: postEntity.getGroupIds(),
-      oldGroupIds: postEntity.getSnapshot().groupIds,
-    });
+    if (postEntity.isPublished()) {
+      await this._newsfeedDomainService.dispatchContentIdToGroups({
+        contentId: postEntity.getId(),
+        newGroupIds: postEntity.getGroupIds(),
+        oldGroupIds: postEntity.getSnapshot().groupIds,
+      });
+    }
   }
 }
