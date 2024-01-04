@@ -405,11 +405,11 @@ export class PostDomainService implements IPostDomainService {
     }
 
     if (postEntity.isPublished()) {
-      await this._contentValidator.checkCanCRUDContent(
-        authUser,
-        postEntity.get('groupIds'),
-        postEntity.get('type')
-      );
+      await this._contentValidator.checkCanCRUDContent({
+        user: authUser,
+        groupIds: postEntity.get('groupIds'),
+        contentType: postEntity.get('type'),
+      });
     }
 
     await this._contentRepository.delete(id);

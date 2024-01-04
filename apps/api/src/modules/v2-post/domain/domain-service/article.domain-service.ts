@@ -152,11 +152,11 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     if (articleEntity.isPublished()) {
-      await this._contentValidator.checkCanCRUDContent(
-        actor,
-        articleEntity.get('groupIds'),
-        articleEntity.get('type')
-      );
+      await this._contentValidator.checkCanCRUDContent({
+        user: actor,
+        groupIds: articleEntity.get('groupIds'),
+        contentType: articleEntity.get('type'),
+      });
     }
 
     await this._contentRepository.delete(id);

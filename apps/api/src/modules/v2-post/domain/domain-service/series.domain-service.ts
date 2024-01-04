@@ -120,13 +120,19 @@ export class SeriesDomainService implements ISeriesDomainService {
     seriesEntity.setSetting(setting);
     const state = seriesEntity.getState();
 
-    await this._contentValidator.checkCanCRUDContent(actor, groupIds, seriesEntity.get('type'));
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+
+    await this._contentValidator.checkCanCRUDContent({
+      user: actor,
+      groupIds,
+      contentType: seriesEntity.get('type'),
+      groups,
+    });
 
     if (state?.enableSetting) {
       await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
@@ -206,7 +212,11 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
     const oldGroupIds = seriesEntity.get('groupIds');
-    await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
+    await this._contentValidator.checkCanCRUDContent({
+      user: actor,
+      groupIds: oldGroupIds,
+      contentType: seriesEntity.get('type'),
+    });
 
     if (groupIds) {
       const groups = await this._groupAdapter.getGroupsByIds(groupIds);
@@ -218,11 +228,11 @@ export class SeriesDomainService implements ISeriesDomainService {
       const { attachGroupIds, detachGroupIds } = state;
 
       if (attachGroupIds?.length) {
-        await this._contentValidator.checkCanCRUDContent(
-          actor,
-          attachGroupIds,
-          seriesEntity.get('type')
-        );
+        await this._contentValidator.checkCanCRUDContent({
+          user: actor,
+          groupIds: attachGroupIds,
+          contentType: seriesEntity.get('type'),
+        });
       }
 
       if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
@@ -272,11 +282,11 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
-    await this._contentValidator.checkCanCRUDContent(
-      actor,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: actor,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
     await this._contentRepository.delete(seriesEntity.get('id'));
 
@@ -314,11 +324,11 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._contentValidator.checkCanCRUDContent(
-      authUser,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: authUser,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
     const content = (await this._contentRepository.findContentByIdInActiveGroup(itemId, {
       mustIncludeGroup: true,
@@ -368,11 +378,11 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._contentValidator.checkCanCRUDContent(
-      authUser,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: authUser,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
     const content = (await this._contentRepository.findContentByIdInActiveGroup(itemId, {
       mustIncludeGroup: true,
@@ -410,11 +420,11 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._contentValidator.checkCanCRUDContent(
-      authUser,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: authUser,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
     await this._contentRepository.reorderPostsSeries(id, itemIds);
 

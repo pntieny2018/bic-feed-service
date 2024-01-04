@@ -56,20 +56,33 @@ export class ContentValidator implements IContentValidator {
     protected readonly _postGroupRepository: IPostGroupRepository
   ) {}
 
-  public async checkCanCRUDContent(
-    user: UserDto,
-    groupAudienceIds: string[],
-    contentType?: CONTENT_TYPE
-  ): Promise<void> {
-    const notCreatableInGroups: GroupDto[] = [];
-    const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
+  public async checkCanCRUDContent(input: {
+    user: UserDto;
+    groupIds: string[];
+    contentType?: CONTENT_TYPE;
+    groups?: GroupDto[];
+  }): Promise<void> {
+    const { user, groupIds, contentType } = input;
+    let { groups } = input;
+
+    if (groups?.length) {
+      const needFindGroupIds = groupIds.filter(
+        (groupId) => !groups.some((group) => group.id === groupId)
+      );
+      if (needFindGroupIds.length) {
+        const needFindGGroups = await this._groupAdapter.getGroupsByIds(needFindGroupIds);
+        groups.push(...needFindGGroups);
+      }
+    } else {
+      groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    }
+
     await this._authorityAppService.buildAbility(user);
     const permissionKey = this._postTypeToPermissionKey(contentType);
-    for (const group of groups) {
-      if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)) {
-        notCreatableInGroups.push(group);
-      }
-    }
+
+    const notCreatableInGroups: GroupDto[] = groups.filter(
+      (group) => !this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)
+    );
 
     if (notCreatableInGroups.length) {
       throw new ContentNoCRUDPermissionAtGroupException(
@@ -131,15 +144,15 @@ export class ContentValidator implements IContentValidator {
       throw new ContentEmptyGroupException();
     }
 
-    const postType = contentEntity.get('type');
+    const contentType = contentEntity.get('type');
     const state = contentEntity.getState();
     const { detachGroupIds, attachGroupIds } = state;
     const isEnableSetting = contentEntity.isEnableSetting();
 
-    await this.checkCanCRUDContent(userAuth, groupIds, postType);
+    await this.checkCanCRUDContent({ user: userAuth, groupIds, contentType });
 
     if (detachGroupIds?.length) {
-      await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
+      await this.checkCanCRUDContent({ user: userAuth, groupIds: detachGroupIds, contentType });
     }
 
     if (
