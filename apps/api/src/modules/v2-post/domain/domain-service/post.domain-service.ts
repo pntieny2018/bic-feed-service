@@ -13,6 +13,7 @@ import {
   PostScheduledEvent,
   PostUpdatedEvent,
   PostVideoFailedEvent,
+  PostVideoSuccessEvent,
 } from '../event';
 import {
   ContentAccessDeniedException,
@@ -351,6 +352,7 @@ export class PostDomainService implements IPostDomainService {
 
     if (postEntity.isChanged()) {
       await this._contentRepository.update(postEntity);
+      this.event.publish(new PostVideoSuccessEvent({ postEntity, authUser: actor }));
     }
 
     if (!isScheduledPost) {
