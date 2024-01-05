@@ -89,7 +89,6 @@ export class PostInSeriesDto extends PickType(PostDto, [
   'setting',
   'type',
   'actor',
-  'isSaved',
   'media',
   'audience',
 ]) {

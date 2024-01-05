@@ -48,15 +48,11 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
     const groups = await this._groupAdapter.getGroupsByIds(
       command.payload?.groupIds || postEntity.get('groupIds')
     );
-    const mentionUsers = await this._userAdapter.getUsersByIds(command.payload.mentionUserIds, {
-      withGroupJoined: true,
-    });
 
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
       actor: command.payload.authUser,
       authUser: command.payload.authUser,
-      mentionUsers,
     });
 
     return result;
