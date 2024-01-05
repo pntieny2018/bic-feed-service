@@ -72,7 +72,7 @@ import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
 } from '../application/event-handler/set-video-state';
-import { FindArticleHandler } from '../application/query/article';
+import { FindArticleHandler, SearchArticlesHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -198,6 +198,7 @@ export const postProvider = [
 
   /** Application Query */
   FindArticleHandler,
+  SearchArticlesHandler,
   FindDraftContentsHandler,
   FindNewsfeedHandler,
   FindTimelineGroupHandler,

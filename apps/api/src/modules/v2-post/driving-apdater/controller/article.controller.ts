@@ -1,3 +1,4 @@
+import { PageDto } from '@api/common/dto';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
@@ -9,6 +10,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -29,12 +31,13 @@ import {
   UpdateArticleCommand,
 } from '../../application/command/article';
 import { ArticleDto } from '../../application/dto';
-import { FindArticleQuery } from '../../application/query/article';
+import { FindArticleQuery, SearchArticlesQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,
   ScheduleArticleRequestDto,
   CreateDraftArticleRequestDto,
+  SearchArticlesDto,
 } from '../dto/request';
 
 @ApiTags('v2 Articles')
@@ -45,6 +48,17 @@ export class ArticleController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
+
+  @ApiOperation({ summary: 'Get post detail' })
+  @Get(ROUTES.ARTICLE.SEARCH_ARTICLES.PATH)
+  @Version(ROUTES.ARTICLE.SEARCH_ARTICLES.VERSIONS)
+  public async searchArticles(
+    @AuthUser() user: UserDto,
+    @Query() searchDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleDto>> {
+    const data = this._queryBus.execute(new SearchArticlesQuery({ user, searchDto }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
 
   @ApiOperation({ summary: 'Get post detail' })
   @Get(ROUTES.ARTICLE.GET_DETAIL.PATH)

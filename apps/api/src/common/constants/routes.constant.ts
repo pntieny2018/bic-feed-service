@@ -108,6 +108,10 @@ export const ROUTES = {
     },
   },
   ARTICLE: {
+    SEARCH_ARTICLES: {
+      PATH: '/articles',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
+    },
     CREATE: {
       PATH: '/articles',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
