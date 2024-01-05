@@ -47,10 +47,10 @@ export class ArticleController {
     private readonly _queryBus: QueryBus
   ) {}
 
-  @ApiOperation({ summary: 'Get post detail' })
+  @ApiOperation({ summary: 'Get article detail' })
   @Get(ROUTES.ARTICLE.GET_DETAIL.PATH)
   @Version(ROUTES.ARTICLE.GET_DETAIL.VERSIONS)
-  public async getPostDetail(
+  public async getArticleDetail(
     @Param('articleId', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {

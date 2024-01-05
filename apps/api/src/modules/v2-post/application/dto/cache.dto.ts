@@ -21,7 +21,7 @@ export class ArticleCacheDto {
   public updatedAt: Date;
   public reactionsCount: ReactionCount;
   public publishedAt: Date;
-  public groups: string[];
+  public groupIds: string[];
   public wordCount: number;
   public commentsCount: number;
   public totalUsersSeen: number;
@@ -43,7 +43,7 @@ export class PostCacheDto {
   public id: string;
   public isReported: boolean;
   public isHidden: boolean;
-  public groups: string[];
+  public groupIds: string[];
   public content: string;
   public title: string;
   public createdAt: Date;
@@ -83,7 +83,7 @@ export class SeriesCacheDto {
   public createdAt: Date;
   public updatedAt: Date;
   public publishedAt: Date;
-  public groups: string[];
+  public groupIds: string[];
   public title: string;
   public summary: string;
   public itemsIds: string[];

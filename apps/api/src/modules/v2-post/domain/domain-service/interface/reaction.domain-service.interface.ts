@@ -2,6 +2,7 @@ import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 
+import { ReactionCount } from '../../../application/dto';
 import { ReactionEntity } from '../../model/reaction';
 
 export type ReactionCreateProps = {
@@ -31,9 +32,7 @@ export type DeleteReactionProps = {
 export interface IReactionDomainService {
   getReactions(props: GetReactionsProps): Promise<PaginationResult<ReactionEntity>>;
 
-  getAndCountReactionByContentIds(
-    contentIds: string[]
-  ): Promise<Map<string, Record<string, number>[]>>;
+  getAndCountReactionByContentIds(contentIds: string[]): Promise<Map<string, ReactionCount[]>>;
 
   createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
 

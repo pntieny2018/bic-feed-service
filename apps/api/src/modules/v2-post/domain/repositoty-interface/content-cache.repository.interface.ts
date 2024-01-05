@@ -6,11 +6,36 @@ import {
 } from '@api/modules/v2-post/application/dto';
 import { ArticleEntity, PostEntity, SeriesEntity } from '@api/modules/v2-post/domain/model/content';
 import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
+import { CONTENT_STATUS } from '@beincom/constants';
+
+export type FindContentInCacheConditionOptions = {
+  id: string;
+  status?: CONTENT_STATUS;
+  createdBy?: string;
+  isHidden?: boolean;
+  groupArchived?: boolean;
+  excludeReportedByUserId?: string;
+};
+
+export type FindContentInCacheIncludeOptions = {
+  mustIncludeGroup?: boolean;
+  shouldIncludeGroup?: boolean;
+  shouldIncludeSeries?: boolean;
+  shouldIncludeItems?: boolean;
+  shouldIncludeCategory?: boolean;
+  shouldIncludeQuiz?: boolean;
+  shouldIncludeLinkPreview?: boolean;
+};
+
+export type FindContentInCacheProps = {
+  where: FindContentInCacheConditionOptions;
+  include?: FindContentInCacheIncludeOptions;
+};
 
 export interface IContentCacheRepository {
   existKey(key: string): Promise<boolean>;
 
-  getContent(contentId: string): Promise<PostCacheDto | ArticleCacheDto | SeriesCacheDto>;
+  findContent(input: FindContentInCacheProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   getContents(contentIds: string[]): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]>;
   setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
   deleteContent(contentId: string): Promise<void>;

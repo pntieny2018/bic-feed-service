@@ -27,7 +27,7 @@ export class MentionValidator implements IMentionValidator {
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
 
-  public async validateMentionUsers(users: UserDto[], groups: GroupDto[]): Promise<void> {
+  public validateMentionUsers(users: UserDto[], groups: GroupDto[]): void {
     if (!users?.length || !groups?.length) {
       return;
     }

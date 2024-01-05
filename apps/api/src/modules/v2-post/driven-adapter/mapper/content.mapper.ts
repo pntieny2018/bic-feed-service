@@ -1,9 +1,9 @@
-import { ReactionsCount } from '@api/common/types';
 import {
   ArticleCacheDto,
   ImageDto,
   LinkPreviewDto,
   PostCacheDto,
+  ReactionCount,
   SeriesCacheDto,
   TagDto,
 } from '@api/modules/v2-post/application/dto';
@@ -41,7 +41,7 @@ export class ContentMapper {
 
   public toDomain(
     post: PostModel,
-    reactionsCountMap?: Map<string, ReactionsCount>
+    reactionsCount?: ReactionCount[]
   ): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) {
       return null;
@@ -50,11 +50,11 @@ export class ContentMapper {
     post = post.toJSON();
     switch (post.type) {
       case CONTENT_TYPE.POST:
-        return this._modelToPostEntity(post, reactionsCountMap);
+        return this._modelToPostEntity(post, reactionsCount);
       case CONTENT_TYPE.SERIES:
         return this._modelToSeriesEntity(post);
       case CONTENT_TYPE.ARTICLE:
-        return this._modelToArticleEntity(post, reactionsCountMap);
+        return this._modelToArticleEntity(post, reactionsCount);
       default:
         return null;
     }
@@ -152,10 +152,7 @@ export class ContentMapper {
     };
   }
 
-  private _modelToPostEntity(
-    post: PostAttributes,
-    reactionsCountMap?: Map<string, ReactionsCount>
-  ): PostEntity {
+  private _modelToPostEntity(post: PostAttributes, reactionsCount?: ReactionCount[]): PostEntity {
     if (post === null) {
       return null;
     }
@@ -205,7 +202,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
-        ...(reactionsCountMap && { reactionsCount: merge({}, ...reactionsCountMap.get(post.id)) }),
+        reactionsCount: reactionsCount ? merge({}, ...reactionsCount) : undefined,
       },
       media: {
         images: (post.mediaJson?.images || []).map((image) => new ImageEntity(image)),
@@ -224,7 +221,7 @@ export class ContentMapper {
 
   private _modelToArticleEntity(
     post: PostAttributes,
-    reactionsCountMap?: Map<string, ReactionsCount>
+    reactionsCount?: ReactionCount[]
   ): ArticleEntity {
     if (post === null) {
       return null;
@@ -275,7 +272,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
-        ...(reactionsCountMap && { reactionsCount: merge({}, ...reactionsCountMap.get(post.id)) }),
+        reactionsCount: reactionsCount ? merge({}, ...reactionsCount) : undefined,
       },
       title: post.title,
       summary: post.summary,
@@ -341,7 +338,7 @@ export class ContentMapper {
       setting: post.setting,
       createdAt: post.createdAt,
       publishedAt: post.publishedAt,
-      groupIds: post.groups,
+      groupIds: post.groupIds,
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
@@ -389,7 +386,7 @@ export class ContentMapper {
       setting: article.setting,
       createdAt: article.createdAt,
       publishedAt: article.publishedAt,
-      groupIds: article.groups,
+      groupIds: article.groupIds,
       aggregation: {
         commentsCount: article.commentsCount,
         totalUsersSeen: article.totalUsersSeen,
@@ -428,7 +425,7 @@ export class ContentMapper {
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
       publishedAt: series.publishedAt,
-      groupIds: series.groups,
+      groupIds: series.groupIds,
       title: series.title,
       summary: series.summary,
       itemIds: series.itemsIds || [],
@@ -448,7 +445,7 @@ export class ContentMapper {
       updatedAt: postEntity.get('updatedAt'),
       createdBy: postEntity.getCreatedBy(),
       updatedBy: postEntity.get('updatedBy'),
-      groups: postEntity.getGroupIds(),
+      groupIds: postEntity.getGroupIds(),
       linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
       media: this._mediaMapper.toDto(postEntity.get('media')),
       mentionsUserId: postEntity.get('mentionUserIds'),
@@ -477,7 +474,7 @@ export class ContentMapper {
       createdAt: articleEntity.get('createdAt'),
       createdBy: articleEntity.getCreatedBy(),
       updatedBy: articleEntity.get('updatedBy'),
-      groups: articleEntity.getGroupIds(),
+      groupIds: articleEntity.getGroupIds(),
       id: articleEntity.getId(),
       isReported: articleEntity.get('isReported'),
       isHidden: articleEntity.isHidden(),
@@ -510,7 +507,7 @@ export class ContentMapper {
       createdBy: seriesEntity.getCreatedBy(),
       isHidden: seriesEntity.isHidden(),
       isReported: seriesEntity.get('isReported'),
-      groups: seriesEntity.getGroupIds(),
+      groupIds: seriesEntity.getGroupIds(),
       id: seriesEntity.getId(),
       itemsIds: seriesEntity.getItemIds(),
       privacy: seriesEntity.get('privacy'),

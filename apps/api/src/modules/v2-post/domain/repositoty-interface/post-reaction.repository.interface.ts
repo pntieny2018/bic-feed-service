@@ -1,8 +1,7 @@
-import { OwnerReactionDto } from '@api/modules/v2-post/application/dto';
 import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 
-import { ReactionsCount } from '../../../../common/types';
+import { OwnerReactionDto, ReactionCount } from '../../application/dto';
 import { ReactionEntity } from '../model/reaction';
 
 export type FindOnePostReactionProps = {
@@ -33,7 +32,7 @@ export interface IPostReactionRepository {
 
   delete(id: string): Promise<void>;
   getPagination(input: GetPaginationPostReactionProps): Promise<PaginationResult<ReactionEntity>>;
-  getAndCountReactionByContents(contentIds: string[]): Promise<Map<string, ReactionsCount>>;
+  getAndCountReactionByContents(contentIds: string[]): Promise<Map<string, ReactionCount[]>>;
   getReactionsByContents(
     contentIds: string[],
     userId: string
