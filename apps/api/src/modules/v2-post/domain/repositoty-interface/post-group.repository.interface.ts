@@ -10,6 +10,11 @@ export type GetPaginationPostGroupProps = {
 } & CursorPaginationProps;
 
 export interface IPostGroupRepository {
+  isInStateContent(contentId: string, isArchived: boolean): Promise<boolean>;
+  getGroupsIdsByContent(
+    contentIds: string[],
+    isArchived?: boolean
+  ): Promise<{ [contentId: string]: string[] }>;
   getNotInStateGroupIds(groupIds: string[], isArchived: boolean): Promise<string[]>;
   getPagination(
     input: GetPaginationPostGroupProps

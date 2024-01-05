@@ -51,35 +51,35 @@ export class SeriesDomainService implements ISeriesDomainService {
   private readonly _logger = new Logger(SeriesDomainService.name);
 
   public constructor(
-    private readonly event: EventBus,
+    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
+    private readonly _mediaDomain: IMediaDomainService,
+    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _contentDomain: IContentDomainService,
+
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
-    @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
+
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository
+    private readonly _contentRepo: IContentRepository,
+
+    private readonly event: EventBus
   ) {}
 
   public async getSeriesById(seriesId: string, authUser: UserDto): Promise<SeriesEntity> {
-    const seriesEntity = await this._contentRepository.findContentWithCache(
-      {
-        where: {
-          id: seriesId,
-          groupArchived: false,
-          excludeReportedByUserId: authUser.id,
-        },
-        include: {
-          mustIncludeGroup: true,
-          shouldIncludeItems: true,
-          shouldIncludeCategory: true,
-        },
+    const seriesEntity = await this._contentRepo.findContentWithCache({
+      where: {
+        id: seriesId,
+        groupArchived: false,
+        excludeReportedByUserId: authUser.id,
       },
-      authUser
-    );
+      include: {
+        mustIncludeGroup: true,
+        shouldIncludeItems: true,
+        shouldIncludeCategory: true,
+      },
+    });
 
     if (
       !seriesEntity ||
@@ -98,7 +98,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   }
 
   public async findSeriesByIds(seriesIds: string[], withItems?: boolean): Promise<SeriesEntity[]> {
-    return (await this._contentRepository.findAll({
+    return (await this._contentRepo.findAll({
       attributes: {
         exclude: ['content'],
       },
@@ -120,17 +120,23 @@ export class SeriesDomainService implements ISeriesDomainService {
     seriesEntity.setSetting(setting);
     const state = seriesEntity.getState();
 
-    await this._contentValidator.checkCanCRUDContent(actor, groupIds, seriesEntity.get('type'));
+    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
+
+    await this._contentValidator.checkCanCRUDContent({
+      user: actor,
+      groupIds,
+      contentType: seriesEntity.get('type'),
+      groups,
+    });
 
     if (state?.enableSetting) {
       await this._contentValidator.checkCanEditContentSetting(actor, groupIds);
     }
 
-    const groups = await this._groupAdapter.getGroupsByIds(groupIds);
     seriesEntity.setGroups(groupIds);
     seriesEntity.setPrivacyFromGroups(groups);
 
-    const images = await this._mediaDomainService.getAvailableImages(
+    const images = await this._mediaDomain.getAvailableImages(
       [],
       [coverMedia.id],
       seriesEntity.get('createdBy')
@@ -141,13 +147,13 @@ export class SeriesDomainService implements ISeriesDomainService {
     seriesEntity.setCover(images[0]);
 
     try {
-      await this._contentRepository.create(seriesEntity);
+      await this._contentRepo.create(seriesEntity);
 
-      await this._contentDomainService.markSeen(seriesEntity.get('id'), actor.id);
+      await this._contentDomain.markSeen(seriesEntity.get('id'), actor.id);
       seriesEntity.increaseTotalSeen();
 
       if (seriesEntity.isImportant()) {
-        await this._contentDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
+        await this._contentDomain.markReadImportant(seriesEntity.get('id'), actor.id);
         seriesEntity.setMarkReadImportant();
       }
     } catch (e) {
@@ -163,7 +169,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   public async update(input: UpdateSeriesProps): Promise<SeriesEntity> {
     const { id, actor, groupIds, coverMedia } = input;
 
-    const seriesEntity = await this._contentRepository.findOne({
+    const seriesEntity = await this._contentRepo.findOne({
       where: {
         id,
         groupArchived: false,
@@ -192,7 +198,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     const isEnableSetting = seriesEntity.isEnableSetting();
 
     if (coverMedia) {
-      const images = await this._mediaDomainService.getAvailableImages(
+      const images = await this._mediaDomain.getAvailableImages(
         [seriesEntity.get('cover')],
         [coverMedia.id],
         seriesEntity.get('createdBy')
@@ -206,7 +212,11 @@ export class SeriesDomainService implements ISeriesDomainService {
     await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
     const oldGroupIds = seriesEntity.get('groupIds');
-    await this._contentValidator.checkCanCRUDContent(actor, oldGroupIds, seriesEntity.get('type'));
+    await this._contentValidator.checkCanCRUDContent({
+      user: actor,
+      groupIds: oldGroupIds,
+      contentType: seriesEntity.get('type'),
+    });
 
     if (groupIds) {
       const groups = await this._groupAdapter.getGroupsByIds(groupIds);
@@ -218,11 +228,11 @@ export class SeriesDomainService implements ISeriesDomainService {
       const { attachGroupIds, detachGroupIds } = state;
 
       if (attachGroupIds?.length) {
-        await this._contentValidator.checkCanCRUDContent(
-          actor,
-          attachGroupIds,
-          seriesEntity.get('type')
-        );
+        await this._contentValidator.checkCanCRUDContent({
+          user: actor,
+          groupIds: attachGroupIds,
+          contentType: seriesEntity.get('type'),
+        });
       }
 
       if (isEnableSetting && (attachGroupIds?.length || detachGroupIds?.length)) {
@@ -236,10 +246,10 @@ export class SeriesDomainService implements ISeriesDomainService {
       return seriesEntity;
     }
 
-    await this._contentRepository.update(seriesEntity);
+    await this._contentRepo.update(seriesEntity);
 
     if (!isImportantBefore && seriesEntity.isImportant()) {
-      await this._contentDomainService.markReadImportant(seriesEntity.get('id'), actor.id);
+      await this._contentDomain.markReadImportant(seriesEntity.get('id'), actor.id);
       seriesEntity.setMarkReadImportant();
     }
 
@@ -251,7 +261,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   public async delete(input: DeleteSeriesProps): Promise<void> {
     const { actor, id } = input;
 
-    const seriesEntity = await this._contentRepository.findOne({
+    const seriesEntity = await this._contentRepo.findOne({
       where: {
         id,
         groupArchived: false,
@@ -272,13 +282,13 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     await this._contentValidator.checkCanReadContent(seriesEntity, actor);
 
-    await this._contentValidator.checkCanCRUDContent(
-      actor,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: actor,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
-    await this._contentRepository.delete(seriesEntity.get('id'));
+    await this._contentRepo.delete(seriesEntity.get('id'));
 
     this.event.publish(new SeriesDeletedEvent({ entity: seriesEntity, authUser: actor }));
   }
@@ -287,7 +297,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     itemIds: string[],
     authUserId: string
   ): Promise<(PostEntity | ArticleEntity)[]> {
-    return (await this._contentRepository.findAll({
+    return (await this._contentRepo.findAll({
       where: {
         ids: itemIds,
         isHidden: false,
@@ -301,7 +311,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   public async addSeriesItems(input: AddSeriesItemsProps): Promise<void> {
     const { id, authUser, itemId } = input;
 
-    const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const seriesEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
       shouldIncludeItems: true,
     });
@@ -314,13 +324,13 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._contentValidator.checkCanCRUDContent(
-      authUser,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: authUser,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
-    const content = (await this._contentRepository.findContentByIdInActiveGroup(itemId, {
+    const content = (await this._contentRepo.findContentByIdInActiveGroup(itemId, {
       mustIncludeGroup: true,
       shouldIncludeSeries: true,
     })) as ArticleEntity | PostEntity;
@@ -340,7 +350,7 @@ export class SeriesDomainService implements ISeriesDomainService {
     content.setSeriesIds(uniq([...content.getSeriesIds(), id]));
     await this._contentValidator.validateLimitedToAttachSeries(content);
 
-    await this._contentRepository.createPostSeries(id, itemId);
+    await this._contentRepo.createPostSeries(id, itemId);
 
     this.event.publish(new ContentAttachedSeriesEvent({ contentId: itemId }));
     this.event.publish(
@@ -356,7 +366,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   public async removeSeriesItems(input: RemoveSeriesItemsProps): Promise<void> {
     const { id, authUser, itemId } = input;
 
-    const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const seriesEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       mustIncludeGroup: true,
     });
 
@@ -368,13 +378,13 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._contentValidator.checkCanCRUDContent(
-      authUser,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: authUser,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
-    const content = (await this._contentRepository.findContentByIdInActiveGroup(itemId, {
+    const content = (await this._contentRepo.findContentByIdInActiveGroup(itemId, {
       mustIncludeGroup: true,
     })) as ArticleEntity | PostEntity;
 
@@ -382,7 +392,7 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentNotFoundException();
     }
 
-    await this._contentRepository.deletePostSeries(id, itemId);
+    await this._contentRepo.deletePostSeries(id, itemId);
 
     this.event.publish(new ContentAttachedSeriesEvent({ contentId: itemId }));
     this.event.publish(
@@ -398,7 +408,7 @@ export class SeriesDomainService implements ISeriesDomainService {
   public async reorderSeriesItems(input: ReorderSeriesItemsProps): Promise<void> {
     const { id, authUser, itemIds } = input;
 
-    const seriesEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const seriesEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       mustIncludeGroup: true,
     });
 
@@ -410,13 +420,13 @@ export class SeriesDomainService implements ISeriesDomainService {
       throw new ContentAccessDeniedException();
     }
 
-    await this._contentValidator.checkCanCRUDContent(
-      authUser,
-      seriesEntity.get('groupIds'),
-      seriesEntity.get('type')
-    );
+    await this._contentValidator.checkCanCRUDContent({
+      user: authUser,
+      groupIds: seriesEntity.get('groupIds'),
+      contentType: seriesEntity.get('type'),
+    });
 
-    await this._contentRepository.reorderPostsSeries(id, itemIds);
+    await this._contentRepo.reorderPostsSeries(id, itemIds);
 
     this.event.publish(new SeriesItemsReorderedEvent(id));
   }
@@ -436,7 +446,7 @@ export class SeriesDomainService implements ISeriesDomainService {
 
     const { attachSeriesIds, detachSeriesIds } = content.getState();
 
-    const series = (await this._contentRepository.findAll({
+    const series = (await this._contentRepo.findAll({
       where: {
         groupArchived: false,
         isHidden: false,

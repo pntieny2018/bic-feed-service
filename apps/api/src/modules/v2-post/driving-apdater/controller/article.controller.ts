@@ -60,10 +60,10 @@ export class ArticleController {
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
-  @ApiOperation({ summary: 'Get post detail' })
+  @ApiOperation({ summary: 'Get article detail' })
   @Get(ROUTES.ARTICLE.GET_DETAIL.PATH)
   @Version(ROUTES.ARTICLE.GET_DETAIL.VERSIONS)
-  public async getPostDetail(
+  public async getArticleDetail(
     @Param('articleId', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {

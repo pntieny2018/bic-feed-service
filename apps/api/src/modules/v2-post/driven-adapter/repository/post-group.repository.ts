@@ -14,6 +14,49 @@ import {
 export class PostGroupRepository implements IPostGroupRepository {
   public constructor(private readonly _libPostGroupRepo: LibPostGroupRepository) {}
 
+  public async isInStateContent(contentId: string, isArchived: boolean): Promise<boolean> {
+    const record = await this._libPostGroupRepo.first({
+      where: {
+        postId: contentId,
+        isArchived,
+      },
+    });
+
+    return !!record;
+  }
+
+  public async getGroupsIdsByContent(
+    contentIds: string[],
+    isArchived?: boolean
+  ): Promise<{ [contentId: string]: string[] }> {
+    if (!contentIds.length) {
+      return {};
+    }
+
+    const record = await this._libPostGroupRepo.findMany({
+      selectRaw: [
+        ['DISTINCT group_id', 'groupId'],
+        ['is_archived', 'isArchived'],
+        ['post_id', 'postId'],
+      ],
+      where: {
+        postId: contentIds,
+        ...(isBoolean(isArchived) && { isArchived }),
+      },
+    });
+
+    return record.reduce((acc, item) => {
+      const { groupId, postId } = item;
+      if (!acc[postId]) {
+        acc[postId] = [];
+      }
+
+      acc[postId].push(groupId);
+
+      return acc;
+    }, {});
+  }
+
   public async getNotInStateGroupIds(groupIds: string[], isArchived: boolean): Promise<string[]> {
     if (!groupIds.length) {
       return [];

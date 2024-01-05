@@ -5,39 +5,116 @@ import {
   SeriesCacheDto,
 } from '@api/modules/v2-post/application/dto';
 import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
-import { IContentCacheRepository } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
+import {
+  FindContentInCacheProps,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { ContentMapper, QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper';
 import { CONTENT_STATUS } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
+import { LibReportDetailRepository } from '@libs/database/postgres/repository';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { isBoolean } from 'lodash';
 
 import { ArticleEntity, PostEntity, SeriesEntity } from '../../domain/model/content';
+import {
+  IPostGroupRepository,
+  POST_GROUP_REPOSITORY_TOKEN,
+} from '../../domain/repositoty-interface';
 
 @Injectable()
 export class ContentCacheRepository implements IContentCacheRepository {
   public constructor(
     private readonly _store: RedisContentService,
     private readonly _contentMapper: ContentMapper,
-    private readonly _quizMapper: QuizMapper
+    private readonly _quizMapper: QuizMapper,
+
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    private readonly _postGroupRepo: IPostGroupRepository,
+    private readonly _libReportDetailRepo: LibReportDetailRepository
   ) {}
 
   public async existKey(key: string): Promise<boolean> {
     return this._store.existKey(key);
   }
 
-  public async getContent(
-    contentId: string
-  ): Promise<PostCacheDto | ArticleCacheDto | SeriesCacheDto> {
-    const contentCache = await this._store.getJson<PostCacheDto | ArticleCacheDto | SeriesCacheDto>(
-      `${CACHE_KEYS.CONTENT}:${contentId}`
-    );
+  public async findContent(
+    input: FindContentInCacheProps
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
+    const { id, status, createdBy, isHidden, groupArchived, excludeReportedByUserId } = input.where;
+    const {
+      mustIncludeGroup,
+      shouldIncludeGroup,
+      shouldIncludeSeries,
+      shouldIncludeItems,
+      shouldIncludeCategory,
+      shouldIncludeQuiz,
+      shouldIncludeLinkPreview,
+    } = input.include || {};
 
-    if (!contentCache) {
+    const cachedContent = await this._store.getJson<
+      PostCacheDto | ArticleCacheDto | SeriesCacheDto
+    >(`${CACHE_KEYS.CONTENT}:${id}`);
+
+    if (
+      !cachedContent ||
+      (status && cachedContent.status !== status) ||
+      (createdBy && cachedContent.createdBy !== createdBy) ||
+      (isBoolean(isHidden) && cachedContent.isHidden !== isHidden)
+    ) {
       return null;
     }
 
-    return contentCache;
+    if (isBoolean(groupArchived) && !mustIncludeGroup && !shouldIncludeGroup) {
+      const isInStateContent = await this._postGroupRepo.isInStateContent(id, groupArchived);
+      if (!isInStateContent) {
+        return null;
+      }
+    }
+
+    if (excludeReportedByUserId) {
+      const isReported = await this._libReportDetailRepo.first({
+        where: { targetId: id, reporterId: excludeReportedByUserId },
+      });
+      if (isReported) {
+        return null;
+      }
+    }
+
+    if (mustIncludeGroup || shouldIncludeGroup) {
+      const groupIdsObject = await this._postGroupRepo.getGroupsIdsByContent(
+        [id],
+        isBoolean(groupArchived) ? groupArchived : undefined
+      );
+      const groupIds = groupIdsObject[id] || [];
+
+      if (mustIncludeGroup && !groupIds.length) {
+        return null;
+      }
+
+      cachedContent.groupIds = groupIds;
+    } else {
+      delete cachedContent.groupIds;
+    }
+
+    if (!shouldIncludeSeries) {
+      delete cachedContent['seriesIds'];
+    }
+    if (!shouldIncludeItems) {
+      delete cachedContent['itemIds'];
+    }
+    if (!shouldIncludeCategory) {
+      delete cachedContent['categories'];
+    }
+    if (!shouldIncludeQuiz) {
+      delete cachedContent['quiz'];
+    }
+    if (!shouldIncludeLinkPreview) {
+      delete cachedContent['linkPreview'];
+    }
+
+    return this._contentMapper.cacheToDomain(cachedContent);
   }
 
   public async getContents(

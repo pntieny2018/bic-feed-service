@@ -67,7 +67,7 @@ export class UserService implements IUserService {
 
     const userProfile =
       (await this._getUserProfileFromCacheByUserName(username)) ||
-      (await this._getUsersProfileFromApiByUserIds([userId])?.[0]);
+      (await this._getUsersProfileFromApiByUserIds([userId]))?.[0];
 
     if (!userProfile) {
       return null;

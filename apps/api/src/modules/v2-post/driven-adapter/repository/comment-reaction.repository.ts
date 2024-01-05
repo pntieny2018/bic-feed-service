@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
-import { ReactionsCount } from '../../../../common/types';
+import { ReactionCount } from '../../application/dto';
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
   FindOneCommentReactionProps,
@@ -49,14 +49,14 @@ export class CommentReactionRepository implements ICommentReactionRepository {
 
   public async getAndCountReactionByComments(
     commentIds: string[]
-  ): Promise<Map<string, ReactionsCount>> {
+  ): Promise<Map<string, ReactionCount[]>> {
     const reactionCount = await this._libReactionCommentDetailsRepo.findMany({
       where: {
         commentId: commentIds,
       },
     });
 
-    return new Map<string, ReactionsCount>(
+    return new Map<string, ReactionCount[]>(
       commentIds.map((commentId) => {
         return [
           commentId,
