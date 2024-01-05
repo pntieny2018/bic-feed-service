@@ -280,6 +280,10 @@ export const ROUTES = {
       PATH: 'contents/welcome',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
     },
+    GET_USERS_SEEN_CONTENT: {
+      PATH: 'contents/:contentId/seen-users',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
+    },
   },
   COMMENT: {
     GET_LIST: {

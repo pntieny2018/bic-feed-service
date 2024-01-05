@@ -1,3 +1,7 @@
+import {
+  GetScheduleContentQuery,
+  UsersSeenContentQuery,
+} from '@api/modules/v2-post/application/query/content';
 import { PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import {
@@ -54,13 +58,13 @@ import {
   GetWelcomeContentsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
-import { GetScheduleContentQuery } from '@api/modules/v2-post/application/query/content';
 import {
   CreateReportDto,
   GetAudienceContentDto,
   GetDraftContentsRequestDto,
   GetMyReportedContentsRequestDto,
   GetScheduleContentsQueryDto,
+  GetUserSeenPostDto,
   PinContentDto,
   PostSettingRequestDto,
   SearchContentsRequestDto,
@@ -471,5 +475,22 @@ export class ContentController {
       })
     );
     return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get users seen content' })
+  @Get(ROUTES.CONTENT.GET_USERS_SEEN_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.GET_USERS_SEEN_CONTENT.VERSIONS)
+  public async getUsersSeenContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @Query() query: GetUserSeenPostDto
+  ): Promise<void> {
+    return this._queryBus.execute(
+      new UsersSeenContentQuery({
+        authUser,
+        contentId,
+        ...query,
+      })
+    );
   }
 }
