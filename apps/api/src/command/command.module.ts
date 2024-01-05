@@ -48,6 +48,7 @@ import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
+import { MigrateNewsfeedCommand } from '@api/command/migrate-newsfeed.command';
 
 @Module({
   imports: [
@@ -105,6 +106,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigrateReportStructure,
     MigratePostTitleCommand,
     MigrateHlsMimetypeVideosCommand,
+    MigrateNewsfeedCommand,
   ],
 })
 export class CommandModule {}

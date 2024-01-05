@@ -3,7 +3,9 @@ import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import {
+  INewsfeedDomainService,
   IPostDomainService,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import { PostEntity } from '../../../../domain/model/content';
@@ -22,6 +24,8 @@ export class PostVideoProcessedHandler implements ICommandHandler<PostVideoProce
     private readonly _postDomain: IPostDomainService,
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepo: IContentRepository,
+    @Inject(NEWSFEED_DOMAIN_SERVICE_TOKEN)
+    private readonly _newsfeedDomain: INewsfeedDomainService,
     @Inject(USER_ADAPTER)
     private readonly _userAdapter: IUserAdapter
   ) {}
