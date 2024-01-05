@@ -12,12 +12,10 @@ export function MaxArticleLength(property: number, validationOptions?: Validatio
       validator: {
         validate(value: any, args: ValidationArguments) {
           const str = StringHelper.serializeEditorContentToText(value);
-          console.log(str);
-          console.log(str.length);
-          return str.trim().length <= args.constraints[0];
+          return str.length <= args.constraints[0];
         },
         defaultMessage(validationArguments?: ValidationArguments): string {
-          return `Your content cannot exceed ${validationArguments.value} characters.`;
+          return `Your content cannot exceed ${validationArguments.constraints[0]} characters.`;
         },
       },
     });
