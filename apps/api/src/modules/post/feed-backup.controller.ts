@@ -1,9 +1,11 @@
+import { UserDto } from '@libs/service/user';
 import { Controller, Param, ParseUUIDPipe, Put } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { PostAppService } from './application/post.app-service';
-import { UserDto } from '../v2-user/application';
 import { AuthUser } from '../../common/decorators';
+
+import { PostAppService } from './application/post.app-service';
 
 @ApiSecurity('authorization')
 @ApiTags('Feed old version')

@@ -1,4 +1,4 @@
-import { ReactionsCount } from '@api/common/types';
+import { OwnerReactionDto } from '@api/modules/v2-post/application/dto';
 import { CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import { PostModel } from '@libs/database/postgres/model';
@@ -6,12 +6,11 @@ import {
   LibPostReactionRepository,
   LibReactionContentDetailsRepository,
 } from '@libs/database/postgres/repository';
-import { Inject, Injectable } from '@nestjs/common';
-import { map } from 'lodash';
+import { Injectable } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
-import { CACHE_ADAPTER, ICacheAdapter } from '../../domain/infra-adapter-interface';
+import { ReactionsCount } from '../../../../common/types';
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
   FindOnePostReactionProps,
@@ -26,9 +25,7 @@ export class PostReactionRepository implements IPostReactionRepository {
   public constructor(
     private readonly _libPostReactionRepo: LibPostReactionRepository,
     private readonly _libReactionContentDetailsRepo: LibReactionContentDetailsRepository,
-    private readonly _postReactionMapper: PostReactionMapper,
-    @Inject(CACHE_ADAPTER)
-    private readonly _cacheAdapter: ICacheAdapter
+    private readonly _postReactionMapper: PostReactionMapper
   ) {}
 
   public async findOne(input: FindOnePostReactionProps): Promise<ReactionEntity> {
@@ -68,37 +65,13 @@ export class PostReactionRepository implements IPostReactionRepository {
   public async getAndCountReactionByContents(
     contentIds: string[]
   ): Promise<Map<string, ReactionsCount>> {
-    const caches = await this._cacheAdapter.mgetJson(contentIds);
-
-    const reactionsCountCachedMap = new Map<string, ReactionsCount>();
-    caches.forEach((cache: string) => {
-      const item = JSON.parse(cache);
-
-      if (item.length > 0 && item[0].id) {
-        const reactionCounts = item[0]?.reactionCounts;
-        if (!reactionCounts) {
-          return;
-        }
-        reactionsCountCachedMap.set(
-          item[0].id,
-          map(item[0].reactionCounts, (value, key) => ({ [key]: value }))
-        );
-      } else {
-        return;
-      }
-    });
-
-    const contentIdsNotCached = contentIds.filter((contentId) => {
-      return !reactionsCountCachedMap.has(contentId);
-    });
-
     const reactionCount = await this._libReactionContentDetailsRepo.findMany({
       where: {
-        contentId: contentIdsNotCached,
+        contentId: contentIds,
       },
     });
 
-    const reactionsCountMap = new Map<string, ReactionsCount>(
+    return new Map<string, ReactionsCount>(
       contentIds.map((contentId) => {
         return [
           contentId,
@@ -113,10 +86,6 @@ export class PostReactionRepository implements IPostReactionRepository {
         ];
       })
     );
-
-    await this._cacheAdapter.cacheContentReactionsCount(reactionsCountMap);
-
-    return new Map([...reactionsCountMap, ...reactionsCountCachedMap]);
   }
 
   public async getPagination(
@@ -151,6 +120,31 @@ export class PostReactionRepository implements IPostReactionRepository {
       rows: result,
       total: count,
     };
+  }
+
+  public async getReactionsByContents(
+    contentIds: string[],
+    userId: string
+  ): Promise<Record<string, OwnerReactionDto[]>> {
+    const reactions = await this._libPostReactionRepo.findMany({
+      where: {
+        postId: contentIds,
+        createdBy: userId,
+      },
+    });
+
+    return reactions.reduce((acc, reaction) => {
+      const { postId } = reaction;
+      if (!acc[postId]) {
+        acc[postId] = [];
+      }
+
+      acc[postId].push({
+        id: reaction.id,
+        reactionName: reaction.reactionName,
+      });
+      return acc;
+    }, {});
   }
 
   public async increaseReactionCount(props: UpdateCountContentReactionProps): Promise<void> {

@@ -51,6 +51,7 @@ export type ContentAttributes = {
   aggregation?: {
     commentsCount: number;
     totalUsersSeen: number;
+    reactionsCount?: Record<string, number>;
   };
 };
 export type ContentState = {
@@ -195,6 +196,10 @@ export class ContentEntity<
 
   public getQuiz(): QuizEntity {
     return this._props.quiz;
+  }
+
+  public getPublishedAt(): Date {
+    return this._props.publishedAt;
   }
 
   public isOwner(userId: string): boolean {

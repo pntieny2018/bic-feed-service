@@ -4,13 +4,11 @@ import { ArrayHelper, AxiosHelper } from '@libs/common/helpers';
 import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
-import { UserDto } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { GROUP_ENDPOINT } from './endpoint.constant';
-import { GroupDto, GroupMember } from './group.dto';
+import { GroupDto } from './group.dto';
 import {
-  GetUserIdsInGroupsProps,
   CountUsersInGroupsProps,
   GetUserRoleInGroupsResult,
   IGroupService,
@@ -75,45 +73,6 @@ export class GroupService implements IGroupService {
     return result;
   }
 
-  public async getGroupMembersDividedByRole(
-    actor: UserDto,
-    groupIds: string[],
-    pagination?: { offset?: number; limit?: number }
-  ): Promise<GroupMember[]> {
-    const response = await Promise.all(
-      groupIds.map(async (groupId): Promise<GroupMember[]> => {
-        try {
-          const response = await this._httpService.get(
-            GROUP_ENDPOINT.GROUP_MEMBERS.replace(':groupId', groupId),
-            {
-              headers: {
-                user: JSON.stringify({
-                  ['token_use']: 'id',
-                  ['cognito:username']: actor.username,
-                  ['custom:user_uuid']: actor.id,
-                  ['email']: actor.email,
-                }),
-              },
-              params: {
-                offset: pagination?.offset || 0,
-                limit: pagination?.limit || 50,
-              },
-            }
-          );
-
-          if (response.status !== HttpStatus.OK) {
-            return [];
-          }
-
-          return response.data['data'];
-        } catch (ex) {
-          return [];
-        }
-      })
-    );
-    return [...new Set(response.flat())];
-  }
-
   public async getUserRoleInGroups(
     groupIds: string[],
     roles: ROLE_TYPE[]
@@ -135,55 +94,6 @@ export class GroupService implements IGroupService {
     } catch (ex) {
       this._logger.error(JSON.stringify(ex));
       return defaultResult;
-    }
-  }
-
-  public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
-    const adminRoleInclude = [ROLE_TYPE.COMMUNITY_ADMIN, ROLE_TYPE.GROUP_ADMIN, ROLE_TYPE.OWNER];
-
-    const data = await this.getUserRoleInGroups(groupIds, adminRoleInclude);
-    const userIds = [];
-
-    for (const groupId of groupIds) {
-      if (data.communityAdmin[groupId]) {
-        userIds.push(...data.communityAdmin[groupId]);
-      }
-
-      if (data.groupAdmin[groupId]) {
-        userIds.push(...data.groupAdmin[groupId]);
-      }
-
-      if (data.owner[groupId]) {
-        userIds.push(...data.owner[groupId]);
-      }
-    }
-    return userIds.includes(userId);
-  }
-
-  public async getCursorUserIdsInGroups(input: GetUserIdsInGroupsProps): Promise<{
-    list: string[];
-    cursor: string;
-  }> {
-    const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, after } = input;
-    try {
-      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
-        group_ids: groupIds,
-        ignore_group_ids: notInGroupIds,
-        ignoreUserIds,
-        include_deactivated: includeDeactivated || false,
-        limit: limit || 5000,
-        after: after || null,
-      });
-      return {
-        list: response.data['data'],
-        cursor: response.data['meta']['cursors']['next'],
-      };
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex));
-      return {
-        list: [],
-        cursor: null,
-      };
     }
   }
 
@@ -211,10 +121,10 @@ export class GroupService implements IGroupService {
 
   public async getPaginationGroupsMembers(
     input: GetPaginationGroupsMembersProps
-  ): Promise<{ ids: string[] }> {
+  ): Promise<{ list: string[] }> {
     const { groupIds, notInGroupIds, includeDeactivated, ignoreUserIds, limit, offset } = input;
     try {
-      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.GROUPS_MEMBERS}`, {
+      const response = await this._httpService.post(`${GROUP_ENDPOINT.INTERNAL.USERS_IN_GROUPS}`, {
         group_ids: groupIds,
         ignore_group_ids: notInGroupIds,
         ignore_user_ids: ignoreUserIds,
@@ -223,11 +133,11 @@ export class GroupService implements IGroupService {
         limit,
       });
       return {
-        ids: response.data['data'].ids,
+        list: response.data['data'],
       };
     } catch (ex) {
       this._logger.error(JSON.stringify(ex));
-      return { ids: [] };
+      return { list: [] };
     }
   }
 }

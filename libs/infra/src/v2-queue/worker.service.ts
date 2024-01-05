@@ -24,7 +24,7 @@ export class WorkerService implements IWorkerService {
       this._logger.debug(`Job ${args.jobId} in ${queueEvents.name} has been completed`);
     });
     queueEvents.on('failed', (args) => {
-      this._logger.debug(
+      this._logger.error(
         `Job ${args.jobId} in ${queueEvents.name} has been failed with reason ${args.failedReason}`
       );
     });
@@ -35,11 +35,11 @@ export class WorkerService implements IWorkerService {
 
     this._worker = new WorkerPro(
       queueName,
-      async (job: JobPro) => {
+      async (job: JobPro): Promise<void> => {
         this._logger.debug(
           `Job ${job.id} in ${queueName} be processed with data ${JSON.stringify(job.data)}`
         );
-        await handlers(job);
+        return handlers(job);
       },
       workerConfig
     );

@@ -1,8 +1,10 @@
-import { ORDER } from '@beincom/constants';
+import { CONTENT_TARGET, ORDER, PRIVACY } from '@beincom/constants';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
-import { ReportAttribute } from '@libs/database/postgres/model';
+import { REPORT_SCOPE, ReportAttribute } from '@libs/database/postgres/model';
 import { LibReportDetailRepository, LibReportRepository } from '@libs/database/postgres/repository';
 import { SentryService } from '@libs/infra/sentry';
+import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
+import { UserDto } from '@libs/service/user';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -45,10 +47,7 @@ import { CommentService } from '../comment';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaDto } from '../media/dto';
 import { MentionService } from '../mention';
-import { ReportTo, TargetType } from '../report-content/contstants';
 import { TagService } from '../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
-import { GroupPrivacy } from '../v2-group/data-type';
 import { RULES } from '../v2-post/constant';
 import {
   ContentEmptyContentException,
@@ -57,7 +56,6 @@ import {
   ContentEmptyGroupException,
   ContentLimitAttachedSeriesException,
 } from '../v2-post/domain/exception';
-import { UserDto } from '../v2-user/application';
 
 import { GetPostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
@@ -92,8 +90,8 @@ export class PostService {
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
     protected userSavePostModel: typeof UserSavePostModel,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    protected groupAppService: IGroupApplicationService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    protected groupAppService: IGroupService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
@@ -341,8 +339,8 @@ export class PostService {
     });
 
     const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-      TargetType.POST,
+      CONTENT_TARGET.ARTICLE,
+      CONTENT_TARGET.POST,
     ]);
     const articleIdsSorted = itemsInSeries
       .filter((item) => !postIdsReported.includes(item.postId))
@@ -557,13 +555,13 @@ export class PostService {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.OPEN) {
+      if (group.privacy === PRIVACY.OPEN) {
         return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) {
+      if (group.privacy === PRIVACY.CLOSED) {
         totalOpen++;
       }
-      if (group.privacy === GroupPrivacy.PRIVATE) {
+      if (group.privacy === PRIVACY.PRIVATE) {
         totalPrivate++;
       }
     }
@@ -1037,8 +1035,8 @@ export class PostService {
     });
 
     const articleOrPostIdsReported = await this.getEntityIdsReportedByUser(userId, [
-      TargetType.ARTICLE,
-      TargetType.POST,
+      CONTENT_TARGET.ARTICLE,
+      CONTENT_TARGET.POST,
     ]);
     const mappedPosts = [];
     for (const postId of ids) {
@@ -1214,9 +1212,9 @@ export class PostService {
 
   public async getEntityIdsReportedByUser(
     userId: string,
-    targetTypes: TargetType[],
+    targetTypes: CONTENT_TARGET[],
     options?: {
-      reportTo?: ReportTo;
+      reportTo?: REPORT_SCOPE;
       groupIds?: string[];
     }
   ): Promise<string[]> {

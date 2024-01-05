@@ -16,7 +16,7 @@ export class FeedSeriesPublishedEventHandler implements IEventHandler<SeriesPubl
   ) {}
 
   public async handle(event: SeriesPublishedEvent): Promise<void> {
-    const { seriesEntity, authUser } = event.payload;
+    const { entity: seriesEntity, authUser } = event.payload;
 
     if (seriesEntity.isHidden() || !seriesEntity.isPublished()) {
       return;
@@ -25,7 +25,7 @@ export class FeedSeriesPublishedEventHandler implements IEventHandler<SeriesPubl
     await this._newsfeedDomainService.attachContentToUserId(seriesEntity, authUser.id);
 
     await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: seriesEntity.getId(),
+      content: seriesEntity,
       newGroupIds: seriesEntity.getGroupIds(),
       oldGroupIds: [],
     });

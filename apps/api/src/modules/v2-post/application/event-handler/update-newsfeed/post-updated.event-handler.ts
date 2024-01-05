@@ -1,13 +1,13 @@
+import {
+  INewsfeedDomainService,
+  NEWSFEED_DOMAIN_SERVICE_TOKEN,
+} from '@api/modules/v2-post/domain/domain-service/interface';
+import { CONTENT_STATUS } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 
-import {
-  INewsfeedDomainService,
-  NEWSFEED_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/newsfeed.domain-service.interface';
 import { PostUpdatedEvent } from '../../../domain/event';
-import { CONTENT_STATUS } from '@beincom/constants';
 
 @EventsHandlerAndLog(PostUpdatedEvent)
 export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> {
@@ -17,7 +17,7 @@ export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity } = event.payload;
+    const { entity: postEntity } = event.payload;
 
     if (postEntity.isHidden()) {
       return;
@@ -26,7 +26,7 @@ export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
     const oldPostEntity = postEntity.getSnapshot();
     if (postEntity.isProcessing() && oldPostEntity.status === CONTENT_STATUS.PUBLISHED) {
       await this._newsfeedDomainService.dispatchContentIdToGroups({
-        contentId: postEntity.getId(),
+        content: postEntity,
         newGroupIds: [],
         oldGroupIds: postEntity.getGroupIds(),
       });
@@ -34,7 +34,7 @@ export class FeedPostUpdatedEventHandler implements IEventHandler<PostUpdatedEve
     }
     if (postEntity.isPublished()) {
       await this._newsfeedDomainService.dispatchContentIdToGroups({
-        contentId: postEntity.getId(),
+        content: postEntity,
         newGroupIds: postEntity.getGroupIds(),
         oldGroupIds: postEntity.getSnapshot().groupIds,
       });

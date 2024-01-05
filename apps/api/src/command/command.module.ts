@@ -4,6 +4,7 @@ import { configs } from '@libs/common/config/configuration';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { LogModule } from '@libs/infra/log';
 import { MediaModule as LibMediaModule } from '@libs/service/media/media.module';
+import { UserModule as LibUserModule } from '@libs/service/user';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
@@ -16,8 +17,6 @@ import { MentionModule } from '../modules/mention';
 import { PostModule } from '../modules/post';
 import { SearchModule } from '../modules/search';
 import { TagModule } from '../modules/tag';
-import { GroupModuleV2 } from '../modules/v2-group/group.module';
-import { UserModuleV2 } from '../modules/v2-user/user.module';
 
 import { CleanUpDeletedCommentRefCommand } from './clean-up-deleted-comment-ref.command';
 import { CleanUpDeletedContentRefCommand } from './clean-up-deleted-content-ref.command';
@@ -61,8 +60,6 @@ import { MigrateNewsfeedCommand } from '@api/command/migrate-newsfeed.command';
     LogModule,
     DatabaseModule,
     LibModule,
-    UserModuleV2,
-    GroupModuleV2,
     PostModule,
     MentionModule,
     MediaModule,
@@ -72,6 +69,7 @@ import { MigrateNewsfeedCommand } from '@api/command/migrate-newsfeed.command';
     FollowModule,
     PostgresModule,
     LibMediaModule,
+    LibUserModule,
   ],
   providers: [
     SequelizeTinkerCommand,

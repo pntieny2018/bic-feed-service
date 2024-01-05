@@ -1,10 +1,9 @@
 import { Traceable } from '@libs/common/modules/opentelemetry';
-import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 
 import { ERRORS } from '../common/constants';
-import { UserDto } from '../modules/v2-user/application';
 
 @Injectable()
 @Traceable()
@@ -36,7 +35,7 @@ export class AuthMiddleware implements NestMiddleware {
   }
 
   private async _getUser(username: string): Promise<UserDto> {
-    const userInfo = await this._userService.findProfileAndPermissionByUsername(username);
+    const userInfo = await this._userService.findByUsername(username);
     if (!userInfo) {
       throw new UnauthorizedException({
         code: ERRORS.API_UNAUTHORIZED,

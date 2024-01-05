@@ -1,3 +1,5 @@
+import { CONTENT_TARGET } from '@beincom/constants';
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -13,9 +15,7 @@ import { createUrlFromId } from '../giphy/giphy.util';
 import { MentionService } from '../mention';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
-import { TargetType } from '../report-content/contstants';
 import { CommentNotFoundException } from '../v2-post/domain/exception';
-import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 import { GetCommentsDto } from './dto/requests';
 import { CommentResponseDto } from './dto/response';
@@ -27,8 +27,8 @@ export class CommentService {
   public constructor(
     @Inject(forwardRef(() => PostService))
     private _postService: PostService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService,
+    @Inject(USER_SERVICE_TOKEN)
+    private _userAppService: IUserService,
     private _mentionService: MentionService,
     private _reactionService: ReactionService,
     private _authorityService: AuthorityService,
@@ -92,8 +92,8 @@ export class CommentService {
     let entityIdsReportedByUser = [];
     if (user) {
       entityIdsReportedByUser = await this._postService.getEntityIdsReportedByUser(user.id, [
-        TargetType.POST,
-        TargetType.ARTICLE,
+        CONTENT_TARGET.POST,
+        CONTENT_TARGET.ARTICLE,
       ]);
     }
     if (entityIdsReportedByUser.includes(postId)) {

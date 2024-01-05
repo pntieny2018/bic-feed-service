@@ -1,6 +1,5 @@
 import { ROLE_TYPE } from '@beincom/constants';
-import { GroupDto, GroupMember } from '@libs/service/group/src/group.dto';
-import { UserDto } from '@libs/service/user';
+import { GroupDto } from '@libs/service/group/src/group.dto';
 
 export type UserRoleInGroup = {
   GROUP_ADMIN: ROLE_TYPE.GROUP_ADMIN;
@@ -45,19 +44,12 @@ export interface IGroupService {
 
   findAllByIds(groupIds: string[]): Promise<GroupDto[]>;
 
-  getGroupMembersDividedByRole(
-    actor: UserDto,
-    groupIds: string[],
-    pagination?: { offset?: number; limit?: number }
-  ): Promise<GroupMember[]>;
-
   getUserRoleInGroups(
     groupIds: string[],
     roles: ROLE_TYPE[]
   ): Promise<GetUserRoleInGroupsResult | null>;
 
-  isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean>;
-  getPaginationGroupsMembers(props: GetPaginationGroupsMembersProps): Promise<{ ids: string[] }>;
+  getPaginationGroupsMembers(props: GetPaginationGroupsMembersProps): Promise<{ list: string[] }>;
   countUsersInGroups(props: CountUsersInGroupsProps): Promise<{ total: number }>;
 }
 

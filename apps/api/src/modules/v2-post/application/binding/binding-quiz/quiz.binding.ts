@@ -30,6 +30,8 @@ export class QuizBinding implements IQuizBinding {
           isCorrect: answer.isCorrect,
         })),
       })),
+      timeLimit: entity.get('timeLimit'),
+      createdBy: entity.get('createdBy'),
       createdAt: entity.get('createdAt'),
       updatedAt: entity.get('updatedAt'),
     });

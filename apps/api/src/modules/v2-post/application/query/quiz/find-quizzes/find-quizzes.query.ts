@@ -1,7 +1,6 @@
 import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
+import { UserDto } from '@libs/service/user';
 import { IQuery } from '@nestjs/cqrs';
-
-import { UserDto } from '../../../../../v2-user/application';
 
 type Props = {
   authUser: UserDto;

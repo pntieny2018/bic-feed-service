@@ -4,7 +4,7 @@ import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/po
 import { ContentEntity } from '../../model/content';
 
 export type DispatchContentIdToGroupsProps = {
-  contentId: string;
+  content: ContentEntity;
   newGroupIds: string[];
   oldGroupIds: string[];
 };

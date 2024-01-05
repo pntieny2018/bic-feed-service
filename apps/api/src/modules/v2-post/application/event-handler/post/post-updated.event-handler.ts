@@ -24,7 +24,7 @@ export class PostUpdatedEventHandler implements IEventHandler<PostUpdatedEvent> 
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       await this._tagDomain.updateTagsUsedByContent(postEntity);

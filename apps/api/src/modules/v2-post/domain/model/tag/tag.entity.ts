@@ -11,10 +11,10 @@ export type TagAttributes = {
   name: string;
   createdBy?: string;
   updatedBy?: string;
-  slug: string;
+  slug?: string;
   totalUsed?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class TagEntity extends DomainAggregateRoot<TagAttributes> {

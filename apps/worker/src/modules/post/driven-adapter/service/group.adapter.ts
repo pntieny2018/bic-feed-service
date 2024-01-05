@@ -17,7 +17,7 @@ export class GroupAdapter implements IGroupAdapter {
     private readonly _groupService: IGroupService
   ) {}
 
-  public async getGroupsMembers(props: GetGroupsMembersProps): Promise<{ ids: string[] }> {
+  public async getGroupsMembers(props: GetGroupsMembersProps): Promise<{ list: string[] }> {
     return this._groupService.getPaginationGroupsMembers(props);
   }
 

@@ -1,9 +1,4 @@
-import {
-  KAFKA_ADAPTER,
-  QUEUE_ADAPTER,
-  EVENT_ADAPTER,
-  CACHE_ADAPTER,
-} from '../domain/infra-adapter-interface';
+import { KAFKA_ADAPTER, QUEUE_ADAPTER, EVENT_ADAPTER } from '../domain/infra-adapter-interface';
 import {
   USER_ADAPTER,
   GROUP_ADAPTER,
@@ -12,7 +7,7 @@ import {
   WEBSOCKET_ADAPTER,
 } from '../domain/service-adapter-interface';
 import { OPEN_AI_ADAPTER } from '../domain/service-adapter-interface/openai-adapter.interface';
-import { KafkaAdapter, QueueAdapter, EventAdapter, CacheAdapter } from '../driven-adapter/infra';
+import { KafkaAdapter, QueueAdapter, EventAdapter } from '../driven-adapter/infra';
 import {
   GroupAdapter,
   MediaAdapter,
@@ -58,9 +53,5 @@ export const adapterProvider = [
   {
     provide: WEBSOCKET_ADAPTER,
     useClass: WebsocketAdapter,
-  },
-  {
-    provide: CACHE_ADAPTER,
-    useClass: CacheAdapter,
   },
 ];

@@ -44,7 +44,7 @@ describe('ContentDomainService', () => {
   describe('getContentByIds', () => {
     it('should get content by ids', async () => {
       jest
-        .spyOn(contentRepository, 'findAll')
+        .spyOn(contentRepository, 'findContentsWithCache')
         .mockResolvedValueOnce([articleEntityMock, postEntityMock]);
 
       const result = await contentDomainService.getContentByIds({

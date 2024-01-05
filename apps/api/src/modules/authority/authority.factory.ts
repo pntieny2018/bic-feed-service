@@ -1,10 +1,9 @@
 import { Ability } from '@casl/ability';
 import { SentryService } from '@libs/infra/sentry';
+import { UserPermissionDto, UserDto } from '@libs/service/user';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 import { SUBJECT } from '../../common/constants/casl.constant';
-import { UserDto } from '../v2-user/application';
-import { UserPermission } from '../v2-user/domain/model/user';
 
 @Injectable()
 export class AuthorityFactory {
@@ -25,7 +24,7 @@ export class AuthorityFactory {
     }
   }
 
-  public static extractAbilitiesFromPermission(userPermission: UserPermission): any[] {
+  public static extractAbilitiesFromPermission(userPermission: UserPermissionDto): any[] {
     const abilities = [];
     for (const communityId in userPermission.communities) {
       const commPermissions = userPermission.communities[communityId];

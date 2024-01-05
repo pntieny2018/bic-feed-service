@@ -1,3 +1,4 @@
+import { IUserService, USER_SERVICE_TOKEN, UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   registerDecorator,
@@ -6,12 +7,8 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
-import {
-  IUserApplicationService,
-  USER_APPLICATION_TOKEN,
-  UserDto,
-} from '../../v2-user/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -26,16 +23,18 @@ export interface IExtendedValidationArguments extends ValidationArguments {
 @Injectable()
 export class ValidateMentionConstraint implements ValidatorConstraintInterface {
   public constructor(
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService
+    @Inject(USER_SERVICE_TOKEN)
+    private _userAppService: IUserService
   ) {}
 
   public async validate(mentions: string[], args?: ValidationArguments): Promise<boolean> {
-    if (mentions.length === 0) return true;
+    if (mentions.length === 0) {
+      return true;
+    }
 
     const { groupIds } = args.object['audience'];
 
-    const users = await this._userAppService.findAllByIds(mentions, { withGroupJoined: true });
+    const users = await this._userAppService.findAllByIds(mentions);
 
     for (const user of users) {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {

@@ -22,6 +22,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
           type: content.type,
           publishedAt: content.publishedAt,
           isImportant: content.isImportant,
+          createdBy: content.createdBy,
           isSeenPost: false,
         },
       ],
@@ -49,6 +50,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
         type: content.type,
         publishedAt: content.publishedAt,
         isImportant: content.isImportant,
+        createdBy: content.createdBy,
         isSeenPost: false,
       })),
       { ignoreDuplicates: true }
@@ -75,6 +77,7 @@ export class UserNewsfeedRepository implements IUserNewsfeedRepository {
         type: content.type,
         publishedAt: content.publishedAt,
         isImportant: content.isImportant,
+        createdBy: content.createdBy,
         isSeenPost: false,
       })),
       { ignoreDuplicates: true }

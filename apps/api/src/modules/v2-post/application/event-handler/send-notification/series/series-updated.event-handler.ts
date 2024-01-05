@@ -24,7 +24,7 @@ export class NotiSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
   ) {}
 
   public async handle(event: SeriesUpdatedEvent): Promise<void> {
-    const { seriesEntity, authUser } = event.payload;
+    const { entity: seriesEntity, authUser } = event.payload;
 
     if (seriesEntity.isHidden()) {
       return;

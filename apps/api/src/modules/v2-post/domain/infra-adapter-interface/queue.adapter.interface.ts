@@ -1,9 +1,11 @@
 import { QueueName } from '@libs/infra/v2-queue';
 
+import { ContentNewsFeedAttributes } from '../../domain/repositoty-interface';
+
 export const QUEUE_ADAPTER = 'QUEUE_ADAPTER';
 
 export type ProducerAttachDetachNewsfeedJobPayload = {
-  contentId: string;
+  content: ContentNewsFeedAttributes;
   newGroupIds: string[];
   oldGroupIds: string[];
 };

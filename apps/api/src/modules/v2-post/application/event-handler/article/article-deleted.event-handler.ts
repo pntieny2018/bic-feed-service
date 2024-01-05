@@ -22,7 +22,7 @@ export class ArticleDeletedEventHandler implements IEventHandler<ArticleDeletedE
   ) {}
 
   public async handle(event: ArticleDeletedEvent): Promise<void> {
-    const { articleEntity, authUser } = event.payload;
+    const { entity: articleEntity, authUser } = event.payload;
 
     if (!articleEntity.isPublished()) {
       return;

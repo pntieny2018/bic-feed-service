@@ -1,6 +1,5 @@
 import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
-
-import { UserDto } from '../../../../v2-user/application';
+import { UserDto } from '@libs/service/user';
 
 export type ImageProps = {
   id: string;

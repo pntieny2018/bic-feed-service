@@ -1,10 +1,12 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_TARGET, PRIVACY } from '@beincom/constants';
+import { ArrayHelper } from '@libs/common/helpers';
+import { GROUP_SERVICE_TOKEN, GroupDto, IGroupService } from '@libs/service/group';
+import { UserDto } from '@libs/service/user';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { PageDto } from '../../../common/dto';
 import { SearchPostsDto } from '../../post/dto/requests';
 import { TagService } from '../../tag/tag.service';
-import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
@@ -18,7 +20,6 @@ import {
   IReportRepository,
   REPORT_REPOSITORY_TOKEN,
 } from '../../v2-post/domain/repositoty-interface';
-import { UserDto } from '../../v2-user/application';
 import { IPostElasticsearch } from '../interfaces';
 import { SearchService } from '../search.service';
 
@@ -26,8 +27,8 @@ import { SearchService } from '../search.service';
 export class SearchAppService {
   public constructor(
     private _searchService: SearchService,
-    @Inject(GROUP_APPLICATION_TOKEN)
-    private _groupAppService: IGroupApplicationService,
+    @Inject(GROUP_SERVICE_TOKEN)
+    private _groupAppService: IGroupService,
     private _tagService: TagService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
@@ -57,11 +58,11 @@ export class SearchAppService {
     let groupIds = authUser.groups;
     let tagId: string;
     if (groupId) {
-      const group = await this._groupAppService.findOne(groupId);
+      const group = await this._groupAppService.findById(groupId);
       if (!group) {
         throw new BadRequestException(`Group not found`);
       }
-      groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
+      groupIds = this._getGroupIdAndChildIdsUserJoined(group, authUser.groups);
       if (groupIds.length === 0) {
         return new PageDto([], {
           limit,
@@ -117,6 +118,29 @@ export class SearchAppService {
       limit,
       offset,
     });
+  }
+
+  private _getGroupIdAndChildIdsUserJoined(
+    group: GroupDto,
+    groupIdsUserJoined: string[]
+  ): string[] {
+    const childGroupIds = [
+      ...group.child.open,
+      ...group.child.closed,
+      ...group.child.private,
+      ...group.child.secret,
+    ];
+    const filterGroupIdsUserJoined = [group.id, ...childGroupIds].filter((groupId) =>
+      groupIdsUserJoined.includes(groupId)
+    );
+
+    if (group.privacy === PRIVACY.OPEN) {
+      filterGroupIdsUserJoined.push(group.id);
+    }
+    if (group.privacy === PRIVACY.CLOSED && groupIdsUserJoined.includes(group.rootGroupId)) {
+      filterGroupIdsUserJoined.push(group.id);
+    }
+    return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
   }
 
   private _buildHighlightMapper(source: IPostElasticsearch[]): Map<string, ContentHighlightDto> {

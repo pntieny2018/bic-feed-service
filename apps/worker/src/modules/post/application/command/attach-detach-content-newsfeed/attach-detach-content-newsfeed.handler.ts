@@ -23,7 +23,7 @@ export class AttachDetachContentNewsfeedHandler
 
   public async execute(command: AttachDetachContentNewsfeedCommand): Promise<void> {
     const { content, action, queryParams } = command.payload;
-    const { ids: userIds } = await this._groupAdapter.getGroupsMembers(queryParams);
+    const { list: userIds } = await this._groupAdapter.getGroupsMembers(queryParams);
 
     if (!userIds.length) {
       return;

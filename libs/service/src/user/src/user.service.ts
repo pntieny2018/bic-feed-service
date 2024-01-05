@@ -1,16 +1,15 @@
 import { CACHE_KEYS } from '@beincom/constants';
-import { UserDto as ProfileUserDto } from '@beincom/dto';
+import { UserDto as UserProfileDto } from '@beincom/dto';
 import { AxiosHelper } from '@libs/common/helpers';
 import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
-import { IUserService, ShowingBadgeDto } from '@libs/service/user';
+import { IUserService, USER_ENDPOINT } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 
-import { USER_ENDPOINT } from './endpoint.constant';
-import { UserDto, UserPermissionDto } from './user.dto';
+import { UserDto, UserPermissionDto, UserPublicProfileDto } from './user.dto';
 
 @Traceable()
 @Injectable()
@@ -19,37 +18,13 @@ export class UserService implements IUserService {
 
   public constructor(
     private readonly _store: RedisService,
-    @Inject(USER_HTTP_TOKEN) private readonly _userHttpService: IHttpService,
-    @Inject(GROUP_HTTP_TOKEN) private readonly _groupHttpService: IHttpService
+    @Inject(GROUP_HTTP_TOKEN) private readonly _groupHttpService: IHttpService,
+    @Inject(USER_HTTP_TOKEN) private readonly _userHttpService: IHttpService
   ) {}
-
-  public async findProfileAndPermissionByUsername(username: string): Promise<UserDto> {
-    try {
-      const user = await this._getUserFromCacheByUserName(username);
-      user.permissions = await this._getPermissionFromCacheByUserId(user.id);
-      return user;
-    } catch (e) {
-      this._logger.error(e);
-      return null;
-    }
-  }
-
-  public async findProfileAndPermissionById(id: string): Promise<UserDto> {
-    try {
-      const [username] = await this._getUsernamesFromCacheByUserIds([id]);
-      const user = await this._getUserFromCacheByUserName(username);
-      user.permissions = await this._getPermissionFromCacheByUserId(user.id);
-      return user;
-    } catch (e) {
-      this._logger.error(e);
-      return null;
-    }
-  }
 
   public async findById(id: string): Promise<UserDto> {
     try {
-      const [username] = await this._getUsernamesFromCacheByUserIds([id]);
-      return this._getUserFromCacheByUserName(username);
+      return this._getUserByUserId(id);
     } catch (e) {
       this._logger.error(e);
       return null;
@@ -62,93 +37,70 @@ export class UserService implements IUserService {
     }
 
     try {
-      const usernames = await this._getUsernamesFromCacheByUserIds(uniq(ids));
-      return this._getUsersFromCacheByUserNames(usernames);
+      return this._getUsersByUserIds(ids);
     } catch (e) {
       this._logger.error(e);
       return [];
     }
   }
 
-  public async findAllByIdsWithAuthUser(ids: string[], authUserId: string): Promise<UserDto[]> {
-    if (!ids.length) {
-      return [];
-    }
-
-    try {
-      const uniqueIds = uniq(ids);
-      return this._getUsersFromApiByIds(uniqueIds, authUserId);
-    } catch (e) {
-      this._logger.error(e);
-      return [];
-    }
-  }
-
-  // TODO: now user squad is keeping this api for protect domain logic, will be refactor it later
-  private async _getUsersFromApiByIds(ids: string[], authUserId: string): Promise<UserDto[]> {
-    try {
-      if (!ids.length) {
-        return [];
-      }
-
-      const params = { ids };
-      if (authUserId) {
-        params['actorId'] = authUserId;
-      }
-      const response = await this._userHttpService.get(USER_ENDPOINT.INTERNAL.GET_USERS, {
-        params,
-      });
-      if (response.status !== HttpStatus.OK) {
-        return [];
-      }
-
-      const userApis = response.data['data'];
-
-      return userApis.map((user) => {
-        const showingBadgesWithCommunity: ShowingBadgeDto[] = user?.showingBadges?.map((badge) => ({
-          ...badge,
-          community: badge.community || null,
-        }));
-
-        return new UserDto({ ...user, showingBadges: showingBadgesWithCommunity });
-      });
-    } catch (e) {
-      this._logger.error(e);
-      return [];
-    }
-  }
-
-  private async _getUserFromCacheByUserName(username: string): Promise<UserDto> {
+  public async findByUsername(username: string): Promise<UserDto> {
     if (!username) {
       return null;
     }
 
-    const [userProfile] = await this._getUserProfilesFromCacheByUserNames([username]);
+    const userProfile =
+      (await this._getUserProfileFromCacheByUserName(username)) ||
+      (await this._getUserProfileFromApiByUserName(username));
+
     if (!userProfile) {
       return null;
     }
 
-    const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
     const joinedGroups = await this._getJoinedGroupsFromCacheByUserId(userProfile.id);
 
-    return new UserDto({ ...userProfile, showingBadges, groups: joinedGroups });
+    return new UserDto({ ...userProfile, groups: joinedGroups });
   }
 
-  private async _getUsersFromCacheByUserNames(usernames: string[]): Promise<UserDto[]> {
-    if (!usernames.length) {
+  private async _getUserByUserId(userId: string): Promise<UserDto> {
+    const [username] = await this._getUsernamesFromCacheByUserIds([userId]);
+
+    const userProfile =
+      (await this._getUserProfileFromCacheByUserName(username)) ||
+      (await this._getUsersProfileFromApiByUserIds([userId]))?.[0];
+
+    if (!userProfile) {
+      return null;
+    }
+
+    const joinedGroups = await this._getJoinedGroupsFromCacheByUserId(userProfile.id);
+
+    return new UserDto({ ...userProfile, groups: joinedGroups });
+  }
+
+  private async _getUsersByUserIds(userIds: string[]): Promise<UserDto[]> {
+    if (!userIds.length) {
       return [];
     }
 
-    const usersProfile = await this._getUserProfilesFromCacheByUserNames(usernames);
+    const usernames = await this._getUsernamesFromCacheByUserIds(uniq(userIds));
+    let usersProfile: UserPublicProfileDto[] = await this._getUsersProfileFromCacheByUserNames(
+      usernames
+    );
+
+    if (!usersProfile?.length) {
+      usersProfile = await this._getUsersProfileFromApiByUserIds(userIds);
+    }
+
+    if (!usersProfile?.length) {
+      return [];
+    }
 
     const pipeline = this._store.getClient().pipeline();
-    const results = new Map();
 
     usersProfile.forEach((userProfile) => {
       const key = `${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`;
       pipeline.smembers(key);
-
-      results.set(userProfile, key);
     });
 
     const joinedGroup = await pipeline.exec();
@@ -162,22 +114,33 @@ export class UserService implements IUserService {
       }
 
       const userProfile = usersProfile[index];
-      const showingBadges = userProfile.showingBadges as ShowingBadgeDto[];
       const joinedGroups = value as string[];
-      users.push(new UserDto({ ...userProfile, showingBadges, groups: joinedGroups }));
+      users.push(new UserDto({ ...userProfile, groups: joinedGroups }));
     });
 
     return users;
   }
 
   private async _getUsernamesFromCacheByUserIds(userIds: string[]): Promise<string[]> {
+    if (userIds?.length) {
+      return [];
+    }
+
     const keys = userIds.map((userId) => `${CACHE_KEYS.USERNAME}:${userId}`);
     return this._store.mget(keys);
   }
 
-  private async _getUserProfilesFromCacheByUserNames(
+  private async _getUserProfileFromCacheByUserName(username: string): Promise<UserProfileDto> {
+    return this._store.get(`${CACHE_KEYS.USER_PROFILE}:${username}`);
+  }
+
+  private async _getUsersProfileFromCacheByUserNames(
     usernames: string[]
-  ): Promise<ProfileUserDto[]> {
+  ): Promise<UserProfileDto[]> {
+    if (!usernames?.length) {
+      return [];
+    }
+
     const keys = usernames.map((username) => `${CACHE_KEYS.USER_PROFILE}:${username}`);
     return this._store.mget(keys);
   }
@@ -186,7 +149,35 @@ export class UserService implements IUserService {
     return this._store.getSets(`${CACHE_KEYS.JOINED_GROUPS}:${userId}`);
   }
 
-  private async _getPermissionFromCacheByUserId(userId: string): Promise<UserPermissionDto> {
+  private async _getUserProfileFromApiByUserName(username: string): Promise<UserProfileDto> {
+    try {
+      const response = await this._userHttpService.get(
+        AxiosHelper.injectParamsToStrUrl(USER_ENDPOINT.INTERNAL.GET_USER_PROFILE_BY_USERNAME, {
+          username,
+        })
+      );
+      return response.data.data;
+    } catch (e) {
+      this._logger.error(`[_getUserProfileFromApiByUserName] ${e.message}`);
+      return null;
+    }
+  }
+
+  private async _getUsersProfileFromApiByUserIds(
+    userIds: string[]
+  ): Promise<UserPublicProfileDto[]> {
+    try {
+      const response = await this._userHttpService.post(USER_ENDPOINT.INTERNAL.GET_USERS_PROFILE, {
+        user_ids: userIds,
+      });
+      return response.data.data;
+    } catch (e) {
+      this._logger.error(`[_getUsersProfileFromApiByUserIds] ${e.message}`);
+      return [];
+    }
+  }
+
+  public async getPermissionByUserId(userId: string): Promise<UserPermissionDto> {
     const versionPermissionCacheKey = 'version';
     const permissions: UserPermissionDto = {
       communities: {},
