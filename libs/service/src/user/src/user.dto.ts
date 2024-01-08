@@ -69,6 +69,10 @@ export class UserDto {
   public groups?: string[];
 
   public constructor(data: Partial<UserDto> = {}, excluded?: string[]) {
+    if (!data) {
+      return;
+    }
+
     this.id = data.id;
     this.username = data.username;
     this.fullname = data.fullname;
