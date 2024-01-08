@@ -1,5 +1,6 @@
 import * as process from 'process';
 
+import { FeedModule } from '@api/modules/feed';
 import { HEADER_REQ_ID } from '@libs/common/constants';
 import { OpenTelemetryModule } from '@libs/common/modules/opentelemetry';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
@@ -46,6 +47,7 @@ import { LibModule } from './lib.module';
     HttpModule,
     LibModule,
     AuthorityModule,
+    FeedModule,
     NotificationModuleV2,
     WebSocketModule,
     HealthModule,
