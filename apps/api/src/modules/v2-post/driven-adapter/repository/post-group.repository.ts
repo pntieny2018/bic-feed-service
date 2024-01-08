@@ -14,15 +14,19 @@ import {
 export class PostGroupRepository implements IPostGroupRepository {
   public constructor(private readonly _libPostGroupRepo: LibPostGroupRepository) {}
 
-  public async isInStateContent(contentId: string, isArchived: boolean): Promise<boolean> {
-    const record = await this._libPostGroupRepo.first({
+  public async getInStateContentIds(contentIds: string[], isArchived: boolean): Promise<string[]> {
+    const record = await this._libPostGroupRepo.findMany({
+      selectRaw: [
+        ['DISTINCT post_id', 'postId'],
+        ['is_archived', 'isArchived'],
+      ],
       where: {
-        postId: contentId,
+        postId: contentIds,
         isArchived,
       },
     });
 
-    return !!record;
+    return record.map((item) => item.postId);
   }
 
   public async getGroupsIdsByContent(

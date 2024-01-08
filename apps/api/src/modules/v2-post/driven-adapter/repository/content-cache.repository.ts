@@ -6,6 +6,7 @@ import {
 } from '@api/modules/v2-post/application/dto';
 import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
 import {
+  FindAllContentsInCacheProps,
   FindContentInCacheProps,
   IContentCacheRepository,
 } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
@@ -43,15 +44,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
     input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const { id, status, createdBy, isHidden, groupArchived, excludeReportedByUserId } = input.where;
-    const {
-      mustIncludeGroup,
-      shouldIncludeGroup,
-      shouldIncludeSeries,
-      shouldIncludeItems,
-      shouldIncludeCategory,
-      shouldIncludeQuiz,
-      shouldIncludeLinkPreview,
-    } = input.include || {};
+    const { mustIncludeGroup, shouldIncludeGroup } = input.include || {};
 
     const cachedContent = await this._store.getJson<
       PostCacheDto | ArticleCacheDto | SeriesCacheDto
@@ -67,8 +60,8 @@ export class ContentCacheRepository implements IContentCacheRepository {
     }
 
     if (isBoolean(groupArchived) && !mustIncludeGroup && !shouldIncludeGroup) {
-      const isInStateContent = await this._postGroupRepo.isInStateContent(id, groupArchived);
-      if (!isInStateContent) {
+      const inStateContentIds = await this._postGroupRepo.getInStateContentIds([id], groupArchived);
+      if (!inStateContentIds.length) {
         return null;
       }
     }
@@ -82,47 +75,116 @@ export class ContentCacheRepository implements IContentCacheRepository {
       }
     }
 
-    if (mustIncludeGroup || shouldIncludeGroup) {
-      const groupIdsObject = await this._postGroupRepo.getGroupsIdsByContent(
-        [id],
-        isBoolean(groupArchived) ? groupArchived : undefined
-      );
-      const groupIds = groupIdsObject[id] || [];
+    const cachedContents = await this._filterIncludeOptions([cachedContent], input);
 
-      if (mustIncludeGroup && !groupIds.length) {
-        return null;
-      }
-
-      cachedContent.groupIds = groupIds;
-    } else {
-      delete cachedContent.groupIds;
-    }
-
-    if (!shouldIncludeSeries) {
-      delete cachedContent['seriesIds'];
-    }
-    if (!shouldIncludeItems) {
-      delete cachedContent['itemIds'];
-    }
-    if (!shouldIncludeCategory) {
-      delete cachedContent['categories'];
-    }
-    if (!shouldIncludeQuiz) {
-      delete cachedContent['quiz'];
-    }
-    if (!shouldIncludeLinkPreview) {
-      delete cachedContent['linkPreview'];
-    }
-
-    return this._contentMapper.cacheToDomain(cachedContent);
+    return this._contentMapper.cacheToDomain(cachedContents[0]);
   }
 
-  public async getContents(
-    contentIds: string[]
+  public async findContents(
+    input: FindAllContentsInCacheProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
+    const { ids } = input.where;
+
+    let cachedContents = await this._store.mgetJson<
+      PostCacheDto | ArticleCacheDto | SeriesCacheDto
+    >(ids.map((id) => `${CACHE_KEYS.CONTENT}:${id}`));
+
+    if (!cachedContents.length) {
+      return [];
+    }
+
+    cachedContents = await this._filterWhereOptions(cachedContents, input);
+    cachedContents = await this._filterIncludeOptions(cachedContents, input);
+
+    return cachedContents.map((cachedContent) => this._contentMapper.cacheToDomain(cachedContent));
+  }
+
+  private async _filterWhereOptions(
+    cachedContents: (PostCacheDto | ArticleCacheDto | SeriesCacheDto)[],
+    input: FindContentInCacheProps | FindAllContentsInCacheProps
   ): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]> {
-    return this._store.mgetJson<PostCacheDto | ArticleCacheDto | SeriesCacheDto>(
-      contentIds.map((contentId) => `${CACHE_KEYS.CONTENT}:${contentId}`)
-    );
+    const { status, createdBy, isHidden, groupArchived, excludeReportedByUserId } = input.where;
+    const { mustIncludeGroup, shouldIncludeGroup } = input.include || {};
+
+    if (status) {
+      cachedContents = cachedContents.filter((content) => content.status === status);
+    }
+    if (createdBy) {
+      cachedContents = cachedContents.filter((content) => content.createdBy === createdBy);
+    }
+    if (isHidden) {
+      cachedContents = cachedContents.filter((content) => content.isHidden === isHidden);
+    }
+    if (isBoolean(groupArchived) && !mustIncludeGroup && !shouldIncludeGroup) {
+      const contentIds = cachedContents.map((content) => content.id);
+      const inStateContents = await this._postGroupRepo.getInStateContentIds(
+        contentIds,
+        groupArchived
+      );
+      cachedContents = cachedContents.filter((content) => inStateContents[content.id]);
+    }
+    if (excludeReportedByUserId) {
+      const contentIds = cachedContents.map((content) => content.id);
+      const reportedTargets = await this._libReportDetailRepo.findMany({
+        where: { targetId: contentIds, reporterId: excludeReportedByUserId },
+      });
+      const reportedTargetIds = reportedTargets.map((reportedTarget) => reportedTarget.targetId);
+      cachedContents = cachedContents.filter((content) => !reportedTargetIds.includes(content.id));
+    }
+
+    return cachedContents;
+  }
+
+  private async _filterIncludeOptions(
+    cachedContents: (PostCacheDto | ArticleCacheDto | SeriesCacheDto)[],
+    input: FindContentInCacheProps | FindAllContentsInCacheProps
+  ): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]> {
+    const { groupArchived } = input.where;
+    const {
+      mustIncludeGroup,
+      shouldIncludeGroup,
+      shouldIncludeSeries,
+      shouldIncludeItems,
+      shouldIncludeCategory,
+      shouldIncludeQuiz,
+      shouldIncludeLinkPreview,
+    } = input.include || {};
+    const contentIds = cachedContents.map((content) => content.id);
+
+    let groupIdsObject = {};
+    if (mustIncludeGroup || shouldIncludeGroup) {
+      groupIdsObject = await this._postGroupRepo.getGroupsIdsByContent(
+        contentIds,
+        isBoolean(groupArchived) ? groupArchived : undefined
+      );
+    }
+
+    cachedContents.forEach((content) => {
+      const groupIds = groupIdsObject[content.id] || [];
+      if (mustIncludeGroup && !groupIds.length) {
+        content = null;
+      } else if (shouldIncludeGroup) {
+        content.groupIds = groupIds;
+      }
+
+      if (content && !shouldIncludeSeries) {
+        delete content['seriesIds'];
+      }
+      if (content && !shouldIncludeItems) {
+        delete content['itemIds'];
+      }
+      if (content && !shouldIncludeCategory) {
+        delete content['categories'];
+      }
+      if (content && !shouldIncludeQuiz) {
+        delete content['quiz'];
+      }
+      if (content && !shouldIncludeLinkPreview) {
+        delete content['linkPreview'];
+      }
+    });
+
+    return cachedContents.filter((content) => content);
   }
 
   public async setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void> {
