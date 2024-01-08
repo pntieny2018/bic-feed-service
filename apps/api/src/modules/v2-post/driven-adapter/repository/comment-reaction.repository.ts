@@ -1,3 +1,4 @@
+import { ReactionDuplicateException } from '@api/modules/v2-post/domain/exception';
 import { ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import {
@@ -36,7 +37,13 @@ export class CommentReactionRepository implements ICommentReactionRepository {
   }
 
   public async create(data: ReactionEntity): Promise<void> {
-    await this._libCommentReactionRepo.create(this._commentReactionMapper.toPersistence(data));
+    try {
+      await this._libCommentReactionRepo.create(this._commentReactionMapper.toPersistence(data));
+    } catch (e) {
+      if (e.name === 'SequelizeUniqueConstraintError') {
+        throw new ReactionDuplicateException();
+      }
+    }
   }
 
   public async delete(id: string): Promise<void> {
