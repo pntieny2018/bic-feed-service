@@ -1,6 +1,6 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { CommentModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
-import { CommentModel } from '../database/models/comment.model';
+import { Command, CommandRunner } from 'nest-commander';
 
 @Command({ name: 'tinker', description: 'Create shared user and group  data' })
 export class SequelizeTinkerCommand implements CommandRunner {

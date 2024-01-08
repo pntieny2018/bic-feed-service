@@ -1,5 +1,6 @@
-import { PostModel } from '@api/database/models/post.model';
+import { Media, Video } from '@libs/common/dtos';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostModel } from '@libs/database/postgres/model';
 import { MEDIA_SERVICE_TOKEN } from '@libs/service/media/src/interface';
 import { MediaService } from '@libs/service/media/src/media.service';
 import { Inject, Logger } from '@nestjs/common';
@@ -68,7 +69,7 @@ export class MigrateHlsMimetypeVideosCommand {
           })
           .flat();
 
-        const videos = await this._mediaService.findVideosByIds(videoIds);
+        const videos: Video[] = await this._mediaService.findVideosByIds(videoIds);
 
         for (const video of videos) {
           const postId = postVideoMap[video.id];
@@ -76,7 +77,7 @@ export class MigrateHlsMimetypeVideosCommand {
             {
               mediaJson: {
                 videos: [video],
-              },
+              } as Media,
             },
             {
               where: {

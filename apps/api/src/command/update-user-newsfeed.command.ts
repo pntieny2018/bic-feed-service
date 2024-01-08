@@ -1,10 +1,8 @@
 /* eslint-disable no-console */
+import { FollowModel, UserNewsFeedModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
 import { Sequelize } from 'sequelize-typescript';
-
-import { FollowModel } from '../database/models/follow.model';
-import { UserNewsFeedModel } from '../database/models/user-newsfeed.model';
 
 @Command({ name: 'update-newsfeed', description: 'Fix processing status for all posts' })
 export class UpdateNewsfeedCommand implements CommandRunner {

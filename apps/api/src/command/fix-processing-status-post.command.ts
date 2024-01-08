@@ -1,6 +1,7 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { CONTENT_STATUS } from '@beincom/constants';
+import { PostModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostStatus } from '../database/models/post.model';
+import { Command, CommandRunner } from 'nest-commander';
 
 @Command({ name: 'post:fix-processing-status', description: 'Fix processing status for all posts' })
 export class FixProcessingStatusPostCommand implements CommandRunner {
@@ -9,10 +10,10 @@ export class FixProcessingStatusPostCommand implements CommandRunner {
   public async run(): Promise<any> {
     try {
       const [count] = await this._postModel.update(
-        { status: PostStatus.DRAFT },
+        { status: CONTENT_STATUS.DRAFT },
         {
           where: {
-            status: PostStatus.PROCESSING,
+            status: CONTENT_STATUS.PROCESSING,
             totalUsersSeen: 0,
           },
         }

@@ -1,14 +1,12 @@
-import { PRIVACY } from '@beincom/constants';
+import { CONTENT_STATUS, PRIVACY } from '@beincom/constants';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostAttributes, PostGroupModel, PostModel } from '@libs/database/postgres/model';
 import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { flatten, uniq } from 'lodash';
 import { Command, CommandRunner } from 'nest-commander';
 import { QueryTypes } from 'sequelize';
-
-import { PostGroupModel } from '../database/models/post-group.model';
-import { IPost, PostModel, PostPrivacy, PostStatus } from '../database/models/post.model';
 
 @Command({ name: 'fix:content-privacy', description: 'Fix privacy for posts/article/series' })
 export class FixContentPrivacyCommand implements CommandRunner {
@@ -76,7 +74,7 @@ export class FixContentPrivacyCommand implements CommandRunner {
     process.exit();
   }
 
-  private async _getPostsToUpdate(offset: number, limit: number): Promise<IPost[]> {
+  private async _getPostsToUpdate(offset: number, limit: number): Promise<PostAttributes[]> {
     const rows = await this._postModel.findAll({
       attributes: ['id', 'created_at'],
       include: [
@@ -89,7 +87,7 @@ export class FixContentPrivacyCommand implements CommandRunner {
         },
       ],
       where: {
-        status: PostStatus.PUBLISHED,
+        status: CONTENT_STATUS.PUBLISHED,
         isHidden: false,
       },
       offset,
@@ -99,7 +97,7 @@ export class FixContentPrivacyCommand implements CommandRunner {
     return rows;
   }
 
-  private async _updatePrivacy(postId: string, privacy: PostPrivacy): Promise<void> {
+  private async _updatePrivacy(postId: string, privacy: PRIVACY): Promise<void> {
     const { schema } = getDatabaseConfig();
     await this._postModel.sequelize.query(
       `UPDATE ${schema}.posts SET privacy = :privacy WHERE id = :postId`,
@@ -131,12 +129,12 @@ export class FixContentPrivacyCommand implements CommandRunner {
     return groupPrivacyMapper;
   }
 
-  private _getPrivacy(groupIds: string[], groupPrivacyMapper: Map<string, PRIVACY>): PostPrivacy {
+  private _getPrivacy(groupIds: string[], groupPrivacyMapper: Map<string, PRIVACY>): PRIVACY {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const groupId of groupIds) {
       if (groupPrivacyMapper.get(groupId) === PRIVACY.OPEN) {
-        return PostPrivacy.OPEN;
+        return PRIVACY.OPEN;
       }
       if (groupPrivacyMapper.get(groupId) === PRIVACY.CLOSED) {
         totalOpen++;
@@ -147,11 +145,11 @@ export class FixContentPrivacyCommand implements CommandRunner {
     }
 
     if (totalOpen > 0) {
-      return PostPrivacy.CLOSED;
+      return PRIVACY.CLOSED;
     }
     if (totalPrivate > 0) {
-      return PostPrivacy.PRIVATE;
+      return PRIVACY.PRIVATE;
     }
-    return PostPrivacy.SECRET;
+    return PRIVACY.SECRET;
   }
 }

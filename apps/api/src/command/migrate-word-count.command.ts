@@ -1,13 +1,17 @@
-import { Command, CommandRunner } from 'nest-commander';
-import { InjectModel } from '@nestjs/sequelize';
-import { Node } from 'slate';
-import { PostModel } from '../database/models/post.model';
-import { PostType } from '../modules/v2-post/data-type';
 import * as process from 'process';
+
+import { PostModel } from '@libs/database/postgres/model';
+import { InjectModel } from '@nestjs/sequelize';
+import { Command, CommandRunner } from 'nest-commander';
+import { Node } from 'slate';
+
+import { PostType } from '../modules/v2-post/data-type';
 
 export const getWordCount = (content) => {
   let count = 0;
-  if (!content) return 0;
+  if (!content) {
+    return 0;
+  }
   try {
     const value = JSON.parse(content);
     value.forEach((node) => {

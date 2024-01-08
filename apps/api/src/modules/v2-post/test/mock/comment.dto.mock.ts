@@ -1,6 +1,6 @@
+import { createUrlFromId } from '@api/modules/v2-giphy/giphy.util';
 import { UserDto } from '@libs/service/user';
 
-import { createUrlFromId } from '../../../giphy/giphy.util';
 import { CommentBaseDto, FileDto, ImageDto, VideoDto } from '../../application/dto';
 import { CommentEntity } from '../../domain/model/comment';
 

@@ -1,7 +1,4 @@
-import { CONTENT_TYPE, IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
-
-import { MediaType } from '../../../database/models/media.model';
-import { PostType } from '../../../database/models/post.model';
+import { CONTENT_TYPE, IMAGE_RESOURCE, MEDIA_PROCESS_STATUS, MEDIA_TYPE } from '@beincom/constants';
 
 export interface ICoverMedia {
   id: string;
@@ -14,7 +11,7 @@ export interface ICoverMedia {
   createdAt: Date;
   name: string;
   originName: string;
-  type: MediaType;
+  type: MEDIA_TYPE;
   width?: number;
   height?: number;
   extension?: string;
@@ -22,7 +19,7 @@ export interface ICoverMedia {
 
 export interface IPostElasticsearch {
   id: string;
-  type: PostType;
+  type: CONTENT_TYPE;
   media: any;
   groupIds: string[];
   communityIds: string[];
@@ -58,7 +55,7 @@ export interface IDataPostToAdd {
   updatedAt: Date;
   publishedAt: Date;
   createdBy: string;
-  type: PostType | CONTENT_TYPE;
+  type: CONTENT_TYPE;
   isHidden: boolean;
   title?: string;
   summary?: string;

@@ -1,9 +1,12 @@
+import {
+  INotificationAdapter,
+  NOTIFICATION_ADAPTER,
+} from '@api/modules/v2-post/domain/service-adapter-interface';
 import { CONTENT_TYPE, QUIZ_STATUS } from '@beincom/constants';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { isBoolean } from 'lodash';
 
-import { ContentNotificationService } from '../../../../../../notification/services';
 import { AUTHORITY_APP_SERVICE_TOKEN, IAuthorityAppService } from '../../../../../authority';
 import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
@@ -28,7 +31,8 @@ export class GetMenuSettingsHandler
     protected readonly _authorityAppService: IAuthorityAppService,
     @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
     private readonly _reactionDomainService: IReactionDomainService,
-    private readonly _contentNotificationService: ContentNotificationService
+    @Inject(NOTIFICATION_ADAPTER)
+    private readonly _notificationAdapter: INotificationAdapter
   ) {}
 
   public async execute(query: GetMenuSettingsQuery): Promise<MenuSettingsDto> {
@@ -128,11 +132,10 @@ export class GetMenuSettingsHandler
     contentEntity: ContentEntity,
     userId: string
   ): Promise<boolean> {
-    const specificNotifications =
-      await this._contentNotificationService.getSpecificNotificationSettings(
-        userId,
-        contentEntity.getId()
-      );
+    const specificNotifications = await this._notificationAdapter.getSpecificNotificationSettings(
+      userId,
+      contentEntity.getId()
+    );
 
     return isBoolean(specificNotifications?.enable) ? specificNotifications.enable : true;
   }

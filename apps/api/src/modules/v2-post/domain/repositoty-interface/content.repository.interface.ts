@@ -1,4 +1,4 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_TARGET, LANGUAGE } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   FindContentIncludeOptions,
@@ -28,6 +28,7 @@ export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
   updateContentPrivacy(contentIds: string[], privacy: string): Promise<void>;
+  updateContentLang(contentIds: string[], lang: LANGUAGE): Promise<void>;
   delete(id: string): Promise<void>;
 
   findContentById(

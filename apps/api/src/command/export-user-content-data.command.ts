@@ -1,11 +1,10 @@
 /* eslint-disable no-console */
+import { PostModel } from '@libs/database/postgres/model';
 import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
 import { Sequelize } from 'sequelize';
-
-import { PostModel } from '../database/models/post.model';
 
 @Command({
   name: 'export-user-content',

@@ -1,3 +1,4 @@
+import { SearchPostsDto } from '@api/modules/search/application/dto/search-post.dto';
 import { CONTENT_TARGET, PRIVACY } from '@beincom/constants';
 import { ArrayHelper } from '@libs/common/helpers';
 import { GROUP_SERVICE_TOKEN, GroupDto, IGroupService } from '@libs/service/group';
@@ -5,8 +6,6 @@ import { UserDto } from '@libs/service/user';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { PageDto } from '../../../common/dto';
-import { SearchPostsDto } from '../../post/dto/requests';
-import { TagService } from '../../tag/tag.service';
 import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
@@ -18,7 +17,9 @@ import {
 } from '../../v2-post/domain/domain-service/interface';
 import {
   IReportRepository,
+  ITagRepository,
   REPORT_REPOSITORY_TOKEN,
+  TAG_REPOSITORY_TOKEN,
 } from '../../v2-post/domain/repositoty-interface';
 import { IPostElasticsearch } from '../interfaces';
 import { SearchService } from '../search.service';
@@ -29,13 +30,14 @@ export class SearchAppService {
     private _searchService: SearchService,
     @Inject(GROUP_SERVICE_TOKEN)
     private _groupAppService: IGroupService,
-    private _tagService: TagService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
     private readonly _contentDomainService: IContentDomainService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
     @Inject(REPORT_REPOSITORY_TOKEN)
-    private readonly _reportRepo: IReportRepository
+    private readonly _reportRepo: IReportRepository,
+    @Inject(TAG_REPOSITORY_TOKEN)
+    private readonly _tagRepo: ITagRepository
   ) {}
 
   /*
@@ -71,7 +73,7 @@ export class SearchAppService {
         });
       }
       if (tagName) {
-        tagId = await this._tagService.findTag(tagName, groupId);
+        tagId = (await this._tagRepo.findOne({ name: tagName, groupId: group.id }))?.get('id');
         if (tagId) {
           searchPostsDto.tagId = tagId;
         }
