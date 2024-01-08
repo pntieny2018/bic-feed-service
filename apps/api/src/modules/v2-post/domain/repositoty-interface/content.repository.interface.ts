@@ -8,7 +8,10 @@ import {
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
 
-import { FindContentInCacheProps } from './content-cache.repository.interface';
+import {
+  FindAllContentsInCacheProps,
+  FindContentInCacheProps,
+} from './content-cache.repository.interface';
 
 export type GetReportContentIdsProps = {
   reportUser: string;
@@ -54,8 +57,7 @@ export interface IContentRepository {
     offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   findContentsWithCache(
-    findAllPostOptions: FindContentProps,
-    offsetPaginationProps?: PaginationProps
+    input: FindAllContentsInCacheProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;

@@ -1,10 +1,6 @@
 import {
-  ArticleCacheDto,
-  PostCacheDto,
-  SeriesCacheDto,
-} from '@api/modules/v2-post/application/dto';
-import {
   CONTENT_CACHE_REPOSITORY_TOKEN,
+  FindAllContentsInCacheProps,
   FindContentInCacheProps,
   IContentCacheRepository,
 } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
@@ -30,7 +26,6 @@ import {
 import { CONTEXT, IContext } from '@libs/infra/log';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { flatten } from 'lodash';
 import { ClsService } from 'nestjs-cls';
 import { Sequelize, Transaction } from 'sequelize';
 
@@ -71,7 +66,7 @@ export class ContentRepository implements IContentRepository {
     private readonly _contentMapper: ContentMapper,
 
     @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
-    private readonly contentCacheRepo: IContentCacheRepository,
+    private readonly _contentCacheRepo: IContentCacheRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
     private readonly _postReactionRepo: IPostReactionRepository,
     private readonly _clsService: ClsService
@@ -314,7 +309,7 @@ export class ContentRepository implements IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
     const handler = (this._clsService.get(CONTEXT) as IContext).handler;
 
-    const cachedContent = await this.contentCacheRepo.findContent(input);
+    const cachedContent = await this._contentCacheRepo.findContent(input);
     if (cachedContent) {
       this._logger.log(`[CACHE] ${handler} - 1`);
       return cachedContent;
@@ -332,7 +327,7 @@ export class ContentRepository implements IContentRepository {
     ]);
     const contentEntity = this._contentMapper.toDomain(content, reactionsCountMap.get(content.id));
 
-    await this.contentCacheRepo.setContents([contentEntity]);
+    await this._contentCacheRepo.setContents([contentEntity]);
 
     return contentEntity;
   }
@@ -346,41 +341,38 @@ export class ContentRepository implements IContentRepository {
   }
 
   public async findContentsWithCache(
-    findAllPostOptions: FindContentProps,
-    offsetPaginate?: PaginationProps
+    input: FindAllContentsInCacheProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const contentIds = findAllPostOptions.where.ids;
-    const contentsCache: (ArticleCacheDto | PostCacheDto | SeriesCacheDto)[] = flatten(
-      await this.contentCacheRepo.getContents(contentIds)
-    );
+    const cachedContentEntities = await this._contentCacheRepo.findContents(input);
 
-    const cacheContentsEntity = contentsCache.map((content) =>
-      this._contentMapper.cacheToDomain(content)
-    );
-
-    findAllPostOptions.where.ids = contentIds.filter(
-      (id: string) => !contentsCache.find((content) => content.id === id)
-    );
+    const { ids: contentIds } = input.where;
+    const cachedContentIds = cachedContentEntities.map((content) => content.getId());
+    const nonCachedContentIds = contentIds.filter((id) => !cachedContentIds.includes(id));
 
     const handler = (this._clsService.get(CONTEXT) as IContext).handler;
     this._logger.log(
-      `[CACHE] ${handler} - ${(contentsCache.length / contentIds.length).toFixed(2)}`
+      `[CACHE] ${handler} - ${(cachedContentIds.length / contentIds.length).toFixed(2)}`
     );
 
-    if (findAllPostOptions.where.ids.length === 0) {
-      return cacheContentsEntity;
+    if (!nonCachedContentIds.length) {
+      return cachedContentEntities;
     }
 
-    const contents = await this._libContentRepo.findAll(findAllPostOptions, offsetPaginate);
+    input.where.ids = nonCachedContentIds;
+    const contents = await this._libContentRepo.findAll(input);
     const reactionsCountMap = await this._postReactionRepo.getAndCountReactionByContents(
-      findAllPostOptions.where.ids
+      nonCachedContentIds
     );
 
-    const dbContentsEntity = contents.map((content) =>
+    const dbContentEntities = contents.map((content) =>
       this._contentMapper.toDomain(content, reactionsCountMap.get(content.id))
     );
-    await this.contentCacheRepo.setContents(dbContentsEntity);
-    return [...dbContentsEntity, ...cacheContentsEntity];
+
+    await this._contentCacheRepo.setContents(dbContentEntities);
+
+    return [...cachedContentEntities, ...dbContentEntities].sort(
+      (a, b) => contentIds.indexOf(a.getId()) - contentIds.indexOf(b.getId())
+    );
   }
 
   public async getContentById(
@@ -424,7 +416,7 @@ export class ContentRepository implements IContentRepository {
       { ignoreDuplicates: true }
     );
 
-    await this.contentCacheRepo.increaseSeenContentCount(postId);
+    await this._contentCacheRepo.increaseSeenContentCount(postId);
   }
 
   public async hasSeen(postId: string, userId: string): Promise<boolean> {

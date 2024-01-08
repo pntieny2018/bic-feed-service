@@ -1,9 +1,4 @@
-import {
-  ArticleCacheDto,
-  PostCacheDto,
-  ReactionCount,
-  SeriesCacheDto,
-} from '@api/modules/v2-post/application/dto';
+import { ReactionCount } from '@api/modules/v2-post/application/dto';
 import { ArticleEntity, PostEntity, SeriesEntity } from '@api/modules/v2-post/domain/model/content';
 import { QuizEntity } from '@api/modules/v2-post/domain/model/quiz';
 import { CONTENT_STATUS } from '@beincom/constants';
@@ -16,6 +11,11 @@ export type FindContentInCacheConditionOptions = {
   groupArchived?: boolean;
   excludeReportedByUserId?: string;
 };
+
+export type FindAllContentsInCacheConditionOptions = Omit<
+  FindContentInCacheConditionOptions,
+  'id'
+> & { ids: string[] };
 
 export type FindContentInCacheIncludeOptions = {
   mustIncludeGroup?: boolean;
@@ -32,11 +32,19 @@ export type FindContentInCacheProps = {
   include?: FindContentInCacheIncludeOptions;
 };
 
+export type FindAllContentsInCacheProps = {
+  where: FindAllContentsInCacheConditionOptions;
+  include?: FindContentInCacheIncludeOptions;
+};
+
 export interface IContentCacheRepository {
   existKey(key: string): Promise<boolean>;
 
   findContent(input: FindContentInCacheProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
-  getContents(contentIds: string[]): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]>;
+  findContents(
+    input: FindAllContentsInCacheProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+
   setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
   deleteContent(contentId: string): Promise<void>;
 
