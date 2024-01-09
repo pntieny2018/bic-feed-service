@@ -1,11 +1,11 @@
+import { CONTENT_TYPE } from '@beincom/constants';
 import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostModel } from '@libs/database/postgres/model';
 import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { Op, QueryTypes } from 'sequelize';
-
-import { PostModel, PostType } from '../database/models/post.model';
 
 interface ICommandOptions {
   rollback: boolean;
@@ -106,7 +106,7 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
               },
             },
           ],
-          type: PostType.ARTICLE,
+          type: CONTENT_TYPE.ARTICLE,
         },
       });
 

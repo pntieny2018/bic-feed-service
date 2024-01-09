@@ -162,7 +162,7 @@ export class ContentDomainService implements IContentDomainService {
       },
     });
 
-    return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+    return contentEntities;
   }
 
   public async getContentIdsInNewsFeed(

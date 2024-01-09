@@ -70,6 +70,19 @@ export class ArrayHelper {
     }, initialValue);
   }
 
+  public static convertArrayToMap<T>(array: T[], key: string): Map<string, T> {
+    return array.reduce((map, item) => {
+      const mapKey = item[key];
+
+      if (!mapKey) {
+        throw new Error(`Missing key for ${item.constructor.name} map`);
+      }
+
+      map.set(mapKey, item);
+      return map;
+    }, new Map());
+  }
+
   public static convertObjectKeysToCamelCase(arr: any[]): any {
     return arr.map((obj) => ObjectHelper.convertKeysToCamelCase(obj));
   }

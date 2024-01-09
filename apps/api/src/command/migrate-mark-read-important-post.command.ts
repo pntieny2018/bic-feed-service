@@ -1,16 +1,14 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { CONTENT_STATUS } from '@beincom/constants';
+import { PostModel, UserMarkReadPostModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostStatus } from '../database/models/post.model';
-import { PostService } from '../modules/post/post.service';
-import { UserMarkReadPostModel } from '../database/models/user-mark-read-post.model';
+import { Command, CommandRunner } from 'nest-commander';
 
 @Command({ name: 'migrate:mark-read-important', description: 'Update privacy for all posts' })
 export class MigrateMarkReadImportantPostCommand implements CommandRunner {
   public constructor(
     @InjectModel(PostModel) private _postModel: typeof PostModel,
     @InjectModel(UserMarkReadPostModel)
-    private _userReadImportantPostModel: typeof UserMarkReadPostModel,
-    private _postService: PostService
+    private _userReadImportantPostModel: typeof UserMarkReadPostModel
   ) {}
 
   public async run(): Promise<any> {
@@ -20,7 +18,7 @@ export class MigrateMarkReadImportantPostCommand implements CommandRunner {
         raw: true,
         where: {
           isImportant: true,
-          status: PostStatus.PUBLISHED,
+          status: CONTENT_STATUS.PUBLISHED,
         },
       });
       for (const post of posts) {

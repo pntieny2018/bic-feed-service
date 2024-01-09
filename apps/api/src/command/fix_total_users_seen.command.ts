@@ -1,7 +1,7 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { PostModel, UserSeenPostModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../database/models/post.model';
-import { UserSeenPostModel } from '../database/models/user-seen-post.model';
+import { Command, CommandRunner } from 'nest-commander';
+
 import { ModelHelper } from '../common/helpers/model.helper';
 
 @Command({ name: 'fix:post:total-users-seen', description: 'Fix total users seen for all posts' })

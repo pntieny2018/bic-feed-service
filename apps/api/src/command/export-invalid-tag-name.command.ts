@@ -1,12 +1,11 @@
 /* eslint-disable no-console */
+import { TagModel } from '@libs/database/postgres/model';
 import { GROUP_SERVICE_TOKEN, IGroupService } from '@libs/service/group';
 import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
 import { Op, Sequelize } from 'sequelize';
-
-import { TagModel } from '../database/models/tag.model';
 
 @Command({
   name: 'export-invalid-tag',

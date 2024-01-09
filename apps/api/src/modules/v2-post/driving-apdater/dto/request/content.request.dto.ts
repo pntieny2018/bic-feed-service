@@ -383,3 +383,21 @@ export class CountContentPerWeekRequestDto {
   })
   public metrics: string[];
 }
+
+export class GetUserSeenPostDto {
+  @ApiProperty({
+    default: 20,
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  public limit: number;
+
+  @ApiProperty({
+    default: 0,
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  public offset: number;
+}

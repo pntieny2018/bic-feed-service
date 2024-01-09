@@ -1,7 +1,7 @@
 import { CONTENT_TYPE, QUIZ_STATUS } from '@beincom/constants';
 import { CursorPaginationProps, CursorPaginationResult } from '@libs/database/postgres/common';
+import { QuizAttributes } from '@libs/database/postgres/model';
 
-import { IQuiz } from '../../../../database/models/quiz.model';
 import { QuizEntity, QuizQuestionEntity } from '../model/quiz';
 
 export type FindOneQuizProps = {
@@ -9,7 +9,7 @@ export type FindOneQuizProps = {
     id?: string;
     status?: QUIZ_STATUS;
   };
-  attributes?: (keyof IQuiz)[];
+  attributes?: (keyof QuizAttributes)[];
 };
 
 export type FindAllQuizProps = {
@@ -20,7 +20,7 @@ export type FindAllQuizProps = {
     contentIds?: string[];
     createdBy?: string;
   };
-  attributes?: (keyof IQuiz)[];
+  attributes?: (keyof QuizAttributes)[];
 };
 
 export type GetPaginationQuizzesProps = {
@@ -29,7 +29,7 @@ export type GetPaginationQuizzesProps = {
     createdBy?: string;
     contentType?: CONTENT_TYPE;
   };
-  attributes?: (keyof IQuiz)[];
+  attributes?: (keyof QuizAttributes)[];
 } & CursorPaginationProps;
 
 export interface IQuizRepository {

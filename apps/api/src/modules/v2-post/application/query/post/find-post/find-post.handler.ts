@@ -31,10 +31,7 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
 
     await this._postValidator.checkCanReadContent(postEntity, authUser);
 
-    const mentionUsers = await this._userAdapter.getUsersByIds(postEntity.get('mentionUserIds'));
-
     return this._contentBinding.postBinding(postEntity, {
-      mentionUsers,
       authUser,
     });
   }

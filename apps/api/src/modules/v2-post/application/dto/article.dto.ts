@@ -68,7 +68,6 @@ export class ArticleInSeriesDto extends PickType(ArticleDto, [
   'publishedAt',
   'setting',
   'actor',
-  'isSaved',
   'coverMedia',
   'categories',
   'audience',

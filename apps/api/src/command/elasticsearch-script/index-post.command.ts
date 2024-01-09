@@ -16,8 +16,6 @@ import { Command, CommandRunner, Option } from 'nest-commander';
 import { Sequelize } from 'sequelize';
 
 import { ElasticsearchHelper } from '../../common/helpers';
-import { PostBindingService } from '../../modules/post/post-binding.service';
-import { PostService } from '../../modules/post/post.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
 import { SearchService } from '../../modules/search/search.service';
 
@@ -46,8 +44,6 @@ export class IndexPostCommand implements CommandRunner {
     @Inject(GROUP_SERVICE_TOKEN)
     public readonly groupAppService: IGroupService,
     public readonly postSearchService: SearchService,
-    public readonly postService: PostService,
-    public readonly postBingdingService: PostBindingService,
     private readonly _configService: ConfigService,
     protected readonly elasticsearchService: ElasticsearchService
   ) {}

@@ -1,3 +1,4 @@
+import { ReactionDuplicateException } from '@api/modules/v2-post/domain/exception';
 import { CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import { PostModel } from '@libs/database/postgres/model';
@@ -52,7 +53,14 @@ export class PostReactionRepository implements IPostReactionRepository {
   }
 
   public async create(data: ReactionEntity): Promise<void> {
-    await this._libPostReactionRepo.create(this._postReactionMapper.toPersistence(data));
+    try {
+      await this._libPostReactionRepo.create(this._postReactionMapper.toPersistence(data));
+    } catch (e) {
+      if (e.name === 'SequelizeUniqueConstraintError') {
+        throw new ReactionDuplicateException();
+      }
+      throw e;
+    }
   }
 
   public async delete(id: string): Promise<void> {

@@ -1,5 +1,4 @@
 import { getDatabaseConfig } from '@libs/database/postgres/config';
-import { PostReactionModel } from '@libs/database/postgres/model';
 import { ReactionContentDetailsModel } from '@libs/database/postgres/model/reaction-content-details.model';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -17,8 +16,6 @@ export class UpdateContentReactionCountCommand implements CommandRunner {
   private readonly _logger = new Logger(UpdateContentReactionCountCommand.name);
 
   public constructor(
-    @InjectModel(PostReactionModel)
-    private _postReactionModel: typeof PostReactionModel,
     @InjectModel(ReactionContentDetailsModel)
     private _reactionContentDetailsModel: typeof ReactionContentDetailsModel
   ) {}
