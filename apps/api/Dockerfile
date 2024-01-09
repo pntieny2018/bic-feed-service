@@ -2,6 +2,7 @@
 ARG APP_NAME=api
 ARG NODE_VERSION=16.20.2
 ARG ALPINE_VERSION=alpine3.18
+ARG NESTCLI_VERSION=9.5.0
 ARG WORKDIR=/usr/src/app
 
 ##------BUILDER STAGE------## 
@@ -12,7 +13,8 @@ ARG APP_NAME
 WORKDIR ${WORKDIR}
 
 # Install the NestJS CLI globally.
-RUN yarn global add @nestjs/cli
+ARG NESTCLI_VERSION
+RUN yarn global add @nestjs/cli@{NESTCLI_VERSION}
 
 # Install dependencies
 COPY package.json yarn.lock ./ 
