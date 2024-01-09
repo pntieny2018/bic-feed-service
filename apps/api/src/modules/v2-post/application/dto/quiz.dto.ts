@@ -2,7 +2,7 @@ import { QUIZ_PROCESS_STATUS, QUIZ_RESULT_STATUS, QUIZ_STATUS } from '@beincom/c
 import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 import { ArticleDto } from './article.dto';
@@ -57,12 +57,24 @@ export class AnswerUserDto {
   @IsUUID()
   @IsNotEmpty()
   @Expose({ name: 'question_id' })
+  @Transform((data) => {
+    if (!data.obj.question_id && data.obj.questionId) {
+      return data.obj.questionId;
+    }
+    return data.obj.question_id;
+  })
   public questionId: string;
 
   @ApiProperty({ type: String })
   @IsUUID()
   @IsNotEmpty()
   @Expose({ name: 'answer_id' })
+  @Transform((data) => {
+    if (!data.obj.answer_id && data.obj.answerId) {
+      return data.obj.answerId;
+    }
+    return data.obj.answer_id;
+  })
   public answerId: string;
 
   public constructor(data: AnswerUserDto) {

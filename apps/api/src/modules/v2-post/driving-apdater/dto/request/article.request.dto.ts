@@ -58,12 +58,24 @@ export class UpdateArticleRequestDto {
   @ApiPropertyOptional({ type: MediaRequestDto })
   @IsOptional()
   @Expose({ name: 'cover_media' })
+  @Transform((data) => {
+    if (!data.obj.cover_media && data.obj.coverMedia) {
+      return data.obj.coverMedia;
+    }
+    return data.obj.cover_media;
+  })
   public coverMedia?: MediaItemDto;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsInt()
   @Expose({ name: 'word_count' })
+  @Transform((data) => {
+    if (!data.obj.word_count && data.obj.wordCount) {
+      return data.obj.wordCount;
+    }
+    return data.obj.word_count;
+  })
   public wordCount?: number;
 
   @ApiPropertyOptional({ type: [String] })
@@ -82,6 +94,12 @@ export class PublishArticleRequestDto extends UpdateArticleRequestDto {}
 export class ScheduleArticleRequestDto extends PublishArticleRequestDto {
   @ApiProperty({ type: Date, required: true })
   @Expose({ name: 'scheduled_at' })
+  @Transform((data) => {
+    if (!data.obj.scheduled_at && data.obj.scheduledAt) {
+      return data.obj.scheduledAt;
+    }
+    return data.obj.scheduled_at;
+  })
   @IsNotEmpty()
   @IsDateString()
   public scheduledAt: Date;

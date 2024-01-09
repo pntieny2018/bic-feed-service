@@ -1,7 +1,7 @@
 import { BIC_EMOJI } from '@api/modules/v2-post/domain/model/reaction';
 import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { emoji } from 'node-emoji';
 import { NIL as NIL_UUID } from 'uuid';
@@ -16,6 +16,12 @@ export class CreateReactionRequestDto {
   @IsIn([...BIC_EMOJI, ...Object.keys(emoji)], { message: 'Reaction not found' })
   @Expose({
     name: 'reaction_name',
+  })
+  @Transform((data) => {
+    if (!data.obj.reaction_name && data.obj.reactionName) {
+      return data.obj.reactionName;
+    }
+    return data.obj.reaction_name;
   })
   public reactionName: string;
 
@@ -32,6 +38,12 @@ export class CreateReactionRequestDto {
   @IsNotEmpty()
   @Expose({
     name: 'target_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.target_id && data.obj.targetId) {
+      return data.obj.targetId;
+    }
+    return data.obj.target_id;
   })
   public targetId: string;
 
@@ -52,6 +64,12 @@ export class DeleteReactionRequestDto {
   @Expose({
     name: 'target_id',
   })
+  @Transform((data) => {
+    if (!data.obj.target_id && data.obj.targetId) {
+      return data.obj.targetId;
+    }
+    return data.obj.target_id;
+  })
   public targetId: string;
 
   @ApiProperty({ required: false, name: 'reaction_id' })
@@ -60,6 +78,12 @@ export class DeleteReactionRequestDto {
   @ValidateIf((object) => !object['reaction_name'] && !object['reactionName'])
   @Expose({
     name: 'reaction_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.reaction_id && data.obj.reactionId) {
+      return data.obj.reactionId;
+    }
+    return data.obj.reaction_id;
   })
   public reactionId?: string;
 
@@ -74,6 +98,12 @@ export class DeleteReactionRequestDto {
   @Expose({
     name: 'reaction_name',
   })
+  @Transform((data) => {
+    if (!data.obj.reaction_name && data.obj.reactionName) {
+      return data.obj.reactionName;
+    }
+    return data.obj.reaction_name;
+  })
   public reactionName: string;
 }
 
@@ -83,6 +113,12 @@ export class GetReactionRequestDto {
   })
   @Expose({
     name: 'reaction_name',
+  })
+  @Transform((data) => {
+    if (!data.obj.reaction_name && data.obj.reactionName) {
+      return data.obj.reactionName;
+    }
+    return data.obj.reaction_name;
   })
   public reactionName: string;
 
@@ -94,6 +130,12 @@ export class GetReactionRequestDto {
   @IsUUID()
   @Expose({
     name: 'target_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.target_id && data.obj.targetId) {
+      return data.obj.targetId;
+    }
+    return data.obj.target_id;
   })
   public targetId: string;
 
@@ -110,6 +152,12 @@ export class GetReactionRequestDto {
   @IsUUID()
   @Expose({
     name: 'latest_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.latest_id && data.obj.latestId) {
+      return data.obj.latestId;
+    }
+    return data.obj.latest_id;
   })
   @IsOptional()
   public latestId = NIL_UUID;

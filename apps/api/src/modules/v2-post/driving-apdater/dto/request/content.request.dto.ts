@@ -26,7 +26,12 @@ export class GetDraftContentsRequestDto extends PaginatedArgs {
   @IsOptional()
   @IsBoolean()
   @Expose({ name: 'is_processing' })
-  @Transform(({ value }) => BooleanHelper.convertStringToBoolean(value))
+  @Transform((data) => {
+    if (!data.obj.is_processing && data.obj.isProcessing) {
+      return BooleanHelper.convertStringToBoolean(data.obj.isProcessing);
+    }
+    return BooleanHelper.convertStringToBoolean(data.obj.is_processing);
+  })
   public isProcessing?: boolean;
 
   @ApiProperty({ description: 'Content type', required: false, default: '', enum: CONTENT_TYPE })
@@ -60,6 +65,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @Expose({
     name: 'tag_ids',
   })
+  @Transform((data) => {
+    if (!data.obj.tag_ids && data.obj.tagIds) {
+      return data.obj.tagIds;
+    }
+    return data.obj.tag_ids;
+  })
   public tagIds?: string[];
 
   @ApiPropertyOptional({
@@ -72,6 +83,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @IsArray()
   @Expose({
     name: 'tag_names',
+  })
+  @Transform((data) => {
+    if (!data.obj.tag_names && data.obj.tagNames) {
+      return data.obj.tagNames;
+    }
+    return data.obj.tag_names;
   })
   public tagNames?: string[];
 
@@ -90,6 +107,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @IsOptional()
   @IsDateString()
   @Expose({ name: 'start_time' })
+  @Transform((data) => {
+    if (!data.obj.start_time && data.obj.startTime) {
+      return data.obj.startTime;
+    }
+    return data.obj.start_time;
+  })
   public startTime?: string;
 
   @ApiPropertyOptional({
@@ -100,6 +123,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @IsOptional()
   @IsDateString()
   @Expose({ name: 'end_time' })
+  @Transform((data) => {
+    if (!data.obj.end_time && data.obj.endTime) {
+      return data.obj.endTime;
+    }
+    return data.obj.end_time;
+  })
   public endTime?: string;
 
   @ApiPropertyOptional({ description: 'Filter by group', required: false, name: 'group_id' })
@@ -107,6 +136,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @IsUUID()
   @IsOptional()
   @Expose({ name: 'group_id' })
+  @Transform((data) => {
+    if (!data.obj.group_id && data.obj.groupId) {
+      return data.obj.groupId;
+    }
+    return data.obj.group_id;
+  })
   public groupId?: string;
 
   @ApiPropertyOptional({
@@ -119,6 +154,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @IsArray()
   @IsEnum(CONTENT_TYPE, { each: true })
   @Expose({ name: 'content_types' })
+  @Transform((data) => {
+    if (!data.obj.content_types && data.obj.contentTypes) {
+      return data.obj.contentTypes;
+    }
+    return data.obj.content_types;
+  })
   public contentTypes?: CONTENT_TYPE[];
 
   @ApiPropertyOptional({
@@ -131,6 +172,12 @@ export class SearchContentsRequestDto extends PaginatedArgs {
   @IsNotEmpty()
   @Transform(({ value }) => value && value === 'true')
   @Expose({ name: 'is_included_inner_groups' })
+  @Transform((data) => {
+    if (!data.obj.is_included_inner_groups && data.obj.isIncludedInnerGroups) {
+      return BooleanHelper.convertStringToBoolean(data.obj.isIncludedInnerGroups);
+    }
+    return BooleanHelper.convertStringToBoolean(data.obj.is_included_inner_groups);
+  })
   public isIncludedInnerGroups: boolean;
 }
 
@@ -158,6 +205,12 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
   @Expose({
     name: 'is_mine',
   })
+  @Transform((data) => {
+    if (!data.obj.is_mine && data.obj.isMine) {
+      return data.obj.isMine;
+    }
+    return data.obj.is_mine;
+  })
   public isMine?: boolean;
 
   @ApiProperty({
@@ -170,6 +223,12 @@ export class GetScheduleContentsQueryDto extends PaginatedArgs {
   @Expose({
     name: 'group_id',
   })
+  @Transform((data) => {
+    if (!data.obj.group_id && data.obj.groupId) {
+      return data.obj.groupId;
+    }
+    return data.obj.group_id;
+  })
   @ValidateIf((input) => input.isMine == undefined)
   public groupId?: string;
 }
@@ -179,6 +238,12 @@ export class ScheduleContentRequestDto extends PublishArticleRequestDto {
   @IsNotEmpty()
   @IsDateString()
   @Expose({ name: 'scheduled_at' })
+  @Transform((data) => {
+    if (!data.obj.scheduled_at && data.obj.scheduledAt) {
+      return data.obj.scheduledAt;
+    }
+    return data.obj.scheduled_at;
+  })
   public scheduledAt: Date;
 
   @ApiProperty({ required: true, enum: [CONTENT_TYPE.ARTICLE, CONTENT_TYPE.POST] })
@@ -211,7 +276,14 @@ export class PinContentDto {
   })
   @IsNotEmpty()
   @IsArray()
-  @Transform(({ value }) => {
+  @Transform((data) => {
+    let value;
+    if (!data.obj.pin_group_ids && data.obj.pinGroupIds) {
+      value = data.obj.pinGroupIds;
+    } else {
+      value = data.obj.pin_group_ids;
+    }
+
     if (Array.isArray(value)) {
       return value.map((v) => v.trim());
     }
@@ -230,7 +302,14 @@ export class PinContentDto {
   })
   @IsNotEmpty()
   @IsArray()
-  @Transform(({ value }) => {
+  @Transform((data) => {
+    let value;
+    if (!data.obj.unpin_group_ids && data.obj.unpinGroupIds) {
+      value = data.obj.unpinGroupIds;
+    } else {
+      value = data.obj.unpin_group_ids;
+    }
+
     if (Array.isArray(value)) {
       return value.map((v) => v.trim());
     }
@@ -248,7 +327,16 @@ export class GetMyReportedContentsRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'target_ids', required: false, type: [String] })
   @Expose({ name: 'target_ids' })
   @Type(() => Array)
-  @Transform(({ value }) => (typeof value === 'string' && !value.includes(',') ? [value] : value))
+  @Transform((data) => {
+    let value;
+    if (!data.obj.target_ids && data.obj.targetIds) {
+      value = data.obj.targetIds;
+    } else {
+      value = data.obj.target_ids;
+    }
+
+    return typeof value === 'string' && !value.includes(',') ? [value] : value;
+  })
   public targetIds?: string[];
 }
 
@@ -263,7 +351,14 @@ export class CountContentPerWeekRequestDto {
   })
   @IsNotEmpty()
   @IsArray()
-  @Transform(({ value }) => {
+  @Transform((data) => {
+    let value;
+    if (!data.obj.target_ids && data.obj.targetIds) {
+      value = data.obj.targetIds;
+    } else {
+      value = data.obj.target_ids;
+    }
+
     if (Array.isArray(value)) {
       return value.map((v) => v.trim());
     }
