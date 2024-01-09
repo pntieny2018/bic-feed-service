@@ -335,9 +335,6 @@ export class GetMyReportedContentsRequestDto extends PaginatedArgs {
       value = data.obj.target_ids;
     }
 
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
-    }
     return typeof value === 'string' && !value.includes(',') ? [value] : value;
   })
   public targetIds?: string[];
