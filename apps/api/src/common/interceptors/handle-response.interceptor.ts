@@ -40,7 +40,7 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
                   })
                 : data,
             meta: {
-              message,
+              message: message === 'OK' ? message : i18n?.translate(message),
             },
           };
         } else {
@@ -48,7 +48,7 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
             code: ERRORS.API_OK,
             data,
             meta: {
-              message,
+              message: message === 'OK' ? message : i18n?.translate(message),
             },
           };
         }
