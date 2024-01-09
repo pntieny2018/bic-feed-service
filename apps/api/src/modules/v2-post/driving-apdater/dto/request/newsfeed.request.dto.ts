@@ -3,6 +3,7 @@ import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import { BooleanHelper } from '@libs/common/helpers';
 
 export class NewsfeedRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'is_important', example: true })
@@ -11,14 +12,11 @@ export class NewsfeedRequestDto extends PaginatedArgs {
     name: 'is_important',
   })
   @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
+  @Transform((data) => {
+    if (!data.obj.is_important && data.obj.isImportant) {
+      return BooleanHelper.convertStringToBoolean(data.obj.isImportant);
     }
-    if (value === 'false') {
-      return false;
-    }
-    return null;
+    return BooleanHelper.convertStringToBoolean(data.obj.is_important);
   })
   public isImportant?: boolean;
 
@@ -28,14 +26,11 @@ export class NewsfeedRequestDto extends PaginatedArgs {
     name: 'is_mine',
   })
   @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
+  @Transform((data) => {
+    if (!data.obj.is_mine && data.obj.isMine) {
+      return BooleanHelper.convertStringToBoolean(data.obj.isMine);
     }
-    if (value === 'false') {
-      return false;
-    }
-    return null;
+    return BooleanHelper.convertStringToBoolean(data.obj.is_mine);
   })
   public isMine?: boolean;
 
@@ -45,14 +40,11 @@ export class NewsfeedRequestDto extends PaginatedArgs {
     name: 'is_saved',
   })
   @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
+  @Transform((data) => {
+    if (!data.obj.is_saved && data.obj.isSaved) {
+      return BooleanHelper.convertStringToBoolean(data.obj.isSaved);
     }
-    if (value === 'false') {
-      return false;
-    }
-    return null;
+    return BooleanHelper.convertStringToBoolean(data.obj.is_saved);
   })
   public isSaved?: boolean;
 

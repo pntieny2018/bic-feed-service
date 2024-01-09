@@ -10,6 +10,12 @@ export class SearchArticlesDto extends PageOptionsDto {
   @Expose({
     name: 'content_search',
   })
+  @Transform((data) => {
+    if (!data.obj.content_search && data.obj.contentCearch) {
+      return data.obj.contentCearch;
+    }
+    return data.obj.content_search;
+  })
   public contentSearch?: string;
 
   @ApiProperty({

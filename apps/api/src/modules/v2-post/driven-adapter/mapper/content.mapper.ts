@@ -10,7 +10,6 @@ import {
 import { MediaMapper } from '@api/modules/v2-post/driven-adapter/mapper/media.mapper';
 import { QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper/quiz.mapper';
 import { CONTENT_TYPE } from '@beincom/constants';
-import { StringHelper } from '@libs/common/helpers';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { Injectable } from '@nestjs/common';
 import { merge } from 'lodash';
@@ -328,7 +327,7 @@ export class ContentMapper {
       id: post.id,
       isHidden: post.isHidden,
       isReported: post.isReported,
-      title: StringHelper.getRawTextFromMarkdown(post.content).slice(0, 500),
+      title: post.title,
       updatedAt: post.updatedAt,
       updatedBy: post.updatedBy,
       createdBy: post.createdBy,

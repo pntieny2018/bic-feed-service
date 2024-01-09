@@ -1,5 +1,5 @@
 import { emoji } from 'node-emoji';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { ReactionEnum } from '../reaction.enum';
 import { BIC_EMOJI } from '../reaction.constant';
@@ -16,6 +16,12 @@ export class ReactionDto {
   @Expose({
     name: 'reaction_name',
   })
+  @Transform((data) => {
+    if (!data.obj.reaction_name && data.obj.reactionName) {
+      return data.obj.reactionName;
+    }
+    return data.obj.reaction_name;
+  })
   public reactionName: string;
 
   @ApiProperty({ example: 'POST' })
@@ -31,6 +37,12 @@ export class ReactionDto {
   @IsNotEmpty()
   @Expose({
     name: 'target_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.target_id && data.obj.targetId) {
+      return data.obj.targetId;
+    }
+    return data.obj.target_id;
   })
   public targetId: string;
 

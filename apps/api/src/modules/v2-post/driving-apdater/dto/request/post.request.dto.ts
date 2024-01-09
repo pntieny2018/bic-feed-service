@@ -70,6 +70,12 @@ export class UpdatePostRequestDto {
   @IsOptional()
   @Type(() => LinkPreviewDto)
   @Expose({ name: 'link_preview' })
+  @Transform((data) => {
+    if (!data.obj.link_preview && data.obj.linkPreview) {
+      return data.obj.linkPreview;
+    }
+    return data.obj.link_preview;
+  })
   public linkPreview?: LinkPreviewDto;
 
   public constructor(data: UpdatePostRequestDto) {
@@ -90,6 +96,12 @@ export class PublishPostRequestDto extends UpdatePostRequestDto {}
 export class SchedulePostRequestDto extends PublishPostRequestDto {
   @ApiProperty({ required: true, type: Date })
   @Expose({ name: 'scheduled_at' })
+  @Transform((data) => {
+    if (!data.obj.scheduled_at && data.obj.scheduledAt) {
+      return data.obj.scheduledAt;
+    }
+    return data.obj.scheduled_at;
+  })
   @IsNotEmpty()
   @IsDateString()
   public scheduledAt: Date;
@@ -111,6 +123,12 @@ export class PostSettingRequestDto {
   @IsNotEmpty()
   @IsBoolean()
   @Expose({ name: 'can_react' })
+  @Transform((data) => {
+    if (!data.obj.can_react && data.obj.canReact) {
+      return data.obj.canReact;
+    }
+    return data.obj.can_react;
+  })
   public canReact: boolean;
 
   @ApiProperty({
@@ -123,6 +141,12 @@ export class PostSettingRequestDto {
   @IsNotEmpty()
   @IsBoolean()
   @Expose({ name: 'can_comment' })
+  @Transform((data) => {
+    if (!data.obj.can_comment && data.obj.canComment) {
+      return data.obj.canComment;
+    }
+    return data.obj.can_comment;
+  })
   public canComment: boolean;
 
   @ApiProperty({
@@ -136,6 +160,12 @@ export class PostSettingRequestDto {
   @IsNotEmpty()
   @IsBoolean()
   @Expose({ name: 'is_important' })
+  @Transform((data) => {
+    if (!data.obj.is_important && data.obj.isImportant) {
+      return data.obj.isImportant;
+    }
+    return data.obj.is_important;
+  })
   public isImportant: boolean;
 
   @ApiProperty({
@@ -149,6 +179,12 @@ export class PostSettingRequestDto {
   @IsOptional()
   @IsDateString()
   @Expose({ name: 'important_expired_at' })
+  @Transform((data) => {
+    if (!data.obj.important_expired_at && data.obj.importantExpiredAt) {
+      return data.obj.importantExpiredAt;
+    }
+    return data.obj.important_expired_at;
+  })
   public importantExpiredAt?: Date;
 }
 

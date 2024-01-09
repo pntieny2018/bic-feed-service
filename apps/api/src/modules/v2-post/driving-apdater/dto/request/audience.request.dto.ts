@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class AudienceRequestDto {
@@ -14,6 +14,12 @@ export class AudienceRequestDto {
   @IsArray()
   @Expose({
     name: 'group_ids',
+  })
+  @Transform((data) => {
+    if (!data.obj.group_ids && data.obj.groupIds) {
+      return data.obj.groupIds;
+    }
+    return data.obj.group_ids;
   })
   public groupIds: string[];
 }

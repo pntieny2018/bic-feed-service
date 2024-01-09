@@ -1,6 +1,6 @@
 import { ORDER } from '@beincom/constants';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { NIL as NIL_UUID } from 'uuid';
 
@@ -16,6 +16,12 @@ export class GetCommentsDto extends PageOptionsDto {
   @Expose({
     name: 'post_id',
   })
+  @Transform((data) => {
+    if (!data.obj.post_id && data.obj.postId) {
+      return data.obj.postId;
+    }
+    return data.obj.post_id;
+  })
   public postId: string;
 
   @ApiProperty({
@@ -26,6 +32,12 @@ export class GetCommentsDto extends PageOptionsDto {
   @IsOptional()
   @Expose({
     name: 'parent_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.parent_id && data.obj.parentId) {
+      return data.obj.parentId;
+    }
+    return data.obj.parent_id;
   })
   public parentId?: string = NIL_UUID;
 
@@ -38,6 +50,12 @@ export class GetCommentsDto extends PageOptionsDto {
   @Type(() => Number)
   @Expose({
     name: 'child_limit',
+  })
+  @Transform((data) => {
+    if (!data.obj.child_limit && data.obj.childLimit) {
+      return data.obj.childLimit;
+    }
+    return data.obj.child_limit;
   })
   public childLimit?: number = 10;
 

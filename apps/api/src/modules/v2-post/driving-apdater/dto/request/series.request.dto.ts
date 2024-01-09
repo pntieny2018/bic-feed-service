@@ -56,6 +56,12 @@ export class CreateSeriesRequestDto {
   @Expose({
     name: 'cover_media',
   })
+  @Transform((data) => {
+    if (!data.obj.cover_media && data.obj.coverMedia) {
+      return data.obj.coverMedia;
+    }
+    return data.obj.cover_media;
+  })
   public coverMedia: MediaDto;
 
   @ApiProperty({
@@ -117,6 +123,12 @@ export class UpdateSeriesRequestDto {
   @Expose({
     name: 'cover_media',
   })
+  @Transform((data) => {
+    if (!data.obj.cover_media && data.obj.coverMedia) {
+      return data.obj.coverMedia;
+    }
+    return data.obj.cover_media;
+  })
   public coverMedia?: MediaDto;
 }
 
@@ -174,14 +186,20 @@ export class GetItemsBySeriesRequestDto {
   })
   @Type(() => Array)
   @IsUUID(4, { each: true })
-  @Transform(({ value }) => {
+  @Expose({
+    name: 'series_ids',
+  })
+  @Transform((data) => {
+    let value;
+    if (!data.obj.series_ids && data.obj.seriesIds) {
+      value = data.obj.seriesIds;
+    } else {
+      value = data.obj.series_ids;
+    }
     if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
     return value;
-  })
-  @Expose({
-    name: 'series_ids',
   })
   @IsNotEmpty()
   public seriesIds: string[];
@@ -194,6 +212,12 @@ export class SearchSeriesRequestDto extends PageOptionsDto {
   @Expose({
     name: 'content_search',
   })
+  @Transform((data) => {
+    if (!data.obj.content_search && data.obj.contentSearch) {
+      return data.obj.contentSearch;
+    }
+    return data.obj.content_search;
+  })
   public contentSearch?: string;
 
   @ApiProperty({
@@ -203,6 +227,12 @@ export class SearchSeriesRequestDto extends PageOptionsDto {
   })
   @Expose({
     name: 'group_ids',
+  })
+  @Transform((data) => {
+    if (!data.obj.group_ids && data.obj.groupIds) {
+      return data.obj.groupIds;
+    }
+    return data.obj.group_ids;
   })
   @IsArray()
   @IsOptional()
@@ -216,6 +246,12 @@ export class SearchSeriesRequestDto extends PageOptionsDto {
   })
   @Expose({
     name: 'item_ids',
+  })
+  @Transform((data) => {
+    if (!data.obj.item_ids && data.obj.itemIds) {
+      return data.obj.itemIds;
+    }
+    return data.obj.item_ids;
   })
   @IsArray()
   @IsOptional()
@@ -248,6 +284,12 @@ export class ChangeItemsInSeriesRequestDto {
   @Expose({
     name: 'item_id',
   })
+  @Transform((data) => {
+    if (!data.obj.item_id && data.obj.itemIds) {
+      return data.obj.itemId;
+    }
+    return data.obj.item_id;
+  })
   public itemId: string;
 }
 
@@ -263,6 +305,12 @@ export class ReorderItemsInSeriesRequestDto {
   @ArrayNotEmpty()
   @Expose({
     name: 'item_ids',
+  })
+  @Transform((data) => {
+    if (!data.obj.item_ids && data.obj.itemIds) {
+      return data.obj.itemIds;
+    }
+    return data.obj.item_ids;
   })
   public itemIds: string[];
 }

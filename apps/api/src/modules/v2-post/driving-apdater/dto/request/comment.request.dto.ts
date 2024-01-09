@@ -31,6 +31,12 @@ export class CreateCommentRequestDto {
   @Expose({
     name: 'post_id',
   })
+  @Transform((data) => {
+    if (!data.obj.post_id && data.obj.postId) {
+      return data.obj.postId;
+    }
+    return data.obj.post_id;
+  })
   public postId: string;
 
   @ApiProperty({ type: String })
@@ -152,6 +158,12 @@ export class GetCommentsAroundIdDto {
   @Expose({
     name: 'target_child_limit',
   })
+  @Transform((data) => {
+    if (!data.obj.target_child_limit && data.obj.targetChildLimit) {
+      return data.obj.targetChildLimit;
+    }
+    return data.obj.target_child_limit;
+  })
   public targetChildLimit?: number;
 }
 
@@ -169,6 +181,12 @@ export class GetListCommentsDto extends PaginatedArgs {
   @Expose({
     name: 'post_id',
   })
+  @Transform((data) => {
+    if (!data.obj.post_id && data.obj.postId) {
+      return data.obj.postId;
+    }
+    return data.obj.post_id;
+  })
   public postId: string;
 
   @ApiPropertyOptional({
@@ -179,6 +197,12 @@ export class GetListCommentsDto extends PaginatedArgs {
   @IsOptional()
   @Expose({
     name: 'parent_id',
+  })
+  @Transform((data) => {
+    if (!data.obj.parent_id && data.obj.parentId) {
+      return data.obj.parentId;
+    }
+    return data.obj.parent_id;
   })
   public parentId: string = NIL;
 }
@@ -272,6 +296,18 @@ export class GetMyReportedCommentsRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'target_ids', required: false, type: [String] })
   @Expose({ name: 'target_ids' })
   @Type(() => Array)
-  @Transform(({ value }) => (typeof value === 'string' && !value.includes(',') ? [value] : value))
+  @Transform((data) => {
+    let value;
+    if (!data.obj.target_ids && data.obj.targetIds) {
+      value = data.obj.targetIds;
+    } else {
+      value = data.obj.target_ids;
+    }
+
+    if (typeof value === 'string' && !value.includes(',')) {
+      return [value];
+    }
+    return value;
+  })
   public targetIds?: string[];
 }
