@@ -72,7 +72,7 @@ export class SeriesController {
   })
   @Post(ROUTES.SERIES.CREATE.PATH)
   @Version(ROUTES.SERIES.CREATE.VERSIONS)
-  public async create(
+  public async createSeries(
     @AuthUser() user: UserDto,
     @Body() createSeriesRequestDto: CreateSeriesRequestDto
   ): Promise<CreateSeriesDto> {
@@ -93,7 +93,7 @@ export class SeriesController {
   @ResponseMessages({ success: 'Reorder successful.' })
   @Put(ROUTES.SERIES.REORDER_ITEMS.PATH)
   @Version(ROUTES.SERIES.REORDER_ITEMS.VERSIONS)
-  public async reorder(
+  public async reorderItemsInSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
     @Body() reorderItemsDto: ReorderItemsInSeriesRequestDto
@@ -112,7 +112,7 @@ export class SeriesController {
   })
   @Put(ROUTES.SERIES.ADD_ITEMS.PATH)
   @Version(ROUTES.SERIES.ADD_ITEMS.VERSIONS)
-  public async addItems(
+  public async addItemsIntoSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
     @Body() addItemsInSeriesDto: ChangeItemsInSeriesRequestDto
@@ -131,7 +131,7 @@ export class SeriesController {
   })
   @Delete(ROUTES.SERIES.REMOVE_ITEMS.PATH)
   @Version(ROUTES.SERIES.REMOVE_ITEMS.VERSIONS)
-  public async removeItems(
+  public async removeItemsFromSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
     @Body() removeItemsInSeriesDto: ChangeItemsInSeriesRequestDto
@@ -150,7 +150,7 @@ export class SeriesController {
   })
   @Put(ROUTES.SERIES.UPDATE.PATH)
   @Version(ROUTES.SERIES.UPDATE.VERSIONS)
-  public async update(
+  public async updateSeries(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSeriesRequestDto: UpdateSeriesRequestDto
@@ -191,7 +191,7 @@ export class SeriesController {
   })
   @Version(ROUTES.SERIES.SEARCH_CONTENTS_BY_SERIES.VERSIONS)
   @Get(ROUTES.SERIES.SEARCH_CONTENTS_BY_SERIES.PATH)
-  public async searchContents(
+  public async searchContentsToAddIntoSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) seriesId: string,
     @Query() searchContentsBySeriesRequestDto: SearchContentsBySeriesRequestDto
@@ -241,7 +241,7 @@ export class SeriesController {
   })
   @Delete(ROUTES.SERIES.DELETE.PATH)
   @Version(ROUTES.SERIES.DELETE.VERSIONS)
-  public async delete(
+  public async deleteSeries(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<void> {

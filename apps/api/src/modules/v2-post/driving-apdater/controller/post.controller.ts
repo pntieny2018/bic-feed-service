@@ -55,7 +55,7 @@ export class PostController {
     success: 'message.post.created_success',
   })
   @Post(ROUTES.POST.CREATE.PATH)
-  public async createDraft(
+  public async createDraftPost(
     @AuthUser() authUser: UserDto,
     @Body() createDraftPostRequestDto: CreateDraftPostRequestDto
   ): Promise<CreateDraftPostDto> {
@@ -134,7 +134,7 @@ export class PostController {
     success: 'message.post.updated_success',
   })
   @Patch(ROUTES.POST.AUTO_SAVE.PATH)
-  public async autoSave(
+  public async autoSavePost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
     @Body() autoSavePostRequestDto: AutoSavePostRequestDto
@@ -170,7 +170,7 @@ export class PostController {
   })
   @Put(ROUTES.POST.SCHEDULE.PATH)
   @Version(ROUTES.POST.SCHEDULE.VERSIONS)
-  public async schedule(
+  public async schedulePost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() scheduleData: SchedulePostRequestDto,
     @AuthUser() user: UserDto
@@ -197,7 +197,7 @@ export class PostController {
   })
   @Delete(ROUTES.POST.DELETE.PATH)
   @Version(ROUTES.POST.DELETE.VERSIONS)
-  public async delete(
+  public async deletePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<void> {
