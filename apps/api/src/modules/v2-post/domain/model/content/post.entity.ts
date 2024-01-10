@@ -1,4 +1,5 @@
 import { CONTENT_STATUS, CONTENT_TYPE } from '@beincom/constants';
+import { StringHelper } from '@libs/common/helpers';
 import { v4 } from 'uuid';
 
 import { RULES } from '../../../constant';
@@ -7,7 +8,6 @@ import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { TagEntity } from '../tag';
 
 import { ContentEntity, ContentAttributes } from './content.entity';
-import { StringHelper } from '@libs/common/helpers';
 
 export type PostAttributes = ContentAttributes & {
   media: {
@@ -74,7 +74,7 @@ export class PostEntity extends ContentEntity<PostAttributes> {
       groupIds,
     });
 
-    if (content) {
+    if (StringHelper.isString(content)) {
       this._props.content = content;
       this._props.title = StringHelper.getRawTextFromMarkdown(content).slice(0, 500);
     }

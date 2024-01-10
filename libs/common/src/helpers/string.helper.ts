@@ -1,5 +1,5 @@
-import { Node } from 'slate';
 import { Remarkable } from 'remarkable';
+import { Node } from 'slate';
 export class StringHelper {
   /**
    * Convert camel case string to snake case string
@@ -186,5 +186,9 @@ export class StringHelper {
     }
 
     return result;
+  }
+
+  public static isString(value: any): boolean {
+    return typeof value === 'string';
   }
 }
