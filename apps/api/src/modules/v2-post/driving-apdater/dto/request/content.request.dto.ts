@@ -12,10 +12,12 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   ValidateIf,
 } from 'class-validator';
 
 import { PublishArticleRequestDto } from './article.request.dto';
+import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 
 export class GetDraftContentsRequestDto extends PaginatedArgs {
   @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
@@ -387,6 +389,7 @@ export class GetUserSeenPostDto {
     required: false,
   })
   @IsOptional()
+  @Max(MAX_ITEMS_PER_PAGE)
   @Transform(({ value }) => Number(value))
   public limit: number;
 

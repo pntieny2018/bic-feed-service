@@ -1,4 +1,5 @@
 export const LANGUAGE_HEADER = 'x-lang';
+export const MAX_ITEMS_PER_PAGE = 25;
 export const VERSION_1_5_0 = '1.5.0';
 export const VERSION_1_6_0 = '1.6.0';
 export const VERSION_1_7_0 = '1.7.0';
