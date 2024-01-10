@@ -89,7 +89,7 @@ export class ContentController {
   })
   @Get(ROUTES.CONTENT.GET_DRAFTS.PATH)
   @Version(ROUTES.CONTENT.GET_DRAFTS.VERSIONS)
-  public async getDrafts(
+  public async getDraftContents(
     @AuthUser() user: UserDto,
     @Query() getListCommentsDto: GetDraftContentsRequestDto
   ): Promise<FindDraftContentsDto> {
@@ -193,7 +193,7 @@ export class ContentController {
   })
   @Get(ROUTES.CONTENT.GET_SERIES.PATH)
   @Version(ROUTES.CONTENT.GET_SERIES.VERSIONS)
-  public async getSeries(
+  public async getSeriesInContent(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<GetSeriesResponseDto> {
@@ -265,7 +265,7 @@ export class ContentController {
   })
   @Put(ROUTES.CONTENT.MARK_AS_READ.PATH)
   @Version(ROUTES.CONTENT.MARK_AS_READ.VERSIONS)
-  public async markRead(
+  public async markReadContent(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) id: string
   ): Promise<void> {
@@ -415,7 +415,7 @@ export class ContentController {
   })
   @Delete(ROUTES.CONTENT.UNSAVE_CONTENT.PATH)
   @Version(ROUTES.CONTENT.UNSAVE_CONTENT.VERSIONS)
-  public async unSave(
+  public async unSaveContent(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<void> {

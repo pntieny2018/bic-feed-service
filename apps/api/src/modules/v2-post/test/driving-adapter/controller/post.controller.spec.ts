@@ -64,7 +64,7 @@ describe('PostController', () => {
 
     it('Should create draft post successfully', async () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(postMock);
-      const result = await postController.createDraft(userMock, createPostRequestDto);
+      const result = await postController.createDraftPost(userMock, createPostRequestDto);
       expect(commandExecute).toBeCalledWith(
         new CreateDraftPostCommand({
           groupIds: createPostRequestDto.audience.groupIds,
@@ -86,7 +86,7 @@ describe('PostController', () => {
 
     it('Should create draft post successfully', async () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(postMock);
-      const result = await postController.createDraft(userMock, createDraftPostRequestDto);
+      const result = await postController.createDraftPost(userMock, createDraftPostRequestDto);
       expect(commandExecute).toBeCalledWith(
         new CreateDraftPostCommand({
           groupIds: createDraftPostRequestDto.audience.groupIds,
@@ -100,7 +100,7 @@ describe('PostController', () => {
       jest.spyOn(command, 'execute').mockRejectedValue(err);
 
       try {
-        await postController.createDraft(userMock, createDraftPostRequestDto);
+        await postController.createDraftPost(userMock, createDraftPostRequestDto);
       } catch (e) {
         expect(e).toEqual(new ForbiddenException(err));
       }
@@ -110,7 +110,7 @@ describe('PostController', () => {
       jest.spyOn(command, 'execute').mockRejectedValue(err);
 
       try {
-        await postController.createDraft(userMock, createDraftPostRequestDto);
+        await postController.createDraftPost(userMock, createDraftPostRequestDto);
       } catch (e) {
         expect(e).toEqual(new BadRequestException(err));
       }

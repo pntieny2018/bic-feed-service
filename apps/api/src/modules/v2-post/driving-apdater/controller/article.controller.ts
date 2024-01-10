@@ -82,7 +82,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
-  public async create(
+  public async createArticle(
     @AuthUser() authUser: UserDto,
     @Body() createDraftArticleRequestDto: CreateDraftArticleRequestDto
   ): Promise<ArticleDto> {
@@ -103,7 +103,7 @@ export class ArticleController {
   })
   @Delete(ROUTES.ARTICLE.DELETE.PATH)
   @Version(ROUTES.ARTICLE.DELETE.VERSIONS)
-  public async delete(
+  public async deleteArticle(
     @AuthUser() user: UserDto,
     @Param('articleId', ParseUUIDPipe) id: string
   ): Promise<void> {
@@ -124,7 +124,7 @@ export class ArticleController {
   })
   @Patch(ROUTES.ARTICLE.AUTO_SAVE.PATH)
   @Version(ROUTES.ARTICLE.AUTO_SAVE.VERSIONS)
-  public async autoSave(
+  public async autoSaveArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() updateData: UpdateArticleRequestDto,
     @AuthUser() authUser: UserDto
@@ -151,7 +151,7 @@ export class ArticleController {
   })
   @Put(ROUTES.ARTICLE.UPDATE.PATH)
   @Version(ROUTES.ARTICLE.UPDATE.VERSIONS)
-  public async update(
+  public async updateArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() updateData: UpdateArticleRequestDto,
     @AuthUser() authUser: UserDto
@@ -180,7 +180,7 @@ export class ArticleController {
   })
   @Put(ROUTES.ARTICLE.PUBLISH.PATH)
   @Version(ROUTES.ARTICLE.PUBLISH.VERSIONS)
-  public async publish(
+  public async publishArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() publishData: PublishArticleRequestDto,
     @AuthUser() authUser: UserDto
@@ -207,7 +207,7 @@ export class ArticleController {
   })
   @Put(ROUTES.ARTICLE.SCHEDULE.PATH)
   @Version(ROUTES.ARTICLE.SCHEDULE.VERSIONS)
-  public async schedule(
+  public async scheduleArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() scheduleData: ScheduleArticleRequestDto,
     @AuthUser() user: UserDto
