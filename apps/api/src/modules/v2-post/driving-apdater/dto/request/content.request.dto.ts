@@ -1,3 +1,4 @@
+import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { BooleanHelper } from '@libs/common/helpers';
 import { PaginatedArgs } from '@libs/database/postgres/common';
@@ -17,7 +18,6 @@ import {
 } from 'class-validator';
 
 import { PublishArticleRequestDto } from './article.request.dto';
-import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 
 export class GetDraftContentsRequestDto extends PaginatedArgs {
   @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
@@ -342,32 +342,66 @@ export class GetMyReportedContentsRequestDto extends PaginatedArgs {
   public targetIds?: string[];
 }
 
-export class CountContentPerWeekRequestDto {
+export class RootGroupRequestDto {
   @ApiProperty({
-    name: 'root_group_ids',
-    type: [String],
-    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
-  })
-  @Expose({
-    name: 'root_group_ids',
+    name: 'id',
   })
   @IsNotEmpty()
-  @IsArray()
+  @IsUUID('4')
+  public id: string;
+
+  @ApiProperty({
+    name: 'created_at',
+  })
+  @Expose({
+    name: 'created_at',
+  })
   @Transform((data) => {
     let value;
-    if (!data.obj.target_ids && data.obj.targetIds) {
-      value = data.obj.targetIds;
+    if (!data.obj.created_at && data.obj.createdAt) {
+      value = data.obj.createdAt;
     } else {
-      value = data.obj.target_ids;
-    }
-
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
+      value = data.obj.created_at;
     }
     return value;
   })
-  @IsUUID('4', { each: true })
-  public rootGroupIds: string[];
+  @IsNotEmpty()
+  @IsDateString()
+  public createdAt: string;
+}
+
+export class CountContentPerWeekRequestDto {
+  @ApiProperty({
+    name: 'root_groups',
+    type: () => RootGroupRequestDto,
+    isArray: true,
+    example: [
+      {
+        id: '8f914eaa-821f-44b8-80e0-7bac69346397',
+        created_at: '2022-07-05T11:49:53.672Z',
+      },
+      {
+        id: 'a2878812-95df-4810-b036-9967de528e6e',
+        created_at: '2022-06-05T11:49:53.672Z',
+      },
+    ],
+  })
+  @Expose({
+    name: 'root_groups',
+  })
+  @Transform((data) => {
+    let value;
+    if (!data.obj.root_groups && data.obj.rootGroups) {
+      value = data.obj.rootGroups;
+    } else {
+      value = data.obj.root_groups;
+    }
+    return value;
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @Type(() => RootGroupRequestDto)
+  public rootGroups: RootGroupRequestDto[];
 
   // TODO: for support multiple metrics
   @ApiProperty({
