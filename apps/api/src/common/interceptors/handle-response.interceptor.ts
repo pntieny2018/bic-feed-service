@@ -6,8 +6,9 @@ import { map, Observable } from 'rxjs';
 import { ERRORS } from '../constants/errors';
 import { ResponseDto } from '../dto';
 import semver from 'semver';
-import { MINIMUM_VERSION_SUPPORT, VERSION_1_13_0 } from '@api/common/constants';
+import { VERSION_1_13_0 } from '@api/common/constants';
 import snakecaseKeys from 'snakecase-keys';
+import { HEADER_VERSION_KEY } from '@libs/common/constants';
 
 @Injectable()
 export class HandleResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>> {
@@ -17,7 +18,7 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
     const request: Request = context.switchToHttp().getRequest();
     return next.handle().pipe(
       map((data) => {
-        const version = request.header('x-version-id');
+        const version = request.header(HEADER_VERSION_KEY);
         //return data;
         let message = 'OK';
         if (response.responseMessage) {
