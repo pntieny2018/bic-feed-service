@@ -48,7 +48,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response: Response,
     isSupportedSnakeCase: boolean
   ): Response {
-    console.log('isSupportedSnakeCase', isSupportedSnakeCase);
     const status = exception.getStatus();
     const res = exception.getResponse();
 
