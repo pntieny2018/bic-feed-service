@@ -5,7 +5,8 @@ import {
 } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsInt, IsOptional, Min } from 'class-validator';
+import { IsArray, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 
 export const PAGING_DEFAULT_LIMIT = 10;
 
@@ -16,6 +17,7 @@ export class PaginatedArgs implements IPaginationArgs {
     required: false,
   })
   @IsOptional()
+  @Max(MAX_ITEMS_PER_PAGE)
   @Expose({
     name: 'limit',
   })
