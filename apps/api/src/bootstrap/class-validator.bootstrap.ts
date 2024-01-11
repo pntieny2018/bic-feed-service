@@ -28,7 +28,7 @@ export class ClassValidatorBootstrap {
     app.useGlobalPipes(
       new TransformRequestPipe(),
       new ValidationPipe({
-        // transform: true,
+        transform: true,
         // whitelist: true,
         // forbidNonWhitelisted: true,
         // forbidUnknownValues: true,
