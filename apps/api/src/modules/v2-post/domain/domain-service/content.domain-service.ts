@@ -71,19 +71,15 @@ export class ContentDomainService implements IContentDomainService {
     contentId: string,
     excludeReportedByUserId?: string
   ): Promise<ContentEntity> {
-    let contentEntity: ContentEntity;
-
-    if (excludeReportedByUserId) {
-      contentEntity = await this._contentRepo.findContentByIdExcludeReportedByUserId(
-        contentId,
+    const contentEntity = await this._contentRepo.findContentWithCache({
+      where: {
+        id: contentId,
         excludeReportedByUserId,
-        { mustIncludeGroup: true }
-      );
-    } else {
-      contentEntity = await this._contentRepo.findContentById(contentId, {
+      },
+      include: {
         mustIncludeGroup: true,
-      });
-    }
+      },
+    });
 
     if (!contentEntity || !contentEntity.isVisible()) {
       throw new ContentNotFoundException();
