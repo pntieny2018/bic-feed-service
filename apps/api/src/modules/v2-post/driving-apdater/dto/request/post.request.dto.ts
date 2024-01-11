@@ -24,7 +24,7 @@ export class UpdatePostRequestDto {
   @IsOptional()
   @Type(() => String)
   @MaxMarkdownLength(RULES.MAX_POST_CONTENT_CHARACTER, {
-    message: `Your content cannot exceed ${new Intl.NumberFormat('de-ES').format(
+    message: `Your post cannot exceed ${new Intl.NumberFormat('de-ES').format(
       RULES.MAX_POST_CONTENT_CHARACTER
     )} characters. `,
   })

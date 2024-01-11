@@ -31,7 +31,7 @@ export class UpdateArticleRequestDto {
   @ApiProperty({ description: 'Content of post', type: String })
   @IsOptional()
   @MaxArticleLength(RULES.MAX_ARTICLE_CONTENT_CHARACTER, {
-    message: `Your content cannot exceed ${new Intl.NumberFormat('de-ES').format(
+    message: `Your article cannot exceed ${new Intl.NumberFormat('de-ES').format(
       RULES.MAX_ARTICLE_CONTENT_CHARACTER
     )} characters. `,
   })
