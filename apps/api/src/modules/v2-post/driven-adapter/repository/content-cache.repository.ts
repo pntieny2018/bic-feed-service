@@ -45,6 +45,10 @@ export class ContentCacheRepository implements IContentCacheRepository {
     return this._store.existKey(key);
   }
 
+  public async existContent(contentId: string): Promise<boolean> {
+    return this._store.existKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+  }
+
   public async findContent(
     input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {

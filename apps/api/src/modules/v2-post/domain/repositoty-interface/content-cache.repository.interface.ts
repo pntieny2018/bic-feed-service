@@ -38,6 +38,7 @@ export type FindAllContentsInCacheProps = {
 
 export interface IContentCacheRepository {
   existKey(key: string): Promise<boolean>;
+  existContent(contentId: string): Promise<boolean>;
 
   findContent(input: FindContentInCacheProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findContents(

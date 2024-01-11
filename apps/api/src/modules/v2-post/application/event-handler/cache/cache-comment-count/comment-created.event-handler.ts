@@ -18,10 +18,8 @@ export class CacheCountCommentCreatedEventHandler implements IEventHandler<Comme
     const { comment } = event.payload;
 
     const contentId = comment.get('postId');
-    const cachedContent = await this._contentCacheRepo.findContent({ where: { id: contentId } });
-    if (!cachedContent) {
-      await this._contentCacheRepo.cacheContents([contentId]);
-    } else {
+    const isCachedContent = await this._contentCacheRepo.existContent(contentId);
+    if (isCachedContent) {
       await this._contentCacheRepo.increaseCommentCount(contentId);
     }
   }

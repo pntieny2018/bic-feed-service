@@ -18,10 +18,8 @@ export class CacheCountCommentDeletedEventHandler implements IEventHandler<Comme
     const { comment } = event.payload;
 
     const contentId = comment.get('postId');
-    const contentCache = await this._contentCacheRepo.findContent({ where: { id: contentId } });
-    if (!contentCache) {
-      await this._contentCacheRepo.cacheContents([contentId]);
-    } else {
+    const isCachedContent = await this._contentCacheRepo.existContent(contentId);
+    if (isCachedContent) {
       const totalReplies = comment.get('totalReply');
       const decreasedValue = totalReplies > 0 ? totalReplies + 1 : 1;
       await this._contentCacheRepo.decreaseCommentCount(contentId, -decreasedValue);

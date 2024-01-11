@@ -30,11 +30,8 @@ export class CacheDecreaseReactionCountEventHandler implements IEventHandler<Rea
     }
 
     const contentId = reactionEntity.get('targetId');
-
-    const cachedContent = await this._contentCacheRepo.findContent({ where: { id: contentId } });
-    if (!cachedContent) {
-      await this._contentCacheRepo.cacheContents([contentId]);
-    } else {
+    const isCachedContent = await this._contentCacheRepo.existContent(contentId);
+    if (isCachedContent) {
       const decreasedValue = await this._contentCacheRepo.decreaseReactionsCount(
         contentId,
         reactionEntity.get('reactionName')
