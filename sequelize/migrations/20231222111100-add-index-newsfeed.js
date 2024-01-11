@@ -55,6 +55,21 @@ const indexList = [
     index: ['post_id', 'user_id', 'created_at'],
   },
   {
+    tableName: 'users_save_posts',
+    indexName: 'users_save_posts_composite_index',
+    index: ['post_id', 'user_id', 'created_at'],
+  },
+  {
+    tableName: 'user_newsfeed',
+    indexName: 'user_newsfeed_post_id_index',
+    index: ['post_id'],
+  },
+  {
+    tableName: 'quizzes',
+    indexName: 'quizzes_composite_index',
+    index: ['post_id', 'created_by', 'status', 'created_at'],
+  },
+  {
     tableName: 'posts_reactions',
     indexName: 'posts_reactions_composite_index',
     index: ['post_id', 'created_by'],
@@ -68,7 +83,7 @@ module.exports = {
         transaction: t,
       });
 
-      await queryInterface.sequelize.query(`DROP INDEX IF EXISTS posts_created_by`, {
+      await queryInterface.sequelize.query(`DROP INDEX IF EXISTS posts_privacy`, {
         transaction: t,
       });
 

@@ -1,3 +1,4 @@
+import { PageDto } from '@api/common/dto';
 import { UserDto } from '@libs/service/user';
 import {
   Body,
@@ -9,6 +10,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Version,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -19,7 +21,6 @@ import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { InjectUserToBody } from '../../../../common/decorators/inject.decorator';
-import { ArticleResponseDto } from '../../../article/dto/responses';
 import {
   AutoSaveArticleCommand,
   CreateDraftArticleCommand,
@@ -30,12 +31,13 @@ import {
   UpdateArticleCommand,
 } from '../../application/command/article';
 import { ArticleDto } from '../../application/dto';
-import { FindArticleQuery } from '../../application/query/article';
+import { FindArticleQuery, SearchArticlesQuery } from '../../application/query/article';
 import {
   PublishArticleRequestDto,
   UpdateArticleRequestDto,
   ScheduleArticleRequestDto,
   CreateDraftArticleRequestDto,
+  SearchArticlesDto,
 } from '../dto/request';
 
 @ApiTags('v2 Articles')
@@ -48,9 +50,20 @@ export class ArticleController {
   ) {}
 
   @ApiOperation({ summary: 'Get post detail' })
+  @Get(ROUTES.ARTICLE.SEARCH_ARTICLES.PATH)
+  @Version(ROUTES.ARTICLE.SEARCH_ARTICLES.VERSIONS)
+  public async searchArticles(
+    @AuthUser() user: UserDto,
+    @Query() searchDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleDto>> {
+    const data = this._queryBus.execute(new SearchArticlesQuery({ user, searchDto }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get article detail' })
   @Get(ROUTES.ARTICLE.GET_DETAIL.PATH)
   @Version(ROUTES.ARTICLE.GET_DETAIL.VERSIONS)
-  public async getPostDetail(
+  public async getArticleDetail(
     @Param('articleId', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<ArticleDto> {
@@ -60,7 +73,7 @@ export class ArticleController {
 
   @ApiOperation({ summary: 'Create draft article' })
   @ApiOkResponse({
-    type: ArticleResponseDto,
+    type: ArticleDto,
     description: 'Create article successfully',
   })
   @Post(ROUTES.ARTICLE.CREATE.PATH)
@@ -69,7 +82,7 @@ export class ArticleController {
   @ResponseMessages({
     success: 'message.article.created_success',
   })
-  public async create(
+  public async createArticle(
     @AuthUser() authUser: UserDto,
     @Body() createDraftArticleRequestDto: CreateDraftArticleRequestDto
   ): Promise<ArticleDto> {
@@ -90,7 +103,7 @@ export class ArticleController {
   })
   @Delete(ROUTES.ARTICLE.DELETE.PATH)
   @Version(ROUTES.ARTICLE.DELETE.VERSIONS)
-  public async delete(
+  public async deleteArticle(
     @AuthUser() user: UserDto,
     @Param('articleId', ParseUUIDPipe) id: string
   ): Promise<void> {
@@ -111,7 +124,7 @@ export class ArticleController {
   })
   @Patch(ROUTES.ARTICLE.AUTO_SAVE.PATH)
   @Version(ROUTES.ARTICLE.AUTO_SAVE.VERSIONS)
-  public async autoSave(
+  public async autoSaveArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() updateData: UpdateArticleRequestDto,
     @AuthUser() authUser: UserDto
@@ -138,7 +151,7 @@ export class ArticleController {
   })
   @Put(ROUTES.ARTICLE.UPDATE.PATH)
   @Version(ROUTES.ARTICLE.UPDATE.VERSIONS)
-  public async update(
+  public async updateArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() updateData: UpdateArticleRequestDto,
     @AuthUser() authUser: UserDto
@@ -167,7 +180,7 @@ export class ArticleController {
   })
   @Put(ROUTES.ARTICLE.PUBLISH.PATH)
   @Version(ROUTES.ARTICLE.PUBLISH.VERSIONS)
-  public async publish(
+  public async publishArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() publishData: PublishArticleRequestDto,
     @AuthUser() authUser: UserDto
@@ -194,7 +207,7 @@ export class ArticleController {
   })
   @Put(ROUTES.ARTICLE.SCHEDULE.PATH)
   @Version(ROUTES.ARTICLE.SCHEDULE.VERSIONS)
-  public async schedule(
+  public async scheduleArticle(
     @Param('articleId', ParseUUIDPipe) articleId: string,
     @Body() scheduleData: ScheduleArticleRequestDto,
     @AuthUser() user: UserDto

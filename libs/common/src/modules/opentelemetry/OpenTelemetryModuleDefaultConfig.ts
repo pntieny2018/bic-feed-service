@@ -1,5 +1,4 @@
-import { ClientRequest, IncomingMessage } from 'http';
-
+import { CONTEXT } from '@libs/infra/log';
 import { Span } from '@opentelemetry/api';
 import {
   InstrumentationConfigMap,
@@ -12,6 +11,7 @@ import { JaegerPropagator } from '@opentelemetry/propagator-jaeger';
 import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { Resource } from '@opentelemetry/resources';
 import { NoopSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { ClsServiceManager } from 'nestjs-cls';
 import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
 
 import { OpenTelemetryModuleConfig } from './OpenTelemetryModuleConfig.interface';
@@ -36,16 +36,12 @@ export const NodeAutoInstrumentationsDefaultConfig = <InstrumentationConfigMap>{
   },
   '@opentelemetry/instrumentation-http': {
     requireParentforOutgoingSpans: true,
-    requestHook: (span: Span, request) => {
-      // replace uuid v4 to :id in path
-      const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+    applyCustomAttributesOnSpan: (span: Span, request, response) => {
+      span.setAttribute('status_code', response.statusCode);
+      const clsService = ClsServiceManager.getClsService();
+      span.setAttribute('request_id', clsService.getId());
 
-      if (request instanceof ClientRequest) {
-        span.updateName(`${request.method} ${request.path.replace(uuidRegex, ':id')}`);
-      }
-      if (request instanceof IncomingMessage) {
-        span.updateName(`${request.method} ${request.url.replace(uuidRegex, ':id')}`);
-      }
+      span.updateName(`${request.method} ${clsService.get(CONTEXT).handler}`);
     },
     enabled: true,
     ignoreIncomingPaths: ['/health/readyz', '/health/livez'],

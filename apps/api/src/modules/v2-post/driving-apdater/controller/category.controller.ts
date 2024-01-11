@@ -25,7 +25,7 @@ export class CategoryController {
     description: 'Get category successfully',
   })
   @Get('/')
-  public async get(
+  public async getCategory(
     @AuthUser() _user: UserDto,
     @Query() getCategoryDto: GetCategoryRequestDto
   ): Promise<PageDto<FindCategoriesPaginationDto>> {

@@ -51,7 +51,7 @@ describe('ContentDomainService', () => {
         ids: [postEntityMock.getId(), articleEntityMock.get('id')],
         authUserId: userMock.id,
       });
-      expect(result).toEqual([postEntityMock, articleEntityMock]);
+      expect(result).toEqual([articleEntityMock, postEntityMock]);
     });
   });
 });

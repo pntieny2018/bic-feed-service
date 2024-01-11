@@ -42,34 +42,49 @@ import { IContentValidator } from './interface';
 @Injectable()
 export class ContentValidator implements IContentValidator {
   public constructor(
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    protected readonly _authorityAppService: IAuthorityAppService,
+
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    protected readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepo: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepo: IPostGroupRepository,
+
     @Inject(GROUP_ADAPTER)
     protected readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    protected readonly _userAdapter: IUserAdapter,
-    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected readonly _authorityAppService: IAuthorityAppService,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository,
-    @Inject(REPORT_REPOSITORY_TOKEN)
-    protected readonly _reportRepository: IReportRepository,
-    @Inject(POST_GROUP_REPOSITORY_TOKEN)
-    protected readonly _postGroupRepository: IPostGroupRepository
+    protected readonly _userAdapter: IUserAdapter
   ) {}
 
-  public async checkCanCRUDContent(
-    user: UserDto,
-    groupAudienceIds: string[],
-    contentType?: CONTENT_TYPE
-  ): Promise<void> {
-    const notCreatableInGroups: GroupDto[] = [];
-    const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
+  public async checkCanCRUDContent(input: {
+    user: UserDto;
+    groupIds: string[];
+    contentType?: CONTENT_TYPE;
+    groups?: GroupDto[];
+  }): Promise<void> {
+    const { user, groupIds, contentType } = input;
+    let { groups } = input;
+
+    if (groups?.length) {
+      const needFindGroupIds = groupIds.filter(
+        (groupId) => !groups.some((group) => group.id === groupId)
+      );
+      if (needFindGroupIds.length) {
+        const needFindGGroups = await this._groupAdapter.getGroupsByIds(needFindGroupIds);
+        groups.push(...needFindGGroups);
+      }
+    } else {
+      groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    }
+
     await this._authorityAppService.buildAbility(user);
     const permissionKey = this._postTypeToPermissionKey(contentType);
-    for (const group of groups) {
-      if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)) {
-        notCreatableInGroups.push(group);
-      }
-    }
+
+    const notCreatableInGroups: GroupDto[] = groups.filter(
+      (group) => !this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)
+    );
 
     if (notCreatableInGroups.length) {
       throw new ContentNoCRUDPermissionAtGroupException(
@@ -131,15 +146,15 @@ export class ContentValidator implements IContentValidator {
       throw new ContentEmptyGroupException();
     }
 
-    const postType = contentEntity.get('type');
+    const contentType = contentEntity.get('type');
     const state = contentEntity.getState();
     const { detachGroupIds, attachGroupIds } = state;
     const isEnableSetting = contentEntity.isEnableSetting();
 
-    await this.checkCanCRUDContent(userAuth, groupIds, postType);
+    await this.checkCanCRUDContent({ user: userAuth, groupIds, contentType });
 
     if (detachGroupIds?.length) {
-      await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
+      await this.checkCanCRUDContent({ user: userAuth, groupIds: detachGroupIds, contentType });
     }
 
     if (
@@ -196,7 +211,7 @@ export class ContentValidator implements IContentValidator {
   }
 
   public async validateContentReported(contentId: string, userId: string): Promise<void> {
-    const isReport = await this._reportRepository.checkIsReported(userId, contentId);
+    const isReport = await this._reportRepo.checkIsReported(userId, contentId);
     if (isReport) {
       throw new ContentNotFoundException();
     }
@@ -205,7 +220,7 @@ export class ContentValidator implements IContentValidator {
   public async validateContentArchived(user: UserDto, postGroupIds: string[]): Promise<void> {
     const userJoinedGroupIds = user.groups ?? [];
     const groupCanAccess = postGroupIds.filter((groupId) => userJoinedGroupIds.includes(groupId));
-    const activePostGroupIds = await this._postGroupRepository.getNotInStateGroupIds(
+    const activePostGroupIds = await this._postGroupRepo.getNotInStateGroupIds(
       groupCanAccess,
       true
     );
@@ -259,7 +274,7 @@ export class ContentValidator implements IContentValidator {
     };
     if (seriesIds?.length) {
       const groupIds = groups.map((e) => e.id);
-      const series = await this._contentRepository.findAll({
+      const series = await this._contentRepo.findAll({
         attributes: {
           exclude: ['content'],
         },
@@ -321,12 +336,10 @@ export class ContentValidator implements IContentValidator {
       throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
-      contentEntity.getId(),
-      {
-        shouldIncludeSeries: true,
-      }
-    )) as ArticleEntity | PostEntity;
+    const contentWithArchivedGroups = (await this._contentRepo.findContentWithCache({
+      where: { id: contentEntity.getId(), groupArchived: false },
+      include: { shouldIncludeSeries: true },
+    })) as ArticleEntity | PostEntity;
 
     if (!contentWithArchivedGroups) {
       return;

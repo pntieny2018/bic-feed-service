@@ -15,7 +15,6 @@ import { Job, JobWithContext } from '../queue';
 import { CONTEXT, getContext, getDebugContext } from './log.context';
 
 export function EventsHandlerAndLog(...events: IEvent[]) {
-  console.log('EventsHandlerAndLog', events);
   // eslint-disable-next-line @typescript-eslint/ban-types
   return function (target: Function): void {
     const className = target.prototype.constructor.name;
@@ -35,7 +34,12 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
       }
       function logError(error: any): void {
         logger.error(
-          `EventHandler error: ${JSON.stringify({ eventName, debugContext, error: error.message })}`
+          `EventHandler error: ${JSON.stringify({
+            eventName,
+            debugContext,
+            error: error.message,
+            stack: error.stack,
+          })}`
         );
         Sentry.captureException(error);
       }

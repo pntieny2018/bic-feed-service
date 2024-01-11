@@ -1,3 +1,7 @@
+import {
+  GetScheduleContentQuery,
+  UsersSeenContentQuery,
+} from '@api/modules/v2-post/application/query/content';
 import { PaginatedResponse } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import {
@@ -54,13 +58,13 @@ import {
   GetWelcomeContentsQuery,
   SearchContentsQuery,
 } from '../../application/query/content';
-import { GetScheduleContentQuery } from '@api/modules/v2-post/application/query/content';
 import {
   CreateReportDto,
   GetAudienceContentDto,
   GetDraftContentsRequestDto,
   GetMyReportedContentsRequestDto,
   GetScheduleContentsQueryDto,
+  GetUserSeenPostDto,
   PinContentDto,
   PostSettingRequestDto,
   SearchContentsRequestDto,
@@ -85,7 +89,7 @@ export class ContentController {
   })
   @Get(ROUTES.CONTENT.GET_DRAFTS.PATH)
   @Version(ROUTES.CONTENT.GET_DRAFTS.VERSIONS)
-  public async getDrafts(
+  public async getDraftContents(
     @AuthUser() user: UserDto,
     @Query() getListCommentsDto: GetDraftContentsRequestDto
   ): Promise<FindDraftContentsDto> {
@@ -189,7 +193,7 @@ export class ContentController {
   })
   @Get(ROUTES.CONTENT.GET_SERIES.PATH)
   @Version(ROUTES.CONTENT.GET_SERIES.VERSIONS)
-  public async getSeries(
+  public async getSeriesInContent(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<GetSeriesResponseDto> {
@@ -261,7 +265,7 @@ export class ContentController {
   })
   @Put(ROUTES.CONTENT.MARK_AS_READ.PATH)
   @Version(ROUTES.CONTENT.MARK_AS_READ.VERSIONS)
-  public async markRead(
+  public async markReadContent(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) id: string
   ): Promise<void> {
@@ -411,7 +415,7 @@ export class ContentController {
   })
   @Delete(ROUTES.CONTENT.UNSAVE_CONTENT.PATH)
   @Version(ROUTES.CONTENT.UNSAVE_CONTENT.VERSIONS)
-  public async unSave(
+  public async unSaveContent(
     @AuthUser() authUser: UserDto,
     @Param('contentId', ParseUUIDPipe) contentId: string
   ): Promise<void> {
@@ -471,5 +475,22 @@ export class ContentController {
       })
     );
     return instanceToInstance(reports, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+  }
+
+  @ApiOperation({ summary: 'Get users seen content' })
+  @Get(ROUTES.CONTENT.GET_USERS_SEEN_CONTENT.PATH)
+  @Version(ROUTES.CONTENT.GET_USERS_SEEN_CONTENT.VERSIONS)
+  public async getUsersSeenContent(
+    @AuthUser() authUser: UserDto,
+    @Param('contentId', ParseUUIDPipe) contentId: string,
+    @Query() query: GetUserSeenPostDto
+  ): Promise<void> {
+    return this._queryBus.execute(
+      new UsersSeenContentQuery({
+        authUser,
+        contentId,
+        ...query,
+      })
+    );
   }
 }

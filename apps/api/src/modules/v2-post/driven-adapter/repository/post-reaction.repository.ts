@@ -1,4 +1,4 @@
-import { OwnerReactionDto } from '@api/modules/v2-post/application/dto';
+import { ReactionDuplicateException } from '@api/modules/v2-post/domain/exception';
 import { CONTENT_TARGET, CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { PaginationResult } from '@libs/database/postgres/common';
 import { PostModel } from '@libs/database/postgres/model';
@@ -10,7 +10,7 @@ import { Injectable } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 
-import { ReactionsCount } from '../../../../common/types';
+import { OwnerReactionDto, ReactionCount } from '../../application/dto';
 import { ReactionEntity } from '../../domain/model/reaction';
 import {
   FindOnePostReactionProps,
@@ -53,7 +53,14 @@ export class PostReactionRepository implements IPostReactionRepository {
   }
 
   public async create(data: ReactionEntity): Promise<void> {
-    await this._libPostReactionRepo.create(this._postReactionMapper.toPersistence(data));
+    try {
+      await this._libPostReactionRepo.create(this._postReactionMapper.toPersistence(data));
+    } catch (e) {
+      if (e.name === 'SequelizeUniqueConstraintError') {
+        throw new ReactionDuplicateException();
+      }
+      throw e;
+    }
   }
 
   public async delete(id: string): Promise<void> {
@@ -64,14 +71,14 @@ export class PostReactionRepository implements IPostReactionRepository {
 
   public async getAndCountReactionByContents(
     contentIds: string[]
-  ): Promise<Map<string, ReactionsCount>> {
+  ): Promise<Map<string, ReactionCount[]>> {
     const reactionCount = await this._libReactionContentDetailsRepo.findMany({
       where: {
         contentId: contentIds,
       },
     });
 
-    return new Map<string, ReactionsCount>(
+    return new Map<string, ReactionCount[]>(
       contentIds.map((contentId) => {
         return [
           contentId,

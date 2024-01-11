@@ -20,12 +20,12 @@ import { merge } from 'lodash';
 @EventsHandlerAndLog(ReactionDeletedEvent)
 export class CacheDecreaseReactionCountEventHandler implements IEventHandler<ReactionDeletedEvent> {
   public constructor(
-    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
-    private readonly _contentCacheRepository: IContentCacheRepository,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
+    private readonly _contentDomain: IContentDomainService,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepo: IContentCacheRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
-    private readonly _postReactionRepository: IPostReactionRepository
+    private readonly _postReactionRepo: IPostReactionRepository
   ) {}
 
   public async handle(event: ReactionDeletedEvent): Promise<void> {
@@ -37,21 +37,21 @@ export class CacheDecreaseReactionCountEventHandler implements IEventHandler<Rea
 
     const contentId = reactionEntity.get('targetId');
 
-    const contentCache = await this._contentCacheRepository.getContent(contentId);
-    if (!contentCache) {
-      const contentEntity = await this._contentDomainService.getContentForCacheById(contentId);
-      await this._contentCacheRepository.setContents([contentEntity]);
+    const cachedContent = await this._contentCacheRepo.findContent({ where: { id: contentId } });
+    if (!cachedContent) {
+      const contentEntity = await this._contentDomain.getContentForCacheById(contentId);
+      await this._contentCacheRepo.setContents([contentEntity]);
     } else {
-      const decreasedValue = await this._contentCacheRepository.decreaseReactionsCount(
+      const decreasedValue = await this._contentCacheRepo.decreaseReactionsCount(
         contentId,
         reactionEntity.get('reactionName')
       );
 
       if (!decreasedValue) {
-        const reactionsCount = await this._postReactionRepository.getAndCountReactionByContents([
+        const reactionsCount = await this._postReactionRepo.getAndCountReactionByContents([
           contentId,
         ]);
-        await this._contentCacheRepository.setReactionsCount(
+        await this._contentCacheRepo.setReactionsCount(
           contentId,
           merge({}, ...(reactionsCount.get(contentId) || []))
         );

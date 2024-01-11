@@ -72,7 +72,7 @@ import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
 } from '../application/event-handler/set-video-state';
-import { FindArticleHandler } from '../application/query/article';
+import { FindArticleHandler, SearchArticlesHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -86,6 +86,7 @@ import {
   GetScheduleContentHandler,
   CountContentPerWeekHandler,
   GetWelcomeContentsHandler,
+  UsersSeenContentHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
@@ -110,6 +111,7 @@ import { SeriesDomainService } from '../domain/domain-service/series.domain-serv
 import {
   CONTENT_REPOSITORY_TOKEN,
   POST_GROUP_REPOSITORY_TOKEN,
+  USER_SEEN_CONTENT_REPOSITORY_TOKEN,
 } from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
@@ -125,7 +127,11 @@ import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
-import { ContentCacheRepository, ContentRepository } from '../driven-adapter/repository';
+import {
+  ContentCacheRepository,
+  ContentRepository,
+  UserSeenContentRepository,
+} from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 
 export const postProvider = [
@@ -198,6 +204,7 @@ export const postProvider = [
 
   /** Application Query */
   FindArticleHandler,
+  SearchArticlesHandler,
   FindDraftContentsHandler,
   FindNewsfeedHandler,
   FindTimelineGroupHandler,
@@ -216,6 +223,7 @@ export const postProvider = [
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
   GetWelcomeContentsHandler,
+  UsersSeenContentHandler,
 
   CountContentPerWeekHandler,
 
@@ -276,5 +284,9 @@ export const postProvider = [
   {
     provide: CONTENT_CACHE_REPOSITORY_TOKEN,
     useClass: ContentCacheRepository,
+  },
+  {
+    provide: USER_SEEN_CONTENT_REPOSITORY_TOKEN,
+    useClass: UserSeenContentRepository,
   },
 ];

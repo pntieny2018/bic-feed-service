@@ -1,7 +1,7 @@
-import { Command, CommandRunner } from 'nest-commander';
-import { InjectModel } from '@nestjs/sequelize';
-import { MediaModel } from '../database/models/media.model';
+import { MediaModel } from '@libs/database/postgres/model';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/sequelize';
+import { Command, CommandRunner } from 'nest-commander';
 
 ///post/images/
 @Command({ name: 'move-media-bucket', description: 'Update domain of media url' })

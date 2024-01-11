@@ -1,4 +1,4 @@
-import { PostLang } from '../../modules/v2-post/data-type';
+import { LANGUAGE } from '@beincom/constants';
 import { getElasticsearchConfig } from '@libs/common/config/elasticsearch';
 
 export class ElasticsearchHelper {
@@ -87,11 +87,11 @@ export class ElasticsearchHelper {
     POST: 'pipe_lang_ident_post',
   };
 
-  public static getLangOfPostByIndexName(indexName: string, defaultIndex?: string): PostLang {
+  public static getLangOfPostByIndexName(indexName: string, defaultIndex?: string): LANGUAGE {
     const index = defaultIndex ? defaultIndex : this.ALIAS.POST.default.name;
     const lang = indexName.slice(index.length + 1, index.length + 3);
 
-    return this.LANGUAGES_SUPPORTED.includes(lang) ? (lang as PostLang) : null;
+    return this.LANGUAGES_SUPPORTED.includes(lang) ? (lang as LANGUAGE) : null;
   }
   public static getIndexOfPostByLang(lang: string): string {
     if (!lang) {

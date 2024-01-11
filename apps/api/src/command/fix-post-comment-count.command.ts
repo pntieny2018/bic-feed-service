@@ -1,7 +1,6 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { CommentModel, PostModel } from '@libs/database/postgres/model';
 import { InjectModel } from '@nestjs/sequelize';
-import { CommentModel } from '../database/models/comment.model';
-import { PostModel } from '../database/models/post.model';
+import { Command, CommandRunner } from 'nest-commander';
 
 @Command({ name: 'fix:post:comment:count', description: 'Fix post comment count' })
 export class FixPostCommentCountCommand implements CommandRunner {

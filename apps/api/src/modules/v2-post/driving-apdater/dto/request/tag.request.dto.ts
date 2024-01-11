@@ -26,14 +26,14 @@ export class GetTagRequestDto extends PageOptionsDto {
   })
   @Type(() => Array)
   @IsUUID(4, { each: true })
+  @Expose({
+    name: 'group_ids',
+  })
   @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
     return value;
-  })
-  @Expose({
-    name: 'group_ids',
   })
   @IsOptional()
   public groupIds: string[];

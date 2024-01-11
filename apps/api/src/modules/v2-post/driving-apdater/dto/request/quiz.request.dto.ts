@@ -1,7 +1,7 @@
 import { CONTENT_TYPE, ORDER, QUIZ_STATUS } from '@beincom/constants';
 import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -295,10 +295,10 @@ class AddQuizAnswerRequestDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @Type(() => Boolean)
   @Expose({
     name: 'is_correct',
   })
+  @Type(() => Boolean)
   public isCorrect: boolean;
   public constructor(data: AddQuizAnswerRequestDto) {
     Object.assign(this, data);

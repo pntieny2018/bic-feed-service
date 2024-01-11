@@ -96,17 +96,12 @@ export class ContentDomainService implements IContentDomainService {
   public async getContentForCacheById(
     id: string
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    return this._contentRepo.findOne({
-      where: {
-        id,
-        groupArchived: false,
-      },
-      include: {
-        shouldIncludeGroup: true,
-        shouldIncludeSeries: true,
-        shouldIncludeLinkPreview: true,
-        shouldIncludeQuiz: true,
-      },
+    return this._contentRepo.findContentById(id, {
+      shouldIncludeSeries: true,
+      shouldIncludeItems: true,
+      shouldIncludeCategory: true,
+      shouldIncludeQuiz: true,
+      shouldIncludeLinkPreview: true,
     });
   }
 
@@ -167,7 +162,7 @@ export class ContentDomainService implements IContentDomainService {
       },
     });
 
-    return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
+    return contentEntities;
   }
 
   public async getContentIdsInNewsFeed(

@@ -20,10 +20,10 @@ export class QuizValidator implements IQuizValidator {
     if (!contentEntity.isOwner(user.id)) {
       throw new ContentAccessDeniedException();
     }
-    await this._contentValidator.checkCanCRUDContent(
+    await this._contentValidator.checkCanCRUDContent({
       user,
-      contentEntity.getGroupIds(),
-      contentEntity.get('type')
-    );
+      groupIds: contentEntity.getGroupIds(),
+      contentType: contentEntity.get('type'),
+    });
   }
 }

@@ -1,5 +1,9 @@
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostTagModel } from '@libs/database/postgres/model/post-tag.model';
+import { PostModel } from '@libs/database/postgres/model/post.model';
 import { IsUUID } from 'class-validator';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { Literal } from 'sequelize/types/utils';
 import {
   AllowNull,
   Column,
@@ -8,6 +12,7 @@ import {
   Length,
   Model,
   PrimaryKey,
+  Sequelize,
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
@@ -55,4 +60,32 @@ export class TagModel extends Model<TagAttributes, InferCreationAttributes<TagMo
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  public static loadTotalUsed(): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+
+    return [
+      Sequelize.literal(`CAST((
+            SELECT COUNT(*)
+            FROM ${schema}.${PostModel.tableName} p
+            JOIN ${schema}.${PostTagModel.tableName} pt ON pt.post_id = p.id
+            WHERE pt.tag_id = "TagModel".id AND p.is_hidden = false AND p.status = 'PUBLISHED'
+          ) AS INTEGER)`),
+      'totalUsed',
+    ];
+  }
+
+  public static loadAllAttributes(): Array<string | [Literal, string]> {
+    return [
+      'id',
+      'name',
+      'slug',
+      'groupId',
+      'createdAt',
+      'updatedAt',
+      'createdBy',
+      'updatedBy',
+      TagModel.loadTotalUsed(),
+    ];
+  }
 }

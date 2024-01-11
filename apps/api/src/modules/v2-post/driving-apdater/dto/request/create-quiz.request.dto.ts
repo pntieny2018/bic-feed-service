@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsUUID, Max, MaxLength, Min } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
+import { BooleanHelper } from '@libs/common/helpers';
 
 export class CreateQuizRequestDto {
   @ApiProperty({ type: String })

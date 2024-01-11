@@ -1,13 +1,17 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_TARGET, LANGUAGE } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   FindContentIncludeOptions,
   FindContentProps,
   GetPaginationContentsProps,
 } from '@libs/database/postgres/repository/interface';
-import { UserDto } from '@libs/service/user';
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
+
+import {
+  FindAllContentsInCacheProps,
+  FindContentInCacheProps,
+} from './content-cache.repository.interface';
 
 export type GetReportContentIdsProps = {
   reportUser: string;
@@ -24,6 +28,7 @@ export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
   updateContentPrivacy(contentIds: string[], privacy: string): Promise<void>;
+  updateContentLang(contentIds: string[], lang: LANGUAGE): Promise<void>;
   delete(id: string): Promise<void>;
 
   findContentById(
@@ -46,16 +51,14 @@ export interface IContentRepository {
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findContentWithCache(
-    findOnePostOptions: FindContentProps,
-    user: UserDto
+    input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
     findAllPostOptions: FindContentProps,
     offsetPaginationProps?: PaginationProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
   findContentsWithCache(
-    findAllPostOptions: FindContentProps,
-    offsetPaginationProps?: PaginationProps
+    input: FindAllContentsInCacheProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;

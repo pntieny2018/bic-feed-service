@@ -33,7 +33,7 @@ export class ReactionController {
   })
   @Version(ROUTES.REACTION.GET_LIST.VERSIONS)
   @Get(ROUTES.REACTION.GET_LIST.PATH)
-  public async get(
+  public async getReactions(
     @AuthUser() authUser: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionRequestDto
   ): Promise<ReactionListDto> {
@@ -64,7 +64,7 @@ export class ReactionController {
   })
   @Version(ROUTES.REACTION.CREATE.VERSIONS)
   @Post(ROUTES.REACTION.CREATE.PATH)
-  public async create(
+  public async createReaction(
     @AuthUser() user: UserDto,
     @Body() createReactionDto: CreateReactionRequestDto
   ): Promise<ReactionDto> {
@@ -83,7 +83,7 @@ export class ReactionController {
   })
   @Version(ROUTES.REACTION.DELETE.VERSIONS)
   @Delete(ROUTES.REACTION.DELETE.PATH)
-  public async delete(
+  public async deleteReaction(
     @AuthUser() user: UserDto,
     @Body() deleteReactionDto: DeleteReactionRequestDto
   ): Promise<void> {

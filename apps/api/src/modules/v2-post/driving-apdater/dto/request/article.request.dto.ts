@@ -1,11 +1,14 @@
+import { PageOptionsDto } from '@api/common/dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
   ValidateIf,
   ValidateNested,
@@ -102,4 +105,65 @@ export class CreateDraftArticleRequestDto {
   public constructor(data: CreateDraftArticleRequestDto) {
     Object.assign(this, data);
   }
+}
+
+export class SearchArticlesDto extends PageOptionsDto {
+  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
+  @IsOptional()
+  @IsString()
+  @Expose({
+    name: 'content_search',
+  })
+  public contentSearch?: string;
+
+  @ApiProperty({
+    description: 'Group IDs',
+    required: false,
+    name: 'group_ids',
+  })
+  @Expose({
+    name: 'group_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  @Transform((data) => {
+    if (!data.obj.group_ids && data.obj.groupIds) {
+      return data.obj.groupIds;
+    }
+    return data.obj.group_ids;
+  })
+  public groupIds?: string[];
+
+  @ApiProperty({
+    description: 'Category IDs',
+    required: false,
+    name: 'category_ids',
+  })
+  @Expose({
+    name: 'category_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public categoryIds?: string[];
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    default: false,
+    name: 'limit_series',
+  })
+  @Expose({
+    name: 'limit_series',
+  })
+  @Transform((data) => {
+    if (!data.obj.limit_series && data.obj.limitSeries) {
+      return data.obj.limitSeries === 'true';
+    }
+    return data.obj.limit_series === 'true';
+  })
+  @IsOptional()
+  @IsBoolean()
+  public limitSeries?: boolean;
 }

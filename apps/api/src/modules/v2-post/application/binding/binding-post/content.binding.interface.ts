@@ -15,7 +15,6 @@ export interface IContentBinding {
     postEntity: PostEntity,
     dataBinding: {
       actor?: UserDto;
-      mentionUsers?: UserDto[];
       groups?: GroupDto[];
       authUser: UserDto;
     }

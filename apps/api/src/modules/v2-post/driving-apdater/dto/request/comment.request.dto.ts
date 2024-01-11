@@ -169,6 +169,12 @@ export class GetListCommentsDto extends PaginatedArgs {
   @Expose({
     name: 'post_id',
   })
+  @Transform((data) => {
+    if (!data.obj.post_id && data.obj.postId) {
+      return data.obj.postId;
+    }
+    return data.obj.post_id;
+  })
   public postId: string;
 
   @ApiPropertyOptional({
