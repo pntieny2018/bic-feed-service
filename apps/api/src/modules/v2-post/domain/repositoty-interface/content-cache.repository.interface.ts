@@ -47,6 +47,7 @@ export interface IContentCacheRepository {
 
   setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
   deleteContent(contentId: string): Promise<void>;
+  deleteContents(contentIds: string[]): Promise<void>;
 
   getReportedTargetIdsByUserId(userId: string): Promise<string[]>;
   cacheUserReportedContent(userId: string, contentIds: string[]): Promise<void>;

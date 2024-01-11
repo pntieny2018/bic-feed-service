@@ -1,3 +1,7 @@
+import {
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 import { IPaginatedInfo } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -24,6 +28,8 @@ export class ProcessGroupStateUpdatedHandler
     private readonly _contentRepo: IContentRepository,
     @Inject(POST_GROUP_REPOSITORY_TOKEN)
     private readonly _postGroupRepo: IPostGroupRepository,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepo: IContentCacheRepository,
     private readonly _contentMapper: ContentMapper,
     // TODO: Change to Adapter
     private readonly _postSearchService: SearchService
@@ -74,6 +80,7 @@ export class ProcessGroupStateUpdatedHandler
   }
 
   private async _updateContent(contentIds: string[]): Promise<void> {
+    await this._contentCacheRepo.deleteContents(contentIds);
     const contentEntities = await this._contentRepo.findAll({
       where: { ids: contentIds, groupArchived: false },
       include: { mustIncludeGroup: true },

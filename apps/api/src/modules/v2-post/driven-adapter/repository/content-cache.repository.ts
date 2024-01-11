@@ -218,6 +218,17 @@ export class ContentCacheRepository implements IContentCacheRepository {
     await this._store.del(`${CACHE_KEYS.CONTENT}:${contentId}`);
   }
 
+  public async deleteContents(contentIds: string[]): Promise<void> {
+    if (!contentIds?.length) {
+      return;
+    }
+    const pipeline = this._store.getClient().pipeline();
+    for (const contentId of contentIds) {
+      pipeline.del(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    }
+    await pipeline.exec();
+  }
+
   public async getReportedTargetIdsByUserId(userId: string): Promise<string[]> {
     return this._store.getSets(`${CACHE_KEYS.USER_REPORTED_CONTENT}:${userId}`);
   }
