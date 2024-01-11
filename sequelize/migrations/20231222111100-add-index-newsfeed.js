@@ -69,6 +69,11 @@ const indexList = [
     indexName: 'quizzes_composite_index',
     index: ['post_id', 'created_by', 'status', 'created_at'],
   },
+  {
+    tableName: 'posts_reactions',
+    indexName: 'posts_reactions_composite_index',
+    index: ['post_id', 'created_by'],
+  },
 ];
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -81,6 +86,13 @@ module.exports = {
       await queryInterface.sequelize.query(`DROP INDEX IF EXISTS posts_privacy`, {
         transaction: t,
       });
+
+      await queryInterface.sequelize.query(
+        `DROP INDEX IF EXISTS posts_reactions_post_id_reaction_name_created_by`,
+        {
+          transaction: t,
+        }
+      );
 
       for (let i = 0; i < indexList.length; i++) {
         await queryInterface.addIndex(
