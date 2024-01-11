@@ -96,7 +96,6 @@ export class PostDomainService implements IPostDomainService {
     const postEntity = await this._contentRepo.findContentWithCache({
       where: {
         id: postId,
-        groupArchived: false,
         excludeReportedByUserId: authUser.id,
       },
       include: {
@@ -146,7 +145,7 @@ export class PostDomainService implements IPostDomainService {
     const { id, scheduledAt, groupIds } = payload;
 
     const postEntity = await this._contentRepo.findContentWithCache({
-      where: { id, groupArchived: false },
+      where: { id },
       include: {
         mustIncludeGroup: true,
         shouldIncludeSeries: true,
@@ -182,7 +181,7 @@ export class PostDomainService implements IPostDomainService {
     const { id: postId, groupIds } = payload;
 
     const postEntity = await this._contentRepo.findContentWithCache({
-      where: { id: postId, groupArchived: false },
+      where: { id: postId },
       include: {
         mustIncludeGroup: true,
         shouldIncludeSeries: true,
@@ -366,7 +365,7 @@ export class PostDomainService implements IPostDomainService {
     const { payload, actor } = props;
 
     const postEntity = await this._contentRepo.findContentWithCache({
-      where: { id: payload.id, groupArchived: false },
+      where: { id: payload.id },
       include: {
         shouldIncludeGroup: true,
         shouldIncludeSeries: true,
@@ -397,7 +396,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async delete(id: string, authUser: UserDto): Promise<void> {
     const postEntity = await this._contentRepo.findContentWithCache({
-      where: { id, groupArchived: false },
+      where: { id },
       include: { shouldIncludeGroup: true, shouldIncludeSeries: true },
     });
 

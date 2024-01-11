@@ -71,7 +71,6 @@ export class SeriesDomainService implements ISeriesDomainService {
     const seriesEntity = await this._contentRepo.findContentWithCache({
       where: {
         id: seriesId,
-        groupArchived: false,
         excludeReportedByUserId: authUser.id,
       },
       include: {

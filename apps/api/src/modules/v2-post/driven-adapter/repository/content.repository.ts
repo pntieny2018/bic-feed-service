@@ -328,7 +328,10 @@ export class ContentRepository implements IContentRepository {
 
     this._logger.log(`[CACHE] ${handler} - 0`);
 
-    const content = await this._libContentRepo.findOne(input);
+    const content = await this._libContentRepo.findOne({
+      where: { ...input.where, groupArchived: false },
+      include: input.include,
+    });
     if (!content) {
       return null;
     }

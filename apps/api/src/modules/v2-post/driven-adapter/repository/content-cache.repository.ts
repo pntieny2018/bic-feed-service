@@ -15,14 +15,10 @@ import { CONTENT_STATUS } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
 import { LibReportDetailRepository } from '@libs/database/postgres/repository';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { isBoolean } from 'lodash';
 
 import { ArticleEntity, PostEntity, SeriesEntity } from '../../domain/model/content';
-import {
-  IPostGroupRepository,
-  POST_GROUP_REPOSITORY_TOKEN,
-} from '../../domain/repositoty-interface';
 
 @Injectable()
 export class ContentCacheRepository implements IContentCacheRepository {
@@ -31,8 +27,6 @@ export class ContentCacheRepository implements IContentCacheRepository {
     private readonly _contentMapper: ContentMapper,
     private readonly _quizMapper: QuizMapper,
 
-    @Inject(POST_GROUP_REPOSITORY_TOKEN)
-    private readonly _postGroupRepo: IPostGroupRepository,
     private readonly _libReportDetailRepo: LibReportDetailRepository
   ) {}
 
@@ -43,8 +37,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
   public async findContent(
     input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const { id, status, createdBy, isHidden, groupArchived, excludeReportedByUserId } = input.where;
-    const { mustIncludeGroup, shouldIncludeGroup } = input.include || {};
+    const { id, status, createdBy, isHidden, excludeReportedByUserId } = input.where;
 
     const cachedContent = await this._store.getJson<
       PostCacheDto | ArticleCacheDto | SeriesCacheDto
@@ -57,13 +50,6 @@ export class ContentCacheRepository implements IContentCacheRepository {
       (isBoolean(isHidden) && cachedContent.isHidden !== isHidden)
     ) {
       return null;
-    }
-
-    if (isBoolean(groupArchived) && !mustIncludeGroup && !shouldIncludeGroup) {
-      const inStateContentIds = await this._postGroupRepo.getInStateContentIds([id], groupArchived);
-      if (!inStateContentIds.length) {
-        return null;
-      }
     }
 
     if (excludeReportedByUserId) {
@@ -103,8 +89,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
     cachedContents: (PostCacheDto | ArticleCacheDto | SeriesCacheDto)[],
     input: FindContentInCacheProps | FindAllContentsInCacheProps
   ): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]> {
-    const { status, createdBy, isHidden, groupArchived, excludeReportedByUserId } = input.where;
-    const { mustIncludeGroup, shouldIncludeGroup } = input.include || {};
+    const { status, createdBy, isHidden, excludeReportedByUserId } = input.where;
 
     if (status) {
       cachedContents = cachedContents.filter((content) => content.status === status);
@@ -115,14 +100,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
     if (isHidden) {
       cachedContents = cachedContents.filter((content) => content.isHidden === isHidden);
     }
-    if (isBoolean(groupArchived) && !mustIncludeGroup && !shouldIncludeGroup) {
-      const contentIds = cachedContents.map((content) => content.id);
-      const inStateContents = await this._postGroupRepo.getInStateContentIds(
-        contentIds,
-        groupArchived
-      );
-      cachedContents = cachedContents.filter((content) => inStateContents[content.id]);
-    }
+
     if (excludeReportedByUserId) {
       let reportedTargetIds = await this.getReportedTargetIdsByUserId(excludeReportedByUserId);
 
@@ -144,7 +122,6 @@ export class ContentCacheRepository implements IContentCacheRepository {
     cachedContents: (PostCacheDto | ArticleCacheDto | SeriesCacheDto)[],
     input: FindContentInCacheProps | FindAllContentsInCacheProps
   ): Promise<(PostCacheDto | ArticleCacheDto | SeriesCacheDto)[]> {
-    const { groupArchived } = input.where;
     const {
       mustIncludeGroup,
       shouldIncludeGroup,
@@ -154,18 +131,9 @@ export class ContentCacheRepository implements IContentCacheRepository {
       shouldIncludeQuiz,
       shouldIncludeLinkPreview,
     } = input.include || {};
-    const contentIds = cachedContents.map((content) => content.id);
-
-    let groupIdsObject = {};
-    if (mustIncludeGroup || shouldIncludeGroup) {
-      groupIdsObject = await this._postGroupRepo.getGroupsIdsByContent(
-        contentIds,
-        isBoolean(groupArchived) ? groupArchived : undefined
-      );
-    }
 
     cachedContents.forEach((content) => {
-      const groupIds = groupIdsObject[content.id] || [];
+      const groupIds = content.groupIds || [];
       if (mustIncludeGroup && !groupIds.length) {
         content = null;
       } else if (shouldIncludeGroup) {
@@ -216,6 +184,17 @@ export class ContentCacheRepository implements IContentCacheRepository {
 
   public async deleteContent(contentId: string): Promise<void> {
     await this._store.del(`${CACHE_KEYS.CONTENT}:${contentId}`);
+  }
+
+  public async deleteContents(contentIds: string[]): Promise<void> {
+    if (!contentIds?.length) {
+      return;
+    }
+    const pipeline = this._store.getClient().pipeline();
+    for (const contentId of contentIds) {
+      pipeline.del(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    }
+    await pipeline.exec();
   }
 
   public async getReportedTargetIdsByUserId(userId: string): Promise<string[]> {

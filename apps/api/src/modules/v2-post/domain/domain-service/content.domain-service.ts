@@ -37,7 +37,6 @@ import {
 import {
   GetAudiencesProps,
   GetContentByIdsProps,
-  GetContentIdsInNewsFeedProps,
   GetContentIdsInTimelineProps,
   GetContentIdsScheduleProps,
   GetDraftsProps,
@@ -148,7 +147,7 @@ export class ContentDomainService implements IContentDomainService {
     if (!ids.length) {
       return [];
     }
-    const contentEntities = await this._contentRepo.findContentsWithCache({
+    return this._contentRepo.findContentsWithCache({
       where: {
         ids,
       },
@@ -161,67 +160,6 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeCategory: true,
       },
     });
-
-    return contentEntities;
-  }
-
-  public async getContentIdsInNewsFeed(
-    props: GetContentIdsInNewsFeedProps
-  ): Promise<CursorPaginationResult<string>> {
-    const {
-      isMine,
-      type,
-      isSaved,
-      limit,
-      isImportant,
-      after,
-      before,
-      authUserId,
-      order = ORDER.DESC,
-    } = props;
-
-    if (isImportant) {
-      return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
-    }
-
-    const orderOptions = isSaved
-      ? {
-          isSavedDateByDesc: true,
-        }
-      : {
-          isPublishedByDesc: true,
-        };
-    const { rows, meta } = await this._contentRepo.getCursorPagination({
-      select: ['id', 'type', 'publishedAt'],
-      where: {
-        isHidden: false,
-        status: CONTENT_STATUS.PUBLISHED,
-        inNewsfeedUserId: authUserId,
-        groupArchived: false,
-        excludeReportedByUserId: authUserId,
-        type,
-        createdBy: isMine ? authUserId : undefined,
-      },
-      include: {
-        ...(isSaved && {
-          mustIncludeSaved: {
-            userId: authUserId,
-          },
-        }),
-      },
-      limit,
-      order,
-      orderOptions,
-      before,
-      after,
-      ...(isSaved && {
-        subQuery: false,
-      }),
-    });
-    return {
-      rows: rows.map((row) => row.getId()),
-      meta,
-    };
   }
 
   public async getContentIdsInTimeline(

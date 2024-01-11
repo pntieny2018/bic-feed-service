@@ -87,7 +87,6 @@ export class ArticleDomainService implements IArticleDomainService {
     const articleEntity = await this._contentRepo.findContentWithCache({
       where: {
         id: articleId,
-        groupArchived: false,
         excludeReportedByUserId: authUser?.id,
       },
       include: {
