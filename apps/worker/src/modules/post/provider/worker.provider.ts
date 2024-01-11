@@ -27,9 +27,9 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     workerToken: CONTENT_SCHEDULED_WORKER_TOKEN,
     processorToken: CONTENT_SCHEDULED_PROCESSOR_TOKEN,
     groupConcurrency: {
-      concurrency: parseInt(process.env.CONTENT_SCHEDULED_GROUP_CONCURRENCY) | 2,
+      concurrency: 1,
     },
-    concurrency: parseInt(process.env.CONTENT_SCHEDULED_CONCURRENCY) | 5,
+    concurrency: parseInt(process.env.CONTENT_SCHEDULED_CONCURRENCY) | 2,
   },
   {
     queueName: QueueName.QUIZ_PENDING,
@@ -51,9 +51,9 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     workerToken: QUIZ_PARTICIPANT_WORKER_TOKEN,
     processorToken: QUIZ_PARTICIPANT_PROCESSOR_TOKEN,
     groupConcurrency: {
-      concurrency: parseInt(process.env.QUIZ_PARTICIPANT_GROUP_CONCURRENCY) | 2,
+      concurrency: 1,
     },
-    concurrency: parseInt(process.env.QUIZ_PARTICIPANT_CONCURRENCY) | 5,
+    concurrency: parseInt(process.env.QUIZ_PARTICIPANT_CONCURRENCY) | 2,
   },
   {
     queueName: QueueName.PRODUCER_ATTACH_DETACH_NEWSFEED,
@@ -71,7 +71,7 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.ATTACH_DETACH_NEWSFEED_CONCURRENCY) | 5,
+    concurrency: parseInt(process.env.ATTACH_DETACH_NEWSFEED_CONCURRENCY) | 2,
   },
   {
     queueName: QueueName.PRODUCER_FOLLOW_UNFOLLOW_GROUPS,
@@ -89,6 +89,6 @@ export const WORKER_ADAPTER_SERVICES: WorkerAdapters[] = [
     groupConcurrency: {
       concurrency: 1,
     },
-    concurrency: parseInt(process.env.FOLLOW_UNFOLLOW_GROUPS_CONCURRENCY) | 5,
+    concurrency: parseInt(process.env.FOLLOW_UNFOLLOW_GROUPS_CONCURRENCY) | 2,
   },
 ];
