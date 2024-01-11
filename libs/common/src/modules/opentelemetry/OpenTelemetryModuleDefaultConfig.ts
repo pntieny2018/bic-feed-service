@@ -36,10 +36,12 @@ export const NodeAutoInstrumentationsDefaultConfig = <InstrumentationConfigMap>{
   },
   '@opentelemetry/instrumentation-http': {
     requireParentforOutgoingSpans: true,
-    requestHook: (span: Span, request) => {
+    applyCustomAttributesOnSpan: (span: Span, request, response) => {
+      span.setAttribute('status_code', response.statusCode);
       const clsService = ClsServiceManager.getClsService();
-      span.updateName(`${request.method} ${clsService.get(CONTEXT).handler}`);
       span.setAttribute('request_id', clsService.getId());
+
+      span.updateName(`${request.method} ${clsService.get(CONTEXT).handler}`);
     },
     enabled: true,
     ignoreIncomingPaths: ['/health/readyz', '/health/livez'],
