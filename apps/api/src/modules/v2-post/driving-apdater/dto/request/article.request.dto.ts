@@ -114,12 +114,6 @@ export class SearchArticlesDto extends PageOptionsDto {
   @Expose({
     name: 'content_search',
   })
-  @Transform((data) => {
-    if (!data.obj.content_search && data.obj.contentSearch) {
-      return data.obj.contentSearch;
-    }
-    return data.obj.content_search;
-  })
   public contentSearch?: string;
 
   @ApiProperty({
@@ -152,12 +146,6 @@ export class SearchArticlesDto extends PageOptionsDto {
   @IsArray()
   @IsOptional()
   @IsUUID('4', { each: true })
-  @Transform((data) => {
-    if (!data.obj.category_ids && data.obj.categoryIds) {
-      return data.obj.categoryIds;
-    }
-    return data.obj.category_ids;
-  })
   public categoryIds?: string[];
 
   @ApiProperty({
