@@ -23,12 +23,6 @@ export class CreateQuizRequestDto {
   @Expose({
     name: 'content_id',
   })
-  @Transform((data) => {
-    if (!data.obj.content_id && data.obj.contentId) {
-      return data.obj.contentId;
-    }
-    return data.obj.content_id;
-  })
   public contentId: string;
 
   @ApiProperty({ type: String })
@@ -48,12 +42,6 @@ export class CreateQuizRequestDto {
   @Expose({
     name: 'number_of_questions',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_questions && data.obj.numberOfQuestions) {
-      return data.obj.numberOfQuestions;
-    }
-    return data.obj.number_of_questions;
-  })
   @IsNotEmpty()
   public numberOfQuestions: number;
 
@@ -65,12 +53,6 @@ export class CreateQuizRequestDto {
   @Expose({
     name: 'number_of_answers',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_answers && data.obj.numberOfAnswers) {
-      return data.obj.numberOfAnswers;
-    }
-    return data.obj.number_of_answers;
-  })
   public numberOfAnswers: number;
 
   @ApiProperty({ type: Number })
@@ -81,12 +63,6 @@ export class CreateQuizRequestDto {
   @Expose({
     name: 'number_of_questions_display',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_questions_display && data.obj.numberOfQuestionsDisplay) {
-      return data.obj.numberOfQuestionsDisplay;
-    }
-    return data.obj.number_of_questions_display;
-  })
   public numberOfQuestionsDisplay?: number;
 
   @ApiProperty({ type: Boolean })
@@ -94,12 +70,6 @@ export class CreateQuizRequestDto {
   @IsOptional()
   @Expose({
     name: 'is_random',
-  })
-  @Transform((data) => {
-    if (!data.obj.is_random && data.obj.isRandom) {
-      return data.obj.isRandom;
-    }
-    return data.obj.is_random;
   })
   public isRandom?: boolean;
 
@@ -123,12 +93,6 @@ export class QuizAnswerRequestDto {
   @Type(() => Boolean)
   @Expose({
     name: 'is_correct',
-  })
-  @Transform((data) => {
-    if (!data.obj.is_correct && data.obj.isCorrect) {
-      return data.obj.isCorrect;
-    }
-    return data.obj.is_correct;
   })
   public isCorrect: boolean;
   public constructor(data: QuizAnswerRequestDto) {
@@ -176,12 +140,6 @@ export class UpdateQuizRequestDto {
   @Expose({
     name: 'number_of_questions',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_questions && data.obj.numberOfQuestions) {
-      return data.obj.numberOfQuestions;
-    }
-    return data.obj.number_of_questions;
-  })
   @IsOptional()
   public numberOfQuestions?: number;
 
@@ -193,12 +151,6 @@ export class UpdateQuizRequestDto {
   @Expose({
     name: 'number_of_answers',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_answers && data.obj.numberOfAnswers) {
-      return data.obj.numberOfAnswers;
-    }
-    return data.obj.number_of_answers;
-  })
   public numberOfAnswers?: number;
 
   @ApiProperty({ type: Number })
@@ -209,24 +161,12 @@ export class UpdateQuizRequestDto {
   @Expose({
     name: 'number_of_questions_display',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_questions_display && data.obj.numberOfQuestionsDisplay) {
-      return data.obj.numberOfQuestionsDisplay;
-    }
-    return data.obj.number_of_questions_display;
-  })
   public numberOfQuestionsDisplay?: number;
 
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
   @Expose({
     name: 'is_random',
-  })
-  @Transform((data) => {
-    if (!data.obj.is_random && data.obj.isRandom) {
-      return data.obj.isRandom;
-    }
-    return data.obj.is_random;
   })
   @IsOptional()
   public isRandom?: boolean;
@@ -262,24 +202,12 @@ class AnswerUser {
   @IsUUID()
   @IsNotEmpty()
   @Expose({ name: 'question_id' })
-  @Transform((data) => {
-    if (!data.obj.question_id && data.obj.questionId) {
-      return data.obj.questionId;
-    }
-    return data.obj.question_id;
-  })
   public questionId: string;
 
   @ApiProperty({ type: String })
   @IsUUID()
   @IsNotEmpty()
   @Expose({ name: 'answer_id' })
-  @Transform((data) => {
-    if (!data.obj.answer_id && data.obj.answerId) {
-      return data.obj.answerId;
-    }
-    return data.obj.answer_id;
-  })
   public answerId: string;
 }
 
@@ -288,12 +216,6 @@ export class UpdateQuizAnswersRequestDto {
   @IsOptional()
   @Expose({
     name: 'is_finished',
-  })
-  @Transform((data) => {
-    if (!data.obj.is_finished && data.obj.isFinished) {
-      return data.obj.isFinished;
-    }
-    return data.obj.is_finished;
   })
   @IsBoolean()
   public isFinished?: boolean;
@@ -317,12 +239,6 @@ export class GenerateQuizRequestDto {
   @Expose({
     name: 'number_of_questions',
   })
-  @Transform((data) => {
-    if (!data.obj.number_of_questions && data.obj.numberOfQuestions) {
-      return data.obj.numberOfQuestions;
-    }
-    return data.obj.number_of_questions;
-  })
   @IsOptional()
   public numberOfQuestions?: number;
 
@@ -333,12 +249,6 @@ export class GenerateQuizRequestDto {
   @IsOptional()
   @Expose({
     name: 'number_of_answers',
-  })
-  @Transform((data) => {
-    if (!data.obj.number_of_answers && data.obj.numberOfAnswers) {
-      return data.obj.numberOfAnswers;
-    }
-    return data.obj.number_of_answers;
   })
   public numberOfAnswers?: number;
 
@@ -385,16 +295,10 @@ class AddQuizAnswerRequestDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @Type(() => Boolean)
   @Expose({
     name: 'is_correct',
   })
-  @Transform((data) => {
-    if (!data.obj.is_correct && data.obj.isCorrect) {
-      return data.obj.isCorrect;
-    }
-    return data.obj.is_correct;
-  })
+  @Type(() => Boolean)
   public isCorrect: boolean;
   public constructor(data: AddQuizAnswerRequestDto) {
     Object.assign(this, data);
@@ -440,12 +344,6 @@ class UpdateQuizAnswerRequestDto {
   @Type(() => Boolean)
   @Expose({
     name: 'is_correct',
-  })
-  @Transform((data) => {
-    if (!data.obj.is_correct && data.obj.isCorrect) {
-      return data.obj.isCorrect;
-    }
-    return data.obj.is_correct;
   })
   public isCorrect: boolean;
   public constructor(data: UpdateQuizAnswerRequestDto) {
