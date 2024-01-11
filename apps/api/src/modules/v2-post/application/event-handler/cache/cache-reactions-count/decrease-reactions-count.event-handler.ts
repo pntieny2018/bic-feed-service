@@ -1,7 +1,3 @@
-import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
-  IContentDomainService,
-} from '@api/modules/v2-post/domain/domain-service/interface';
 import { ReactionDeletedEvent } from '@api/modules/v2-post/domain/event';
 import {
   IPostReactionRepository,
@@ -20,8 +16,6 @@ import { merge } from 'lodash';
 @EventsHandlerAndLog(ReactionDeletedEvent)
 export class CacheDecreaseReactionCountEventHandler implements IEventHandler<ReactionDeletedEvent> {
   public constructor(
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomain: IContentDomainService,
     @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
     private readonly _contentCacheRepo: IContentCacheRepository,
     @Inject(POST_REACTION_REPOSITORY_TOKEN)
@@ -39,8 +33,7 @@ export class CacheDecreaseReactionCountEventHandler implements IEventHandler<Rea
 
     const cachedContent = await this._contentCacheRepo.findContent({ where: { id: contentId } });
     if (!cachedContent) {
-      const contentEntity = await this._contentDomain.getContentForCacheById(contentId);
-      await this._contentCacheRepo.setContents([contentEntity]);
+      await this._contentCacheRepo.cacheContents([contentId]);
     } else {
       const decreasedValue = await this._contentCacheRepo.decreaseReactionsCount(
         contentId,

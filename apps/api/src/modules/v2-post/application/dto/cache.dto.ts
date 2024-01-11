@@ -19,15 +19,15 @@ export class ArticleCacheDto {
   public media: MediaDto;
   public createdAt: Date;
   public updatedAt: Date;
-  public reactionsCount: ReactionCount;
   public publishedAt: Date;
   public groupIds: string[];
+  public title: string;
+  public content: string;
+  public summary: string;
+  public reactionsCount: ReactionCount;
   public wordCount: number;
   public commentsCount: number;
   public totalUsersSeen: number;
-  public content: string;
-  public summary: string;
-  public title: string;
   public categories: { id: string; name: string }[];
   public coverMedia: ImageDto;
   public seriesIds: string[];
@@ -43,26 +43,26 @@ export class PostCacheDto {
   public id: string;
   public isReported: boolean;
   public isHidden: boolean;
-  public groupIds: string[];
-  public content: string;
-  public title: string;
+  public createdBy: string;
+  public updatedBy: string;
+  public privacy: PRIVACY;
+  public status: CONTENT_STATUS;
+  public type: CONTENT_TYPE;
+  public setting: PostSettingDto;
+  public media: MediaDto;
   public createdAt: Date;
   public updatedAt: Date;
   public publishedAt: Date;
-  public createdBy: string;
-  public updatedBy: string;
-  public tags: TagDto[];
-  public media: MediaDto;
-  public mentionsUserId: string[];
-  public status: CONTENT_STATUS;
-  public type: CONTENT_TYPE;
-  public privacy: PRIVACY;
-  public setting: PostSettingDto;
+  public groupIds: string[];
+  public title: string;
+  public content: string;
+  public reactionsCount: ReactionCount;
   public commentsCount: number;
   public totalUsersSeen: number;
-  public linkPreview?: LinkPreviewDto;
-  public reactionsCount: ReactionCount;
+  public mentionsUserIds: string[];
   public seriesIds: string[];
+  public tags: TagDto[];
+  public linkPreview?: LinkPreviewDto;
   public quiz?: QuizDto;
 
   public constructor(data: PostCacheDto) {
@@ -72,10 +72,10 @@ export class PostCacheDto {
 
 export class SeriesCacheDto {
   public id: string;
-  public createdBy: string;
-  public updatedBy: string;
   public isReported: boolean;
   public isHidden: boolean;
+  public createdBy: string;
+  public updatedBy: string;
   public privacy: PRIVACY;
   public status: CONTENT_STATUS;
   public type: CONTENT_TYPE;

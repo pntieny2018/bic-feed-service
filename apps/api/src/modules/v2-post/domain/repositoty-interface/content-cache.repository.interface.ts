@@ -44,7 +44,7 @@ export interface IContentCacheRepository {
     input: FindAllContentsInCacheProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
-  setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
+  cacheContents(contentIds: string[]): Promise<void>;
   deleteContent(contentId: string): Promise<void>;
   deleteContents(contentIds: string[]): Promise<void>;
 
