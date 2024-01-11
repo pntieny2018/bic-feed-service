@@ -29,14 +29,7 @@ export class GetTagRequestDto extends PageOptionsDto {
   @Expose({
     name: 'group_ids',
   })
-  @Transform((data) => {
-    let value;
-    if (!data.obj.group_ids && data.obj.groupIds) {
-      value = data.obj.groupIds;
-    } else {
-      value = data.obj.group_ids;
-    }
-
+  @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
@@ -58,12 +51,6 @@ export class CreateTagRequestDto {
   @IsNotEmpty()
   @Expose({
     name: 'group_id',
-  })
-  @Transform((data) => {
-    if (!data.obj.group_id && data.obj.groupId) {
-      return data.obj.groupId;
-    }
-    return data.obj.group_id;
   })
   public groupId: string;
 

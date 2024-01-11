@@ -57,24 +57,12 @@ export class AnswerUserDto {
   @IsUUID()
   @IsNotEmpty()
   @Expose({ name: 'question_id' })
-  @Transform((data) => {
-    if (!data.obj.question_id && data.obj.questionId) {
-      return data.obj.questionId;
-    }
-    return data.obj.question_id;
-  })
   public questionId: string;
 
   @ApiProperty({ type: String })
   @IsUUID()
   @IsNotEmpty()
   @Expose({ name: 'answer_id' })
-  @Transform((data) => {
-    if (!data.obj.answer_id && data.obj.answerId) {
-      return data.obj.answerId;
-    }
-    return data.obj.answer_id;
-  })
   public answerId: string;
 
   public constructor(data: AnswerUserDto) {

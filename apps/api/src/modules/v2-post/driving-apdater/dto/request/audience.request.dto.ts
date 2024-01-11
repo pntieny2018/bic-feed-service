@@ -15,11 +15,5 @@ export class AudienceRequestDto {
   @Expose({
     name: 'group_ids',
   })
-  @Transform((data) => {
-    if (!data.obj.group_ids && data.obj.groupIds) {
-      return data.obj.groupIds;
-    }
-    return data.obj.group_ids;
-  })
   public groupIds: string[];
 }

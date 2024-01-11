@@ -12,11 +12,8 @@ export class GetTimelineRequestDto extends PaginatedArgs {
     name: 'is_important',
   })
   @IsBoolean()
-  @Transform((data) => {
-    if (!data.obj.is_important && data.obj.isImportant) {
-      return BooleanHelper.convertStringToBoolean(data.obj.isImportant);
-    }
-    return BooleanHelper.convertStringToBoolean(data.obj.is_important);
+  @Transform(({ value }) => {
+    return BooleanHelper.convertStringToBoolean(value);
   })
   public isImportant?: boolean;
 
@@ -25,11 +22,8 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   @Expose({
     name: 'is_mine',
   })
-  @Transform((data) => {
-    if (!data.obj.is_mine && data.obj.isMine) {
-      return BooleanHelper.convertStringToBoolean(data.obj.isMine);
-    }
-    return BooleanHelper.convertStringToBoolean(data.obj.is_mine);
+  @Transform(({ value }) => {
+    return BooleanHelper.convertStringToBoolean(value);
   })
   @IsBoolean()
   @Transform(({ value }) => {
@@ -49,11 +43,8 @@ export class GetTimelineRequestDto extends PaginatedArgs {
     name: 'is_saved',
   })
   @IsBoolean()
-  @Transform((data) => {
-    if (!data.obj.is_saved && data.obj.isSaved) {
-      return BooleanHelper.convertStringToBoolean(data.obj.isSaved);
-    }
-    return BooleanHelper.convertStringToBoolean(data.obj.is_saved);
+  @Transform(({ value }) => {
+    return BooleanHelper.convertStringToBoolean(value);
   })
   public isSaved?: boolean;
 
