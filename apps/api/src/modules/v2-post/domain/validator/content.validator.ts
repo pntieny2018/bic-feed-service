@@ -337,7 +337,7 @@ export class ContentValidator implements IContentValidator {
     }
 
     const contentWithArchivedGroups = (await this._contentRepo.findContentWithCache({
-      where: { id: contentEntity.getId(), groupArchived: false },
+      where: { id: contentEntity.getId() },
       include: { shouldIncludeSeries: true },
     })) as ArticleEntity | PostEntity;
 

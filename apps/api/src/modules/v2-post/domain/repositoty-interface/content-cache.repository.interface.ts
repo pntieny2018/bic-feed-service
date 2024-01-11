@@ -8,7 +8,6 @@ export type FindContentInCacheConditionOptions = {
   status?: CONTENT_STATUS;
   createdBy?: string;
   isHidden?: boolean;
-  groupArchived?: boolean;
   excludeReportedByUserId?: string;
 };
 
