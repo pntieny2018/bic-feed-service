@@ -13,12 +13,19 @@ import {
 import { ContentMapper, QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper';
 import { CONTENT_STATUS } from '@beincom/constants';
 import { CACHE_KEYS } from '@libs/common/constants';
-import { LibReportDetailRepository } from '@libs/database/postgres/repository';
+import {
+  LibContentRepository,
+  LibReportDetailRepository,
+} from '@libs/database/postgres/repository';
 import { RedisContentService } from '@libs/infra/redis/redis-content.service';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { isBoolean } from 'lodash';
 
 import { ArticleEntity, PostEntity, SeriesEntity } from '../../domain/model/content';
+import {
+  IPostReactionRepository,
+  POST_REACTION_REPOSITORY_TOKEN,
+} from '../../domain/repositoty-interface';
 
 @Injectable()
 export class ContentCacheRepository implements IContentCacheRepository {
@@ -27,11 +34,19 @@ export class ContentCacheRepository implements IContentCacheRepository {
     private readonly _contentMapper: ContentMapper,
     private readonly _quizMapper: QuizMapper,
 
-    private readonly _libReportDetailRepo: LibReportDetailRepository
+    @Inject(POST_REACTION_REPOSITORY_TOKEN)
+    private readonly _postReactionRepo: IPostReactionRepository,
+
+    private readonly _libReportDetailRepo: LibReportDetailRepository,
+    private readonly _libContentRepo: LibContentRepository
   ) {}
 
   public async existKey(key: string): Promise<boolean> {
     return this._store.existKey(key);
+  }
+
+  public async existContent(contentId: string): Promise<boolean> {
+    return this._store.existKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
   }
 
   public async findContent(
@@ -53,9 +68,16 @@ export class ContentCacheRepository implements IContentCacheRepository {
     }
 
     if (excludeReportedByUserId) {
-      const isReported = await this._libReportDetailRepo.first({
-        where: { targetId: id, reporterId: excludeReportedByUserId },
-      });
+      const reportedTargetIds = await this.getReportedTargetIdsByUserId(excludeReportedByUserId);
+      let isReported = reportedTargetIds?.includes(id);
+
+      if (!reportedTargetIds?.length) {
+        const reportedTarget = await this._libReportDetailRepo.first({
+          where: { targetId: id, reporterId: excludeReportedByUserId },
+        });
+        isReported = !!reportedTarget;
+      }
+
       if (isReported) {
         return null;
       }
@@ -160,18 +182,36 @@ export class ContentCacheRepository implements IContentCacheRepository {
     return cachedContents.filter((content) => content);
   }
 
-  public async setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void> {
+  public async cacheContents(contentIds: string[]): Promise<void> {
+    if (!contentIds.length) {
+      return;
+    }
+
+    const contents = await this._libContentRepo.findAll({
+      where: { ids: contentIds, status: CONTENT_STATUS.PUBLISHED, groupArchived: false },
+      include: {
+        shouldIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeItems: true,
+        shouldIncludeCategory: true,
+        shouldIncludeQuiz: true,
+        shouldIncludeLinkPreview: true,
+      },
+    });
     if (!contents.length) {
       return;
     }
 
-    const contentsCacheDto = await this._contentMapper.contentsCacheBinding(contents);
-    const pipeline = this._store.getClient().pipeline();
-    for (const contentCacheDto of contentsCacheDto) {
-      if (!contentCacheDto || contentCacheDto.status !== CONTENT_STATUS.PUBLISHED) {
-        continue;
-      }
+    const reactionsCountMap = await this._postReactionRepo.getAndCountReactionByContents(
+      contentIds
+    );
 
+    const pipeline = this._store.getClient().pipeline();
+    for (const content of contents) {
+      const contentCacheDto = this._contentMapper.modelToCache(
+        content,
+        reactionsCountMap[content.id]
+      );
       pipeline.call(
         'JSON.SET',
         `${CACHE_KEYS.CONTENT}:${contentCacheDto.id}`,

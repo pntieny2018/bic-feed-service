@@ -38,13 +38,14 @@ export type FindAllContentsInCacheProps = {
 
 export interface IContentCacheRepository {
   existKey(key: string): Promise<boolean>;
+  existContent(contentId: string): Promise<boolean>;
 
   findContent(input: FindContentInCacheProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findContents(
     input: FindAllContentsInCacheProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
-  setContents(contents: (PostEntity | ArticleEntity | SeriesEntity)[]): Promise<void>;
+  cacheContents(contentIds: string[]): Promise<void>;
   deleteContent(contentId: string): Promise<void>;
   deleteContents(contentIds: string[]): Promise<void>;
 

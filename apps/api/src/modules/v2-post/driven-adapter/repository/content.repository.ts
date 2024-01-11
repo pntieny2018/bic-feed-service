@@ -341,7 +341,7 @@ export class ContentRepository implements IContentRepository {
     ]);
     const contentEntity = this._contentMapper.toDomain(content, reactionsCountMap.get(content.id));
 
-    await this._contentCacheRepo.setContents([contentEntity]);
+    this._contentCacheRepo.cacheContents([content.id]);
 
     return contentEntity;
   }
@@ -382,7 +382,7 @@ export class ContentRepository implements IContentRepository {
       this._contentMapper.toDomain(content, reactionsCountMap.get(content.id))
     );
 
-    await this._contentCacheRepo.setContents(dbContentEntities);
+    this._contentCacheRepo.cacheContents(nonCachedContentIds);
 
     return [...cachedContentEntities, ...dbContentEntities].sort(
       (a, b) => contentIds.indexOf(a.getId()) - contentIds.indexOf(b.getId())

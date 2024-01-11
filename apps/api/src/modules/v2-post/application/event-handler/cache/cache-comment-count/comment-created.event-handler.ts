@@ -1,7 +1,3 @@
-import {
-  CONTENT_DOMAIN_SERVICE_TOKEN,
-  IContentDomainService,
-} from '@api/modules/v2-post/domain/domain-service/interface';
 import { CommentCreatedEvent } from '@api/modules/v2-post/domain/event';
 import {
   CONTENT_CACHE_REPOSITORY_TOKEN,
@@ -14,8 +10,6 @@ import { IEventHandler } from '@nestjs/cqrs';
 @EventsHandlerAndLog(CommentCreatedEvent)
 export class CacheCountCommentCreatedEventHandler implements IEventHandler<CommentCreatedEvent> {
   public constructor(
-    @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomain: IContentDomainService,
     @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
     private readonly _contentCacheRepo: IContentCacheRepository
   ) {}
@@ -24,11 +18,8 @@ export class CacheCountCommentCreatedEventHandler implements IEventHandler<Comme
     const { comment } = event.payload;
 
     const contentId = comment.get('postId');
-    const cachedContent = await this._contentCacheRepo.findContent({ where: { id: contentId } });
-    if (!cachedContent) {
-      const contentEntity = await this._contentDomain.getContentForCacheById(contentId);
-      await this._contentCacheRepo.setContents([contentEntity]);
-    } else {
+    const isCachedContent = await this._contentCacheRepo.existContent(contentId);
+    if (isCachedContent) {
       await this._contentCacheRepo.increaseCommentCount(contentId);
     }
   }

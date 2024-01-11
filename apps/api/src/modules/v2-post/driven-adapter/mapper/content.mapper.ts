@@ -1,15 +1,17 @@
 import {
   ArticleCacheDto,
+  FileDto,
   ImageDto,
   LinkPreviewDto,
   PostCacheDto,
+  QuizDto,
   ReactionCount,
   SeriesCacheDto,
   TagDto,
+  VideoDto,
 } from '@api/modules/v2-post/application/dto';
-import { MediaMapper } from '@api/modules/v2-post/driven-adapter/mapper/media.mapper';
-import { QuizMapper } from '@api/modules/v2-post/driven-adapter/mapper/quiz.mapper';
 import { CONTENT_TYPE } from '@beincom/constants';
+import { QuizAttributes, TagAttributes } from '@libs/database/postgres/model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
 import { Injectable } from '@nestjs/common';
 import { merge } from 'lodash';
@@ -33,11 +35,6 @@ import { TagEntity } from '../../domain/model/tag';
 
 @Injectable()
 export class ContentMapper {
-  public constructor(
-    private readonly _quizMapper: QuizMapper,
-    private readonly _mediaMapper: MediaMapper
-  ) {}
-
   public toDomain(
     post: PostModel,
     reactionsCount?: ReactionCount[]
@@ -78,24 +75,25 @@ export class ContentMapper {
     }
   }
 
-  public async contentsCacheBinding(
-    contentEntities: (PostEntity | SeriesEntity | ArticleEntity)[]
-  ): Promise<(ArticleCacheDto | PostCacheDto | SeriesCacheDto)[]> {
-    const result = [];
-    for (const content of contentEntities) {
-      if (content instanceof PostEntity) {
-        result.push(this._bindingPostCache(content));
-      }
-      if (content instanceof ArticleEntity) {
-        result.push(this._bindingArticleCache(content));
-      }
-
-      if (content instanceof SeriesEntity) {
-        result.push(this._bindingSeriesCache(content));
-      }
+  public modelToCache(
+    post: PostModel,
+    reactionsCount?: ReactionCount[]
+  ): ArticleCacheDto | PostCacheDto | SeriesCacheDto {
+    if (post === null) {
+      return null;
     }
 
-    return result;
+    post = post.toJSON();
+    switch (post.type) {
+      case CONTENT_TYPE.POST:
+        return this._modelToPostCache(post, reactionsCount);
+      case CONTENT_TYPE.SERIES:
+        return this._modelToSeriesCache(post);
+      case CONTENT_TYPE.ARTICLE:
+        return this._modelToArticleCache(post, reactionsCount);
+      default:
+        return null;
+    }
   }
 
   public toPersistence<
@@ -212,7 +210,7 @@ export class ContentMapper {
       content: post.content,
       mentionUserIds: post.mentions || [],
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
-      seriesIds: post.seriesIds || [],
+      seriesIds: (post.series || []).map((series) => series.id),
       tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
       videoIdProcessing: post.videoIdProcessing || null,
     });
@@ -278,7 +276,7 @@ export class ContentMapper {
       content: post.content,
       categories: (post.categories || []).map((category) => new CategoryEntity(category)),
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
-      seriesIds: post.seriesIds || [],
+      seriesIds: (post.series || []).map((series) => series.id),
       tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
     });
   }
@@ -358,7 +356,7 @@ export class ContentMapper {
           })
         : undefined,
       content: post.content,
-      mentionUserIds: post.mentionsUserId || [],
+      mentionUserIds: post.mentionsUserIds || [],
       linkPreview: post.linkPreview
         ? new LinkPreviewEntity(post.linkPreview as LinkPreviewAttributes)
         : undefined,
@@ -432,115 +430,151 @@ export class ContentMapper {
     });
   }
 
-  private _bindingPostCache(postEntity: PostEntity): PostCacheDto {
+  private _modelToPostCache(
+    post: PostAttributes,
+    reactionsCount: ReactionCount[] = []
+  ): PostCacheDto {
     return new PostCacheDto({
-      id: postEntity.getId(),
-      isHidden: postEntity.isHidden(),
-      isReported: postEntity.get('isReported'),
-      commentsCount: postEntity.get('aggregation')?.commentsCount || 0,
-      content: postEntity.getContent(),
-      title: postEntity.get('title'),
-      createdAt: postEntity.get('createdAt'),
-      updatedAt: postEntity.get('updatedAt'),
-      createdBy: postEntity.getCreatedBy(),
-      updatedBy: postEntity.get('updatedBy'),
-      groupIds: postEntity.getGroupIds(),
-      linkPreview: this._getLinkPreviewBindingInContent(postEntity.get('linkPreview')),
-      media: this._mediaMapper.toDto(postEntity.get('media')),
-      mentionsUserId: postEntity.get('mentionUserIds'),
-      privacy: postEntity.get('privacy'),
-      publishedAt: postEntity.get('publishedAt'),
-      reactionsCount: postEntity.get('aggregation')?.reactionsCount,
-      setting: postEntity.get('setting'),
-      status: postEntity.get('status'),
-      tags: postEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
-      totalUsersSeen: postEntity.get('aggregation')?.totalUsersSeen || 0,
-      type: postEntity.getType(),
-      seriesIds: postEntity.getSeriesIds(),
-      quiz: postEntity.get('quiz') ? this._quizMapper.toDto(postEntity.get('quiz')) : undefined,
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      media: {
+        images: (post.mediaJson?.images || []).map((image) => new ImageDto(image)),
+        files: (post.mediaJson?.files || []).map((file) => new FileDto(file)),
+        videos: (post.mediaJson?.videos || []).map((video) => new VideoDto(video)),
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      publishedAt: post.publishedAt,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      title: post.title,
+      content: post.content,
+      reactionsCount: merge({}, ...reactionsCount),
+      commentsCount: post.commentsCount || 0,
+      totalUsersSeen: post.totalUsersSeen || 0,
+      mentionsUserIds: post.mentions || [],
+      seriesIds: (post.series || []).map((series) => series.id),
+      tags: (post.tagsJson || []).map((tag) => this._modelToTagDto(tag)),
+      linkPreview: post.linkPreview ? new LinkPreviewDto(post.linkPreview) : null,
+      quiz: this._modelToQuizDto(post.quiz?.[0]),
     });
   }
 
-  private _bindingArticleCache(articleEntity: ArticleEntity): ArticleCacheDto {
+  private _modelToArticleCache(
+    post: PostAttributes,
+    reactionsCount: ReactionCount[] = []
+  ): ArticleCacheDto {
     return new ArticleCacheDto({
-      categories: articleEntity.getCategories().map((category) => ({
-        id: category.get('id'),
-        name: category.get('name'),
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      media: {
+        images: (post.mediaJson?.images || []).map((image) => new ImageDto(image)),
+        files: (post.mediaJson?.files || []).map((file) => new FileDto(file)),
+        videos: (post.mediaJson?.videos || []).map((video) => new VideoDto(video)),
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      publishedAt: post.publishedAt,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      title: post.title,
+      content: post.content,
+      summary: post.summary,
+      reactionsCount: merge({}, ...reactionsCount),
+      wordCount: post.wordCount || 0,
+      commentsCount: post.commentsCount || 0,
+      totalUsersSeen: post.totalUsersSeen || 0,
+      categories: (post.categories || []).map((category) => ({
+        id: category.id,
+        name: category.name,
       })),
-      commentsCount: articleEntity.get('aggregation')?.commentsCount || 0,
-      content: articleEntity.get('content'),
-      coverMedia: new ImageDto(articleEntity.get('cover')?.toObject()),
-      createdAt: articleEntity.get('createdAt'),
-      createdBy: articleEntity.getCreatedBy(),
-      updatedBy: articleEntity.get('updatedBy'),
-      groupIds: articleEntity.getGroupIds(),
-      id: articleEntity.getId(),
-      isReported: articleEntity.get('isReported'),
-      isHidden: articleEntity.isHidden(),
-      media: this._mediaMapper.toDto(articleEntity.get('media')),
-      privacy: articleEntity.get('privacy'),
-      publishedAt: articleEntity.get('publishedAt'),
-      reactionsCount: articleEntity.get('aggregation')?.reactionsCount,
-      seriesIds: articleEntity.getSeriesIds(),
-      setting: articleEntity.get('setting'),
-      status: articleEntity.get('status'),
-      summary: articleEntity.get('summary'),
-      tags: articleEntity.getTags().map((tagEntity) => this._getTagBindingInContent(tagEntity)),
-      title: articleEntity.get('title'),
-      totalUsersSeen: articleEntity.get('aggregation')?.totalUsersSeen || 0,
-      type: articleEntity.getType(),
-      updatedAt: articleEntity.get('updatedAt'),
-      wordCount: articleEntity.get('wordCount'),
-      quiz: articleEntity.get('quiz')
-        ? this._quizMapper.toDto(articleEntity.get('quiz'))
-        : undefined,
+      coverMedia: post.coverJson ? new ImageDto(post.coverJson) : null,
+      seriesIds: (post.series || []).map((series) => series.id),
+      tags: (post.tagsJson || []).map((tag) => this._modelToTagDto(tag)),
+      quiz: this._modelToQuizDto(post.quiz?.[0]),
     });
   }
 
-  private _bindingSeriesCache(seriesEntity: SeriesEntity): SeriesCacheDto {
+  private _modelToSeriesCache(post: PostAttributes): SeriesCacheDto {
     return new SeriesCacheDto({
-      coverMedia: new ImageDto(seriesEntity.get('cover')?.toObject()),
-      createdAt: seriesEntity.get('createdAt'),
-      updatedAt: seriesEntity.get('updatedAt'),
-      updatedBy: seriesEntity.get('updatedBy'),
-      createdBy: seriesEntity.getCreatedBy(),
-      isHidden: seriesEntity.isHidden(),
-      isReported: seriesEntity.get('isReported'),
-      groupIds: seriesEntity.getGroupIds(),
-      id: seriesEntity.getId(),
-      itemsIds: seriesEntity.getItemIds(),
-      privacy: seriesEntity.get('privacy'),
-      publishedAt: seriesEntity.get('publishedAt'),
-      setting: seriesEntity.get('setting'),
-      status: seriesEntity.get('status'),
-      summary: seriesEntity.get('summary'),
-      title: seriesEntity.get('title'),
-      type: seriesEntity.getType(),
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      publishedAt: post.publishedAt,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      title: post.title,
+      summary: post.summary,
+      itemsIds: post.itemIds || [],
+      coverMedia: post.coverJson ? new ImageDto(post.coverJson) : null,
     });
   }
 
-  private _getLinkPreviewBindingInContent(linkPreviewEntity: LinkPreviewEntity): LinkPreviewDto {
-    if (!linkPreviewEntity) {
+  private _modelToQuizDto(quiz: QuizAttributes): QuizDto {
+    if (!quiz) {
       return null;
     }
     return {
-      id: linkPreviewEntity.get('id'),
-      url: linkPreviewEntity.get('url'),
-      domain: linkPreviewEntity.get('domain'),
-      image: linkPreviewEntity.get('image'),
-      title: linkPreviewEntity.get('title'),
-      description: linkPreviewEntity.get('description'),
+      id: quiz.id,
+      contentId: quiz.postId,
+      numberOfQuestions: quiz.numberOfQuestions,
+      numberOfAnswers: quiz.numberOfAnswers,
+      isRandom: quiz.isRandom,
+      title: quiz.title,
+      description: quiz.description,
+      numberOfQuestionsDisplay: quiz.numberOfQuestionsDisplay,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+      status: quiz.status,
+      genStatus: quiz.genStatus,
+      createdBy: quiz.createdBy,
+      timeLimit: quiz.timeLimit,
     };
   }
 
-  private _getTagBindingInContent(tagEntity: TagEntity): TagDto {
-    if (!tagEntity) {
+  private _modelToTagDto(tag: TagAttributes): TagDto {
+    if (!tag) {
       return null;
     }
     return {
-      id: tagEntity.get('id'),
-      groupId: tagEntity.get('groupId'),
-      name: tagEntity.get('name'),
+      id: tag.id,
+      groupId: tag.groupId,
+      name: tag.name,
+      slug: tag.slug,
     };
   }
 }
