@@ -124,11 +124,16 @@ export class ContentCacheRepository implements IContentCacheRepository {
       cachedContents = cachedContents.filter((content) => inStateContents[content.id]);
     }
     if (excludeReportedByUserId) {
-      const contentIds = cachedContents.map((content) => content.id);
-      const reportedTargets = await this._libReportDetailRepo.findMany({
-        where: { targetId: contentIds, reporterId: excludeReportedByUserId },
-      });
-      const reportedTargetIds = reportedTargets.map((reportedTarget) => reportedTarget.targetId);
+      let reportedTargetIds = await this.getReportedTargetIdsByUserId(excludeReportedByUserId);
+
+      if (!reportedTargetIds?.length) {
+        const contentIds = cachedContents.map((content) => content.id);
+        const reportedTargets = await this._libReportDetailRepo.findMany({
+          where: { targetId: contentIds, reporterId: excludeReportedByUserId },
+        });
+        reportedTargetIds = reportedTargets.map((reportedTarget) => reportedTarget.targetId);
+      }
+
       cachedContents = cachedContents.filter((content) => !reportedTargetIds.includes(content.id));
     }
 

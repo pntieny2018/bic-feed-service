@@ -34,7 +34,12 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
       }
       function logError(error: any): void {
         logger.error(
-          `EventHandler error: ${JSON.stringify({ eventName, debugContext, error: error.message })}`
+          `EventHandler error: ${JSON.stringify({
+            eventName,
+            debugContext,
+            error: error.message,
+            stack: error.stack,
+          })}`
         );
         Sentry.captureException(error);
       }

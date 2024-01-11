@@ -309,6 +309,7 @@ export class SearchService {
       communities: {
         terms: {
           field: 'communityIds',
+          size: 100,
         },
       },
     };

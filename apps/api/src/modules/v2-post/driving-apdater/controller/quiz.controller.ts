@@ -76,7 +76,7 @@ export class QuizController {
   })
   @Get(ROUTES.QUIZ.GET_QUIZZES.PATH)
   @Version(ROUTES.QUIZ.GET_QUIZZES.VERSIONS)
-  public async get(
+  public async getQuizzes(
     @AuthUser() user: UserDto,
     @Query() getQuizzesRequestDto: GetQuizzesRequestDto
   ): Promise<FindQuizzesDto> {
@@ -96,7 +96,7 @@ export class QuizController {
   })
   @Post(ROUTES.QUIZ.CREATE.PATH)
   @Version(ROUTES.QUIZ.CREATE.VERSIONS)
-  public async create(
+  public async createQuiz(
     @AuthUser() authUser: UserDto,
     @Body() createQuizDto: CreateQuizRequestDto
   ): Promise<QuizDto> {
@@ -114,7 +114,7 @@ export class QuizController {
   })
   @Put(ROUTES.QUIZ.GENERATE.PATH)
   @Version(ROUTES.QUIZ.GENERATE.VERSIONS)
-  public async regenerate(
+  public async regenerateQuiz(
     @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto,
     @Body() generateQuizDto: GenerateQuizRequestDto
@@ -167,7 +167,7 @@ export class QuizController {
   })
   @Put(ROUTES.QUIZ.UPDATE.PATH)
   @Version(ROUTES.QUIZ.UPDATE.VERSIONS)
-  public async update(
+  public async updateQuiz(
     @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto,
     @Body() updateQuizDto: UpdateQuizRequestDto,
@@ -201,7 +201,7 @@ export class QuizController {
   })
   @Delete(ROUTES.QUIZ.DELETE.PATH)
   @Version(ROUTES.QUIZ.DELETE.VERSIONS)
-  public async delete(
+  public async deleteQuiz(
     @Param('quizId', ParseUUIDPipe) quizId: string,
     @AuthUser() authUser: UserDto
   ): Promise<void> {

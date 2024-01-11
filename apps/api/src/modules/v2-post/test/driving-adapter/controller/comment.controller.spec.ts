@@ -36,6 +36,7 @@ describe('CommentController', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           t: (...args) => {},
         } as any)
     );
@@ -58,7 +59,7 @@ describe('CommentController', () => {
         })
       );
 
-      const res = await commentController.getList(userMock, listCommentDto);
+      const res = await commentController.getListComments(userMock, listCommentDto);
       expect(res).toEqual({
         list: [commentMock],
         meta: {},
@@ -82,7 +83,7 @@ describe('CommentController', () => {
         .spyOn(query, 'execute')
         .mockImplementation(() => Promise.reject(new ContentNotFoundException('Post not found')));
 
-      await expect(commentController.getList(userMock, listCommentDto)).rejects.toThrow(
+      await expect(commentController.getListComments(userMock, listCommentDto)).rejects.toThrow(
         new NotFoundException('Post not found')
       );
     });
@@ -95,7 +96,7 @@ describe('CommentController', () => {
       } as GetListCommentsDto;
       jest.spyOn(query, 'execute').mockImplementation(() => Promise.reject(new Error()));
 
-      await expect(commentController.getList(userMock, listCommentDto)).rejects.toThrow(
+      await expect(commentController.getListComments(userMock, listCommentDto)).rejects.toThrow(
         new Error()
       );
     });
@@ -220,7 +221,7 @@ describe('CommentController', () => {
       };
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.resolve(commentMock));
 
-      const res = await commentController.create(userMock, createCommentDto);
+      const res = await commentController.createComment(userMock, createCommentDto);
       expect(res).toEqual(commentMock);
       expect(command.execute).toBeCalledWith({
         payload: {
@@ -246,7 +247,7 @@ describe('CommentController', () => {
         .spyOn(command, 'execute')
         .mockImplementation(() => Promise.reject(new ContentNotFoundException('Post not found')));
 
-      await expect(commentController.create(userMock, createCommentDto)).rejects.toThrow(
+      await expect(commentController.createComment(userMock, createCommentDto)).rejects.toThrow(
         new NotFoundException('Post not found')
       );
     });
@@ -262,7 +263,7 @@ describe('CommentController', () => {
           Promise.reject(new DomainModelException('Domain model exception'))
         );
 
-      await expect(commentController.create(userMock, createCommentDto)).rejects.toThrow(
+      await expect(commentController.createComment(userMock, createCommentDto)).rejects.toThrow(
         new BadRequestException('Domain model exception')
       );
     });
@@ -280,7 +281,7 @@ describe('CommentController', () => {
           )
         );
 
-      await expect(commentController.create(userMock, createCommentDto)).rejects.toThrow(
+      await expect(commentController.createComment(userMock, createCommentDto)).rejects.toThrow(
         new ForbiddenException('Content No Comment Permission Exception')
       );
     });
@@ -292,7 +293,7 @@ describe('CommentController', () => {
       };
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.reject(new Error('Error')));
 
-      await expect(commentController.create(userMock, createCommentDto)).rejects.toThrow(
+      await expect(commentController.createComment(userMock, createCommentDto)).rejects.toThrow(
         new Error('Error')
       );
     });
@@ -322,7 +323,7 @@ describe('CommentController', () => {
       };
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.resolve(commentMock));
 
-      const res = await commentController.reply(
+      const res = await commentController.replyComment(
         userMock,
         '7a821691-64cb-4846-9933-d31cbe5ce558',
         replyCommentDto
@@ -355,7 +356,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.reply(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', replyCommentDto)
+        commentController.replyComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          replyCommentDto
+        )
       ).rejects.toThrow(new NotFoundException('Comment Reply Not Exist Exception'));
     });
 
@@ -371,7 +376,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.reply(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', replyCommentDto)
+        commentController.replyComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          replyCommentDto
+        )
       ).rejects.toThrow(new BadRequestException('Domain model exception'));
     });
 
@@ -389,7 +398,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.reply(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', replyCommentDto)
+        commentController.replyComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          replyCommentDto
+        )
       ).rejects.toThrow(new ForbiddenException('Content No Comment Permission Exception'));
     });
 
@@ -401,7 +414,11 @@ describe('CommentController', () => {
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.reject(new Error('error')));
 
       await expect(
-        commentController.reply(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', replyCommentDto)
+        commentController.replyComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          replyCommentDto
+        )
       ).rejects.toThrow(new Error('error'));
     });
   });
@@ -429,7 +446,7 @@ describe('CommentController', () => {
       };
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.resolve(commentMock));
 
-      await commentController.update(
+      await commentController.updateComment(
         userMock,
         '7a821691-64cb-4846-9933-d31cbe5ce558',
         updateCommentDto
@@ -459,7 +476,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.update(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', updateCommentDto)
+        commentController.updateComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          updateCommentDto
+        )
       ).rejects.toThrow(new NotFoundException('Comment Not Found Exception'));
     });
 
@@ -474,7 +495,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.update(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', updateCommentDto)
+        commentController.updateComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          updateCommentDto
+        )
       ).rejects.toThrow(new BadRequestException('Domain model exception'));
     });
 
@@ -491,7 +516,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.update(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', updateCommentDto)
+        commentController.updateComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          updateCommentDto
+        )
       ).rejects.toThrow(new ForbiddenException('Content No Comment Permission Exception'));
     });
 
@@ -506,7 +535,11 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.update(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558', updateCommentDto)
+        commentController.updateComment(
+          userMock,
+          '7a821691-64cb-4846-9933-d31cbe5ce558',
+          updateCommentDto
+        )
       ).rejects.toThrow(new Error('Content No Comment Permission Exception'));
     });
   });
@@ -514,7 +547,7 @@ describe('CommentController', () => {
     it('should destroy a comment successfully', async () => {
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.resolve());
 
-      await commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558');
+      await commentController.destroyComment(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558');
       expect(command.execute).toBeCalledWith({
         payload: {
           commentId: '7a821691-64cb-4846-9933-d31cbe5ce558',
@@ -531,7 +564,7 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
+        commentController.destroyComment(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
       ).rejects.toThrow(new NotFoundException('Comment Not Found Exception'));
     });
 
@@ -543,7 +576,7 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
+        commentController.destroyComment(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
       ).rejects.toThrow(new BadRequestException('Domain model exception'));
     });
 
@@ -557,7 +590,7 @@ describe('CommentController', () => {
         );
 
       await expect(
-        commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
+        commentController.destroyComment(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
       ).rejects.toThrow(new ForbiddenException('Content No Comment Permission Exception'));
     });
 
@@ -565,7 +598,7 @@ describe('CommentController', () => {
       jest.spyOn(command, 'execute').mockImplementation(() => Promise.reject(new Error()));
 
       await expect(
-        commentController.destroy(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
+        commentController.destroyComment(userMock, '7a821691-64cb-4846-9933-d31cbe5ce558')
       ).rejects.toThrow(new Error());
     });
   });

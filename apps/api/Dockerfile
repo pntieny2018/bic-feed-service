@@ -14,7 +14,7 @@ WORKDIR ${WORKDIR}
 
 # Install the NestJS CLI globally.
 ARG NESTCLI_VERSION
-RUN yarn global add @nestjs/cli@{NESTCLI_VERSION}
+RUN yarn global add @nestjs/cli@${NESTCLI_VERSION}
 
 # Install dependencies
 COPY package.json yarn.lock ./ 

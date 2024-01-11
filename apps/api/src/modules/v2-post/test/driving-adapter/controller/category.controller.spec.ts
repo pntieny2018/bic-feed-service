@@ -60,7 +60,7 @@ describe('CategoryController', () => {
         limit: 10,
       };
       const queryExecute = jest.spyOn(query, 'execute').mockResolvedValue(categoryMocks);
-      await controller.get(userMock, getCategoryDto);
+      await controller.getCategory(userMock, getCategoryDto);
       expect(queryExecute).toBeCalledWith(
         new FindCategoriesPaginationQuery({
           name: getCategoryDto.name,

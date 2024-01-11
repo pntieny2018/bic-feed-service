@@ -56,7 +56,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Get tags' })
   @Get(ROUTES.TAG.GET_TAGS.PATH)
-  public async get(
+  public async getTags(
     @AuthUser() _user: UserDto,
     @Query() getTagDto: GetTagRequestDto
   ): Promise<PageDto<FindTagsPaginationDto>> {
@@ -82,7 +82,7 @@ export class TagController {
   })
   @Post(ROUTES.TAG.CREATE_TAG.PATH)
   @Version(ROUTES.TAG.CREATE_TAG.VERSIONS)
-  public async create(
+  public async createTag(
     @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagRequestDto
   ): Promise<TagDto> {
@@ -101,7 +101,7 @@ export class TagController {
   @ResponseMessages({ success: 'message.tag.updated_success' })
   @Put(ROUTES.TAG.UPDATE_TAG.PATH)
   @Version(ROUTES.TAG.UPDATE_TAG.VERSIONS)
-  public async update(
+  public async updateTag(
     @AuthUser() user: UserDto,
     @Param('tagId', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagRequestDto
@@ -121,7 +121,7 @@ export class TagController {
   @Delete(ROUTES.TAG.DELETE_TAG.PATH)
   @Version(ROUTES.TAG.DELETE_TAG.VERSIONS)
   @ResponseMessages({ success: 'message.tag.deleted_success' })
-  public async delete(
+  public async deleteTag(
     @AuthUser() user: UserDto,
     @Param('tagId', ParseUUIDPipe) tagId: string
   ): Promise<void> {
