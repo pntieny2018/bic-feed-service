@@ -11,29 +11,12 @@ export class UserAdapter implements IUserAdapter {
   ) {}
 
   public async getUserById(userId: string, options?: FindUserOption): Promise<UserDto> {
-    const user = await this._userService.findById(userId);
-
-    const excluded = this._getExcludedFields(options);
-
-    return new UserDto(user, excluded);
+    return this._userService.findById(userId, options);
   }
 
   public async getUsersByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
     const uniqueIds = uniq(userIds);
-    const users = await this._userService.findAllByIds(uniqueIds);
-
-    const excluded = this._getExcludedFields(options);
-
-    return users.map((user) => new UserDto(user, excluded));
-  }
-
-  private _getExcludedFields(options?: FindUserOption): string[] {
-    const excluded = [];
-
-    if (!options?.withGroupJoined) {
-      excluded.push('groups');
-    }
-    return excluded;
+    return this._userService.findAllByIds(uniqueIds, options);
   }
 
   public async canCudTags(userId: string, groupId: string): Promise<boolean> {
