@@ -5,7 +5,7 @@ import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
 import { RedisService } from '@libs/infra/redis';
 import { GROUP_ENDPOINT } from '@libs/service/group/src/endpoint.constant';
-import { IUserService, USER_ENDPOINT } from '@libs/service/user';
+import { FindUserOption, IUserService, USER_ENDPOINT } from '@libs/service/user';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 
@@ -22,22 +22,22 @@ export class UserService implements IUserService {
     @Inject(USER_HTTP_TOKEN) private readonly _userHttpService: IHttpService
   ) {}
 
-  public async findById(id: string): Promise<UserDto> {
+  public async findById(id: string, options?: FindUserOption): Promise<UserDto> {
     try {
-      return this._getUserByUserId(id);
+      return this._getUserByUserId(id, options);
     } catch (e) {
       this._logger.error(e);
       return null;
     }
   }
 
-  public async findAllByIds(ids: string[]): Promise<UserDto[]> {
+  public async findAllByIds(ids: string[], options?: FindUserOption): Promise<UserDto[]> {
     if (!ids.length) {
       return [];
     }
 
     try {
-      return this._getUsersByUserIds(ids);
+      return this._getUsersByUserIds(ids, options);
     } catch (e) {
       this._logger.error(e);
       return [];
@@ -62,7 +62,7 @@ export class UserService implements IUserService {
     return new UserDto({ ...userProfile, groups: joinedGroups });
   }
 
-  private async _getUserByUserId(userId: string): Promise<UserDto> {
+  private async _getUserByUserId(userId: string, options?: FindUserOption): Promise<UserDto> {
     const [username] = await this._getUsernamesFromCacheByUserIds([userId]);
 
     const userProfile =
@@ -73,12 +73,19 @@ export class UserService implements IUserService {
       return null;
     }
 
+    if (!options?.withGroupJoined) {
+      return new UserDto(userProfile);
+    }
+
     const joinedGroups = await this._getJoinedGroupsFromCacheByUserId(userProfile.id);
 
     return new UserDto({ ...userProfile, groups: joinedGroups });
   }
 
-  private async _getUsersByUserIds(userIds: string[]): Promise<UserDto[]> {
+  private async _getUsersByUserIds(
+    userIds: string[],
+    options?: FindUserOption
+  ): Promise<UserDto[]> {
     if (!userIds.length) {
       return [];
     }
@@ -103,8 +110,15 @@ export class UserService implements IUserService {
       pipeline.smembers(key);
     });
 
-    const joinedGroup = await pipeline.exec();
     const users: UserDto[] = [];
+    if (!options?.withGroupJoined) {
+      usersProfile.forEach((userProfile) => {
+        users.push(new UserDto(userProfile));
+      });
+      return users;
+    }
+
+    const joinedGroup = await pipeline.exec();
     joinedGroup.forEach((result, index) => {
       const [err, value] = result;
 

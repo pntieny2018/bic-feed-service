@@ -654,7 +654,9 @@ export class ContentBinding implements IContentBinding {
     }
 
     const [users, groups, ownerReactions, markedReadPosts] = await Promise.all([
-      this._userAdapter.getUsersByIds(uniq([...authorIds, ...mentionUserIds])),
+      this._userAdapter.getUsersByIds(uniq([...authorIds, ...mentionUserIds]), {
+        withGroupJoined: false,
+      }),
       this._groupAdapter.getGroupsByIds(uniq(groupIds)),
       this._bindOwnerReactions(authUser.id, contentIds),
       this._bindMarkedReadPost(authUser.id, contentIds),
