@@ -28,6 +28,9 @@ export class CommentBinding implements ICommentBinding {
     private readonly _userAdapter: IUserAdapter
   ) {}
   public async commentsBinding(rows: CommentEntity[]): Promise<CommentExtendedDto[]> {
+    if (!rows || rows.length === 0) {
+      return [];
+    }
     const userData = await this._getUsersBindingInComment(rows);
 
     const reactionsCount = await this._commentReactionRepo.getAndCountReactionByComments(
