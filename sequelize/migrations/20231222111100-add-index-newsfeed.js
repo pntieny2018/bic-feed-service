@@ -72,12 +72,14 @@ const indexList = [
   {
     tableName: 'posts_reactions',
     indexName: 'posts_reactions_composite_index',
-    index: ['post_id', 'created_by'],
+    index: ['post_id', 'created_by', 'reaction_name'],
+    isUnique: true,
   },
   {
     tableName: 'comments_reactions',
     indexName: 'comments_reactions_composite_index',
-    index: ['comment_id', 'created_by'],
+    index: ['comment_id', 'created_by', 'reaction_name'],
+    isUnique: true,
   },
 ];
 module.exports = {
