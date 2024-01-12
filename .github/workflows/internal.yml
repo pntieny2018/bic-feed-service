@@ -1,9 +1,11 @@
 name: internal
 run-name: ${{ github.ref_name }}
 on:
-  pull_request:
-    types:
-      - closed
+#   pull_request:
+#     types:
+#       - closed
+#     branches: ["internal"]
+  push:
     branches: ["internal"]
 # on:
 #   push:
