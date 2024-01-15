@@ -212,7 +212,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
     for (const content of contents) {
       const contentCacheDto = this._contentMapper.modelToCache(
         content,
-        reactionsCountMap[content.id]
+        reactionsCountMap.get(content.id)
       );
       pipeline.call(
         'JSON.SET',
