@@ -121,7 +121,7 @@ export class ContentBinding implements IContentBinding {
         postEntity.get('aggregation')?.reactionsCount
       ),
       this._bindOwnerReactions(authUser.id, [postId]),
-      this._bindMarkedReadPost(authUser.id, [postId]),
+      this._bindMarkedReadPost(authUser.id, postEntity.isImportant() ? [postId] : []),
     ]);
 
     let quiz;
@@ -291,7 +291,7 @@ export class ContentBinding implements IContentBinding {
         articleEntity.get('aggregation')?.reactionsCount
       ),
       this._bindOwnerReactions(authUser.id, [articleId]),
-      this._bindMarkedReadPost(authUser.id, [articleId]),
+      this._bindMarkedReadPost(authUser.id, articleEntity.isImportant() ? [articleId] : []),
     ]);
 
     let quiz;
@@ -335,9 +335,7 @@ export class ContentBinding implements IContentBinding {
       markedReadPost: markedReadArticles[articleEntity.getId()] || false,
       ownerReactions: ownerReactions[articleEntity.getId()] || [],
       reactionsCount,
-      publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
-        ? articleEntity.get('scheduledAt')
-        : articleEntity.get('publishedAt'),
+      publishedAt: articleEntity.get('publishedAt'),
       scheduledAt: articleEntity.get('scheduledAt'),
       audience: { groups },
       communities,
@@ -408,9 +406,7 @@ export class ContentBinding implements IContentBinding {
         reactionsCount: map(articleEntity.get('aggregation')?.reactionsCount, (value, key) => ({
           [key]: value,
         })),
-        publishedAt: articleEntity.isWaitingSchedule() // Temporarily set publish to backward compatible with mobile
-          ? articleEntity.get('scheduledAt')
-          : articleEntity.get('publishedAt'),
+        publishedAt: articleEntity.get('publishedAt'),
         scheduledAt: articleEntity.get('scheduledAt'),
         audience: { groups: articleGroups },
         communities: articleCommunities,
@@ -467,7 +463,7 @@ export class ContentBinding implements IContentBinding {
           shouldIncludeCategory: true,
         },
       }),
-      this._bindMarkedReadPost(authUser.id, [seriesId]),
+      this._bindMarkedReadPost(authUser.id, seriesEntity.isImportant() ? [seriesId] : []),
     ]);
 
     const itemIds = seriesEntity.getItemIds();
@@ -627,6 +623,7 @@ export class ContentBinding implements IContentBinding {
     const postEntities = [];
     const articleEntities = [];
     const seriesEntities = [];
+    const importantContentIds = [];
     let hasBindingQuiz = false;
 
     for (const contentEntity of contentEntities) {
@@ -651,6 +648,9 @@ export class ContentBinding implements IContentBinding {
       ) {
         hasBindingQuiz = true;
       }
+      if (contentEntity.isImportant()) {
+        importantContentIds.push(contentEntity.getId());
+      }
     }
 
     const [users, groups, ownerReactions, markedReadPosts] = await Promise.all([
@@ -659,7 +659,7 @@ export class ContentBinding implements IContentBinding {
       }),
       this._groupAdapter.getGroupsByIds(uniq(groupIds)),
       this._bindOwnerReactions(authUser.id, contentIds),
-      this._bindMarkedReadPost(authUser.id, contentIds),
+      this._bindMarkedReadPost(authUser.id, importantContentIds),
     ]);
 
     const usersMap = ArrayHelper.convertArrayToObject(users, 'id');
@@ -1052,10 +1052,7 @@ export class ContentBinding implements IContentBinding {
       markedReadPost: articleAttributes.markedReadImportant,
       ownerReactions: articleAttributes.ownerReactions,
       reactionsCount,
-      publishedAt:
-        articleAttributes.status === CONTENT_STATUS.WAITING_SCHEDULE // Temporarily set publish to backward compatible with mobile
-          ? articleAttributes.scheduledAt
-          : articleAttributes.publishedAt,
+      publishedAt: articleAttributes.publishedAt,
       scheduledAt: articleAttributes.scheduledAt,
       audience: { groups },
       communities,
@@ -1085,17 +1082,20 @@ export class ContentBinding implements IContentBinding {
     return instanceToInstance(user, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
-  private _bindOwnerReactions(
+  private async _bindOwnerReactions(
     authUserId: string,
     contentIds: string[]
   ): Promise<Record<string, OwnerReactionDto[]>> {
     return this._postReactionRepo.getReactionsByContents(contentIds, authUserId);
   }
 
-  private _bindMarkedReadPost(
+  private async _bindMarkedReadPost(
     authUserId: string,
     contentIds: string[]
   ): Promise<Record<string, boolean>> {
+    if (!contentIds.length) {
+      return {};
+    }
     return this._contentRepo.getMarkReadImportant(contentIds, authUserId);
   }
 }

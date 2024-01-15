@@ -587,7 +587,9 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async saveContent(contentId: string, authUser: UserDto): Promise<void> {
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
+    const content = await this._contentRepo.findContentWithCache({
+      where: { id: contentId },
+    });
 
     if (!content || !content.isPublished()) {
       throw new ContentNotFoundException();
@@ -597,7 +599,9 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async unsaveContent(contentId: string, userId: string): Promise<void> {
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
+    const content = await this._contentRepo.findContentWithCache({
+      where: { id: contentId },
+    });
 
     if (!content || !content.isPublished()) {
       throw new ContentNotFoundException();
