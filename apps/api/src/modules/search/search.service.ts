@@ -270,8 +270,7 @@ export class SearchService {
     const { from, size, searchAfter } = query;
     const body = this.elasticsearchQueryBuilder.buildPayloadSearchForContent(query);
     const payload = {
-      // index: ElasticsearchHelper.ALIAS.POST.all.name,
-      index: 'dev_posts*',
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
       ...body,
       from,
       size,
