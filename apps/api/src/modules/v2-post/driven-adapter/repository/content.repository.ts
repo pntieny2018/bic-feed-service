@@ -318,15 +318,15 @@ export class ContentRepository implements IContentRepository {
   public async findContentWithCache(
     input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const handler = (this._clsService.get(CONTEXT) as IContext).handler;
+    const handler = (this._clsService?.get(CONTEXT) as IContext)?.handler;
 
     const cachedContent = await this._contentCacheRepo.findContent(input);
     if (cachedContent) {
-      this._logger.log(`[CACHE] ${handler} - 1`);
+      handler && this._logger.log(`[CACHE] ${handler} - 1`);
       return cachedContent;
     }
 
-    this._logger.log(`[CACHE] ${handler} - 0`);
+    handler && this._logger.log(`[CACHE] ${handler} - 0`);
 
     const content = await this._libContentRepo.findOne({
       where: { ...input.where, groupArchived: false },
