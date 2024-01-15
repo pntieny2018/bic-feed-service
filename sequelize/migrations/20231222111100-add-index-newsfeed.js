@@ -117,7 +117,7 @@ module.exports = {
           indexList[i].index,
           {
             unique: indexList[i].isUnique || false,
-            indexName: indexList[i].indexName || undefined,
+            name: indexList[i].indexName || undefined,
             transaction: t,
           }
         );
