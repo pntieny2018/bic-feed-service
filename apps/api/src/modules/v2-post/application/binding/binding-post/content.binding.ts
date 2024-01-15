@@ -1082,19 +1082,19 @@ export class ContentBinding implements IContentBinding {
     return instanceToInstance(user, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
-  private _bindOwnerReactions(
+  private async _bindOwnerReactions(
     authUserId: string,
     contentIds: string[]
   ): Promise<Record<string, OwnerReactionDto[]>> {
     return this._postReactionRepo.getReactionsByContents(contentIds, authUserId);
   }
 
-  private _bindMarkedReadPost(
+  private async _bindMarkedReadPost(
     authUserId: string,
     contentIds: string[]
   ): Promise<Record<string, boolean>> {
     if (!contentIds.length) {
-      return;
+      return {};
     }
     return this._contentRepo.getMarkReadImportant(contentIds, authUserId);
   }
