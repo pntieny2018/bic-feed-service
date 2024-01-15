@@ -83,8 +83,8 @@ const indexList = [
   },
   {
     tableName: 'comments',
-    indexName: 'comments_parent_id_index',
-    index: ['parent_id'],
+    indexName: 'comments_parent_id_created_at_index',
+    index: ['parent_id', 'created_at'],
   },
 ];
 module.exports = {
