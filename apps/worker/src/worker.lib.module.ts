@@ -76,12 +76,23 @@ import * as Sentry from '@sentry/node';
     RedisModule.registerAsync({
       useFactory: async (configService: ConfigService) => {
         const redisConfig = configService.get<IRedisConfig>('redis');
+        // Temporary init redis for content. Remove soon
+        const redisContentConfig = configService.get<IRedisConfig>('redisContent');
         const sslConfig = redisConfig.ssl
           ? {
               tls: {
                 host: redisConfig.host,
                 port: redisConfig.port,
                 password: redisConfig.password,
+              },
+            }
+          : {};
+        const redisContentSslConfig = redisContentConfig.ssl
+          ? {
+              tls: {
+                host: redisContentConfig.host,
+                port: redisContentConfig.port,
+                password: redisContentConfig.password,
               },
             }
           : {};
@@ -93,6 +104,13 @@ import * as Sentry from '@sentry/node';
             port: redisConfig.port,
             password: redisConfig.password,
             ...sslConfig,
+          },
+          redisContentOptions: {
+            keyPrefix: redisContentConfig.prefix,
+            host: redisContentConfig.host,
+            port: redisContentConfig.port,
+            password: redisContentConfig.password,
+            ...redisContentSslConfig,
           },
         };
       },
