@@ -81,6 +81,11 @@ const indexList = [
     index: ['comment_id', 'created_by', 'reaction_name'],
     isUnique: true,
   },
+  {
+    tableName: 'comments',
+    indexName: 'comments_parent_id_index',
+    index: ['parent_id'],
+  },
 ];
 module.exports = {
   async up(queryInterface, Sequelize) {
