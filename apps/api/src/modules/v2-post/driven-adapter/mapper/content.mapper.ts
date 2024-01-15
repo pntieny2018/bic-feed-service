@@ -210,7 +210,7 @@ export class ContentMapper {
       content: post.content,
       mentionUserIds: post.mentions || [],
       linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
-      seriesIds: (post.series || []).map((series) => series.id),
+      seriesIds: post.seriesIds || [],
       tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
       videoIdProcessing: post.videoIdProcessing || null,
     });
@@ -276,7 +276,7 @@ export class ContentMapper {
       content: post.content,
       categories: (post.categories || []).map((category) => new CategoryEntity(category)),
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
-      seriesIds: (post.series || []).map((series) => series.id),
+      seriesIds: post.seriesIds || [],
       tags: (post.tagsJson || []).map((tag) => new TagEntity(tag)),
     });
   }
@@ -464,7 +464,7 @@ export class ContentMapper {
       commentsCount: post.commentsCount || 0,
       totalUsersSeen: post.totalUsersSeen || 0,
       mentionsUserIds: post.mentions || [],
-      seriesIds: (post.series || []).map((series) => series.id),
+      seriesIds: post.seriesIds || [],
       tags: (post.tagsJson || []).map((tag) => this._modelToTagDto(tag)),
       linkPreview: post.linkPreview ? new LinkPreviewDto(post.linkPreview) : null,
       quiz: this._modelToQuizDto(post.quiz?.[0]),
@@ -511,7 +511,7 @@ export class ContentMapper {
         name: category.name,
       })),
       coverMedia: post.coverJson ? new ImageDto(post.coverJson) : null,
-      seriesIds: (post.series || []).map((series) => series.id),
+      seriesIds: post.seriesIds || [],
       tags: (post.tagsJson || []).map((tag) => this._modelToTagDto(tag)),
       quiz: this._modelToQuizDto(post.quiz?.[0]),
     });
