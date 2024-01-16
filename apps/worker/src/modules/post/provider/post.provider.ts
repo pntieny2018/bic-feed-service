@@ -10,8 +10,11 @@ import { ContentCron } from '../application/cron/content.cron';
 import { PostCronService } from '../application/cron/post.cron';
 import { ContentDomainService } from '../domain/domain-service';
 import { CONTENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
-import { CONTENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { ContentRepository } from '../driven-adapter/repository';
+import {
+  CACHE_CONTENT_REPOSITORY_TOKEN,
+  CONTENT_REPOSITORY_TOKEN,
+} from '../domain/repositoty-interface';
+import { CacheContentRepository, ContentRepository } from '../driven-adapter/repository';
 
 export const postProvider = [
   /** Application Cron Handler */
@@ -26,7 +29,10 @@ export const postProvider = [
     provide: CONTENT_REPOSITORY_TOKEN,
     useClass: ContentRepository,
   },
-
+  {
+    provide: CACHE_CONTENT_REPOSITORY_TOKEN,
+    useClass: CacheContentRepository,
+  },
   /** Application Handler */
   PublishContentToNewsfeedHandler,
   RemoveContentFromNewsfeedHandler,
