@@ -2,6 +2,7 @@
 export const ContentHasBeenSeen = 'content.has.been.seen';
 export const ContentGetDetail = 'content.get.detail';
 export const ContentAttachedSeries = 'content.attached.series';
+export const ContentUpdateSetting = 'content.update.setting';
 
 // post
 export const PostWillBeCreated = 'post.will.be.created';

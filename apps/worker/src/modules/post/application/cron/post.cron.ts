@@ -68,16 +68,22 @@ export class PostCronService {
   private async _jobUpdateImportantPost(): Promise<void> {
     try {
       this._logger.debug('[Cron Job] Start update important post');
+      const bufferTimeInMinute = 1;
+      const beforeDate = moment().add(bufferTimeInMinute, 'minute').toDate();
+
       const importantPosts = await this._postModel.findAll({
         where: {
           isImportant: true,
           importantExpiredAt: {
-            [Op.lt]: Sequelize.literal('NOW()'),
+            [Op.lt]: beforeDate,
           },
         },
       });
 
       const importantPostIds = importantPosts.map((post) => post.id);
+      if (!importantPostIds.length) {
+        return;
+      }
 
       await this._postModel.update(
         {
@@ -93,11 +99,9 @@ export class PostCronService {
 
       await this._sequelizeConnection.query(
         `UPDATE ${UserNewsFeedModel.getTableName()} 
-        SET is_important = false WHERE post_id IN 
-        (
-          SELECT id FROM ${PostModel.getTableName()} 
-          WHERE is_important = true AND important_expired_at < NOW()
-        )`
+            SET is_important = false WHERE post_id IN 
+            (${importantPostIds.map((item) => this._sequelizeConnection.escape(item)).join(',')})
+        `
       );
 
       await this._contentCacheRepo.deleteContents(importantPostIds);

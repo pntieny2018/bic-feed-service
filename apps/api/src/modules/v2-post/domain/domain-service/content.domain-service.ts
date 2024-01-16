@@ -1,3 +1,4 @@
+import { ContentUpdateSettingEvent } from '@api/modules/v2-post/domain/event';
 import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { GetPaginationContentsProps } from '@libs/database/postgres';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { isEmpty } from 'class-validator';
 import { uniq } from 'lodash';
 
@@ -64,7 +66,8 @@ export class ContentDomainService implements IContentDomainService {
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    private readonly _authorityApp: IAuthorityAppService
+    private readonly _authorityApp: IAuthorityAppService,
+    private readonly event: EventBus
   ) {}
 
   public async getVisibleContent(
@@ -393,6 +396,7 @@ export class ContentDomainService implements IContentDomainService {
       importantExpiredAt,
     });
     await this._contentRepo.update(contentEntity);
+    this.event.publish(new ContentUpdateSettingEvent({ contentId: contentEntity.getId() }));
 
     if (isImportant) {
       await this._contentRepo.markReadImportant(contentId, authUser.id);
