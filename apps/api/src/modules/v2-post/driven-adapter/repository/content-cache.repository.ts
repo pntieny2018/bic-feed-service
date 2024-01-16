@@ -291,7 +291,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
   }
 
   public async increaseSeenContentCount(contentId: string): Promise<void> {
-    const isContentCached = await this._store.existKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    const isContentCached = await this.existContent(contentId);
     if (!isContentCached) {
       return;
     }
@@ -300,7 +300,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
 
   public async updateQuiz(quiz: QuizEntity): Promise<void> {
     const contentId = quiz.get('contentId');
-    const isContentCached = await this._store.existKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    const isContentCached = await this.existContent(contentId);
     if (!isContentCached) {
       return;
     }
@@ -310,7 +310,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
   }
 
   public async deleteQuiz(contentId: string): Promise<void> {
-    const isContentCached = await this._store.existKey(`${CACHE_KEYS.CONTENT}:${contentId}`);
+    const isContentCached = await this.existContent(contentId);
     if (!isContentCached) {
       return;
     }
