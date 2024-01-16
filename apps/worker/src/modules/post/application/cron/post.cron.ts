@@ -4,13 +4,18 @@ import {
   PostModel,
   UserNewsFeedModel,
 } from '@libs/database/postgres/model';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import moment from 'moment';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+
+import {
+  CACHE_CONTENT_REPOSITORY_TOKEN,
+  ICacheContentRepository,
+} from '../../domain/repositoty-interface';
 
 @Injectable()
 export class PostCronService {
@@ -23,6 +28,8 @@ export class PostCronService {
     private readonly _postModel: typeof PostModel,
     @InjectModel(FailedProcessPostModel)
     private readonly _failedProcessPostModel: typeof FailedProcessPostModel,
+    @Inject(CACHE_CONTENT_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepo: ICacheContentRepository,
 
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize
@@ -61,16 +68,24 @@ export class PostCronService {
   private async _jobUpdateImportantPost(): Promise<void> {
     try {
       this._logger.debug('[Cron Job] Start update important post');
+      const importantPosts = await this._postModel.findAll({
+        where: {
+          isImportant: true,
+          importantExpiredAt: {
+            [Op.lt]: Sequelize.literal('NOW()'),
+          },
+        },
+      });
+
+      const importantPostIds = importantPosts.map((post) => post.id);
+
       await this._postModel.update(
         {
           isImportant: false,
         },
         {
           where: {
-            isImportant: true,
-            importantExpiredAt: {
-              [Op.lt]: Sequelize.literal('NOW()'),
-            },
+            id: importantPostIds,
           },
           paranoid: false,
         }
@@ -84,6 +99,8 @@ export class PostCronService {
           WHERE is_important = true AND important_expired_at < NOW()
         )`
       );
+
+      await this._contentCacheRepo.deleteContents(importantPostIds);
 
       this._logger.debug('[Cron Job] Complete update important post');
     } catch (e) {
