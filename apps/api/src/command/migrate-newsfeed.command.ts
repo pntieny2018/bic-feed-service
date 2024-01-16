@@ -23,12 +23,6 @@ export class MigrateNewsfeedCommand implements CommandRunner {
       this._logger.log('Start migrate...');
 
       await this._userNewsfeedModel.sequelize.query(`
-        DELETE FROM ${schemaName}.user_newsfeed t1
-              USING ${schemaName}.posts t2
-              WHERE t1.post_id = t2.id AND t2.status != 'PUBLISHED'
-      `);
-
-      await this._userNewsfeedModel.sequelize.query(`
         UPDATE ${schemaName}.user_newsfeed t1
               set created_by = t2.created_by, published_at = t2.published_at,
                   type = t2.type,
@@ -36,6 +30,12 @@ export class MigrateNewsfeedCommand implements CommandRunner {
               FROM ${schemaName}.posts t2
           WHERE
               t2.id = t1.post_id;
+      `);
+
+      await this._userNewsfeedModel.sequelize.query(`
+        DELETE FROM ${schemaName}.user_newsfeed t1
+              USING ${schemaName}.posts t2
+              WHERE t1.post_id = t2.id AND (t2.status != 'PUBLISHED' OR t2.is_hidden = true);
       `);
 
       this._logger.log('Done');
