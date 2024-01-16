@@ -318,7 +318,12 @@ export class ContentRepository implements IContentRepository {
   public async findContentWithCache(
     input: FindContentInCacheProps
   ): Promise<PostEntity | ArticleEntity | SeriesEntity> {
-    const handler = (this._clsService?.get(CONTEXT) as IContext)?.handler;
+    let handler;
+    try {
+      handler = (this._clsService?.get(CONTEXT) as IContext)?.handler;
+    } catch (error) {
+      handler = null;
+    }
 
     const cachedContent = await this._contentCacheRepo.findContent(input);
     if (cachedContent) {
@@ -363,10 +368,17 @@ export class ContentRepository implements IContentRepository {
     const cachedContentIds = cachedContentEntities.map((content) => content.getId());
     const nonCachedContentIds = contentIds.filter((id) => !cachedContentIds.includes(id));
 
-    const handler = (this._clsService.get(CONTEXT) as IContext).handler;
-    this._logger.log(
-      `[CACHE] ${handler} - ${(cachedContentIds.length / contentIds.length).toFixed(2)}`
-    );
+    let handler;
+    try {
+      handler = (this._clsService?.get(CONTEXT) as IContext)?.handler;
+    } catch (error) {
+      handler = null;
+    }
+
+    handler &&
+      this._logger.log(
+        `[CACHE] ${handler} - ${(cachedContentIds.length / contentIds.length).toFixed(2)}`
+      );
 
     if (!nonCachedContentIds.length) {
       return cachedContentEntities;
