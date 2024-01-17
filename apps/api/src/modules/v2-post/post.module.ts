@@ -47,6 +47,7 @@ import {
   sharedProvider,
   tagProvider,
   workerProvider,
+  webSocketProvider,
 } from './provider';
 
 @Module({
@@ -81,6 +82,7 @@ import {
     InternalController,
   ],
   providers: [
+    ...webSocketProvider,
     ...adapterProvider,
     ...categoryProvider,
     ...commentProvider,

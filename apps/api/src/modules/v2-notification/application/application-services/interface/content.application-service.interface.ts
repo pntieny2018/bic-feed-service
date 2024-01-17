@@ -4,6 +4,11 @@ import { ArticleDto, PostDto, SeriesDto } from '../../../../v2-post/application/
 
 export const CONTENT_NOTIFICATION_APPLICATION_SERVICE = 'CONTENT_NOTIFICATION_APPLICATION_SERVICE';
 
+export type PostVideoProcessSuccessNotificationPayload = {
+  actor: UserDto;
+  post: PostDto;
+};
+
 export type PostVideoProcessFailedNotificationPayload = {
   actor: UserDto;
   post: PostDto;
@@ -89,6 +94,9 @@ export interface IContentNotificationApplicationService {
   sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void>;
   sendPostPublishedNotification(payload: PostPublishedNotificationPayload): Promise<void>;
   sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void>;
+  sendPostVideoProcessSuccessNotification(
+    payload: PostVideoProcessSuccessNotificationPayload
+  ): Promise<void>;
   sendPostVideoProcessFailedNotification(
     payload: PostVideoProcessFailedNotificationPayload
   ): Promise<void>;
