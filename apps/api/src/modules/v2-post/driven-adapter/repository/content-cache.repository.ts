@@ -234,7 +234,7 @@ export class ContentCacheRepository implements IContentCacheRepository {
     }
     const pipeline = this._store.getClient().pipeline();
     for (const contentId of contentIds) {
-      pipeline.del(`${CACHE_KEYS.CONTENT}:${contentId}`);
+      pipeline.call('DEL', `${CACHE_KEYS.CONTENT}:${contentId}`);
     }
     await pipeline.exec();
   }
