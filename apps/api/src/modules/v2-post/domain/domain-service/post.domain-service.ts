@@ -111,7 +111,7 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNotFoundException();
     }
 
-    await this._contentValidator.checkCanReadNotPublishedContent(postEntity, authUser.id);
+    await this._contentValidator.checkCanReadContent(postEntity, authUser);
 
     if (!authUser.id && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();

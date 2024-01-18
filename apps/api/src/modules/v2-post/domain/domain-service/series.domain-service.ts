@@ -80,18 +80,14 @@ export class SeriesDomainService implements ISeriesDomainService {
       },
     });
 
-    if (
-      !seriesEntity ||
-      !(seriesEntity instanceof SeriesEntity) ||
-      (seriesEntity.isDraft() && !seriesEntity.isOwner(authUser.id)) ||
-      seriesEntity.isHidden()
-    ) {
+    if (!seriesEntity || !(seriesEntity instanceof SeriesEntity)) {
       throw new ContentNotFoundException();
     }
 
-    if (!authUser && !seriesEntity.isOpen()) {
-      throw new ContentAccessDeniedException();
-    }
+    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
+    await this._contentValidator.checkCanReadContent(seriesEntity, authUser, {
+      dataGroups: groups,
+    });
 
     return seriesEntity;
   }

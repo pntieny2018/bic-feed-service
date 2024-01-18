@@ -20,23 +20,15 @@ export class FindPostHandler implements IQueryHandler<FindPostQuery, PostDto> {
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
-    private readonly _postDomainService: IPostDomainService,
-    @Inject(GROUP_ADAPTER)
-    private readonly _groupAdapter: IGroupAdapter
+    private readonly _postDomainService: IPostDomainService
   ) {}
 
   public async execute(query: FindPostQuery): Promise<PostDto> {
     const { postId, authUser } = query.payload;
     const postEntity = await this._postDomainService.getPostById(postId, authUser);
 
-    const groups = await this._groupAdapter.getGroupsByIds(postEntity.getGroupIds());
-    await this._postValidator.checkCanReadContent(postEntity, authUser, {
-      dataGroups: groups,
-    });
-
     return this._contentBinding.postBinding(postEntity, {
       authUser,
-      groups,
     });
   }
 }

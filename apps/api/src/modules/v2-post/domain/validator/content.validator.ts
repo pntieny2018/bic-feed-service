@@ -192,16 +192,12 @@ export class ContentValidator implements IContentValidator {
       dataGroups?: GroupDto[];
     }
   ): Promise<void> {
-    if (post.isOwner(user.id)) {
+    if (post.isOpen() || post.isClosed() || post.isOwner(user.id)) {
       return;
     }
 
-    if (post.isDraft() && !post.isOwner(user.id)) {
+    if (post.isDraft() || post.isHidden()) {
       throw new ContentNoCRUDPermissionException();
-    }
-
-    if (post.isOpen() || post.isClosed()) {
-      return;
     }
 
     const groupAudienceIds = post.get('groupIds') ?? [];

@@ -103,7 +103,10 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ContentNotFoundException();
     }
 
-    await this._contentValidator.checkCanReadNotPublishedContent(articleEntity, authUser.id);
+    const groups = await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds'));
+    await this._contentValidator.checkCanReadContent(articleEntity, authUser, {
+      dataGroups: groups,
+    });
 
     if (!authUser && !articleEntity.isOpen()) {
       throw new ContentAccessDeniedException();
