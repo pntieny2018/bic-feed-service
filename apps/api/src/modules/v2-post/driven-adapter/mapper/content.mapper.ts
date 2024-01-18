@@ -399,6 +399,15 @@ export class ContentMapper {
       categories: article.categories
         ? article.categories.map((category) => new CategoryEntity(category))
         : [],
+      quiz: article.quiz
+        ? new QuizEntity({
+            ...article.quiz,
+            contentId: article.id,
+            questions: (article.quiz.questions || []).map(
+              (question) => new QuizQuestionEntity(question as QuizQuestionAttributes)
+            ),
+          })
+        : undefined,
       cover: article.coverMedia ? new ImageEntity(article.coverMedia) : null,
       seriesIds: article.seriesIds || [],
       tags: article.tags ? article.tags.map((tag) => new TagEntity(tag)) : [],
