@@ -2,6 +2,10 @@ import {
   ISeriesDomainService,
   SERIES_DOMAIN_SERVICE_TOKEN,
 } from '@api/modules/v2-post/domain/domain-service/interface';
+import {
+  GROUP_ADAPTER,
+  IGroupAdapter,
+} from '@api/modules/v2-post/domain/service-adapter-interface';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
@@ -19,16 +23,22 @@ export class FindSeriesHandler implements IQueryHandler<FindSeriesQuery, SeriesD
     @Inject(POST_VALIDATOR_TOKEN)
     private readonly _postValidator: IPostValidator,
     @Inject(CONTENT_BINDING_TOKEN)
-    private readonly _contentBinding: ContentBinding
+    private readonly _contentBinding: ContentBinding,
+    @Inject(GROUP_ADAPTER)
+    private readonly _groupAdapter: IGroupAdapter
   ) {}
 
   public async execute(query: FindSeriesQuery): Promise<SeriesDto> {
     const { seriesId, authUser } = query.payload;
     const seriesEntity = await this._seriesDomainService.getSeriesById(seriesId, authUser);
-    await this._postValidator.checkCanReadContent(seriesEntity, authUser);
+    const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.getGroupIds());
+    await this._postValidator.checkCanReadContent(seriesEntity, authUser, {
+      dataGroups: groups,
+    });
 
     return this._contentBinding.seriesBinding(seriesEntity, {
       authUser,
+      groups,
     });
   }
 }

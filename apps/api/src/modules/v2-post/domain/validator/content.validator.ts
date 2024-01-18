@@ -17,6 +17,7 @@ import {
   ContentNoEditSettingPermissionAtGroupException,
   ContentNoPinPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
   TagSeriesInvalidException,
   UserNoBelongGroupException,
 } from '../exception';
@@ -184,7 +185,13 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public async checkCanReadContent(post: ContentEntity, user: UserDto): Promise<void> {
+  public async checkCanReadContent(
+    post: ContentEntity,
+    user: UserDto,
+    options?: {
+      dataGroups?: GroupDto[];
+    }
+  ): Promise<void> {
     if (post.isOwner(user.id)) {
       return;
     }
@@ -206,6 +213,9 @@ export class ContentValidator implements IContentValidator {
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
+      if (options?.dataGroups?.length) {
+        throw new ContentRequireGroupException(null, { requireGroups: options.dataGroups });
+      }
       throw new ContentNoCRUDPermissionException();
     }
   }
