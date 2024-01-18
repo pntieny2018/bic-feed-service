@@ -136,7 +136,7 @@ export class UserService implements IUserService {
   }
 
   private async _getUsernamesFromCacheByUserIds(userIds: string[]): Promise<string[]> {
-    if (userIds?.length) {
+    if (!userIds?.length) {
       return [];
     }
 
