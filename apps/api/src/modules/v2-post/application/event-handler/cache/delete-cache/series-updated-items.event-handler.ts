@@ -22,6 +22,15 @@ export class DeleteCacheContentWhenSeriesUpdatedItemsHandler implements IEventHa
     event: SeriesItemsAddedEvent | SeriesItemsRemovedEvent | SeriesItemsReorderedEvent
   ): Promise<void> {
     const contentId = event.payload.seriesId;
+    if (!contentId) {
+      return;
+    }
+
+    if (event instanceof SeriesItemsAddedEvent || event instanceof SeriesItemsRemovedEvent) {
+      const itemId = event.payload.item.getId();
+      await this.contentCacheRepository.deleteContents([contentId, itemId]);
+      return;
+    }
 
     await this.contentCacheRepository.deleteContent(contentId);
   }
