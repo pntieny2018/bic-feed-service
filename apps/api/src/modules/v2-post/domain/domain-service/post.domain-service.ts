@@ -110,8 +110,10 @@ export class PostDomainService implements IPostDomainService {
     if (!isPost || postEntity.isInArchivedGroups()) {
       throw new ContentNotFoundException();
     }
-
-    await this._contentValidator.checkCanReadContent(postEntity, authUser);
+    const groups = await this._groupAdapter.getGroupsByIds(postEntity.get('groupIds'));
+    await this._contentValidator.checkCanReadContent(postEntity, authUser, {
+      dataGroups: groups,
+    });
 
     if (!authUser.id && !postEntity.isOpen()) {
       throw new ContentAccessDeniedException();
