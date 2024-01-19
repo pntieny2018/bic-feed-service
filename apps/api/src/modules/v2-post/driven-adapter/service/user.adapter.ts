@@ -16,7 +16,9 @@ export class UserAdapter implements IUserAdapter {
 
   public async getUsersByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
     const uniqueIds = uniq(userIds);
-    return this._userService.findAllByIds(uniqueIds, options);
+    const a = this._userService.findAllByIds(uniqueIds, options);
+    console.log(a);
+    return a;
   }
 
   public async canCudTags(userId: string, groupId: string): Promise<boolean> {

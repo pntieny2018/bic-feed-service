@@ -210,7 +210,7 @@ export class ContentValidator implements IContentValidator {
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      this._logger.log('options?.dataGroups', options?.dataGroups);
+      this._logger.log(options?.dataGroups);
       if (options?.dataGroups?.length) {
         throw new ContentRequireGroupException(null, { requireGroups: options.dataGroups });
       }
