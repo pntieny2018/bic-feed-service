@@ -111,8 +111,6 @@ export class PostDomainService implements IPostDomainService {
       throw new ContentNotFoundException();
     }
     const groups = await this._groupAdapter.getGroupsByIds(postEntity.get('groupIds'));
-    this._logger.log(postEntity.get('groupIds'));
-    this._logger.log(groups);
     await this._contentValidator.checkCanReadContent(postEntity, authUser, {
       dataGroups: groups,
     });

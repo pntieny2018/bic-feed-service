@@ -193,7 +193,7 @@ export class ContentValidator implements IContentValidator {
       dataGroups?: GroupDto[];
     }
   ): Promise<void> {
-    if (post.isOpen() || post.isClosed() || post.isOwner(user.id)) {
+    if (post.isOwner(user.id)) {
       return;
     }
 
@@ -201,16 +201,19 @@ export class ContentValidator implements IContentValidator {
       throw new ContentNoCRUDPermissionException();
     }
 
+    if (post.isOpen() || post.isClosed()) {
+      return;
+    }
+
     const groupAudienceIds = post.get('groupIds') ?? [];
     const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
-    if (isAdmin && !post.isDraft()) {
+    if (isAdmin) {
       return;
     }
 
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      this._logger.log(options?.dataGroups);
       if (options?.dataGroups?.length) {
         throw new ContentRequireGroupException(null, { requireGroups: options.dataGroups });
       }
