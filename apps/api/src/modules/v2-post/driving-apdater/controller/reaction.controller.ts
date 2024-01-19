@@ -84,11 +84,9 @@ export class ReactionController {
   @Version(ROUTES.REACTION.DELETE.VERSIONS)
   @Delete(ROUTES.REACTION.DELETE.PATH)
   public async deleteReaction(
-    @AuthUser() user: UserDto,
+    @AuthUser() authUser: UserDto,
     @Body() deleteReactionDto: DeleteReactionRequestDto
   ): Promise<void> {
-    return this._commandBus.execute(
-      new DeleteReactionCommand({ ...deleteReactionDto, userId: user.id })
-    );
+    return this._commandBus.execute(new DeleteReactionCommand({ ...deleteReactionDto, authUser }));
   }
 }

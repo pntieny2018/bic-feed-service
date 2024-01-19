@@ -1,5 +1,6 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
@@ -48,7 +49,7 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
   ) {}
 
   public async handle(event: ReactionCreatedEvent): Promise<void> {
-    const { reactionEntity } = event.payload;
+    const { reactionEntity, authUser } = event.payload;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
 
@@ -67,7 +68,7 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
       );
       payload.comment = commentDto;
 
-      payload.content = await this._getContentDto(commentDto.postId, reactionActor.id);
+      payload.content = await this._getContentDto(commentDto.postId, reactionActor.id, authUser);
 
       if (commentDto.parentId !== NIL) {
         payload.parentComment = await this._getCommentDto(commentDto.parentId);
@@ -76,14 +77,19 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
         return this._notificationAdapter.sendReactionCommentNotification(payload);
       }
     } else {
-      payload.content = await this._getContentDto(reactionEntity.get('targetId'), reactionActor.id);
+      payload.content = await this._getContentDto(
+        reactionEntity.get('targetId'),
+        reactionActor.id,
+        authUser
+      );
       return this._notificationAdapter.sendReactionContentNotification(payload);
     }
   }
 
   private async _getContentDto(
     contentId: string,
-    reactionActorId: string
+    reactionActorId: string,
+    authUser: UserDto
   ): Promise<PostDto | ArticleDto> {
     const contentEntity = await this._contentRepository.findOne({
       where: { id: contentId },
@@ -98,9 +104,7 @@ export class NotiCreatedReactionEventHandler implements IEventHandler<ReactionCr
       throw new ContentNotFoundException();
     }
 
-    const contentActor = await this._userAdapter.getUserById(contentEntity.getCreatedBy());
-
-    const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);
+    const contentDto = await this._contentBinding.contentsBinding([contentEntity], authUser);
     return contentDto[0] as PostDto | ArticleDto;
   }
 

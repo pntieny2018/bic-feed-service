@@ -174,7 +174,10 @@ export class UserService implements IUserService {
   }
 
   private async _getShowBadgesFromCacheByUserId(userId: string): Promise<ShowingBadgeDto[]> {
-    return this._store.get(`${CACHE_KEYS.SHOWING_BADGES}:${userId}`);
+    const showingBadges = await this._store.get<ShowingBadgeDto[]>(
+      `${CACHE_KEYS.SHOWING_BADGES}:${userId}`
+    );
+    return showingBadges || [];
   }
 
   private async _getUserProfileFromApiByUserName(username: string): Promise<UserProfileDto> {

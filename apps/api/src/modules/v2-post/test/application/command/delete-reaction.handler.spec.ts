@@ -57,7 +57,7 @@ describe('DeleteReactionHandler', () => {
         reactionName: '+1',
         target: target,
         targetId: targetId,
-        userId: userMock.id,
+        authUser: userMock,
       });
       const reactionRecord = {
         id: v4(),
@@ -77,7 +77,7 @@ describe('DeleteReactionHandler', () => {
         reactionName: '+1',
         target: target,
         targetId: targetId,
-        userId: userMock.id,
+        authUser: userMock,
       });
       jest
         .spyOn(domainService, 'deleteReaction')
