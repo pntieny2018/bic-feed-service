@@ -1,7 +1,7 @@
 import { CONTENT_TYPE, PERMISSION_KEY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 import moment from 'moment';
 
@@ -42,6 +42,7 @@ import { IContentValidator } from './interface';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
+  private readonly _logger = new Logger(ContentValidator.name);
   public constructor(
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService,
@@ -209,6 +210,7 @@ export class ContentValidator implements IContentValidator {
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
+      this._logger.log('options?.dataGroups', options?.dataGroups);
       if (options?.dataGroups?.length) {
         throw new ContentRequireGroupException(null, { requireGroups: options.dataGroups });
       }
