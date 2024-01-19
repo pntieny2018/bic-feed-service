@@ -1,5 +1,5 @@
 import { CACHE_KEYS } from '@beincom/constants';
-import { UserDto as UserProfileDto } from '@beincom/dto';
+import { ShowingBadgeDto, UserDto as UserProfileDto } from '@beincom/dto';
 import { AxiosHelper } from '@libs/common/helpers';
 import { Traceable } from '@libs/common/modules/opentelemetry';
 import { GROUP_HTTP_TOKEN, IHttpService, USER_HTTP_TOKEN } from '@libs/infra/http';
@@ -58,8 +58,9 @@ export class UserService implements IUserService {
     }
 
     const joinedGroups = await this._getJoinedGroupsFromCacheByUserId(userProfile.id);
+    const showingBadges = await this._getShowBadgesFromCacheByUserId(userProfile.id);
 
-    return new UserDto({ ...userProfile, groups: joinedGroups });
+    return new UserDto({ ...userProfile, groups: joinedGroups, showingBadges });
   }
 
   private async _getUserByUserId(userId: string, options?: FindUserOption): Promise<UserDto> {
@@ -72,6 +73,9 @@ export class UserService implements IUserService {
     if (!userProfile) {
       return null;
     }
+
+    const showingBadges = await this._getShowBadgesFromCacheByUserId(userProfile.id);
+    userProfile.showingBadges = showingBadges;
 
     if (!options?.withGroupJoined) {
       return new UserDto(userProfile);
@@ -103,33 +107,39 @@ export class UserService implements IUserService {
       return [];
     }
 
-    const pipeline = this._store.getClient().pipeline();
+    const joinedGroupsPipeline = this._store.getClient().pipeline();
+    const showingBadgesPipeline = this._store.getClient().pipeline();
 
     usersProfile.forEach((userProfile) => {
-      const key = `${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`;
-      pipeline.smembers(key);
+      joinedGroupsPipeline.smembers(`${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`);
+      showingBadgesPipeline.get(`${CACHE_KEYS.SHOWING_BADGES}:${userProfile.id}`);
     });
 
+    const [joinedGroupsResults, showingBadgesResults] = await Promise.all([
+      options?.withGroupJoined ? joinedGroupsPipeline.exec() : [],
+      showingBadgesPipeline.exec(),
+    ]);
+
     const users: UserDto[] = [];
-    if (!options?.withGroupJoined) {
-      usersProfile.forEach((userProfile) => {
-        users.push(new UserDto(userProfile));
-      });
-      return users;
-    }
 
-    const joinedGroup = await pipeline.exec();
-    joinedGroup.forEach((result, index) => {
-      const [err, value] = result;
+    usersProfile.forEach((userProfile, index) => {
+      const [joinedGroupsErr, joinedGroupsValue] = joinedGroupsResults[index] || [];
+      const [showingBadgesErr, showingBadgesValue] = showingBadgesResults[index];
 
-      if (err) {
-        this._logger.error(err);
+      if (joinedGroupsErr) {
+        this._logger.error(joinedGroupsErr);
         return;
       }
 
-      const userProfile = usersProfile[index];
-      const joinedGroups = value as string[];
-      users.push(new UserDto({ ...userProfile, groups: joinedGroups }));
+      if (showingBadgesErr) {
+        this._logger.error(showingBadgesErr);
+        return;
+      }
+
+      const joinedGroups = options?.withGroupJoined ? (joinedGroupsValue as string[]) : [];
+      const showingBadges = JSON.parse(showingBadgesValue as string);
+
+      users.push(new UserDto({ ...userProfile, groups: joinedGroups, showingBadges }));
     });
 
     return users;
@@ -161,6 +171,10 @@ export class UserService implements IUserService {
 
   private async _getJoinedGroupsFromCacheByUserId(userId: string): Promise<string[]> {
     return this._store.getSets(`${CACHE_KEYS.JOINED_GROUPS}:${userId}`);
+  }
+
+  private async _getShowBadgesFromCacheByUserId(userId: string): Promise<ShowingBadgeDto[]> {
+    return this._store.get(`${CACHE_KEYS.SHOWING_BADGES}:${userId}`);
   }
 
   private async _getUserProfileFromApiByUserName(username: string): Promise<UserProfileDto> {
