@@ -1,4 +1,4 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_TARGET, CONTENT_TYPE } from '@beincom/constants';
 import { createCursor, parseCursor } from '@libs/database/postgres/common';
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
@@ -71,10 +71,14 @@ export class SearchContentsHandler
       }
     }
 
+    const targetTypes = contentTypes?.includes(CONTENT_TYPE.SERIES)
+      ? contentTypes.filter((type) => type !== CONTENT_TYPE.SERIES)
+      : contentTypes;
+
     const excludeByIds = await this._reportRepo.getReportedTargetIdsByReporterId({
       reporterId: authUser.id,
       groupIds,
-      targetTypes: contentTypes as unknown as CONTENT_TARGET[],
+      targetTypes: targetTypes as unknown as CONTENT_TARGET[],
     });
 
     const response = await this._postSearchService.searchContents<IPostElasticsearch>({
