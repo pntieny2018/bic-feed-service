@@ -200,8 +200,10 @@ export class ContentValidator implements IContentValidator {
     if (post.isDraft() || post.isHidden()) {
       throw new ContentNoCRUDPermissionException();
     }
-
+    console.log('post.isOpen()=', post.isOpen());
+    console.log('post.isClosed()=', post.isClosed());
     if (post.isOpen() || post.isClosed()) {
+      console.log('1111');
       return;
     }
 
@@ -213,6 +215,7 @@ export class ContentValidator implements IContentValidator {
 
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
+    console.log('canAccess=', canAccess);
     if (!canAccess) {
       if (options?.dataGroups?.length) {
         throw new ContentRequireGroupException(null, { requireGroups: options.dataGroups });
