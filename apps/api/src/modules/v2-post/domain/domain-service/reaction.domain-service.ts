@@ -73,16 +73,16 @@ export class ReactionDomainService implements IReactionDomainService {
         throw new ReactionTargetNotExistingException();
     }
 
-    this.eventBus.publish(new ReactionCreatedEvent({ reactionEntity }));
+    this.eventBus.publish(new ReactionCreatedEvent({ reactionEntity, authUser }));
     return reactionEntity;
   }
 
   public async deleteReaction(props: DeleteReactionProps): Promise<void> {
-    const { target, targetId, reactionName, userId } = props;
+    const { authUser, target, targetId, reactionName } = props;
 
     const conditions = {
       reactionName,
-      createdBy: userId,
+      createdBy: authUser.id,
     };
 
     switch (target) {
@@ -106,7 +106,7 @@ export class ReactionDomainService implements IReactionDomainService {
       throw new ReactionNotFoundException();
     }
 
-    if (reactionEntity.get('createdBy') !== userId) {
+    if (reactionEntity.get('createdBy') !== authUser.id) {
       throw new ReactionNotHaveAuthorityException();
     }
 
@@ -116,6 +116,6 @@ export class ReactionDomainService implements IReactionDomainService {
       await this._postReactionRepository.delete(reactionEntity.get('id'));
     }
 
-    this.eventBus.publish(new ReactionDeletedEvent({ reactionEntity }));
+    this.eventBus.publish(new ReactionDeletedEvent({ reactionEntity, authUser }));
   }
 }

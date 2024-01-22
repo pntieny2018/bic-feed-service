@@ -22,7 +22,7 @@ export type GetReactionsProps = {
 };
 
 export type DeleteReactionProps = {
-  userId: string;
+  authUser: UserDto;
   targetId: string;
   target: CONTENT_TARGET;
   reactionId?: string;
