@@ -77,7 +77,7 @@ import {
     InternalController,
   ],
   providers: [
-    ...webSocketProvider, // NOTE: Temporarily only turned on in the dev/stg environment
+    ...webSocketProvider,
     ...adapterProvider,
     ...categoryProvider,
     ...commentProvider,

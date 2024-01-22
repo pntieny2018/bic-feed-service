@@ -16,6 +16,7 @@ import {
   NotiPostVideoFailedEventHandler,
   NotiReportCreatedEventHandler,
   NotiReportHiddenEventHandler,
+  NotiPostVideoSuccessEventHandler,
 } from '../application/event-handler/send-notification';
 
 export const notificationProvider = [
@@ -27,6 +28,7 @@ export const notificationProvider = [
   NotiPostDeletedEventHandler,
   NotiPostPublishedEventHandler,
   NotiPostUpdatedEventHandler,
+  NotiPostVideoSuccessEventHandler,
   NotiPostVideoFailedEventHandler,
 
   NotiSeriesDeletedEventHandler,

@@ -10,7 +10,7 @@ export class MigratePostTitleCommand implements CommandRunner {
 
   public async run(): Promise<any> {
     let offset = 0;
-    const limit = 1;
+    const limit = 1000;
     console.log(`Updating...`);
     let count = 0;
     while (true) {
@@ -35,10 +35,13 @@ export class MigratePostTitleCommand implements CommandRunner {
         }
 
         offset += limit;
-      } catch (e) {}
-
-      console.log(`Updated ${count} posts. DONE!`);
-      process.exit();
+        console.log(`Processing ${count} posts...`);
+      } catch (e) {
+        console.log(e);
+      }
     }
+
+    console.log(`DONE!`);
+    process.exit();
   }
 }
