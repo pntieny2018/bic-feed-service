@@ -62,7 +62,7 @@ export class GetMyReportedContentsHandler
     const contentIds = reportEntities.map((row) => row.get('targetId'));
     const contentEntities = await this._contentRepo.findAll({
       where: { ids: contentIds },
-      include: { mustIncludeGroup: true },
+      include: { mustIncludeGroup: true, shouldIncludeQuiz: true },
     });
     const contents = await this._contentBinding.contentsBinding(contentEntities, authUser);
 

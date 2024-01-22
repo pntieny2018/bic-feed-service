@@ -20,6 +20,7 @@ import {
   PostPublishedNotificationPayload,
   PostUpdatedNotificationPayload,
   PostVideoProcessFailedNotificationPayload,
+  PostVideoProcessSuccessNotificationPayload,
   REACTION_NOTIFICATION_APPLICATION_SERVICE,
   ReactionCommentNotificationPayload,
   ReactionContentNotificationPayload,
@@ -60,6 +61,12 @@ export class NotificationAdapter implements INotificationAdapter {
 
   public async sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void> {
     return this._contentNotiApp.sendPostUpdatedNotification(payload);
+  }
+
+  public async sendPostVideoProcessSuccessNotification(
+    payload: PostVideoProcessSuccessNotificationPayload
+  ): Promise<void> {
+    return this._contentNotiApp.sendPostVideoProcessSuccessNotification(payload);
   }
 
   public async sendPostVideoProcessFailedNotification(
