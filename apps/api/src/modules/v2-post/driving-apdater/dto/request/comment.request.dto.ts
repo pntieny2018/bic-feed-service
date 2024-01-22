@@ -19,6 +19,8 @@ import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
 import { UserMentionDto } from '../../../application/dto';
 
 import { MediaRequestDto } from './media.request.dto';
+import { MaxMarkdownLength } from '@api/modules/v2-post/driving-apdater/custom-validation/MaxMarkdownLength.validation';
+import { RULES } from '@api/modules/v2-post/constant';
 
 export class CreateCommentRequestDto {
   @ApiProperty({
@@ -45,6 +47,11 @@ export class CreateCommentRequestDto {
         o.giphyId
       )
   )
+  @MaxMarkdownLength(RULES.MAX_COMMENT_CHARACTER, {
+    message: `Your comment cannot exceed ${new Intl.NumberFormat('de-ES').format(
+      RULES.MAX_COMMENT_CHARACTER
+    )} characters. `,
+  })
   public content: string;
 
   @ApiProperty({
@@ -189,6 +196,11 @@ export class UpdateCommentRequestDto {
   @ApiPropertyOptional()
   @Type(() => String)
   @IsOptional()
+  @MaxMarkdownLength(RULES.MAX_COMMENT_CHARACTER, {
+    message: `Your comment cannot exceed ${new Intl.NumberFormat('de-ES').format(
+      RULES.MAX_COMMENT_CHARACTER
+    )} characters. `,
+  })
   public content: string;
 
   @ApiPropertyOptional({
