@@ -1,4 +1,3 @@
-import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { BooleanHelper } from '@libs/common/helpers';
 import { PaginatedArgs } from '@libs/database/postgres/common';
@@ -18,6 +17,7 @@ import {
 } from 'class-validator';
 
 import { PublishArticleRequestDto } from './article.request.dto';
+import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 
 export class GetDraftContentsRequestDto extends PaginatedArgs {
   @ApiProperty({ enum: ORDER, default: ORDER.DESC, required: false })
@@ -309,4 +309,23 @@ export class CountContentPerWeekRequestDto {
     name: 'metrics',
   })
   public metrics: string[];
+}
+
+export class GetUserSeenPostDto {
+  @ApiProperty({
+    default: 20,
+    required: false,
+  })
+  @IsOptional()
+  @Max(MAX_ITEMS_PER_PAGE)
+  @Transform(({ value }) => Number(value))
+  public limit: number;
+
+  @ApiProperty({
+    default: 0,
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  public offset: number;
 }
