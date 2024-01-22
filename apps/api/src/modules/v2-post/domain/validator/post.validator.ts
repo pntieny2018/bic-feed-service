@@ -1,13 +1,20 @@
+import { UserDto } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { UserDto } from '../../../v2-user/application';
 import { ContentEmptyContentException } from '../exception';
 import { PostEntity } from '../model/content';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IPostGroupRepository,
+  IReportRepository,
+  POST_GROUP_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import {
   IUserAdapter,
   USER_ADAPTER,
@@ -21,16 +28,29 @@ import { IPostValidator } from './interface';
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
   public constructor(
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    protected _authorityAppService: IAuthorityAppService,
+
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    protected readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepo: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepo: IPostGroupRepository,
+
     @Inject(GROUP_ADAPTER)
     protected _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    protected readonly _userAdapter: IUserAdapter,
-    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected _authorityAppService: IAuthorityAppService,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository
+    protected readonly _userAdapter: IUserAdapter
   ) {
-    super(_groupAdapter, _userAdapter, _authorityAppService, _contentRepository);
+    super(
+      _authorityAppService,
+      _contentRepo,
+      _reportRepo,
+      _postGroupRepo,
+      _groupAdapter,
+      _userAdapter
+    );
   }
 
   public async validatePublishContent(

@@ -9,6 +9,7 @@ import {
 import { useContainer } from 'class-validator';
 import { ValidatorException } from '../common/exceptions';
 import { StringHelper } from '../common/helpers';
+import { TransformRequestPipe } from '@api/common/pipe/transform-request.pipe';
 
 export type ConstraintItem = { title: string; message: string[] };
 
@@ -25,6 +26,7 @@ export class ClassValidatorBootstrap {
     useContainer(app.select(module), { fallbackOnErrors: true });
     Logger.debug('ClassValidatorProvider initialized', ClassValidatorBootstrap.name);
     app.useGlobalPipes(
+      new TransformRequestPipe(),
       new ValidationPipe({
         transform: true,
         // whitelist: true,

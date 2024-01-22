@@ -1,3 +1,13 @@
+import {
+  DeleteCacheContentWhenAdminHidHandler,
+  DeleteCacheContentWhenContentDeletedHandler,
+  DeleteCacheContentWhenContentUpdatedHandler,
+  DeleteCacheContentWhenSeriesUpdatedItemsHandler,
+} from '@api/modules/v2-post/application/event-handler/cache/delete-cache';
+import { DetachNewsfeedWhenReportCreatedEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-created.event-handler';
+import { DetachNewsfeedWhenReportHiddenEventHandler } from '@api/modules/v2-post/application/event-handler/update-newsfeed/report-hidden.event-handler';
+import { CONTENT_CACHE_REPOSITORY_TOKEN } from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
+
 import { ContentBinding, CONTENT_BINDING_TOKEN } from '../application/binding';
 import {
   AutoSaveArticleHandler,
@@ -37,13 +47,16 @@ import {
   UpdateSeriesHandler,
 } from '../application/command/series';
 import { ValidateSeriesTagsHandler } from '../application/command/tag';
-import { ContentCron } from '../application/cron';
 import {
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
   ArticleUpdatedEventHandler,
 } from '../application/event-handler/article';
 import { ReportHiddenEventHandler } from '../application/event-handler/content';
+import {
+  SeenContentWhenReactionCreatedEventHandler,
+  SeenContentWhenGetDetailEventHandler,
+} from '../application/event-handler/mark-seen-content';
 import {
   PostDeletedEventHandler,
   PostPublishedEventHandler,
@@ -59,13 +72,7 @@ import {
   VideoPostDeletedEventHandler,
   VideoPostUpdatedEventHandler,
 } from '../application/event-handler/set-video-state';
-
-import {
-  SeenContentWhenReactionCreatedEventHandler,
-  SeenContentWhenGetDetailEventHandler,
-} from '../application/event-handler/mark-seen-content';
-
-import { FindArticleHandler } from '../application/query/article';
+import { FindArticleHandler, SearchArticlesHandler } from '../application/query/article';
 import {
   FindDraftContentsHandler,
   FindNewsfeedHandler,
@@ -79,6 +86,7 @@ import {
   GetScheduleContentHandler,
   CountContentPerWeekHandler,
   GetWelcomeContentsHandler,
+  UsersSeenContentHandler,
 } from '../application/query/content';
 import { FindPostHandler, FindPostsByIdsHandler } from '../application/query/post';
 import {
@@ -103,6 +111,7 @@ import { SeriesDomainService } from '../domain/domain-service/series.domain-serv
 import {
   CONTENT_REPOSITORY_TOKEN,
   POST_GROUP_REPOSITORY_TOKEN,
+  USER_SEEN_CONTENT_REPOSITORY_TOKEN,
 } from '../domain/repositoty-interface';
 import { ArticleValidator } from '../domain/validator/article.validator';
 import { ContentValidator } from '../domain/validator/content.validator';
@@ -118,13 +127,14 @@ import { ContentMapper } from '../driven-adapter/mapper/content.mapper';
 import { QuizParticipantMapper } from '../driven-adapter/mapper/quiz-participant.mapper';
 import { QuizQuestionMapper } from '../driven-adapter/mapper/quiz-question.mapper';
 import { QuizMapper } from '../driven-adapter/mapper/quiz.mapper';
-import { ContentRepository } from '../driven-adapter/repository';
+import {
+  ContentCacheRepository,
+  ContentRepository,
+  UserSeenContentRepository,
+} from '../driven-adapter/repository';
 import { PostGroupRepository } from '../driven-adapter/repository/post-group.repository';
 
 export const postProvider = [
-  /** Application Cron Handler */
-  ContentCron,
-
   /** Application Event Handler */
   ArticleDeletedEventHandler,
   ArticlePublishedEventHandler,
@@ -141,8 +151,16 @@ export const postProvider = [
   VideoPostDeletedEventHandler,
   ReportHiddenEventHandler,
 
+  /** Cache Content Event Handler */
+  DeleteCacheContentWhenContentDeletedHandler,
+  DeleteCacheContentWhenContentUpdatedHandler,
+  DeleteCacheContentWhenSeriesUpdatedItemsHandler,
+  DeleteCacheContentWhenAdminHidHandler,
+
   SeenContentWhenReactionCreatedEventHandler,
   SeenContentWhenGetDetailEventHandler,
+  DetachNewsfeedWhenReportHiddenEventHandler,
+  DetachNewsfeedWhenReportCreatedEventHandler,
   /** Application Binding */
   {
     provide: CONTENT_BINDING_TOKEN,
@@ -186,6 +204,7 @@ export const postProvider = [
 
   /** Application Query */
   FindArticleHandler,
+  SearchArticlesHandler,
   FindDraftContentsHandler,
   FindNewsfeedHandler,
   FindTimelineGroupHandler,
@@ -204,6 +223,11 @@ export const postProvider = [
   GetContentAudienceHandler,
   SearchContentsBySeriesHandler,
   GetWelcomeContentsHandler,
+  UsersSeenContentHandler,
+
+  CountContentPerWeekHandler,
+
+  CountContentPerWeekHandler,
 
   CountContentPerWeekHandler,
 
@@ -260,5 +284,13 @@ export const postProvider = [
   {
     provide: POST_GROUP_REPOSITORY_TOKEN,
     useClass: PostGroupRepository,
+  },
+  {
+    provide: CONTENT_CACHE_REPOSITORY_TOKEN,
+    useClass: ContentCacheRepository,
+  },
+  {
+    provide: USER_SEEN_CONTENT_REPOSITORY_TOKEN,
+    useClass: UserSeenContentRepository,
   },
 ];

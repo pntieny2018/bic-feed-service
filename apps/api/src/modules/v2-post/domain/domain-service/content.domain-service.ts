@@ -1,3 +1,4 @@
+import { ContentUpdateSettingEvent } from '@api/modules/v2-post/domain/event';
 import { CONTENT_STATUS, CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { GetPaginationContentsProps } from '@libs/database/postgres';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@libs/database/postgres/common';
 import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { isEmpty } from 'class-validator';
 import { uniq } from 'lodash';
 
@@ -37,7 +39,6 @@ import {
 import {
   GetAudiencesProps,
   GetContentByIdsProps,
-  GetContentIdsInNewsFeedProps,
   GetContentIdsInTimelineProps,
   GetContentIdsScheduleProps,
   GetDraftsProps,
@@ -65,26 +66,23 @@ export class ContentDomainService implements IContentDomainService {
     @Inject(GROUP_ADAPTER)
     private readonly _groupAdapter: IGroupAdapter,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    private readonly _authorityApp: IAuthorityAppService
+    private readonly _authorityApp: IAuthorityAppService,
+    private readonly event: EventBus
   ) {}
 
   public async getVisibleContent(
     contentId: string,
     excludeReportedByUserId?: string
   ): Promise<ContentEntity> {
-    let contentEntity: ContentEntity;
-
-    if (excludeReportedByUserId) {
-      contentEntity = await this._contentRepo.findContentByIdExcludeReportedByUserId(
-        contentId,
+    const contentEntity = await this._contentRepo.findContentWithCache({
+      where: {
+        id: contentId,
         excludeReportedByUserId,
-        { mustIncludeGroup: true }
-      );
-    } else {
-      contentEntity = await this._contentRepo.findContentById(contentId, {
+      },
+      include: {
         mustIncludeGroup: true,
-      });
-    }
+      },
+    });
 
     if (!contentEntity || !contentEntity.isVisible()) {
       throw new ContentNotFoundException();
@@ -132,11 +130,11 @@ export class ContentDomainService implements IContentDomainService {
   public async getContentByIds(
     input: GetContentByIdsProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]> {
-    const { ids, authUserId } = input;
+    const { ids } = input;
     if (!ids.length) {
       return [];
     }
-    const contentEntities = await this._contentRepo.findAll({
+    return this._contentRepo.findContentsWithCache({
       where: {
         ids,
       },
@@ -145,78 +143,10 @@ export class ContentDomainService implements IContentDomainService {
         shouldIncludeItems: true,
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
-        shouldIncludeSaved: {
-          userId: authUserId,
-        },
-        shouldIncludeMarkReadImportant: {
-          userId: authUserId,
-        },
-        shouldIncludeReaction: {
-          userId: authUserId,
-        },
+        shouldIncludeSeries: true,
+        shouldIncludeCategory: true,
       },
     });
-
-    return contentEntities.sort((a, b) => ids.indexOf(a.getId()) - ids.indexOf(b.getId()));
-  }
-
-  public async getContentIdsInNewsFeed(
-    props: GetContentIdsInNewsFeedProps
-  ): Promise<CursorPaginationResult<string>> {
-    const {
-      isMine,
-      type,
-      isSaved,
-      limit,
-      isImportant,
-      after,
-      before,
-      authUserId,
-      order = ORDER.DESC,
-    } = props;
-
-    if (isImportant) {
-      return this.getImportantContentIds({ ...props, isOnNewsfeed: true });
-    }
-
-    const orderOptions = isSaved
-      ? {
-          isSavedDateByDesc: true,
-        }
-      : {
-          isPublishedByDesc: true,
-        };
-    const { rows, meta } = await this._contentRepo.getCursorPagination({
-      select: ['id', 'type', 'publishedAt'],
-      where: {
-        isHidden: false,
-        status: CONTENT_STATUS.PUBLISHED,
-        inNewsfeedUserId: authUserId,
-        groupArchived: false,
-        excludeReportedByUserId: authUserId,
-        type,
-        createdBy: isMine ? authUserId : undefined,
-      },
-      include: {
-        ...(isSaved && {
-          mustIncludeSaved: {
-            userId: authUserId,
-          },
-        }),
-      },
-      limit,
-      order,
-      orderOptions,
-      before,
-      after,
-      ...(isSaved && {
-        subQuery: false,
-      }),
-    });
-    return {
-      rows: rows.map((row) => row.getId()),
-      meta,
-    };
   }
 
   public async getContentIdsInTimeline(
@@ -235,6 +165,14 @@ export class ContentDomainService implements IContentDomainService {
       order = ORDER.DESC,
     } = props;
 
+    if (!groupIds.length) {
+      return {
+        rows: [],
+        meta: {
+          hasNextPage: false,
+        },
+      };
+    }
     if (isImportant) {
       return this.getImportantContentIds(props);
     }
@@ -458,6 +396,7 @@ export class ContentDomainService implements IContentDomainService {
       importantExpiredAt,
     });
     await this._contentRepo.update(contentEntity);
+    this.event.publish(new ContentUpdateSettingEvent({ contentId: contentEntity.getId() }));
 
     if (isImportant) {
       await this._contentRepo.markReadImportant(contentId, authUser.id);
@@ -652,7 +591,9 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async saveContent(contentId: string, authUser: UserDto): Promise<void> {
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
+    const content = await this._contentRepo.findContentWithCache({
+      where: { id: contentId },
+    });
 
     if (!content || !content.isPublished()) {
       throw new ContentNotFoundException();
@@ -662,7 +603,9 @@ export class ContentDomainService implements IContentDomainService {
   }
 
   public async unsaveContent(contentId: string, userId: string): Promise<void> {
-    const content = await this._contentRepo.findContentByIdInActiveGroup(contentId);
+    const content = await this._contentRepo.findContentWithCache({
+      where: { id: contentId },
+    });
 
     if (!content || !content.isPublished()) {
       throw new ContentNotFoundException();

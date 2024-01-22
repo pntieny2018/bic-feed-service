@@ -59,11 +59,9 @@ export class ArticleDomainService implements IArticleDomainService {
 
   public constructor(
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
-    private readonly _contentDomainService: IContentDomainService,
+    private readonly _contentDomain: IContentDomainService,
     @Inject(MEDIA_DOMAIN_SERVICE_TOKEN)
-    private readonly _mediaDomainService: IMediaDomainService,
-    @Inject(GROUP_ADAPTER)
-    protected readonly _groupAdapter: IGroupAdapter,
+    private readonly _mediaDomain: IMediaDomainService,
 
     @Inject(ARTICLE_VALIDATOR_TOKEN)
     private readonly _articleValidator: IArticleValidator,
@@ -73,20 +71,22 @@ export class ArticleDomainService implements IArticleDomainService {
     private readonly _contentValidator: IContentValidator,
 
     @Inject(CATEGORY_REPOSITORY_TOKEN)
-    protected readonly _categoryRepository: ICategoryRepository,
+    protected readonly _categoryRepo: ICategoryRepository,
     @Inject(CONTENT_REPOSITORY_TOKEN)
-    private readonly _contentRepository: IContentRepository,
+    private readonly _contentRepo: IContentRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
-    private readonly _tagRepository: ITagRepository,
+    private readonly _tagRepo: ITagRepository,
+
+    @Inject(GROUP_ADAPTER)
+    protected readonly _groupAdapter: IGroupAdapter,
 
     private readonly event: EventBus
   ) {}
 
   public async getArticleById(articleId: string, authUser: UserDto): Promise<ArticleEntity> {
-    const articleEntity = await this._contentRepository.findOne({
+    const articleEntity = await this._contentRepo.findContentWithCache({
       where: {
         id: articleId,
-        groupArchived: false,
         excludeReportedByUserId: authUser?.id,
       },
       include: {
@@ -95,15 +95,6 @@ export class ArticleDomainService implements IArticleDomainService {
         shouldIncludeLinkPreview: true,
         shouldIncludeQuiz: true,
         shouldIncludeCategory: true,
-        shouldIncludeSaved: {
-          userId: authUser?.id,
-        },
-        shouldIncludeMarkReadImportant: {
-          userId: authUser?.id,
-        },
-        shouldIncludeReaction: {
-          userId: authUser?.id,
-        },
       },
     });
 
@@ -112,7 +103,10 @@ export class ArticleDomainService implements IArticleDomainService {
       throw new ContentNotFoundException();
     }
 
-    await this._contentValidator.checkCanReadNotPublishedContent(articleEntity, authUser.id);
+    const groups = await this._groupAdapter.getGroupsByIds(articleEntity.get('groupIds'));
+    await this._contentValidator.checkCanReadContent(articleEntity, authUser, {
+      dataGroups: groups,
+    });
 
     if (!authUser && !articleEntity.isOpen()) {
       throw new ContentAccessDeniedException();
@@ -133,7 +127,7 @@ export class ArticleDomainService implements IArticleDomainService {
     articleEntity.setGroups(groups.map((group) => group.id));
     articleEntity.setPrivacyFromGroups(groups);
     try {
-      await this._contentRepository.create(articleEntity);
+      await this._contentRepo.create(articleEntity);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -144,7 +138,7 @@ export class ArticleDomainService implements IArticleDomainService {
   public async delete(props: DeleteArticleProps): Promise<void> {
     const { actor, id } = props;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const articleEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
       shouldIncludeSeries: true,
     });
@@ -158,22 +152,22 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     if (articleEntity.isPublished()) {
-      await this._contentValidator.checkCanCRUDContent(
-        actor,
-        articleEntity.get('groupIds'),
-        articleEntity.get('type')
-      );
+      await this._contentValidator.checkCanCRUDContent({
+        user: actor,
+        groupIds: articleEntity.get('groupIds'),
+        contentType: articleEntity.get('type'),
+      });
     }
 
-    await this._contentRepository.delete(id);
-    this.event.publish(new ArticleDeletedEvent({ articleEntity, authUser: actor }));
+    await this._contentRepo.delete(id);
+    this.event.publish(new ArticleDeletedEvent({ entity: articleEntity, authUser: actor }));
   }
 
   public async publish(input: PublishArticleProps): Promise<ArticleEntity> {
     const { payload, actor } = input;
     const { id: articleId } = payload;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+    const articleEntity = await this._contentRepo.findContentByIdInActiveGroup(articleId, {
       shouldIncludeGroup: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
@@ -201,25 +195,25 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._contentValidator.validateLimitedToAttachSeries(articleEntity);
     await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
-    await this._contentRepository.update(articleEntity);
-    this.event.publish(new ArticlePublishedEvent({ articleEntity, authUser: actor }));
+    await this._contentRepo.update(articleEntity);
+    this.event.publish(new ArticlePublishedEvent({ entity: articleEntity, authUser: actor }));
 
-    await this._contentDomainService.markSeen(articleEntity.get('id'), actor.id);
+    await this._contentDomain.markSeen(articleEntity.get('id'), actor.id);
     articleEntity.increaseTotalSeen();
 
     if (articleEntity.isImportant()) {
-      await this._contentDomainService.markReadImportant(articleEntity.get('id'), actor.id);
+      await this._contentDomain.markReadImportant(articleEntity.get('id'), actor.id);
       articleEntity.setMarkReadImportant();
     }
 
     return articleEntity;
   }
 
-  public async schedule(inputData: ScheduleArticleProps): Promise<ArticleEntity> {
+  public async schedule(inputData: ScheduleArticleProps): Promise<void> {
     const { payload, actor } = inputData;
     const { id, scheduledAt } = payload;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(id, {
+    const articleEntity = await this._contentRepo.findContentByIdInActiveGroup(id, {
       shouldIncludeGroup: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
@@ -250,17 +244,15 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     if (articleEntity.isChanged()) {
-      await this._contentRepository.update(articleEntity);
+      await this._contentRepo.update(articleEntity);
     }
-
-    return articleEntity;
   }
 
   public async update(input: UpdateArticleProps): Promise<ArticleEntity> {
     const { payload, actor } = input;
     const { id: articleId, coverMedia } = payload;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+    const articleEntity = await this._contentRepo.findContentByIdInActiveGroup(articleId, {
       shouldIncludeGroup: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
@@ -294,8 +286,8 @@ export class ArticleDomainService implements IArticleDomainService {
     await this._articleValidator.validateArticleToPublish(articleEntity, actor);
 
     if (articleEntity.isChanged()) {
-      await this._contentRepository.update(articleEntity);
-      this.event.publish(new ArticleUpdatedEvent({ articleEntity, authUser: actor }));
+      await this._contentRepo.update(articleEntity);
+      this.event.publish(new ArticleUpdatedEvent({ entity: articleEntity, authUser: actor }));
     }
 
     return articleEntity;
@@ -305,7 +297,7 @@ export class ArticleDomainService implements IArticleDomainService {
     const { payload, actor } = input;
     const { id: articleId, coverMedia } = payload;
 
-    const articleEntity = await this._contentRepository.findContentByIdInActiveGroup(articleId, {
+    const articleEntity = await this._contentRepo.findContentByIdInActiveGroup(articleId, {
       shouldIncludeGroup: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
@@ -335,7 +327,7 @@ export class ArticleDomainService implements IArticleDomainService {
       return;
     }
 
-    return this._contentRepository.update(articleEntity);
+    return this._contentRepo.update(articleEntity);
   }
 
   private async _setArticleEntityAttributes(
@@ -347,12 +339,12 @@ export class ArticleDomainService implements IArticleDomainService {
     const { categoryIds, tagIds, coverMedia, ...restUpdate } = payload;
 
     if (tagIds) {
-      const newTags = await this._tagRepository.findAll({ ids: tagIds });
+      const newTags = await this._tagRepo.findAll({ ids: tagIds });
       articleEntity.setTags(newTags);
     }
 
     if (coverMedia) {
-      const images = await this._mediaDomainService.getAvailableImages(
+      const images = await this._mediaDomain.getAvailableImages(
         [articleEntity.get('cover')],
         [coverMedia.id],
         articleEntity.get('createdBy')
@@ -364,7 +356,7 @@ export class ArticleDomainService implements IArticleDomainService {
     }
 
     if (categoryIds) {
-      const newCategories = await this._categoryRepository.findAll({ where: { ids: categoryIds } });
+      const newCategories = await this._categoryRepo.findAll({ where: { ids: categoryIds } });
       if (newCategories.length) {
         await this._categoryValidator.checkValidCategories(categoryIds, actor.id);
       }

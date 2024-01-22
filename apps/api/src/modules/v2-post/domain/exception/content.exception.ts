@@ -68,12 +68,12 @@ export class ContentNoCRUDPermissionException extends DomainForbiddenException {
 export class ContentNoCRUDPermissionAtGroupException extends DomainForbiddenException {
   public static code = ERRORS.CONTENT_NO_CRUD_PERMISSION_AT_GROUP;
 
-  public constructor(groups: string[] = [], message: string = null, error: any = null) {
+  public constructor(groupNames: string[] = [], message: string = null, error: any = null) {
     const i18n = I18nContext.current();
     message =
       message ||
       i18n?.t(`error.content.no_crud_permission_at_group`, {
-        args: { groups: groups.join(', ') },
+        args: { groups: groupNames.join(', ') },
       }) ||
       '';
 

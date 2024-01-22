@@ -1,6 +1,10 @@
 import { IEventPayload } from '@libs/infra/event';
 
-import { ContentAttachedSeries, ContentGetDetail } from '../../../../common/constants';
+import {
+  ContentAttachedSeries,
+  ContentGetDetail,
+  ContentUpdateSetting,
+} from '../../../../common/constants';
 
 interface ContentGetDetailEventPayload {
   contentId: string;
@@ -8,6 +12,10 @@ interface ContentGetDetailEventPayload {
 }
 
 interface ContentAttachedSeriesEventPayload {
+  contentId: string;
+}
+
+interface ContentUpdateSettingEventPayload {
   contentId: string;
 }
 
@@ -36,5 +44,19 @@ export class ContentAttachedSeriesEvent implements IEventPayload {
 
   public getEventName(): string {
     return ContentAttachedSeriesEvent.event;
+  }
+}
+
+export class ContentUpdateSettingEvent implements IEventPayload {
+  public static event = ContentUpdateSetting;
+
+  public payload: ContentUpdateSettingEventPayload;
+
+  public constructor(data: ContentUpdateSettingEventPayload) {
+    this.payload = data;
+  }
+
+  public getEventName(): string {
+    return ContentUpdateSettingEvent.event;
   }
 }

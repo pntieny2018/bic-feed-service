@@ -1,5 +1,20 @@
+import {
+  ArticleCacheDto,
+  FileDto,
+  ImageDto,
+  LinkPreviewDto,
+  PostCacheDto,
+  QuizDto,
+  ReactionCount,
+  SeriesCacheDto,
+  TagDto,
+  VideoDto,
+} from '@api/modules/v2-post/application/dto';
 import { CONTENT_TYPE } from '@beincom/constants';
+import { QuizAttributes, TagAttributes } from '@libs/database/postgres/model';
 import { PostAttributes, PostModel } from '@libs/database/postgres/model/post.model';
+import { Injectable } from '@nestjs/common';
+import { merge } from 'lodash';
 
 import { CategoryEntity } from '../../domain/model/category';
 import {
@@ -12,14 +27,18 @@ import {
   ArticleAttributes as ArticleEntityAttributes,
   SeriesAttributes as SeriesEntityAttributes,
 } from '../../domain/model/content';
-import { LinkPreviewEntity } from '../../domain/model/link-preview';
+import { LinkPreviewAttributes, LinkPreviewEntity } from '../../domain/model/link-preview';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
-import { QuizEntity, QuizQuestionEntity } from '../../domain/model/quiz';
+import { QuizEntity, QuizQuestionAttributes, QuizQuestionEntity } from '../../domain/model/quiz';
 import { QuizParticipantEntity } from '../../domain/model/quiz-participant';
 import { TagEntity } from '../../domain/model/tag';
 
+@Injectable()
 export class ContentMapper {
-  public toDomain(post: PostModel): PostEntity | ArticleEntity | SeriesEntity {
+  public toDomain(
+    post: PostModel,
+    reactionsCount?: ReactionCount[]
+  ): PostEntity | ArticleEntity | SeriesEntity {
     if (post === null) {
       return null;
     }
@@ -27,11 +46,51 @@ export class ContentMapper {
     post = post.toJSON();
     switch (post.type) {
       case CONTENT_TYPE.POST:
-        return this._modelToPostEntity(post);
+        return this._modelToPostEntity(post, reactionsCount);
       case CONTENT_TYPE.SERIES:
         return this._modelToSeriesEntity(post);
       case CONTENT_TYPE.ARTICLE:
-        return this._modelToArticleEntity(post);
+        return this._modelToArticleEntity(post, reactionsCount);
+      default:
+        return null;
+    }
+  }
+
+  public cacheToDomain(
+    content: PostCacheDto | ArticleCacheDto | SeriesCacheDto
+  ): PostEntity | ArticleEntity | SeriesEntity {
+    if (content === null) {
+      return null;
+    }
+
+    switch (content.type) {
+      case CONTENT_TYPE.POST:
+        return this._cacheToPostEntity(content as PostCacheDto);
+      case CONTENT_TYPE.SERIES:
+        return this._cacheToSeriesEntity(content as SeriesCacheDto);
+      case CONTENT_TYPE.ARTICLE:
+        return this._cacheToArticleEntity(content as ArticleCacheDto);
+      default:
+        return null;
+    }
+  }
+
+  public modelToCache(
+    post: PostModel,
+    reactionsCount?: ReactionCount[]
+  ): ArticleCacheDto | PostCacheDto | SeriesCacheDto {
+    if (post === null) {
+      return null;
+    }
+
+    post = post.toJSON();
+    switch (post.type) {
+      case CONTENT_TYPE.POST:
+        return this._modelToPostCache(post, reactionsCount);
+      case CONTENT_TYPE.SERIES:
+        return this._modelToSeriesCache(post);
+      case CONTENT_TYPE.ARTICLE:
+        return this._modelToArticleCache(post, reactionsCount);
       default:
         return null;
     }
@@ -90,7 +149,7 @@ export class ContentMapper {
     };
   }
 
-  private _modelToPostEntity(post: PostAttributes): PostEntity {
+  private _modelToPostEntity(post: PostAttributes, reactionsCount?: ReactionCount[]): PostEntity {
     if (post === null) {
       return null;
     }
@@ -140,6 +199,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
+        reactionsCount: reactionsCount ? merge({}, ...reactionsCount) : undefined,
       },
       media: {
         images: (post.mediaJson?.images || []).map((image) => new ImageEntity(image)),
@@ -156,7 +216,10 @@ export class ContentMapper {
     });
   }
 
-  private _modelToArticleEntity(post: PostAttributes): ArticleEntity {
+  private _modelToArticleEntity(
+    post: PostAttributes,
+    reactionsCount?: ReactionCount[]
+  ): ArticleEntity {
     if (post === null) {
       return null;
     }
@@ -206,6 +269,7 @@ export class ContentMapper {
       aggregation: {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
+        reactionsCount: reactionsCount ? merge({}, ...reactionsCount) : undefined,
       },
       title: post.title,
       summary: post.summary,
@@ -251,5 +315,275 @@ export class ContentMapper {
       itemIds: post.itemIds || [],
       cover: post.coverJson ? new ImageEntity(post.coverJson) : null,
     });
+  }
+
+  private _cacheToPostEntity(post: PostCacheDto): PostEntity {
+    if (post === null) {
+      return null;
+    }
+    return new PostEntity({
+      id: post.id,
+      isHidden: post.isHidden,
+      isReported: post.isReported,
+      title: post.title,
+      updatedAt: post.updatedAt,
+      updatedBy: post.updatedBy,
+      createdBy: post.createdBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: post.setting,
+      createdAt: post.createdAt,
+      publishedAt: post.publishedAt,
+      groupIds: post.groupIds,
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+        reactionsCount: post.reactionsCount,
+      },
+      media: {
+        images: (post.media.images || []).map((image) => new ImageEntity(image)),
+        files: (post.media.files || []).map((file) => new FileEntity(file)),
+        videos: (post.media.videos || []).map((video) => new VideoEntity(video)),
+      },
+      quiz: post.quiz
+        ? new QuizEntity({
+            ...post.quiz,
+            contentId: post.id,
+            questions: (post.quiz.questions || []).map(
+              (question) => new QuizQuestionEntity(question as QuizQuestionAttributes)
+            ),
+          })
+        : undefined,
+      content: post.content,
+      mentionUserIds: post.mentionsUserIds || [],
+      linkPreview: post.linkPreview
+        ? new LinkPreviewEntity(post.linkPreview as LinkPreviewAttributes)
+        : undefined,
+      seriesIds: post.seriesIds || [],
+      tags: post.tags ? post.tags.map((tag) => new TagEntity(tag)) : [],
+    });
+  }
+
+  private _cacheToArticleEntity(article: ArticleCacheDto): ArticleEntity {
+    if (article === null) {
+      return null;
+    }
+    return new ArticleEntity({
+      id: article.id,
+      isHidden: article.isHidden,
+      isReported: article.isReported,
+      title: article.title,
+      updatedAt: article.updatedAt,
+      updatedBy: article.updatedBy,
+      createdBy: article.createdBy,
+      privacy: article.privacy,
+      status: article.status,
+      type: article.type,
+      setting: article.setting,
+      createdAt: article.createdAt,
+      publishedAt: article.publishedAt,
+      groupIds: article.groupIds,
+      aggregation: {
+        commentsCount: article.commentsCount,
+        totalUsersSeen: article.totalUsersSeen,
+        reactionsCount: article.reactionsCount,
+      },
+      media: {
+        images: (article.media.images || []).map((image) => new ImageEntity(image)),
+        files: (article.media.files || []).map((file) => new FileEntity(file)),
+        videos: (article.media.videos || []).map((video) => new VideoEntity(video)),
+      },
+      content: article.content,
+      summary: article.summary,
+      categories: article.categories
+        ? article.categories.map((category) => new CategoryEntity(category))
+        : [],
+      quiz: article.quiz
+        ? new QuizEntity({
+            ...article.quiz,
+            contentId: article.id,
+            questions: (article.quiz.questions || []).map(
+              (question) => new QuizQuestionEntity(question as QuizQuestionAttributes)
+            ),
+          })
+        : undefined,
+      cover: article.coverMedia ? new ImageEntity(article.coverMedia) : null,
+      seriesIds: article.seriesIds || [],
+      tags: article.tags ? article.tags.map((tag) => new TagEntity(tag)) : [],
+    });
+  }
+
+  private _cacheToSeriesEntity(series: SeriesCacheDto): SeriesEntity {
+    if (series === null) {
+      return null;
+    }
+    return new SeriesEntity({
+      id: series.id,
+      isReported: series.isReported,
+      isHidden: series.isHidden,
+      createdBy: series.createdBy,
+      updatedBy: series.updatedBy,
+      privacy: series.privacy,
+      status: series.status,
+      type: series.type,
+      setting: series.setting,
+      createdAt: series.createdAt,
+      updatedAt: series.updatedAt,
+      publishedAt: series.publishedAt,
+      groupIds: series.groupIds,
+      title: series.title,
+      summary: series.summary,
+      itemIds: series.itemsIds || [],
+      cover: series.coverMedia ? new ImageEntity(series.coverMedia) : null,
+    });
+  }
+
+  private _modelToPostCache(
+    post: PostAttributes,
+    reactionsCount: ReactionCount[] = []
+  ): PostCacheDto {
+    return new PostCacheDto({
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      media: {
+        images: (post.mediaJson?.images || []).map((image) => new ImageDto(image)),
+        files: (post.mediaJson?.files || []).map((file) => new FileDto(file)),
+        videos: (post.mediaJson?.videos || []).map((video) => new VideoDto(video)),
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      publishedAt: post.publishedAt,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      title: post.title,
+      content: post.content,
+      reactionsCount: merge({}, ...reactionsCount),
+      commentsCount: post.commentsCount || 0,
+      totalUsersSeen: post.totalUsersSeen || 0,
+      mentionsUserIds: post.mentions || [],
+      seriesIds: post.seriesIds || [],
+      tags: (post.tagsJson || []).map((tag) => this._modelToTagDto(tag)),
+      linkPreview: post.linkPreview ? new LinkPreviewDto(post.linkPreview) : null,
+      quiz: this._modelToQuizDto(post.quiz?.[0]),
+    });
+  }
+
+  private _modelToArticleCache(
+    post: PostAttributes,
+    reactionsCount: ReactionCount[] = []
+  ): ArticleCacheDto {
+    return new ArticleCacheDto({
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      media: {
+        images: (post.mediaJson?.images || []).map((image) => new ImageDto(image)),
+        files: (post.mediaJson?.files || []).map((file) => new FileDto(file)),
+        videos: (post.mediaJson?.videos || []).map((video) => new VideoDto(video)),
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      publishedAt: post.publishedAt,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      title: post.title,
+      content: post.content,
+      summary: post.summary,
+      reactionsCount: merge({}, ...reactionsCount),
+      wordCount: post.wordCount || 0,
+      commentsCount: post.commentsCount || 0,
+      totalUsersSeen: post.totalUsersSeen || 0,
+      categories: (post.categories || []).map((category) => ({
+        id: category.id,
+        name: category.name,
+      })),
+      coverMedia: post.coverJson ? new ImageDto(post.coverJson) : null,
+      seriesIds: post.seriesIds || [],
+      tags: (post.tagsJson || []).map((tag) => this._modelToTagDto(tag)),
+      quiz: this._modelToQuizDto(post.quiz?.[0]),
+    });
+  }
+
+  private _modelToSeriesCache(post: PostAttributes): SeriesCacheDto {
+    return new SeriesCacheDto({
+      id: post.id,
+      isReported: post.isReported,
+      isHidden: post.isHidden,
+      createdBy: post.createdBy,
+      updatedBy: post.updatedBy,
+      privacy: post.privacy,
+      status: post.status,
+      type: post.type,
+      setting: {
+        isImportant: post.isImportant,
+        importantExpiredAt: post.importantExpiredAt,
+        canComment: post.canComment,
+        canReact: post.canReact,
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      publishedAt: post.publishedAt,
+      groupIds: (post.groups || []).map((group) => group.groupId),
+      title: post.title,
+      summary: post.summary,
+      itemsIds: post.itemIds || [],
+      coverMedia: post.coverJson ? new ImageDto(post.coverJson) : null,
+    });
+  }
+
+  private _modelToQuizDto(quiz: QuizAttributes): QuizDto {
+    if (!quiz) {
+      return null;
+    }
+    return {
+      id: quiz.id,
+      contentId: quiz.postId,
+      numberOfQuestions: quiz.numberOfQuestions,
+      numberOfAnswers: quiz.numberOfAnswers,
+      isRandom: quiz.isRandom,
+      title: quiz.title,
+      description: quiz.description,
+      numberOfQuestionsDisplay: quiz.numberOfQuestionsDisplay,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+      status: quiz.status,
+      genStatus: quiz.genStatus,
+      createdBy: quiz.createdBy,
+      timeLimit: quiz.timeLimit,
+    };
+  }
+
+  private _modelToTagDto(tag: TagAttributes): TagDto {
+    if (!tag) {
+      return null;
+    }
+    return {
+      id: tag.id,
+      groupId: tag.groupId,
+      name: tag.name,
+      slug: tag.slug,
+    };
   }
 }

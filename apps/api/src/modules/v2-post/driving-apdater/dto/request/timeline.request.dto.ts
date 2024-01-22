@@ -3,6 +3,7 @@ import { PaginatedArgs } from '@libs/database/postgres/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import { BooleanHelper } from '@libs/common/helpers';
 
 export class GetTimelineRequestDto extends PaginatedArgs {
   @ApiProperty({ name: 'is_important', example: true })
@@ -12,13 +13,7 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
-    }
-    if (value === 'false') {
-      return false;
-    }
-    return null;
+    return BooleanHelper.convertStringToBoolean(value);
   })
   public isImportant?: boolean;
 
@@ -26,6 +21,9 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   @IsOptional()
   @Expose({
     name: 'is_mine',
+  })
+  @Transform(({ value }) => {
+    return BooleanHelper.convertStringToBoolean(value);
   })
   @IsBoolean()
   @Transform(({ value }) => {
@@ -46,13 +44,7 @@ export class GetTimelineRequestDto extends PaginatedArgs {
   })
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
-    }
-    if (value === 'false') {
-      return false;
-    }
-    return null;
+    return BooleanHelper.convertStringToBoolean(value);
   })
   public isSaved?: boolean;
 

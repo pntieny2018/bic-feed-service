@@ -14,6 +14,10 @@ import {
 import { GROUP_ADAPTER, IGroupAdapter } from '../../../../domain/service-adapter-interface';
 
 import { ProcessGroupPrivacyUpdatedCommand } from './process-group-privacy-updated.command';
+import {
+  CONTENT_CACHE_REPOSITORY_TOKEN,
+  IContentCacheRepository,
+} from '@api/modules/v2-post/domain/repositoty-interface/content-cache.repository.interface';
 
 @CommandHandler(ProcessGroupPrivacyUpdatedCommand)
 export class ProcessGroupPrivacyUpdatedHandler
@@ -23,7 +27,9 @@ export class ProcessGroupPrivacyUpdatedHandler
     @Inject(CONTENT_REPOSITORY_TOKEN)
     private readonly _contentRepository: IContentRepository,
     @Inject(GROUP_ADAPTER)
-    private readonly _groupAdapter: IGroupAdapter
+    private readonly _groupAdapter: IGroupAdapter,
+    @Inject(CONTENT_CACHE_REPOSITORY_TOKEN)
+    private readonly _contentCacheRepo: IContentCacheRepository
   ) {}
 
   public async execute(command: ProcessGroupPrivacyUpdatedCommand): Promise<void> {
@@ -98,9 +104,11 @@ export class ProcessGroupPrivacyUpdatedHandler
 
     const contentsChanged = contents.filter((content) => content.isChanged());
 
+    const contentIdsChanged = [];
     const contentPrivacyMapping: { [privacy: string]: string[] } = contentsChanged.reduce(
       (mapping, content) => {
         const privacy = content.getPrivacy();
+        contentIdsChanged.push(content.getId());
         if (!mapping[privacy]) {
           mapping[privacy] = [content.getId()];
         } else {
@@ -110,9 +118,9 @@ export class ProcessGroupPrivacyUpdatedHandler
       },
       {}
     );
-
     for (const [privacy, contentIds] of Object.entries(contentPrivacyMapping)) {
       await this._contentRepository.updateContentPrivacy(contentIds, privacy);
     }
+    await this._contentCacheRepo.deleteContents(contentIdsChanged);
   }
 }

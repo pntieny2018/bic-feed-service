@@ -50,6 +50,7 @@ export class TracingInterceptor implements NestInterceptor {
       event: eventName,
       actor,
       requestId: cls.getId(),
+      handler: ctx.getHandler().name,
     };
     cls.set(CONTEXT, context);
 

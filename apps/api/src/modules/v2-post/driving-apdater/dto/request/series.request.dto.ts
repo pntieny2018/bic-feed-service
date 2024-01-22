@@ -174,14 +174,14 @@ export class GetItemsBySeriesRequestDto {
   })
   @Type(() => Array)
   @IsUUID(4, { each: true })
+  @Expose({
+    name: 'series_ids',
+  })
   @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
     return value;
-  })
-  @Expose({
-    name: 'series_ids',
   })
   @IsNotEmpty()
   public seriesIds: string[];

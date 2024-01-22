@@ -1,12 +1,12 @@
 import { CONTENT_TARGET } from '@beincom/constants';
 import { EventsHandlerAndLog } from '@libs/infra/log';
+import { UserDto } from '@libs/service/user';
 import { Inject } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
 import { NIL } from 'uuid';
 
 import { ReactionDeletedEvent } from '../../../../domain/event';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../../domain/exception';
-import { ContentEntity } from '../../../../domain/model/content';
 import {
   COMMENT_REPOSITORY_TOKEN,
   CONTENT_REPOSITORY_TOKEN,
@@ -49,7 +49,7 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
   ) {}
 
   public async handle(event: ReactionDeletedEvent): Promise<void> {
-    const { reactionEntity } = event.payload;
+    const { reactionEntity, authUser } = event.payload;
 
     const reactionActor = await this._userAdapter.getUserById(reactionEntity.get('createdBy'));
 
@@ -68,7 +68,7 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
       );
       payload.comment = commentDto;
 
-      payload.content = await this._getContentDto(commentDto.postId, reactionActor.id);
+      payload.content = await this._getContentDto(commentDto.postId, reactionActor.id, authUser);
 
       if (commentDto.parentId !== NIL) {
         payload.parentComment = await this._getCommentDto(commentDto.parentId);
@@ -77,14 +77,19 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
         return this._notificationAdapter.sendReactionCommentNotification(payload);
       }
     } else {
-      payload.content = await this._getContentDto(reactionEntity.get('targetId'), reactionActor.id);
+      payload.content = await this._getContentDto(
+        reactionEntity.get('targetId'),
+        reactionActor.id,
+        authUser
+      );
       return this._notificationAdapter.sendReactionContentNotification(payload);
     }
   }
 
   private async _getContentDto(
     contentId: string,
-    reactionActorId: string
+    reactionActorId: string,
+    authUser: UserDto
   ): Promise<PostDto | ArticleDto> {
     const contentEntity = await this._contentRepository.findOne({
       where: { id: contentId },
@@ -99,11 +104,7 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
       throw new ContentNotFoundException();
     }
 
-    const contentActor = await this._userAdapter.getUserByIdWithPermission(
-      (contentEntity as ContentEntity).get('createdBy')
-    );
-
-    const contentDto = await this._contentBinding.contentsBinding([contentEntity], contentActor);
+    const contentDto = await this._contentBinding.contentsBinding([contentEntity], authUser);
     return contentDto[0] as PostDto | ArticleDto;
   }
 
@@ -122,12 +123,6 @@ export class NotiDeletedReactionEventHandler implements IEventHandler<ReactionDe
       throw new CommentNotFoundException();
     }
 
-    const commentActor = await this._userAdapter.getUserById(commentEntity.get('createdBy'));
-
-    return (
-      await this._commentBinding.commentsBinding([commentEntity], {
-        authUser: commentActor,
-      })
-    )[0];
+    return (await this._commentBinding.commentsBinding([commentEntity]))[0];
   }
 }

@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import { Controller, Get, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
@@ -5,7 +6,6 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { VERSIONS_SUPPORTED } from '../../../../common/constants';
 import { AuthUser } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { UserDto } from '../../../v2-user/application';
 import { FindCategoriesPaginationDto } from '../../application/dto/category.dto';
 import { FindCategoriesPaginationQuery } from '../../application/query/category';
 import { GetCategoryRequestDto } from '../dto/request';
@@ -25,7 +25,7 @@ export class CategoryController {
     description: 'Get category successfully',
   })
   @Get('/')
-  public async get(
+  public async getCategory(
     @AuthUser() _user: UserDto,
     @Query() getCategoryDto: GetCategoryRequestDto
   ): Promise<PageDto<FindCategoriesPaginationDto>> {

@@ -1,3 +1,4 @@
+import { QuizDto } from '@api/modules/v2-post/application/dto';
 import { QuizAttributes, QuizModel } from '@libs/database/postgres/model/quiz.model';
 import { Injectable } from '@nestjs/common';
 
@@ -82,5 +83,25 @@ export class QuizMapper {
         updatedAt: question.get('updatedAt'),
       })),
     };
+  }
+
+  public toDto(entity: QuizEntity): QuizDto {
+    return new QuizDto({
+      id: entity.get('id'),
+      contentId: entity.get('contentId'),
+      status: entity.get('status'),
+      genStatus: entity.get('genStatus'),
+      title: entity.get('title'),
+      description: entity.get('description'),
+      numberOfQuestions: entity.get('numberOfQuestions'),
+      numberOfQuestionsDisplay: entity.get('numberOfQuestionsDisplay'),
+      numberOfAnswers: entity.get('numberOfAnswers'),
+      isRandom: entity.get('isRandom'),
+      error: entity.get('error'),
+      timeLimit: entity.get('timeLimit'),
+      createdBy: entity.get('createdBy'),
+      createdAt: entity.get('createdAt'),
+      updatedAt: entity.get('updatedAt'),
+    });
   }
 }

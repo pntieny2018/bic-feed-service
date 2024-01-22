@@ -6,11 +6,12 @@ import { ArticleEntity, ContentEntity, PostEntity } from '../../model/content';
 import { TagEntity } from '../../model/tag';
 
 export interface IContentValidator {
-  checkCanCRUDContent(
-    user: UserDto,
-    groupAudienceIds: string[],
-    postType?: CONTENT_TYPE
-  ): Promise<void>;
+  checkCanCRUDContent(input: {
+    user: UserDto;
+    groupIds: string[];
+    contentType?: CONTENT_TYPE;
+    groups?: GroupDto[];
+  }): Promise<void>;
 
   checkCanEditContentSetting(user: UserDto, groupAudienceIds: string[]): Promise<void>;
 
@@ -25,8 +26,14 @@ export interface IContentValidator {
   checkCanReadContent(
     post: ContentEntity,
     user: UserDto,
-    postGroupsData?: GroupDto[]
+    options?: {
+      dataGroups?: GroupDto[];
+    }
   ): Promise<void>;
+
+  validateContentReported(contentId: string, userId: string): Promise<void>;
+
+  validateContentArchived(user: UserDto, postGroupIds: string[]): Promise<void>;
 
   checkCanReadNotPublishedContent(contentEntity: ContentEntity, userId: string): Promise<void>;
 

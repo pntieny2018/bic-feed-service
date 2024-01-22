@@ -1,11 +1,10 @@
+import { BIC_EMOJI } from '@api/modules/v2-post/domain/model/reaction';
 import { CONTENT_TARGET, ORDER } from '@beincom/constants';
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { emoji } from 'node-emoji';
 import { NIL as NIL_UUID } from 'uuid';
-
-import { BIC_EMOJI } from '../../../../reaction/reaction.constant';
 
 export class CreateReactionRequestDto {
   @ApiProperty({

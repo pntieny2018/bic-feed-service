@@ -1,10 +1,9 @@
 import { QUIZ_PROCESS_STATUS, QUIZ_RESULT_STATUS, QUIZ_STATUS } from '@beincom/constants';
 import { IPaginatedInfo, PaginatedResponse } from '@libs/database/postgres/common';
+import { UserDto } from '@libs/service/user';
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-
-import { UserDto } from '../../../v2-user/application';
 
 import { ArticleDto } from './article.dto';
 import { PostDto } from './post.dto';
@@ -17,7 +16,7 @@ export class QuizDto {
   public numberOfAnswers: number;
   public isRandom: boolean;
   public title: string;
-  public description?: string;
+  public description: string;
   public numberOfQuestionsDisplay?: number;
   public questions?: QuestionDto[];
   public createdAt: Date;
@@ -28,6 +27,8 @@ export class QuizDto {
     code: string;
     message: string;
   };
+  public createdBy?: string;
+  public timeLimit: number;
   public constructor(data: Partial<QuizDto>) {
     Object.assign(this, data);
   }

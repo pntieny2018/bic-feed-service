@@ -54,7 +54,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       const mentionUsers = await this._userAdapter.getUsersByIds(mentions, {
         withGroupJoined: true,
       });
-      await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+      this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
 
     const commentEntity = await this._commentDomain.create({
@@ -63,6 +63,6 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       parentId,
     });
 
-    return this._commentBinding.commentBinding(commentEntity, { authUser: actor });
+    return this._commentBinding.commentBinding(commentEntity);
   }
 }

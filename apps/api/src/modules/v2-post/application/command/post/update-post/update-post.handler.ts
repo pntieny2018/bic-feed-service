@@ -5,9 +5,7 @@ import {
   CONTENT_DOMAIN_SERVICE_TOKEN,
   IContentDomainService,
   IPostDomainService,
-  IReactionDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
-  REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
 import {
   GROUP_ADAPTER,
@@ -23,8 +21,6 @@ import { UpdatePostCommand } from './update-post.command';
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, PostDto> {
   public constructor(
-    @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
-    private readonly _reactionDomainService: IReactionDomainService,
     @Inject(POST_DOMAIN_SERVICE_TOKEN)
     private readonly _postDomainService: IPostDomainService,
     @Inject(CONTENT_DOMAIN_SERVICE_TOKEN)
@@ -52,15 +48,11 @@ export class UpdatePostHandler implements ICommandHandler<UpdatePostCommand, Pos
     const groups = await this._groupAdapter.getGroupsByIds(
       command.payload?.groupIds || postEntity.get('groupIds')
     );
-    const mentionUsers = await this._userAdapter.getUsersByIds(command.payload.mentionUserIds, {
-      withGroupJoined: true,
-    });
 
     const result = await this._contentBinding.postBinding(postEntity, {
       groups,
       actor: command.payload.authUser,
       authUser: command.payload.authUser,
-      mentionUsers,
     });
 
     return result;

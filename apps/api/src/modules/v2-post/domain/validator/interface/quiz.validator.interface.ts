@@ -1,4 +1,4 @@
-import { UserDto } from '../../../../v2-user/application';
+import { UserDto } from '@libs/service/user';
 
 export interface IQuizValidator {
   checkCanCUDQuizInContent(contentId: string, authUser: UserDto): Promise<void>;

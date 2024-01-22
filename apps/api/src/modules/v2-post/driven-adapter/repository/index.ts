@@ -8,4 +8,6 @@ export * from './quiz.repository';
 export * from './quiz-participant.repository';
 export * from './report.repository';
 export * from './tag.repository';
-export * from './follow.repository';
+export * from './content-cache.repository';
+export * from './user-newsfeed.repository';
+export * from './user-seen-content.repository';

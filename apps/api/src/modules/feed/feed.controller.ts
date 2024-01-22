@@ -1,13 +1,13 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { PageDto } from '../../common/dto';
-import { FeedService } from './feed.service';
-import { PostResponseDto } from '../post/dto/responses';
+import { UserDto } from '@libs/service/user';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+
 import { VERSIONS_SUPPORTED } from '../../common/constants';
-import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { UserDto } from '../v2-user/application';
-import { ArticleResponseDto } from '../article/dto/responses';
 import { AuthUser } from '../../common/decorators';
+import { PageDto } from '../../common/dto';
+
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { FeedService } from './feed.service';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -25,17 +25,5 @@ export class FeedController {
     @Query() getUserSeenPostDto: GetUserSeenPostDto
   ): Promise<PageDto<UserDto>> {
     return this._feedService.getUsersSeenPosts(user, getUserSeenPostDto);
-  }
-
-  @ApiOperation({ summary: 'Get list pinned' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-  })
-  @Get('group/:groupId/pinned')
-  public async getPinnedList(
-    @Param('groupId', ParseUUIDPipe) groupId: string,
-    @AuthUser() user: UserDto
-  ): Promise<ArticleResponseDto[]> {
-    return this._feedService.getPinnedList(groupId, user);
   }
 }

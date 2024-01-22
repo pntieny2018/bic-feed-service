@@ -20,7 +20,7 @@ export class SearchSeriesUpdatedEventHandler implements IEventHandler<SeriesUpda
   ) {}
 
   public async handle(event: SeriesUpdatedEvent): Promise<void> {
-    const { seriesEntity, authUser } = event.payload;
+    const { entity: seriesEntity, authUser } = event.payload;
 
     const groups = await this._groupAdapter.getGroupsByIds(seriesEntity.get('groupIds'));
     const communityIds = uniq(groups.map((group) => group.rootGroupId));

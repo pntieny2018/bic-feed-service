@@ -33,6 +33,7 @@ describe('TagController', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           t: (...args) => {},
         } as any)
     );
@@ -62,7 +63,7 @@ describe('TagController', () => {
       const queryExecute = jest
         .spyOn(query, 'execute')
         .mockResolvedValue({ rows: [tagMock], total: 1 });
-      const result = await tagController.get(userMock, getTagDto);
+      const result = await tagController.getTags(userMock, getTagDto);
       expect(queryExecute).toBeCalledWith(
         new FindTagsPaginationQuery({
           name: getTagDto.name,
@@ -82,7 +83,7 @@ describe('TagController', () => {
 
     it('Should create tag successfully', async () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
-      await tagController.create(userMock, createTagDto);
+      await tagController.createTag(userMock, createTagDto);
       expect(commandExecute).toBeCalledWith(
         new CreateTagCommand({
           groupId: createTagDto.groupId,
@@ -96,7 +97,7 @@ describe('TagController', () => {
       const err = new TagDuplicateNameException();
       jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await tagController.create(userMock, createTagDto);
+        await tagController.createTag(userMock, createTagDto);
       } catch (e) {
         expect(e).toEqual(new BadRequestException(err));
       }
@@ -110,7 +111,7 @@ describe('TagController', () => {
 
     it('Should update tag successfully', async () => {
       const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
-      const result = await tagController.update(userMock, tagMock.id, updateTagDto);
+      const result = await tagController.updateTag(userMock, tagMock.id, updateTagDto);
       expect(commandExecute).toBeCalledWith(
         new UpdateTagCommand({
           id: tagMock.id,
@@ -124,7 +125,7 @@ describe('TagController', () => {
       const err = new TagNotFoundException();
       jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await tagController.update(userMock, tagMock.id, updateTagDto);
+        await tagController.updateTag(userMock, tagMock.id, updateTagDto);
       } catch (e) {
         expect(e).toEqual(new NotFoundException(err));
       }
@@ -134,7 +135,7 @@ describe('TagController', () => {
       const err = new TagDuplicateNameException();
       jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await tagController.update(userMock, tagMock.id, updateTagDto);
+        await tagController.updateTag(userMock, tagMock.id, updateTagDto);
       } catch (e) {
         expect(e).toEqual(new BadRequestException(err));
       }
@@ -144,7 +145,7 @@ describe('TagController', () => {
       const err = new TagUsedException();
       jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await tagController.update(userMock, tagMock.id, updateTagDto);
+        await tagController.updateTag(userMock, tagMock.id, updateTagDto);
       } catch (e) {
         expect(e).toEqual(new BadRequestException(err));
       }
@@ -157,16 +158,16 @@ describe('TagController', () => {
     };
 
     it('Should delete tag successfully', async () => {
-      jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
-      const result = await tagController.delete(userMock, deleteTagDto.id);
-      expect(result).not.toBeDefined();
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue({});
+      await tagController.deleteTag(userMock, deleteTagDto.id);
+      expect(commandExecute).toBeCalledTimes(1);
     });
 
     it(`Should catch not found exception`, async () => {
       const err = new TagNotFoundException();
       jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await tagController.delete(userMock, deleteTagDto.id);
+        await tagController.deleteTag(userMock, deleteTagDto.id);
       } catch (e) {
         expect(e).toEqual(new NotFoundException(err));
       }
@@ -176,7 +177,7 @@ describe('TagController', () => {
       const err = new TagUsedException();
       jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await tagController.delete(userMock, deleteTagDto.id);
+        await tagController.deleteTag(userMock, deleteTagDto.id);
       } catch (e) {
         expect(e).toEqual(new BadRequestException(err));
       }

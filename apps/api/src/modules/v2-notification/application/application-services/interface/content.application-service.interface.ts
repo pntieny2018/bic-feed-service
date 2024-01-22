@@ -1,3 +1,4 @@
+import { SpecificNotificationSettings } from '@api/modules/v2-notification/data-type';
 import { UserDto } from '@libs/service/user';
 
 import { ArticleDto, PostDto, SeriesDto } from '../../../../v2-post/application/dto';
@@ -91,6 +92,11 @@ export type SeriesChangedItemNotificationPayload = {
 };
 
 export interface IContentNotificationApplicationService {
+  getSpecificNotificationSettings(
+    userId: string,
+    targetId: string
+  ): Promise<SpecificNotificationSettings>;
+
   sendPostDeletedNotification(payload: PostDeletedNotificationPayload): Promise<void>;
   sendPostPublishedNotification(payload: PostPublishedNotificationPayload): Promise<void>;
   sendPostUpdatedNotification(payload: PostUpdatedNotificationPayload): Promise<void>;

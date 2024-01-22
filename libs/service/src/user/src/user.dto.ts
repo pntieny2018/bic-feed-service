@@ -1,30 +1,9 @@
+import { ShowingBadgeDto } from '@beincom/dto';
 import { Expose } from 'class-transformer';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../../apps/api/src/common/constants';
 
-class CommunityInfo {
-  @Expose()
-  public id: string;
-
-  @Expose()
-  public name: string;
-}
-
-export class ShowingBadgeDto {
-  @Expose()
-  public id: string;
-
-  @Expose()
-  public name: string;
-
-  @Expose()
-  public iconUrl: string;
-
-  @Expose()
-  public community: CommunityInfo;
-}
-
-export class BaseUserDto {
+export class UserPublicProfileDto {
   @Expose()
   public id: string;
 
@@ -35,17 +14,21 @@ export class BaseUserDto {
   public fullname: string;
 
   @Expose()
-  public email: string;
-
-  @Expose()
   public avatar: string;
 
-  public constructor(data: Partial<BaseUserDto> = {}) {
+  @Expose()
+  public isVerified?: boolean;
+
+  @Expose()
+  public showingBadges?: ShowingBadgeDto[];
+
+  public constructor(data: Partial<UserPublicProfileDto> = {}) {
     this.id = data.id;
     this.username = data.username;
     this.fullname = data.fullname;
-    this.email = data.email;
     this.avatar = data.avatar;
+    this.isVerified = data.isVerified;
+    this.showingBadges = data.showingBadges;
   }
 }
 
@@ -63,9 +46,6 @@ export class UserDto {
 
   @Expose()
   public fullname: string;
-
-  @Expose()
-  public email: string;
 
   @Expose()
   public avatar: string;
@@ -89,10 +69,13 @@ export class UserDto {
   public groups?: string[];
 
   public constructor(data: Partial<UserDto> = {}, excluded?: string[]) {
+    if (!data) {
+      return;
+    }
+
     this.id = data.id;
     this.username = data.username;
     this.fullname = data.fullname;
-    this.email = data.email;
     this.avatar = data.avatar;
     this.showingBadges = data.showingBadges;
     this.isDeactivated = data.isDeactivated;

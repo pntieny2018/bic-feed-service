@@ -1,11 +1,11 @@
+import { SearchPostsDto } from '@api/modules/search/application/dto/search-post.dto';
+import { UserDto } from '@libs/service/user';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { VERSIONS_SUPPORTED } from '../../common/constants';
 import { AuthUser } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
-import { SearchPostsDto } from '../post/dto/requests';
-import { UserDto } from '../v2-user/application';
 
 import { SearchAppService } from './application/search.app-service';
 

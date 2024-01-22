@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
+import { instanceToInstance } from 'class-transformer';
 import { Request } from 'express';
 
 import { VERSIONS_SUPPORTED, TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
@@ -55,17 +55,17 @@ export class PostController {
     success: 'message.post.created_success',
   })
   @Post(ROUTES.POST.CREATE.PATH)
-  public async createDraft(
+  public async createDraftPost(
     @AuthUser() authUser: UserDto,
     @Body() createDraftPostRequestDto: CreateDraftPostRequestDto
   ): Promise<CreateDraftPostDto> {
     const { audience } = createDraftPostRequestDto;
 
-    const data = await this._commandBus.execute<CreateDraftPostCommand, CreateDraftPostDto>(
+    const data = this._commandBus.execute<CreateDraftPostCommand, CreateDraftPostDto>(
       new CreateDraftPostCommand({ groupIds: audience.groupIds, authUser })
     );
 
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Update post' })
@@ -96,7 +96,7 @@ export class PostController {
     if (data.status === CONTENT_STATUS.PROCESSING) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Publish post.' })
@@ -126,7 +126,7 @@ export class PostController {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
 
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Auto save post' })
@@ -134,7 +134,7 @@ export class PostController {
     success: 'message.post.updated_success',
   })
   @Patch(ROUTES.POST.AUTO_SAVE.PATH)
-  public async autoSave(
+  public async autoSavePost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
     @Body() autoSavePostRequestDto: AutoSavePostRequestDto
@@ -159,8 +159,8 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto
   ): Promise<PostDto> {
-    const data = await this._queryBus.execute(new FindPostQuery({ postId, authUser }));
-    return plainToInstance(PostDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    const data = this._queryBus.execute(new FindPostQuery({ postId, authUser }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Schedule post' })
@@ -170,12 +170,12 @@ export class PostController {
   })
   @Put(ROUTES.POST.SCHEDULE.PATH)
   @Version(ROUTES.POST.SCHEDULE.VERSIONS)
-  public async schedule(
+  public async schedulePost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() scheduleData: SchedulePostRequestDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    await this._commandBus.execute<SchedulePostCommand, void>(
+    return this._commandBus.execute<SchedulePostCommand, void>(
       new SchedulePostCommand({
         id: postId,
         content: scheduleData.content,
@@ -197,10 +197,10 @@ export class PostController {
   })
   @Delete(ROUTES.POST.DELETE.PATH)
   @Version(ROUTES.POST.DELETE.VERSIONS)
-  public async delete(
+  public async deletePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<void> {
-    await this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
+    return this._commandBus.execute(new DeletePostCommand({ postId, authUser: user }));
   }
 }

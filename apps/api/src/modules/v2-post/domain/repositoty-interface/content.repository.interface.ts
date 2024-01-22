@@ -1,4 +1,4 @@
-import { CONTENT_TARGET } from '@beincom/constants';
+import { CONTENT_TARGET, LANGUAGE } from '@beincom/constants';
 import { CursorPaginationResult, PaginationProps } from '@libs/database/postgres/common';
 import {
   FindContentIncludeOptions,
@@ -7,6 +7,11 @@ import {
 } from '@libs/database/postgres/repository/interface';
 
 import { PostEntity, ArticleEntity, ContentEntity, SeriesEntity } from '../model/content';
+
+import {
+  FindAllContentsInCacheProps,
+  FindContentInCacheProps,
+} from './content-cache.repository.interface';
 
 export type GetReportContentIdsProps = {
   reportUser: string;
@@ -23,6 +28,7 @@ export interface IContentRepository {
   create(data: PostEntity | ArticleEntity | SeriesEntity): Promise<void>;
   update(data: ContentEntity): Promise<void>;
   updateContentPrivacy(contentIds: string[], privacy: string): Promise<void>;
+  updateContentLang(contentIds: string[], lang: LANGUAGE): Promise<void>;
   delete(id: string): Promise<void>;
 
   findContentById(
@@ -44,9 +50,15 @@ export interface IContentRepository {
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
   findOne(findOnePostOptions: FindContentProps): Promise<PostEntity | ArticleEntity | SeriesEntity>;
+  findContentWithCache(
+    input: FindContentInCacheProps
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
   findAll(
     findAllPostOptions: FindContentProps,
     offsetPaginationProps?: PaginationProps
+  ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
+  findContentsWithCache(
+    input: FindAllContentsInCacheProps
   ): Promise<(PostEntity | ArticleEntity | SeriesEntity)[]>;
 
   getContentById(contentId: string): Promise<PostEntity | ArticleEntity | SeriesEntity>;
@@ -59,6 +71,7 @@ export interface IContentRepository {
   markSeen(postId: string, userId: string): Promise<void>;
   hasSeen(postId: string, userId: string): Promise<boolean>;
   markReadImportant(postId: string, userId: string): Promise<void>;
+  getMarkReadImportant(postIds: string[], userId: string): Promise<Record<string, boolean>>;
 
   findPinnedContentIdsByGroupId(groupId: string): Promise<string[]>;
   reorderPinnedContent(contentIds: string[], groupId: string): Promise<void>;
@@ -66,6 +79,7 @@ export interface IContentRepository {
   unpinContent(contentId: string, groupIds: string[]): Promise<void>;
   saveContent(userId: string, contentId: string): Promise<void>;
   unSaveContent(userId: string, contentId: string): Promise<void>;
+  getSavedContentIds(userId: string, contentIds: string[]): Promise<Record<string, boolean>>;
 
   createPostSeries(seriesId: string, postId: string): Promise<void>;
   deletePostSeries(seriesId: string, postId: string): Promise<void>;

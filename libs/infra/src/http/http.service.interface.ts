@@ -1,3 +1,5 @@
+import { ModuleMetadata } from '@nestjs/common';
+
 export interface IHttpServiceRequestOptions {
   headers?: Record<string, string>;
   params?: object;
@@ -15,6 +17,12 @@ export interface IHttpServiceResponse<T = any> {
   statusText: string;
   headers: Record<string, string>;
   data: T;
+}
+
+export interface IHttpDALModuleOptions extends Pick<ModuleMetadata, 'imports'> {
+  provide: string;
+  useFactory?: (...args: any[]) => IHttpServiceOptions;
+  inject?: any[];
 }
 
 export interface IHttpService {

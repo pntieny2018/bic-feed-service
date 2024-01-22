@@ -1,10 +1,11 @@
-import { Op, QueryTypes } from 'sequelize';
+import { CONTENT_TYPE } from '@beincom/constants';
+import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { PostModel } from '@libs/database/postgres/model';
+import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { PostModel, PostType } from '../database/models/post.model';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
-import { getDatabaseConfig } from '@libs/database/postgres/config';
+import { Op, QueryTypes } from 'sequelize';
 
 interface ICommandOptions {
   rollback: boolean;
@@ -19,8 +20,8 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
   public constructor(
     @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
-    @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    @Inject(USER_SERVICE_TOKEN)
+    private readonly _userService: IUserService
   ) {}
 
   public static overrideUrl = (node: Record<string, any>): Record<string, any> => {
@@ -105,7 +106,7 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
               },
             },
           ],
-          type: PostType.ARTICLE,
+          type: CONTENT_TYPE.ARTICLE,
         },
       });
 
@@ -116,9 +117,7 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
 
       const userIdsNeedToFind = posts.map((post) => post.createdBy);
 
-      const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-        withGroupJoined: false,
-      });
+      const users = await this._userService.findAllByIds(userIdsNeedToFind);
 
       const jsonPosts = posts.map((post) => ({
         id: post.id,
@@ -127,7 +126,6 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
         createdBy: post.createdBy,
         actor: {
           username: users.find((user) => user.id === post.createdBy)?.username,
-          email: users.find((user) => user.id === post.createdBy)?.email,
           fullname: users.find((user) => user.id === post.createdBy)?.fullname,
         },
       }));
@@ -159,7 +157,9 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
   }
 
   private _recurseChildren(children: any, func: any): any {
-    if (!children) return;
+    if (!children) {
+      return;
+    }
     const newChildren = children.map((child) => {
       const newChild = func(child);
       if (child.hasOwnProperty('children') && child.children.length > 0) {
@@ -179,7 +179,9 @@ export class MigrateArticlesContainErrorImageCommand implements CommandRunner {
 
   private _recursivelyUpdateChildrenProperties(node: any, func: any): any {
     const newNode = func(node);
-    if (!node.hasOwnProperty('children') || !node.children?.length) return newNode;
+    if (!node.hasOwnProperty('children') || !node.children?.length) {
+      return newNode;
+    }
     const newNodeChildren = newNode.children.map((child) => {
       const newChild = func(child);
       return {

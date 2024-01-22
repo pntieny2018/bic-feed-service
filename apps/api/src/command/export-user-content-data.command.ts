@@ -1,8 +1,9 @@
+/* eslint-disable no-console */
+import { PostModel } from '@libs/database/postgres/model';
+import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
+import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Command, CommandRunner } from 'nest-commander';
-import { PostModel } from '../database/models/post.model';
-import { Inject } from '@nestjs/common';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
 import { Sequelize } from 'sequelize';
 
 @Command({
@@ -13,8 +14,8 @@ export class ExportUserContentDataCommand implements CommandRunner {
   public constructor(
     @InjectModel(PostModel) private _postModel: typeof PostModel,
 
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService
+    @Inject(USER_SERVICE_TOKEN)
+    private _userService: IUserService
   ) {}
 
   public async run(): Promise<any> {
@@ -67,8 +68,10 @@ export class ExportUserContentDataCommand implements CommandRunner {
     for (const userId of userIds) {
       count++;
       console.log(`Exporting ${count}/${userIds.length}`);
-      if (!userId) continue;
-      const user = await this._userAppService.findOne(userId);
+      if (!userId) {
+        continue;
+      }
+      const user = await this._userService.findById(userId);
       const contentCounted: any = postCount.find((item) => item.createdBy === userId);
 
       data.push({

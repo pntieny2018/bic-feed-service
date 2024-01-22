@@ -14,7 +14,7 @@ export class FilePostPublishedEventHandler implements IEventHandler<PostPublishe
   ) {}
 
   public async handle(event: PostPublishedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     const fileIds = postEntity.get('media').files.map((file) => file.get('id'));
 

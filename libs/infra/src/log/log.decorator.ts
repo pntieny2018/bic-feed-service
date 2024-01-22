@@ -34,7 +34,12 @@ export function EventsHandlerAndLog(...events: IEvent[]) {
       }
       function logError(error: any): void {
         logger.error(
-          `EventHandler error: ${JSON.stringify({ eventName, debugContext, error: error.message })}`
+          `EventHandler error: ${JSON.stringify({
+            eventName,
+            debugContext,
+            error: error.message,
+            stack: error.stack,
+          })}`
         );
         Sentry.captureException(error);
       }
@@ -159,48 +164,32 @@ export function ProcessorAndLog(queueName: string) {
   };
 }
 
-export function EventPatternAndLog(topicName: string) {
-  // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/explicit-module-boundary-types
+export function EventPatternAndLog(topicName: string): MethodDecorator {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor): void {
     const originalHandler = descriptor.value;
     const className = target.constructor.name;
     const logger = new Logger(className);
 
-    descriptor.value = function (message: IKafkaConsumerMessage<unknown>): void {
+    descriptor.value = async function (message: IKafkaConsumerMessage<unknown>): Promise<any> {
       const { headers } = message;
-      const requestId = headers?.[HEADER_REQ_ID] || v4(); // Assuming you have a requestId header
+      const requestId = headers?.[HEADER_REQ_ID] || v4();
       const cls = ClsServiceManager.getClsService();
       cls.enter();
       cls.set(CLS_ID, requestId);
 
-      logger.debug(`EventPattern start: ${JSON.stringify({ topicName, message })}`);
+      const { topic, partition, offset } = message;
 
-      function logDone(): void {
-        logger.debug(`EventPattern done: ${JSON.stringify({ topicName })}`);
-      }
-
-      function logError(error: any): void {
-        logger.error(`EventPattern error: ${JSON.stringify({ topicName, error: error.message })}`);
+      try {
+        logger.debug(`EventPattern start: ${JSON.stringify({ topic, message })}`);
+        const response = await originalHandler.call(this, message);
+        logger.debug(`EventPattern done: ${JSON.stringify({ topic, partition, offset })}`);
+        return response;
+      } catch (error) {
+        logger.error(`EventPattern error: ${JSON.stringify({ topic, error: error.message })}`);
         Sentry.captureException(error);
       }
-
-      const result = originalHandler.call(this, message);
-
-      if (result instanceof Promise) {
-        result
-          .then((d) => {
-            logDone();
-            return d;
-          })
-          .catch((error) => {
-            logError(error);
-          });
-      } else {
-        logDone();
-      }
-
-      return result;
     };
+
     EventPattern(`${process.env.KAFKA_ENV}.${topicName}`)(target, propertyKey, descriptor);
   };
 }

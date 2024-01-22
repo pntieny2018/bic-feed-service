@@ -13,7 +13,7 @@ import {
 import { ArticleEntity, PostEntity, SeriesEntity } from '../model/content';
 
 interface SeriesEventPayload {
-  seriesEntity: SeriesEntity;
+  entity: SeriesEntity;
   authUser: UserDto;
 }
 

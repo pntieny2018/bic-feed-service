@@ -1,4 +1,5 @@
 import { IMAGE_RESOURCE, MEDIA_PROCESS_STATUS } from '@beincom/constants';
+import { VideoThumbnail } from '@libs/common/dtos';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
@@ -52,6 +53,7 @@ export class FileDto {
   public createdBy: string;
   public mimeType: string;
   public size: number;
+  public status: MEDIA_PROCESS_STATUS;
 
   public constructor(data: Partial<FileDto>) {
     Object.assign(this, data);
@@ -86,11 +88,8 @@ export class VideoDto {
   public height: number;
   public createdBy: string;
   public status: MEDIA_PROCESS_STATUS;
-  public thumbnails: {
-    url: string;
-    width: number;
-    height: number;
-  }[];
+  public duration: number;
+  public thumbnails: VideoThumbnail[];
 
   public constructor(data: Partial<VideoDto>) {
     Object.assign(this, data);

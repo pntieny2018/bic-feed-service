@@ -14,7 +14,7 @@ export class VideoPostUpdatedEventHandler implements IEventHandler<PostUpdatedEv
   ) {}
 
   public async handle(event: PostUpdatedEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     if (postEntity.isPublished()) {
       const { detachVideoIds } = postEntity.getState();

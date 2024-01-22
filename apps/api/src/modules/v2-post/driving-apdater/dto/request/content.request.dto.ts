@@ -1,3 +1,4 @@
+import { MAX_ITEMS_PER_PAGE } from '@api/common/constants';
 import { CONTENT_TYPE, ORDER } from '@beincom/constants';
 import { BooleanHelper } from '@libs/common/helpers';
 import { PaginatedArgs } from '@libs/database/postgres/common';
@@ -12,6 +13,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   ValidateIf,
 } from 'class-validator';
 

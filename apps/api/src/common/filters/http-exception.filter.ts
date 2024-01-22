@@ -22,6 +22,9 @@ import {
   DomainForbiddenException,
   DomainNotFoundException,
 } from '../exceptions';
+import semver from 'semver';
+import { VERSION_1_13_0 } from '@api/common/constants';
+import { HEADER_VERSION_KEY } from '@libs/common/constants';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -30,27 +33,34 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public catch(error: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    return this.handleHttpException(this._errorToHttpException(error), response);
+    const request = ctx.getRequest();
+    const version = request.header(HEADER_VERSION_KEY);
+    const isSupportedSnakeCase = semver.lte(version, VERSION_1_13_0);
+    return this.handleHttpException(
+      this._errorToHttpException(error),
+      response,
+      isSupportedSnakeCase
+    );
   }
 
-  /**
-   * Handle Nest Http Exception
-   * @param exception
-   * @param response
-   */
-  protected handleHttpException(exception: HttpException, response: Response): Response {
+  protected handleHttpException(
+    exception: HttpException,
+    response: Response,
+    isSupportedSnakeCase: boolean
+  ): Response {
     const status = exception.getStatus();
     const res = exception.getResponse();
 
     let errors = res['message'];
+
     if (res['errors']) {
-      errors = snakecaseKeys(res['errors']);
+      errors = isSupportedSnakeCase ? snakecaseKeys(res['errors']) : res['errors'];
     }
     if (res['cause']) {
-      errors = snakecaseKeys(res['cause']);
+      errors = isSupportedSnakeCase ? snakecaseKeys(res['cause']) : res['cause'];
     }
     if (res['_response']) {
-      errors = snakecaseKeys(res['_response']);
+      errors = isSupportedSnakeCase ? snakecaseKeys(res['_response']) : res['_response'];
     }
 
     return response.status(status).json(

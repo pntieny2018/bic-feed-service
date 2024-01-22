@@ -5,7 +5,6 @@ import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
 } from '../../../../domain/domain-service/interface';
-import { IUserAdapter, USER_ADAPTER } from '../../../../domain/service-adapter-interface';
 import {
   IReactionValidator,
   REACTION_VALIDATOR_TOKEN,
@@ -19,8 +18,6 @@ export class CreateReactionHandler implements ICommandHandler<CreateReactionComm
   public constructor(
     @Inject(REACTION_DOMAIN_SERVICE_TOKEN)
     private readonly _reactionDomainService: IReactionDomainService,
-    @Inject(USER_ADAPTER)
-    private readonly _userAdapter: IUserAdapter,
     @Inject(REACTION_VALIDATOR_TOKEN)
     private readonly _reactionValidator: IReactionValidator
   ) {}

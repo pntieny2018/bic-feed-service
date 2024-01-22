@@ -1,8 +1,8 @@
-import { Command, CommandRunner, Option } from 'nest-commander';
-import { InjectModel } from '@nestjs/sequelize';
-import { MediaModel } from '../database/models/media.model';
-import { Op } from 'sequelize';
+import { MediaModel } from '@libs/database/postgres/model';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/sequelize';
+import { Command, CommandRunner, Option } from 'nest-commander';
+import { Op } from 'sequelize';
 
 interface ICommandOptions {
   updateThumbnail: boolean;

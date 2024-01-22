@@ -3,21 +3,14 @@ import { MigratePostTitleCommand } from '@api/command/migrate-post-title.command
 import { configs } from '@libs/common/config/configuration';
 import { PostgresModule } from '@libs/database/postgres/postgres.module';
 import { LogModule } from '@libs/infra/log';
+import { GroupModule as LibGroupModule } from '@libs/service/group';
 import { MediaModule as LibMediaModule } from '@libs/service/media/media.module';
+import { UserModule as LibUserModule } from '@libs/service/user';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { LibModule } from '../app/lib.module';
-import { DatabaseModule } from '../database';
-import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publisher';
-import { FollowModule } from '../modules/follow';
-import { MediaModule } from '../modules/media';
-import { MentionModule } from '../modules/mention';
-import { PostModule } from '../modules/post';
 import { SearchModule } from '../modules/search';
-import { TagModule } from '../modules/tag';
-import { GroupModuleV2 } from '../modules/v2-group/group.module';
-import { UserModuleV2 } from '../modules/v2-user/user.module';
 
 import { CleanUpDeletedCommentRefCommand } from './clean-up-deleted-comment-ref.command';
 import { CleanUpDeletedContentRefCommand } from './clean-up-deleted-content-ref.command';
@@ -49,6 +42,7 @@ import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
+import { MigrateNewsfeedCommand } from '@api/command/migrate-newsfeed.command';
 
 @Module({
   imports: [
@@ -58,19 +52,12 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
       load: [configs],
     }),
     LogModule,
-    DatabaseModule,
     LibModule,
-    UserModuleV2,
-    GroupModuleV2,
-    PostModule,
-    MentionModule,
-    MediaModule,
     SearchModule,
-    TagModule,
-    FeedPublisherModule,
-    FollowModule,
     PostgresModule,
     LibMediaModule,
+    LibUserModule,
+    LibGroupModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -85,7 +72,6 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     // MigrateStatusPostCommand,
     FixProcessingStatusPostCommand,
     UpdateNewsfeedCommand,
-    FeedPublisherService,
     FixTotalUsersSeenCommand,
     MigrateCommentMentionsCommand,
     MigratePostMentionsCommand,
@@ -107,6 +93,7 @@ import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
     MigrateReportStructure,
     MigratePostTitleCommand,
     MigrateHlsMimetypeVideosCommand,
+    MigrateNewsfeedCommand,
   ],
 })
 export class CommandModule {}

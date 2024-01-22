@@ -1,20 +1,23 @@
-import { PRIVACY, ROLE_TYPE } from '@beincom/constants';
+import { PERMISSION_KEY, PRIVACY, ROLE_TYPE } from '@beincom/constants';
 import { ArrayHelper } from '@libs/common/helpers';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import {
   GROUP_SERVICE_TOKEN,
   IGroupService,
 } from '@libs/service/group/src/group.service.interface';
+import { IUserService, USER_SERVICE_TOKEN } from '@libs/service/user';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { GroupNotFoundException } from '../../domain/exception';
-import { GetUserIdsInGroupsProps, IGroupAdapter } from '../../domain/service-adapter-interface';
+import { IGroupAdapter } from '../../domain/service-adapter-interface';
 
 @Injectable()
 export class GroupAdapter implements IGroupAdapter {
   public constructor(
     @Inject(GROUP_SERVICE_TOKEN)
-    private readonly _groupService: IGroupService
+    private readonly _groupService: IGroupService,
+    @Inject(USER_SERVICE_TOKEN)
+    private readonly _userService: IUserService
   ) {}
 
   public async getGroupById(groupId: string): Promise<GroupDto> {
@@ -30,7 +33,11 @@ export class GroupAdapter implements IGroupAdapter {
   }
 
   public async isAdminInAnyGroups(userId: string, groupIds: string[]): Promise<boolean> {
-    return this._groupService.isAdminInAnyGroups(userId, groupIds);
+    const { groups: groupPermissions } = await this._userService.getPermissionByUserId(userId);
+
+    return groupIds.some((groupId) =>
+      groupPermissions[groupId]?.includes(PERMISSION_KEY.ROLE_GROUP_ADMIN)
+    );
   }
 
   public getGroupIdsAndChildIdsUserJoined(group: GroupDto, groupIdsUserJoined: string[]): string[] {
@@ -72,12 +79,6 @@ export class GroupAdapter implements IGroupAdapter {
     ]);
 
     return groupMembers.groupAdmin;
-  }
-
-  public async getUserIdsInGroups(
-    props: GetUserIdsInGroupsProps
-  ): Promise<{ list: string[]; cursor: string }> {
-    return this._groupService.getUserIdsInGroups(props);
   }
 
   public async getCommunityAdmins(groupIds: string[]): Promise<{

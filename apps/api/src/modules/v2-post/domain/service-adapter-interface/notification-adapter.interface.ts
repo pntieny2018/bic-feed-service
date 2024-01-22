@@ -1,3 +1,5 @@
+import { SpecificNotificationSettings } from '@api/modules/v2-notification/data-type';
+
 import {
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
@@ -67,4 +69,9 @@ export interface INotificationAdapter {
 
   sendReportCreatedNotification(payload: ReportCreatedNotificationPayload): Promise<void>;
   sendReportHiddenNotification(payload: ReportHiddenNotificationPayload): Promise<void>;
+
+  getSpecificNotificationSettings(
+    userId: string,
+    targetId: string
+  ): Promise<SpecificNotificationSettings>;
 }

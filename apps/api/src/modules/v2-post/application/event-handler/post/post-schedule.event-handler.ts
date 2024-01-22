@@ -14,7 +14,7 @@ export class PostScheduledEventHandler implements IEventHandler<PostScheduledEve
   ) {}
 
   public async handle(event: PostScheduledEvent): Promise<void> {
-    const { postEntity } = event.payload;
+    const { entity: postEntity } = event.payload;
 
     if (!postEntity.isWaitingSchedule()) {
       return;

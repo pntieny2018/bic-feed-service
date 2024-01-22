@@ -1,3 +1,4 @@
+import { SpecificNotificationSettings } from '@api/modules/v2-notification/data-type';
 import { Inject } from '@nestjs/common';
 
 import {
@@ -186,5 +187,12 @@ export class NotificationAdapter implements INotificationAdapter {
     payload: ReportHiddenNotificationPayload
   ): Promise<void> {
     return this._reportNotiApp.sendReportHiddenNotification(payload);
+  }
+
+  public async getSpecificNotificationSettings(
+    userId: string,
+    targetId: string
+  ): Promise<SpecificNotificationSettings> {
+    return this._contentNotiApp.getSpecificNotificationSettings(userId, targetId);
   }
 }

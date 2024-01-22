@@ -7,6 +7,7 @@
       "root": "apps/api",
       "entryFile": "main",
       "sourceRoot": "apps/api/src",
+      "sourceMap": true,
       "compilerOptions": {
         "tsConfigPath": "apps/api/tsconfig.app.json"
       }

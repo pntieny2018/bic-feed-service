@@ -6,6 +6,7 @@ export interface IContext {
   requestId: string;
   actor: UserDto;
   event: string;
+  handler?: string;
 }
 
 export const CONTEXT = Symbol('CONTEXT');

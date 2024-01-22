@@ -108,6 +108,10 @@ export const ROUTES = {
     },
   },
   ARTICLE: {
+    SEARCH_ARTICLES: {
+      PATH: '/articles',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_12_0),
+    },
     CREATE: {
       PATH: '/articles',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_5_0),
@@ -275,6 +279,10 @@ export const ROUTES = {
     GET_WELCOME_CONTENT: {
       PATH: 'contents/welcome',
       VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_13_0),
+    },
+    GET_USERS_SEEN_CONTENT: {
+      PATH: 'contents/:contentId/seen-users',
+      VERSIONS: AppHelper.getVersionsSupportedFrom(VERSION_1_11_0),
     },
   },
   COMMENT: {

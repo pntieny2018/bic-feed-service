@@ -52,9 +52,7 @@ export class FindCommentsAroundIdHandler
       targetChildLimit,
     });
 
-    const commentsDto = await this._commentBinding.commentsBinding(rows, {
-      authUser,
-    });
+    const commentsDto = await this._commentBinding.commentsBinding(rows);
 
     return new FindCommentsAroundIdDto(commentsDto, meta);
   }

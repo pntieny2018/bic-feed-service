@@ -1,3 +1,4 @@
+import { UserDto } from '@libs/service/user';
 import {
   Body,
   Controller,
@@ -12,13 +13,12 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { instanceToInstance, plainToInstance } from 'class-transformer';
+import { instanceToInstance } from 'class-transformer';
 
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants';
 import { ROUTES } from '../../../../common/constants/routes.constant';
 import { AuthUser, ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { UserDto } from '../../../v2-user/application';
 import {
   AddSeriesItemsCommand,
   CreateSeriesCommand,
@@ -72,11 +72,11 @@ export class SeriesController {
   })
   @Post(ROUTES.SERIES.CREATE.PATH)
   @Version(ROUTES.SERIES.CREATE.VERSIONS)
-  public async create(
+  public async createSeries(
     @AuthUser() user: UserDto,
     @Body() createSeriesRequestDto: CreateSeriesRequestDto
   ): Promise<CreateSeriesDto> {
-    const data = await this._commandBus.execute<CreateSeriesCommand, CreateSeriesDto>(
+    const data = this._commandBus.execute<CreateSeriesCommand, CreateSeriesDto>(
       new CreateSeriesCommand({
         ...createSeriesRequestDto,
         actor: user,
@@ -93,7 +93,7 @@ export class SeriesController {
   @ResponseMessages({ success: 'Reorder successful.' })
   @Put(ROUTES.SERIES.REORDER_ITEMS.PATH)
   @Version(ROUTES.SERIES.REORDER_ITEMS.VERSIONS)
-  public async reorder(
+  public async reorderItemsInSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
     @Body() reorderItemsDto: ReorderItemsInSeriesRequestDto
@@ -112,7 +112,7 @@ export class SeriesController {
   })
   @Put(ROUTES.SERIES.ADD_ITEMS.PATH)
   @Version(ROUTES.SERIES.ADD_ITEMS.VERSIONS)
-  public async addItems(
+  public async addItemsIntoSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
     @Body() addItemsInSeriesDto: ChangeItemsInSeriesRequestDto
@@ -131,7 +131,7 @@ export class SeriesController {
   })
   @Delete(ROUTES.SERIES.REMOVE_ITEMS.PATH)
   @Version(ROUTES.SERIES.REMOVE_ITEMS.VERSIONS)
-  public async removeItems(
+  public async removeItemsFromSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) id: string,
     @Body() removeItemsInSeriesDto: ChangeItemsInSeriesRequestDto
@@ -150,12 +150,12 @@ export class SeriesController {
   })
   @Put(ROUTES.SERIES.UPDATE.PATH)
   @Version(ROUTES.SERIES.UPDATE.VERSIONS)
-  public async update(
+  public async updateSeries(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSeriesRequestDto: UpdateSeriesRequestDto
   ): Promise<SeriesDto> {
-    const data = await this._commandBus.execute<UpdateSeriesCommand, SeriesDto>(
+    const data = this._commandBus.execute<UpdateSeriesCommand, SeriesDto>(
       new UpdateSeriesCommand({
         ...updateSeriesRequestDto,
         id,
@@ -173,15 +173,13 @@ export class SeriesController {
     @AuthUser() authUser: UserDto,
     @Query() getItemsBySeriesRequestDto: GetItemsBySeriesRequestDto
   ): Promise<FindItemsBySeriesDto> {
-    const result = await this._queryBus.execute<FindItemsBySeriesQuery, FindItemsBySeriesDto>(
+    const result = this._queryBus.execute<FindItemsBySeriesQuery, FindItemsBySeriesDto>(
       new FindItemsBySeriesQuery({
         seriesIds: getItemsBySeriesRequestDto.seriesIds,
         authUser,
       })
     );
-    return plainToInstance(FindItemsBySeriesDto, result, {
-      groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC],
-    });
+    return instanceToInstance(result, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Search post/article to add into series' })
@@ -193,12 +191,12 @@ export class SeriesController {
   })
   @Version(ROUTES.SERIES.SEARCH_CONTENTS_BY_SERIES.VERSIONS)
   @Get(ROUTES.SERIES.SEARCH_CONTENTS_BY_SERIES.PATH)
-  public async searchContents(
+  public async searchContentsToAddIntoSeries(
     @AuthUser() authUser: UserDto,
     @Param('seriesId', ParseUUIDPipe) seriesId: string,
     @Query() searchContentsBySeriesRequestDto: SearchContentsBySeriesRequestDto
   ): Promise<SearchContentsBySeriesDto> {
-    const data = await this._queryBus.execute(
+    const data = this._queryBus.execute(
       new SearchContentsBySeriesQuery({ authUser, seriesId, ...searchContentsBySeriesRequestDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -207,12 +205,12 @@ export class SeriesController {
   @ApiOperation({ summary: 'Get series detail' })
   @Get(ROUTES.SERIES.GET_DETAIL.PATH)
   @Version(ROUTES.SERIES.GET_DETAIL.VERSIONS)
-  public async getPostDetail(
+  public async getSeriesDetail(
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() authUser: UserDto
   ): Promise<SeriesDto> {
-    const data = await this._queryBus.execute(new FindSeriesQuery({ seriesId: id, authUser }));
-    return plainToInstance(SeriesDto, data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
+    const data = this._queryBus.execute(new FindSeriesQuery({ seriesId: id, authUser }));
+    return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
   }
 
   @ApiOperation({ summary: 'Search series' })
@@ -228,7 +226,7 @@ export class SeriesController {
     @AuthUser() authUser: UserDto,
     @Query() searchSeriesRequestDto: SearchSeriesRequestDto
   ): Promise<PageDto<SearchSeriesDto>> {
-    const data = await this._queryBus.execute(
+    const data = this._queryBus.execute(
       new SearchSeriesQuery({ authUser, ...searchSeriesRequestDto })
     );
     return instanceToInstance(data, { groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] });
@@ -243,11 +241,11 @@ export class SeriesController {
   })
   @Delete(ROUTES.SERIES.DELETE.PATH)
   @Version(ROUTES.SERIES.DELETE.VERSIONS)
-  public async delete(
+  public async deleteSeries(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<void> {
-    await this._commandBus.execute<DeleteSeriesCommand, void>(
+    return this._commandBus.execute<DeleteSeriesCommand, void>(
       new DeleteSeriesCommand({
         id,
         actor: user,

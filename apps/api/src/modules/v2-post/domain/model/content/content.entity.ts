@@ -5,6 +5,7 @@ import { validate as isUUID } from 'uuid';
 
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { DomainModelException } from '../../../../../common/exceptions';
+import { ReactionCount } from '../../../application/dto';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { QuizEntity } from '../quiz';
 import { QuizParticipantEntity } from '../quiz-participant';
@@ -51,6 +52,7 @@ export type ContentAttributes = {
   aggregation?: {
     commentsCount: number;
     totalUsersSeen: number;
+    reactionsCount?: ReactionCount;
   };
 };
 export type ContentState = {
@@ -195,6 +197,10 @@ export class ContentEntity<
 
   public getQuiz(): QuizEntity {
     return this._props.quiz;
+  }
+
+  public getPublishedAt(): Date {
+    return this._props.publishedAt;
   }
 
   public isOwner(userId: string): boolean {

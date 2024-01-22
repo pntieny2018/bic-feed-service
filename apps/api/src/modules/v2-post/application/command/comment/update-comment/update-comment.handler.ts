@@ -59,7 +59,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
       const mentionUsers = await this._userAdapter.getUsersByIds(mentions, {
         withGroupJoined: true,
       });
-      await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
+      this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     }
 
     await this._commentDomainService.update({

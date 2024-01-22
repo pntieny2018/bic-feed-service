@@ -16,13 +16,13 @@ export class FeedSeriesUpdatedEventHandler implements IEventHandler<SeriesUpdate
   ) {}
 
   public async handle(event: SeriesUpdatedEvent): Promise<void> {
-    const { seriesEntity } = event.payload;
+    const { entity: seriesEntity } = event.payload;
 
     if (seriesEntity.isHidden() || !seriesEntity.isPublished()) {
       return;
     }
     await this._newsfeedDomainService.dispatchContentIdToGroups({
-      contentId: seriesEntity.getId(),
+      content: seriesEntity,
       newGroupIds: seriesEntity.getGroupIds(),
       oldGroupIds: seriesEntity.getSnapshot().groupIds,
     });

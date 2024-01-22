@@ -1,5 +1,12 @@
+import {
+  HttpModule,
+  IAxiosConfig,
+  IHttpServiceOptions,
+  NOTIFICATION_HTTP_TOKEN,
+} from '@libs/infra/http';
 import { KafkaModule } from '@libs/infra/kafka';
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import {
   CommentNotificationApplicationService,
@@ -17,7 +24,23 @@ import { KAFKA_ADAPTER } from './domain/infra-adapter-interface';
 import { KafkaAdapter } from './driven-adapter/infra';
 
 @Module({
-  imports: [KafkaModule],
+  imports: [
+    KafkaModule,
+    HttpModule.forRoot([
+      {
+        provide: NOTIFICATION_HTTP_TOKEN,
+        useFactory: (configService: ConfigService): IHttpServiceOptions => {
+          const axiosConfig = configService.get<IAxiosConfig>('axios');
+          return {
+            baseURL: axiosConfig.notification.baseUrl,
+            maxRedirects: axiosConfig.notification.maxRedirects,
+            timeout: axiosConfig.notification.timeout,
+          };
+        },
+        inject: [ConfigService],
+      },
+    ]),
+  ],
   controllers: [],
   providers: [
     {

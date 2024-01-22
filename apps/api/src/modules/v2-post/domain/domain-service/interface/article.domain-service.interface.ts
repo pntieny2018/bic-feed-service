@@ -53,7 +53,7 @@ export interface IArticleDomainService {
   delete(input: DeleteArticleProps): Promise<void>;
   update(input: UpdateArticleProps): Promise<ArticleEntity>;
   publish(input: PublishArticleProps): Promise<ArticleEntity>;
-  schedule(input: ScheduleArticleProps): Promise<ArticleEntity>;
+  schedule(input: ScheduleArticleProps): Promise<void>;
   autoSave(inputData: AutoSaveArticleProps): Promise<void>;
 }
 export const ARTICLE_DOMAIN_SERVICE_TOKEN = 'ARTICLE_DOMAIN_SERVICE_TOKEN';

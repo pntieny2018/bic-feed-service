@@ -1,7 +1,7 @@
 import { CONTENT_TYPE, PERMISSION_KEY } from '@beincom/constants';
 import { GroupDto } from '@libs/service/group/src/group.dto';
 import { UserDto } from '@libs/service/user';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { uniq } from 'lodash';
 import moment from 'moment';
 
@@ -16,13 +16,21 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionAtGroupException,
   ContentNoPinPermissionException,
+  ContentNotFoundException,
   ContentRequireGroupException,
   TagSeriesInvalidException,
   UserNoBelongGroupException,
 } from '../exception';
 import { SeriesEntity, ContentEntity, PostEntity, ArticleEntity } from '../model/content';
 import { TagEntity } from '../model/tag';
-import { CONTENT_REPOSITORY_TOKEN, IContentRepository } from '../repositoty-interface';
+import {
+  CONTENT_REPOSITORY_TOKEN,
+  IContentRepository,
+  IPostGroupRepository,
+  IReportRepository,
+  POST_GROUP_REPOSITORY_TOKEN,
+  REPORT_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import {
   IUserAdapter,
   USER_ADAPTER,
@@ -34,31 +42,51 @@ import { IContentValidator } from './interface';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
+  private readonly _logger = new Logger(ContentValidator.name);
   public constructor(
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    protected readonly _authorityAppService: IAuthorityAppService,
+
+    @Inject(CONTENT_REPOSITORY_TOKEN)
+    protected readonly _contentRepo: IContentRepository,
+    @Inject(REPORT_REPOSITORY_TOKEN)
+    protected readonly _reportRepo: IReportRepository,
+    @Inject(POST_GROUP_REPOSITORY_TOKEN)
+    protected readonly _postGroupRepo: IPostGroupRepository,
+
     @Inject(GROUP_ADAPTER)
     protected readonly _groupAdapter: IGroupAdapter,
     @Inject(USER_ADAPTER)
-    protected readonly _userAdapter: IUserAdapter,
-    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected readonly _authorityAppService: IAuthorityAppService,
-    @Inject(CONTENT_REPOSITORY_TOKEN)
-    protected readonly _contentRepository: IContentRepository
+    protected readonly _userAdapter: IUserAdapter
   ) {}
 
-  public async checkCanCRUDContent(
-    user: UserDto,
-    groupAudienceIds: string[],
-    contentType?: CONTENT_TYPE
-  ): Promise<void> {
-    const notCreatableInGroups: GroupDto[] = [];
-    const groups = await this._groupAdapter.getGroupsByIds(groupAudienceIds);
+  public async checkCanCRUDContent(input: {
+    user: UserDto;
+    groupIds: string[];
+    contentType?: CONTENT_TYPE;
+    groups?: GroupDto[];
+  }): Promise<void> {
+    const { user, groupIds, contentType } = input;
+    let { groups } = input;
+
+    if (groups?.length) {
+      const needFindGroupIds = groupIds.filter(
+        (groupId) => !groups.some((group) => group.id === groupId)
+      );
+      if (needFindGroupIds.length) {
+        const needFindGGroups = await this._groupAdapter.getGroupsByIds(needFindGroupIds);
+        groups.push(...needFindGGroups);
+      }
+    } else {
+      groups = await this._groupAdapter.getGroupsByIds(groupIds);
+    }
+
     await this._authorityAppService.buildAbility(user);
     const permissionKey = this._postTypeToPermissionKey(contentType);
-    for (const group of groups) {
-      if (!this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)) {
-        notCreatableInGroups.push(group);
-      }
-    }
+
+    const notCreatableInGroups: GroupDto[] = groups.filter(
+      (group) => !this._authorityAppService.canDoActionOnGroup(permissionKey, group.id)
+    );
 
     if (notCreatableInGroups.length) {
       throw new ContentNoCRUDPermissionAtGroupException(
@@ -120,15 +148,15 @@ export class ContentValidator implements IContentValidator {
       throw new ContentEmptyGroupException();
     }
 
-    const postType = contentEntity.get('type');
+    const contentType = contentEntity.get('type');
     const state = contentEntity.getState();
     const { detachGroupIds, attachGroupIds } = state;
     const isEnableSetting = contentEntity.isEnableSetting();
 
-    await this.checkCanCRUDContent(userAuth, groupIds, postType);
+    await this.checkCanCRUDContent({ user: userAuth, groupIds, contentType });
 
     if (detachGroupIds?.length) {
-      await this.checkCanCRUDContent(userAuth, detachGroupIds, postType);
+      await this.checkCanCRUDContent({ user: userAuth, groupIds: detachGroupIds, contentType });
     }
 
     if (
@@ -161,34 +189,54 @@ export class ContentValidator implements IContentValidator {
   public async checkCanReadContent(
     post: ContentEntity,
     user: UserDto,
-    groups?: GroupDto[]
+    options?: {
+      dataGroups?: GroupDto[];
+    }
   ): Promise<void> {
     if (post.isOwner(user.id)) {
       return;
     }
 
-    if (post.isDraft() && !post.isOwner(user.id)) {
+    if (post.isDraft() || post.isHidden()) {
       throw new ContentNoCRUDPermissionException();
     }
-
     if (post.isOpen() || post.isClosed()) {
       return;
     }
 
     const groupAudienceIds = post.get('groupIds') ?? [];
     const isAdmin = await this._groupAdapter.isAdminInAnyGroups(user.id, groupAudienceIds);
-
-    if (isAdmin && !post.isDraft()) {
+    if (isAdmin) {
       return;
     }
 
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      if (groups?.length > 0) {
-        throw new ContentRequireGroupException(null, { requireGroups: groups });
+      if (options?.dataGroups?.length) {
+        throw new ContentRequireGroupException(null, { requireGroups: options.dataGroups });
       }
       throw new ContentNoCRUDPermissionException();
+    }
+  }
+
+  public async validateContentReported(contentId: string, userId: string): Promise<void> {
+    const isReport = await this._reportRepo.checkIsReported(userId, contentId);
+    if (isReport) {
+      throw new ContentNotFoundException();
+    }
+  }
+
+  public async validateContentArchived(user: UserDto, postGroupIds: string[]): Promise<void> {
+    const userJoinedGroupIds = user.groups ?? [];
+    const groupCanAccess = postGroupIds.filter((groupId) => userJoinedGroupIds.includes(groupId));
+    const activePostGroupIds = await this._postGroupRepo.getNotInStateGroupIds(
+      groupCanAccess,
+      true
+    );
+
+    if (!activePostGroupIds.length) {
+      throw new ContentNotFoundException();
     }
   }
 
@@ -236,7 +284,7 @@ export class ContentValidator implements IContentValidator {
     };
     if (seriesIds?.length) {
       const groupIds = groups.map((e) => e.id);
-      const series = await this._contentRepository.findAll({
+      const series = await this._contentRepo.findAll({
         attributes: {
           exclude: ['content'],
         },
@@ -298,12 +346,10 @@ export class ContentValidator implements IContentValidator {
       throw new ContentLimitAttachedSeriesException(RULES.LIMIT_ATTACHED_SERIES);
     }
 
-    const contentWithArchivedGroups = (await this._contentRepository.findContentByIdInArchivedGroup(
-      contentEntity.getId(),
-      {
-        shouldIncludeSeries: true,
-      }
-    )) as ArticleEntity | PostEntity;
+    const contentWithArchivedGroups = (await this._contentRepo.findContentWithCache({
+      where: { id: contentEntity.getId() },
+      include: { shouldIncludeSeries: true },
+    })) as ArticleEntity | PostEntity;
 
     if (!contentWithArchivedGroups) {
       return;

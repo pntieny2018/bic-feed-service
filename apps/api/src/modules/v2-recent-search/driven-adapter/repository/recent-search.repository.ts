@@ -1,10 +1,12 @@
-import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
-import { InjectModel } from '@nestjs/sequelize';
-import { RecentSearchModel } from '../../../../database/models/recent-search.model';
+import { RecentSearchModel } from '@libs/database/postgres/model';
 import { Inject } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
+
 import { RecentSearchType } from '../../data-type/recent-search-type.enum';
 import { RECENT_SEARCH_FACTORY_TOKEN } from '../../domain/factory/interface/recent-search.factory.interface';
 import { RecentSearchFactory } from '../../domain/factory/recent-search.factory';
+import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
+
 import {
   DeleteRecentSearchOptions,
   FindRecentSearchOptions,
@@ -81,7 +83,9 @@ export class RecentSearchRepository implements IRecentSearchRepository {
   }
 
   private _modelToEntity(model: RecentSearchModel): RecentSearchEntity {
-    if (!model) return null;
+    if (!model) {
+      return null;
+    }
     return this._recentSearchFactory.reconstitute(model.toJSON());
   }
 }

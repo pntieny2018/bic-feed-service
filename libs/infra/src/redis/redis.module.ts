@@ -7,7 +7,9 @@ import {
   IRedisStoreModuleOptionsFactory,
 } from './interfaces/redis-store.module.interface';
 import { RedisClusterStore } from './redis-cluster.store';
+import { RedisContentService } from './redis-content.service';
 import {
+  REDIS_CONTENT_INSTANCE_TOKEN,
   REDIS_STORE_INSTANCE_TOKEN,
   REDIS_STORE_MODULE_ID,
   REDIS_STORE_MODULE_OPTIONS,
@@ -85,11 +87,32 @@ export class RedisModule {
           inject: [REDIS_STORE_MODULE_OPTIONS],
         },
         {
+          provide: REDIS_CONTENT_INSTANCE_TOKEN,
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          useFactory: (config: RedisStoreModuleOptions) => {
+            const store = config.clusterMode
+              ? RedisClusterStore.create(config.nodes, config.clusterOptions)
+              : RedisStore.create(config.redisContentOptions);
+
+            store.on('connect', () => {
+              Logger.debug('Redis content connected');
+            });
+
+            store.on('error', (error) => {
+              Logger.error(error);
+            });
+
+            return store;
+          },
+          inject: [REDIS_STORE_MODULE_OPTIONS],
+        },
+        {
           provide: REDIS_STORE_MODULE_ID,
           useValue: randomStringGenerator(),
         },
         ...(options.extraProviders || []),
         RedisService,
+        RedisContentService,
       ],
       exports: [
         ...this._createAsyncProviders(options),
@@ -104,11 +127,22 @@ export class RedisModule {
           inject: [REDIS_STORE_MODULE_OPTIONS],
         },
         {
+          provide: REDIS_CONTENT_INSTANCE_TOKEN,
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          useFactory: (config: RedisStoreModuleOptions) => {
+            return config.clusterMode
+              ? RedisClusterStore.create(config.nodes, config.clusterOptions)
+              : RedisStore.create(config.redisContentOptions);
+          },
+          inject: [REDIS_STORE_MODULE_OPTIONS],
+        },
+        {
           provide: REDIS_STORE_MODULE_ID,
           useValue: randomStringGenerator(),
         },
         ...(options.extraProviders || []),
         RedisService,
+        RedisContentService,
       ],
     };
   }

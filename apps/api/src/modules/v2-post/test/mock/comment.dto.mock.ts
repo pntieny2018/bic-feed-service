@@ -1,5 +1,6 @@
-import { createUrlFromId } from '../../../giphy/giphy.util';
-import { UserDto } from '../../../v2-user/application';
+import { createUrlFromId } from '@api/modules/v2-giphy/giphy.util';
+import { UserDto } from '@libs/service/user';
+
 import { CommentBaseDto, FileDto, ImageDto, VideoDto } from '../../application/dto';
 import { CommentEntity } from '../../domain/model/comment';
 
@@ -34,7 +35,6 @@ export const createCommentDto = (commentEntity: CommentEntity): CommentBaseDto =
           [current.username]: {
             id: current.id,
             fullname: current.fullname,
-            email: current.email,
             username: current.username,
             avatar: current.avatar,
           },

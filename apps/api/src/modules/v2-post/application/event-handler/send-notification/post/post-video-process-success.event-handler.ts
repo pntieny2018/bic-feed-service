@@ -19,7 +19,7 @@ export class NotiPostVideoSuccessEventHandler implements IEventHandler<PostVideo
   ) {}
 
   public async handle(event: PostVideoSuccessEvent): Promise<void> {
-    const { postEntity, authUser } = event.payload;
+    const { entity: postEntity, authUser } = event.payload;
 
     const postDto = await this._contentBinding.postBinding(postEntity, {
       actor: authUser,

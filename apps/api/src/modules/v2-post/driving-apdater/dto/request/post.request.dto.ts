@@ -10,10 +10,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
-import { UserMentionDto } from '../../../../mention/dto';
-import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
-import { MediaRequestDto } from '../../../application/dto';
+import {
+  LinkPreviewDto,
+  MediaRequestDto,
+  PostSettingDto,
+  UserMentionDto,
+} from '../../../application/dto';
 
 import { AudienceRequestDto } from './audience.request.dto';
 import { MaxMarkdownLength } from '@api/modules/v2-post/driving-apdater/custom-validation/MaxMarkdownLength.validation';
