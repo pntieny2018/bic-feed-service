@@ -15,10 +15,6 @@ export class WsPostVideoSuccessEventHandler implements IEventHandler<PostVideoSu
   public async handle(event: PostVideoSuccessEvent): Promise<void> {
     const { entity: postEntity } = event.payload;
 
-    if (postEntity.isPublished()) {
-      return;
-    }
-
     await this._websocketAdapter.emitPostVideoProcessedEvent({
       event: PostVideoSuccessEvent.event,
       recipients: [postEntity.getCreatedBy()],

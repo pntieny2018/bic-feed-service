@@ -20,6 +20,7 @@ import {
   SeriesHasBeenPublished,
   SeriesHasBeenUpdated,
   SeriesHasBeenRemoveItem,
+  PostVideoHasBeenPublished,
 } from '../../../../common/constants';
 import { ArticleDto, PostDto, SeriesDto } from '../../../v2-post/application/dto';
 import { SpecificNotificationSettings, TargetType, VerbActivity } from '../../data-type';
@@ -41,6 +42,7 @@ import {
   PostPublishedNotificationPayload,
   PostUpdatedNotificationPayload,
   PostVideoProcessFailedNotificationPayload,
+  PostVideoProcessSuccessNotificationPayload,
   SeriesAddedItemNotificationPayload,
   SeriesChangedItemNotificationPayload,
   SeriesDeletedNotificationPayload,
@@ -151,6 +153,31 @@ export class ContentNotificationApplicationService
     kafkaPayload.value.meta.post = kafkaPayload.value.meta.post
       ? { ...kafkaPayload.value.meta.post, ignoreUserIds: ignoreUserIds }
       : { ignoreUserIds: ignoreUserIds };
+
+    await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
+  }
+
+  public async sendPostVideoProcessSuccessNotification(
+    payload: PostVideoProcessSuccessNotificationPayload
+  ): Promise<void> {
+    const { actor, post } = payload;
+
+    const postObject = this._createPostActivityObject(post);
+    const activity = this._createPostActivity(postObject);
+
+    const kafkaPayload = new NotificationPayloadDto<PostActivityObjectDto>({
+      key: post.id,
+      value: {
+        actor,
+        event: PostVideoHasBeenPublished,
+        data: activity,
+        meta: {
+          post: {
+            ignoreUserIds: post.series?.map((series) => series.createdBy),
+          },
+        },
+      },
+    });
 
     await this._kafkaAdapter.emit(KAFKA_TOPIC.STREAM.POST, kafkaPayload);
   }
