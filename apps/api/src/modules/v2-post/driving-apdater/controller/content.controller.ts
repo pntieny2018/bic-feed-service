@@ -64,12 +64,12 @@ import {
   GetDraftContentsRequestDto,
   GetMyReportedContentsRequestDto,
   GetScheduleContentsQueryDto,
-  GetUserSeenPostDto,
   PinContentDto,
   PostSettingRequestDto,
   SearchContentsRequestDto,
   ValidateSeriesTagDto,
 } from '../dto/request';
+import { GetUserSeenPostDto } from '@api/modules/feed/dto/request/get-user-seen-post.dto';
 
 @ApiTags('v2 Content')
 @ApiSecurity('authorization')
