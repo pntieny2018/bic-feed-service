@@ -268,15 +268,6 @@ export class RootGroupRequestDto {
   @Expose({
     name: 'created_at',
   })
-  @Transform((data) => {
-    let value;
-    if (!data.obj.created_at && data.obj.createdAt) {
-      value = data.obj.createdAt;
-    } else {
-      value = data.obj.created_at;
-    }
-    return value;
-  })
   @IsNotEmpty()
   @IsDateString()
   public createdAt: string;
@@ -318,23 +309,4 @@ export class CountContentPerWeekRequestDto {
     name: 'metrics',
   })
   public metrics: string[];
-}
-
-export class GetUserSeenPostDto {
-  @ApiProperty({
-    default: 20,
-    required: false,
-  })
-  @IsOptional()
-  @Max(MAX_ITEMS_PER_PAGE)
-  @Transform(({ value }) => Number(value))
-  public limit: number;
-
-  @ApiProperty({
-    default: 0,
-    required: false,
-  })
-  @IsOptional()
-  @Transform(({ value }) => Number(value))
-  public offset: number;
 }

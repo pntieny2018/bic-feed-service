@@ -229,6 +229,8 @@ export const postProvider = [
 
   CountContentPerWeekHandler,
 
+  CountContentPerWeekHandler,
+
   /** Domain Service */
   {
     provide: ARTICLE_DOMAIN_SERVICE_TOKEN,
