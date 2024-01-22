@@ -95,13 +95,18 @@ export class UserService implements IUserService {
     }
 
     const usernames = await this._getUsernamesFromCacheByUserIds(uniq(userIds));
-    let usersProfile: UserPublicProfileDto[] = await this._getUsersProfileFromCacheByUserNames(
-      usernames
-    );
+    const cachedUsersProfile: UserPublicProfileDto[] =
+      await this._getUsersProfileFromCacheByUserNames(usernames);
 
-    if (!usersProfile?.length) {
-      usersProfile = await this._getUsersProfileFromApiByUserIds(userIds);
+    const cachedUserIds = cachedUsersProfile.map((userProfile) => userProfile.id);
+    const nonCachedUserIds = userIds.filter((userId) => !cachedUserIds.includes(userId));
+
+    let apiUsersProfile: UserPublicProfileDto[] = [];
+    if (nonCachedUserIds.length) {
+      apiUsersProfile = await this._getUsersProfileFromApiByUserIds(nonCachedUserIds);
     }
+
+    const usersProfile = [...cachedUsersProfile, ...apiUsersProfile];
 
     if (!usersProfile?.length) {
       return [];
@@ -112,7 +117,7 @@ export class UserService implements IUserService {
 
     usersProfile.forEach((userProfile) => {
       joinedGroupsPipeline.smembers(`${CACHE_KEYS.JOINED_GROUPS}:${userProfile.id}`);
-      showingBadgesPipeline.get(`${CACHE_KEYS.SHOWING_BADGES}:${userProfile.id}`);
+      showingBadgesPipeline.get(`${CACHE_KEYS.SHOWING_BADGES}:${userProfile.id}-a`);
     });
 
     const [joinedGroupsResults, showingBadgesResults] = await Promise.all([
@@ -166,7 +171,9 @@ export class UserService implements IUserService {
     }
 
     const keys = usernames.map((username) => `${CACHE_KEYS.USER_PROFILE}:${username}`);
-    return this._store.mget(keys);
+    const users = await this._store.mget(keys);
+
+    return users || [];
   }
 
   private async _getJoinedGroupsFromCacheByUserId(userId: string): Promise<string[]> {
@@ -201,7 +208,7 @@ export class UserService implements IUserService {
       const response = await this._userHttpService.post(USER_ENDPOINT.INTERNAL.GET_USERS_PROFILE, {
         user_ids: userIds,
       });
-      return response.data.data;
+      return response.data.data || [];
     } catch (e) {
       this._logger.error(`[_getUsersProfileFromApiByUserIds] ${e.message}`);
       return [];
